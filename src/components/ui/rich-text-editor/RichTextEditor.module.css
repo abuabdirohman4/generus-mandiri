@@ -1,0 +1,211 @@
+/* Tiptap Rich Text Editor Custom Styles */
+.tiptapContainer {
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.tiptapContainer:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Toolbar styling */
+.toolbar {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.toolbarButton {
+  background: none;
+  border: none;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background-color: #e5e7eb;
+  color: #3b82f6;
+}
+
+.toolbarButton.active {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.toolbarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.separator {
+  width: 1px;
+  height: 1.5rem;
+  background-color: #d1d5db;
+  margin: 0 0.25rem;
+}
+
+/* Editor content styling */
+.editorContent {
+  padding: 1rem;
+  min-height: 12rem;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  color: #111827;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.editorContent:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* Content formatting */
+.editorContent p {
+  margin: 0.5rem 0;
+  color: #111827;
+}
+
+.editorContent strong {
+  font-weight: 700;
+}
+
+.editorContent em {
+  font-style: italic;
+}
+
+.editorContent u {
+  text-decoration: underline;
+}
+
+.editorContent s {
+  text-decoration: line-through;
+}
+
+/* Skeleton loading states */
+.skeletonButton {
+  width: 2rem;
+  height: 2rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.editorSkeleton {
+  height: 12rem;
+  background-color: #f3f4f6;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Dark mode styles */
+.dark .tiptapContainer {
+  border-color: #4b5563;
+  background-color: #1f2937;
+}
+
+.dark .tiptapContainer:focus-within {
+  border-color: #3b82f6;
+}
+
+.dark .toolbar {
+  background-color: #1f2937;
+  border-bottom-color: #4b5563;
+}
+
+.dark .toolbarButton {
+  color: #9ca3af;
+}
+
+.dark .toolbarButton:hover:not(:disabled) {
+  background-color: #374151;
+  color: #3b82f6;
+}
+
+.dark .toolbarButton.active {
+  background-color: #1e3a8a;
+  color: #60a5fa;
+}
+
+.dark .separator {
+  background-color: #4b5563;
+}
+
+.dark .editorContent {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+.dark .editorContent:empty::before {
+  color: #6b7280;
+}
+
+.dark .editorContent p {
+  color: #f9fafb;
+}
+
+.dark .skeletonButton {
+  background-color: #4b5563;
+}
+
+.dark .editorSkeleton {
+  background-color: #374151;
+}
+
+/* Disabled state */
+.tiptapContainer:has(.editorContent[contenteditable="false"]) {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.dark .tiptapContainer:has(.editorContent[contenteditable="false"]) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.editorContent[contenteditable="false"] {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.dark .editorContent[contenteditable="false"] {
+  background-color: #374151;
+  color: #9ca3af;
+}

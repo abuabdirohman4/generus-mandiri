@@ -1,0 +1,40 @@
+{
+  "name": "Better Planner",
+  "short_name": "Better Planner",
+  "description": "A comprehensive project planning and task management app to help you achieve your goals",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "display_override": ["window-controls-overlay"],
+  "categories": [
+    "productivity",
+    "business",
+    "lifestyle"
+  ],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "prefer_related_applications": false,
+  "id": "/"
+}
