@@ -1,6 +1,6 @@
 #### **Folder: `03_Halaman_Pendukung`**
 
-**1. File: `app/(app)/siswa/page.jsx`**
+**1. File: `src/app/(admin)/siswa/page.jsx`**
 
   * **Tujuan:** Menampilkan daftar semua siswa dalam sistem.
   * **Logika:**
@@ -8,7 +8,7 @@
       * Langsung `await` pemanggilan data dari Supabase di dalam komponen untuk mengambil semua siswa beserta nama kelasnya (join).
       * Render data dalam sebuah komponen tabel.
 
-**2. File: `app/(app)/laporan/page.jsx`**
+**2. File: `src/app/(admin)/laporan/page.jsx`**
 
   * **Tujuan:** Halaman laporan kehadiran.
   * **Logika:**

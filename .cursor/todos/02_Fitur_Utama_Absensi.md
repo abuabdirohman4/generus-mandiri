@@ -1,8 +1,8 @@
 #### **Folder: `02_Fitur_Utama_Absensi`**
 
-**1. File: `app/(app)/absensi/page.jsx`**
+**1. File: `src/app/(admin)/absensi/page.jsx`**
 
-  * **Tujuan:** Halaman utama untuk melakukan absensi. Tanda `(app)` adalah route group untuk halaman yang dilindungi middleware.
+  * **Tujuan:** Halaman utama untuk melakukan absensi. Tanda `(admin)` adalah route group untuk halaman yang dilindungi middleware.
   * **Logika:**
       * Gunakan `'use client'`.
       * **Fetch Data:** Ambil data siswa untuk kelas guru yang sedang login. Anda bisa pass data ini dari Server Component parent atau fetch di client dengan SWR.
@@ -12,7 +12,7 @@
       * **Modal Izin:** Jika status diubah menjadi 'I', panggil komponen modal untuk memasukkan alasan.
       * **Tombol Simpan:** Panggil Server Action `saveAttendance` saat diklik.
 
-**2. File: `app/(app)/absensi/actions.js`**
+**2. File: `src/app/(admin)/absensi/actions.js`**
 
   * **Tujuan:** Server Action untuk menyimpan data absensi ke database.
   * **Logika:**

@@ -1,6 +1,6 @@
 #### **Folder: `04_State_Global_dan_Layout`**
 
-**1. File: `stores/userStore.js`**
+**1. File: `stores/userStore.ts`**
 
   * **Tujuan:** Store Zustand untuk data sesi pengguna global.
   * **Logika:**
@@ -16,7 +16,7 @@
     export default useUserStore;
     ```
 
-**2. File: `app/(app)/layout.jsx`**
+**2. File: `src/app/(admin)/layout.tsx`**
 
   * **Tujuan:** Layout utama untuk halaman-halaman setelah login.
   * **Logika:**

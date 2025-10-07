@@ -1,6 +1,6 @@
 #### **Folder: `01_Autentikasi_dan_Middleware`**
 
-**1. File: `app/login/page.jsx`**
+**1. File: `src/app/(full-width-pages)/(auth)/signin./page.tsx`**
 
   * **Tujuan:** Halaman login untuk guru.
   * **Logika:**
@@ -12,7 +12,7 @@
         3.  Memanggil `supabase.auth.signInWithPassword({ email, password })`.
         4.  Jika berhasil, arahkan ke halaman `/absensi`. Jika gagal, tampilkan pesan error.
 
-**2. File: `app/admin/users/actions.js`**
+**2. File: `src/app/(full-width-pages)/(auth)/actions.ts`**
 
   * **Tujuan:** Server Action untuk membuat pengguna (guru) baru oleh admin.
   * **Logika:**
@@ -23,7 +23,7 @@
         3.  Memanggil `supabaseAdmin.auth.admin.createUser()` dengan email dummy (`${username}@warlob.app`), password, dan `user_metadata`.
         4.  Setelah user dibuat di `auth`, masukkan data `full_name` dan `role` ke tabel `profiles`.
 
-**3. File: `middleware.js` (di root proyek)**
+**3. File: `src/middleware.ts` (di root proyek)**
 
   * **Tujuan:** Melindungi halaman-halaman yang memerlukan login.
   * **Logika:**
