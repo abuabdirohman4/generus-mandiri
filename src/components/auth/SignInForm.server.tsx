@@ -23,14 +23,14 @@ export default function SignInForm() {
   return (
     <form action={handleSubmit} className="space-y-6">
       <div>
-        <Label>Email<span className="text-error-500">*</span></Label>
+        <Label>Username<span className="text-error-500">*</span></Label>
         <input
-          name="email"
-          type="email"
+          name="username"
+          type="text"
           required
           disabled={isPending}
           className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          placeholder="Enter your email"
+          placeholder="Enter your username"
         />
       </div>
       <div>

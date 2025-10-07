@@ -11,18 +11,20 @@ export async function login(formData: FormData) {
   const supabase = await createClient();
 
   // Type-safe form data extraction
-  const email = formData.get("email");
+  const username = formData.get("username");
   const password = formData.get("password");
 
   // Validation
-  if (!isNonEmptyString(email) || !isValidEmail(email)) {
-    return redirect("/signin?message=Email tidak valid");
+  if (!isNonEmptyString(username)) {
+    return redirect("/signin?message=Username tidak boleh kosong");
   }
 
   if (!isNonEmptyString(password)) {
     return redirect("/signin?message=Password tidak boleh kosong");
   }
 
+  // Membuat email dummy dari username
+  const email = `${username}@warlob.app`;
   const data = { email, password };
 
   try {
@@ -34,7 +36,7 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect("/home");
   } catch (error) {
     // Check if this is a Next.js redirect error (expected behavior)
     if (isRedirectError(error)) {

@@ -5,8 +5,8 @@ import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import SignInForm from "@/components/auth/SignInForm.server";
 
 export const metadata: Metadata = {
-  title: "SignIn Page | Better Planner",
-  description: "This is Signin Page Better Planner",
+  title: "SignIn Page | Warlob App",
+  description: "Sistem Absensi Digital Warlob App",
 };
 
 export default async function SignIn({ searchParams }: { searchParams?: Promise<{ message?: string }> }) {
@@ -26,10 +26,10 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign In
+              Warlob App
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in!
+              Sistem Absensi Digital - Masuk dengan username dan password
             </p>
           </div>
           {message ? <div className={`mb-4 p-3 rounded text-center ${
@@ -54,12 +54,17 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
           </div> */}
           <SignInForm />
           <div className="mt-5">
-            <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-              Don&apos;t have an account? {" "}
-              <Link href="/signup" className="text-brand-500 hover:text-brand-600 dark:text-brand-400">
-                Sign Up
-              </Link>
-            </p>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Demo Credentials:
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                Admin: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">admin</code> / <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">admin354</code>
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                Guru: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">guru_kelas1</code> / <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">guru354</code>
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 {
-  "name": "Better Planner",
-  "short_name": "Better Planner",
-  "description": "A comprehensive project planning and task management app to help you achieve your goals",
+  "name": "Warlob App",
+  "short_name": "Warlob App",
+  "description": "Sistem Absensi Digital untuk sekolah",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

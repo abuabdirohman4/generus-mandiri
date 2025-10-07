@@ -1,6 +1,17 @@
 /**
  * Centralized error handling utilities
  * Provides consistent error handling patterns across the application
+ * 
+ * @example
+ * // Basic usage with general context
+ * handleApiError(error, 'menyimpan data');
+ * 
+ * // With custom message for more specific context
+ * handleApiError(error, 'menyimpan data', 'Gagal membuat guru baru');
+ * 
+ * // Using helper function for dynamic messages
+ * const message = createErrorContext('data guru', 'menyimpan data');
+ * handleApiError(error, 'menyimpan data', message);
  */
 
 export type ErrorContext = 
@@ -11,26 +22,6 @@ export type ErrorContext =
   | 'autentikasi'
   | 'validasi'
   | 'network'
-  | 'memuat profil user'
-  | 'menyimpan pengaturan suara'
-  | 'memuat pengaturan suara'
-  | 'mereset pengaturan suara'
-  | 'memuat brain dump'
-  | 'menyimpan brain dump'
-  | 'mengupdate brain dump'
-  | 'menghapus brain dump'
-  | 'memuat data berdasarkan rentang tanggal'
-  | 'memuat work quests'
-  | 'membuat work quest'
-  | 'memperbarui work quest'
-  | 'menghapus work quest'
-  | 'memuat work quest projects'
-  | 'membuat work quest project'
-  | 'memperbarui work quest project'
-  | 'menghapus work quest project'
-  | 'membuat work quest task'
-  | 'memperbarui work quest task'
-  | 'menghapus work quest task'
   | 'unknown';
 
 export interface ErrorInfo {
@@ -43,7 +34,7 @@ export interface ErrorInfo {
 /**
  * Standardized error handler for API operations
  */
-export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo => {
+export const handleApiError = (error: unknown, context: ErrorContext, customMessage?: string): ErrorInfo => {
   const errorInfo: ErrorInfo = {
     context,
     timestamp: Date.now(),
@@ -57,8 +48,10 @@ export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo
     return errorInfo;
   }
 
-  // Extract meaningful error message
-  if (error instanceof Error) {
+  // Use custom message if provided, otherwise extract from error
+  if (customMessage) {
+    errorInfo.message = customMessage;
+  } else if (error instanceof Error) {
     errorInfo.message = error.message;
   } else if (typeof error === 'string') {
     errorInfo.message = error;
@@ -76,6 +69,25 @@ export const handleApiError = (error: unknown, context: ErrorContext): ErrorInfo
   });
 
   return errorInfo;
+};
+
+/**
+ * Helper function to create specific error messages with general context
+ */
+export const createErrorContext = (operation: string, context: ErrorContext): string => {
+  const contextMap = {
+    'menyimpan data': 'menyimpan',
+    'memuat data': 'memuat',
+    'menghapus data': 'menghapus',
+    'mengupdate data': 'mengupdate',
+    'autentikasi': 'autentikasi',
+    'validasi': 'validasi',
+    'network': 'koneksi',
+    'unknown': 'operasi'
+  };
+  
+  const action = contextMap[context] || 'operasi';
+  return `Gagal ${action} ${operation}`;
 };
 
 /**
@@ -133,12 +145,12 @@ export const isRedirectError = (error: unknown): boolean => {
 /**
  * Handle server action errors with proper redirect error handling
  */
-export const handleServerActionError = (error: unknown, context: ErrorContext): ErrorInfo | null => {
+export const handleServerActionError = (error: unknown, context: ErrorContext, customMessage?: string): ErrorInfo | null => {
   // If it's a redirect error, don't treat it as an error
   if (isRedirectError(error)) {
     return null;
   }
   
   // Handle actual errors
-  return handleApiError(error, context);
+  return handleApiError(error, context, customMessage);
 }; 

@@ -167,7 +167,7 @@ export default function PWAComponents() {
       console.log('🔔 User choice:', outcome);
       
       if (outcome === "accepted") {
-        toast.success("Better Planner installed successfully!");
+        toast.success("Warlob App installed successfully!");
       } else {
         toast.info("Installation cancelled");
       }
@@ -245,7 +245,7 @@ export default function PWAComponents() {
                 />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Install Better Planner</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Install Warlob App</h3>
               <p className="text-xs text-gray-500">Add to home screen for quick access</p>
             </div>
           </div>
