@@ -19,7 +19,6 @@ export default function AbsensiPage() {
     handleStatusChange,
     handleSave,
     getAttendancePercentage,
-    loadExistingAttendance
   } = useAttendance()
 
   const [showReasonModal, setShowReasonModal] = useState(false)
