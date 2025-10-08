@@ -1,22 +1,23 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
+import { useUserProfile } from '@/stores/userProfileStore';
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 
 // Dropdown Menu Items Component
-function DropdownMenuItems({ onClose }: { onClose: () => void }) {
+function DropdownMenuItems({ onClose, profile }: { onClose: () => void; profile: { full_name: string; email?: string } | null }) {
   return (
     <>
       <div>
         <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          Abu Abdirohman
+          {profile?.full_name || 'Loading...'}
         </span>
         <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-          abuabdirohman4@gmail.com
+          {profile?.email || 'Loading...'}
         </span>
       </div>
 
@@ -46,7 +47,7 @@ function DropdownMenuItems({ onClose }: { onClose: () => void }) {
             Edit profile
           </DropdownItem>
         </li>
-        <li>
+        {/* <li>
           <DropdownItem
             onItemClick={onClose}
             tag="a"
@@ -95,7 +96,7 @@ function DropdownMenuItems({ onClose }: { onClose: () => void }) {
             </svg>
             Support
           </DropdownItem>
-        </li>
+        </li> */}
       </ul>
       <form action={signOut}>
         <button
@@ -126,6 +127,7 @@ function DropdownMenuItems({ onClose }: { onClose: () => void }) {
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const { profile, avatarUrl: cachedAvatarUrl, loading, setAvatarUrl } = useUserProfile();
 
   const toggleDropdown = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
@@ -135,6 +137,26 @@ export default function UserDropdown() {
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
   }, []);
+
+  // Memoize avatar URL generation and cache it in the store
+  const avatarUrl = useMemo(() => {
+    if (!profile?.full_name) return '/images/user/owner.png';
+    
+    // Return cached avatar URL if available
+    if (cachedAvatarUrl) return cachedAvatarUrl;
+    
+    // Generate new avatar URL
+    const backgroundColor = '4f46e5'; // indigo-600
+    const textColor = 'ffffff'; // white
+    const size = '44'; // Match the Image component size
+    
+    const newAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=${backgroundColor}&color=${textColor}&size=${size}&bold=true&format=png&font-size=0.4&rounded=true`;
+    
+    // Cache the URL in the store
+    setAvatarUrl(newAvatarUrl);
+    
+    return newAvatarUrl;
+  }, [profile?.full_name, cachedAvatarUrl, setAvatarUrl]);
 
   return (
     <div className="relative">
@@ -146,12 +168,19 @@ export default function UserDropdown() {
           <Image
             width={44}
             height={44}
-            src="/images/user/owner.png"
-            alt="User"
+            src={avatarUrl}
+            alt={profile?.full_name || 'User'}
+            onError={(e) => {
+              // Fallback to default image if avatar generation fails
+              const target = e.target as HTMLImageElement;
+              target.src = '/images/user/owner.png';
+            }}
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Abu Abdirohman</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {loading ? 'Loading...' : profile?.full_name || 'User'}
+        </span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -178,7 +207,7 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <DropdownMenuItems onClose={closeDropdown} />
+        <DropdownMenuItems onClose={closeDropdown} profile={profile} />
       </Dropdown>
     </div>
   );
