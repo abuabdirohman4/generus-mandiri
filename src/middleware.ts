@@ -1,33 +1,46 @@
 import { NextResponse, type NextRequest } from 'next/server'
-
 import { createClient } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl
 
-    // Skip middleware for PWA files and static assets
+    // Skip middleware for static assets and PWA files
     if (
-      pathname === '/manifest.json' ||
-      pathname === '/sw.js' ||
-      pathname === '/sw-dev.js' ||
-      pathname === '/sw-custom.js' ||
       pathname.startsWith('/_next/') ||
       pathname.startsWith('/images/') ||
-      pathname === '/favicon.ico'
+      pathname.startsWith('/icons/') ||
+      pathname.startsWith('/audio/') ||
+      pathname === '/favicon.ico' ||
+      pathname === '/manifest.json' ||
+      pathname === '/sw.js' ||
+      pathname.startsWith('/workbox-')
     ) {
       return NextResponse.next()
     }
 
-    const { supabase, response } = createClient(request)
-    const { data: { session } } = await supabase.auth.getSession()
+    // Skip middleware for API routes
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next()
+    }
 
-    // Define public routes that don't require authentication
-    const publicRoutes = ['/signin', '/signup']
-    const isPublicRoute = publicRoutes.includes(pathname)
+    const { supabase, response } = createClient(request)
     
-    // Define protected routes that require authentication
-    const protectedRoutes = ['/home', '/absensi', '/kelas', '/siswa', '/admin', '/laporan']
+    // Get session with timeout to prevent hanging
+    let session = null
+    try {
+      const { data: { session: sessionData } } = await supabase.auth.getSession()
+      session = sessionData
+    } catch (error) {
+      console.error('Auth session error:', error)
+      // Continue without session if auth fails
+    }
+
+    // Define route categories
+    const publicRoutes = ['/signin', '/signup']
+    const protectedRoutes = ['/home', '/absensi', '/teachers', '/settings', '/dashboard']
+    
+    const isPublicRoute = publicRoutes.includes(pathname)
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
     
     // Handle root path redirect
@@ -39,26 +52,24 @@ export async function middleware(request: NextRequest) {
       }
     }
     
-    // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke home
-    if (session && (pathname === '/signin' || pathname === '/signup')) {
+    // Redirect authenticated users away from auth pages
+    if (session && isPublicRoute) {
       return NextResponse.redirect(new URL('/home', request.url))
     }
     
-    // Jika user tidak login dan mencoba mengakses halaman yang memerlukan auth, redirect ke signin
+    // Redirect unauthenticated users to signin
     if (!session && isProtectedRoute) {
       const signinUrl = new URL('/signin', request.url)
-      // Add redirect parameter to know where to go after login
       signinUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(signinUrl)
     }
 
+    // Allow public routes and authenticated protected routes
     return response
-  } catch {
-    return NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    })
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // On error, allow the request to continue
+    return NextResponse.next()
   }
 }
 

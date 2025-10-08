@@ -21,21 +21,21 @@ const toastConfig = {
 };
 
 export const metadata: Metadata = {
-  title: "Better Planner",
-  description: "A comprehensive project planning and task management app to help you achieve your goals",
+  title: "Warlob App - Sistem Digital Generus Warlob",
+  description: "Sistem Digital Generus Warlob untuk manajemen pengajian, absensi dan data siswa",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Better Planner",
+    title: "Warlob App",
   },
   icons: {
     icon: [
-      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/svg+xml" },
-      { url: "/images/logo/logo-icon.svg", sizes: "512x512", type: "image/svg+xml" },
+      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/svg+xml" },
+      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
     ],
   },
   other: {

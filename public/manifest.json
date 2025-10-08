@@ -1,16 +1,16 @@
 {
-  "name": "Warlob App",
+  "name": "Warlob Ap",
   "short_name": "Warlob",
   "description": "Sistem Digital Generus Warlob",
-  "start_url": "/",
+  "start_url": "/home",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
   "categories": [
+    "education",
     "productivity",
-    "business",
-    "education"
+    "business"
   ],
   "lang": "id",
   "scope": "/",
@@ -32,16 +32,46 @@
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "prefer_related_applications": false,
-  "id": "/",
+  "id": "warlob-school-management",
   "shortcuts": [
     {
       "name": "Absensi",
       "short_name": "Absensi",
-      "description": "Akses cepat ke halaman absensi",
+      "description": "Kelola kehadiran siswa",
       "url": "/absensi",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Guru",
+      "short_name": "Guru",
+      "description": "Kelola data guru",
+      "url": "/teachers",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Beranda",
+      "short_name": "Beranda",
+      "description": "Dashboard utama",
+      "url": "/home",
       "icons": [
         {
           "src": "/images/logo/logo-icon.png",
