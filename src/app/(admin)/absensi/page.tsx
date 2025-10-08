@@ -7,6 +7,7 @@ import AttendanceHeader from './components/AttendanceHeader'
 import AttendanceTable from './components/AttendanceTable'
 import LoadingState from './components/LoadingState'
 import dayjs from 'dayjs'
+import Button from '@/components/ui/button/Button'
 
 export default function AbsensiPage() {
   const {
@@ -90,13 +91,13 @@ export default function AbsensiPage() {
 
         {/* Save Button */}
         <div className="mt-8 flex justify-center sm:justify-end">
-          <button
+          <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto"
           >
             {saving ? 'Menyimpan...' : 'Simpan'}
-          </button>
+          </Button>
         </div>
 
         {/* Auto-save Status - Uncomment to enable auto-save */}
