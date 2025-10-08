@@ -18,26 +18,12 @@ function PageTitle() {
   
   const getPageTitle = (path: string) => {
     switch (path) {
-      case '/dashboard':
-        return 'Dashboard';
-      case '/execution/daily-sync':
-        return 'Daily Sync';
-      case '/execution/weekly-sync':
-        return 'Weekly Sync';
-      case '/planning/vision':
-        return 'Vision';
-      case '/planning/12-week-quests':
-        return '12 Week Quests';
-      case '/planning/main-quests':
-        return 'Main Quests';
-      case '/quests/work-quests':
-        return 'Work Quests';
-      case '/quests/side-quests':
-        return 'Side Quests';
-      case '/analytics':
-        return 'Analytics';
+      case '/home':
+        return 'Home';
+      case '/absensi':
+        return 'Absensi';
       default:
-        return 'Better Planner';
+        return 'Warlob App';
     }
   };
 

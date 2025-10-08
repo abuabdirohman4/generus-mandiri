@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ReasonModal from '@/app/(admin)/absensi/components/ReasonModal'
 import { saveAttendance } from './actions'
+import { DatePicker } from 'antd'
+import dayjs from 'dayjs'
 
 interface Student {
   id: string
@@ -29,11 +31,21 @@ export default function AbsensiPage() {
   const [showReasonModal, setShowReasonModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [reason, setReason] = useState('')
+  const [selectedDate, setSelectedDate] = useState(new Date())
   const router = useRouter()
 
   useEffect(() => {
     fetchStudents()
   }, [])
+
+  const handleDateChange = (date: dayjs.Dayjs | null) => {
+    if (date) {
+      const newDate = date.toDate()
+      setSelectedDate(newDate)
+      // Reload attendance data for the new date
+      loadExistingAttendance(students, newDate)
+    }
+  }
 
   const fetchStudents = async () => {
     try {
@@ -100,7 +112,7 @@ export default function AbsensiPage() {
       setStudents(studentsData)
 
       // Load existing attendance data for today
-      await loadExistingAttendance(studentsData)
+      await loadExistingAttendance(studentsData, new Date())
 
     } catch (error) {
       console.error('Error:', error)
@@ -109,16 +121,16 @@ export default function AbsensiPage() {
     }
   }
 
-  const loadExistingAttendance = async (studentsData: Student[]) => {
+  const loadExistingAttendance = async (studentsData: Student[], date: Date) => {
     try {
       const supabase = createClient()
-      const today = new Date().toLocaleDateString('en-CA')
+      const selectedDateStr = date.toLocaleDateString('en-CA')
       
-      // Get existing attendance records for today
+      // Get existing attendance records for selected date
       const { data: existingAttendance, error } = await supabase
         .from('attendance_logs')
         .select('student_id, status, reason')
-        .eq('date', today)
+        .eq('date', selectedDateStr)
 
       if (error) {
         console.error('Error fetching existing attendance:', error)
@@ -176,11 +188,11 @@ export default function AbsensiPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const today = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
+      const selectedDateStr = selectedDate.toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
       
       const attendanceData = Object.entries(attendance).map(([studentId, data]) => ({
         student_id: studentId,
-        date: today,
+        date: selectedDateStr,
         status: data.status,
         reason: data.reason || null
       }))
@@ -190,7 +202,7 @@ export default function AbsensiPage() {
       if (result.success) {
         alert('Data absensi berhasil disimpan!')
         // Reload attendance data to show updated status
-        await loadExistingAttendance(students)
+        await loadExistingAttendance(students, selectedDate)
       } else {
         alert('Gagal menyimpan data absensi: ' + result.error)
       }
@@ -202,14 +214,14 @@ export default function AbsensiPage() {
     }
   }
 
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      'H': 'Hadir',
-      'I': 'Izin',
-      'S': 'Sakit',
-      'A': 'Alfa'
-    }
-    return labels[status as keyof typeof labels] || status
+  const getAttendancePercentage = () => {
+    if (students.length === 0) return 0
+    
+    const presentCount = Object.values(attendance).filter(
+      record => record.status === 'H'
+    ).length
+    
+    return Math.round((presentCount / students.length) * 100)
   }
 
 
@@ -226,56 +238,72 @@ export default function AbsensiPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Absensi Siswa
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            {new Date().toLocaleDateString('id-ID', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+        <div className="mb-4">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              <DatePicker
+                value={dayjs(selectedDate)}
+                onChange={handleDateChange}
+                format="DD/MM/YYYY"
+                placeholder="Pilih tanggal"
+                className="w-40"
+                size="middle"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Students List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Daftar Siswa ({students.length} siswa)
-            </h2>
+        <div className="rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3">
+          <div className="bg-white dark:bg-gray-800 flex items-center justify-between px-2 sm:px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {students.length > 0 && students[0].class_name
+                  ? `${students[0].class_name}`
+                  : ''}
+              </h2>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Siswa ({students.length} orang)
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm">Kehadiran</div>
+              <div className="font-bold text-blue-600 dark:text-blue-400">
+                {getAttendancePercentage()}%
+              </div>
+            </div>
           </div>
-          
-          {/* Table Layout */}
+        </div>
+        
+        {/* Table Layout */}
+        <div className="rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               {/* Table Header */}
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                  <th className="px-2 sm:px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                  <th className="px-2 sm:px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                     Nama
                   </th>
-                  <th className="px-1 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
+                  <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
                     Hadir
                   </th>
-                  <th className="px-1 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
+                  <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
                     Izin
                   </th>
-                  <th className="px-1 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
+                  <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
                     Sakit
                   </th>
-                  <th className="px-1 pr-2 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
+                  <th className="px-1 pr-2 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
                     Alfa
                   </th>
                 </tr>
               </thead>
               
               {/* Table Body */}
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {students.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     {/* Student Info */}
@@ -324,7 +352,7 @@ export default function AbsensiPage() {
             disabled={saving}
             className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {saving ? 'Menyimpan...' : 'Simpan Absensi'}
+            {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
 
