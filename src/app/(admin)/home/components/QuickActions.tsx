@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 
@@ -107,7 +106,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-red-100 dark:bg-red-900',
       iconColor: 'text-red-600 dark:text-red-400',
-      adminOnly: true
     }
   ];
 
@@ -140,11 +138,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {action.name}
-                  {isLoading && (
-                    <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
-                      Loading...
-                    </span>
-                  )}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {action.description}
