@@ -28,13 +28,15 @@ interface QuickActionItem {
   bgColor: string;
   iconColor: string;
   adminOnly?: boolean;
+  disabled?: boolean;
 }
 
 export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  const handleNavigation = useCallback((href: string) => {
+  const handleNavigation = useCallback((href: string, disabled?: boolean) => {
+    if (disabled) return;
     setLoadingRoutes(prev => new Set(prev).add(href));
     router.push(href);
   }, [router]);
@@ -65,7 +67,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
         </svg>
       ),
       bgColor: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-600 dark:text-blue-400'
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      disabled: false
     },
     {
       id: 'siswa',
@@ -78,7 +81,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
         </svg>
       ),
       bgColor: 'bg-purple-100 dark:bg-purple-900',
-      iconColor: 'text-purple-600 dark:text-purple-400'
+      iconColor: 'text-purple-600 dark:text-purple-400',
+      disabled: true
     },
     {
       id: 'guru',
@@ -92,7 +96,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-orange-100 dark:bg-orange-900',
       iconColor: 'text-orange-600 dark:text-orange-400',
-      adminOnly: true
+      adminOnly: true,
+      disabled: true
     },
     {
       id: 'laporan',
@@ -106,6 +111,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-red-100 dark:bg-red-900',
       iconColor: 'text-red-600 dark:text-red-400',
+      disabled: true
     }
   ];
 
@@ -120,8 +126,16 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
         return (
           <div
             key={action.id}
-            onClick={() => handleNavigation(action.href)}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => {
+              if (!action.disabled) {
+                handleNavigation(action.href);
+              }
+            }}
+            className={`rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow cursor-pointer ${
+              action.disabled ? 'bg-gray-100 opacity-70 border-gray-300 pointer-events-none' : 'bg-white border-gray-200'
+            }`}
+            aria-disabled={action.disabled}
+            tabIndex={action.disabled ? -1 : 0}
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">

@@ -74,6 +74,8 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
       (event, session) => {
         if (event === 'SIGNED_OUT') {
           setProfile(null);
+          setLoading(false);
+          setError(null);
         } else if (session?.user) {
           fetchUserData();
         }

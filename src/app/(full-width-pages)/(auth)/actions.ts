@@ -122,7 +122,22 @@ export async function signOut() {
   const supabase = await createClient();
   
   try {
-    await supabase.auth.signOut();
+    // Sign out from Supabase
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error('Supabase signOut error:', error);
+    }
+    
+    // Revalidate all paths to clear cached data
+    revalidatePath("/", "layout");
+    revalidatePath("/home");
+    revalidatePath("/absensi");
+    revalidatePath("/teachers");
+    revalidatePath("/settings");
+    revalidatePath("/dashboard");
+    
+    // Redirect to signin page
     redirect("/signin");
   } catch (error) {
     // Check if this is a Next.js redirect error (expected behavior)
@@ -134,7 +149,9 @@ export async function signOut() {
     // Handle actual errors
     const errorInfo = handleApiError(error, 'autentikasi', 'gagal logout');
     console.error('Sign out error:', errorInfo);
+    
     // Even if there's an error, still redirect to signin
+    revalidatePath("/", "layout");
     redirect("/signin");
   }
 } 
