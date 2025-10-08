@@ -8,6 +8,7 @@ import AppSidebar from "@/components/layouts/AppSidebar";
 import Backdrop from "@/components/layouts/Backdrop";
 import BottomNavigation from "@/components/layouts/BottomNavigation";
 import { AdminLayoutProvider } from "@/components/layouts/AdminLayoutProvider";
+import { usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -15,6 +16,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const pathname = usePathname();
+  const isHome = pathname.includes("/home");
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
@@ -32,6 +35,9 @@ export default function AdminLayout({
           className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
         >
           <AppHeader />
+          {/* {!isHome ? (
+            <AppHeader />
+          ) : null} */}
           <div className={`p-4 mx-auto max-w-[var(--breakpoint-2xl)] md:p-6 pb-28 md:pb-6`}>
             {children}
           </div>

@@ -1,121 +1,133 @@
-import type { Metadata } from "next";
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server'
-import HomeSkeleton from '@/components/ui/skeleton/HomeSkeleton';
+"use client";
+
+import { useState } from 'react';
+import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
 
-export const metadata: Metadata = {
-  title: "Beranda | Warlob App",
-  description: "Halaman utama Warlob App - Sistem Digital Generus Warlob",
-};
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={<HomeSkeleton />}>
-      <HomeContent />
-    </Suspense>
-  );
+interface HomePageProps {
+  profile: {
+    id: string;
+    full_name: string;
+    role: string;
+    classes?: Array<{
+      id: string;
+      name: string;
+    }>;
+  };
 }
 
-async function HomeContent() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function HomePage({ profile }: HomePageProps) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Tidak dapat memuat data user
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Silakan login kembali
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // Get user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      role,
-      classes!classes_teacher_id_fkey (
-        id,
-        name
-      )
-    `)
-    .eq('id', user.id)
-    .single()
-
-  // Extract username from email
-  const username = user.email?.split('@')[0] || 'Unknown'
-
-  if (!profile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Profile tidak ditemukan
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Silakan hubungi administrator
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const isAdmin = profile.role === 'admin'
-  const isTeacher = profile.role === 'teacher'
-
-  // Add email to profile data
-  const profileWithEmail = {
-    ...profile,
-    email: user.email
-  }
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-gray-50 dark:bg-gray-900">
+      {/* Header Section - Livin By Mandiri Style */}
+      <div className="fixed top-0 left-1/2 md:hidden transform -translate-x-1/2 z-40 overflow-hidden bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-800 px-6 pt-5 pb-4 max-w-md w-full">
+        {/* Asymmetrical Wave Shape at Bottom */}
+        <div className="absolute bottom-0 left-0 w-full h-8">
+          <svg
+            viewBox="0 0 400 32"
+            className="w-full h-full"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,32 Q100,20 200,32 T400,20 L400,32 Z"
+              fill="rgb(249 250 251)"
+              className="transition-all duration-300"
+            />
+          </svg>
+        </div>
+
+        <div className="relative z-10">
+          {/* Top Row - User Profile and Settings */}
+          <div className="flex items-center justify-between mb-4">
+            {/* User Profile */}
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+                <span className="text-white font-bold text-white">
+                  {(() => {
+                    const words = profile.full_name?.split(' ').filter(Boolean) || [];
+                    if (words.length > 2) {
+                      return (
+                        (words[0][0]?.toUpperCase() || '') +
+                        (words[words.length - 1][0]?.toUpperCase() || '')
+                      );
+                    } else {
+                      return words
+                        .slice(0, 2)
+                        .map((word: string) => word[0]?.toUpperCase() || '')
+                        .join('');
+                    }
+                  })()}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-white font-semibold text-lg">
+                  {profile.full_name}
+                </h2>
+                <div className="flex items-center space-x-2 text-blue-200 text-sm">
+                  <span>{profile.classes?.[0]?.name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Logout"
+            >
+              {isLoggingOut ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-3 pt-28 sm:px-6 lg:px-8 md:py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="md:flex md:gap-2 text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            <div>Selamat Datang, </div> 
-            <div>{profile.full_name}!</div> 
+            <div>Selamat Datang </div> 
+            {/* <div className="text-brand-600 dark:text-brand-400">{profile.full_name}!</div> */}
           </h1>
-          {/* <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            Username: {username}
-          </p> */}
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            {isAdmin 
-              ? 'Selamat datang di dashboard admin Warlob App' 
-              : `Selamat datang di ${profile.classes?.[0]?.name || 'kelas tidak diketahui'}`
-            }
+          <p className="text-gray-600 dark:text-gray-400">
+            Kelola data & absensi generus dengan mudah melalui aplikasi ini.
           </p>
         </div>
 
         {/* Quick Actions */}
-        <QuickActions isAdmin={isAdmin} profile={profile} />
-
-        {/* Recent Activity */}
-        {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Aktivitas Terbaru</h2>
-          <div className="space-y-3">
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              <span>Selamat datang di Warlob App!</span>
-              <span className="ml-auto text-xs text-gray-500 dark:text-gray-500">
-                {new Date().toLocaleString('id-ID')}
-              </span>
-            </div>
-          </div>
-        </div> */}
+        <QuickActions 
+          isAdmin={profile.role === 'admin'} 
+          profile={profile} 
+        />
       </div>
     </div>
-  )
+  );
 }

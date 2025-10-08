@@ -159,43 +159,35 @@ export default function UserDropdown() {
     setIsOpen(false);
   }, []);
 
-  // Generate avatar URL and cache it in the store
-  const avatarUrl = useMemo(() => {
-    if (!profile?.full_name) return '/images/user/user1.png';
-    
-    // Return cached avatar URL if available
-    if (cachedAvatarUrl) return cachedAvatarUrl;
-    
-    // Generate new avatar URL
-    const backgroundColor = '4f46e5'; // indigo-600
-    const textColor = 'ffffff'; // white
-    const size = '44'; // Match the Image component size
-    
-    const newAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=${backgroundColor}&color=${textColor}&size=${size}&bold=true&format=png&font-size=0.4&rounded=true`;
-    
-    return newAvatarUrl;
-  }, [profile?.full_name, cachedAvatarUrl]);
-
-  // Cache the generated avatar URL in the store
-  useEffect(() => {
-    if (avatarUrl && avatarUrl !== '/images/user/user1.png' && avatarUrl !== cachedAvatarUrl) {
-      setAvatarUrl(avatarUrl);
-    }
-  }, [avatarUrl, cachedAvatarUrl, setAvatarUrl]);
-
   return (
     <div className="relative">
       <button
         onClick={toggleDropdown} 
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <Image
-            width={44}
-            height={44}
-            src={avatarUrl}
-            alt={profile?.full_name || 'User'}
-          />
+        <span className="mr-3 overflow-hidden rounded-full h-8 w-8 bg-brand-500 dark:bg-gray-700 flex items-center justify-center">
+          {loading ? (
+            <Spinner size={20} />
+          ) : (
+            <div className="w-9 h-9 bg-brand-500 backdrop-blur-sm rounded-full flex items-center justify-center border border-brand-400">
+              <span className="text-white font-bold text-white">
+                {(() => {
+                  const words = profile?.full_name?.split(' ').filter(Boolean) || [];
+                  if (words.length > 2) {
+                    return (
+                      (words[0][0]?.toUpperCase() || '') +
+                      (words[words.length - 1][0]?.toUpperCase() || '')
+                    );
+                  } else {
+                    return words
+                      .slice(0, 2)
+                      .map((word: string) => word[0]?.toUpperCase() || '')
+                      .join('');
+                  }
+                })()}
+              </span>
+            </div>
+          )}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
