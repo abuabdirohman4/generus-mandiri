@@ -29,6 +29,11 @@ const navItems: NavItem[] = [
   },
 ];
 
+// Loading Spinner Component
+function LoadingSpinner({ size = "w-4 h-4" }: { size?: string }) {
+  return <Spinner size={16} colorClass="border-gray-300 border-t-blue-600" />;
+}
+
 export default function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();

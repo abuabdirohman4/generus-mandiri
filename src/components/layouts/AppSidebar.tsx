@@ -22,6 +22,11 @@ type NavItem = {
   subItems?: SubNavItem[];
 };
 
+// Loading Spinner Component
+function LoadingSpinner({ size = "w-4 h-4" }: { size?: string }) {
+  return <Spinner size={16} colorClass="border-gray-300 border-t-blue-600" />;
+}
+
 const mainNav: NavItem[] = [
   {
     icon: <GridIcon />,
