@@ -40,18 +40,18 @@ async function HomeContent() {
     .from('profiles')
     .select(`
       id,
-      username,
       full_name,
       role,
-      class_id,
-      classes (
+      classes!classes_teacher_id_fkey (
         id,
-        name,
-        grade
+        name
       )
     `)
     .eq('id', user.id)
     .single()
+
+  // Extract username from email
+  const username = user.email?.split('@')[0] || 'Unknown'
 
   if (!profile) {
     return (
@@ -79,10 +79,13 @@ async function HomeContent() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Selamat datang, {profile.full_name}!
           </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            Username: {username}
+          </p>
           <p className="text-lg text-gray-600 dark:text-gray-400">
             {isAdmin 
               ? 'Selamat datang di dashboard admin Warlob App' 
-              : `Selamat datang di kelas ${profile.classes?.[0]?.name || 'Tidak diketahui'} (Kelas ${profile.classes?.[0]?.grade || 'Tidak diketahui'})`
+              : `Selamat datang di ${profile.classes?.[0]?.name || 'kelas tidak diketahui'}`
             }
           </p>
         </div>
@@ -122,7 +125,7 @@ async function HomeContent() {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Kelas</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {isAdmin ? 'Kelola semua kelas' : `Kelas ${profile.classes?.[0]?.name || 'Tidak diketahui'}`}
+                  {isAdmin ? 'Kelola semua kelas' : `${profile.classes?.[0]?.name || 'Kelas tidak diketahui'}`}
                 </p>
                 <a href="/kelas" className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-sm font-medium">
                   Buka →
@@ -144,7 +147,7 @@ async function HomeContent() {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Siswa</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {isAdmin ? 'Kelola semua siswa' : `Siswa kelas ${profile.classes?.[0]?.name || 'Tidak diketahui'}`}
+                  {isAdmin ? 'Kelola semua siswa' : `Siswa ${profile.classes?.[0]?.name || 'kelas tidak diketahui'}`}
                 </p>
                 <a href="/siswa" className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 text-sm font-medium">
                   Buka →

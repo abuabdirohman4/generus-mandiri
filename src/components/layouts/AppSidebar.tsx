@@ -6,17 +6,9 @@ import React, { useEffect, useRef, useState,useCallback } from "react";
 
 import { useSidebar } from "@/stores/sidebarStore";
 import {
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
-  PieChartIcon,
-  PlugInIcon,
-  UserCircleIcon,
-  TaskIcon,
-  EyeIcon,
-  CheckCircleIcon,
-  // DocsIcon,
-  // ShootingStarIcon,
+  GroupIcon,
 } from "@/lib/icons";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
@@ -28,88 +20,16 @@ type NavItem = {
   subItems?: SubNavItem[];
 };
 
-const executionNav: NavItem[] = [
+const mainNav: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    path: "/dashboard",
+    name: "Home",
+    path: "/home",
   },
   {
-    icon: <TaskIcon />,
-    name: "Daily Sync",
-    path: "/execution/daily-sync",
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Weekly Sync",
-    path: "/execution/weekly-sync",
-  },
-];
-
-const planningNav: NavItem[] = [
-  {
-    icon: <EyeIcon />,
-    name: "Vision",
-    path: "/planning/vision",
-  },
-  {
-    icon: <TaskIcon />,
-    name: "12 Week Quests",
-    path: "/planning/12-week-quests",
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Main Quests",
-    path: "/planning/main-quests",
-  },
-  // {
-  //   icon: <DocsIcon />,
-  //   name: "Self Development Curriculum",
-  //   path: "/planning/curriculum",
-  // },
-  // {
-  //   icon: <ShootingStarIcon />,
-  //   name: "Best Week",
-  //   path: "/planning/best-week",
-  // },
-];
-
-const questsNav: NavItem[] = [
-  {
-    icon: <TaskIcon />,
-    name: "Work Quests",
-    path: "/quests/work-quests",
-  },
-  {
-    icon: <TaskIcon />,
-    name: "Side Quests",
-    path: "/quests/side-quests",
-  },
-];
-
-const trackingNav: NavItem[] = [
-  {
-    icon: <UserCircleIcon />,
-    name: "AW Quests",
-    path: "/aw-quests",
-  },
-  {
-    icon: <CheckCircleIcon />,
-    name: "Habit Tracker",
-    path: "/habit-tracker",
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Reports",
-    path: "/reports",
-  },
-];
-
-const settingsNav: NavItem[] = [
-  {
-    icon: <PlugInIcon />,
-    name: "Settings",
-    path: "/profile",
+    icon: <GroupIcon />,
+    name: "Absensi",
+    path: "/absensi",
   },
 ];
 
@@ -429,88 +349,18 @@ function SidebarContent({
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="flex flex-col gap-6">
-          {/* EXECUTION */}
-          <div className="mb-2">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Execution</div>
-            <MenuItems 
-              navItems={executionNav} 
-              menuType="main"
-              isExpanded={isExpanded}
-              isHovered={isHovered}
-              isMobileOpen={isMobileOpen}
-              openSubmenu={openSubmenu}
-              subMenuHeight={subMenuHeight}
-              subMenuRefs={subMenuRefs}
-              handleSubmenuToggle={handleSubmenuToggle}
-              isActive={isActive}
-            />
-          </div>
-          {/* PLANNING */}
-          <div className="mb-2">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Planning</div>
-            <MenuItems 
-              navItems={planningNav} 
-              menuType="main"
-              isExpanded={isExpanded}
-              isHovered={isHovered}
-              isMobileOpen={isMobileOpen}
-              openSubmenu={openSubmenu}
-              subMenuHeight={subMenuHeight}
-              subMenuRefs={subMenuRefs}
-              handleSubmenuToggle={handleSubmenuToggle}
-              isActive={isActive}
-            />
-          </div>
-          {/* QUEST */}
-          <div className="mb-2">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quests</div>
-            <MenuItems 
-              navItems={questsNav} 
-              menuType="main"
-              isExpanded={isExpanded}
-              isHovered={isHovered}
-              isMobileOpen={isMobileOpen}
-              openSubmenu={openSubmenu}
-              subMenuHeight={subMenuHeight}
-              subMenuRefs={subMenuRefs}
-              handleSubmenuToggle={handleSubmenuToggle}
-              isActive={isActive}
-            />
-          </div>
-          {/* TRACKING */}
-          {/* <div className="mb-2">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tracking</div>
-            <MenuItems 
-              navItems={trackingNav} 
-              menuType="main"
-              isExpanded={isExpanded}
-              isHovered={isHovered}
-              isMobileOpen={isMobileOpen}
-              openSubmenu={openSubmenu}
-              subMenuHeight={subMenuHeight}
-              subMenuRefs={subMenuRefs}
-              handleSubmenuToggle={handleSubmenuToggle}
-              isActive={isActive}
-            />
-          </div> */}
-          {/* Divider */}
-          {/* <div className="flex-1" /> */}
-          {/* SETTINGS */}
-          {/* <div className="mb-2">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Settings</div>
-            <MenuItems 
-              navItems={settingsNav} 
-              menuType="main"
-              isExpanded={isExpanded}
-              isHovered={isHovered}
-              isMobileOpen={isMobileOpen}
-              openSubmenu={openSubmenu}
-              subMenuHeight={subMenuHeight}
-              subMenuRefs={subMenuRefs}
-              handleSubmenuToggle={handleSubmenuToggle}
-              isActive={isActive}
-            />
-          </div> */}
+          <MenuItems 
+            navItems={mainNav} 
+            menuType="main"
+            isExpanded={isExpanded}
+            isHovered={isHovered}
+            isMobileOpen={isMobileOpen}
+            openSubmenu={openSubmenu}
+            subMenuHeight={subMenuHeight}
+            subMenuRefs={subMenuRefs}
+            handleSubmenuToggle={handleSubmenuToggle}
+            isActive={isActive}
+          />
         </nav>
       </div>
     </aside>
@@ -533,29 +383,8 @@ const AppSidebar: React.FC = () => {
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
   useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? executionNav : trackingNav;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
-        }
-      });
-    });
-
-    // If no submenu item matches, close the open submenu
-    if (!submenuMatched) {
-      setOpenSubmenu(null);
-    }
+    // Since we don't have submenus anymore, always close any open submenu
+    setOpenSubmenu(null);
   }, [pathname,isActive]);
 
   useEffect(() => {

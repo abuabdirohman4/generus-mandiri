@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, TaskIcon, CalenderIcon, PieChartIcon } from "@/lib/icons";
+import { GridIcon, GroupIcon } from "@/lib/icons";
 
 interface NavItem {
   href: string;
@@ -15,28 +15,16 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    href: "/dashboard",
-    label: "Dashboard",
+    href: "/home",
+    label: "Home",
     icon: <GridIcon />,
     activeIcon: <GridIcon />,
   },
   {
-    href: "/execution/daily-sync",
-    label: "Daily Sync",
-    icon: <TaskIcon />,
-    activeIcon: <TaskIcon />,
-  },
-  {
-    href: "/execution/weekly-sync",
-    label: "Weekly Sync",
-    icon: <CalenderIcon />,
-    activeIcon: <CalenderIcon />,
-  },
-  {
-    href: "/planning/main-quests",
-    label: "Main Quests",
-    icon: <PieChartIcon />,
-    activeIcon: <PieChartIcon />,
+    href: "/absensi",
+    label: "Absensi",
+    icon: <GroupIcon />,
+    activeIcon: <GroupIcon />,
   },
 ];
 
