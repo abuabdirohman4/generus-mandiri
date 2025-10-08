@@ -47,6 +47,20 @@ export default function AbsensiPage() {
     }
   }
 
+  const goToPreviousDay = () => {
+    const previousDay = new Date(selectedDate)
+    previousDay.setDate(previousDay.getDate() - 1)
+    setSelectedDate(previousDay)
+    loadExistingAttendance(students, previousDay)
+  }
+
+  const goToNextDay = () => {
+    const nextDay = new Date(selectedDate)
+    nextDay.setDate(nextDay.getDate() + 1)
+    setSelectedDate(nextDay)
+    loadExistingAttendance(students, nextDay)
+  }
+
   const fetchStudents = async () => {
     try {
       const supabase = createClient()
@@ -243,6 +257,18 @@ export default function AbsensiPage() {
         <div className="mb-4">
           <div className="flex items-center justify-end">
             <div className="flex items-center gap-2">
+              {/* Previous Day Button */}
+              <button
+                onClick={goToPreviousDay}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                title="Hari sebelumnya"
+              >
+                <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* DatePicker */}
               <DatePicker
                 value={dayjs(selectedDate)}
                 onChange={handleDateChange}
@@ -251,11 +277,22 @@ export default function AbsensiPage() {
                 className="w-40"
                 size="middle"
               />
+
+              {/* Next Day Button */}
+              <button
+                onClick={goToNextDay}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                title="Hari berikutnya"
+              >
+                <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Students List */}
+        {/* Summmary */}
         <div className="rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3">
           <div className="bg-white dark:bg-gray-800 flex items-center justify-between px-2 sm:px-4 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
@@ -277,7 +314,7 @@ export default function AbsensiPage() {
           </div>
         </div>
         
-        {/* Table Layout */}
+        {/* Students List */}
         <div className="rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
