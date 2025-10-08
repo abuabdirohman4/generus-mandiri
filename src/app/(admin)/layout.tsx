@@ -1,10 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import React from "react";
 
 import { useSidebar } from "@/stores/sidebarStore";
-import { useTimerStore } from '@/stores/timerStore';
 import AppHeader from "@/components/layouts/AppHeader";
 import AppSidebar from "@/components/layouts/AppSidebar";
 import Backdrop from "@/components/layouts/Backdrop";
@@ -17,8 +15,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-  const pathname = usePathname();
-  const isTwelveWeeksGoals = pathname.includes("/planning/12-week-quests");
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
@@ -36,7 +32,7 @@ export default function AdminLayout({
           className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
         >
           <AppHeader />
-          <div className={`p-4 mx-auto ${!isTwelveWeeksGoals ? "max-w-[var(--breakpoint-2xl)]" : ""} md:p-6 pb-28 md:pb-6`}>
+          <div className={`p-4 mx-auto max-w-[var(--breakpoint-2xl)] md:p-6 pb-28 md:pb-6`}>
             {children}
           </div>
         </div>

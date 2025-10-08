@@ -23,12 +23,21 @@ export async function middleware(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
 
     // Define public routes that don't require authentication
-    const publicRoutes = ['/', '/signin', '/signup']
+    const publicRoutes = ['/signin', '/signup']
     const isPublicRoute = publicRoutes.includes(pathname)
     
     // Define protected routes that require authentication
     const protectedRoutes = ['/home', '/absensi', '/kelas', '/siswa', '/admin', '/laporan']
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+    
+    // Handle root path redirect
+    if (pathname === '/') {
+      if (session) {
+        return NextResponse.redirect(new URL('/home', request.url))
+      } else {
+        return NextResponse.redirect(new URL('/signin', request.url))
+      }
+    }
     
     // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke home
     if (session && (pathname === '/signin' || pathname === '/signup')) {
