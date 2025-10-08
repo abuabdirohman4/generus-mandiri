@@ -140,7 +140,7 @@ export default function UserDropdown() {
 
   // Generate avatar URL and cache it in the store
   const avatarUrl = useMemo(() => {
-    if (!profile?.full_name) return '/images/user/owner.png';
+    if (!profile?.full_name) return '/images/user/user1.png';
     
     // Return cached avatar URL if available
     if (cachedAvatarUrl) return cachedAvatarUrl;
@@ -174,11 +174,6 @@ export default function UserDropdown() {
             height={44}
             src={avatarUrl}
             alt={profile?.full_name || 'User'}
-            onError={(e) => {
-              // Fallback to default image if avatar generation fails
-              const target = e.target as HTMLImageElement;
-              target.src = '/images/user/owner.png';
-            }}
           />
         </span>
 

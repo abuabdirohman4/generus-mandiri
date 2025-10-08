@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import React, { useCallback } from 'react'
 import { saveAttendance } from '../actions'
 import { toast } from 'sonner'
+import { useStudentsData } from './useStudentsData'
+import { useAttendanceData } from './useAttendanceData'
+import { useAttendanceStore } from '../stores/attendanceStore'
 
 interface Student {
   id: string
@@ -22,134 +23,49 @@ interface AttendanceData {
 }
 
 export function useAttendance() {
-  const [students, setStudents] = useState<Student[]>([])
-  const [attendance, setAttendance] = useState<AttendanceData>({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(new Date())
-  const router = useRouter()
+  // Get all state and actions from store in one call to avoid multiple subscriptions
+  const {
+    students,
+    attendance,
+    selectedDate,
+    loading: storeLoading,
+    saving,
+    setStudents,
+    setAttendance,
+    setSelectedDate,
+    setSaving,
+    updateStudentStatus
+  } = useAttendanceStore()
+  
+  // Get data from SWR hooks
+  const { students: swrStudents, isLoading: studentsLoading, error: studentsError } = useStudentsData()
+  const { attendance: swrAttendance, isLoading: attendanceLoading, mutate: mutateAttendance } = useAttendanceData(selectedDate)
+  
+  // Combined loading state
+  const loading = studentsLoading || attendanceLoading || storeLoading
 
-  const fetchStudents = useCallback(async () => {
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        router.push('/signin')
-        return
-      }
-
-      // Get user profile to determine which class they teach
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (!profile) {
-        console.error('Profile not found')
-        return
-      }
-
-      let query = supabase
-        .from('students')
-        .select(`
-          id,
-          name,
-          gender,
-          classes!inner(
-            id,
-            name
-          )
-        `)
-
-      // If user is a teacher, get their class and filter students
-      if (profile.role === 'teacher') {
-        const { data: teacherClass } = await supabase
-          .from('classes')
-          .select('id')
-          .eq('teacher_id', user.id)
-          .single()
-
-        if (teacherClass) {
-          query = query.eq('class_id', teacherClass.id)
-        }
-      }
-
-      const { data, error } = await query.order('name')
-
-      if (error) {
-        console.error('Error fetching students:', error)
-        return
-      }
-
-      const studentsData = data.map(student => ({
-        id: student.id,
-        name: student.name,
-        gender: student.gender,
-        class_name: (student.classes as any).name,
-        class_id: (student.classes as any).id
-      }))
-
-      setStudents(studentsData)
-      await loadExistingAttendance(studentsData, new Date())
-
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
+  // Update store when SWR data changes
+  React.useEffect(() => {
+    if (swrStudents.length > 0) {
+      setStudents(swrStudents)
     }
-  }, [router])
+  }, [swrStudents, setStudents])
 
-  const loadExistingAttendance = useCallback(async (studentsData: Student[], date: Date) => {
-    try {
-      const supabase = createClient()
-      const selectedDateStr = date.toLocaleDateString('en-CA')
-      
-      // Get existing attendance records for selected date
-      const { data: existingAttendance, error } = await supabase
-        .from('attendance_logs')
-        .select('student_id, status, reason')
-        .eq('date', selectedDateStr)
-
-      if (error) {
-        console.error('Error fetching existing attendance:', error)
-        return
-      }
-
-      // Initialize attendance with existing data or default to 'A' (Absent)
-      const initialAttendance: AttendanceData = {}
-      studentsData.forEach(student => {
-        const existingRecord = existingAttendance?.find(record => record.student_id === student.id)
-        initialAttendance[student.id] = {
-          status: existingRecord?.status || 'A',
-          reason: existingRecord?.reason || undefined
-        }
-      })
-      
-      setAttendance(initialAttendance)
-    } catch (error) {
-      console.error('Error loading existing attendance:', error)
-      // Fallback to default 'A' status if loading fails
-      const initialAttendance: AttendanceData = {}
-      studentsData.forEach(student => {
-        initialAttendance[student.id] = { status: 'A' }
-      })
-      setAttendance(initialAttendance)
+  React.useEffect(() => {
+    if (Object.keys(swrAttendance).length > 0) {
+      setAttendance(swrAttendance)
     }
-  }, [])
+  }, [swrAttendance, setAttendance])
+
 
   const handleDateChange = useCallback((date: Date) => {
     setSelectedDate(date)
-    loadExistingAttendance(students, date)
-  }, [students, loadExistingAttendance])
+    // SWR will automatically fetch new data when the date changes
+  }, [setSelectedDate])
 
   const handleStatusChange = useCallback((studentId: string, status: 'H' | 'I' | 'S' | 'A') => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], status, reason: status === 'I' ? prev[studentId]?.reason : undefined }
-    }))
-  }, [])
+    updateStudentStatus(studentId, status)
+  }, [updateStudentStatus])
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -159,15 +75,16 @@ export function useAttendance() {
       const attendanceData = Object.entries(attendance).map(([studentId, data]) => ({
         student_id: studentId,
         date: selectedDateStr,
-        status: data.status,
-        reason: data.reason || null
+        status: (data as AttendanceData[string]).status,
+        reason: (data as AttendanceData[string]).reason || null
       }))
 
       const result = await saveAttendance(attendanceData)
       
       if (result.success) {
         toast.success('Data absensi berhasil disimpan!')
-        await loadExistingAttendance(students, selectedDate)
+        // Invalidate SWR cache to refetch fresh data
+        mutateAttendance()
       } else {
         toast.error('Gagal menyimpan data absensi: ' + result.error)
       }
@@ -177,21 +94,17 @@ export function useAttendance() {
     } finally {
       setSaving(false)
     }
-  }, [attendance, selectedDate, students, loadExistingAttendance])
+  }, [attendance, selectedDate, mutateAttendance, setSaving])
 
   const getAttendancePercentage = useCallback(() => {
     if (students.length === 0) return 0
     
     const presentCount = Object.values(attendance).filter(
-      record => record.status === 'H'
+      (record: AttendanceData[string]) => record.status === 'H'
     ).length
     
     return Math.round((presentCount / students.length) * 100)
   }, [students.length, attendance])
-
-  useEffect(() => {
-    fetchStudents()
-  }, [fetchStudents])
 
   return {
     students,
@@ -202,7 +115,6 @@ export function useAttendance() {
     handleDateChange,
     handleStatusChange,
     handleSave,
-    getAttendancePercentage,
-    loadExistingAttendance
+    getAttendancePercentage
   }
 }
