@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import ReasonModal from '@/app/(admin)/absensi/components/ReasonModal'
@@ -32,6 +32,9 @@ export default function AbsensiPage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -60,6 +63,46 @@ export default function AbsensiPage() {
     setSelectedDate(nextDay)
     loadExistingAttendance(students, nextDay)
   }
+
+  // // Auto-save function with debouncing
+  // const autoSave = useCallback(async (attendanceData: AttendanceData) => {
+  //   if (saveTimeoutRef.current) {
+  //     clearTimeout(saveTimeoutRef.current)
+  //   }
+
+  //   saveTimeoutRef.current = setTimeout(async () => {
+  //     setIsAutoSaving(true)
+  //     try {
+  //       const selectedDateStr = selectedDate.toLocaleDateString('en-CA')
+        
+  //       const attendanceRecords = Object.entries(attendanceData).map(([studentId, data]) => ({
+  //         student_id: studentId,
+  //         date: selectedDateStr,
+  //         status: data.status,
+  //         reason: data.reason || null
+  //       }))
+
+  //       const result = await saveAttendance(attendanceRecords)
+        
+  //       if (result.success) {
+  //         setLastSaved(new Date())
+  //       } else {
+  //         console.error('Auto-save failed:', result.error)
+  //       }
+  //     } catch (error) {
+  //       console.error('Auto-save error:', error)
+  //     } finally {
+  //       setIsAutoSaving(false)
+  //     }
+  //   }, 1500) // 1.5 second delay
+  // }, [selectedDate])
+
+  // // Trigger auto-save when attendance changes
+  // useEffect(() => {
+  //   if (Object.keys(attendance).length > 0) {
+  //     autoSave(attendance)
+  //   }
+  // }, [attendance, autoSave])
 
   const fetchStudents = async () => {
     try {
@@ -274,7 +317,6 @@ export default function AbsensiPage() {
                 onChange={handleDateChange}
                 format="DD/MM/YYYY"
                 placeholder="Pilih tanggal"
-                className="w-40"
                 size="middle"
               />
 
@@ -292,7 +334,7 @@ export default function AbsensiPage() {
           </div>
         </div>
 
-        {/* Summmary */}
+        {/* Summary */}
         <div className="rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3">
           <div className="bg-white dark:bg-gray-800 flex items-center justify-between px-2 sm:px-4 py-4 border-b border-gray-200 dark:border-gray-700">
             <div>
@@ -392,6 +434,27 @@ export default function AbsensiPage() {
             {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
+
+        {/* Auto-save Status */}
+        {/* <div className="mt-6 flex justify-center sm:justify-end">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            {isAutoSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span>Menyimpan...</span>
+              </>
+            ) : lastSaved ? (
+              <>
+                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Disimpan {lastSaved.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+              </>
+            ) : (
+              <span>Perubahan akan disimpan otomatis</span>
+            )}
+          </div>
+        </div> */}
 
         {/* Reason Modal */}
         <ReasonModal
