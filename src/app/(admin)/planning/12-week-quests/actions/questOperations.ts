@@ -110,7 +110,7 @@ export async function saveQuests(
       insertedQuests
     };
   } catch (error) {
-    const errorInfo = handleApiError(error, 'menyimpan data');
+    const errorInfo = handleApiError(error, 'menyimpan data', 'gagal menyimpan quest');
     return { 
       success: false, 
       message: errorInfo.message || 'Gagal menyimpan quest'
@@ -195,7 +195,7 @@ export async function finalizeQuests(
       url: '/planning/main-quests'
     };
   } catch (error) {
-    const errorInfo = handleApiError(error, 'mengupdate data');
+    const errorInfo = handleApiError(error, 'mengupdate data', 'gagal commit main quest');
     return { 
       success: false, 
       message: errorInfo.message || 'Gagal commit main quest'
@@ -232,7 +232,7 @@ export async function getAllQuestsForQuarter(
 
     return data || [];
   } catch (error) {
-    handleApiError(error, 'memuat data');
+    handleApiError(error, 'memuat data', 'gagal memuat data quest');
     return [];
   }
 }
@@ -270,7 +270,7 @@ export async function getPairwiseResults(
 
     return data?.results_json || {};
   } catch (error) {
-    handleApiError(error, 'memuat data');
+    handleApiError(error, 'memuat data', 'gagal memuat data pairwise results');
     return {};
   }
 }

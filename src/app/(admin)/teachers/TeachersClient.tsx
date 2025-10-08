@@ -6,15 +6,13 @@ import { toast } from 'sonner';
 
 interface Teacher {
   id: string;
-  username: string;
   full_name: string;
   role: string;
   created_at: string;
   classes: {
     id: string;
     name: string;
-    grade: number;
-  };
+  }[];
 }
 
 interface Class {
@@ -230,9 +228,6 @@ export default function TeachersClient() {
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Username
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Nama Lengkap
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -250,13 +245,10 @@ export default function TeachersClient() {
               {teachers.map((teacher) => (
                 <tr key={teacher.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {teacher.username}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {teacher.full_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {teacher.classes?.name} (Kelas {teacher.classes?.grade})
+                    {teacher.classes?.[0]?.name || 'Tidak ada kelas'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {new Date(teacher.created_at).toLocaleDateString('id-ID')}

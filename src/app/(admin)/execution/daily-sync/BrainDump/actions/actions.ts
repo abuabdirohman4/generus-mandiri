@@ -43,7 +43,7 @@ export async function getBrainDumpByDate(date: string): Promise<BrainDumpItem | 
 
     return data;
   } catch (error) {
-    handleApiError(error, 'memuat brain dump');
+    handleApiError(error, 'memuat data', 'gagal memuat brain dump');
     return null;
   }
 }
@@ -84,7 +84,7 @@ export async function upsertBrainDump(brainDumpData: CreateBrainDumpData): Promi
     revalidatePath('/execution/daily-sync');
     return data;
   } catch (error) {
-    handleApiError(error, 'menyimpan brain dump');
+    handleApiError(error, 'menyimpan data', 'gagal menyimpan brain dump');
     throw error;
   }
 }
@@ -117,7 +117,7 @@ export async function getBrainDumpByDateRange(startDate: string, endDate: string
 
     return data || [];
   } catch (error) {
-    handleApiError(error, 'memuat data berdasarkan rentang tanggal');
+    handleApiError(error, 'memuat data', 'gagal memuat data berdasarkan rentang tanggal');
     return [];
   }
 }

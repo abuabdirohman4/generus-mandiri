@@ -139,14 +139,12 @@ export async function getTeachers() {
       .from('profiles')
       .select(`
         id,
-        username,
         full_name,
         role,
         created_at,
-        classes (
+        classes!classes_teacher_id_fkey (
           id,
-          name,
-          grade
+          name
         )
       `)
       .eq('role', 'teacher')

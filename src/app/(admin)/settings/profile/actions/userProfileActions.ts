@@ -56,7 +56,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     return data;
   } catch (error) {
     console.error('🎵 getUserProfile error:', error);
-    handleApiError(error, 'memuat profil user');
+    handleApiError(error, 'memuat data', 'gagal memuat profil user');
     return null;
   }
 }
@@ -115,7 +115,7 @@ export async function updateSoundSettings(settings: Partial<SoundSettings>): Pro
     revalidatePath('/dashboard');
     revalidatePath('/execution');
   } catch (error) {
-    handleApiError(error, 'menyimpan pengaturan suara');
+    handleApiError(error, 'menyimpan data', 'gagal menyimpan pengaturan suara');
     throw error;
   }
 }
@@ -130,7 +130,7 @@ export async function getSoundSettings(): Promise<SoundSettings> {
     return settings;
   } catch (error) {
     console.error('🎵 getSoundSettings error:', error);
-    handleApiError(error, 'memuat pengaturan suara');
+    handleApiError(error, 'memuat data', 'gagal memuat pengaturan suara');
     return DEFAULT_SOUND_SETTINGS;
   }
 }
@@ -186,7 +186,7 @@ export async function resetSoundSettings(): Promise<void> {
     revalidatePath('/dashboard');
     revalidatePath('/execution');
   } catch (error) {
-    handleApiError(error, 'mereset pengaturan suara');
+    handleApiError(error, 'mengupdate data', 'gagal mereset pengaturan suara');
     throw error;
   }
 }

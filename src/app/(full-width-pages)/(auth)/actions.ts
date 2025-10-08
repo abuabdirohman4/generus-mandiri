@@ -45,7 +45,7 @@ export async function login(formData: FormData) {
     }
     
     // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
+    const errorInfo = handleApiError(error, 'autentikasi', 'gagal login');
     return redirect(`/signin?message=${encodeURIComponent(errorInfo.message || 'Gagal login')}`);
   }
 }
@@ -113,7 +113,7 @@ export async function signup(formData: FormData) {
     }
     
     // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
+    const errorInfo = handleApiError(error, 'autentikasi', 'gagal membuat akun');
     return redirect(`/signup?message=${encodeURIComponent(errorInfo.message || 'Gagal membuat akun')}&email=${encodeURIComponent(data.email)}`);
   }
 }
@@ -132,7 +132,7 @@ export async function signOut() {
     }
     
     // Handle actual errors
-    const errorInfo = handleApiError(error, 'autentikasi');
+    const errorInfo = handleApiError(error, 'autentikasi', 'gagal logout');
     console.error('Sign out error:', errorInfo);
     // Even if there's an error, still redirect to signin
     redirect("/signin");
