@@ -1,7 +1,7 @@
 {
-  "name": "Warlob App - Sistem Absensi Digital",
+  "name": "Warlob App",
   "short_name": "Warlob",
-  "description": "Sistem Absensi Digital untuk sekolah - PWA untuk mobile",
+  "description": "Sistem Digital Generus Warlob",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

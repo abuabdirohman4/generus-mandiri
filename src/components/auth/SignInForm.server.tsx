@@ -59,7 +59,7 @@ export default function SignInForm() {
           </button>
         </div>
       </div>
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Checkbox
             checked={keepLoggedIn}
@@ -68,13 +68,13 @@ export default function SignInForm() {
             className="checked:opacity-100"
           />
           <label onClick={() => setKeepLoggedIn(!keepLoggedIn)} htmlFor="keep-logged-in" className="block font-normal text-gray-700 text-theme-sm cursor-pointer dark:text-gray-400">
-            Keep me logged in
+            Tetap masuk
           </label>
         </div>
         <Link href="/forgot-password" className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400">
-          Forgot password?
+          Lupa Password?
         </Link>
-      </div>
+      </div> */}
       <button 
         type="submit" 
         disabled={isPending}
@@ -83,10 +83,10 @@ export default function SignInForm() {
         {isPending ? (
           <>
             <Spinner size={16} className="mr-2" colorClass="border-white" />
-            Signing In...
+            Masuk...
           </>
         ) : (
-          "Sign In"
+          "Masuk"
         )}
       </button>
     </form>

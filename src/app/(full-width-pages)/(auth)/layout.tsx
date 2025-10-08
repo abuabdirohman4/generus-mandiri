@@ -29,7 +29,7 @@ export default function AuthLayout({
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  A planner for turning your vision into daily action.
+                  Sistem Digital Generus Warlob
                 </p>
               </div>
             </div>

@@ -23,7 +23,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Home",
+    name: "Beranda",
     path: "/home",
   },
   {
@@ -320,32 +320,32 @@ function SidebarContent({
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-        <div className="py-8 ml-4 flex justify-start">
-            <Link href="/" className="relative block">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Image
-                    src="/images/logo/logo-icon.svg"
-                    alt="Logo"
-                    width={34}
-                    height={34}
-                    priority
-                  />
-                </div>
-                
-                <div
-                  className={`transition-all duration-300 ease-in-out transform ${
-                    isExpanded || isHovered || isMobileOpen
-                      ? "opacity-100 translate-x-0 ml-3 w-auto"
-                      : "opacity-0 -translate-x-4 absolute pointer-events-none ml-0 w-0 overflow-hidden"
-                  }`}
-                >
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Better Planner
-                  </span>
-                </div>
-              </div>
-            </Link>
+      <div className={`${isExpanded || isHovered ? 'ml-2' : 'ml-2'} py-8 flex justify-start`}>
+        <Link href="/" className="relative block">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Image
+                src="/images/logo/logo-icon.svg"
+                alt="Logo"
+                width={34}
+                height={34}
+                priority
+              />
+            </div>
+            
+            <div
+              className={`transition-all duration-300 ease-in-out transform ${
+                isExpanded || isHovered || isMobileOpen
+                  ? "opacity-100 translate-x-0 ml-3 w-auto"
+                  : "opacity-0 -translate-x-4 absolute pointer-events-none ml-0 w-0 overflow-hidden"
+              }`}
+            >
+              <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                Warlob App
+              </span>
+            </div>
+          </div>
+        </Link>
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="flex flex-col gap-6">

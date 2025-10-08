@@ -9,6 +9,7 @@ import AppHeader from "@/components/layouts/AppHeader";
 import AppSidebar from "@/components/layouts/AppSidebar";
 import Backdrop from "@/components/layouts/Backdrop";
 import BottomNavigation from "@/components/layouts/BottomNavigation";
+import { AdminLayoutProvider } from "@/components/layouts/AdminLayoutProvider";
 
 export default function AdminLayout({
   children,
@@ -27,7 +28,8 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
   return (
-    <div className="min-h-screen dark:bg-gray-900 xl:flex">
+    <AdminLayoutProvider>
+      <div className="min-h-screen dark:bg-gray-900 xl:flex">
         <AppSidebar />
         <Backdrop />
         <div
@@ -40,5 +42,6 @@ export default function AdminLayout({
         </div>
         <BottomNavigation />
       </div>
+    </AdminLayoutProvider>
   );
 }

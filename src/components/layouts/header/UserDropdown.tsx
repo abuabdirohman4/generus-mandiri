@@ -14,10 +14,10 @@ function DropdownMenuItems({ onClose, profile }: { onClose: () => void; profile:
     <>
       <div>
         <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          {profile?.full_name || 'Loading...'}
+          {profile?.full_name || 'User'}
         </span>
         <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-          {profile?.email || 'Loading...'}
+          {profile?.email || 'Email tidak tersedia'}
         </span>
       </div>
 

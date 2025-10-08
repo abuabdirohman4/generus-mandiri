@@ -27,14 +27,14 @@ export default function SplashScreen({ children }: SplashScreenProps) {
           <div className="mx-auto mb-3 rounded-2xl flex items-center justify-center shadow-lg">
             <img 
               src="/images/logo/logo-icon.svg" 
-              alt="Better Planner Logo" 
+              alt="Warlob App Logo" 
               className="w-32 h-32"
             />
           </div>
           
           {/* App Name */}
-          <h1 className="text-2xl font-bold mb-2">Better Planner</h1>
-          <p className="text-gray-400 text-lg">Your productivity companion</p>
+          <h1 className="text-2xl font-bold mb-2">Warlob App</h1>
+          <p className="text-gray-400 text-lg">Semoga Lancar Barokah</p>
 
           {/* Loading indicator */}
           <div className="mt-6 transition-all duration-1000 delay-700">

@@ -19,7 +19,7 @@ function PageTitle() {
   const getPageTitle = (path: string) => {
     switch (path) {
       case '/home':
-        return 'Home';
+        return 'Beranda';
       case '/absensi':
         return 'Absensi';
       default:

@@ -6,7 +6,7 @@ import SignInForm from "@/components/auth/SignInForm.server";
 
 export const metadata: Metadata = {
   title: "SignIn Page | Warlob App",
-  description: "Sistem Absensi Digital Warlob App",
+  description: "Sistem Digital Generus Warlob Warlob App",
 };
 
 export default async function SignIn({ searchParams }: { searchParams?: Promise<{ message?: string }> }) {
@@ -29,7 +29,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
               Warlob App
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Sistem Absensi Digital - Masuk dengan username dan password
+              Masuk dengan username dan password
             </p>
           </div>
           {message ? <div className={`mb-4 p-3 rounded text-center ${
@@ -53,7 +53,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
             </div>
           </div> */}
           <SignInForm />
-          <div className="mt-5">
+          {/* <div className="mt-5">
             <div className="text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 Demo Credentials:
@@ -65,7 +65,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
                 Guru: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">guru_kelas1</code> / <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">guru354</code>
               </p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

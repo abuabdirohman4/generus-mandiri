@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server'
 import HomeSkeleton from '@/components/ui/skeleton/HomeSkeleton';
-import { UserProfileProvider } from './UserProfileProvider';
 
 export const metadata: Metadata = {
-  title: "Home | Warlob App",
-  description: "Halaman utama Warlob App - Sistem Absensi Digital",
+  title: "Beranda | Warlob App",
+  description: "Halaman utama Warlob App - Sistem Digital Generus Warlob",
 };
 
 export default function HomePage() {
@@ -72,10 +71,15 @@ async function HomeContent() {
   const isAdmin = profile.role === 'admin'
   const isTeacher = profile.role === 'teacher'
 
+  // Add email to profile data
+  const profileWithEmail = {
+    ...profile,
+    email: user.email
+  }
+
   return (
-    <UserProfileProvider profile={profile}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="md:flex md:gap-2 text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -203,8 +207,7 @@ async function HomeContent() {
             </div>
           </div>
         </div> */}
-        </div>
       </div>
-    </UserProfileProvider>
+    </div>
   )
 }

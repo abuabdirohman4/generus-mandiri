@@ -16,7 +16,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     href: "/home",
-    label: "Home",
+    label: "Beranda",
     icon: <GridIcon />,
     activeIcon: <GridIcon />,
   },
