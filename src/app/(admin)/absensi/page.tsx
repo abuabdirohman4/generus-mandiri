@@ -207,20 +207,11 @@ export default function AbsensiPage() {
       'H': 'Hadir',
       'I': 'Izin',
       'S': 'Sakit',
-      'A': 'Absen'
+      'A': 'Alfa'
     }
     return labels[status as keyof typeof labels] || status
   }
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      'H': 'text-green-600 bg-green-100',
-      'I': 'text-yellow-600 bg-yellow-100',
-      'S': 'text-red-600 bg-red-100',
-      'A': 'text-gray-600 bg-gray-100'
-    }
-    return colors[status as keyof typeof colors] || 'text-gray-600 bg-gray-100'
-  }
 
   if (loading) {
     return (
@@ -235,7 +226,7 @@ export default function AbsensiPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -253,65 +244,136 @@ export default function AbsensiPage() {
 
         {/* Students List */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Daftar Siswa ({students.length} siswa)
             </h2>
           </div>
           
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {students.map((student) => (
-              <div key={student.id} className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      {student.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {student.gender} • {student.class_name}
-                    </p>
-                    {attendance[student.id]?.reason && (
-                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                        Alasan: {attendance[student.id].reason}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-4">
-                    {(['H', 'I', 'S', 'A'] as const).map((status) => (
-                      <label key={status} className="flex items-center">
-                        <input
-                          type="radio"
-                          name={`status-${student.id}`}
-                          value={status}
-                          checked={attendance[student.id]?.status === status}
-                          onChange={() => handleStatusChange(student.id, status)}
-                          className="sr-only"
-                        />
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-colors ${
-                            attendance[student.id]?.status === status
-                              ? getStatusColor(status)
-                              : 'text-gray-500 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          }`}
-                        >
-                          {getStatusLabel(status)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+          {/* Mobile Table Layout */}
+          <div className="sm:hidden">
+            {/* Mobile Header */}
+            <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Siswa ({students.length})
+                </span>
+                <div className="flex space-x-4">
+                  {(['H', 'A', 'I', 'S'] as const).map((status) => (
+                    <span key={status} className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {getStatusLabel(status)}
+                    </span>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
+            
+            {/* Mobile Student Rows */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {students.map((student) => (
+                <div key={student.id} className="px-4 py-3">
+                  <div className="flex items-center">
+                    {/* Student Name - Left side */}
+                    <div className="flex-1 pr-4">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white leading-tight">
+                        {student.name}
+                      </div>
+                      {attendance[student.id]?.reason && (
+                        <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                          Alasan: {attendance[student.id].reason}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Radio Buttons - Right side */}
+                    <div className="flex space-x-4">
+                      {(['H', 'A', 'I', 'S'] as const).map((status) => (
+                        <label key={status} className="flex items-center cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`status-${student.id}`}
+                            value={status}
+                            checked={attendance[student.id]?.status === status}
+                            onChange={() => handleStatusChange(student.id, status)}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Desktop Table Layout */}
+          <div className="hidden sm:block">
+            {/* Desktop Header */}
+            <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <span className="font-semibold text-gray-900 dark:text-white">Nama Siswa</span>
+                </div>
+                <div className="flex">
+                  {(['H', 'I', 'S', 'A'] as const).map((status) => (
+                    <div key={status} className="w-16 flex justify-center">
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {getStatusLabel(status)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Desktop Student Rows */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {students.map((student) => (
+                <div key={student.id} className="px-6 py-4">
+                  <div className="flex items-center">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        {student.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {student.gender} • {student.class_name}
+                      </p>
+                      {attendance[student.id]?.reason && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                          Alasan: {attendance[student.id].reason}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex">
+                      {(['H', 'I', 'S', 'A'] as const).map((status) => (
+                        <div key={status} className="w-16 flex justify-center">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`status-${student.id}`}
+                              value={status}
+                              checked={attendance[student.id]?.status === status}
+                              onChange={() => handleStatusChange(student.id, status)}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                            />
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="mt-8 flex justify-end">
+        <div className="mt-8 flex justify-center sm:justify-end">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? 'Menyimpan...' : 'Simpan Absensi'}
           </button>

@@ -1,40 +1,53 @@
 {
-  "name": "Warlob App",
-  "short_name": "Warlob App",
-  "description": "Sistem Absensi Digital untuk sekolah",
+  "name": "Warlob App - Sistem Absensi Digital",
+  "short_name": "Warlob",
+  "description": "Sistem Absensi Digital untuk sekolah - PWA untuk mobile",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#ffffff",
   "orientation": "portrait-primary",
-  "display_override": ["window-controls-overlay"],
   "categories": [
     "productivity",
     "business",
-    "lifestyle"
+    "education"
   ],
-  "lang": "en",
+  "lang": "id",
   "scope": "/",
   "icons": [
     {
       "src": "/images/logo/logo-icon.png",
-      "sizes": "180x180",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/images/logo/logo-icon.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/logo/logo-icon.png",
-      "sizes": "512x512", 
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "prefer_related_applications": false,
-  "id": "/"
+  "id": "/",
+  "shortcuts": [
+    {
+      "name": "Absensi",
+      "short_name": "Absensi",
+      "description": "Akses cepat ke halaman absensi",
+      "url": "/absensi",
+      "icons": [
+        {
+          "src": "/images/logo/logo-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }

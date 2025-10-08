@@ -30,14 +30,17 @@ export async function middleware(request: NextRequest) {
     const protectedRoutes = ['/home', '/absensi', '/kelas', '/siswa', '/admin', '/laporan']
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
     
-    // Jika user sudah login dan mencoba mengakses halaman signin/signup atau root, redirect ke home
-    if (session && (pathname === '/signin' || pathname === '/signup' || pathname === '/')) {
+    // Jika user sudah login dan mencoba mengakses halaman signin/signup, redirect ke home
+    if (session && (pathname === '/signin' || pathname === '/signup')) {
       return NextResponse.redirect(new URL('/home', request.url))
     }
     
     // Jika user tidak login dan mencoba mengakses halaman yang memerlukan auth, redirect ke signin
     if (!session && isProtectedRoute) {
-      return NextResponse.redirect(new URL('/signin', request.url))
+      const signinUrl = new URL('/signin', request.url)
+      // Add redirect parameter to know where to go after login
+      signinUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(signinUrl)
     }
 
     return response

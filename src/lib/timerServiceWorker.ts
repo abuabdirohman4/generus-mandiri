@@ -31,14 +31,11 @@ export interface TimerData {
 }
 
 /**
- * Send a message to the service worker
+ * Send a message to the service worker - DISABLED
  */
 export function sendMessageToServiceWorker(message: TimerMessage): void {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage(message);
-  } else {
-    console.warn('Service Worker not available or not controlling the page');
-  }
+  // Service worker communication disabled
+  console.log('Service Worker communication disabled:', message);
 }
 
 /**
@@ -148,40 +145,15 @@ export function addServiceWorkerMessageListener(
 }
 
 /**
- * Check if service worker is ready
+ * Check if service worker is ready - DISABLED
  */
 export function isServiceWorkerReady(): boolean {
-  return 'serviceWorker' in navigator && !!navigator.serviceWorker.controller;
+  return false; // Service worker disabled
 }
 
 /**
- * Wait for service worker to be ready
+ * Wait for service worker to be ready - DISABLED
  */
 export function waitForServiceWorker(): Promise<ServiceWorker> {
-  return new Promise((resolve, reject) => {
-    if (!('serviceWorker' in navigator)) {
-      reject(new Error('Service Worker not supported'));
-      return;
-    }
-
-    if (navigator.serviceWorker.controller) {
-      resolve(navigator.serviceWorker.controller);
-      return;
-    }
-
-    const handleControllerChange = () => {
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-        resolve(navigator.serviceWorker.controller);
-      }
-    };
-
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-      reject(new Error('Service Worker not ready after 10 seconds'));
-    }, 10000);
-  });
+  return Promise.reject(new Error('Service Worker disabled'));
 }

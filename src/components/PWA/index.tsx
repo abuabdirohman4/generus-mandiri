@@ -19,31 +19,17 @@ export default function PWAComponents() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
+  // Update prompt removed - no service worker updates
 
   // Check if we're on the landing page or auth pages
   const isLandingPage = pathname === '/' || pathname.startsWith('/(full-width-pages)');
 
   useEffect(() => {
-    // Register main PWA Service Worker (handles both PWA and timer functionality)
+    // Register simple service worker for PWA installation
     if ('serviceWorker' in navigator) {
-      // Register custom service worker with integrated timer functionality
-      navigator.serviceWorker.register('/sw-custom.js')
+      navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
-          console.log('🔧 Main Service Worker registered:', registration);
-          
-          // Check for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New service worker is available
-                  setShowUpdatePrompt(true);
-                }
-              });
-            }
-          });
+          console.log('🔧 Simple Service Worker registered:', registration);
         })
         .catch((error) => {
           console.error('❌ Service Worker registration failed:', error);
@@ -76,11 +62,7 @@ export default function PWAComponents() {
       setIsOnline(false);
     };
 
-    // Service worker update handler
-    const handleServiceWorkerUpdate = () => {
-      console.log('🔄 Service worker update available');
-      setShowUpdatePrompt(true);
-    };
+    // Service worker update handler removed
 
     // Event listeners
     if (typeof window !== 'undefined') {
@@ -88,12 +70,7 @@ export default function PWAComponents() {
       window.addEventListener("online", handleOnline);
       window.addEventListener("offline", handleOffline);
       
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.addEventListener(
-          "controllerchange",
-          handleServiceWorkerUpdate
-        );
-      }
+      // Service worker event listeners removed
     }
 
     // Check if already installed
@@ -117,12 +94,7 @@ export default function PWAComponents() {
         window.removeEventListener("online", handleOnline);
         window.removeEventListener("offline", handleOffline);
         
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.removeEventListener(
-            "controllerchange",
-            handleServiceWorkerUpdate
-          );
-        }
+        // Service worker cleanup removed
       }
     };
   }, []);
@@ -188,15 +160,7 @@ export default function PWAComponents() {
     }
   };
 
-  const handleUpdateClick = () => {
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  };
-
-  const handleUpdateDismiss = () => {
-    setShowUpdatePrompt(false);
-  };
+  // Update handlers removed - no service worker updates
 
   // Don't show if dismissed this session or on landing page
   if (typeof window !== 'undefined' && (sessionStorage.getItem('pwa-install-dismissed') === 'true' || isLandingPage) && showInstallPrompt) {
@@ -212,24 +176,7 @@ export default function PWAComponents() {
         </div>
       )}
 
-      {/* Update Available */}
-      {showUpdatePrompt && (
-        <div className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 px-4 z-50">
-          🔄 New version available
-          <button 
-            onClick={handleUpdateClick}
-            className="ml-4 bg-white text-blue-500 px-3 py-1 rounded text-sm font-medium"
-          >
-            Update
-          </button>
-          <button 
-            onClick={handleUpdateDismiss}
-            className="ml-2 text-white text-sm"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {/* Update prompt removed - no service worker updates */}
 
       {/* Install Prompt - Only show on authenticated pages */}
       {showInstallPrompt && !isLandingPage && (
