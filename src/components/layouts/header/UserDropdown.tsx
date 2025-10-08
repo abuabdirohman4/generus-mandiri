@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import { useUserProfile } from '@/stores/userProfileStore';
@@ -138,7 +138,7 @@ export default function UserDropdown() {
     setIsOpen(false);
   }, []);
 
-  // Memoize avatar URL generation and cache it in the store
+  // Generate avatar URL and cache it in the store
   const avatarUrl = useMemo(() => {
     if (!profile?.full_name) return '/images/user/owner.png';
     
@@ -152,11 +152,15 @@ export default function UserDropdown() {
     
     const newAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name)}&background=${backgroundColor}&color=${textColor}&size=${size}&bold=true&format=png&font-size=0.4&rounded=true`;
     
-    // Cache the URL in the store
-    setAvatarUrl(newAvatarUrl);
-    
     return newAvatarUrl;
-  }, [profile?.full_name, cachedAvatarUrl, setAvatarUrl]);
+  }, [profile?.full_name, cachedAvatarUrl]);
+
+  // Cache the generated avatar URL in the store
+  useEffect(() => {
+    if (avatarUrl && avatarUrl !== '/images/user/user1.png' && avatarUrl !== cachedAvatarUrl) {
+      setAvatarUrl(avatarUrl);
+    }
+  }, [avatarUrl, cachedAvatarUrl, setAvatarUrl]);
 
   return (
     <div className="relative">

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { saveAttendance } from '../actions'
+import { toast } from 'sonner'
 
 interface Student {
   id: string
@@ -165,14 +166,14 @@ export function useAttendance() {
       const result = await saveAttendance(attendanceData)
       
       if (result.success) {
-        alert('Data absensi berhasil disimpan!')
+        toast.success('Data absensi berhasil disimpan!')
         await loadExistingAttendance(students, selectedDate)
       } else {
-        alert('Gagal menyimpan data absensi: ' + result.error)
+        toast.error('Gagal menyimpan data absensi: ' + result.error)
       }
     } catch (error) {
       console.error('Error saving attendance:', error)
-      alert('Terjadi kesalahan saat menyimpan data')
+      toast.error('Terjadi kesalahan saat menyimpan data')
     } finally {
       setSaving(false)
     }

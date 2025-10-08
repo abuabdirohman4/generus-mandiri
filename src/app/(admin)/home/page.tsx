@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server'
 import HomeSkeleton from '@/components/ui/skeleton/HomeSkeleton';
 
@@ -100,7 +101,7 @@ async function HomeContent() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Absensi Card */}
-          <a href="/absensi" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
+          <Link href="/absensi" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -114,7 +115,7 @@ async function HomeContent() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Kelola kehadiran siswa</p>
               </div>
             </div>
-          </a>
+          </Link>
 
           {/* Kelas Card */}
           {/* <a href="/kelas" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
@@ -136,7 +137,7 @@ async function HomeContent() {
           </a> */}
 
           {/* Siswa Card */}
-          <a href="/siswa" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
+          <Link href="/siswa" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
@@ -148,17 +149,17 @@ async function HomeContent() {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Siswa</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {isAdmin ? 'Kelola semua siswa' : `Siswa ${profile.classes?.[0]?.name || 'kelas tidak diketahui'}`}
+                  Kelola data siswa
                 </p>
               </div>
             </div>
-          </a>
+          </Link>
 
           {/* Admin Only Cards */}
           {isAdmin && (
             <>
               {/* Guru Card */}
-              <a href="/admin/teachers" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
+              <Link href="/admin/teachers" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
@@ -172,10 +173,10 @@ async function HomeContent() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Kelola data guru</p>
                   </div>
                 </div>
-              </a>
+              </Link>
 
               {/* Laporan Card */}
-              <a href="/laporan" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
+              <Link href="/laporan" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
@@ -189,7 +190,7 @@ async function HomeContent() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Laporan absensi</p>
                   </div>
                 </div>
-              </a>
+              </Link>
             </>
           )}
         </div>
