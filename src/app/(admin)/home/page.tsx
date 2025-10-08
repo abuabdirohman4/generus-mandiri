@@ -76,12 +76,13 @@ async function HomeContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Selamat datang, {profile.full_name}!
+          <h1 className="md:flex md:gap-2 text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <div>Selamat Datang, </div> 
+            <div>{profile.full_name}!</div> 
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          {/* <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
             Username: {username}
-          </p>
+          </p> */}
           <p className="text-lg text-gray-600 dark:text-gray-400">
             {isAdmin 
               ? 'Selamat datang di dashboard admin Warlob App' 
@@ -93,7 +94,7 @@ async function HomeContent() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Absensi Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <a href="/absensi" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
@@ -105,15 +106,12 @@ async function HomeContent() {
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Absensi</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Kelola kehadiran siswa</p>
-                <a href="/absensi" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
-                  Buka →
-                </a>
               </div>
             </div>
-          </div>
+          </a>
 
           {/* Kelas Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          {/* <a href="/kelas" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
@@ -127,15 +125,12 @@ async function HomeContent() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isAdmin ? 'Kelola semua kelas' : `${profile.classes?.[0]?.name || 'Kelas tidak diketahui'}`}
                 </p>
-                <a href="/kelas" className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-sm font-medium">
-                  Buka →
-                </a>
               </div>
             </div>
-          </div>
+          </a> */}
 
           {/* Siswa Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+          <a href="/siswa" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
@@ -149,18 +144,15 @@ async function HomeContent() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {isAdmin ? 'Kelola semua siswa' : `Siswa ${profile.classes?.[0]?.name || 'kelas tidak diketahui'}`}
                 </p>
-                <a href="/siswa" className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 text-sm font-medium">
-                  Buka →
-                </a>
               </div>
             </div>
-          </div>
+          </a>
 
           {/* Admin Only Cards */}
           {isAdmin && (
             <>
               {/* Guru Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+              <a href="/admin/teachers" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
@@ -172,15 +164,12 @@ async function HomeContent() {
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Guru</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Kelola data guru</p>
-                    <a href="/admin/teachers" className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 text-sm font-medium">
-                      Buka →
-                    </a>
                   </div>
                 </div>
-              </div>
+              </a>
 
               {/* Laporan Card */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+              <a href="/laporan" className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer block">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
@@ -192,18 +181,15 @@ async function HomeContent() {
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Laporan</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Laporan absensi</p>
-                    <a href="/laporan" className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">
-                      Buka →
-                    </a>
                   </div>
                 </div>
-              </div>
+              </a>
             </>
           )}
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Aktivitas Terbaru</h2>
           <div className="space-y-3">
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -213,9 +199,8 @@ async function HomeContent() {
                 {new Date().toLocaleString('id-ID')}
               </span>
             </div>
-            {/* Add more recent activities here as needed */}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )
