@@ -3,7 +3,7 @@ import Link from "next/link";
 import React from "react";
 
 import GridShape from "@/components/common/GridShape";
-import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
+// import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 // Note: ThemeProvider no longer needed with Zustand
 
 export default function AuthLayout({
@@ -24,7 +24,7 @@ export default function AuthLayout({
                   <Image
                     width={300}
                     height={48}
-                    src="./images/logo/auth-logo.svg"
+                    src="/images/logo/auth-logo.svg"
                     alt="Logo"
                   />
                 </Link>
@@ -34,9 +34,9 @@ export default function AuthLayout({
               </div>
             </div>
           </div>
-          <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
+          {/* <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
             <ThemeTogglerTwo />
-          </div>
+          </div> */}
         </div>
     </div>
   );

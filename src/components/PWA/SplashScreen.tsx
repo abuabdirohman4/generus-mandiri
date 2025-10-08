@@ -13,7 +13,7 @@ export default function SplashScreen({ children }: SplashScreenProps) {
     // Show splash screen for 1.5 seconds
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 1500);
+    }, 800);
 
     return () => clearTimeout(splashTimer);
   }, []);

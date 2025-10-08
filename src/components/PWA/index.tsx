@@ -19,6 +19,7 @@ export default function PWAComponents() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [isAppReady, setIsAppReady] = useState(false);
   // Update prompt removed - no service worker updates
 
   // Check if we're on the landing page or auth pages
@@ -30,10 +31,16 @@ export default function PWAComponents() {
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
           console.log('🔧 Simple Service Worker registered:', registration);
+          setIsAppReady(true);
         })
         .catch((error) => {
           console.error('❌ Service Worker registration failed:', error);
+          // Still mark as ready even if SW fails
+          setIsAppReady(true);
         });
+    } else {
+      // No service worker support, mark as ready
+      setIsAppReady(true);
     }
 
     // Install prompt handler

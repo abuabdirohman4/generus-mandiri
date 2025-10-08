@@ -2,10 +2,8 @@
 // Minimal functionality for mobile installation only
 
 const CACHE_NAME = 'warlob-app-v1';
+// ⚠️ UBAH INI: Hanya cache file static, bukan routes yang redirect
 const urlsToCache = [
-  '/',
-  '/signin',
-  '/absensi',
   '/manifest.json',
   '/images/logo/logo-icon.svg'
 ];
@@ -17,11 +15,18 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('📦 Caching essential files');
-        return cache.addAll(urlsToCache);
+        // ⚠️ TAMBAHKAN ERROR HANDLING
+        return cache.addAll(urlsToCache).catch(err => {
+          console.error('❌ Failed to cache files:', err);
+          // Continue anyway, don't block installation
+        });
       })
       .then(() => {
         console.log('✅ Service Worker installed');
         return self.skipWaiting();
+      })
+      .catch(err => {
+        console.error('❌ Service Worker installation failed:', err);
       })
   );
 });
@@ -58,11 +63,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ⚠️ TAMBAHKAN INI: Skip Next.js internal files dan API routes
+  if (event.request.url.includes('/_next/') || 
+      event.request.url.includes('/api/')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         // Return cached version or fetch from network
         return response || fetch(event.request);
+      })
+      .catch(() => {
+        // If both cache and network fail, return to network
+        return fetch(event.request);
       })
   );
 });
