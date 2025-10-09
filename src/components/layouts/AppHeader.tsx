@@ -20,8 +20,8 @@ function PageTitle() {
     switch (path) {
       case '/home':
         return 'Beranda';
-      case '/absensi':
-        return 'Absensi';
+      // case '/absensi':
+      //   return 'Absensi';
       case '/siswa':
         return 'Siswa';
       case '/laporan':
@@ -33,15 +33,19 @@ function PageTitle() {
       case '/settings/pwa':
         return 'PWA Settings';
       default:
+        if (path.startsWith('/absensi')) { // meeting detail pages
+          return 'Absensi';
+        }
         return 'Warlob App';
     }
   };
 
-  // Check if page needs back button (Vision, 12 Week Quests, Main Quest)
+  // If page needs back button
   const needsBackButton = (path: string) => {
-    return path === '/planning/vision' || 
-           path === '/planning/12-week-quests' || 
-           path === '/planning/main-quests';
+    return path.startsWith('/absensi/'); // Include all absensi sub-pages including meeting IDs
+          //  path === '/absensi' || 
+          //  path === '/siswa' || 
+          //  path === '/laporan';
   };
 
   if (!mounted) {
