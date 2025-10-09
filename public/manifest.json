@@ -1,6 +1,6 @@
 {
-  "name": "Warlob Ap",
-  "short_name": "Warlob",
+  "name": "Warlob App",
+  "short_name": "Warlob App",
   "description": "Sistem Digital Generus Warlob",
   "start_url": "/home",
   "display": "standalone",

@@ -77,6 +77,30 @@ export default function SignInForm() {
         </div>
       </div>
 
+      {/* Wave Separator */}
+      {/* <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full">
+            <svg
+              viewBox="0 0 400 30"
+              className="w-full h-6"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0,30 C50,20 100,25 150,18 C200,12 250,20 300,15 C350,10 400,18 400,18 L400,30 L0,30 Z"
+                fill="rgb(243 244 246)"
+                className="dark:fill-gray-700 transition-colors duration-200"
+              />
+            </svg>
+          </div>
+        </div>
+        <div className="relative flex justify-center">
+          <span className="px-4 py-2 text-sm text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-400 rounded-full shadow-sm border border-gray-200 dark:border-gray-600">
+            atau
+          </span>
+        </div>
+      </div> */}
+
       {/* Remember Me & Forgot Password - Only show on desktop */}
       {/* <div className="hidden lg:flex items-center justify-between">
         <div className="flex items-center gap-3">
