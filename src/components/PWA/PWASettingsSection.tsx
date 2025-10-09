@@ -17,6 +17,7 @@ export default function PWASettingsSection() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isCheckingSupport, setIsCheckingSupport] = useState(true);
   const [installStatus, setInstallStatus] = useState<'not-supported' | 'available' | 'installed' | 'dismissed'>('not-supported');
   const { profile } = useUserProfile();
 
@@ -28,17 +29,19 @@ export default function PWASettingsSection() {
           (window.navigator as any).standalone === true) {
         setIsInstalled(true);
         setInstallStatus('installed');
-        return;
+        setIsCheckingSupport(false);
+        return true; // Return true to skip timeout
       }
       
       // Check if user previously dismissed
       const installPrompt = localStorage.getItem('pwa-install-prompt');
       if (installPrompt === 'dismissed') {
         setInstallStatus('dismissed');
-        return;
+        setIsCheckingSupport(false);
+        return true; // Return true to skip timeout
       }
       
-      setInstallStatus('not-supported');
+      return false; // Continue checking
     };
 
     // Listen for beforeinstallprompt event
@@ -46,6 +49,7 @@ export default function PWASettingsSection() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setInstallStatus('available');
+      setIsCheckingSupport(false); // Clear loading state immediately
     };
 
     // Listen for appinstalled event
@@ -56,7 +60,20 @@ export default function PWASettingsSection() {
     };
 
     // Check on mount
-    checkInstallStatus();
+    const shouldSkipTimeout = checkInstallStatus();
+    
+    if (shouldSkipTimeout) {
+      return; // Already installed or dismissed
+    }
+
+    // Set timeout to wait for beforeinstallprompt
+    const timeoutId = setTimeout(() => {
+      // If still checking after 3 seconds and no event, not supported
+      if (!deferredPrompt) {
+        setInstallStatus('not-supported');
+      }
+      setIsCheckingSupport(false);
+    }, 3000);
 
     // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -64,6 +81,7 @@ export default function PWASettingsSection() {
 
     // Cleanup
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
@@ -100,6 +118,17 @@ export default function PWASettingsSection() {
   };
 
   const getStatusInfo = () => {
+    if (isCheckingSupport) {
+      return {
+        title: 'Memeriksa Dukungan PWA...',
+        description: 'Mohon tunggu, sedang memeriksa apakah browser Anda mendukung PWA',
+        icon: '🔄',
+        color: 'text-blue-600 dark:text-blue-400',
+        bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+        borderColor: 'border-blue-200 dark:border-blue-800'
+      };
+    }
+    
     switch (installStatus) {
       case 'installed':
         return {
@@ -171,10 +200,17 @@ export default function PWASettingsSection() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
+              {isCheckingSupport && (
+                <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Memeriksa dukungan browser...
+                </div>
+              )}
+              
               {installStatus === 'available' && (
                 <button
                   onClick={handleInstallClick}
-                  disabled={isInstalling}
+                  disabled={isInstalling || isCheckingSupport}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
                 >
                   {isInstalling ? (
