@@ -71,7 +71,7 @@ export default function AbsensiPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
         {/* Header with Date Controls and Summary */}
         <AttendanceHeader
           students={students}

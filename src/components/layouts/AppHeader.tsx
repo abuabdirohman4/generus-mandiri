@@ -22,6 +22,10 @@ function PageTitle() {
         return 'Beranda';
       case '/absensi':
         return 'Absensi';
+      case '/siswa':
+        return 'Siswa';
+      case '/laporan':
+        return 'Laporan';
       case '/settings':
         return 'Pengaturan';
       case '/settings/profile':

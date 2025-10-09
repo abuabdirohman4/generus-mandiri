@@ -35,7 +35,7 @@ export default async function SiswaPage() {
     console.error('Error fetching students:', error)
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -82,16 +82,18 @@ export default async function SiswaPage() {
     },
   ]
 
-  const tableData = students?.map((student: Student, index: number) => ({
+  const tableData = students?.map((student, index: number) => ({
     no: index + 1,
     name: student.name,
     gender: student.gender || '-',
-    class_name: student.classes.name,
+    class_name: Array.isArray(student.classes) && student.classes.length > 0
+      ? student.classes[0].name
+      : '-',
   })) || []
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

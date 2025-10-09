@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, GroupIcon } from "@/lib/icons";
+import { GridIcon, GroupIcon, UserIcon } from "@/lib/icons";
 import Spinner from "../ui/spinner/Spinner";
 
 interface NavItem {
@@ -24,6 +24,18 @@ const navItems: NavItem[] = [
   {
     href: "/absensi",
     label: "Absensi",
+    icon: <GroupIcon />,
+    activeIcon: <GroupIcon />,
+  },
+  {
+    href: "/siswa",
+    label: "Siswa",
+    icon: <UserIcon />,
+    activeIcon: <UserIcon />,
+  },
+  {
+    href: "/laporan",
+    label: "Laporan",
     icon: <GroupIcon />,
     activeIcon: <GroupIcon />,
   },
