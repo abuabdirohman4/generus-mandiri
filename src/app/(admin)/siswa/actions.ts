@@ -14,7 +14,7 @@ export interface Student {
   classes: {
     id: string
     name: string
-  }[]
+  }
 }
 
 export interface Class {
@@ -23,33 +23,87 @@ export interface Class {
 }
 
 /**
- * Mendapatkan daftar semua siswa dengan informasi kelas
+ * Mendapatkan profile user saat ini
  */
-export async function getStudents(): Promise<Student[]> {
+export async function getUserProfile() {
   try {
     const supabase = await createClient()
     
-    const { data: students, error } = await supabase
-      .from('students')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
       .select(`
-        id,
-        name,
-        gender,
-        class_id,
-        created_at,
-        updated_at,
-        classes!inner(
+        role,
+        classes!classes_teacher_id_fkey(
           id,
           name
         )
       `)
-      .order('name')
+      .eq('id', user.id)
+      .single()
+
+    // Handle the classes relationship - it could be an array or single object
+    const classesData = Array.isArray(profile?.classes) ? profile.classes : [profile?.classes].filter(Boolean)
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
+    return {
+      role: profile.role,
+      class_id: classesData[0]?.id || null,
+      class_name: classesData[0]?.name || null
+    }
+  } catch (error) {
+    handleApiError(error, 'memuat data', 'Gagal memuat profile user')
+    throw error
+  }
+}
+
+/**
+ * Mendapatkan daftar siswa dengan informasi kelas
+ */
+export async function getStudents(classId?: string): Promise<Student[]> {
+  try {
+    const supabase = await createClient()
+    
+    let query = supabase
+      .from('students')
+      .select(`
+        *,
+        class:classes(
+          id,
+          name
+        )
+      `)
+
+    // Filter by class if classId provided
+    if (classId) {
+      query = query.eq('class_id', classId)
+    }
+
+    const { data: students, error } = await query.order('name')
 
     if (error) {
       throw error
     }
 
-    return students || []
+    const transformedStudents = students?.map(student => ({
+      id: student.id,
+      name: student.name,
+      gender: student.gender,
+      class_id: student.class_id,
+      created_at: student.created_at,
+      updated_at: student.updated_at,
+      classes: student.class || null
+    })) || []
+
+    console.log('transformedStudents', transformedStudents)
+    return transformedStudents
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
