@@ -60,7 +60,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={outfit.className} suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         {/* Inject global timer for Weekly Sync loading measurement */}
         <script
           dangerouslySetInnerHTML={{

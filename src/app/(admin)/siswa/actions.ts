@@ -14,7 +14,7 @@ export interface Student {
   classes: {
     id: string
     name: string
-  }
+  } | null
 }
 
 export interface Class {
@@ -102,7 +102,6 @@ export async function getStudents(classId?: string): Promise<Student[]> {
       classes: student.class || null
     })) || []
 
-    console.log('transformedStudents', transformedStudents)
     return transformedStudents
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')

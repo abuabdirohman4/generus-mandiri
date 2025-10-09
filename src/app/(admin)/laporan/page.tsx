@@ -115,17 +115,19 @@ export default function LaporanPage() {
     },
   ]
 
-  const tableData = data?.detailedRecords?.map((record, index) => ({
-    no: index + 1,
-    student_name: record.student_name,
-    class_name: record.class_name,
-    total_days: record.total_days,
-    hadir: record.hadir,
-    izin: record.izin,
-    sakit: record.sakit,
-    alpha: record.alpha,
-    attendance_rate: `${record.attendance_rate}%`,
-  })) || []
+  const tableData = data?.detailedRecords
+    ?.sort((a, b) => a.student_name.localeCompare(b.student_name)) // Sort by student name
+    ?.map((record, index) => ({
+      no: index + 1,
+      student_name: record.student_name,
+      class_name: record.class_name,
+      total_days: record.total_days,
+      hadir: record.hadir,
+      izin: record.izin,
+      sakit: record.sakit,
+      alpha: record.alpha,
+      attendance_rate: `${record.attendance_rate}%`,
+    })) || []
 
   if (error) {
     return (
@@ -412,6 +414,11 @@ export default function LaporanPage() {
                   <DataTable
                     columns={columns}
                     data={tableData}
+                    pagination={true}
+                    searchable={true}
+                    itemsPerPageOptions={[5, 10, 25, 50]}
+                    defaultItemsPerPage={10}
+                    searchPlaceholder="Cari siswa..."
                     className="bg-white dark:bg-gray-800"
                     headerClassName="bg-gray-50 dark:bg-gray-700"
                     rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"

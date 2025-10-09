@@ -28,6 +28,9 @@ export default function AttendanceTable({
   onStatusChange, 
   className = '' 
 }: AttendanceTableProps) {
+  // Sort students by name
+  const sortedStudents = [...students].sort((a, b) => a.name.localeCompare(b.name))
+
   return (
     <div className={`rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
@@ -55,7 +58,7 @@ export default function AttendanceTable({
           
           {/* Table Body */}
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {students.map((student) => (
+            {sortedStudents.map((student) => (
               <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 {/* Student Info */}
                 <td className="px-2 sm:px-6 py-3 sm:py-4">
