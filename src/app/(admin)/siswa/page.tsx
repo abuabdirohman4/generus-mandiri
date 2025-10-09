@@ -1,61 +1,142 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createStudent, updateStudent, deleteStudent, getStudents, getClasses, getCurrentUserRole, type Student, type Class } from './actions'
+import { toast } from 'sonner'
 import DataTable from '@/components/table/Table'
+import { Modal } from '@/components/ui/modal'
+import Button from '@/components/ui/button/Button'
+import Input from '@/components/form/input/InputField'
+import Label from '@/components/form/Label'
 
-interface Student {
-  id: string
-  name: string
-  gender: string | null
-  class_id: string
-  created_at: string
-  updated_at: string
-  classes: {
-    name: string
+export default function SiswaPage() {
+  const [students, setStudents] = useState<Student[]>([])
+  const [classes, setClasses] = useState<Class[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    gender: '',
+    classId: ''
+  })
+
+  // Load data on component mount
+  useEffect(() => {
+    loadData()
+    loadUserRole()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [studentsData, classesData] = await Promise.all([
+        getStudents(),
+        getClasses()
+      ])
+      setStudents(studentsData)
+      setClasses(classesData)
+    } catch (error) {
+      toast.error('Gagal memuat data')
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
-export default async function SiswaPage() {
-  const supabase = await createClient()
+  const loadUserRole = async () => {
+    try {
+      const role = await getCurrentUserRole()
+      setUserRole(role)
+    } catch (error) {
+      console.error('Error loading user role:', error)
+    }
+  }
 
-  const { data: students, error } = await supabase
-    .from('students')
-    .select(`
-      id,
-      name,
-      gender,
-      class_id,
-      created_at,
-      updated_at,
-      classes!inner(
-        name
-      )
-    `)
-    .order('name')
+  const handleOpenModal = (mode: 'create' | 'edit', student?: Student) => {
+    setModalMode(mode)
+    setSelectedStudent(student || null)
+    
+    if (mode === 'edit' && student) {
+      setFormData({
+        name: student.name,
+        gender: student.gender || '',
+        classId: student.class_id
+      })
+    } else {
+      setFormData({
+        name: '',
+        gender: '',
+        classId: ''
+      })
+    }
+    
+    setShowModal(true)
+  }
 
-  if (error) {
-    console.error('Error fetching students:', error)
-    return (
-      <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-                  Error
-                </h3>
-                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
-                  <p>Gagal memuat data siswa. Silakan coba lagi nanti.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setSelectedStudent(null)
+    setFormData({
+      name: '',
+      gender: '',
+      classId: ''
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.name || !formData.gender || !formData.classId) {
+      toast.error('Semua field harus diisi')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const formDataObj = new FormData()
+      formDataObj.append('name', formData.name)
+      formDataObj.append('gender', formData.gender)
+      formDataObj.append('classId', formData.classId)
+
+      if (modalMode === 'create') {
+        await createStudent(formDataObj)
+        toast.success('Siswa berhasil ditambahkan')
+      } else {
+        if (selectedStudent) {
+          await updateStudent(selectedStudent.id, formDataObj)
+          toast.success('Siswa berhasil diupdate')
+        }
+      }
+      
+      handleCloseModal()
+      loadData() // Reload data
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
+      toast.error(errorMessage)
+      console.error('Error submitting form:', error)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (studentId: string, studentName: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus siswa ${studentName}?`)) {
+      return
+    }
+
+    try {
+      await deleteStudent(studentId)
+      toast.success('Siswa berhasil dihapus')
+      loadData() // Reload data
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
+      toast.error(errorMessage)
+      console.error('Error deleting student:', error)
+    }
   }
 
   const columns = [
@@ -80,28 +161,75 @@ export default async function SiswaPage() {
       label: 'Kelas',
       align: 'center' as const,
     },
+    {
+      key: 'actions',
+      label: 'Aksi',
+      align: 'center' as const,
+      width: '32',
+    },
   ]
 
-  const tableData = students?.map((student, index: number) => ({
+  const tableData = students.map((student, index) => ({
     no: index + 1,
     name: student.name,
     gender: student.gender || '-',
-    class_name: Array.isArray(student.classes) && student.classes.length > 0
-      ? student.classes[0].name
-      : '-',
-  })) || []
+    class_name: student.classes[0]?.name || '-',
+    actions: student.id, // We'll use this in renderCell
+  }))
+
+  const renderCell = (column: any, item: any, index: number) => {
+    if (column.key === 'actions') {
+      return (
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={() => handleOpenModal('edit', students.find(s => s.id === item.actions))}
+            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+          >
+            Edit
+          </button>
+          {userRole === 'admin' && (
+            <button
+              onClick={() => handleDelete(item.actions, students.find(s => s.id === item.actions)?.name || '')}
+              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+            >
+              Hapus
+            </button>
+          )}
+        </div>
+      )
+    }
+    return item[column.key] || '-'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Daftar Siswa
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Kelola data siswa dan informasi kelas
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Daftar Siswa
+              </h1>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Kelola data siswa dan informasi kelas
+              </p>
+            </div>
+            <Button
+              onClick={() => handleOpenModal('create')}
+              className="px-4 py-2"
+            >
+              Tambah Siswa
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -120,7 +248,7 @@ export default async function SiswaPage() {
                       Total Siswa
                     </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {students?.length || 0}
+                      {students.length}
                     </dd>
                   </dl>
                 </div>
@@ -142,7 +270,7 @@ export default async function SiswaPage() {
                       Laki-laki
                     </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {students?.filter(s => s.gender === 'Laki-laki').length || 0}
+                      {students.filter(s => s.gender === 'Laki-laki').length}
                     </dd>
                   </dl>
                 </div>
@@ -164,7 +292,7 @@ export default async function SiswaPage() {
                       Perempuan
                     </dt>
                     <dd className="text-lg font-medium text-gray-900 dark:text-white">
-                      {students?.filter(s => s.gender === 'Perempuan').length || 0}
+                      {students.filter(s => s.gender === 'Perempuan').length}
                     </dd>
                   </dl>
                 </div>
@@ -178,6 +306,7 @@ export default async function SiswaPage() {
           <DataTable
             columns={columns}
             data={tableData}
+            renderCell={renderCell}
             className="bg-white dark:bg-gray-800"
             headerClassName="bg-gray-50 dark:bg-gray-700"
             rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -195,6 +324,80 @@ export default async function SiswaPage() {
             </p>
           </div>
         )}
+
+        {/* Modal Form */}
+        <Modal isOpen={showModal} onClose={handleCloseModal} className="max-w-[600px] m-4">
+          <div className="p-6">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+              {modalMode === 'create' ? 'Tambah' : 'Edit'} Siswa
+            </h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Masukkan nama lengkap"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="gender">Jenis Kelamin</Label>
+                <select
+                  id="gender"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="">Pilih jenis kelamin</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="classId">Kelas</Label>
+                <select
+                  id="classId"
+                  value={formData.classId}
+                  onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  required
+                >
+                  <option value="">Pilih kelas</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2"
+                >
+                  {submitting ? 'Menyimpan...' : 'Simpan'}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCloseModal}
+                  variant="outline"
+                  className="px-4 py-2"
+                >
+                  Batal
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
       </div>
     </div>
   )

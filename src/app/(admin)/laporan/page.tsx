@@ -130,7 +130,7 @@ export default function LaporanPage() {
   if (error) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
+        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -155,16 +155,16 @@ export default function LaporanPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Laporan Kehadiran
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Analisis dan visualisasi data kehadiran siswa
           </p>
-        </div>
+        </div> */}
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
