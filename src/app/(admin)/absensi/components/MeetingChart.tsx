@@ -7,6 +7,7 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { updateMeeting, deleteMeeting } from '../actions'
 import { toast } from 'sonner'
+import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -49,6 +50,15 @@ export default function MeetingChart({
 }: MeetingChartProps) {
   const [chartType, setChartType] = useState<ChartType>('line')
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null)
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    meetingId: string
+    meetingTitle: string
+  }>({
+    isOpen: false,
+    meetingId: '',
+    meetingTitle: ''
+  })
 
   const handleEdit = async (meeting: Meeting) => {
     if (onEdit) {
@@ -56,18 +66,22 @@ export default function MeetingChart({
     }
   }
 
-  const handleDelete = async (meetingId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus pertemuan ini?')) {
-      return
-    }
+  const handleDeleteClick = (meetingId: string, meetingTitle: string) => {
+    setDeleteModal({
+      isOpen: true,
+      meetingId,
+      meetingTitle
+    })
+  }
 
-    setDeletingMeetingId(meetingId)
+  const handleDeleteConfirm = async () => {
+    setDeletingMeetingId(deleteModal.meetingId)
     try {
-      const result = await deleteMeeting(meetingId)
+      const result = await deleteMeeting(deleteModal.meetingId)
       if (result.success) {
         toast.success('Pertemuan berhasil dihapus')
         if (onDelete) {
-          onDelete(meetingId)
+          onDelete(deleteModal.meetingId)
         }
       } else {
         toast.error('Gagal menghapus pertemuan: ' + result.error)
@@ -77,7 +91,20 @@ export default function MeetingChart({
       toast.error('Terjadi kesalahan saat menghapus pertemuan')
     } finally {
       setDeletingMeetingId(null)
+      setDeleteModal({
+        isOpen: false,
+        meetingId: '',
+        meetingTitle: ''
+      })
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({
+      isOpen: false,
+      meetingId: '',
+      meetingTitle: ''
+    })
   }
 
   // Prepare chart data
@@ -296,7 +323,7 @@ export default function MeetingChart({
                 </button>
 
                 <button
-                  onClick={() => handleDelete(meeting.id)}
+                  onClick={() => handleDeleteClick(meeting.id, `Pertemuan ${meeting.meetingNumber}`)}
                   disabled={deletingMeetingId === meeting.id}
                   className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                   title="Hapus Pertemuan"
@@ -314,6 +341,19 @@ export default function MeetingChart({
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Hapus Pertemuan"
+        message={`Apakah Anda yakin ingin menghapus "${deleteModal.meetingTitle}"?`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+        isLoading={deletingMeetingId === deleteModal.meetingId}
+      />
     </div>
   )
 }

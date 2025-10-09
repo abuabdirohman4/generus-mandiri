@@ -6,3 +6,5 @@ alwaysApply: true
 - Akses langsung database nya ke supabase dengan nama database nya "warlob-app"
 - Untuk halaman halaman yang bisa di akses saat user login itu di src/app/(admin)
 - Gunakan server actions untuk proses dengan backend
+
+- Untuk button, modal, input, pop up delete kalau tampilannya tidak khusus atau umum, pakai components yang sudah ada di src/components

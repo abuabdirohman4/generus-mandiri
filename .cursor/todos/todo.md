@@ -1,12 +1,18 @@
 
+Today 
+- Beresin Meeting cretion page
+- absensi page 
+- optimasi
+
 Absensi
 [] Ubah konsep jadi saat masuk ke halaman ini, user perlu tambah pertemuan
 [] Jadi saat buka halaman ini, langsung menampilkan pertemuannya ada di hari apa saja dan persentase kehadirannya
 [] User bisa edit pertemuan yang sudah berlalu
 [] Di dalam absensi jadi tidak perlu biarkan user bisa ganti ganti hari karena harinya sudah fix saat masuk ke table input absensi nya
 
-[] + button di pojok kanan bawah
+[x] + button di pojok kanan bawah
 [] setelah update isi absensi data di list, card nya tidak langsung terupdate
+[x] delete pakai confirm modal
 
 Siswa
 [x] Tambah siswa masih sangat lama
@@ -18,7 +24,7 @@ Laporan
 [] Buat loading skeleton
 
 Components
-- Input select with arrow
+- Input select with arrow (laporan, modal pertemuan)
 - Button & Loading
 - Icon sidebar & bottom samain dengan di home
 

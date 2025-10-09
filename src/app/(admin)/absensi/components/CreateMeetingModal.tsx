@@ -198,7 +198,7 @@ export default function CreateMeetingModal({
               </div>
 
               {/* Student Preview */}
-              {filteredStudents.length > 0 && (
+              {/* {filteredStudents.length > 0 && (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Siswa yang akan diikutsertakan ({filteredStudents.length} orang):
@@ -216,7 +216,7 @@ export default function CreateMeetingModal({
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Buttons */}
               <div className="flex justify-end space-x-3">
