@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   GridIcon,
   GroupIcon,
+  UserIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
@@ -32,6 +33,26 @@ const mainNav: NavItem[] = [
     icon: <GroupIcon />,
     name: "Absensi",
     path: "/absensi",
+  },
+  {
+    icon: <UserIcon />,
+    name: "Siswa",
+    path: "/siswa",
+  },
+  // {
+  //   icon: <UserIcon />,
+  //   name: "Guru",
+  //   path: "/guru",
+  // },
+  // {
+  //   icon: <UserIcon />,
+  //   name: "Kelas",
+  //   path: "/kelas",
+  // },
+  {
+    icon: <GroupIcon />,
+    name: "Laporan",
+    path: "/laporan",
   },
 ];
 

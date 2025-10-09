@@ -155,7 +155,7 @@ export default function PWASettingsSection() {
       </div>
 
       {/* Debug Information */}
-      <PWADebug />
+      {/* <PWADebug /> */}
 
       {/* Status Card */}
       <div className={`rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} p-6`}>

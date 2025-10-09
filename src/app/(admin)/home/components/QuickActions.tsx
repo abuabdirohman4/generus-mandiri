@@ -82,7 +82,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-purple-100 dark:bg-purple-900',
       iconColor: 'text-purple-600 dark:text-purple-400',
-      disabled: true
+      disabled: false
     },
     {
       id: 'guru',
@@ -111,7 +111,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-red-100 dark:bg-red-900',
       iconColor: 'text-red-600 dark:text-red-400',
-      disabled: true
+      disabled: false
     },
     {
       id: 'settings',

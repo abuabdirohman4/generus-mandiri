@@ -73,7 +73,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
         </div>
 
         {/* Main Content Container with Background */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 lg:shadow-none lg:bg-transparent lg:dark:bg-transparent lg:p-0 border">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 lg:shadow-none lg:bg-transparent lg:dark:bg-transparent lg:p-0 border md:border-none">
           {/* Mobile: Show subtitle only on mobile since header has title */}
           <div className="lg:hidden mb-6 text-center">
             <p className="text-md text-gray-500 dark:text-gray-400">
