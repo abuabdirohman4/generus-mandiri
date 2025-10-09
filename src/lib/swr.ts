@@ -175,6 +175,34 @@ export const brainDumpKeys = {
 };
 
 /**
+ * SWR key generator for students
+ */
+export const studentKeys = {
+  all: ['students'] as const,
+  lists: () => [...studentKeys.all, 'list'] as const,
+  list: (classId?: string) => [...studentKeys.lists(), classId || 'all'] as const,
+  details: () => [...studentKeys.all, 'detail'] as const,
+  detail: (id: string) => [...studentKeys.details(), id] as const,
+};
+
+/**
+ * SWR key generator for classes
+ */
+export const classKeys = {
+  all: ['classes'] as const,
+  lists: () => [...classKeys.all, 'list'] as const,
+  list: () => [...classKeys.lists()] as const,
+};
+
+/**
+ * SWR key generator for user profile
+ */
+export const userProfileKeys = {
+  all: ['user-profile'] as const,
+  profile: () => [...userProfileKeys.all, 'profile'] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -189,4 +217,7 @@ export const dataKeys = {
   vision: visionKeys,
   pairwise: pairwiseKeys,
   brainDump: brainDumpKeys,
+  students: studentKeys,
+  classes: classKeys,
+  userProfile: userProfileKeys,
 }; 

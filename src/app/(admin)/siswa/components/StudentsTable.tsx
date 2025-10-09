@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import DataTable from '@/components/table/Table'
+import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import { PencilIcon, TrashBinIcon } from '@/lib/icons'
 
 interface Student {
@@ -20,7 +22,7 @@ interface StudentsTableProps {
   students: Student[]
   userRole: string | null
   onEdit: (student: Student) => void
-  onDelete: (studentId: string, studentName: string) => void
+  onDelete: (studentId: string) => void
   userProfile: { role: string } | null
 }
 
@@ -31,6 +33,40 @@ export default function StudentsTable({
   onDelete, 
   userProfile 
 }: StudentsTableProps) {
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    studentId: string
+    studentName: string
+  }>({
+    isOpen: false,
+    studentId: '',
+    studentName: ''
+  })
+
+  const handleDeleteClick = (studentId: string, studentName: string) => {
+    setDeleteModal({
+      isOpen: true,
+      studentId,
+      studentName
+    })
+  }
+
+  const handleDeleteConfirm = () => {
+    onDelete(deleteModal.studentId)
+    setDeleteModal({
+      isOpen: false,
+      studentId: '',
+      studentName: ''
+    })
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({
+      isOpen: false,
+      studentId: '',
+      studentName: ''
+    })
+  }
   // Conditional columns based on user role
   const baseColumns = [
     {
@@ -84,7 +120,7 @@ export default function StudentsTable({
           </button>
           {userRole === 'admin' && (
             <button
-              onClick={() => onDelete(item.actions, students.find(s => s.id === item.actions)?.name || '')}
+              onClick={() => handleDeleteClick(item.actions, students.find(s => s.id === item.actions)?.name || '')}
               className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
               title="Hapus"
             >
@@ -98,18 +134,31 @@ export default function StudentsTable({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={tableData}
-      renderCell={renderCell}
-      pagination={true}
-      searchable={true}
-      itemsPerPageOptions={[5, 10, 25, 50]}
-      defaultItemsPerPage={10}
-      searchPlaceholder="Cari siswa..."
-      className="bg-white dark:bg-gray-800"
-      headerClassName="bg-gray-50 dark:bg-gray-700"
-      rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={tableData}
+        renderCell={renderCell}
+        pagination={true}
+        searchable={true}
+        itemsPerPageOptions={[5, 10, 25, 50]}
+        defaultItemsPerPage={10}
+        searchPlaceholder="Cari siswa..."
+        className="bg-white dark:bg-gray-800"
+        headerClassName="bg-gray-50 dark:bg-gray-700"
+        rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
+      />
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Hapus Siswa"
+        message={`Apakah Anda yakin ingin menghapus siswa "${deleteModal.studentName}"?`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+      />
+    </>
   )
 }

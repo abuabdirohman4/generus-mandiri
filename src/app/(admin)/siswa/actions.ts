@@ -139,12 +139,6 @@ export async function createStudent(formData: FormData) {
   try {
     const supabase = await createClient()
     
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('User not authenticated')
-    }
-
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
@@ -159,18 +153,8 @@ export async function createStudent(formData: FormData) {
       throw new Error('Jenis kelamin tidak valid')
     }
 
-    // Check if class exists
-    const { data: classData } = await supabase
-      .from('classes')
-      .select('id')
-      .eq('id', classId)
-      .single()
-
-    if (!classData) {
-      throw new Error('Kelas tidak ditemukan')
-    }
-
-    // Create student
+    // Create student with RLS handling auth + class validation
+    // RLS policies will handle user authentication and class access
     const { data: newStudent, error } = await supabase
       .from('students')
       .insert({
@@ -193,6 +177,13 @@ export async function createStudent(formData: FormData) {
       .single()
 
     if (error) {
+      // Handle specific RLS errors
+      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+        throw new Error('Tidak memiliki izin untuk membuat siswa di kelas ini')
+      }
+      if (error.code === '23503') {
+        throw new Error('Kelas tidak ditemukan')
+      }
       throw error
     }
 
@@ -211,12 +202,6 @@ export async function updateStudent(studentId: string, formData: FormData) {
   try {
     const supabase = await createClient()
     
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('User not authenticated')
-    }
-
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
@@ -231,29 +216,8 @@ export async function updateStudent(studentId: string, formData: FormData) {
       throw new Error('Jenis kelamin tidak valid')
     }
 
-    // Check if student exists
-    const { data: existingStudent } = await supabase
-      .from('students')
-      .select('id')
-      .eq('id', studentId)
-      .single()
-
-    if (!existingStudent) {
-      throw new Error('Siswa tidak ditemukan')
-    }
-
-    // Check if class exists
-    const { data: classData } = await supabase
-      .from('classes')
-      .select('id')
-      .eq('id', classId)
-      .single()
-
-    if (!classData) {
-      throw new Error('Kelas tidak ditemukan')
-    }
-
-    // Update student
+    // Update student with RLS handling auth + validation
+    // RLS policies will handle user authentication and access control
     const { data: updatedStudent, error } = await supabase
       .from('students')
       .update({
@@ -278,6 +242,16 @@ export async function updateStudent(studentId: string, formData: FormData) {
       .single()
 
     if (error) {
+      // Handle specific RLS errors
+      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+        throw new Error('Tidak memiliki izin untuk mengupdate siswa ini')
+      }
+      if (error.code === '23503') {
+        throw new Error('Kelas tidak ditemukan')
+      }
+      if (error.code === 'PGRST116') {
+        throw new Error('Siswa tidak ditemukan')
+      }
       throw error
     }
 
