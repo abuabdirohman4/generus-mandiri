@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
-import PWAInstallCard from '@/components/PWA/PWAInstallCard';
 import { useUserProfile } from '@/stores/userProfileStore';
 
 export default function HomePage() {
@@ -113,9 +111,6 @@ export default function HomePage() {
             Kelola data & absensi generus dengan mudah melalui aplikasi ini.
           </p>
         </div>
-
-        {/* PWA Install Card */}
-        {/* <PWAInstallCard /> */}
 
         {/* Quick Actions */}
         {profile && (

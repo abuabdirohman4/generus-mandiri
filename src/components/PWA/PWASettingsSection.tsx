@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
+import PWADebug from './PWADebug';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -152,6 +153,9 @@ export default function PWASettingsSection() {
           Kelola instalasi aplikasi web progresif untuk pengalaman yang lebih baik
         </p>
       </div>
+
+      {/* Debug Information */}
+      <PWADebug />
 
       {/* Status Card */}
       <div className={`rounded-lg border-2 ${statusInfo.borderColor} ${statusInfo.bgColor} p-6`}>
