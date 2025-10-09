@@ -164,12 +164,12 @@ export default function SiswaPage() {
 
   // Conditional columns based on user role
   const baseColumns = [
-    {
-      key: 'no',
-      label: 'No',
-      width: '16',
-      align: 'center' as const,
-    },
+    // {
+    //   key: 'no',
+    //   label: 'No',
+    //   width: '16',
+    //   align: 'center' as const,
+    // },
     {
       key: 'name',
       label: 'Nama',
@@ -200,7 +200,7 @@ export default function SiswaPage() {
     : [...baseColumns, actionsColumn]
 
   const tableData = students.map((student, index) => ({
-    no: index + 1,
+    // no: index + 1,
     name: student.name,
     gender: student.gender || '-',
     class_name: student.classes.name || '-',
@@ -365,32 +365,19 @@ export default function SiswaPage() {
         </div>
 
         {/* Students Table */}
-        {tableData.length > 0 ? (
-          <div className="overflow-x-auto">
-            <div className="min-w-full">
-              <DataTable
-                columns={columns}
-                data={tableData}
-                renderCell={renderCell}
-                className="bg-white dark:bg-gray-800"
-                headerClassName="bg-gray-50 dark:bg-gray-700"
-                rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              Tidak ada data siswa
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Belum ada siswa yang terdaftar dalam sistem.
-            </p>
-          </div>
-        )}
+        <DataTable
+          columns={columns}
+          data={tableData}
+          renderCell={renderCell}
+          pagination={true}
+          searchable={true}
+          itemsPerPageOptions={[5, 10, 25, 50]}
+          defaultItemsPerPage={10}
+          searchPlaceholder="Cari siswa..."
+          className="bg-white dark:bg-gray-800"
+          headerClassName="bg-gray-50 dark:bg-gray-700"
+          rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
+        />
 
         {/* Modal Form */}
         <Modal isOpen={showModal} onClose={handleCloseModal} className="max-w-[600px] m-4">
