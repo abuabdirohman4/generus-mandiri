@@ -180,7 +180,7 @@ export default function DataTable({
               <select
                 value={itemsPerPage}
                 onChange={handleItemsPerPageChange}
-                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                className="px-2 py-1 bg-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
               >
                 {itemsPerPageOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
@@ -198,7 +198,7 @@ export default function DataTable({
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={handleSearch}
-                className="w-full sm:w-64 px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                className="w-full sm:w-64 px-3 py-2 pl-10 bg-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
