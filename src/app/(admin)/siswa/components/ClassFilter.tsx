@@ -8,7 +8,7 @@ interface Class {
 }
 
 interface ClassFilterProps {
-  userProfile: { role: string } | null
+  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
   classes: Class[]
   selectedClassFilter: string
   onClassFilterChange: (value: string) => void

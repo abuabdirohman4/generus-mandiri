@@ -23,7 +23,7 @@ interface StudentsTableProps {
   userRole: string | null
   onEdit: (student: Student) => void
   onDelete: (studentId: string) => void
-  userProfile: { role: string } | null
+  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
 }
 
 export default function StudentsTable({ 

@@ -2,7 +2,7 @@
 
 interface StatsCardsProps {
   students: Array<{ gender: string | null }>
-  userProfile: { role: string; class_name: string | null } | null
+  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
 }
 
 export default function StatsCards({ students, userProfile }: StatsCardsProps) {

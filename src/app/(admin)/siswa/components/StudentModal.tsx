@@ -27,7 +27,7 @@ interface StudentModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   student?: Student | null
-  userProfile: { role: string; class_id: string | null; class_name: string | null } | null
+  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
   classes: Class[]
   onSubmit: (formData: FormData) => Promise<void>
   submitting: boolean
