@@ -66,5 +66,5 @@ async function HomeContent() {
     )
   }
 
-  return <HomePage profile={profile} />;
+  return <HomePage />;
 }

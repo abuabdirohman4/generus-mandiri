@@ -1,23 +1,15 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
+import PWAInstallCard from '@/components/PWA/PWAInstallCard';
+import { useUserProfile } from '@/stores/userProfileStore';
 
-interface HomePageProps {
-  profile: {
-    id: string;
-    full_name: string;
-    role: string;
-    classes?: Array<{
-      id: string;
-      name: string;
-    }>;
-  };
-}
-
-export default function HomePage({ profile }: HomePageProps) {
+export default function HomePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { profile } = useUserProfile();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -32,7 +24,7 @@ export default function HomePage({ profile }: HomePageProps) {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       {/* Header Section - Livin By Mandiri Style */}
-      <div className="fixed top-0 left-1/2 md:hidden transform -translate-x-1/2 z-40 overflow-hidden bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-800 px-6 pt-5 pb-4 max-w-md w-full">
+      <div className="fixed top-0 left-1/2 md:hidden transform -translate-x-1/2 z-40 overflow-hidden bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-800 px-6 pt-5 pb-4 w-full">
         {/* Asymmetrical Wave Shape at Bottom */}
         <div className="absolute bottom-0 left-0 w-full h-8">
           <svg
@@ -56,7 +48,7 @@ export default function HomePage({ profile }: HomePageProps) {
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
                 <span className="text-white font-bold text-white">
                   {(() => {
-                    const words = profile.full_name?.split(' ').filter(Boolean) || [];
+                    const words = profile?.full_name?.split(' ').filter(Boolean) || [];
                     if (words.length > 2) {
                       return (
                         (words[0][0]?.toUpperCase() || '') +
@@ -73,10 +65,10 @@ export default function HomePage({ profile }: HomePageProps) {
               </div>
               <div>
                 <h2 className="text-white font-semibold text-lg">
-                  {profile.full_name}
+                  {profile?.full_name || 'User'}
                 </h2>
                 <div className="flex items-center space-x-2 text-blue-200 text-sm">
-                  <span>{profile.classes?.[0]?.name}</span>
+                  <span>{profile?.classes?.[0]?.name || 'No Class'}</span>
                 </div>
               </div>
             </div>
@@ -122,11 +114,16 @@ export default function HomePage({ profile }: HomePageProps) {
           </p>
         </div>
 
+        {/* PWA Install Card */}
+        {/* <PWAInstallCard /> */}
+
         {/* Quick Actions */}
-        <QuickActions 
-          isAdmin={profile.role === 'admin'} 
-          profile={profile} 
-        />
+        {profile && (
+          <QuickActions 
+            isAdmin={profile.role === 'admin'} 
+            profile={profile} 
+          />
+        )}
       </div>
     </div>
   );

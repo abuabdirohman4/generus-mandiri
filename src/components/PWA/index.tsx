@@ -68,15 +68,15 @@ export default function PWAComponents() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
       // Only show prompt on protected pages, not on auth pages
-      if (isProtectedPage && !isInstalled) {
-        // Check if user dismissed before
-        const dismissed = sessionStorage.getItem('pwa-install-dismissed');
-        if (!dismissed) {
-          setTimeout(() => {
-            setShowInstallPrompt(true);
-          }, 2000);
-        }
-      }
+      // if (isProtectedPage && !isInstalled) {
+      //   // Check if user dismissed before
+      //   const dismissed = sessionStorage.getItem('pwa-install-dismissed');
+      //   if (!dismissed) {
+      //     setTimeout(() => {
+      //       setShowInstallPrompt(true);
+      //     }, 2000);
+      //   }
+      // }
     };
 
     // Network status handlers

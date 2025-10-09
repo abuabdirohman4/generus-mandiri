@@ -22,6 +22,12 @@ function PageTitle() {
         return 'Beranda';
       case '/absensi':
         return 'Absensi';
+      case '/settings':
+        return 'Pengaturan';
+      case '/settings/profile':
+        return 'Profil';
+      case '/settings/pwa':
+        return 'PWA Settings';
       default:
         return 'Warlob App';
     }
