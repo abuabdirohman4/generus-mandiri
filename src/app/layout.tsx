@@ -31,11 +31,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
-      { url: "/images/logo/logo-icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.svg", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/png" },
     ],
   },
   other: {

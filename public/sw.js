@@ -8,7 +8,6 @@ const STATIC_CACHE = 'warlob-static-v1.0.0';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/images/logo/logo-icon.svg',
-  '/images/logo/logo-icon.png',
   '/images/logo/logo.svg'
 ];
 
