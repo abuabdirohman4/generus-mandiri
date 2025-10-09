@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState, useMemo } from 'react'
+import { ReactNode, useState, useMemo, useEffect } from 'react'
 
 interface Column {
   key: string
@@ -8,6 +8,7 @@ interface Column {
   width?: string
   align?: 'left' | 'center' | 'right'
   className?: string
+  sortable?: boolean
 }
 
 interface DataTableProps {
@@ -43,6 +44,15 @@ export default function DataTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortColumn, setSortColumn] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+
+  // Helper function to check if column is sortable
+  const isSortable = (column: Column) => {
+    if (column.sortable === false) return false
+    if (column.key === 'actions' || column.key === 'aksi') return false
+    return true
+  }
 
   // Search functionality
   const filteredData = useMemo(() => {
@@ -59,24 +69,43 @@ export default function DataTable({
     })
   }, [data, searchQuery, columns, searchable])
 
+  // Sorting functionality
+  const sortedData = useMemo(() => {
+    if (!sortColumn || !sortDirection) return filteredData
+    
+    return [...filteredData].sort((a, b) => {
+      const aValue = a[sortColumn]
+      const bValue = b[sortColumn]
+      
+      // Handle null/undefined
+      if (aValue == null) return 1
+      if (bValue == null) return -1
+      
+      // Compare values
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [filteredData, sortColumn, sortDirection])
+
   // Pagination calculations
-  const totalEntries = filteredData.length
+  const totalEntries = sortedData.length
   const totalPages = Math.ceil(totalEntries / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage + 1
   const endIndex = Math.min(currentPage * itemsPerPage, totalEntries)
   
   // Get current page data
   const currentPageData = useMemo(() => {
-    if (!pagination) return filteredData
+    if (!pagination) return sortedData
     const start = (currentPage - 1) * itemsPerPage
     const end = start + itemsPerPage
-    return filteredData.slice(start, end)
-  }, [filteredData, currentPage, itemsPerPage, pagination])
+    return sortedData.slice(start, end)
+  }, [sortedData, currentPage, itemsPerPage, pagination])
 
-  // Reset to first page when search changes
-  useMemo(() => {
+  // Reset to first page when search or sort changes
+  useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery])
+  }, [searchQuery, sortColumn, sortDirection])
 
   // Event handlers
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +115,21 @@ export default function DataTable({
   const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value))
     setCurrentPage(1)
+  }
+
+  const handleSort = (columnKey: string) => {
+    if (sortColumn === columnKey) {
+      // Toggle through: asc → desc → null
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else if (sortDirection === 'desc') {
+        setSortColumn(null)
+        setSortDirection(null)
+      }
+    } else {
+      setSortColumn(columnKey)
+      setSortDirection('asc')
+    }
   }
 
   const goToPage = (page: number) => {
@@ -173,14 +217,36 @@ export default function DataTable({
             {/* Table Header */}
             <thead className={`bg-gray-100 dark:bg-gray-700 ${headerClassName}`}>
               <tr>
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    className={`px-2 sm:px-6 py-4 text-${column.align || 'left'} text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap ${column.width ? `w-${column.width}` : ''} ${column.className || ''}`}
-                  >
-                    {column.label}
-                  </th>
-                ))}
+                {columns.map((column) => {
+                  const getAlignmentClass = (align?: string) => {
+                    switch (align) {
+                      case 'center': return 'text-center'
+                      case 'right': return 'text-right'
+                      default: return 'text-left'
+                    }
+                  }
+                  
+                  return (
+                    <th
+                      key={column.key}
+                      onClick={() => isSortable(column) && handleSort(column.key)}
+                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap ${column.width ? `w-${column.width}` : ''} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
+                    >
+                      <div className={`flex items-center gap-2 ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                        {column.label}
+                        {isSortable(column) && (
+                          <span className="text-gray-400 dark:text-gray-500">
+                            {sortColumn === column.key ? (
+                              sortDirection === 'asc' ? '↑' : '↓'
+                            ) : (
+                              '⇅'
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             
@@ -193,14 +259,24 @@ export default function DataTable({
                     className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName}`}
                     onClick={() => onRowClick?.(item, index)}
                   >
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={`px-2 sm:px-6 py-3 sm:py-4 text-${column.align || 'left'} text-sm text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''}`}
-                      >
-                        {renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)}
-                      </td>
-                    ))}
+                    {columns.map((column) => {
+                      const getAlignmentClass = (align?: string) => {
+                        switch (align) {
+                          case 'center': return 'text-center'
+                          case 'right': return 'text-right'
+                          default: return 'text-left'
+                        }
+                      }
+                      
+                      return (
+                        <td
+                          key={column.key}
+                          className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''}`}
+                        >
+                          {renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)}
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))
               ) : (
