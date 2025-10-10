@@ -134,6 +134,7 @@ export default function AbsensiPage() {
               meetings={meetings}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isLoading={isLoading}
             />
           )}
 
@@ -142,6 +143,7 @@ export default function AbsensiPage() {
               meetings={meetings}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isLoading={isLoading}
             />
           )}
 
@@ -150,6 +152,7 @@ export default function AbsensiPage() {
               meetings={meetings}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isLoading={isLoading}
             />
           )}
         </div>

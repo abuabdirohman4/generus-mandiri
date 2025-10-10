@@ -124,10 +124,14 @@ const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
 
 export function useMeetings(classId?: string) {
   const [userId, setUserId] = useState<string | null>(null)
+  const [isGettingUserId, setIsGettingUserId] = useState(true)
 
   // Get current user ID for cache key
   useEffect(() => {
-    getCurrentUserId().then(setUserId)
+    getCurrentUserId().then((id) => {
+      setUserId(id)
+      setIsGettingUserId(false)
+    })
   }, [])
 
   const swrKey = userId ? (classId ? `/api/meetings/${classId}/${userId}` : `/api/meetings/${userId}`) : null
@@ -148,10 +152,13 @@ export function useMeetings(classId?: string) {
     }
   )
 
+  // Combined loading state: getting userId OR SWR loading
+  const combinedLoading = isGettingUserId || isLoading
+
   return {
     meetings: data || [],
     error,
-    isLoading,
+    isLoading: combinedLoading,
     mutate
   }
 }

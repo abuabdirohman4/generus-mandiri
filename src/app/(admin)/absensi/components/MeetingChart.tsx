@@ -11,6 +11,7 @@ import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
 import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
+import MeetingChartSkeleton from '@/components/ui/skeleton/MeetingChartSkeleton'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -41,6 +42,7 @@ interface MeetingChartProps {
   onEdit?: (meeting: Meeting) => void
   onDelete?: (meetingId: string) => void
   className?: string
+  isLoading?: boolean
 }
 
 type ChartType = 'line' | 'bar'
@@ -49,7 +51,8 @@ export default function MeetingChart({
   meetings, 
   onEdit, 
   onDelete, 
-  className = '' 
+  className = '',
+  isLoading = false
 }: MeetingChartProps) {
   const [chartType, setChartType] = useState<ChartType>('line')
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
@@ -178,6 +181,12 @@ export default function MeetingChart({
     return null
   }
 
+  // Show skeleton while loading
+  if (isLoading) {
+    return <MeetingChartSkeleton />
+  }
+
+  // Show empty state only when not loading and no meetings
   if (meetings.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>

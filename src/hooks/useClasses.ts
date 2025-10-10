@@ -28,10 +28,14 @@ const fetcher = async (): Promise<Class[]> => {
 
 export function useClasses() {
   const [userId, setUserId] = useState<string | null>(null)
+  const [isGettingUserId, setIsGettingUserId] = useState(true)
 
   // Get current user ID for cache key
   useEffect(() => {
-    getCurrentUserId().then(setUserId)
+    getCurrentUserId().then((id) => {
+      setUserId(id)
+      setIsGettingUserId(false)
+    })
   }, [])
 
   const { data, error, isLoading, mutate } = useSWR<Class[]>(
@@ -44,9 +48,12 @@ export function useClasses() {
     }
   )
 
+  // Combined loading state: getting userId OR SWR loading
+  const combinedLoading = isGettingUserId || isLoading
+
   return {
     classes: data || [],
-    isLoading,
+    isLoading: combinedLoading,
     error,
     mutate
   }

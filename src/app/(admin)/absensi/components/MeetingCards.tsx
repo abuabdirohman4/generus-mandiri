@@ -13,6 +13,7 @@ import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
+import MeetingCardSkeleton from '@/components/ui/skeleton/MeetingCardSkeleton'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -43,13 +44,15 @@ interface MeetingCardsProps {
   onEdit?: (meeting: Meeting) => void
   onDelete?: (meetingId: string) => void
   className?: string
+  isLoading?: boolean
 }
 
 export default function MeetingCards({ 
   meetings, 
   onEdit, 
   onDelete, 
-  className = '' 
+  className = '',
+  isLoading = false
 }: MeetingCardsProps) {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -121,6 +124,12 @@ export default function MeetingCards({
     // Loading state will be cleared when component unmounts or page changes
   }
 
+  // Show skeleton while loading
+  if (isLoading) {
+    return <MeetingCardSkeleton />
+  }
+
+  // Show empty state only when not loading and no meetings
   if (meetings.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>
