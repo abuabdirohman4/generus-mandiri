@@ -40,7 +40,7 @@ export function useMeetings(classId?: string) {
   const [currentPage, setCurrentPage] = useState(1)
   
   // Set to true to enable dummy data toggle in UI
-  const isDummy = true
+  const isDummy = false
   
   const ITEMS_PER_PAGE = 10
 
