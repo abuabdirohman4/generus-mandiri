@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, GroupIcon, UserIcon } from "@/lib/icons";
+import { GridIcon, GroupIcon, ReportIcon, UserIcon } from "@/lib/icons";
 import Spinner from "../ui/spinner/Spinner";
 
 interface NavItem {
@@ -36,8 +35,8 @@ const navItems: NavItem[] = [
   {
     href: "/laporan",
     label: "Laporan",
-    icon: <GroupIcon />,
-    activeIcon: <GroupIcon />,
+    icon: <ReportIcon />,
+    activeIcon: <ReportIcon />,
   },
 ];
 

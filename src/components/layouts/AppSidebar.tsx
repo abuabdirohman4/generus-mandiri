@@ -10,6 +10,7 @@ import {
   ChevronDownIcon,
   GridIcon,
   GroupIcon,
+  ReportIcon,
   UserIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
@@ -51,7 +52,7 @@ const mainNav: NavItem[] = [
   //   path: "/kelas",
   // },
   {
-    icon: <GroupIcon />,
+    icon: <ReportIcon />,
     name: "Laporan",
     path: "/laporan",
   },
