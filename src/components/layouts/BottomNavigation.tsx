@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { GridIcon, GroupIcon, ReportIcon, UserIcon } from "@/lib/icons";
+import { CheckCircleIcon, GridIcon, GroupIcon, ReportIcon, UserIcon } from "@/lib/icons";
 import Spinner from "../ui/spinner/Spinner";
 
 interface NavItem {
@@ -23,14 +23,14 @@ const navItems: NavItem[] = [
   {
     href: "/absensi",
     label: "Absensi",
-    icon: <GroupIcon />,
-    activeIcon: <GroupIcon />,
+    icon: <CheckCircleIcon />,
+    activeIcon: <CheckCircleIcon />,
   },
   {
     href: "/siswa",
     label: "Siswa",
-    icon: <UserIcon />,
-    activeIcon: <UserIcon />,
+    icon: <GroupIcon />,
+    activeIcon: <GroupIcon />,
   },
   {
     href: "/laporan",
@@ -39,11 +39,6 @@ const navItems: NavItem[] = [
     activeIcon: <ReportIcon />,
   },
 ];
-
-// Loading Spinner Component
-function LoadingSpinner({ size = "w-4 h-4" }: { size?: string }) {
-  return <Spinner size={16} colorClass="border-gray-300 border-t-blue-600" />;
-}
 
 export default function BottomNavigation() {
   const pathname = usePathname();
