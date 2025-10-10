@@ -1,0 +1,202 @@
+[
+  {
+    "id": "meeting-1",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2024-01-15",
+    "topic": "Hafalan Surat Al-Fatihah",
+    "description": "Pembelajaran dasar membaca Al-Quran",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": "meeting-2",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2024-01-14",
+    "topic": "Tajwid Dasar",
+    "description": "Belajar hukum-hukum tajwid",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-14T08:00:00Z"
+  },
+  {
+    "id": "meeting-3",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2024-01-13",
+    "topic": "Doa Sehari-hari",
+    "description": "Menghafal doa-doa penting",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-13T08:00:00Z"
+  },
+  {
+    "id": "meeting-4",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2024-01-12",
+    "topic": "Sifat Wajib Allah",
+    "description": "Mengenal sifat-sifat wajib Allah SWT",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-12T08:00:00Z"
+  },
+  {
+    "id": "meeting-5",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2024-01-11",
+    "topic": "Rukun Iman",
+    "description": "Memahami 6 rukun iman",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-11T08:00:00Z"
+  },
+  {
+    "id": "meeting-6",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2024-01-10",
+    "topic": "Rukun Islam",
+    "description": "Memahami 5 rukun islam",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": "meeting-7",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2024-01-09",
+    "topic": "Hafalan Surat Al-Ikhlas",
+    "description": "Menghafal surat pendek",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-09T08:00:00Z"
+  },
+  {
+    "id": "meeting-8",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2024-01-08",
+    "topic": "Adab Membaca Al-Quran",
+    "description": "Tata cara yang benar dalam membaca Al-Quran",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-08T08:00:00Z"
+  },
+  {
+    "id": "meeting-9",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2024-01-07",
+    "topic": "Kisah Nabi",
+    "description": "Belajar dari kisah-kisah nabi",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-07T08:00:00Z"
+  },
+  {
+    "id": "meeting-10",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2024-01-06",
+    "topic": "Hafalan Surat Al-Falaq",
+    "description": "Menghafal surat perlindungan",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-06T08:00:00Z"
+  },
+  {
+    "id": "meeting-11",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2024-01-05",
+    "topic": "Hafalan Surat An-Nas",
+    "description": "Menghafal surat perlindungan",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-05T08:00:00Z"
+  },
+  {
+    "id": "meeting-12",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2024-01-04",
+    "topic": "Sejarah Islam",
+    "description": "Mengenal sejarah perkembangan Islam",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-04T08:00:00Z"
+  },
+  {
+    "id": "meeting-13",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2024-01-03",
+    "topic": "Hafalan Surat Al-Kafirun",
+    "description": "Menghafal surat penolakan",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-03T08:00:00Z"
+  },
+  {
+    "id": "meeting-14",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2024-01-02",
+    "topic": "Hafalan Surat Al-Maun",
+    "description": "Menghafal surat tentang tolong menolong",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-02T08:00:00Z"
+  },
+  {
+    "id": "meeting-15",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2024-01-01",
+    "topic": "Hafalan Surat Al-Kautsar",
+    "description": "Menghafal surat pendek",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2024-01-01T08:00:00Z"
+  },
+  {
+    "id": "meeting-16",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2023-12-31",
+    "topic": "Hafalan Surat Al-Kaafirun",
+    "description": "Menghafal surat penolakan",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2023-12-31T08:00:00Z"
+  },
+  {
+    "id": "meeting-17",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2023-12-30",
+    "topic": "Hafalan Surat Al-Maun",
+    "description": "Menghafal surat tentang tolong menolong",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2023-12-30T08:00:00Z"
+  },
+  {
+    "id": "meeting-18",
+    "class_id": "class-1",
+    "title": "Pengajian Desa",
+    "date": "2023-12-29",
+    "topic": "Hafalan Surat Al-Kautsar",
+    "description": "Menghafal surat pendek",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2023-12-29T08:00:00Z"
+  },
+  {
+    "id": "meeting-19",
+    "class_id": "class-1",
+    "title": "Pengajian Rutin",
+    "date": "2023-12-28",
+    "topic": "Hafalan Surat Al-Kaafirun",
+    "description": "Menghafal surat penolakan",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2023-12-28T08:00:00Z"
+  },
+  {
+    "id": "meeting-20",
+    "class_id": "class-1",
+    "title": "Pengajian Kelompok",
+    "date": "2023-12-27",
+    "topic": "Hafalan Surat Al-Maun",
+    "description": "Menghafal surat tentang tolong menolong",
+    "student_snapshot": ["student-1", "student-2", "student-3", "student-4", "student-5"],
+    "created_at": "2023-12-27T08:00:00Z"
+  }
+]

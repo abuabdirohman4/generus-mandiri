@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMeetings } from './hooks/useMeetings'
 import { useClasses } from '@/hooks/useClasses'
 import { useUserProfile } from '@/stores/userProfileStore'
@@ -12,6 +12,7 @@ import MeetingChart from './components/MeetingChart'
 import ClassFilter from '@/components/shared/ClassFilter'
 import LoadingState from './components/LoadingState'
 import Spinner from '@/components/ui/spinner/Spinner'
+import Pagination from '@/components/ui/pagination/Pagination'
 
 export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
@@ -23,7 +24,18 @@ export default function AbsensiPage() {
     ? userProfile.classes?.[0]?.id || undefined
     : selectedClassFilter && selectedClassFilter.trim() !== '' ? selectedClassFilter : undefined
 
-  const { meetings, isLoading, error, mutate } = useMeetings(classId)
+  const { 
+    meetings, 
+    currentPage,
+    totalPages,
+    goToPage,
+    useDummyData,
+    toggleDummyData,
+    isDummy,
+    isLoading, 
+    error, 
+    mutate 
+  } = useMeetings(classId)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<any>(null)
@@ -49,6 +61,11 @@ export default function AbsensiPage() {
   const handleClassFilterChange = (value: string) => {
     setSelectedClassFilter(value)
   }
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentPage])
 
   // Only show loading skeleton on initial load (when no data yet)
   const initialLoading = (isLoading && meetings.length === 0) || classesLoading
@@ -102,11 +119,30 @@ export default function AbsensiPage() {
             </p>
           </div>
 
-          {/* View Mode Toggle */}
-          <ViewModeToggle
-            currentMode={viewMode}
-            onModeChange={setViewMode}
-          />
+          <div className="flex items-center gap-4">
+            {/* Toggle Dummy Data Button - Only show if isDummy is true */}
+            {isDummy && (
+              <button
+                onClick={toggleDummyData}
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                  useDummyData
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {useDummyData ? 'Dummy Data ON' : 'Dummy Data OFF'}
+              </button>
+            )}
+
+            {/* View Mode Toggle */}
+            <ViewModeToggle
+              currentMode={viewMode}
+              onModeChange={setViewMode}
+            />
+          </div>
         </div>
 
         {/* Class Filter */}
@@ -130,30 +166,60 @@ export default function AbsensiPage() {
         {/* Content */}
         <div className="mb-8">
           {viewMode === 'list' && (
-            <MeetingList
-              meetings={meetings}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-            />
+            <>
+              <MeetingList
+                meetings={meetings}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isLoading={isLoading}
+              />
+              {!isLoading && totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                  className="mt-6"
+                />
+              )}
+            </>
           )}
 
           {viewMode === 'card' && (
-            <MeetingCards
-              meetings={meetings}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-            />
+            <>
+              <MeetingCards
+                meetings={meetings}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isLoading={isLoading}
+              />
+              {!isLoading && totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                  className="mt-6"
+                />
+              )}
+            </>
           )}
 
           {viewMode === 'chart' && (
-            <MeetingChart
-              meetings={meetings}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-            />
+            <>
+              <MeetingChart
+                meetings={meetings}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isLoading={isLoading}
+              />
+              {!isLoading && totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                  className="mt-6"
+                />
+              )}
+            </>
           )}
         </div>
 

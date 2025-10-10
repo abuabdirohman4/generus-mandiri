@@ -229,7 +229,7 @@ export async function createMeeting(data: CreateMeetingData) {
   }
 }
 
-export async function getMeetingsByClass(classId?: string) {
+export async function getMeetingsByClass(classId?: string, limit: number = 10, cursor?: string) {
   try {
     const supabase = await createClient()
     
@@ -267,6 +267,12 @@ export async function getMeetingsByClass(classId?: string) {
         )
       `)
       .order('date', { ascending: false })
+      .limit(limit)
+
+    // If cursor (last meeting date) is provided, get meetings older than cursor
+    if (cursor) {
+      query = query.lt('date', cursor)
+    }
 
     // If user is a teacher, only get their class meetings
     if (profile.role === 'teacher') {
@@ -279,7 +285,7 @@ export async function getMeetingsByClass(classId?: string) {
       if (teacherClass) {
         query = query.eq('class_id', teacherClass.id)
       } else {
-        return { success: true, data: [] }
+        return { success: true, data: [], hasMore: false }
       }
     } else if (classId) {
       query = query.eq('class_id', classId)
@@ -292,7 +298,11 @@ export async function getMeetingsByClass(classId?: string) {
       return { success: false, error: error.message, data: null }
     }
 
-    return { success: true, data: data || [] }
+    return { 
+      success: true, 
+      data: data || [], 
+      hasMore: data?.length === limit 
+    }
   } catch (error) {
     console.error('Error in getMeetingsByClass:', error)
     return { success: false, error: 'Internal server error', data: null }
