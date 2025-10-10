@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { getMeetingsByClass } from '../actions'
+import { getCurrentUserId } from '@/lib/userUtils'
 
 interface Meeting {
   id: any
@@ -30,15 +31,18 @@ interface MeetingWithStats extends Meeting {
 
 const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
   // Extract classId from URL if present
-  // URL format: /api/meetings or /api/meetings/{classId}
+  // URL format: /api/meetings/{userId} or /api/meetings/{classId}/{userId}
   let classId: string | undefined = undefined
   
-  if (url.includes('/api/meetings/') && url !== '/api/meetings') {
+  if (url.includes('/api/meetings/')) {
     const urlParts = url.split('/')
-    const extractedClassId = urlParts[urlParts.length - 1]
-    // Only use if it's a valid UUID format (not empty or 'meetings')
-    if (extractedClassId && extractedClassId !== 'meetings' && extractedClassId.length > 10) {
-      classId = extractedClassId
+    // Check if we have classId (format: /api/meetings/{classId}/{userId})
+    if (urlParts.length > 4) {
+      const extractedClassId = urlParts[3]
+      // Only use if it's a valid UUID format (not empty or 'meetings')
+      if (extractedClassId && extractedClassId !== 'meetings' && extractedClassId.length > 10) {
+        classId = extractedClassId
+      }
     }
   }
   
@@ -119,7 +123,14 @@ const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
 }
 
 export function useMeetings(classId?: string) {
-  const swrKey = classId ? `/api/meetings/${classId}` : '/api/meetings'
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Get current user ID for cache key
+  useEffect(() => {
+    getCurrentUserId().then(setUserId)
+  }, [])
+
+  const swrKey = userId ? (classId ? `/api/meetings/${classId}/${userId}` : `/api/meetings/${userId}`) : null
   
   const { data, error, isLoading, mutate } = useSWR<MeetingWithStats[]>(
     swrKey,
@@ -132,6 +143,7 @@ export function useMeetings(classId?: string) {
         console.error('Error fetching meetings:', error)
         console.error('SWR Key:', swrKey)
         console.error('ClassId:', classId)
+        console.error('UserId:', userId)
       }
     }
   )

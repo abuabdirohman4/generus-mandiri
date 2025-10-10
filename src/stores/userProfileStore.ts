@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { clearUserCache } from '@/lib/userUtils';
 
 interface UserProfile {
   id: string;
@@ -50,12 +51,16 @@ export const useUserProfileStore = create<UserProfileState>()(
         loading: false 
       }),
 
-      clearProfile: () => set({ 
-        profile: null, 
-        avatarUrl: null,
-        loading: false, 
-        error: null 
-      }),
+      clearProfile: () => {
+        // Clear all user-related cache when logging out
+        clearUserCache()
+        set({ 
+          profile: null, 
+          avatarUrl: null,
+          loading: false, 
+          error: null 
+        })
+      },
     }),
     {
       name: 'user-profile-storage',

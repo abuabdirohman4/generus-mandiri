@@ -180,9 +180,9 @@ export const brainDumpKeys = {
 export const studentKeys = {
   all: ['students'] as const,
   lists: () => [...studentKeys.all, 'list'] as const,
-  list: (classId?: string) => [...studentKeys.lists(), classId || 'all'] as const,
+  list: (classId?: string, userId?: string) => [...studentKeys.lists(), classId || 'all', userId || 'current'] as const,
   details: () => [...studentKeys.all, 'detail'] as const,
-  detail: (id: string) => [...studentKeys.details(), id] as const,
+  detail: (id: string, userId?: string) => [...studentKeys.details(), id, userId || 'current'] as const,
 };
 
 /**
@@ -191,7 +191,7 @@ export const studentKeys = {
 export const classKeys = {
   all: ['classes'] as const,
   lists: () => [...classKeys.all, 'list'] as const,
-  list: () => [...classKeys.lists()] as const,
+  list: (userId?: string) => [...classKeys.lists(), userId || 'current'] as const,
 };
 
 /**
@@ -199,7 +199,7 @@ export const classKeys = {
  */
 export const userProfileKeys = {
   all: ['user-profile'] as const,
-  profile: () => [...userProfileKeys.all, 'profile'] as const,
+  profile: (userId?: string) => [...userProfileKeys.all, 'profile', userId || 'current'] as const,
 };
 
 /**

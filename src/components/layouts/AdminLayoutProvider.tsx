@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useUserProfileStore } from '@/stores/userProfileStore';
 import { createClient } from '@/lib/supabase/client';
+import { clearUserCache } from '@/lib/userUtils';
 
 interface AdminLayoutProviderProps {
   children: React.ReactNode;
@@ -73,6 +74,8 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_OUT') {
+          // Clear all user-related cache when signing out
+          clearUserCache();
           setProfile(null);
           setLoading(false);
           setError(null);
