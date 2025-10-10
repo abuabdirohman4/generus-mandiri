@@ -5,13 +5,13 @@ Today
 - optimasi
 
 Absensi
-[] Ubah konsep jadi saat masuk ke halaman ini, user perlu tambah pertemuan
-[] Jadi saat buka halaman ini, langsung menampilkan pertemuannya ada di hari apa saja dan persentase kehadirannya
-[] User bisa edit pertemuan yang sudah berlalu
-[] Di dalam absensi jadi tidak perlu biarkan user bisa ganti ganti hari karena harinya sudah fix saat masuk ke table input absensi nya
+[x] Ubah konsep jadi saat masuk ke halaman ini, user perlu tambah pertemuan
+[x] Jadi saat buka halaman ini, langsung menampilkan pertemuannya ada di hari apa saja dan persentase kehadirannya
+[x] User bisa edit pertemuan yang sudah berlalu
+[x] Di dalam absensi jadi tidak perlu biarkan user bisa ganti ganti hari karena harinya sudah fix saat masuk ke table input absensi nya
 
 [x] + button di pojok kanan bawah
-[] setelah update isi absensi data di list, card nya tidak langsung terupdate
+[x] setelah update isi absensi data di list, card nya tidak langsung terupdate
 [x] delete pakai confirm modal
 
 Siswa

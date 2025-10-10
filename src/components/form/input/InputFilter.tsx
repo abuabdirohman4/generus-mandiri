@@ -16,6 +16,7 @@ interface InputFilterProps {
   allOptionLabel?: string
   disabled?: boolean
   className?: string
+  widthClassName?: string
 }
 
 export default function InputFilter({ 
@@ -26,11 +27,12 @@ export default function InputFilter({
   options,
   allOptionLabel = 'Semua',
   disabled = false,
-  className = ''
+  className = '',
+  widthClassName = ''
 }: InputFilterProps) {
   return (
     <div className={`mb-6 ${className}`}>
-      <div className="max-w-xs">
+      <div className={`max-w-xs ${widthClassName}`}>
         <Label htmlFor={id}>{label}</Label>
         <select
           id={id}

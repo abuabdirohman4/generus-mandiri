@@ -52,6 +52,7 @@ export default function ClassFilter({
         onChange={() => {}} // No-op for teacher
         options={classOptions}
         disabled={true}
+        widthClassName="w-full md:max-w-xs"
       />
     )
   }
@@ -66,6 +67,7 @@ export default function ClassFilter({
         onChange={onClassFilterChange}
         options={classes.map(cls => ({ value: cls.id, label: cls.name }))}
         allOptionLabel="Semua Kelas"
+        widthClassName="!max-w-full md:!max-w-xs"
       />
     )
   }
