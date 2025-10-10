@@ -8,6 +8,7 @@ import Button from '@/components/ui/button/Button'
 import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
+import InputFilter from '@/components/form/input/InputFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -175,21 +176,18 @@ export default function CreateMeetingModal({
             <form onSubmit={handleSubmit}>
               {/* Class Selection */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Kelas
-                </label>
-                <select
+                <InputFilter
+                  options={classes.map(cls => ({
+                    value: cls.id,
+                    label: cls.name
+                  }))}
                   value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                >
-                  {classes.map((cls) => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val: string) => setSelectedClassId(val)}
+                  id="classFilter"   
+                  label="Kelas"
+                  widthClassName="!max-w-full"
+                  className='!mb-0'
+                />
               </div>
 
               {/* Title Field */}
@@ -222,7 +220,7 @@ export default function CreateMeetingModal({
               </div>
 
               {/* Topic */}
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Topik (Opsional)
                 </label>
@@ -233,10 +231,10 @@ export default function CreateMeetingModal({
                   placeholder="Contoh: Hafalan"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
-              </div>
+              </div> */}
 
               {/* Description */}
-              <div className="mb-6">
+              {/* <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Deskripsi (Opsional)
                 </label>
@@ -247,7 +245,7 @@ export default function CreateMeetingModal({
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
                 />
-              </div>
+              </div> */}
 
               {/* Student Preview */}
               {/* {filteredStudents.length > 0 && (

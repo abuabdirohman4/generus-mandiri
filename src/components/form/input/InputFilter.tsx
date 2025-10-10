@@ -25,7 +25,7 @@ export default function InputFilter({
   value,
   onChange,
   options,
-  allOptionLabel = 'Semua',
+  allOptionLabel,
   disabled = false,
   className = '',
   widthClassName = ''
@@ -45,7 +45,9 @@ export default function InputFilter({
             backgroundPosition: 'right 8px center'
           }}
         >
-          <option value="">{allOptionLabel}</option>
+          {allOptionLabel && (
+            <option value="">{allOptionLabel}</option>
+          )}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
