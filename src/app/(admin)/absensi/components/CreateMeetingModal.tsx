@@ -5,7 +5,7 @@ import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import Button from '@/components/ui/button/Button'
-import { createMeeting } from '../actions'
+import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudentsData } from '../hooks/useStudentsData'
 
@@ -17,19 +17,21 @@ interface CreateMeetingModalProps {
   onClose: () => void
   onSuccess: () => void
   classId?: string
+  meeting?: any // Add meeting prop for edit mode
 }
 
 export default function CreateMeetingModal({ 
   isOpen, 
   onClose, 
   onSuccess, 
-  classId 
+  classId,
+  meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
   const [formData, setFormData] = useState({
-    date: dayjs(),
-    title: 'Pengajian Rutin',
-    topic: '',
-    description: ''
+    date: meeting ? dayjs(meeting.date) : dayjs(),
+    title: meeting?.title || 'Pengajian Rutin',
+    topic: meeting?.topic || '',
+    description: meeting?.description || ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassId, setSelectedClassId] = useState<string>('')
@@ -60,6 +62,18 @@ export default function CreateMeetingModal({
     }
   }, [classId, classes])
 
+  // Update useEffect to reinitialize when meeting changes
+  useEffect(() => {
+    if (meeting) {
+      setFormData({
+        date: dayjs(meeting.date),
+        title: meeting.title,
+        topic: meeting.topic || '',
+        description: meeting.description || ''
+      })
+    }
+  }, [meeting])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -75,24 +89,44 @@ export default function CreateMeetingModal({
 
     setIsSubmitting(true)
     try {
-      const result = await createMeeting({
-        classId: selectedClassId,
-        date: formData.date.format('YYYY-MM-DD'),
-        title: formData.title,
-        topic: formData.topic || undefined,
-        description: formData.description || undefined
-      })
-
-      if (result.success) {
-        toast.success('Pertemuan berhasil dibuat!')
-        onSuccess()
-        handleClose()
+      if (meeting) {
+        // Edit mode
+        const result = await updateMeeting(meeting.id, {
+          classId: selectedClassId,
+          date: formData.date.format('YYYY-MM-DD'),
+          title: formData.title,
+          topic: formData.topic || undefined,
+          description: formData.description || undefined
+        })
+        
+        if (result.success) {
+          toast.success('Pertemuan berhasil diperbarui!')
+          onSuccess()
+          handleClose()
+        } else {
+          toast.error('Gagal memperbarui pertemuan: ' + result.error)
+        }
       } else {
-        toast.error('Gagal membuat pertemuan: ' + result.error)
+        // Create mode
+        const result = await createMeeting({
+          classId: selectedClassId,
+          date: formData.date.format('YYYY-MM-DD'),
+          title: formData.title,
+          topic: formData.topic || undefined,
+          description: formData.description || undefined
+        })
+
+        if (result.success) {
+          toast.success('Pertemuan berhasil dibuat!')
+          onSuccess()
+          handleClose()
+        } else {
+          toast.error('Gagal membuat pertemuan: ' + result.error)
+        }
       }
     } catch (error) {
-      console.error('Error creating meeting:', error)
-      toast.error('Terjadi kesalahan saat membuat pertemuan')
+      console.error('Error:', error)
+      toast.error('Terjadi kesalahan')
     } finally {
       setIsSubmitting(false)
     }
@@ -101,7 +135,7 @@ export default function CreateMeetingModal({
   const handleClose = () => {
     setFormData({
       date: dayjs(),
-      title: 'Pengajian',
+      title: 'Pengajian Rutin',
       topic: '',
       description: ''
     })
@@ -125,7 +159,7 @@ export default function CreateMeetingModal({
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Buat Pertemuan Baru
+                {meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
               </h3>
               <button
                 onClick={handleClose}
@@ -250,7 +284,7 @@ export default function CreateMeetingModal({
                   disabled={isSubmitting || studentsLoading || filteredStudents.length === 0}
                   variant="primary"
                 >
-                  {isSubmitting ? 'Membuat...' : 'Buat Pertemuan'}
+                  {isSubmitting ? (meeting ? 'Memperbarui...' : 'Membuat...') : (meeting ? 'Perbarui' : 'Buat Pertemuan')}
                 </Button>
               </div>
             </form>

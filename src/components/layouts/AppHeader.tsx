@@ -42,8 +42,8 @@ function PageTitle() {
 
   // If page needs back button
   const needsBackButton = (path: string) => {
-    return path.startsWith('/absensi/'); // Include all absensi sub-pages including meeting IDs
-          //  path === '/absensi' || 
+    return path === '/absensi' || 
+           path.startsWith('/absensi/'); // Include all absensi sub-pages including meeting IDs
           //  path === '/siswa' || 
           //  path === '/laporan';
   };

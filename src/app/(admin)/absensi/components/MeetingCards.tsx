@@ -8,6 +8,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { updateMeeting, deleteMeeting } from '../actions'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
+import CreateMeetingModal from './CreateMeetingModal'
+import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 
 // Set Indonesian locale
@@ -47,7 +50,10 @@ export default function MeetingCards({
   onDelete, 
   className = '' 
 }: MeetingCardsProps) {
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null)
+  const [loadingMeetingId, setLoadingMeetingId] = useState<string | null>(null)
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean
     meetingId: string
@@ -61,6 +67,9 @@ export default function MeetingCards({
   const handleEdit = async (meeting: Meeting) => {
     if (onEdit) {
       onEdit(meeting)
+    } else {
+      setEditingMeeting(meeting)
+      setShowEditModal(true)
     }
   }
 
@@ -103,6 +112,12 @@ export default function MeetingCards({
       meetingId: '',
       meetingTitle: ''
     })
+  }
+
+  const handleMeetingClick = (meetingId: string) => {
+    setLoadingMeetingId(meetingId)
+    // The Link component will handle navigation
+    // Loading state will be cleared when component unmounts or page changes
   }
 
   const getStatusColor = (percentage: number) => {
@@ -148,63 +163,58 @@ export default function MeetingCards({
         ].filter(item => item.value > 0) // Only show categories with data
 
         return (
-          <div
+          <Link
             key={meeting.id}
-            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+            href={`/absensi/${meeting.id}`}
+            className="block"
+            onClick={() => handleMeetingClick(meeting.id)}
           >
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                    {meeting.title}
-                  </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    {dayjs(meeting.date).format('DD MMM YYYY')}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {meeting.classes[0]?.name || ''}
-                  </p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer relative">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                      {meeting.title}
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      {dayjs(meeting.date).format('DD MMM YYYY')}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {meeting.classes[0]?.name || ''}
+                    </p>
+                  </div>
+
+                  {/* Dropdown Menu */}
+                  <div className="ml-2">
+                    <DropdownMenu
+                      items={[
+                        {
+                          label: 'Edit Info',
+                          onClick: () => {
+                            setEditingMeeting(meeting)
+                            setShowEditModal(true)
+                          },
+                          icon: (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          )
+                        },
+                        {
+                          label: 'Hapus',
+                          variant: 'danger',
+                          onClick: () => handleDeleteClick(meeting.id, meeting.title),
+                          icon: (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )
+                        }
+                      ]}
+                    />
+                  </div>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 ml-2">
-                  <Link
-                    href={`/absensi/${meeting.id}`}
-                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    title="Input Absensi"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </Link>
-
-                  <button
-                    onClick={() => handleEdit(meeting)}
-                    className="p-2 text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors"
-                    title="Edit Pertemuan"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-
-                  <button
-                    onClick={() => handleDeleteClick(meeting.id, meeting.title)}
-                    disabled={deletingMeetingId === meeting.id}
-                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-                    title="Hapus Pertemuan"
-                  >
-                    {deletingMeetingId === meeting.id ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
 
               {/* Topic */}
               {meeting.topic && (
@@ -281,7 +291,18 @@ export default function MeetingCards({
                 </p>
               </div>
             </div>
+
+            {/* Loading Overlay */}
+            {loadingMeetingId === meeting.id && (
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
+                <div className="flex flex-col items-center gap-2">
+                  <Spinner size={24} />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Memuat...</span>
+                </div>
+              </div>
+            )}
           </div>
+          </Link>
         )
       })}
     </div>
@@ -297,6 +318,21 @@ export default function MeetingCards({
       cancelText="Batal"
       isDestructive={true}
       isLoading={deletingMeetingId === deleteModal.meetingId}
+    />
+
+    {/* Edit Modal */}
+    <CreateMeetingModal
+      isOpen={showEditModal}
+      onClose={() => {
+        setShowEditModal(false)
+        setEditingMeeting(null)
+      }}
+      onSuccess={() => {
+        onDelete?.('') // Trigger refresh
+        setShowEditModal(false)
+        setEditingMeeting(null)
+      }}
+      meeting={editingMeeting}
     />
   </>
   )
