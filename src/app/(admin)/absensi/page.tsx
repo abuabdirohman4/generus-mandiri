@@ -18,7 +18,18 @@ import Pagination from '@/components/ui/pagination/Pagination'
 export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
   const { classes, isLoading: classesLoading } = useClasses()
-  const [selectedClassFilter, setSelectedClassFilter] = useState('')
+  
+  // Get UI state from Zustand store
+  const { 
+    viewMode, 
+    setViewMode,
+    selectedClassFilter,
+    setSelectedClassFilter,
+    showCreateModal,
+    setShowCreateModal,
+    editingMeeting,
+    setEditingMeeting
+  } = useAbsensiUIStore()
   
   // Determine classId based on user role
   const classId = userProfile?.role === 'teacher' 
@@ -37,9 +48,6 @@ export default function AbsensiPage() {
     error, 
     mutate 
   } = useMeetings(classId)
-  const { viewMode, setViewMode } = useAbsensiUIStore()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingMeeting, setEditingMeeting] = useState<any>(null)
 
   // Track revalidating state
   const isRevalidating = isLoading && meetings.length > 0

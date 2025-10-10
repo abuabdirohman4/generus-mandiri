@@ -12,6 +12,18 @@ interface AbsensiUIStore {
   currentPage: number
   setCurrentPage: (page: number) => void
   
+  // Class filter state
+  selectedClassFilter: string
+  setSelectedClassFilter: (classId: string) => void
+  
+  // Modal state
+  showCreateModal: boolean
+  setShowCreateModal: (show: boolean) => void
+  
+  // Editing meeting state
+  editingMeeting: any | null
+  setEditingMeeting: (meeting: any | null) => void
+  
   // Reset function
   reset: () => void
 }
@@ -19,6 +31,9 @@ interface AbsensiUIStore {
 const initialState = {
   viewMode: 'list' as ViewMode,
   currentPage: 1,
+  selectedClassFilter: '',
+  showCreateModal: false,
+  editingMeeting: null,
 }
 
 export const useAbsensiUIStore = create<AbsensiUIStore>()(
@@ -28,14 +43,18 @@ export const useAbsensiUIStore = create<AbsensiUIStore>()(
       
       setViewMode: (mode: ViewMode) => set({ viewMode: mode }),
       setCurrentPage: (page: number) => set({ currentPage: page }),
+      setSelectedClassFilter: (classId: string) => set({ selectedClassFilter: classId }),
+      setShowCreateModal: (show: boolean) => set({ showCreateModal: show }),
+      setEditingMeeting: (meeting: any | null) => set({ editingMeeting: meeting }),
       
       reset: () => set(initialState),
     }),
     {
       name: 'absensi-ui-store',
-      // Only persist viewMode, not currentPage (reset on each session)
+      // Persist user preferences, not transient UI state
       partialize: (state) => ({ 
-        viewMode: state.viewMode 
+        viewMode: state.viewMode,
+        selectedClassFilter: state.selectedClassFilter
       }),
     }
   )
