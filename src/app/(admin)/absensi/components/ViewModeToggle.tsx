@@ -1,36 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { GridIcon } from '@/lib/icons'
+import { useAbsensiUIStore } from '@/stores/absensiUIStore'
 
 export type ViewMode = 'list' | 'card' | 'chart'
 
 interface ViewModeToggleProps {
-  currentMode: ViewMode
-  onModeChange: (mode: ViewMode) => void
   className?: string
 }
 
 export default function ViewModeToggle({ 
-  currentMode, 
-  onModeChange, 
   className = '' 
 }: ViewModeToggleProps) {
+  const { viewMode, setViewMode } = useAbsensiUIStore()
   const [mounted, setMounted] = useState(false)
 
-  // Persist view mode preference
   useEffect(() => {
     setMounted(true)
-    const savedMode = localStorage.getItem('attendance-view-mode') as ViewMode
-    if (savedMode && ['list', 'card', 'chart'].includes(savedMode)) {
-      onModeChange(savedMode)
-    }
-  }, [onModeChange])
-
-  const handleModeChange = (mode: ViewMode) => {
-    onModeChange(mode)
-    localStorage.setItem('attendance-view-mode', mode)
-  }
+  }, [])
 
   if (!mounted) {
     return (
@@ -80,10 +67,10 @@ export default function ViewModeToggle({
       {modes.map(({ mode, icon, label }) => (
         <button
           key={mode}
-          onClick={() => handleModeChange(mode)}
+          onClick={() => setViewMode(mode)}
           className={`
             p-2 rounded-lg transition-colors duration-200
-            ${currentMode === mode
+            ${viewMode === mode
               ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400'
               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
             }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useMeetings } from './hooks/useMeetings'
 import { useClasses } from '@/hooks/useClasses'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { useAbsensiUIStore } from '@/stores/absensiUIStore'
 import ViewModeToggle, { ViewMode } from './components/ViewModeToggle'
 import CreateMeetingModal from './components/CreateMeetingModal'
 import MeetingList from './components/MeetingList'
@@ -36,7 +37,7 @@ export default function AbsensiPage() {
     error, 
     mutate 
   } = useMeetings(classId)
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const { viewMode, setViewMode } = useAbsensiUIStore()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<any>(null)
 
@@ -138,10 +139,7 @@ export default function AbsensiPage() {
             )}
 
             {/* View Mode Toggle */}
-            <ViewModeToggle
-              currentMode={viewMode}
-              onModeChange={setViewMode}
-            />
+            <ViewModeToggle />
           </div>
         </div>
 

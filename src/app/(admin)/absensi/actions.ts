@@ -491,3 +491,134 @@ export async function getAttendanceByMeeting(meetingId: string) {
     return { success: false, error: 'Internal server error', data: null }
   }
 }
+
+export async function getMeetingsWithStats(classId?: string, limit: number = 10, cursor?: string) {
+  try {
+    const supabase = await createClient()
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'User not authenticated', data: null }
+    }
+
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      return { success: false, error: 'User profile not found', data: null }
+    }
+
+    // Build meetings query
+    let query = supabase
+      .from('meetings')
+      .select(`
+        id,
+        class_id,
+        title,
+        date,
+        topic,
+        description,
+        student_snapshot,
+        created_at,
+        classes (
+          id,
+          name
+        )
+      `)
+      .order('date', { ascending: false })
+      .limit(limit)
+
+    // If cursor (last meeting date) is provided, get meetings older than cursor
+    if (cursor) {
+      query = query.lt('date', cursor)
+    }
+
+    // If user is a teacher, only get their class meetings
+    if (profile.role === 'teacher') {
+      const { data: teacherClass } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('teacher_id', user.id)
+        .single()
+
+      if (teacherClass) {
+        query = query.eq('class_id', teacherClass.id)
+      } else {
+        return { success: true, data: [], hasMore: false }
+      }
+    } else if (classId) {
+      query = query.eq('class_id', classId)
+    }
+
+    const { data: meetings, error: meetingsError } = await query
+
+    if (meetingsError) {
+      console.error('Error fetching meetings:', meetingsError)
+      return { success: false, error: meetingsError.message, data: null }
+    }
+
+    if (!meetings || meetings.length === 0) {
+      return { success: true, data: [], hasMore: false }
+    }
+
+    // Get all meeting IDs
+    const meetingIds = meetings.map(meeting => meeting.id)
+
+    // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
+    const { data: attendanceData, error: attendanceError } = await supabase
+      .from('attendance_logs')
+      .select('meeting_id, status')
+      .in('meeting_id', meetingIds)
+
+    if (attendanceError) {
+      console.error('Error fetching attendance data:', attendanceError)
+      return { success: false, error: attendanceError.message, data: null }
+    }
+
+    // Group attendance by meeting_id
+    const attendanceByMeeting = (attendanceData || []).reduce((acc, record) => {
+      if (!acc[record.meeting_id]) acc[record.meeting_id] = []
+      acc[record.meeting_id].push(record)
+      return acc
+    }, {} as Record<string, any[]>)
+
+    // Process meetings with stats
+    const meetingsWithStats = meetings.map(meeting => {
+      const meetingAttendance = attendanceByMeeting[meeting.id] || []
+      const totalStudents = meeting.student_snapshot.length
+      
+      const presentCount = meetingAttendance.filter(record => record.status === 'H').length
+      const absentCount = meetingAttendance.filter(record => record.status === 'A').length
+      const sickCount = meetingAttendance.filter(record => record.status === 'S').length
+      const excusedCount = meetingAttendance.filter(record => record.status === 'I').length
+      
+      const attendancePercentage = totalStudents > 0 
+        ? Math.round((presentCount / totalStudents) * 100)
+        : 0
+
+      return {
+        ...meeting,
+        attendancePercentage,
+        totalStudents,
+        presentCount,
+        absentCount,
+        sickCount,
+        excusedCount
+      }
+    })
+
+    return { 
+      success: true, 
+      data: meetingsWithStats, 
+      hasMore: meetings.length === limit 
+    }
+  } catch (error) {
+    console.error('Error in getMeetingsWithStats:', error)
+    return { success: false, error: 'Internal server error', data: null }
+  }
+}

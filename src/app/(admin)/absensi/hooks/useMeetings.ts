@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
-import { getMeetingsByClass } from '../actions'
+import { getMeetingsByClass, getMeetingsWithStats } from '../actions'
 import { getCurrentUserId } from '@/lib/userUtils'
+import { useAbsensiUIStore } from '@/stores/absensiUIStore'
 import dummyMeetings from '@/lib/dummy/meetings.json'
 
 interface Meeting {
@@ -52,7 +53,7 @@ const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
   if (!result.success) {
     throw new Error(result.error || 'Failed to fetch meetings')
   }
-
+  
   const meetings = result.data || []
   
   // For each meeting, fetch attendance data and calculate stats
@@ -126,9 +127,11 @@ const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
 export function useMeetings(classId?: string) {
   const [userId, setUserId] = useState<string | null>(null)
   const [isGettingUserId, setIsGettingUserId] = useState(true)
-  const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [useDummyData, setUseDummyData] = useState(false)
+  
+  // Get currentPage from Zustand store
+  const { currentPage, setCurrentPage } = useAbsensiUIStore()
   
   // Set to true to enable dummy data toggle in UI
   const isDummy = false
@@ -145,8 +148,8 @@ export function useMeetings(classId?: string) {
 
   // Reset page when classId changes
   useEffect(() => {
-    setPage(1)
-  }, [classId])
+    setCurrentPage(1)
+  }, [classId, setCurrentPage])
 
   // Process dummy data with mock stats
   const processDummyData = (meetings: any[]) => {
@@ -188,7 +191,7 @@ export function useMeetings(classId?: string) {
   }
 
   const swrKey = userId 
-    ? `${classId ? `/api/meetings/${classId}/${userId}` : `/api/meetings/${userId}`}?page=${page}&dummy=${useDummyData}`
+    ? `${classId ? `/api/meetings/${classId}/${userId}` : `/api/meetings/${userId}`}?page=${currentPage}&dummy=${useDummyData}`
     : null
 
   const { data, error, isLoading, mutate } = useSWR<{
@@ -200,7 +203,7 @@ export function useMeetings(classId?: string) {
     async () => {
       // If using dummy data, return processed dummy data
       if (useDummyData) {
-        const startIndex = (page - 1) * ITEMS_PER_PAGE
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
         const endIndex = startIndex + ITEMS_PER_PAGE
         const paginatedDummy = dummyMeetings.slice(startIndex, endIndex)
         const processedDummy = processDummyData(paginatedDummy)
@@ -215,98 +218,34 @@ export function useMeetings(classId?: string) {
         }
       }
 
-      // Original database logic
-      const cursor = await getCursor(page)
-      const result = await getMeetingsByClass(classId, ITEMS_PER_PAGE, cursor)
-      
+      // Use optimized getMeetingsWithStats function to avoid N+1 queries
+      const cursor = await getCursor(currentPage)
+      const result = await getMeetingsWithStats(classId, ITEMS_PER_PAGE, cursor)
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch meetings')
       }
 
-      // Process meetings with stats using the existing fetcher logic
-      const meetings = result.data || []
-      const meetingsWithStats = await Promise.all(
-        meetings.map(async (meeting) => {
-          try {
-            // Import the supabase client
-            const { createClient } = await import('@/lib/supabase/client')
-            const supabase = createClient()
-            
-            // Fetch attendance data for this meeting
-            const { data: attendanceData, error: attendanceError } = await supabase
-              .from('attendance_logs')
-              .select('status')
-              .eq('meeting_id', meeting.id)
+      // getMeetingsWithStats ALREADY returns meetings with stats!
+      const meetingsWithStats = result.data || []
 
-            if (attendanceError) {
-              console.error(`Error fetching attendance for meeting ${meeting.id}:`, attendanceError)
-              // Return meeting with zero stats if error
-              return {
-                ...meeting,
-                attendancePercentage: 0,
-                totalStudents: meeting.student_snapshot.length,
-                presentCount: 0,
-                absentCount: 0,
-                sickCount: 0,
-                excusedCount: 0
-              }
-            }
-
-            // Calculate attendance statistics
-            const totalStudents = meeting.student_snapshot.length
-            const presentCount = attendanceData?.filter(record => record.status === 'H').length || 0
-            const absentCount = attendanceData?.filter(record => record.status === 'A').length || 0
-            const sickCount = attendanceData?.filter(record => record.status === 'S').length || 0
-            const excusedCount = attendanceData?.filter(record => record.status === 'I').length || 0
-            
-            // Calculate attendance percentage based on snapshot
-            const attendancePercentage = totalStudents > 0 
-              ? Math.round((presentCount / totalStudents) * 100)
-              : 0
-
-            return {
-              ...meeting,
-              attendancePercentage,
-              totalStudents,
-              presentCount,
-              absentCount,
-              sickCount,
-              excusedCount
-            }
-          } catch (error) {
-            console.error(`Error processing meeting ${meeting.id}:`, error)
-            // Return meeting with zero stats if error
-            return {
-              ...meeting,
-              attendancePercentage: 0,
-              totalStudents: meeting.student_snapshot.length,
-              presentCount: 0,
-              absentCount: 0,
-              sickCount: 0,
-              excusedCount: 0
-            }
-          }
-        })
-      )
-
-      // Get total count for pagination
+      // Get total count for pagination  
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
-      
+
       let countQuery = supabase
         .from('meetings')
         .select('*', { count: 'exact', head: true })
 
-      // Apply same filters as the main query
       if (classId) {
         countQuery = countQuery.eq('class_id', classId)
       }
 
       const { count } = await countQuery
-      
+
       const totalPages = Math.ceil((count || 0) / ITEMS_PER_PAGE)
       setTotalPages(totalPages)
-      
+
       return {
         meetings: meetingsWithStats,
         hasMore: result.hasMore || false,
@@ -328,13 +267,13 @@ export function useMeetings(classId?: string) {
 
   const goToPage = (pageNum: number) => {
     if (pageNum >= 1 && pageNum <= totalPages) {
-      setPage(pageNum)
+      setCurrentPage(pageNum)
     }
   }
 
   const toggleDummyData = () => {
     setUseDummyData(!useDummyData)
-    setPage(1) // Reset to first page
+    setCurrentPage(1) // Reset to first page
   }
 
   // Combined loading state: getting userId OR SWR loading
@@ -342,12 +281,12 @@ export function useMeetings(classId?: string) {
 
   return {
     meetings: data?.meetings || [],
-    currentPage: page,
+    currentPage,
     totalPages,
     hasMore: data?.hasMore || false,
     goToPage,
-    nextPage: () => goToPage(page + 1),
-    prevPage: () => goToPage(page - 1),
+    nextPage: () => goToPage(currentPage + 1),
+    prevPage: () => goToPage(currentPage - 1),
     useDummyData,
     toggleDummyData,
     isDummy,
