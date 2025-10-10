@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/modal'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
+import InputFilter from '@/components/form/input/InputFilter'
 
 interface Student {
   id: string
@@ -137,46 +138,48 @@ export default function StudentModal({
           {/* Only show class selection for admins */}
           {userProfile?.role === 'admin' && (
             <div>
-              <Label htmlFor="classId">Kelas</Label>
-              <select
+              <InputFilter
                 id="classId"
+                label="Kelas"
                 value={formData.classId}
-                onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 8px center'
-                }}
-                required
-              >
-                <option value="">Pilih kelas</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value: string) => setFormData({ ...formData, classId: value })}
+                options={classes.map((cls) => ({
+                  value: cls.id,
+                  label: cls.name,
+                }))}
+                allOptionLabel="Pilih kelas"
+                widthClassName="!max-w-full"
+              />
             </div>
           )}
 
           {/* Show class info for teachers */}
           {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name && (
             <div>
-              <Label>Kelas</Label>
+              {/* <Label>Kelas</Label>
               <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
                 {userProfile.classes[0].name}
-              </div>
+              </div> */}
+              <InputFilter
+                id="classId"
+                label="Kelas"
+                value={formData.classId}
+                onChange={(value: string) => setFormData({ ...formData, classId: value })}
+                options={classes
+                  .filter((cls) =>
+                    userProfile?.classes?.some((teacherClass) => teacherClass.id === cls.id)
+                  )
+                  .map((cls) => ({
+                    value: cls.id,
+                    label: cls.name,
+                  }))
+                }
+                widthClassName="!max-w-full"
+              />
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2"
-            >
-              {submitting ? 'Menyimpan...' : 'Simpan'}
-            </Button>
+          <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
               onClick={handleClose}
@@ -184,6 +187,13 @@ export default function StudentModal({
               className="px-4 py-2"
             >
               Batal
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2"
+            >
+              {submitting ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </div>
         </form>
