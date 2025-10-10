@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState,useCallback } from "react";
 
 import { useSidebar } from "@/stores/sidebarStore";
 import {
+  CheckCircleIcon,
   ChevronDownIcon,
   GridIcon,
   GroupIcon,
@@ -30,12 +31,12 @@ const mainNav: NavItem[] = [
     path: "/home",
   },
   {
-    icon: <GroupIcon />,
+    icon: <CheckCircleIcon />,
     name: "Absensi",
     path: "/absensi",
   },
   {
-    icon: <UserIcon />,
+    icon: <GroupIcon />,
     name: "Siswa",
     path: "/siswa",
   },

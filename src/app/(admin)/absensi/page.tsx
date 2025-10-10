@@ -2,15 +2,27 @@
 
 import { useState } from 'react'
 import { useMeetings } from './hooks/useMeetings'
+import { useClasses } from '@/hooks/useClasses'
+import { useUserProfile } from '@/stores/userProfileStore'
 import ViewModeToggle, { ViewMode } from './components/ViewModeToggle'
 import CreateMeetingModal from './components/CreateMeetingModal'
 import MeetingList from './components/MeetingList'
 import MeetingCards from './components/MeetingCards'
 import MeetingChart from './components/MeetingChart'
+import ClassFilter from '@/components/shared/ClassFilter'
 import LoadingState from './components/LoadingState'
 
 export default function AbsensiPage() {
-  const { meetings, isLoading, error, mutate } = useMeetings()
+  const { profile: userProfile } = useUserProfile()
+  const { classes, isLoading: classesLoading } = useClasses()
+  const [selectedClassFilter, setSelectedClassFilter] = useState('')
+  
+  // Determine classId based on user role
+  const classId = userProfile?.role === 'teacher' 
+    ? userProfile.classes?.[0]?.id || undefined
+    : selectedClassFilter && selectedClassFilter.trim() !== '' ? selectedClassFilter : undefined
+
+  const { meetings, isLoading, error, mutate } = useMeetings(classId)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<any>(null)
@@ -30,7 +42,14 @@ export default function AbsensiPage() {
     mutate() // Refresh meetings list
   }
 
-  if (isLoading) {
+  const handleClassFilterChange = (value: string) => {
+    setSelectedClassFilter(value)
+  }
+
+  // Combined loading state
+  const combinedLoading = isLoading || classesLoading
+
+  if (combinedLoading) {
     return <LoadingState />
   }
 
@@ -69,7 +88,10 @@ export default function AbsensiPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Daftar Pertemuan
+              Pengajian
+              {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name && (
+                <> {userProfile.classes[0].name}</>
+              )}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Kelola pertemuan dan kehadiran siswa
@@ -82,6 +104,14 @@ export default function AbsensiPage() {
             onModeChange={setViewMode}
           />
         </div>
+
+        {/* Class Filter */}
+        <ClassFilter
+          userProfile={userProfile}
+          classes={classes}
+          selectedClassFilter={selectedClassFilter}
+          onClassFilterChange={handleClassFilterChange}
+        />
 
         {/* Content */}
         <div className="mb-8">
@@ -129,6 +159,7 @@ export default function AbsensiPage() {
             setEditingMeeting(null)
           }}
           onSuccess={handleCreateSuccess}
+          classId={classId}
         />
       </div>
     </div>

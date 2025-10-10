@@ -2,7 +2,8 @@
 
 import Button from '@/components/ui/button/Button'
 import SiswaSkeleton from '@/components/ui/skeleton/SiswaSkeleton'
-import { StatsCards, ClassFilter, StudentModal, StudentsTable } from './components'
+import ClassFilter from '@/components/shared/ClassFilter'
+import { StatsCards, StudentModal, StudentsTable } from './components'
 import { useSiswaPage } from './hooks'
 
 export default function SiswaPage() {

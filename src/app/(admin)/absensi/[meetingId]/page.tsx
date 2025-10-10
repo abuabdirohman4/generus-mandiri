@@ -32,6 +32,8 @@ export default function MeetingAttendancePage() {
     getAttendanceStats
   } = useMeetingAttendance(meetingId)
 
+  console.log('meeting', meeting)
+
   const [saving, setSaving] = useState(false)
   const [showReasonModal, setShowReasonModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
@@ -187,30 +189,29 @@ export default function MeetingAttendancePage() {
           </div> */}
 
           {/* Meeting Info */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+          {/* <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {meeting.topic && (
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    {meeting.topic}
+                    Topik: {meeting.topic}
                   </h3>
                 )}
                 {meeting.description && (
                   <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    {meeting.description}
+                    Deskripsi: {meeting.description}
                   </p>
                 )}
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span>Total: {meeting.totalStudents} siswa</span>
-                  <span>Dibuat: {dayjs(meeting.created_at).format('DD/MM/YYYY HH:mm')}</span>
+                  <span>{dayjs(meeting.date).format('dddd, DD MMMM YYYY')}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Summary Card */}
           <SummaryCard
-            title={`Kehadiran: ${localAttendancePercentage}%`}
+            title={`Siswa (${meeting.student_snapshot?.length} orang)`}
             subtitle={`${localStats.hadir} hadir, ${localStats.absen} alfa, ${localStats.izin} izin, ${localStats.sakit} sakit`}
             percentage={localAttendancePercentage}
             percentageLabel="Kehadiran"
@@ -228,12 +229,6 @@ export default function MeetingAttendancePage() {
 
         {/* Save Button */}
         <div className="flex justify-center sm:justify-end gap-4">
-          {/* <Button
-            onClick={goBack}
-            variant="outline"
-          >
-            Kembali
-          </Button> */}
           <Button
             onClick={handleSave}
             disabled={saving}

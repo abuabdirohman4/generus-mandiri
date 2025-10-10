@@ -29,7 +29,20 @@ interface MeetingWithStats extends Meeting {
 }
 
 const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
-  const result = await getMeetingsByClass()
+  // Extract classId from URL if present
+  // URL format: /api/meetings or /api/meetings/{classId}
+  let classId: string | undefined = undefined
+  
+  if (url.includes('/api/meetings/') && url !== '/api/meetings') {
+    const urlParts = url.split('/')
+    const extractedClassId = urlParts[urlParts.length - 1]
+    // Only use if it's a valid UUID format (not empty or 'meetings')
+    if (extractedClassId && extractedClassId !== 'meetings' && extractedClassId.length > 10) {
+      classId = extractedClassId
+    }
+  }
+  
+  const result = await getMeetingsByClass(classId)
   
   if (!result.success) {
     throw new Error(result.error || 'Failed to fetch meetings')
@@ -105,9 +118,11 @@ const fetcher = async (url: string): Promise<MeetingWithStats[]> => {
   return meetingsWithStats
 }
 
-export function useMeetings() {
+export function useMeetings(classId?: string) {
+  const swrKey = classId ? `/api/meetings/${classId}` : '/api/meetings'
+  
   const { data, error, isLoading, mutate } = useSWR<MeetingWithStats[]>(
-    '/api/meetings',
+    swrKey,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -115,6 +130,8 @@ export function useMeetings() {
       dedupingInterval: 30000, // 30 seconds cache
       onError: (error) => {
         console.error('Error fetching meetings:', error)
+        console.error('SWR Key:', swrKey)
+        console.error('ClassId:', classId)
       }
     }
   )
