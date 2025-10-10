@@ -3,17 +3,10 @@
 import React, { useCallback } from 'react'
 import { saveAttendance } from '../actions'
 import { toast } from 'sonner'
-import { useStudentsData } from './useStudentsData'
+import { useStudents } from '@/hooks/useStudents'
 import { useAttendanceData } from './useAttendanceData'
 import { useAttendanceStore } from '../stores/attendanceStore'
 
-interface Student {
-  id: string
-  name: string
-  gender: string
-  class_name: string
-  class_id: string
-}
 
 interface AttendanceData {
   [studentId: string]: {
@@ -38,7 +31,7 @@ export function useAttendance() {
   } = useAttendanceStore()
   
   // Get data from SWR hooks
-  const { students: swrStudents, isLoading: studentsLoading, error: studentsError } = useStudentsData()
+  const { students: swrStudents, isLoading: studentsLoading, error: studentsError } = useStudents()
   const { attendance: swrAttendance, isLoading: attendanceLoading, mutate: mutateAttendance } = useAttendanceData(selectedDate)
   
   // Combined loading state
@@ -47,7 +40,15 @@ export function useAttendance() {
   // Update store when SWR data changes
   React.useEffect(() => {
     if (swrStudents.length > 0) {
-      setStudents(swrStudents)
+      // Transform global Student interface to attendance store format
+      const transformedStudents = swrStudents.map(student => ({
+        id: student.id,
+        name: student.name,
+        gender: student.gender || '',
+        class_name: student.class_name || '',
+        class_id: student.class_id
+      }))
+      setStudents(transformedStudents)
     }
   }, [swrStudents, setStudents])
 

@@ -11,6 +11,7 @@ import MeetingCards from './components/MeetingCards'
 import MeetingChart from './components/MeetingChart'
 import ClassFilter from '@/components/shared/ClassFilter'
 import LoadingState from './components/LoadingState'
+import Spinner from '@/components/ui/spinner/Spinner'
 
 export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
@@ -26,6 +27,9 @@ export default function AbsensiPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingMeeting, setEditingMeeting] = useState<any>(null)
+
+  // Track revalidating state
+  const isRevalidating = isLoading && meetings.length > 0
 
   const handleCreateSuccess = () => {
     mutate() // Refresh meetings list
@@ -46,10 +50,10 @@ export default function AbsensiPage() {
     setSelectedClassFilter(value)
   }
 
-  // Combined loading state
-  const combinedLoading = isLoading || classesLoading
+  // Only show loading skeleton on initial load (when no data yet)
+  const initialLoading = (isLoading && meetings.length === 0) || classesLoading
 
-  if (combinedLoading) {
+  if (initialLoading) {
     return <LoadingState />
   }
 
@@ -112,6 +116,16 @@ export default function AbsensiPage() {
           selectedClassFilter={selectedClassFilter}
           onClassFilterChange={handleClassFilterChange}
         />
+
+        {/* Revalidating Overlay */}
+        {isRevalidating && (
+          <div className="fixed top-20 right-6 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
+              <Spinner size={20} />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Memperbarui data...</span>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="mb-8">

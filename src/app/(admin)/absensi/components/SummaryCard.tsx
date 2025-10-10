@@ -1,5 +1,7 @@
 'use client'
 
+import { getStatusBgColor, getStatusColor } from "@/lib/percentages"
+
 interface SummaryCardProps {
   title: string
   subtitle?: string
@@ -33,6 +35,9 @@ export default function SummaryCard({
         {percentage !== undefined && (
           <div className="text-center">
             <div className="text-sm">{percentageLabel}</div>
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBgColor(percentage)} ${getStatusColor(percentage)}`}>
+              {percentage}%
+            </div>
             <div className="font-bold text-blue-600 dark:text-blue-400">
               {percentage}%
             </div>

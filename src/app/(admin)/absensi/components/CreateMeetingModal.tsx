@@ -7,7 +7,7 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import Button from '@/components/ui/button/Button'
 import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
-import { useStudentsData } from '../hooks/useStudentsData'
+import { useStudents } from '@/hooks/useStudents'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -36,14 +36,14 @@ export default function CreateMeetingModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassId, setSelectedClassId] = useState<string>('')
 
-  const { students, isLoading: studentsLoading } = useStudentsData()
+  const { students, isLoading: studentsLoading } = useStudents()
 
   // Get unique classes from students
   const classes = students.reduce((acc, student) => {
     if (!acc.find(c => c.id === student.class_id)) {
       acc.push({
         id: student.class_id,
-        name: student.class_name
+        name: student.class_name || ''
       })
     }
     return acc

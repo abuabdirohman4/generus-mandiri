@@ -11,6 +11,7 @@ import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
 import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
+import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -127,18 +128,6 @@ export default function MeetingList({
     setLoadingMeetingId(meetingId)
     // The Link component will handle navigation
     // Loading state will be cleared when component unmounts or page changes
-  }
-
-  const getStatusColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600 dark:text-green-400'
-    if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400'
-    return 'text-red-600 dark:text-red-400'
-  }
-
-  const getStatusBgColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-green-100 dark:bg-green-900'
-    if (percentage >= 60) return 'bg-yellow-100 dark:bg-yellow-900'
-    return 'bg-red-100 dark:bg-red-900'
   }
 
   if (meetings.length === 0) {

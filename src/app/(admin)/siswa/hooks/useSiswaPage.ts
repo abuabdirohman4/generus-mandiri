@@ -4,9 +4,9 @@ import { useCallback } from 'react'
 import useSWRMutation from 'swr/mutation'
 import { toast } from 'sonner'
 import { useSiswaStore } from '../stores/siswaStore'
-import { useStudents } from './useStudents'
-import { useClasses } from './useClasses'
-import { useUserProfile } from './useUserProfile'
+import { useStudents } from '@/hooks/useStudents'
+import { useClasses } from '@/hooks/useClasses'
+import { useUserProfile } from '@/stores/userProfileStore'
 import { createStudent, updateStudent, deleteStudent, type Student } from '../actions'
 
 export function useSiswaPage() {
@@ -25,14 +25,14 @@ export function useSiswaPage() {
   } = useSiswaStore()
 
   // User profile
-  const { userProfile, isLoading: profileLoading } = useUserProfile()
+  const { profile: userProfile, loading: profileLoading } = useUserProfile()
 
   // Classes
   const { classes, isLoading: classesLoading } = useClasses()
 
   // Students with conditional classId
   const classId = userProfile?.role === 'teacher' 
-    ? userProfile.class_id || undefined
+    ? userProfile.classes?.[0]?.id || undefined
     : selectedClassFilter || undefined
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents({

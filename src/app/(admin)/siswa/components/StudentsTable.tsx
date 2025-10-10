@@ -4,26 +4,17 @@ import { useState } from 'react'
 import DataTable from '@/components/table/Table'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import { PencilIcon, TrashBinIcon } from '@/lib/icons'
-
-interface Student {
-  id: string
-  name: string
-  gender: string | null
-  class_id: string
-  created_at: string
-  updated_at: string
-  classes: {
-    id: string
-    name: string
-  } | null
-}
+import { Student } from '@/hooks/useStudents'
 
 interface StudentsTableProps {
   students: Student[]
   userRole: string | null
   onEdit: (student: Student) => void
   onDelete: (studentId: string) => void
-  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
+  userProfile: { 
+    role: string; 
+    classes?: Array<{ id: string; name: string }> 
+  } | null | undefined
 }
 
 export default function StudentsTable({ 
@@ -103,7 +94,7 @@ export default function StudentsTable({
     .map((student) => ({
       name: student.name,
       gender: student.gender || '-',
-      class_name: student.classes?.name || '-',
+      class_name: student.class_name || '-',
       actions: student.id, // We'll use this in renderCell
     }))
 

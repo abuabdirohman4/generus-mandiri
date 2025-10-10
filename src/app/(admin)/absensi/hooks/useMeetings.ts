@@ -136,9 +136,9 @@ export function useMeetings(classId?: string) {
     swrKey,
     fetcher,
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true, // Enable auto-revalidation on focus
       revalidateOnReconnect: true,
-      dedupingInterval: 30000, // 30 seconds cache
+      dedupingInterval: 5000, // 5 seconds cache for faster updates
       onError: (error) => {
         console.error('Error fetching meetings:', error)
         console.error('SWR Key:', swrKey)

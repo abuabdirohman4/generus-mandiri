@@ -12,6 +12,8 @@ import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
+import { getCurrentUserId } from '@/lib/userUtils'
+import { mutate as globalMutate } from 'swr'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -31,8 +33,6 @@ export default function MeetingAttendancePage() {
     calculateAttendancePercentage,
     getAttendanceStats
   } = useMeetingAttendance(meetingId)
-
-  console.log('meeting', meeting)
 
   const [saving, setSaving] = useState(false)
   const [showReasonModal, setShowReasonModal] = useState(false)
@@ -87,7 +87,18 @@ export default function MeetingAttendancePage() {
       
       if (result.success) {
         toast.success('Data absensi berhasil disimpan!')
-        mutate() // Refresh data
+        mutate() // Refresh current page data
+        
+        // Revalidate meetings cache for main absensi page
+        const userId = await getCurrentUserId()
+        if (userId) {
+          // Revalidate all meetings cache for this user
+          globalMutate((key: any) => 
+            typeof key === 'string' && 
+            key.includes('/api/meetings') && 
+            key.includes(userId)
+          )
+        }
       } else {
         toast.error('Gagal menyimpan data absensi: ' + result.error)
       }

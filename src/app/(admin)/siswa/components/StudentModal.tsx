@@ -27,7 +27,10 @@ interface StudentModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   student?: Student | null
-  userProfile: { role: string; class_id: string | null; class_name: string | null } | null | undefined
+  userProfile: { 
+    role: string; 
+    classes?: Array<{ id: string; name: string }> 
+  } | null | undefined
   classes: Class[]
   onSubmit: (formData: FormData) => Promise<void>
   submitting: boolean
@@ -58,7 +61,7 @@ export default function StudentModal({
       })
     } else {
       // Auto-fill class for teachers
-      const classId = userProfile?.role === 'teacher' ? userProfile.class_id || '' : ''
+      const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
       setFormData({
         name: '',
         gender: '',
@@ -157,11 +160,11 @@ export default function StudentModal({
           )}
 
           {/* Show class info for teachers */}
-          {userProfile?.role === 'teacher' && userProfile.class_name && (
+          {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name && (
             <div>
               <Label>Kelas</Label>
               <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
-                {userProfile.class_name}
+                {userProfile.classes[0].name}
               </div>
             </div>
           )}
