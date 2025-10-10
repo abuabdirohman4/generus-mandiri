@@ -14,7 +14,7 @@ interface Meeting {
   id: string
   class_id: string
   teacher_id: string
-  meeting_number: number
+  title: string
   date: string
   topic?: string
   description?: string
@@ -26,6 +26,7 @@ interface Meeting {
 interface CreateMeetingData {
   classId: string
   date: string
+  title: string
   topic?: string
   description?: string
 }
@@ -200,24 +201,13 @@ export async function createMeeting(data: CreateMeetingData) {
       return { success: false, error: 'No students found in this class' }
     }
 
-    // Get next meeting number for this class
-    const { data: lastMeeting } = await supabase
-      .from('meetings')
-      .select('meeting_number')
-      .eq('class_id', data.classId)
-      .order('meeting_number', { ascending: false })
-      .limit(1)
-      .single()
-
-    const nextMeetingNumber = lastMeeting ? lastMeeting.meeting_number + 1 : 1
-
     // Create meeting with student snapshot
     const { data: meeting, error } = await supabase
       .from('meetings')
       .insert({
         class_id: data.classId,
         teacher_id: profile.id,
-        meeting_number: nextMeetingNumber,
+        title: data.title,
         date: data.date,
         topic: data.topic,
         description: data.description,
@@ -265,7 +255,7 @@ export async function getMeetingsByClass(classId?: string) {
       .select(`
         id,
         class_id,
-        meeting_number,
+        title,
         date,
         topic,
         description,
@@ -318,7 +308,7 @@ export async function getMeetingById(meetingId: string) {
       .select(`
         id,
         class_id,
-        meeting_number,
+        title,
         date,
         topic,
         description,
@@ -351,6 +341,7 @@ export async function updateMeeting(meetingId: string, data: Partial<CreateMeeti
     const { error } = await supabase
       .from('meetings')
       .update({
+        title: data.title,
         date: data.date,
         topic: data.topic,
         description: data.description,

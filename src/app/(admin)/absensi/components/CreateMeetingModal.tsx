@@ -27,6 +27,7 @@ export default function CreateMeetingModal({
 }: CreateMeetingModalProps) {
   const [formData, setFormData] = useState({
     date: dayjs(),
+    title: 'Pengajian Rutin',
     topic: '',
     description: ''
   })
@@ -77,6 +78,7 @@ export default function CreateMeetingModal({
       const result = await createMeeting({
         classId: selectedClassId,
         date: formData.date.format('YYYY-MM-DD'),
+        title: formData.title,
         topic: formData.topic || undefined,
         description: formData.description || undefined
       })
@@ -99,6 +101,7 @@ export default function CreateMeetingModal({
   const handleClose = () => {
     setFormData({
       date: dayjs(),
+      title: 'Pengajian',
       topic: '',
       description: ''
     })
@@ -155,6 +158,21 @@ export default function CreateMeetingModal({
                 </select>
               </div>
 
+              {/* Title Field */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Judul Pengajian
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Pengajian Kelompok, Pengajian Desa, dll"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  required
+                />
+              </div>
+
               {/* Date Picker */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -178,7 +196,7 @@ export default function CreateMeetingModal({
                   type="text"
                   value={formData.topic}
                   onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                  placeholder="Contoh: Materi Matematika Dasar"
+                  placeholder="Contoh: Hafalan"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>

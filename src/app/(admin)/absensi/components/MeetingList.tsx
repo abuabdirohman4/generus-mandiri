@@ -7,6 +7,7 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import { updateMeeting, deleteMeeting } from '../actions'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -14,7 +15,7 @@ dayjs.locale('id')
 interface Meeting {
   id: string
   class_id: string
-  meeting_number: number
+  title: string
   date: string
   topic?: string
   description?: string
@@ -172,7 +173,7 @@ export default function MeetingList({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                              Pengajian {meeting.meeting_number}
+                              {meeting.title}
                             </h4>
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                               {meeting.classes[0]?.name || ''}
@@ -185,13 +186,23 @@ export default function MeetingList({
                             </p>
                           )}
 
-                          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                            <span>
-                              {meeting.presentCount} hadir, {meeting.absentCount} alfa
-                            </span>
-                            <span>
-                              {meeting.excusedCount} izin, {meeting.sickCount} sakit
-                            </span>
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
+                              <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
+                              <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
+                              <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
+                              <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
+                            </div>
                           </div>
                         </div>
 
@@ -224,7 +235,7 @@ export default function MeetingList({
                             </button>
 
                             <button
-                              onClick={() => handleDeleteClick(meeting.id, `Pertemuan ${meeting.meeting_number}`)}
+                              onClick={() => handleDeleteClick(meeting.id, meeting.title)}
                               disabled={deletingMeetingId === meeting.id}
                               className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                               title="Hapus Pertemuan"

@@ -7,7 +7,7 @@ import { getMeetingsByClass } from '../actions'
 interface Meeting {
   id: any
   class_id: any
-  meeting_number: any
+  title: any
   date: any
   topic?: any
   description?: any

@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { updateMeeting, deleteMeeting } from '../actions'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -15,7 +16,7 @@ dayjs.locale('id')
 interface Meeting {
   id: string
   class_id: string
-  meeting_number: number
+  title: string
   date: string
   topic?: string
   description?: string
@@ -38,13 +39,6 @@ interface MeetingCardsProps {
   onEdit?: (meeting: Meeting) => void
   onDelete?: (meetingId: string) => void
   className?: string
-}
-
-const COLORS = {
-  hadir: '#10B981', // green
-  izin: '#F59E0B', // yellow
-  sakit: '#3B82F6', // blue
-  absen: '#EF4444' // red
 }
 
 export default function MeetingCards({ 
@@ -147,10 +141,10 @@ export default function MeetingCards({
         {meetings.map((meeting) => {
         // Prepare data for pie chart
         const chartData = [
-          { name: 'Hadir', value: meeting.presentCount, color: COLORS.hadir },
-          { name: 'Izin', value: meeting.excusedCount, color: COLORS.izin },
-          { name: 'Sakit', value: meeting.sickCount, color: COLORS.sakit },
-          { name: 'Absen', value: meeting.absentCount, color: COLORS.absen }
+          { name: 'Hadir', value: meeting.presentCount, color: ATTENDANCE_COLORS.hadir },
+          { name: 'Izin', value: meeting.excusedCount, color: ATTENDANCE_COLORS.izin },
+          { name: 'Sakit', value: meeting.sickCount, color: ATTENDANCE_COLORS.sakit },
+          { name: 'Absen', value: meeting.absentCount, color: ATTENDANCE_COLORS.absen }
         ].filter(item => item.value > 0) // Only show categories with data
 
         return (
@@ -163,7 +157,7 @@ export default function MeetingCards({
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
                   <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                    Pertemuan {meeting.meeting_number}
+                    {meeting.title}
                   </h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                     {dayjs(meeting.date).format('DD MMM YYYY')}
@@ -196,7 +190,7 @@ export default function MeetingCards({
                   </button>
 
                   <button
-                    onClick={() => handleDeleteClick(meeting.id, `Pertemuan ${meeting.meeting_number}`)}
+                    onClick={() => handleDeleteClick(meeting.id, meeting.title)}
                     disabled={deletingMeetingId === meeting.id}
                     className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                     title="Hapus Pertemuan"
@@ -261,19 +255,19 @@ export default function MeetingCards({
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
                       <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
                       <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
                       <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
                       <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
                     </div>
                   </div>

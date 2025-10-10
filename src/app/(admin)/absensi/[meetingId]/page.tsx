@@ -178,7 +178,7 @@ export default function MeetingAttendancePage() {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Pertemuan {meeting.meeting_number}
+                {meeting.title}
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 {dayjs(meeting.date).format('dddd, DD MMMM YYYY')} • {meeting.classes[0]?.name || ''}

@@ -15,7 +15,7 @@ dayjs.locale('id')
 interface Meeting {
   id: string
   class_id: string
-  meeting_number: number
+  title: string
   date: string
   topic?: string
   description?: string
@@ -112,7 +112,7 @@ export default function MeetingChart({
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((meeting) => ({
       id: meeting.id,
-      meetingNumber: meeting.meeting_number,
+      title: meeting.title,
       date: dayjs(meeting.date).format('DD/MM'),
       fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
       attendancePercentage: meeting.attendancePercentage,
@@ -131,7 +131,7 @@ export default function MeetingChart({
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900 dark:text-white">
-            Pertemuan {data.meetingNumber}
+            {data.title}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             {data.fullDate}
@@ -288,7 +288,7 @@ export default function MeetingChart({
                 </div>
                 <div>
                   <h5 className="font-medium text-gray-900 dark:text-white">
-                    Pertemuan {meeting.meetingNumber}
+                    {meeting.title}
                   </h5>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {meeting.fullDate} • {meeting.classes}
@@ -323,7 +323,7 @@ export default function MeetingChart({
                 </button>
 
                 <button
-                  onClick={() => handleDeleteClick(meeting.id, `Pertemuan ${meeting.meetingNumber}`)}
+                  onClick={() => handleDeleteClick(meeting.id, meeting.title)}
                   disabled={deletingMeetingId === meeting.id}
                   className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                   title="Hapus Pertemuan"
