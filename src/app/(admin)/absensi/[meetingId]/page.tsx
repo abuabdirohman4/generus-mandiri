@@ -14,6 +14,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId } from '@/lib/userUtils'
 import { mutate as globalMutate } from 'swr'
+import { invalidateMeetingsCache } from '../utils/cache'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -92,12 +93,10 @@ export default function MeetingAttendancePage() {
         // Revalidate meetings cache for main absensi page
         const userId = await getCurrentUserId()
         if (userId) {
-          // Revalidate all meetings cache for this user
-          globalMutate((key: any) => 
-            typeof key === 'string' && 
-            key.includes('/api/meetings') && 
-            key.includes(userId)
-          )
+          // Get classId from meeting data to invalidate the correct cache
+          const classId = meeting?.class_id
+          console.log('🔄 Triggering cache invalidation after attendance save:', { userId, classId, meetingId })
+          await invalidateMeetingsCache(userId, classId)
         }
       } else {
         toast.error('Gagal menyimpan data absensi: ' + result.error)

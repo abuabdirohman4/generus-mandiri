@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useMeetings } from './hooks/useMeetings'
 import { useClasses } from '@/hooks/useClasses'
 import { useUserProfile } from '@/stores/userProfileStore'
-// import { useAbsensiUIStore } from '@/stores/absensiUIStore'
+import { useAbsensiUIStore } from '@/stores/absensiUIStore'
 import ViewModeToggle, { ViewMode } from './components/ViewModeToggle'
 import CreateMeetingModal from './components/CreateMeetingModal'
 import MeetingList from './components/MeetingList'
@@ -19,11 +19,17 @@ export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
   const { classes, isLoading: classesLoading } = useClasses()
   
-  // Temporarily use local state
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [selectedClassFilter, setSelectedClassFilter] = useState('')
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingMeeting, setEditingMeeting] = useState<any>(null)
+  // Get UI state from Zustand store
+  const {
+    viewMode,
+    setViewMode,
+    selectedClassFilter,
+    setSelectedClassFilter,
+    showCreateModal,
+    setShowCreateModal,
+    editingMeeting,
+    setEditingMeeting
+  } = useAbsensiUIStore()
   
   // Determine classId based on user role
   const classId = userProfile?.role === 'teacher' 

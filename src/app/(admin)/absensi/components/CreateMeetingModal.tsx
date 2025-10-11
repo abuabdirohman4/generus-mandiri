@@ -9,6 +9,7 @@ import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import InputFilter from '@/components/form/input/InputFilter'
+import Link from 'next/link'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -248,12 +249,12 @@ export default function CreateMeetingModal({
               </div> */}
 
               {/* Student Preview */}
-              {/* {filteredStudents.length > 0 && (
+              {filteredStudents.length > 0 && (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Siswa yang akan diikutsertakan ({filteredStudents.length} orang):
+                    Jumlah Siswa untuk pertemuan ini ada <Link href={`/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
                   </h4>
-                  <div className="max-h-32 overflow-y-auto">
+                  {/* <div className="max-h-32 overflow-y-auto">
                     <div className="flex flex-wrap gap-1">
                       {filteredStudents.map((student) => (
                         <span
@@ -264,9 +265,9 @@ export default function CreateMeetingModal({
                         </span>
                       ))}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
-              )} */}
+              )}
 
               {/* Buttons */}
               <div className="flex justify-end space-x-3">

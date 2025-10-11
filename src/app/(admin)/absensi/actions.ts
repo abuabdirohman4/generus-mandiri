@@ -201,6 +201,17 @@ export async function createMeeting(data: CreateMeetingData) {
       return { success: false, error: 'No students found in this class' }
     }
 
+    // Generate meeting number (increment from last meeting for this class)
+    const { data: lastMeeting } = await supabase
+      .from('meetings')
+      .select('meeting_number')
+      .eq('class_id', data.classId)
+      .order('meeting_number', { ascending: false })
+      .limit(1)
+      .single()
+
+    const nextMeetingNumber = (lastMeeting?.meeting_number || 0) + 1
+
     // Create meeting with student snapshot
     const { data: meeting, error } = await supabase
       .from('meetings')
@@ -211,7 +222,8 @@ export async function createMeeting(data: CreateMeetingData) {
         date: data.date,
         topic: data.topic,
         description: data.description,
-        student_snapshot: students.map(s => s.id)
+        student_snapshot: students.map(s => s.id),
+        meeting_number: nextMeetingNumber
       })
       .select()
       .single()
