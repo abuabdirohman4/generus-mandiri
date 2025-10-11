@@ -64,7 +64,7 @@ export default function AttendancePieChart({ data, className = '' }: AttendanceP
   }
 
   return (
-    <div className={`w-full h-80 ${className}`}>
+    <div className={`w-full h-64 ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
