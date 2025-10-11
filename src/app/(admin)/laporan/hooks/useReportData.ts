@@ -10,6 +10,12 @@ interface Class {
 
 interface UseReportDataOptions {
   filters: {
+    // General mode filters
+    month?: number
+    year?: number
+    viewMode?: 'general' | 'detailed'
+    
+    // Detailed mode filters
     period: 'daily' | 'weekly' | 'monthly' | 'yearly'
     classId: string | undefined
     startDate: string | undefined
@@ -22,8 +28,14 @@ interface UseReportDataOptions {
  * Hook untuk fetching data laporan dengan SWR caching
  */
 export function useReportData({ filters, enabled = true }: UseReportDataOptions) {
-  // Convert dayjs objects to strings for API call
+  // Convert filters for API call
   const apiFilters: ReportFilters = {
+    // General mode filters
+    month: filters.month,
+    year: filters.year,
+    viewMode: filters.viewMode,
+    
+    // Detailed mode filters
     period: filters.period,
     classId: filters.classId || undefined,
     startDate: filters.startDate || undefined,

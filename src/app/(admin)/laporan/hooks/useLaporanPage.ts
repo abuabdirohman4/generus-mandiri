@@ -15,6 +15,12 @@ export function useLaporanPage() {
   // SWR hooks
   const { data: reportData, error, isLoading, mutate } = useReportData({ 
     filters: {
+      // General mode filters
+      month: filters.viewMode === 'general' ? filters.month : undefined,
+      year: filters.viewMode === 'general' ? filters.year : undefined,
+      viewMode: filters.viewMode,
+      
+      // Detailed mode filters
       period: filters.period,
       classId: filters.classId || undefined,
       startDate: filters.startDate?.format('DD-MM-YYYY') || undefined,
@@ -63,6 +69,10 @@ export function useLaporanPage() {
     return reportData?.chartData || []
   }, [reportData?.chartData])
 
+  const trendChartData = useMemo(() => {
+    return reportData?.trendChartData || []
+  }, [reportData?.trendChartData])
+
   // Actions
   const handleFilterChange = (key: string, value: string) => {
     setFilter(key as keyof typeof filters, value)
@@ -87,6 +97,7 @@ export function useLaporanPage() {
     tableData,
     summaryStats,
     chartData,
+    trendChartData,
     classes,
     
     // State

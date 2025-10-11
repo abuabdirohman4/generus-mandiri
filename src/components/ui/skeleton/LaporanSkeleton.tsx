@@ -75,6 +75,18 @@ export default function LaporanSkeleton() {
           </div>
         </div>
 
+        {/* Trend Chart Skeleton */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
+            <div className="flex gap-2">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
+            </div>
+          </div>
+          <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+        </div>
+
         {/* Data Table Skeleton */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">

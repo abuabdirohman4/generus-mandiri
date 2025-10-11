@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { updateMeeting, deleteMeeting } from '../actions'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
@@ -12,6 +11,7 @@ import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
 import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import MeetingChartSkeleton from '@/components/ui/skeleton/MeetingChartSkeleton'
+import { TrendChart } from '@/components/charts'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -45,8 +45,6 @@ interface MeetingChartProps {
   isLoading?: boolean
 }
 
-type ChartType = 'line' | 'bar'
-
 export default function MeetingChart({ 
   meetings, 
   onEdit, 
@@ -54,7 +52,6 @@ export default function MeetingChart({
   className = '',
   isLoading = false
 }: MeetingChartProps) {
-  const [chartType, setChartType] = useState<ChartType>('line')
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null)
@@ -125,8 +122,24 @@ export default function MeetingChart({
     // Loading state will be cleared when component unmounts or page changes
   }
 
-  // Prepare chart data
+  // Prepare chart data for TrendChart
   const chartData = meetings
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((meeting) => ({
+      date: dayjs(meeting.date).format('DD/MM'),
+      fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
+      percentage: meeting.attendancePercentage,
+      details: {
+        present: meeting.presentCount,
+        absent: meeting.absentCount,
+        excused: meeting.excusedCount,
+        sick: meeting.sickCount,
+        total: meeting.totalStudents
+      }
+    }))
+
+  // Prepare detailed meeting data for list
+  const meetingListData = meetings
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((meeting) => ({
       id: meeting.id,
@@ -143,43 +156,6 @@ export default function MeetingChart({
       classes: meeting.classes[0]?.name || ''
     }))
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-900 dark:text-white">
-            {data.title}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            {data.fullDate}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-            {data.classes}
-          </p>
-          {data.topic && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {data.topic}
-            </p>
-          )}
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium text-blue-600 dark:text-blue-400">
-                {data.attendancePercentage}%
-              </span> kehadiran
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {data.presentCount} hadir, {data.absentCount} alfa
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {data.excusedCount} izin, {data.sickCount} sakit
-            </p>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
 
   // Show skeleton while loading
   if (isLoading) {
@@ -207,88 +183,12 @@ export default function MeetingChart({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Chart Controls */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Tren Kehadiran
-        </h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setChartType('line')}
-            className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-              chartType === 'line'
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-            }`}
-          >
-            Garis
-          </button>
-          <button
-            onClick={() => setChartType('bar')}
-            className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-              chartType === 'bar'
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-            }`}
-          >
-            Batang
-          </button>
-        </div>
-      </div>
-
       {/* Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            {chartType === 'line' ? (
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  tickLine={{ stroke: '#6B7280' }}
-                />
-                <YAxis 
-                  domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={{ stroke: '#6B7280' }}
-                  label={{ value: 'Persentase (%)', angle: -90, position: 'insideLeft' }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="attendancePercentage"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
-                />
-              </LineChart>
-            ) : (
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }}
-                  tickLine={{ stroke: '#6B7280' }}
-                />
-                <YAxis 
-                  domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={{ stroke: '#6B7280' }}
-                  label={{ value: 'Persentase (%)', angle: -90, position: 'insideLeft' }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="attendancePercentage"
-                  fill="#3B82F6"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            )}
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <TrendChart 
+        data={chartData}
+        title="Tren Kehadiran"
+        isLoading={isLoading}
+      />
 
       {/* Meeting List */}
       <div className="space-y-3">
@@ -296,7 +196,7 @@ export default function MeetingChart({
           Detail Pertemuan
         </h4>
         <div className="space-y-2">
-          {chartData.map((meeting) => (
+          {meetingListData.map((meeting) => (
             <Link
               key={meeting.id}
               href={`/absensi/${meeting.id}`}

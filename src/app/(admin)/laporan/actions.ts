@@ -4,6 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 
 export interface ReportFilters {
+  // General mode filters
+  month?: number
+  year?: number
+  viewMode?: 'general' | 'detailed'
+  
+  // Detailed mode filters
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
   startDate?: string
@@ -19,6 +25,16 @@ export interface ReportData {
     alpha: number
   }
   chartData: Array<{ name: string; value: number }>
+  trendChartData: Array<{
+    date: string
+    fullDate: string
+    attendancePercentage: number
+    presentCount: number
+    absentCount: number
+    excusedCount: number
+    sickCount: number
+    totalRecords: number
+  }>
   detailedRecords: Array<{
     student_id: string
     student_name: string
@@ -51,7 +67,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       throw new Error('User not authenticated')
     }
 
-    // Build date range based on period
+    // Build date range based on filter mode
     let dateFilter: {
       date?: {
         eq?: string
@@ -61,7 +77,19 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     } = {}
     const now = new Date()
     
-    if (filters.startDate && filters.endDate) {
+    if (filters.viewMode === 'general' && filters.month && filters.year) {
+      // General mode: use month and year
+      const startDate = new Date(filters.year, filters.month - 1, 1)
+      const endDate = new Date(filters.year, filters.month, 0) // Last day of the month
+      
+      dateFilter = {
+        date: {
+          gte: startDate.toISOString().split('T')[0],
+          lte: endDate.toISOString().split('T')[0]
+        }
+      }
+    } else if (filters.startDate && filters.endDate) {
+      // Detailed mode: use custom date range
       dateFilter = {
         date: {
           gte: filters.startDate,
@@ -69,6 +97,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         }
       }
     } else {
+      // Fallback to period-based filtering
       switch (filters.period) {
         case 'daily':
           const today = now.toISOString().split('T')[0]
@@ -161,6 +190,69 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       { name: 'Alpha', value: summary.alpha },
     ].filter(item => item.value > 0) // Only include non-zero values
 
+    // Generate trend chart data (grouped by date)
+    const dailyData = attendanceLogs?.reduce((acc: any, log: any) => {
+      const date = log.date
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          presentCount: 0,
+          absentCount: 0,
+          excusedCount: 0,
+          sickCount: 0,
+          totalRecords: 0
+        }
+      }
+      
+      acc[date].totalRecords++
+      switch (log.status) {
+        case 'H':
+          acc[date].presentCount++
+          break
+        case 'A':
+          acc[date].absentCount++
+          break
+        case 'I':
+          acc[date].excusedCount++
+          break
+        case 'S':
+          acc[date].sickCount++
+          break
+      }
+      
+      return acc
+    }, {}) || {}
+
+    // Convert to array and format for chart
+    const trendChartData = Object.values(dailyData)
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((day: any) => {
+        const attendancePercentage = day.totalRecords > 0 
+          ? Math.round((day.presentCount / day.totalRecords) * 100)
+          : 0
+        
+        const date = new Date(day.date)
+        const monthNames = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+          'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+        ]
+        
+        return {
+          date: `${date.getDate().toString().padStart(2, '0')} ${monthNames[date.getMonth()]}`,
+          fullDate: date.toLocaleDateString('id-ID', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          }),
+          attendancePercentage,
+          presentCount: day.presentCount,
+          absentCount: day.absentCount,
+          excusedCount: day.excusedCount,
+          sickCount: day.sickCount,
+          totalRecords: day.totalRecords
+        }
+      })
+
     // Group by student for detailed view
     const studentSummary = attendanceLogs?.reduce((acc: any, log: any) => {
       const studentId = log.student_id
@@ -210,6 +302,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     return {
       summary,
       chartData,
+      trendChartData,
       detailedRecords,
       period: filters.period,
       dateRange: {

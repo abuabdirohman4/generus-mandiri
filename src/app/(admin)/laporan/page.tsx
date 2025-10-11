@@ -3,7 +3,7 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { useLaporanPage } from './hooks'
-import { FilterSection, SummaryCards, StatsCards, ReportChart, DataTable } from './components'
+import { FilterSection, SummaryCards, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 
 // Set Indonesian locale
@@ -16,6 +16,7 @@ export default function LaporanPage() {
     tableData,
     summaryStats,
     chartData,
+    trendChartData,
     classes,
     filters,
     loading,
@@ -86,15 +87,21 @@ export default function LaporanPage() {
                 period={filters.period}
               />
 
-              {/* Chart */}
-              <ReportChart
-                chartData={chartData}
-                summaryStats={summaryStats}
-              />
-            </div>
+            {/* Chart */}
+            <ReportChart
+              chartData={chartData}
+              summaryStats={summaryStats}
+            />
+          </div>
 
-            {/* Data Table */}
-            {/* <DataTable tableData={tableData} /> */}
+          {/* Attendance Trend Chart */}
+          <AttendanceTrendChart 
+            chartData={trendChartData}
+            isLoading={loading}
+          />
+
+          {/* Data Table */}
+          {/* <DataTable tableData={tableData} /> */}
           </>
         ) : (
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
