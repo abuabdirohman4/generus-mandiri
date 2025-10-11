@@ -4,7 +4,15 @@ import { useState, useEffect } from 'react'
 import DataTable from '@/components/table/Table'
 import AttendancePieChart from '@/components/charts/AttendancePieChart'
 import Button from '@/components/ui/button/Button'
+import InputFilter from '@/components/form/input/InputFilter'
+import DatePickerInput from '@/components/form/input/DatePicker'
 import { getAttendanceReport, getClasses, type ReportData, type ReportFilters } from './actions'
+import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
+import dayjs, { Dayjs } from 'dayjs'
+import 'dayjs/locale/id' // Import Indonesian locale
+
+// Set Indonesian locale
+dayjs.locale('id')
 
 interface Class {
   id: string
@@ -12,16 +20,35 @@ interface Class {
 }
 
 export default function LaporanPage() {
-  const [filters, setFilters] = useState<ReportFilters>({
+  const [filters, setFilters] = useState<{
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    classId: string
+    startDate: Dayjs | null
+    endDate: Dayjs | null
+  }>({
     period: 'monthly',
     classId: '',
-    startDate: '',
-    endDate: ''
+    startDate: null,
+    endDate: null
   })
   const [classes, setClasses] = useState<Class[]>([])
   const [data, setData] = useState<ReportData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Period options for InputFilter
+  const periodOptions = [
+    { value: 'daily', label: 'Harian' },
+    { value: 'weekly', label: 'Mingguan' },
+    { value: 'monthly', label: 'Bulanan' },
+    { value: 'yearly', label: 'Tahunan' }
+  ]
+
+  // Class options for InputFilter
+  const classOptions = classes.map(cls => ({
+    value: cls.id,
+    label: cls.name
+  }))
 
   // Fetch classes for filter dropdown
   useEffect(() => {
@@ -42,7 +69,14 @@ export default function LaporanPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const reportData = await getAttendanceReport(filters)
+        // Convert dayjs objects to strings for API call
+        const apiFilters: ReportFilters = {
+          period: filters.period,
+          classId: filters.classId || undefined,
+          startDate: filters.startDate?.format('DD-MM-YYYY') || undefined,
+          endDate: filters.endDate?.format('DD-MM-YYYY') || undefined
+        }
+        const reportData = await getAttendanceReport(apiFilters)
         setData(reportData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch report data')
@@ -61,8 +95,8 @@ export default function LaporanPage() {
     setFilters({
       period: 'monthly',
       classId: '',
-      startDate: '',
-      endDate: ''
+      startDate: null,
+      endDate: null
     })
   }
 
@@ -159,7 +193,7 @@ export default function LaporanPage() {
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
-        {/* <div className="mb-8">
+        {/* <div className="mb-4">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Laporan Kehadiran
           </h1>
@@ -169,72 +203,51 @@ export default function LaporanPage() {
         </div> */}
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             Filter Laporan
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Periode
-              </label>
-              <select
-                value={filters.period}
-                onChange={(e) => handleFilterChange('period', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="daily">Harian</option>
-                <option value="weekly">Mingguan</option>
-                <option value="monthly">Bulanan</option>
-                <option value="yearly">Tahunan</option>
-              </select>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4">
+            <InputFilter
+              id="period"
+              label="Periode"
+              value={filters.period}
+              onChange={(value) => handleFilterChange('period', value)}
+              options={periodOptions}
+              className="mb-0"
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kelas
-              </label>
-              <select
-                value={filters.classId}
-                onChange={(e) => handleFilterChange('classId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Semua Kelas</option>
-                {classes.map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <InputFilter
+              id="classId"
+              label="Kelas"
+              value={filters.classId ?? ''}
+              onChange={(value) => handleFilterChange('classId', value)}
+              options={classOptions}
+              allOptionLabel="Semua Kelas"
+              className="mb-0"
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tanggal Mulai
-              </label>
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+            <DatePickerInput
+              mode="single"
+              label="Tanggal Mulai"
+              value={filters.startDate}
+              onChange={(date) => setFilters(prev => ({ ...prev, startDate: date }))}
+              format="DD/MM/YYYY"
+              placeholder="Pilih Tanggal"
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tanggal Akhir
-              </label>
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+            <DatePickerInput
+              mode="single"
+              label="Tanggal Akhir"
+              value={filters.endDate}
+              onChange={(date) => setFilters(prev => ({ ...prev, endDate: date }))}
+              format="DD/MM/YYYY"
+              placeholder="Pilih Tanggal"
+            />
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <Button onClick={resetFilters} variant="outline">
+          <div className="mt-6 md:mt-2 flex justify-end gap-2 w-full md:w-auto">
+            <Button onClick={resetFilters} variant="outline" className="w-full md:w-auto">
               Reset Filter
             </Button>
           </div>
@@ -250,7 +263,26 @@ export default function LaporanPage() {
         ) : data ? (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            {/* <div className="flex flex-wrap gap-2 md:gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
+                <span className="text-gray-600 dark:text-gray-400">{data.summary.hadir} Hadir</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
+                <span className="text-gray-600 dark:text-gray-400">{data.summary.alpha} Alfa</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
+                <span className="text-gray-600 dark:text-gray-400">{data.summary.izin} Izin</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
+                <span className="text-gray-600 dark:text-gray-400">{data.summary.sakit} Sakit</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-4">
               <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                 <div className="p-5">
                   <div className="flex items-center">
@@ -350,22 +382,14 @@ export default function LaporanPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Chart and Table */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Chart */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Visualisasi Kehadiran
-                </h3>
-                <AttendancePieChart data={data.chartData} />
-              </div>
-
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {/* Quick Stats */}
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Statistik Cepat
+                  Statistik Kehadiran
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
@@ -400,10 +424,18 @@ export default function LaporanPage() {
                   )}
                 </div>
               </div>
+              
+              {/* Chart */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Visualisasi Kehadiran
+                </h3>
+                <AttendancePieChart data={data.chartData} />
+              </div>
             </div>
 
             {/* Detailed Table */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+            {/* <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   Detail Laporan per Siswa
@@ -437,7 +469,7 @@ export default function LaporanPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
           </>
         ) : (
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">

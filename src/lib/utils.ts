@@ -40,3 +40,25 @@ export function isMobile(): boolean {
   return !isDesktop();
 }
 
+/**
+ * Detects if the user is on a real mobile device (not just small screen)
+ * Combines screen size check with touch capability detection
+ * @returns {boolean} True if on actual mobile device
+ */
+export function isTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    (navigator as any).msMaxTouchPoints > 0
+  );
+}
+
+/**
+ * Detects if should use mobile UI (actual mobile device)
+ * @returns {boolean} True if should use mobile native inputs
+ */
+export function shouldUseMobileUI(): boolean {
+  return isMobile() && isTouchDevice();
+}
+

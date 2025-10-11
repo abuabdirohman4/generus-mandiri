@@ -199,7 +199,7 @@ export default function MeetingList({
                               </p>
                             )}
 
-                            <div className="flex flex-wrap gap-3 text-xs">
+                            <div className="flex flex-wrap gap-2 md:gap-3 text-xs">
                               <div className="flex items-center gap-1">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
                                 <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
