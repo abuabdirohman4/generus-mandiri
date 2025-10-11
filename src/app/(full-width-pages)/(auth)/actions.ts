@@ -23,12 +23,27 @@ export async function login(formData: FormData) {
     return redirect("/signin?message=Password tidak boleh kosong");
   }
 
-  // Membuat email dummy dari username
-  const email = `${username}@warlob.app`;
-  const data = { email, password };
-
   try {
-    const { error } = await supabase.auth.signInWithPassword(data);
+    // Cari user berdasarkan username di kolom profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('username', username)
+      .single();
+
+    if (profileError || !profile) {
+      return redirect("/signin?message=Username tidak ditemukan");
+    }
+
+    if (!profile.email) {
+      return redirect("/signin?message=Email tidak ditemukan untuk user ini");
+    }
+
+    // Login menggunakan email dari profiles table
+    const { error } = await supabase.auth.signInWithPassword({
+      email: profile.email,
+      password
+    });
 
     if (error) {
       const errorMessage = handleAuthError(error);
@@ -57,6 +72,7 @@ export async function signup(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
   const name = formData.get("name");
+  const username = formData.get("username");
 
   // Validation
   if (!isNonEmptyString(email) || !isValidEmail(email)) {
@@ -71,10 +87,26 @@ export async function signup(formData: FormData) {
     return redirect("/signup?message=Nama tidak boleh kosong");
   }
 
+  if (!isNonEmptyString(username)) {
+    return redirect("/signup?message=Username tidak boleh kosong");
+  }
+
+  // Cek apakah username sudah ada
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .single();
+
+  if (existingProfile) {
+    return redirect("/signup?message=Username sudah digunakan");
+  }
+
   const data = {
     email,
     password,
     name,
+    username,
   };
   
   try {
@@ -92,6 +124,26 @@ export async function signup(formData: FormData) {
 
     if (result.error) {
       return redirect(`/signup?message=${encodeURIComponent(result.error.message)}&email=${encodeURIComponent(data.email)}`);
+    }
+
+    // Buat profile dengan username dan email jika user berhasil dibuat
+    if (result.data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: result.data.user.id,
+          username: data.username,
+          email: data.email,
+          full_name: data.name,
+          role: 'teacher', // Default role untuk signup
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        // Jika gagal membuat profile, hapus user yang sudah dibuat
+        await supabase.auth.admin.deleteUser(result.data.user.id);
+        return redirect("/signup?message=Gagal membuat profile user");
+      }
     }
 
     // Force sign out to ensure user is not automatically signed in

@@ -91,6 +91,7 @@ export async function createTeacher(formData: FormData) {
       .insert({
         id: authUser.user.id,
         username,
+        email,
         full_name: fullName,
         role: 'teacher',
         class_id: classId,

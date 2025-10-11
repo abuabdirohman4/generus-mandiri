@@ -17,6 +17,7 @@ export default function SignUpForm({ error, defaultEmail }: { error?: string | n
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Check if message is success or error
@@ -116,6 +117,19 @@ export default function SignUpForm({ error, defaultEmail }: { error?: string | n
             disabled={isPending}
             className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="Enter your full name"
+          />
+        </div>
+        <div>
+          <Label>Username<span className="text-error-500">*</span></Label>
+          <input
+            name="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            disabled={isPending}
+            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            placeholder="Enter your username"
           />
         </div>
         <div>
