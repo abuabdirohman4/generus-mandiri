@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import InputFilter from '@/components/form/input/InputFilter'
 import Link from 'next/link'
+import DatePickerInput from '@/components/form/input/DatePicker'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -208,15 +209,13 @@ export default function CreateMeetingModal({
 
               {/* Date Picker */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tanggal Pertemuan
-                </label>
-                <DatePicker
+                <DatePickerInput
+                  mode="single"
+                  label="Tanggal Pertemuan"
                   value={formData.date}
                   onChange={(date) => setFormData(prev => ({ ...prev, date: date || dayjs() }))}
                   format="DD/MM/YYYY"
-                  className="w-full"
-                  placeholder="Pilih tanggal"
+                  placeholder="Pilih Tanggal"
                 />
               </div>
 

@@ -30,7 +30,8 @@ export default function LaporanPage() {
     handleWeekChange,
     handleResetFilters,
     classOptions,
-    periodOptions
+    periodOptions,
+    classFilterLogic
   } = useLaporanPage()
 
   if (hasError) {
@@ -85,6 +86,7 @@ export default function LaporanPage() {
           filters={filters}
           periodOptions={periodOptions}
           classOptions={classOptions}
+          classFilterLogic={classFilterLogic}
           onFilterChange={handleFilterChange}
           onDateChange={handleDateChange}
           onWeekChange={handleWeekChange}

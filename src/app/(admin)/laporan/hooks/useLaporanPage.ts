@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useLaporan } from '../stores/laporanStore'
 import { useReportData, useClasses } from './useReportData'
+import { useUserProfile } from '@/stores/userProfileStore'
 import { Dayjs } from 'dayjs'
 
 /**
@@ -11,6 +12,9 @@ import { Dayjs } from 'dayjs'
 export function useLaporanPage() {
   // Store state
   const { filters, setFilters, resetFilters, setFilter, hasActiveFilters, filterCount } = useLaporan()
+  
+  // User profile for class filtering
+  const { profile: userProfile } = useUserProfile()
   
   // SWR hooks
   const { data: reportData, error, isLoading, mutate } = useReportData({ 
@@ -94,6 +98,47 @@ export function useLaporanPage() {
     return reportData.trendChartData
   }, [reportData?.trendChartData])
 
+  // Class filter logic based on user role
+  const classFilterLogic = useMemo(() => {
+    if (userProfile?.role === 'teacher') {
+      // For teachers, auto-select their class
+      const classId = (userProfile as any).class_id || userProfile.classes?.[0]?.id || ''
+      const className = (userProfile as any).class_name || userProfile.classes?.[0]?.name || ''
+      const classOptions = userProfile.classes?.map((c: any) => ({ value: c.id, label: c.name })) || 
+                          (classId ? [{ value: classId, label: className }] : [])
+      
+      return {
+        selectedClassId: classId,
+        classOptions,
+        isTeacher: true,
+        isDisabled: true
+      }
+    } else if (userProfile?.role === 'admin') {
+      // For admins, show all classes with "Semua Kelas" option
+      return {
+        selectedClassId: filters.classId || '',
+        classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),
+        isTeacher: false,
+        isDisabled: false
+      }
+    }
+    
+    // Default fallback
+    return {
+      selectedClassId: filters.classId || '',
+      classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),
+      isTeacher: false,
+      isDisabled: false
+    }
+  }, [userProfile, filters.classId, classes])
+
+  // Auto-set class filter for teachers
+  useEffect(() => {
+    if (userProfile?.role === 'teacher' && classFilterLogic.selectedClassId && !filters.classId) {
+      setFilter('classId', classFilterLogic.selectedClassId)
+    }
+  }, [userProfile?.role, classFilterLogic.selectedClassId, filters.classId, setFilter])
+
   // Actions
   const handleFilterChange = (key: string, value: string) => {
     // Convert numeric fields to numbers
@@ -151,16 +196,16 @@ export function useLaporanPage() {
     mutate,
     
     // Computed
-    classOptions: classes.map(cls => ({
-      value: cls.id,
-      label: cls.name
-    })),
+    classOptions: classFilterLogic.classOptions,
     periodOptions: [
       { value: 'daily', label: 'Harian' },
       // { value: 'weekly', label: 'Mingguan' },
       { value: 'monthly', label: 'Bulanan' },
       // { value: 'yearly', label: 'Tahunan' }
-    ]
+    ],
+    
+    // Class filter logic
+    classFilterLogic
   }
 }
 

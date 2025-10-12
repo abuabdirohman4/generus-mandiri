@@ -24,8 +24,9 @@ Laporan
 [x] Tampilkan kalau 100%
 [x] Axis Y di mobile
 [x] Data di laporan dan di absensi beda tanggal yang muncul
-[] Kalau bulanan pakai bulan ke bulan, minggu juga dan tahunan juga
-[] Rentang Tanggal disesuain
+[x] Kalau bulanan pakai bulan ke bulan
+[] minggu juga dan tahunan juga
+[x] Rentang Tanggal disesuain
 
 Components
 [x] Input select with arrow (laporan, modal pertemuan)
