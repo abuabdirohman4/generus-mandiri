@@ -139,6 +139,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       .select(`
         id,
         student_id,
+        meeting_id,
         date,
         status,
         reason,
@@ -190,38 +191,36 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       { name: 'Alpha', value: summary.alpha },
     ].filter(item => item.value > 0) // Only include non-zero values
 
-    // Generate trend chart data (grouped by date)
-    const dailyData = attendanceLogs?.reduce((acc: any, log: any) => {
-      const date = log.date
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          presentCount: 0,
-          absentCount: 0,
-          excusedCount: 0,
-          sickCount: 0,
-          totalRecords: 0
-        }
-      }
+    // Fetch meetings for the date range to ensure all meetings appear in chart
+    const { data: meetings } = await supabase
+      .from('meetings')
+      .select('id, title, date, student_snapshot, class_id')
+      .gte('date', dateFilter.date?.gte || '1900-01-01')
+      .lte('date', dateFilter.date?.lte || '2100-12-31')
+      .order('date')
+
+    // Apply class filter to meetings if specified
+    const filteredMeetings = filters.classId 
+      ? meetings?.filter(meeting => meeting.class_id === filters.classId) || []
+      : meetings || []
+
+    // Generate trend chart data from meetings (not just attendance logs)
+    const dailyData = filteredMeetings.reduce((acc: any, meeting: any) => {
+      const date = meeting.date
+      const meetingLogs = attendanceLogs?.filter(log => log.meeting_id === meeting.id) || []
+      const totalStudents = meeting.student_snapshot?.length || 0
       
-      acc[date].totalRecords++
-      switch (log.status) {
-        case 'H':
-          acc[date].presentCount++
-          break
-        case 'A':
-          acc[date].absentCount++
-          break
-        case 'I':
-          acc[date].excusedCount++
-          break
-        case 'S':
-          acc[date].sickCount++
-          break
+      acc[date] = {
+        date,
+        presentCount: meetingLogs.filter(log => log.status === 'H').length,
+        absentCount: meetingLogs.filter(log => log.status === 'A').length,
+        excusedCount: meetingLogs.filter(log => log.status === 'I').length,
+        sickCount: meetingLogs.filter(log => log.status === 'S').length,
+        totalRecords: totalStudents
       }
       
       return acc
-    }, {}) || {}
+    }, {})
 
     // Convert to array and format for chart
     const trendChartData = Object.values(dailyData)
