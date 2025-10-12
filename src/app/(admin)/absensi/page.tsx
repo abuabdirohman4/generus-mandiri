@@ -41,9 +41,6 @@ export default function AbsensiPage() {
     currentPage,
     totalPages,
     goToPage,
-    useDummyData,
-    toggleDummyData,
-    isDummy,
     isLoading, 
     error, 
     mutate 
@@ -114,6 +111,24 @@ export default function AbsensiPage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+        {/* Dummy Data Indicator */}
+        {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
+          <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-orange-800 dark:text-orange-200">
+                  <strong>Mode Dummy Data:</strong> Data yang ditampilkan adalah data dummy untuk keperluan pengembangan.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -129,23 +144,6 @@ export default function AbsensiPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Toggle Dummy Data Button - Only show if isDummy is true */}
-            {isDummy && (
-              <button
-                onClick={toggleDummyData}
-                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                  useDummyData
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {useDummyData ? 'Dummy Data ON' : 'Dummy Data OFF'}
-              </button>
-            )}
-
             {/* View Mode Toggle */}
             <ViewModeToggle />
           </div>

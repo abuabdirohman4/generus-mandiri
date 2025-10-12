@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { getMeetingsByClass, getMeetingsWithStats } from '../actions'
 import { getCurrentUserId } from '@/lib/userUtils'
-import dummyMeetings from '@/lib/dummy/meetings.json'
+import { getDummyMeetings } from '@/lib/dummy/processAttendanceLogs'
 
 interface Meeting {
   id: any
@@ -34,13 +34,18 @@ export function useMeetings(classId?: string) {
   const [userId, setUserId] = useState<string | null>(null)
   const [isGettingUserId, setIsGettingUserId] = useState(true)
   const [totalPages, setTotalPages] = useState(1)
-  const [useDummyData, setUseDummyData] = useState(false)
+  
+  // Use environment variable to control dummy data
+  const isDummy = process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true'
+  const [useDummyData, setUseDummyData] = useState(isDummy)
+  
+  // Update useDummyData when environment variable changes
+  useEffect(() => {
+    setUseDummyData(isDummy)
+  }, [isDummy])
   
   // Temporarily use local state for currentPage
   const [currentPage, setCurrentPage] = useState(1)
-  
-  // Set to true to enable dummy data toggle in UI
-  const isDummy = false
   
   const ITEMS_PER_PAGE = 10
 
@@ -57,31 +62,10 @@ export function useMeetings(classId?: string) {
     setCurrentPage(1)
   }, [classId, setCurrentPage])
 
-  // Process dummy data with mock stats
+  // Process dummy data with realistic stats from attendance logs
   const processDummyData = (meetings: any[]) => {
-    return meetings.map((meeting, index) => {
-      // Generate random attendance stats for testing
-      const totalStudents = meeting.student_snapshot.length
-      const presentCount = Math.floor(Math.random() * totalStudents)
-      const absentCount = Math.floor(Math.random() * (totalStudents - presentCount))
-      const sickCount = Math.floor(Math.random() * (totalStudents - presentCount - absentCount))
-      const excusedCount = totalStudents - presentCount - absentCount - sickCount
-      
-      const attendancePercentage = totalStudents > 0 
-        ? Math.round((presentCount / totalStudents) * 100)
-        : 0
-
-      return {
-        ...meeting,
-        classes: [{ id: 'class-1', name: 'Kelas 1' }], // Mock class data
-        attendancePercentage,
-        totalStudents,
-        presentCount,
-        absentCount,
-        sickCount,
-        excusedCount
-      }
-    })
+    // For dummy data, ignore classId filtering since we use 'class-1' in dummy data
+    return getDummyMeetings()
   }
 
   // Calculate cursor from page number
@@ -109,14 +93,14 @@ export function useMeetings(classId?: string) {
     async () => {
       // If using dummy data, return processed dummy data
       if (useDummyData) {
-        const processedDummy = processDummyData(dummyMeetings)
+        const processedDummy = processDummyData([])
         
-        const totalPages = Math.ceil(dummyMeetings.length / ITEMS_PER_PAGE)
+        const totalPages = Math.ceil(processedDummy.length / ITEMS_PER_PAGE)
         setTotalPages(totalPages)
         
         return {
           allMeetings: processedDummy,
-          total: dummyMeetings.length
+          total: processedDummy.length
         }
       }
 

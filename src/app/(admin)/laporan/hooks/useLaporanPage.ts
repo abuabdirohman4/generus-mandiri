@@ -23,8 +23,8 @@ export function useLaporanPage() {
       // Detailed mode filters
       period: filters.period,
       classId: filters.classId || undefined,
-      startDate: filters.startDate?.format('DD-MM-YYYY') || undefined,
-      endDate: filters.endDate?.format('DD-MM-YYYY') || undefined
+      startDate: filters.startDate?.format('YYYY-MM-DD') || undefined,
+      endDate: filters.endDate?.format('YYYY-MM-DD') || undefined
     }
   })
   

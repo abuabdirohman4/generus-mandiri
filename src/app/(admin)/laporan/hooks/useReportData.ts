@@ -2,6 +2,7 @@
 
 import useSWR from 'swr'
 import { getAttendanceReport, getClasses, type ReportData, type ReportFilters } from '../actions'
+import { generateDummyReportData } from '@/lib/dummy/processAttendanceLogs'
 
 interface Class {
   id: string
@@ -28,6 +29,9 @@ interface UseReportDataOptions {
  * Hook untuk fetching data laporan dengan SWR caching
  */
 export function useReportData({ filters, enabled = true }: UseReportDataOptions) {
+  // Check if dummy data should be used
+  const useDummyData = process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true'
+  
   // Convert filters for API call
   const apiFilters: ReportFilters = {
     // General mode filters
@@ -42,11 +46,17 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     endDate: filters.endDate || undefined
   }
 
-  const swrKey = enabled ? ['report-data', apiFilters] : null
+  const swrKey = enabled ? ['report-data', apiFilters, useDummyData] : null
 
   const { data, error, isLoading, mutate } = useSWR<ReportData>(
     swrKey,
     async () => {
+      // If using dummy data, generate from JSON
+      if (useDummyData) {
+        return generateDummyReportData(apiFilters)
+      }
+      
+      // Otherwise fetch from server
       const reportData = await getAttendanceReport(apiFilters)
       return reportData
     },
@@ -61,6 +71,7 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
         console.error('Error fetching report data:', error)
         console.error('SWR Key:', swrKey)
         console.error('Filters:', apiFilters)
+        console.error('Using dummy data:', useDummyData)
       }
     }
   )
@@ -70,6 +81,7 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     error,
     isLoading,
     mutate,
+    useDummyData,
     // Helper to check if data is available
     hasData: !!data,
     // Helper to get error message

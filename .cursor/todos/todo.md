@@ -1,14 +1,12 @@
 
-Today 
-- Beresin Meeting cretion page
-- absensi page 
-- optimasi
-
 Absensi
 [x] Ubah konsep jadi saat masuk ke halaman ini, user perlu tambah pertemuan
 [x] Jadi saat buka halaman ini, langsung menampilkan pertemuannya ada di hari apa saja dan persentase kehadirannya
 [x] User bisa edit pertemuan yang sudah berlalu
 [x] Di dalam absensi jadi tidak perlu biarkan user bisa ganti ganti hari karena harinya sudah fix saat masuk ke table input absensi nya
+[x] Beresin Meeting cretion page
+[x] absensi page 
+[x] optimasi
 
 [x] + button di pojok kanan bawah
 [x] setelah update isi absensi data di list, card nya tidak langsung terupdate
@@ -21,12 +19,17 @@ Siswa
 [x] Buat loading skeleton
 
 Laporan
-[] Buat loading skeleton
+[x] Buat loading skeleton
+[x] Dummy nya ubah lebih variatif
+[x] Tampilkan kalau 100%
+[x] Axis Y di mobile
+[] Kalau bulanan pakai bulan ke bulan, minggu juga dan tahunan juga
+[] Data di laporan dan di absensi beda tanggal yang muncul
 
 Components
-- Input select with arrow (laporan, modal pertemuan)
-- Button & Loading
-- Icon sidebar & bottom samain dengan di home
+[x] Input select with arrow (laporan, modal pertemuan)
+[x] Button & Loading
+[x] Icon sidebar & bottom samain dengan di home
 
 Bug
 - Terkadang terkena error berikut

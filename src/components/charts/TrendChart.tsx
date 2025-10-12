@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LabelList } from 'recharts'
 
 interface TrendChartData {
@@ -32,6 +32,44 @@ export default function TrendChart({
   className = ''
 }: TrendChartProps) {
   const [chartType, setChartType] = useState<ChartType>('line')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768) // md breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Dynamic chart margin based on screen size
+  const chartMargin = isMobile 
+    ? { top: 25, right: 10, left: -20, bottom: 5 }  // Negative left margin to use the space, more top for labels
+    : { top: 25, right: 30, left: 20, bottom: 5 }   // Normal margin for desktop
+
+  // Custom label component to fix 100% label display
+  const CustomLabel = (props: any) => {
+    const { x, y, width, value } = props
+    
+    // Keep all labels above, but use smaller offset for high values to prevent clipping
+    const yPos = value >= 95 ? y - 3 : y - 5
+    
+    return (
+      <text 
+        x={x + width / 2} 
+        y={yPos} 
+        fill="#6B7280" 
+        textAnchor="middle" 
+        fontSize={12}
+        fontWeight="500"
+      >
+        {value}%
+      </text>
+    )
+  }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -138,7 +176,7 @@ export default function TrendChart({
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'line' ? (
-            <LineChart data={data}>
+            <LineChart data={data} margin={chartMargin}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
                 dataKey="date" 
@@ -149,11 +187,11 @@ export default function TrendChart({
                 domain={[0, 100]}
                 tick={{ fontSize: 12 }}
                 tickLine={{ stroke: '#6B7280' }}
-                label={{ 
+                label={!isMobile ? { 
                   value: 'Persentase Kehadiran (%)', 
                   angle: -90, 
                   position: 'insideLeft' 
-                }}
+                } : undefined}
               />
               <Tooltip content={<CustomTooltip />} />
               <Line
@@ -165,15 +203,12 @@ export default function TrendChart({
                 activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
               >
                 <LabelList 
-                  dataKey="percentage" 
-                  position="top" 
-                  formatter={(value: any) => `${value}%`}
-                  style={{ fontSize: 12, fill: '#6B7280' }}
+                  content={<CustomLabel />}
                 />
               </Line>
             </LineChart>
           ) : (
-            <BarChart data={data}>
+            <BarChart data={data} margin={chartMargin}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis 
                 dataKey="date" 
@@ -184,11 +219,11 @@ export default function TrendChart({
                 domain={[0, 100]}
                 tick={{ fontSize: 12 }}
                 tickLine={{ stroke: '#6B7280' }}
-                label={{ 
+                label={!isMobile ? { 
                   value: 'Persentase Kehadiran (%)', 
                   angle: -90, 
                   position: 'insideLeft' 
-                }}
+                } : undefined}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar
@@ -197,10 +232,7 @@ export default function TrendChart({
                 radius={[4, 4, 0, 0]}
               >
                 <LabelList 
-                  dataKey="percentage" 
-                  position="top" 
-                  formatter={(value: any) => `${value}%`}
-                  style={{ fontSize: 12, fill: '#6B7280' }}
+                  content={<CustomLabel />}
                 />
               </Bar>
             </BarChart>

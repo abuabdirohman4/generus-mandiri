@@ -22,8 +22,8 @@ interface LaporanState {
   setFilter: (key: keyof LaporanFilters, value: any) => void
 }
 
-const getCurrentMonth = () => new Date().getMonth() + 1
-const getCurrentYear = () => new Date().getFullYear()
+const getCurrentMonth = () => 10 // Use October for dummy data compatibility
+const getCurrentYear = () => 2025 // Use 2025 for dummy data compatibility
 
 const defaultFilters: LaporanFilters = {
   // General mode defaults

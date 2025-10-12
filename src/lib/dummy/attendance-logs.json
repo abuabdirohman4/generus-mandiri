@@ -1,0 +1,7602 @@
+[
+  {
+    "id": "log-1",
+    "student_id": "student-1",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-2",
+    "student_id": "student-2",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-3",
+    "student_id": "student-3",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-4",
+    "student_id": "student-4",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-5",
+    "student_id": "student-5",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-6",
+    "student_id": "student-6",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-7",
+    "student_id": "student-7",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-8",
+    "student_id": "student-8",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-9",
+    "student_id": "student-9",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-10",
+    "student_id": "student-10",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-11",
+    "student_id": "student-11",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-12",
+    "student_id": "student-12",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-13",
+    "student_id": "student-13",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-14",
+    "student_id": "student-14",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-15",
+    "student_id": "student-15",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-16",
+    "student_id": "student-16",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-17",
+    "student_id": "student-17",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-18",
+    "student_id": "student-18",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-19",
+    "student_id": "student-19",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-20",
+    "student_id": "student-20",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-21",
+    "student_id": "student-21",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-22",
+    "student_id": "student-22",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-23",
+    "student_id": "student-23",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-24",
+    "student_id": "student-24",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-25",
+    "student_id": "student-25",
+    "meeting_id": "meeting-1",
+    "date": "2025-10-02",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-26",
+    "student_id": "student-1",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-27",
+    "student_id": "student-2",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-28",
+    "student_id": "student-3",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-29",
+    "student_id": "student-4",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-30",
+    "student_id": "student-5",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-31",
+    "student_id": "student-6",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-32",
+    "student_id": "student-7",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-33",
+    "student_id": "student-8",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-34",
+    "student_id": "student-9",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-35",
+    "student_id": "student-10",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-36",
+    "student_id": "student-11",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-37",
+    "student_id": "student-12",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-38",
+    "student_id": "student-13",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-39",
+    "student_id": "student-14",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-40",
+    "student_id": "student-15",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-41",
+    "student_id": "student-16",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-42",
+    "student_id": "student-17",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-43",
+    "student_id": "student-18",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-44",
+    "student_id": "student-19",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-45",
+    "student_id": "student-20",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-46",
+    "student_id": "student-21",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-47",
+    "student_id": "student-22",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-48",
+    "student_id": "student-23",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-49",
+    "student_id": "student-24",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-50",
+    "student_id": "student-25",
+    "meeting_id": "meeting-2",
+    "date": "2025-10-04",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-51",
+    "student_id": "student-1",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-52",
+    "student_id": "student-2",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-53",
+    "student_id": "student-3",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-54",
+    "student_id": "student-4",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-55",
+    "student_id": "student-5",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-56",
+    "student_id": "student-6",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-57",
+    "student_id": "student-7",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-58",
+    "student_id": "student-8",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-59",
+    "student_id": "student-9",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-60",
+    "student_id": "student-10",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-61",
+    "student_id": "student-11",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-62",
+    "student_id": "student-12",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-63",
+    "student_id": "student-13",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-64",
+    "student_id": "student-14",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-65",
+    "student_id": "student-15",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-66",
+    "student_id": "student-16",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-67",
+    "student_id": "student-17",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-68",
+    "student_id": "student-18",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-69",
+    "student_id": "student-19",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-70",
+    "student_id": "student-20",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-71",
+    "student_id": "student-21",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-72",
+    "student_id": "student-22",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-73",
+    "student_id": "student-23",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-74",
+    "student_id": "student-24",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-75",
+    "student_id": "student-25",
+    "meeting_id": "meeting-3",
+    "date": "2025-10-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-76",
+    "student_id": "student-1",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-77",
+    "student_id": "student-2",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-78",
+    "student_id": "student-3",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-79",
+    "student_id": "student-4",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-80",
+    "student_id": "student-5",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-81",
+    "student_id": "student-6",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-82",
+    "student_id": "student-7",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-83",
+    "student_id": "student-8",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-84",
+    "student_id": "student-9",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-85",
+    "student_id": "student-10",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-86",
+    "student_id": "student-11",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-87",
+    "student_id": "student-12",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-88",
+    "student_id": "student-13",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-89",
+    "student_id": "student-14",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-90",
+    "student_id": "student-15",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-91",
+    "student_id": "student-16",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-92",
+    "student_id": "student-17",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-93",
+    "student_id": "student-18",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-94",
+    "student_id": "student-19",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-95",
+    "student_id": "student-20",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-96",
+    "student_id": "student-21",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-97",
+    "student_id": "student-22",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-98",
+    "student_id": "student-23",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-99",
+    "student_id": "student-24",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-100",
+    "student_id": "student-25",
+    "meeting_id": "meeting-4",
+    "date": "2025-10-09",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-101",
+    "student_id": "student-1",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-102",
+    "student_id": "student-2",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-103",
+    "student_id": "student-3",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-104",
+    "student_id": "student-4",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-105",
+    "student_id": "student-5",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-106",
+    "student_id": "student-6",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-107",
+    "student_id": "student-7",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-108",
+    "student_id": "student-8",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-109",
+    "student_id": "student-9",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-110",
+    "student_id": "student-10",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-111",
+    "student_id": "student-11",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-112",
+    "student_id": "student-12",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-113",
+    "student_id": "student-13",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-114",
+    "student_id": "student-14",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-115",
+    "student_id": "student-15",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-116",
+    "student_id": "student-16",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-117",
+    "student_id": "student-17",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-118",
+    "student_id": "student-18",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-119",
+    "student_id": "student-19",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-120",
+    "student_id": "student-20",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-121",
+    "student_id": "student-21",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-122",
+    "student_id": "student-22",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-123",
+    "student_id": "student-23",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-124",
+    "student_id": "student-24",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-125",
+    "student_id": "student-25",
+    "meeting_id": "meeting-5",
+    "date": "2025-10-11",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-126",
+    "student_id": "student-1",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-127",
+    "student_id": "student-2",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-128",
+    "student_id": "student-3",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-129",
+    "student_id": "student-4",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-130",
+    "student_id": "student-5",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-131",
+    "student_id": "student-6",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-132",
+    "student_id": "student-7",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-133",
+    "student_id": "student-8",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-134",
+    "student_id": "student-9",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-135",
+    "student_id": "student-10",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-136",
+    "student_id": "student-11",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-137",
+    "student_id": "student-12",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-138",
+    "student_id": "student-13",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-139",
+    "student_id": "student-14",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-140",
+    "student_id": "student-15",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-141",
+    "student_id": "student-16",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-142",
+    "student_id": "student-17",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-143",
+    "student_id": "student-18",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-144",
+    "student_id": "student-19",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-145",
+    "student_id": "student-20",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-146",
+    "student_id": "student-21",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-147",
+    "student_id": "student-22",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-148",
+    "student_id": "student-23",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-149",
+    "student_id": "student-24",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-150",
+    "student_id": "student-25",
+    "meeting_id": "meeting-6",
+    "date": "2025-10-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-151",
+    "student_id": "student-1",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-152",
+    "student_id": "student-2",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-153",
+    "student_id": "student-3",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-154",
+    "student_id": "student-4",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-155",
+    "student_id": "student-5",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-156",
+    "student_id": "student-6",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-157",
+    "student_id": "student-7",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-158",
+    "student_id": "student-8",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-159",
+    "student_id": "student-9",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-160",
+    "student_id": "student-10",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-161",
+    "student_id": "student-11",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-162",
+    "student_id": "student-12",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-163",
+    "student_id": "student-13",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-164",
+    "student_id": "student-14",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-165",
+    "student_id": "student-15",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-166",
+    "student_id": "student-16",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-167",
+    "student_id": "student-17",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-168",
+    "student_id": "student-18",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-169",
+    "student_id": "student-19",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-170",
+    "student_id": "student-20",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-171",
+    "student_id": "student-21",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-172",
+    "student_id": "student-22",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-173",
+    "student_id": "student-23",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-174",
+    "student_id": "student-24",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-175",
+    "student_id": "student-25",
+    "meeting_id": "meeting-7",
+    "date": "2025-10-16",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-176",
+    "student_id": "student-1",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-177",
+    "student_id": "student-2",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-178",
+    "student_id": "student-3",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-179",
+    "student_id": "student-4",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-180",
+    "student_id": "student-5",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-181",
+    "student_id": "student-6",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-182",
+    "student_id": "student-7",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-183",
+    "student_id": "student-8",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-184",
+    "student_id": "student-9",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-185",
+    "student_id": "student-10",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-186",
+    "student_id": "student-11",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-187",
+    "student_id": "student-12",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-188",
+    "student_id": "student-13",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-189",
+    "student_id": "student-14",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-190",
+    "student_id": "student-15",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-191",
+    "student_id": "student-16",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-192",
+    "student_id": "student-17",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-193",
+    "student_id": "student-18",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-194",
+    "student_id": "student-19",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-195",
+    "student_id": "student-20",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-196",
+    "student_id": "student-21",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-197",
+    "student_id": "student-22",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-198",
+    "student_id": "student-23",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-199",
+    "student_id": "student-24",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-200",
+    "student_id": "student-25",
+    "meeting_id": "meeting-8",
+    "date": "2025-10-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-201",
+    "student_id": "student-1",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-202",
+    "student_id": "student-2",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-203",
+    "student_id": "student-3",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-204",
+    "student_id": "student-4",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-205",
+    "student_id": "student-5",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-206",
+    "student_id": "student-6",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-207",
+    "student_id": "student-7",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-208",
+    "student_id": "student-8",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-209",
+    "student_id": "student-9",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-210",
+    "student_id": "student-10",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-211",
+    "student_id": "student-11",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-212",
+    "student_id": "student-12",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-213",
+    "student_id": "student-13",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-214",
+    "student_id": "student-14",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-215",
+    "student_id": "student-15",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-216",
+    "student_id": "student-16",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-217",
+    "student_id": "student-17",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-218",
+    "student_id": "student-18",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-219",
+    "student_id": "student-19",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-220",
+    "student_id": "student-20",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-221",
+    "student_id": "student-21",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-222",
+    "student_id": "student-22",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-223",
+    "student_id": "student-23",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-224",
+    "student_id": "student-24",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-225",
+    "student_id": "student-25",
+    "meeting_id": "meeting-9",
+    "date": "2025-10-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-226",
+    "student_id": "student-1",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-227",
+    "student_id": "student-2",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-228",
+    "student_id": "student-3",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-229",
+    "student_id": "student-4",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-230",
+    "student_id": "student-5",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-231",
+    "student_id": "student-6",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-232",
+    "student_id": "student-7",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-233",
+    "student_id": "student-8",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-234",
+    "student_id": "student-9",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-235",
+    "student_id": "student-10",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-236",
+    "student_id": "student-11",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-237",
+    "student_id": "student-12",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-238",
+    "student_id": "student-13",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-239",
+    "student_id": "student-14",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-240",
+    "student_id": "student-15",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-241",
+    "student_id": "student-16",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-242",
+    "student_id": "student-17",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-243",
+    "student_id": "student-18",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-244",
+    "student_id": "student-19",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-245",
+    "student_id": "student-20",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-246",
+    "student_id": "student-21",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-247",
+    "student_id": "student-22",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-248",
+    "student_id": "student-23",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-249",
+    "student_id": "student-24",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-250",
+    "student_id": "student-25",
+    "meeting_id": "meeting-10",
+    "date": "2025-10-23",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-251",
+    "student_id": "student-1",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-252",
+    "student_id": "student-2",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-253",
+    "student_id": "student-3",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-254",
+    "student_id": "student-4",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-255",
+    "student_id": "student-5",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-256",
+    "student_id": "student-6",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-257",
+    "student_id": "student-7",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-258",
+    "student_id": "student-8",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-259",
+    "student_id": "student-9",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-260",
+    "student_id": "student-10",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-261",
+    "student_id": "student-11",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-262",
+    "student_id": "student-12",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-263",
+    "student_id": "student-13",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-264",
+    "student_id": "student-14",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-265",
+    "student_id": "student-15",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-266",
+    "student_id": "student-16",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-267",
+    "student_id": "student-17",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-268",
+    "student_id": "student-18",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-269",
+    "student_id": "student-19",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-270",
+    "student_id": "student-20",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-271",
+    "student_id": "student-21",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-272",
+    "student_id": "student-22",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-273",
+    "student_id": "student-23",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-274",
+    "student_id": "student-24",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-275",
+    "student_id": "student-25",
+    "meeting_id": "meeting-11",
+    "date": "2025-10-25",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-276",
+    "student_id": "student-1",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-277",
+    "student_id": "student-2",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-278",
+    "student_id": "student-3",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-279",
+    "student_id": "student-4",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-280",
+    "student_id": "student-5",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-281",
+    "student_id": "student-6",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-282",
+    "student_id": "student-7",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-283",
+    "student_id": "student-8",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-284",
+    "student_id": "student-9",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-285",
+    "student_id": "student-10",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-286",
+    "student_id": "student-11",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-287",
+    "student_id": "student-12",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-288",
+    "student_id": "student-13",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-289",
+    "student_id": "student-14",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-290",
+    "student_id": "student-15",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-291",
+    "student_id": "student-16",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-292",
+    "student_id": "student-17",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-293",
+    "student_id": "student-18",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-294",
+    "student_id": "student-19",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-295",
+    "student_id": "student-20",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-296",
+    "student_id": "student-21",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-297",
+    "student_id": "student-22",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-298",
+    "student_id": "student-23",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-299",
+    "student_id": "student-24",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-300",
+    "student_id": "student-25",
+    "meeting_id": "meeting-12",
+    "date": "2025-10-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-301",
+    "student_id": "student-1",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-302",
+    "student_id": "student-2",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-303",
+    "student_id": "student-3",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-304",
+    "student_id": "student-4",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-305",
+    "student_id": "student-5",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-306",
+    "student_id": "student-6",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-307",
+    "student_id": "student-7",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-308",
+    "student_id": "student-8",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-309",
+    "student_id": "student-9",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-310",
+    "student_id": "student-10",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-311",
+    "student_id": "student-11",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-312",
+    "student_id": "student-12",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-313",
+    "student_id": "student-13",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-314",
+    "student_id": "student-14",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-315",
+    "student_id": "student-15",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-316",
+    "student_id": "student-16",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-317",
+    "student_id": "student-17",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-318",
+    "student_id": "student-18",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-319",
+    "student_id": "student-19",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-320",
+    "student_id": "student-20",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-321",
+    "student_id": "student-21",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-322",
+    "student_id": "student-22",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-323",
+    "student_id": "student-23",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-324",
+    "student_id": "student-24",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-325",
+    "student_id": "student-25",
+    "meeting_id": "meeting-13",
+    "date": "2025-10-30",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-326",
+    "student_id": "student-1",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-327",
+    "student_id": "student-2",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-328",
+    "student_id": "student-3",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-329",
+    "student_id": "student-4",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-330",
+    "student_id": "student-5",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-331",
+    "student_id": "student-6",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-332",
+    "student_id": "student-7",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-333",
+    "student_id": "student-8",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-334",
+    "student_id": "student-9",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-335",
+    "student_id": "student-10",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-336",
+    "student_id": "student-11",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-337",
+    "student_id": "student-12",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-338",
+    "student_id": "student-13",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-339",
+    "student_id": "student-14",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-340",
+    "student_id": "student-15",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-341",
+    "student_id": "student-16",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-342",
+    "student_id": "student-17",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-343",
+    "student_id": "student-18",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-344",
+    "student_id": "student-19",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-345",
+    "student_id": "student-20",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-346",
+    "student_id": "student-21",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-347",
+    "student_id": "student-22",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-348",
+    "student_id": "student-23",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-349",
+    "student_id": "student-24",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-350",
+    "student_id": "student-25",
+    "meeting_id": "meeting-14",
+    "date": "2025-11-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-351",
+    "student_id": "student-1",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-352",
+    "student_id": "student-2",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-353",
+    "student_id": "student-3",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-354",
+    "student_id": "student-4",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-355",
+    "student_id": "student-5",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-356",
+    "student_id": "student-6",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-357",
+    "student_id": "student-7",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-358",
+    "student_id": "student-8",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-359",
+    "student_id": "student-9",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-360",
+    "student_id": "student-10",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-361",
+    "student_id": "student-11",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-362",
+    "student_id": "student-12",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-363",
+    "student_id": "student-13",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-364",
+    "student_id": "student-14",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-365",
+    "student_id": "student-15",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-366",
+    "student_id": "student-16",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-367",
+    "student_id": "student-17",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-368",
+    "student_id": "student-18",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-369",
+    "student_id": "student-19",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-370",
+    "student_id": "student-20",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-371",
+    "student_id": "student-21",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-372",
+    "student_id": "student-22",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-373",
+    "student_id": "student-23",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-374",
+    "student_id": "student-24",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-375",
+    "student_id": "student-25",
+    "meeting_id": "meeting-15",
+    "date": "2025-11-03",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-376",
+    "student_id": "student-1",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-377",
+    "student_id": "student-2",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-378",
+    "student_id": "student-3",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-379",
+    "student_id": "student-4",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-380",
+    "student_id": "student-5",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-381",
+    "student_id": "student-6",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-382",
+    "student_id": "student-7",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-383",
+    "student_id": "student-8",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-384",
+    "student_id": "student-9",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-385",
+    "student_id": "student-10",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-386",
+    "student_id": "student-11",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-387",
+    "student_id": "student-12",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-388",
+    "student_id": "student-13",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-389",
+    "student_id": "student-14",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-390",
+    "student_id": "student-15",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-391",
+    "student_id": "student-16",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-392",
+    "student_id": "student-17",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-393",
+    "student_id": "student-18",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-394",
+    "student_id": "student-19",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-395",
+    "student_id": "student-20",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-396",
+    "student_id": "student-21",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-397",
+    "student_id": "student-22",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-398",
+    "student_id": "student-23",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-399",
+    "student_id": "student-24",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-400",
+    "student_id": "student-25",
+    "meeting_id": "meeting-16",
+    "date": "2025-11-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-401",
+    "student_id": "student-1",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-402",
+    "student_id": "student-2",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-403",
+    "student_id": "student-3",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-404",
+    "student_id": "student-4",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-405",
+    "student_id": "student-5",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-406",
+    "student_id": "student-6",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-407",
+    "student_id": "student-7",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-408",
+    "student_id": "student-8",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-409",
+    "student_id": "student-9",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-410",
+    "student_id": "student-10",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-411",
+    "student_id": "student-11",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-412",
+    "student_id": "student-12",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-413",
+    "student_id": "student-13",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-414",
+    "student_id": "student-14",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-415",
+    "student_id": "student-15",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-416",
+    "student_id": "student-16",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-417",
+    "student_id": "student-17",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-418",
+    "student_id": "student-18",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-419",
+    "student_id": "student-19",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-420",
+    "student_id": "student-20",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-421",
+    "student_id": "student-21",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-422",
+    "student_id": "student-22",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-423",
+    "student_id": "student-23",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-424",
+    "student_id": "student-24",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-425",
+    "student_id": "student-25",
+    "meeting_id": "meeting-17",
+    "date": "2025-11-08",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-426",
+    "student_id": "student-1",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-427",
+    "student_id": "student-2",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-428",
+    "student_id": "student-3",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-429",
+    "student_id": "student-4",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-430",
+    "student_id": "student-5",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-431",
+    "student_id": "student-6",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-432",
+    "student_id": "student-7",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-433",
+    "student_id": "student-8",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-434",
+    "student_id": "student-9",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-435",
+    "student_id": "student-10",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-436",
+    "student_id": "student-11",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-437",
+    "student_id": "student-12",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-438",
+    "student_id": "student-13",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-439",
+    "student_id": "student-14",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-440",
+    "student_id": "student-15",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-441",
+    "student_id": "student-16",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-442",
+    "student_id": "student-17",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-443",
+    "student_id": "student-18",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-444",
+    "student_id": "student-19",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-445",
+    "student_id": "student-20",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-446",
+    "student_id": "student-21",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-447",
+    "student_id": "student-22",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-448",
+    "student_id": "student-23",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-449",
+    "student_id": "student-24",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-450",
+    "student_id": "student-25",
+    "meeting_id": "meeting-18",
+    "date": "2025-11-10",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-451",
+    "student_id": "student-1",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-452",
+    "student_id": "student-2",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-453",
+    "student_id": "student-3",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-454",
+    "student_id": "student-4",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-455",
+    "student_id": "student-5",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-456",
+    "student_id": "student-6",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-457",
+    "student_id": "student-7",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-458",
+    "student_id": "student-8",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-459",
+    "student_id": "student-9",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-460",
+    "student_id": "student-10",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-461",
+    "student_id": "student-11",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-462",
+    "student_id": "student-12",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-463",
+    "student_id": "student-13",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-464",
+    "student_id": "student-14",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-465",
+    "student_id": "student-15",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-466",
+    "student_id": "student-16",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-467",
+    "student_id": "student-17",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-468",
+    "student_id": "student-18",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-469",
+    "student_id": "student-19",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-470",
+    "student_id": "student-20",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-471",
+    "student_id": "student-21",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-472",
+    "student_id": "student-22",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-473",
+    "student_id": "student-23",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-474",
+    "student_id": "student-24",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-475",
+    "student_id": "student-25",
+    "meeting_id": "meeting-19",
+    "date": "2025-11-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-476",
+    "student_id": "student-1",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-477",
+    "student_id": "student-2",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-478",
+    "student_id": "student-3",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-479",
+    "student_id": "student-4",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-480",
+    "student_id": "student-5",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-481",
+    "student_id": "student-6",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-482",
+    "student_id": "student-7",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-483",
+    "student_id": "student-8",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-484",
+    "student_id": "student-9",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-485",
+    "student_id": "student-10",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-486",
+    "student_id": "student-11",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-487",
+    "student_id": "student-12",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-488",
+    "student_id": "student-13",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-489",
+    "student_id": "student-14",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-490",
+    "student_id": "student-15",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-491",
+    "student_id": "student-16",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-492",
+    "student_id": "student-17",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-493",
+    "student_id": "student-18",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-494",
+    "student_id": "student-19",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-495",
+    "student_id": "student-20",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-496",
+    "student_id": "student-21",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-497",
+    "student_id": "student-22",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-498",
+    "student_id": "student-23",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-499",
+    "student_id": "student-24",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-500",
+    "student_id": "student-25",
+    "meeting_id": "meeting-20",
+    "date": "2025-11-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-501",
+    "student_id": "student-1",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-502",
+    "student_id": "student-2",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-503",
+    "student_id": "student-3",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-504",
+    "student_id": "student-4",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-505",
+    "student_id": "student-5",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-506",
+    "student_id": "student-6",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-507",
+    "student_id": "student-7",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-508",
+    "student_id": "student-8",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-509",
+    "student_id": "student-9",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-510",
+    "student_id": "student-10",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-511",
+    "student_id": "student-11",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-512",
+    "student_id": "student-12",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-513",
+    "student_id": "student-13",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-514",
+    "student_id": "student-14",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-515",
+    "student_id": "student-15",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-516",
+    "student_id": "student-16",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-517",
+    "student_id": "student-17",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-518",
+    "student_id": "student-18",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-519",
+    "student_id": "student-19",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-520",
+    "student_id": "student-20",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-521",
+    "student_id": "student-21",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-522",
+    "student_id": "student-22",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-523",
+    "student_id": "student-23",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-524",
+    "student_id": "student-24",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-525",
+    "student_id": "student-25",
+    "meeting_id": "meeting-21",
+    "date": "2025-11-17",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-526",
+    "student_id": "student-1",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-527",
+    "student_id": "student-2",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-528",
+    "student_id": "student-3",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-529",
+    "student_id": "student-4",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-530",
+    "student_id": "student-5",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-531",
+    "student_id": "student-6",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-532",
+    "student_id": "student-7",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-533",
+    "student_id": "student-8",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-534",
+    "student_id": "student-9",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-535",
+    "student_id": "student-10",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-536",
+    "student_id": "student-11",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-537",
+    "student_id": "student-12",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-538",
+    "student_id": "student-13",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-539",
+    "student_id": "student-14",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-540",
+    "student_id": "student-15",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-541",
+    "student_id": "student-16",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-542",
+    "student_id": "student-17",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-543",
+    "student_id": "student-18",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-544",
+    "student_id": "student-19",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-545",
+    "student_id": "student-20",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-546",
+    "student_id": "student-21",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-547",
+    "student_id": "student-22",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-548",
+    "student_id": "student-23",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-549",
+    "student_id": "student-24",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-550",
+    "student_id": "student-25",
+    "meeting_id": "meeting-22",
+    "date": "2025-11-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-551",
+    "student_id": "student-1",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-552",
+    "student_id": "student-2",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-553",
+    "student_id": "student-3",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-554",
+    "student_id": "student-4",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-555",
+    "student_id": "student-5",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-556",
+    "student_id": "student-6",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-557",
+    "student_id": "student-7",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-558",
+    "student_id": "student-8",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-559",
+    "student_id": "student-9",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-560",
+    "student_id": "student-10",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-561",
+    "student_id": "student-11",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-562",
+    "student_id": "student-12",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-563",
+    "student_id": "student-13",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-564",
+    "student_id": "student-14",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-565",
+    "student_id": "student-15",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-566",
+    "student_id": "student-16",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-567",
+    "student_id": "student-17",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-568",
+    "student_id": "student-18",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-569",
+    "student_id": "student-19",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-570",
+    "student_id": "student-20",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-571",
+    "student_id": "student-21",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-572",
+    "student_id": "student-22",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-573",
+    "student_id": "student-23",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-574",
+    "student_id": "student-24",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-575",
+    "student_id": "student-25",
+    "meeting_id": "meeting-23",
+    "date": "2025-11-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-576",
+    "student_id": "student-1",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-577",
+    "student_id": "student-2",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-578",
+    "student_id": "student-3",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-579",
+    "student_id": "student-4",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-580",
+    "student_id": "student-5",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-581",
+    "student_id": "student-6",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-582",
+    "student_id": "student-7",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-583",
+    "student_id": "student-8",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-584",
+    "student_id": "student-9",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-585",
+    "student_id": "student-10",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-586",
+    "student_id": "student-11",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-587",
+    "student_id": "student-12",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-588",
+    "student_id": "student-13",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-589",
+    "student_id": "student-14",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-590",
+    "student_id": "student-15",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-591",
+    "student_id": "student-16",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-592",
+    "student_id": "student-17",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-593",
+    "student_id": "student-18",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-594",
+    "student_id": "student-19",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-595",
+    "student_id": "student-20",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-596",
+    "student_id": "student-21",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-597",
+    "student_id": "student-22",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-598",
+    "student_id": "student-23",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-599",
+    "student_id": "student-24",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-600",
+    "student_id": "student-25",
+    "meeting_id": "meeting-24",
+    "date": "2025-11-24",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-601",
+    "student_id": "student-1",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-602",
+    "student_id": "student-2",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-603",
+    "student_id": "student-3",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-604",
+    "student_id": "student-4",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-605",
+    "student_id": "student-5",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-606",
+    "student_id": "student-6",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-607",
+    "student_id": "student-7",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-608",
+    "student_id": "student-8",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-609",
+    "student_id": "student-9",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-610",
+    "student_id": "student-10",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-611",
+    "student_id": "student-11",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-612",
+    "student_id": "student-12",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-613",
+    "student_id": "student-13",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-614",
+    "student_id": "student-14",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-615",
+    "student_id": "student-15",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-616",
+    "student_id": "student-16",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-617",
+    "student_id": "student-17",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-618",
+    "student_id": "student-18",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-619",
+    "student_id": "student-19",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-620",
+    "student_id": "student-20",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-621",
+    "student_id": "student-21",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-622",
+    "student_id": "student-22",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-623",
+    "student_id": "student-23",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-624",
+    "student_id": "student-24",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-625",
+    "student_id": "student-25",
+    "meeting_id": "meeting-25",
+    "date": "2025-11-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-626",
+    "student_id": "student-1",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-627",
+    "student_id": "student-2",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-628",
+    "student_id": "student-3",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-629",
+    "student_id": "student-4",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-630",
+    "student_id": "student-5",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-631",
+    "student_id": "student-6",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-632",
+    "student_id": "student-7",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-633",
+    "student_id": "student-8",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "I",
+    "reason": "Ada acara"
+  },
+  {
+    "id": "log-634",
+    "student_id": "student-9",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-635",
+    "student_id": "student-10",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-636",
+    "student_id": "student-11",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-637",
+    "student_id": "student-12",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-638",
+    "student_id": "student-13",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-639",
+    "student_id": "student-14",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-640",
+    "student_id": "student-15",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-641",
+    "student_id": "student-16",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-642",
+    "student_id": "student-17",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-643",
+    "student_id": "student-18",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-644",
+    "student_id": "student-19",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-645",
+    "student_id": "student-20",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-646",
+    "student_id": "student-21",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-647",
+    "student_id": "student-22",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-648",
+    "student_id": "student-23",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-649",
+    "student_id": "student-24",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-650",
+    "student_id": "student-25",
+    "meeting_id": "meeting-26",
+    "date": "2025-11-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-651",
+    "student_id": "student-1",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-652",
+    "student_id": "student-2",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-653",
+    "student_id": "student-3",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-654",
+    "student_id": "student-4",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-655",
+    "student_id": "student-5",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-656",
+    "student_id": "student-6",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-657",
+    "student_id": "student-7",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-658",
+    "student_id": "student-8",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-659",
+    "student_id": "student-9",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-660",
+    "student_id": "student-10",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-661",
+    "student_id": "student-11",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-662",
+    "student_id": "student-12",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-663",
+    "student_id": "student-13",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-664",
+    "student_id": "student-14",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-665",
+    "student_id": "student-15",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-666",
+    "student_id": "student-16",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-667",
+    "student_id": "student-17",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-668",
+    "student_id": "student-18",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-669",
+    "student_id": "student-19",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-670",
+    "student_id": "student-20",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-671",
+    "student_id": "student-21",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-672",
+    "student_id": "student-22",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-673",
+    "student_id": "student-23",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-674",
+    "student_id": "student-24",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-675",
+    "student_id": "student-25",
+    "meeting_id": "meeting-27",
+    "date": "2025-12-01",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-676",
+    "student_id": "student-1",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-677",
+    "student_id": "student-2",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-678",
+    "student_id": "student-3",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-679",
+    "student_id": "student-4",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-680",
+    "student_id": "student-5",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-681",
+    "student_id": "student-6",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-682",
+    "student_id": "student-7",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-683",
+    "student_id": "student-8",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-684",
+    "student_id": "student-9",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-685",
+    "student_id": "student-10",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-686",
+    "student_id": "student-11",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-687",
+    "student_id": "student-12",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-688",
+    "student_id": "student-13",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-689",
+    "student_id": "student-14",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-690",
+    "student_id": "student-15",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-691",
+    "student_id": "student-16",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-692",
+    "student_id": "student-17",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-693",
+    "student_id": "student-18",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-694",
+    "student_id": "student-19",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-695",
+    "student_id": "student-20",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-696",
+    "student_id": "student-21",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-697",
+    "student_id": "student-22",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-698",
+    "student_id": "student-23",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-699",
+    "student_id": "student-24",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-700",
+    "student_id": "student-25",
+    "meeting_id": "meeting-28",
+    "date": "2025-12-04",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-701",
+    "student_id": "student-1",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-702",
+    "student_id": "student-2",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-703",
+    "student_id": "student-3",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-704",
+    "student_id": "student-4",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-705",
+    "student_id": "student-5",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-706",
+    "student_id": "student-6",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-707",
+    "student_id": "student-7",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-708",
+    "student_id": "student-8",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-709",
+    "student_id": "student-9",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-710",
+    "student_id": "student-10",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-711",
+    "student_id": "student-11",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-712",
+    "student_id": "student-12",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-713",
+    "student_id": "student-13",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-714",
+    "student_id": "student-14",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-715",
+    "student_id": "student-15",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-716",
+    "student_id": "student-16",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-717",
+    "student_id": "student-17",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-718",
+    "student_id": "student-18",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-719",
+    "student_id": "student-19",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-720",
+    "student_id": "student-20",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-721",
+    "student_id": "student-21",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-722",
+    "student_id": "student-22",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-723",
+    "student_id": "student-23",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-724",
+    "student_id": "student-24",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-725",
+    "student_id": "student-25",
+    "meeting_id": "meeting-29",
+    "date": "2025-12-06",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-726",
+    "student_id": "student-1",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-727",
+    "student_id": "student-2",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-728",
+    "student_id": "student-3",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-729",
+    "student_id": "student-4",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-730",
+    "student_id": "student-5",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-731",
+    "student_id": "student-6",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-732",
+    "student_id": "student-7",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-733",
+    "student_id": "student-8",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-734",
+    "student_id": "student-9",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-735",
+    "student_id": "student-10",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-736",
+    "student_id": "student-11",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-737",
+    "student_id": "student-12",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-738",
+    "student_id": "student-13",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-739",
+    "student_id": "student-14",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-740",
+    "student_id": "student-15",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-741",
+    "student_id": "student-16",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-742",
+    "student_id": "student-17",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-743",
+    "student_id": "student-18",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-744",
+    "student_id": "student-19",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-745",
+    "student_id": "student-20",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-746",
+    "student_id": "student-21",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-747",
+    "student_id": "student-22",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-748",
+    "student_id": "student-23",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-749",
+    "student_id": "student-24",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-750",
+    "student_id": "student-25",
+    "meeting_id": "meeting-30",
+    "date": "2025-12-08",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-751",
+    "student_id": "student-1",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-752",
+    "student_id": "student-2",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-753",
+    "student_id": "student-3",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-754",
+    "student_id": "student-4",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-755",
+    "student_id": "student-5",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-756",
+    "student_id": "student-6",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-757",
+    "student_id": "student-7",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-758",
+    "student_id": "student-8",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-759",
+    "student_id": "student-9",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-760",
+    "student_id": "student-10",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-761",
+    "student_id": "student-11",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-762",
+    "student_id": "student-12",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-763",
+    "student_id": "student-13",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-764",
+    "student_id": "student-14",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-765",
+    "student_id": "student-15",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-766",
+    "student_id": "student-16",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-767",
+    "student_id": "student-17",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-768",
+    "student_id": "student-18",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-769",
+    "student_id": "student-19",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-770",
+    "student_id": "student-20",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-771",
+    "student_id": "student-21",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-772",
+    "student_id": "student-22",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-773",
+    "student_id": "student-23",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-774",
+    "student_id": "student-24",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-775",
+    "student_id": "student-25",
+    "meeting_id": "meeting-31",
+    "date": "2025-12-11",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-776",
+    "student_id": "student-1",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-777",
+    "student_id": "student-2",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-778",
+    "student_id": "student-3",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-779",
+    "student_id": "student-4",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-780",
+    "student_id": "student-5",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-781",
+    "student_id": "student-6",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-782",
+    "student_id": "student-7",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-783",
+    "student_id": "student-8",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-784",
+    "student_id": "student-9",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-785",
+    "student_id": "student-10",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-786",
+    "student_id": "student-11",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-787",
+    "student_id": "student-12",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-788",
+    "student_id": "student-13",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-789",
+    "student_id": "student-14",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-790",
+    "student_id": "student-15",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-791",
+    "student_id": "student-16",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-792",
+    "student_id": "student-17",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-793",
+    "student_id": "student-18",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-794",
+    "student_id": "student-19",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-795",
+    "student_id": "student-20",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-796",
+    "student_id": "student-21",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-797",
+    "student_id": "student-22",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-798",
+    "student_id": "student-23",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-799",
+    "student_id": "student-24",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-800",
+    "student_id": "student-25",
+    "meeting_id": "meeting-32",
+    "date": "2025-12-13",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-801",
+    "student_id": "student-1",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-802",
+    "student_id": "student-2",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-803",
+    "student_id": "student-3",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-804",
+    "student_id": "student-4",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-805",
+    "student_id": "student-5",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-806",
+    "student_id": "student-6",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-807",
+    "student_id": "student-7",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-808",
+    "student_id": "student-8",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-809",
+    "student_id": "student-9",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-810",
+    "student_id": "student-10",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-811",
+    "student_id": "student-11",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-812",
+    "student_id": "student-12",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-813",
+    "student_id": "student-13",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-814",
+    "student_id": "student-14",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-815",
+    "student_id": "student-15",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-816",
+    "student_id": "student-16",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-817",
+    "student_id": "student-17",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-818",
+    "student_id": "student-18",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-819",
+    "student_id": "student-19",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-820",
+    "student_id": "student-20",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-821",
+    "student_id": "student-21",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-822",
+    "student_id": "student-22",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-823",
+    "student_id": "student-23",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-824",
+    "student_id": "student-24",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-825",
+    "student_id": "student-25",
+    "meeting_id": "meeting-33",
+    "date": "2025-12-15",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-826",
+    "student_id": "student-1",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-827",
+    "student_id": "student-2",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-828",
+    "student_id": "student-3",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-829",
+    "student_id": "student-4",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-830",
+    "student_id": "student-5",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-831",
+    "student_id": "student-6",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-832",
+    "student_id": "student-7",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-833",
+    "student_id": "student-8",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-834",
+    "student_id": "student-9",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-835",
+    "student_id": "student-10",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-836",
+    "student_id": "student-11",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-837",
+    "student_id": "student-12",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-838",
+    "student_id": "student-13",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-839",
+    "student_id": "student-14",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-840",
+    "student_id": "student-15",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-841",
+    "student_id": "student-16",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-842",
+    "student_id": "student-17",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-843",
+    "student_id": "student-18",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-844",
+    "student_id": "student-19",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-845",
+    "student_id": "student-20",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-846",
+    "student_id": "student-21",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-847",
+    "student_id": "student-22",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-848",
+    "student_id": "student-23",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-849",
+    "student_id": "student-24",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-850",
+    "student_id": "student-25",
+    "meeting_id": "meeting-34",
+    "date": "2025-12-18",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-851",
+    "student_id": "student-1",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-852",
+    "student_id": "student-2",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-853",
+    "student_id": "student-3",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-854",
+    "student_id": "student-4",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-855",
+    "student_id": "student-5",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-856",
+    "student_id": "student-6",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-857",
+    "student_id": "student-7",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-858",
+    "student_id": "student-8",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-859",
+    "student_id": "student-9",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "I",
+    "reason": "Keperluan keluarga"
+  },
+  {
+    "id": "log-860",
+    "student_id": "student-10",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-861",
+    "student_id": "student-11",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-862",
+    "student_id": "student-12",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-863",
+    "student_id": "student-13",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-864",
+    "student_id": "student-14",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-865",
+    "student_id": "student-15",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-866",
+    "student_id": "student-16",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-867",
+    "student_id": "student-17",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-868",
+    "student_id": "student-18",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-869",
+    "student_id": "student-19",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": "Sakit kepala"
+  },
+  {
+    "id": "log-870",
+    "student_id": "student-20",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-871",
+    "student_id": "student-21",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-872",
+    "student_id": "student-22",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-873",
+    "student_id": "student-23",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-874",
+    "student_id": "student-24",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-875",
+    "student_id": "student-25",
+    "meeting_id": "meeting-35",
+    "date": "2025-12-20",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-876",
+    "student_id": "student-1",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-877",
+    "student_id": "student-2",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-878",
+    "student_id": "student-3",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-879",
+    "student_id": "student-4",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-880",
+    "student_id": "student-5",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-881",
+    "student_id": "student-6",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-882",
+    "student_id": "student-7",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-883",
+    "student_id": "student-8",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-884",
+    "student_id": "student-9",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "I",
+    "reason": "Kunjungan dokter"
+  },
+  {
+    "id": "log-885",
+    "student_id": "student-10",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-886",
+    "student_id": "student-11",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-887",
+    "student_id": "student-12",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-888",
+    "student_id": "student-13",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-889",
+    "student_id": "student-14",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-890",
+    "student_id": "student-15",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-891",
+    "student_id": "student-16",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-892",
+    "student_id": "student-17",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-893",
+    "student_id": "student-18",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-894",
+    "student_id": "student-19",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-895",
+    "student_id": "student-20",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-896",
+    "student_id": "student-21",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-897",
+    "student_id": "student-22",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-898",
+    "student_id": "student-23",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-899",
+    "student_id": "student-24",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-900",
+    "student_id": "student-25",
+    "meeting_id": "meeting-36",
+    "date": "2025-12-22",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-901",
+    "student_id": "student-1",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-902",
+    "student_id": "student-2",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-903",
+    "student_id": "student-3",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-904",
+    "student_id": "student-4",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-905",
+    "student_id": "student-5",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-906",
+    "student_id": "student-6",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-907",
+    "student_id": "student-7",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-908",
+    "student_id": "student-8",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-909",
+    "student_id": "student-9",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-910",
+    "student_id": "student-10",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-911",
+    "student_id": "student-11",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-912",
+    "student_id": "student-12",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-913",
+    "student_id": "student-13",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-914",
+    "student_id": "student-14",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-915",
+    "student_id": "student-15",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-916",
+    "student_id": "student-16",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-917",
+    "student_id": "student-17",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "S",
+    "reason": null
+  },
+  {
+    "id": "log-918",
+    "student_id": "student-18",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-919",
+    "student_id": "student-19",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-920",
+    "student_id": "student-20",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "I",
+    "reason": null
+  },
+  {
+    "id": "log-921",
+    "student_id": "student-21",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-922",
+    "student_id": "student-22",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-923",
+    "student_id": "student-23",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-924",
+    "student_id": "student-24",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-925",
+    "student_id": "student-25",
+    "meeting_id": "meeting-37",
+    "date": "2025-12-27",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-926",
+    "student_id": "student-1",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-927",
+    "student_id": "student-2",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-928",
+    "student_id": "student-3",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-929",
+    "student_id": "student-4",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-930",
+    "student_id": "student-5",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-931",
+    "student_id": "student-6",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-932",
+    "student_id": "student-7",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-933",
+    "student_id": "student-8",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "S",
+    "reason": "Flu"
+  },
+  {
+    "id": "log-934",
+    "student_id": "student-9",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-935",
+    "student_id": "student-10",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-936",
+    "student_id": "student-11",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-937",
+    "student_id": "student-12",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-938",
+    "student_id": "student-13",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-939",
+    "student_id": "student-14",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-940",
+    "student_id": "student-15",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-941",
+    "student_id": "student-16",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-942",
+    "student_id": "student-17",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-943",
+    "student_id": "student-18",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-944",
+    "student_id": "student-19",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "S",
+    "reason": "Sakit demam"
+  },
+  {
+    "id": "log-945",
+    "student_id": "student-20",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-946",
+    "student_id": "student-21",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-947",
+    "student_id": "student-22",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-948",
+    "student_id": "student-23",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "H",
+    "reason": null
+  },
+  {
+    "id": "log-949",
+    "student_id": "student-24",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "A",
+    "reason": null
+  },
+  {
+    "id": "log-950",
+    "student_id": "student-25",
+    "meeting_id": "meeting-38",
+    "date": "2025-12-29",
+    "status": "S",
+    "reason": null
+  }
+]
