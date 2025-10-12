@@ -3,17 +3,85 @@
 import { createClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 
+/**
+ * Helper function to get week start date
+ */
+function getWeekStartDate(year: number, month: number, weekNumber: number): string {
+  const firstDay = new Date(year, month - 1, 1)
+  const firstWeekDays = 7 - firstDay.getDay() + 1 // Days in first week
+  
+  if (weekNumber === 1) {
+    return firstDay.toISOString().split('T')[0]
+  }
+  
+  const startDay = firstWeekDays + (weekNumber - 2) * 7
+  const startDate = new Date(year, month - 1, startDay)
+  return startDate.toISOString().split('T')[0]
+}
+
+/**
+ * Helper function to get week end date
+ */
+function getWeekEndDate(year: number, month: number, weekNumber: number): string {
+  const firstDay = new Date(year, month - 1, 1)
+  const firstWeekDays = 7 - firstDay.getDay() + 1 // Days in first week
+  
+  if (weekNumber === 1) {
+    const endDay = firstWeekDays
+    const endDate = new Date(year, month - 1, endDay)
+    return endDate.toISOString().split('T')[0]
+  }
+  
+  const startDay = firstWeekDays + (weekNumber - 2) * 7
+  const endDay = Math.min(startDay + 6, new Date(year, month, 0).getDate())
+  const endDate = new Date(year, month - 1, endDay)
+  return endDate.toISOString().split('T')[0]
+}
+
+/**
+ * Helper function to get week number in month
+ */
+function getWeekNumberInMonth(date: Date): number {
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1)
+  const firstWeekDays = 7 - firstDay.getDay() + 1 // Days in first week
+  const dayOfMonth = date.getDate()
+  
+  if (dayOfMonth <= firstWeekDays) {
+    return 1
+  }
+  
+  const remainingDays = dayOfMonth - firstWeekDays
+  return Math.ceil(remainingDays / 7) + 1
+}
+
 export interface ReportFilters {
   // General mode filters
   month?: number
   year?: number
   viewMode?: 'general' | 'detailed'
   
-  // Detailed mode filters
+  // Detailed mode filters - Period-specific
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
+  
+  // Daily filters
   startDate?: string
   endDate?: string
+  
+  // Weekly filters
+  weekYear?: number
+  weekMonth?: number
+  startWeekNumber?: number
+  endWeekNumber?: number
+  
+  // Monthly filters
+  monthYear?: number
+  startMonth?: number
+  endMonth?: number
+  
+  // Yearly filters
+  startYear?: number
+  endYear?: number
 }
 
 export interface ReportData {
@@ -77,6 +145,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     } = {}
     const now = new Date()
     
+    
     if (filters.viewMode === 'general' && filters.month && filters.year) {
       // General mode: use month and year
       const startDate = new Date(filters.year, filters.month - 1, 1)
@@ -88,50 +157,92 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           lte: endDate.toISOString().split('T')[0]
         }
       }
-    } else if (filters.startDate && filters.endDate) {
-      // Detailed mode: use custom date range
-      dateFilter = {
-        date: {
-          gte: filters.startDate,
-          lte: filters.endDate
-        }
-      }
     } else {
-      // Fallback to period-based filtering
+      // Detailed mode: period-specific filtering
       switch (filters.period) {
         case 'daily':
-          const today = now.toISOString().split('T')[0]
-          dateFilter = { date: { eq: today } }
+          if (filters.startDate && filters.endDate) {
+            dateFilter = {
+              date: {
+                gte: filters.startDate,
+                lte: filters.endDate
+              }
+            }
+          } else {
+            const today = now.toISOString().split('T')[0]
+            dateFilter = { date: { eq: today } }
+          }
           break
+          
         case 'weekly':
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          dateFilter = {
-            date: {
-              gte: weekAgo.toISOString().split('T')[0],
-              lte: now.toISOString().split('T')[0]
+          if (filters.weekYear && filters.weekMonth && filters.startWeekNumber && filters.endWeekNumber) {
+            const startDate = getWeekStartDate(filters.weekYear, filters.weekMonth, filters.startWeekNumber)
+            const endDate = getWeekEndDate(filters.weekYear, filters.weekMonth, filters.endWeekNumber)
+            dateFilter = {
+              date: {
+                gte: startDate,
+                lte: endDate
+              }
+            }
+          } else {
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            dateFilter = {
+              date: {
+                gte: weekAgo.toISOString().split('T')[0],
+                lte: now.toISOString().split('T')[0]
+              }
             }
           }
           break
+          
         case 'monthly':
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-          dateFilter = {
-            date: {
-              gte: monthAgo.toISOString().split('T')[0],
-              lte: now.toISOString().split('T')[0]
+          if (filters.monthYear && filters.startMonth && filters.endMonth) {
+            const startDate = new Date(filters.monthYear, filters.startMonth - 1, 1)
+            const endDate = new Date(filters.monthYear, filters.endMonth, 0) // Last day of end month
+            dateFilter = {
+              date: {
+                gte: startDate.toISOString().split('T')[0],
+                lte: endDate.toISOString().split('T')[0]
+              }
+            }
+          } else {
+            // Default to current month if monthly filters not set
+            const currentMonth = now.getMonth() + 1
+            const currentYear = now.getFullYear()
+            const startDate = new Date(currentYear, currentMonth - 1, 1)
+            const endDate = new Date(currentYear, currentMonth, 0) // Last day of current month
+            dateFilter = {
+              date: {
+                gte: startDate.toISOString().split('T')[0],
+                lte: endDate.toISOString().split('T')[0]
+              }
             }
           }
           break
+          
         case 'yearly':
-          const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-          dateFilter = {
-            date: {
-              gte: yearAgo.toISOString().split('T')[0],
-              lte: now.toISOString().split('T')[0]
+          if (filters.startYear && filters.endYear) {
+            const startDate = new Date(filters.startYear, 0, 1)
+            const endDate = new Date(filters.endYear, 11, 31)
+            dateFilter = {
+              date: {
+                gte: startDate.toISOString().split('T')[0],
+                lte: endDate.toISOString().split('T')[0]
+              }
+            }
+          } else {
+            const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+            dateFilter = {
+              date: {
+                gte: yearAgo.toISOString().split('T')[0],
+                lte: now.toISOString().split('T')[0]
+              }
             }
           }
           break
       }
     }
+
 
     // Build query
     let query = supabase
@@ -205,44 +316,99 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       : meetings || []
 
     // Generate trend chart data from meetings (not just attendance logs)
+    console.log('🔍 Debug: Processing trend data for period =', filters.period, 'viewMode =', filters.viewMode)
+    console.log('🔍 Debug: filteredMeetings count =', filteredMeetings.length)
+    
     const dailyData = filteredMeetings.reduce((acc: any, meeting: any) => {
-      const date = meeting.date
+      const meetingDate = new Date(meeting.date)
       const meetingLogs = attendanceLogs?.filter(log => log.meeting_id === meeting.id) || []
       const totalStudents = meeting.student_snapshot?.length || 0
       
-      acc[date] = {
-        date,
-        presentCount: meetingLogs.filter(log => log.status === 'H').length,
-        absentCount: meetingLogs.filter(log => log.status === 'A').length,
-        excusedCount: meetingLogs.filter(log => log.status === 'I').length,
-        sickCount: meetingLogs.filter(log => log.status === 'S').length,
-        totalRecords: totalStudents
+      // Group by period type
+      let groupKey: string
+      let displayDate: string
+      
+      
+      switch (filters.period) {
+        case 'daily':
+          groupKey = meeting.date
+          displayDate = meeting.date
+          break
+        case 'weekly':
+          // Group by week number in month
+          const weekNumber = getWeekNumberInMonth(meetingDate)
+          groupKey = `week-${weekNumber}`
+          displayDate = `Minggu ${weekNumber}`
+          break
+        case 'monthly':
+          // Only group by month if it's detailed mode with monthly period
+          if (filters.viewMode === 'detailed') {
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+            groupKey = `${meetingDate.getFullYear()}-${meetingDate.getMonth() + 1}`
+            displayDate = monthNames[meetingDate.getMonth()]
+          } else {
+            // For general mode, show daily data
+            groupKey = meeting.date
+            displayDate = meeting.date
+          }
+          break
+        case 'yearly':
+          // Group by year
+          groupKey = meetingDate.getFullYear().toString()
+          displayDate = meetingDate.getFullYear().toString()
+          break
+        default:
+          groupKey = meeting.date
+          displayDate = meeting.date
       }
+      
+      if (!acc[groupKey]) {
+        acc[groupKey] = {
+          date: groupKey,
+          displayDate,
+          presentCount: 0,
+          absentCount: 0,
+          excusedCount: 0,
+          sickCount: 0,
+          totalRecords: 0
+        }
+      }
+      
+      acc[groupKey].presentCount += meetingLogs.filter(log => log.status === 'H').length
+      acc[groupKey].absentCount += meetingLogs.filter(log => log.status === 'A').length
+      acc[groupKey].excusedCount += meetingLogs.filter(log => log.status === 'I').length
+      acc[groupKey].sickCount += meetingLogs.filter(log => log.status === 'S').length
+      acc[groupKey].totalRecords += totalStudents
       
       return acc
     }, {})
 
     // Convert to array and format for chart
+    
     const trendChartData = Object.values(dailyData)
-      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a: any, b: any) => {
+        // Sort by period-specific criteria
+        switch (filters.period) {
+          case 'daily':
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+          case 'weekly':
+            return parseInt(a.date.split('-')[1]) - parseInt(b.date.split('-')[1])
+          case 'monthly':
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+          case 'yearly':
+            return parseInt(a.date) - parseInt(b.date)
+          default:
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+        }
+      })
       .map((day: any) => {
         const attendancePercentage = day.totalRecords > 0 
           ? Math.round((day.presentCount / day.totalRecords) * 100)
           : 0
         
-        const date = new Date(day.date)
-        const monthNames = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-          'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-        ]
-        
         return {
-          date: `${date.getDate().toString().padStart(2, '0')} ${monthNames[date.getMonth()]}`,
-          fullDate: date.toLocaleDateString('id-ID', { 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
-          }),
+          date: day.displayDate,
+          fullDate: day.displayDate, // Use displayDate for both
           attendancePercentage,
           presentCount: day.presentCount,
           absentCount: day.absentCount,
@@ -251,6 +417,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           totalRecords: day.totalRecords
         }
       })
+    
 
     // Group by student for detailed view
     const studentSummary = attendanceLogs?.reduce((acc: any, log: any) => {

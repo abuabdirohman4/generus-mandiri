@@ -17,12 +17,98 @@ interface SummaryStats {
 interface StatsCardsProps {
   summaryStats: SummaryStats | null
   period: string
+  viewMode: 'general' | 'detailed'
+  filters: {
+    month: number
+    year: number
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly'
+    startDate: any
+    endDate: any
+    weekYear?: number
+    weekMonth?: number
+    startWeekNumber?: number
+    endWeekNumber?: number
+    monthYear?: number
+    startMonth?: number
+    endMonth?: number
+    startYear?: number
+    endYear?: number
+  }
 }
 
-export default function StatsCards({ summaryStats, period }: StatsCardsProps) {
+export default function StatsCards({ summaryStats, period, viewMode, filters }: StatsCardsProps) {
   if (!summaryStats) return null
 
   const { total, hadir, izin, sakit, alpha, attendanceRate, periodLabel, dateRange } = summaryStats
+
+  // Helper function to get month name
+  const getMonthName = (monthNumber: number) => {
+    const monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]
+    return monthNames[monthNumber - 1]
+  }
+
+  // Generate period-specific labels
+  const getPeriodDisplay = () => {
+    if (viewMode === 'general') {
+      return `${getMonthName(filters.month)} ${filters.year}`
+    }
+
+    switch (filters.period) {
+      case 'daily':
+        return 'Harian'
+      case 'weekly':
+        return 'Mingguan'
+      case 'monthly':
+        return 'Bulanan'
+      case 'yearly':
+        return 'Tahunan'
+      default:
+        return 'Bulanan'
+    }
+  }
+
+  const getRangeDisplay = () => {
+    if (viewMode === 'general') {
+      return null // No range display for general mode
+    }
+
+    switch (filters.period) {
+      case 'daily':
+        if (filters.startDate && filters.endDate) {
+          const startDate = new Date(filters.startDate).toLocaleDateString('id-ID')
+          const endDate = new Date(filters.endDate).toLocaleDateString('id-ID')
+          return `${startDate} - ${endDate}`
+        }
+        return null
+
+      case 'weekly':
+        if (filters.weekYear && filters.weekMonth && filters.startWeekNumber && filters.endWeekNumber) {
+          const monthName = getMonthName(filters.weekMonth)
+          return `${filters.startWeekNumber} - ${filters.endWeekNumber}, ${monthName} ${filters.weekYear}`
+        }
+        return null
+
+      case 'monthly':
+        if (filters.monthYear && filters.startMonth && filters.endMonth) {
+          const startMonthName = getMonthName(filters.startMonth)
+          const endMonthName = getMonthName(filters.endMonth)
+          return `${startMonthName} - ${endMonthName} ${filters.monthYear}`
+        }
+        return null
+
+      case 'yearly':
+        if (filters.startYear && filters.endYear) {
+          return `${filters.startYear} - ${filters.endYear}`
+        }
+        return null
+
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -43,16 +129,16 @@ export default function StatsCards({ summaryStats, period }: StatsCardsProps) {
             Periode Laporan
           </span>
           <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-            {periodLabel}
+            {getPeriodDisplay()}
           </span>
         </div>
-        {dateRange.start && (
+        {getRangeDisplay() && (
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Rentang Tanggal
+              Rentang Periode
             </span>
             <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {dateRange.start} - {dateRange.end || 'Sekarang'}
+              {getRangeDisplay()}
             </span>
           </div>
         )}

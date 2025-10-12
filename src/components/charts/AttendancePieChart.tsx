@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
 interface ChartData {
@@ -26,7 +27,7 @@ const DARK_COLORS = {
   'Alpha': '#F87171', // red-400
 }
 
-export default function AttendancePieChart({ data, className = '' }: AttendancePieChartProps) {
+const AttendancePieChart = memo(function AttendancePieChart({ data, className = '' }: AttendancePieChartProps) {
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
     if (percent < 0.05) return null // Don't show label for slices less than 5%
     
@@ -102,4 +103,6 @@ export default function AttendancePieChart({ data, className = '' }: AttendanceP
       </ResponsiveContainer>
     </div>
   )
-}
+})
+
+export default AttendancePieChart

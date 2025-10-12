@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import AttendancePieChart from '@/components/charts/AttendancePieChart'
 
 interface ChartData {
@@ -19,7 +20,7 @@ interface ReportChartProps {
   } | null
 }
 
-export default function ReportChart({ chartData, summaryStats }: ReportChartProps) {
+const ReportChart = memo(function ReportChart({ chartData, summaryStats }: ReportChartProps) {
   if (!summaryStats) return null
 
   const { total, hadir, izin, sakit, alpha, attendanceRate } = summaryStats
@@ -51,4 +52,6 @@ export default function ReportChart({ chartData, summaryStats }: ReportChartProp
       )}
     </div>
   )
-}
+})
+
+export default ReportChart

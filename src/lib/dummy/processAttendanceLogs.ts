@@ -24,13 +24,33 @@ interface Meeting {
 }
 
 interface ReportFilters {
-  period?: 'daily' | 'weekly' | 'monthly' | 'yearly'
-  classId?: string
-  startDate?: string
-  endDate?: string
+  // General mode filters
   month?: number
   year?: number
   viewMode?: 'general' | 'detailed'
+  
+  // Detailed mode filters - Period-specific
+  period?: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  classId?: string
+  
+  // Daily filters
+  startDate?: string
+  endDate?: string
+  
+  // Weekly filters
+  weekYear?: number
+  weekMonth?: number
+  startWeekNumber?: number
+  endWeekNumber?: number
+  
+  // Monthly filters
+  monthYear?: number
+  startMonth?: number
+  endMonth?: number
+  
+  // Yearly filters
+  startYear?: number
+  endYear?: number
 }
 
 interface StudentSummary {
@@ -196,6 +216,37 @@ function filterLogsByDateRange(
   return data
 }
 
+// Helper function to get week start date
+function getWeekStartDate(year: number, month: number, weekNumber: number): string {
+  const firstDay = dayjs().year(year).month(month - 1).startOf('month')
+  const firstWeekDays = 7 - firstDay.day() + 1 // Days in first week
+  
+  if (weekNumber === 1) {
+    return firstDay.format('YYYY-MM-DD')
+  }
+  
+  const startDay = firstWeekDays + (weekNumber - 2) * 7
+  const startDate = dayjs().year(year).month(month - 1).date(startDay)
+  return startDate.format('YYYY-MM-DD')
+}
+
+// Helper function to get week end date
+function getWeekEndDate(year: number, month: number, weekNumber: number): string {
+  const firstDay = dayjs().year(year).month(month - 1).startOf('month')
+  const firstWeekDays = 7 - firstDay.day() + 1 // Days in first week
+  
+  if (weekNumber === 1) {
+    const endDay = firstWeekDays
+    const endDate = dayjs().year(year).month(month - 1).date(endDay)
+    return endDate.format('YYYY-MM-DD')
+  }
+  
+  const startDay = firstWeekDays + (weekNumber - 2) * 7
+  const endDay = Math.min(startDay + 6, firstDay.endOf('month').date())
+  const endDate = dayjs().year(year).month(month - 1).date(endDay)
+  return endDate.format('YYYY-MM-DD')
+}
+
 // Helper function to get date range based on period
 function getDateRangeByPeriod(period: 'daily' | 'weekly' | 'monthly' | 'yearly'): { startDate: string; endDate: string } {
   const now = dayjs()
@@ -231,9 +282,27 @@ function getDateRangeByPeriod(period: 'daily' | 'weekly' | 'monthly' | 'yearly')
 
 // Main function to generate dummy report data
 export function generateDummyReportData(filters: ReportFilters): ReportData {
-  const { period = 'monthly', classId, startDate, endDate, month, year, viewMode = 'general' } = filters
+  const { 
+    period = 'monthly', 
+    classId, 
+    startDate, 
+    endDate, 
+    month, 
+    year, 
+    viewMode = 'general',
+    // Period-specific filters
+    weekYear,
+    weekMonth,
+    startWeekNumber,
+    endWeekNumber,
+    monthYear,
+    startMonth,
+    endMonth,
+    startYear,
+    endYear
+  } = filters
 
-  // Determine date range
+  // Determine date range based on period type
   let dateRange: { startDate: string; endDate: string }
   
   if (viewMode === 'general' && month && year) {
@@ -244,12 +313,57 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
       startDate: startOfMonth.format('YYYY-MM-DD'),
       endDate: endOfMonth.format('YYYY-MM-DD')
     }
-  } else if (startDate && endDate) {
-    // For detailed mode with date range
-    dateRange = { startDate, endDate }
   } else {
-    // Fallback to period-based range
-    dateRange = getDateRangeByPeriod(period)
+    // Detailed mode: period-specific filtering
+    switch (period) {
+      case 'daily':
+        if (startDate && endDate) {
+          dateRange = { startDate, endDate }
+        } else {
+          const today = dayjs().format('YYYY-MM-DD')
+          dateRange = { startDate: today, endDate: today }
+        }
+        break
+        
+      case 'weekly':
+        if (weekYear && weekMonth && startWeekNumber && endWeekNumber) {
+          const startDate = getWeekStartDate(weekYear, weekMonth, startWeekNumber)
+          const endDate = getWeekEndDate(weekYear, weekMonth, endWeekNumber)
+          dateRange = { startDate, endDate }
+        } else {
+          dateRange = getDateRangeByPeriod('weekly')
+        }
+        break
+        
+      case 'monthly':
+        if (monthYear && startMonth && endMonth) {
+          const startOfStartMonth = dayjs().year(monthYear).month(startMonth - 1).startOf('month')
+          const endOfEndMonth = dayjs().year(monthYear).month(endMonth - 1).endOf('month')
+          dateRange = {
+            startDate: startOfStartMonth.format('YYYY-MM-DD'),
+            endDate: endOfEndMonth.format('YYYY-MM-DD')
+          }
+        } else {
+          dateRange = getDateRangeByPeriod('monthly')
+        }
+        break
+        
+      case 'yearly':
+        if (startYear && endYear) {
+          const startOfStartYear = dayjs().year(startYear).startOf('year')
+          const endOfEndYear = dayjs().year(endYear).endOf('year')
+          dateRange = {
+            startDate: startOfStartYear.format('YYYY-MM-DD'),
+            endDate: endOfEndYear.format('YYYY-MM-DD')
+          }
+        } else {
+          dateRange = getDateRangeByPeriod('yearly')
+        }
+        break
+        
+      default:
+        dateRange = getDateRangeByPeriod(period)
+    }
   }
 
   // Filter meetings and logs by date range and class
@@ -312,27 +426,84 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
     { name: 'Alpha', value: studentSummaries.reduce((sum, s) => sum + s.absent_count, 0) }
   ]
 
-  // Generate trend chart data (daily attendance percentage)
-  const trendChartData: TrendChartData[] = finalFilteredMeetings.map(meeting => {
-    const meetingLogs = filteredLogs.filter(log => log.meeting_id === meeting.id)
-    const totalStudents = studentIds.length
-    const presentCount = meetingLogs.filter(log => log.status === 'H').length
-    const absentCount = meetingLogs.filter(log => log.status === 'A').length
-    const excusedCount = meetingLogs.filter(log => log.status === 'I').length
-    const sickCount = meetingLogs.filter(log => log.status === 'S').length
-    const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0
+  // Generate trend chart data based on period type
+  let trendChartData: TrendChartData[] = []
+  
+  if (period === 'monthly' && viewMode === 'detailed') {
+    // Group meetings by month for monthly period
+    const monthlyData = finalFilteredMeetings.reduce((acc: any, meeting: any) => {
+      const meetingDate = dayjs(meeting.date)
+      const monthKey = `${meetingDate.year()}-${meetingDate.month() + 1}`
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+      const displayMonth = monthNames[meetingDate.month()]
+      
+      if (!acc[monthKey]) {
+        acc[monthKey] = {
+          monthKey,
+          displayMonth,
+          presentCount: 0,
+          absentCount: 0,
+          excusedCount: 0,
+          sickCount: 0,
+          totalRecords: 0,
+          meetingCount: 0
+        }
+      }
+      
+      const meetingLogs = filteredLogs.filter(log => log.meeting_id === meeting.id)
+      const totalStudents = studentIds.length
+      
+      acc[monthKey].presentCount += meetingLogs.filter(log => log.status === 'H').length
+      acc[monthKey].absentCount += meetingLogs.filter(log => log.status === 'A').length
+      acc[monthKey].excusedCount += meetingLogs.filter(log => log.status === 'I').length
+      acc[monthKey].sickCount += meetingLogs.filter(log => log.status === 'S').length
+      acc[monthKey].totalRecords += totalStudents
+      acc[monthKey].meetingCount += 1
+      
+      return acc
+    }, {})
+    
+    trendChartData = Object.values(monthlyData)
+      .sort((a: any, b: any) => a.monthKey.localeCompare(b.monthKey))
+      .map((month: any) => {
+        const attendancePercentage = month.totalRecords > 0 
+          ? Math.round((month.presentCount / month.totalRecords) * 100)
+          : 0
+        
+        return {
+          date: month.displayMonth,
+          fullDate: month.displayMonth,
+          attendancePercentage,
+          presentCount: month.presentCount,
+          absentCount: month.absentCount,
+          excusedCount: month.excusedCount,
+          sickCount: month.sickCount,
+          totalRecords: month.totalRecords
+        }
+      })
+  } else {
+    // For other periods, use the original daily mapping
+    trendChartData = finalFilteredMeetings.map(meeting => {
+      const meetingLogs = filteredLogs.filter(log => log.meeting_id === meeting.id)
+      const totalStudents = studentIds.length
+      const presentCount = meetingLogs.filter(log => log.status === 'H').length
+      const absentCount = meetingLogs.filter(log => log.status === 'A').length
+      const excusedCount = meetingLogs.filter(log => log.status === 'I').length
+      const sickCount = meetingLogs.filter(log => log.status === 'S').length
+      const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0
 
-    return {
-      date: dayjs(meeting.date).format('DD MMM'),
-      fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
-      attendancePercentage,
-      presentCount,
-      absentCount,
-      excusedCount,
-      sickCount,
-      totalRecords: totalStudents
-    }
-  }).sort((a, b) => dayjs(a.fullDate).valueOf() - dayjs(b.fullDate).valueOf())
+      return {
+        date: dayjs(meeting.date).format('DD MMM'),
+        fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
+        attendancePercentage,
+        presentCount,
+        absentCount,
+        excusedCount,
+        sickCount,
+        totalRecords: totalStudents
+      }
+    }).sort((a, b) => dayjs(a.fullDate).valueOf() - dayjs(b.fullDate).valueOf())
+  }
 
   // Generate detailed records (student summary format)
   const detailedRecords = studentSummaries.map(summary => ({

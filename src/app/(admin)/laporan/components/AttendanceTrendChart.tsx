@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { TrendChart } from '@/components/charts'
 
 interface TrendChartData {
@@ -17,12 +18,16 @@ interface AttendanceTrendChartProps {
   chartData: TrendChartData[]
   isLoading?: boolean
   className?: string
+  period?: string
+  viewMode?: 'general' | 'detailed'
 }
 
-export default function AttendanceTrendChart({ 
+const AttendanceTrendChart = memo(function AttendanceTrendChart({ 
   chartData, 
   isLoading = false,
-  className = ''
+  className = '',
+  period = 'monthly',
+  viewMode = 'detailed'
 }: AttendanceTrendChartProps) {
   // Transform data from laporan format to TrendChart format
   const transformedData = chartData.map(item => ({
@@ -38,12 +43,34 @@ export default function AttendanceTrendChart({
     }
   }))
   
+  // Generate dynamic title based on period and view mode
+  const getTitle = () => {
+    if (viewMode === 'general') {
+      return 'Tren Kehadiran Harian'
+    }
+    
+    switch (period) {
+      case 'daily':
+        return 'Tren Kehadiran Harian'
+      case 'weekly':
+        return 'Tren Kehadiran Mingguan'
+      case 'monthly':
+        return 'Tren Kehadiran Bulanan'
+      case 'yearly':
+        return 'Tren Kehadiran Tahunan'
+      default:
+        return 'Tren Kehadiran'
+    }
+  }
+
   return (
     <TrendChart 
       data={transformedData} 
-      title="Tren Kehadiran Harian" 
+      title={getTitle()} 
       isLoading={isLoading}
       className={className}
     />
   )
-}
+})
+
+export default AttendanceTrendChart

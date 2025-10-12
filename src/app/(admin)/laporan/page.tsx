@@ -27,6 +27,7 @@ export default function LaporanPage() {
     filterCount,
     handleFilterChange,
     handleDateChange,
+    handleWeekChange,
     handleResetFilters,
     classOptions,
     periodOptions
@@ -86,6 +87,7 @@ export default function LaporanPage() {
           classOptions={classOptions}
           onFilterChange={handleFilterChange}
           onDateChange={handleDateChange}
+          onWeekChange={handleWeekChange}
           onResetFilters={handleResetFilters}
           hasActiveFilters={hasActiveFilters}
           filterCount={filterCount}
@@ -103,10 +105,13 @@ export default function LaporanPage() {
               <StatsCards
                 summaryStats={summaryStats}
                 period={filters.period}
+                viewMode={filters.viewMode}
+                filters={filters}
               />
               
               {/* Chart */}
               <ReportChart
+                key={`report-chart-${filters.period}-${filters.viewMode}`}
                 chartData={chartData}
                 summaryStats={summaryStats}
               />
@@ -114,8 +119,11 @@ export default function LaporanPage() {
 
             {/* Attendance Trend Chart */}
             <AttendanceTrendChart 
+              key={`trend-chart-${filters.period}-${filters.viewMode}`}
               chartData={trendChartData}
               isLoading={loading}
+              period={filters.period}
+              viewMode={filters.viewMode}
             />
 
             {/* Data Table */}

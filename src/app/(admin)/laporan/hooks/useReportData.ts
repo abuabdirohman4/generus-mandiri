@@ -16,11 +16,28 @@ interface UseReportDataOptions {
     year?: number
     viewMode?: 'general' | 'detailed'
     
-    // Detailed mode filters
+    // Detailed mode filters - Period-specific
     period: 'daily' | 'weekly' | 'monthly' | 'yearly'
-    classId: string | undefined
-    startDate: string | undefined
-    endDate: string | undefined
+    classId?: string
+    
+    // Daily filters
+    startDate?: string
+    endDate?: string
+    
+    // Weekly filters
+    weekYear?: number
+    weekMonth?: number
+    startWeekNumber?: number
+    endWeekNumber?: number
+    
+    // Monthly filters
+    monthYear?: number
+    startMonth?: number
+    endMonth?: number
+    
+    // Yearly filters
+    startYear?: number
+    endYear?: number
   }
   enabled?: boolean
 }

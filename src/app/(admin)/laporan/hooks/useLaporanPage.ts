@@ -23,8 +23,27 @@ export function useLaporanPage() {
       // Detailed mode filters
       period: filters.period,
       classId: filters.classId || undefined,
-      startDate: filters.startDate?.format('YYYY-MM-DD') || undefined,
-      endDate: filters.endDate?.format('YYYY-MM-DD') || undefined
+      
+      // Period-specific filters
+      ...(filters.period === 'daily' && {
+        startDate: filters.startDate?.format('YYYY-MM-DD') || undefined,
+        endDate: filters.endDate?.format('YYYY-MM-DD') || undefined
+      }),
+      ...(filters.period === 'weekly' && {
+        weekYear: filters.weekYear,
+        weekMonth: filters.weekMonth,
+        startWeekNumber: filters.startWeekNumber,
+        endWeekNumber: filters.endWeekNumber
+      }),
+      ...(filters.period === 'monthly' && {
+        monthYear: filters.monthYear,
+        startMonth: filters.startMonth,
+        endMonth: filters.endMonth
+      }),
+      ...(filters.period === 'yearly' && {
+        startYear: filters.startYear,
+        endYear: filters.endYear
+      })
     }
   })
   
@@ -66,20 +85,35 @@ export function useLaporanPage() {
   }, [reportData?.summary, filters.period, reportData?.dateRange])
 
   const chartData = useMemo(() => {
-    return reportData?.chartData || []
+    if (!reportData?.chartData) return []
+    return reportData.chartData
   }, [reportData?.chartData])
 
   const trendChartData = useMemo(() => {
-    return reportData?.trendChartData || []
+    if (!reportData?.trendChartData) return []
+    return reportData.trendChartData
   }, [reportData?.trendChartData])
 
   // Actions
   const handleFilterChange = (key: string, value: string) => {
-    setFilter(key as keyof typeof filters, value)
+    // Convert numeric fields to numbers
+    const numericFields = ['month', 'year', 'weekYear', 'weekMonth', 'startWeekNumber', 'endWeekNumber', 'monthYear', 'startMonth', 'endMonth', 'startYear', 'endYear']
+    
+    if (numericFields.includes(key)) {
+      const numericValue = parseInt(value) || 0
+      setFilter(key as keyof typeof filters, numericValue)
+    } else {
+      setFilter(key as keyof typeof filters, value)
+    }
   }
 
   const handleDateChange = (key: 'startDate' | 'endDate', date: Dayjs | null) => {
     setFilter(key, date)
+  }
+
+  const handleWeekChange = (weeks: [Dayjs | null, Dayjs | null]) => {
+    setFilter('startDate', weeks[0])
+    setFilter('endDate', weeks[1])
   }
 
   const handleResetFilters = () => {
@@ -112,6 +146,7 @@ export function useLaporanPage() {
     // Actions
     handleFilterChange,
     handleDateChange,
+    handleWeekChange,
     handleResetFilters,
     mutate,
     
@@ -122,9 +157,9 @@ export function useLaporanPage() {
     })),
     periodOptions: [
       { value: 'daily', label: 'Harian' },
-      { value: 'weekly', label: 'Mingguan' },
+      // { value: 'weekly', label: 'Mingguan' },
       { value: 'monthly', label: 'Bulanan' },
-      { value: 'yearly', label: 'Tahunan' }
+      // { value: 'yearly', label: 'Tahunan' }
     ]
   }
 }

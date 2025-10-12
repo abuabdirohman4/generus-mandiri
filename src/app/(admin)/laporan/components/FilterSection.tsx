@@ -3,6 +3,7 @@
 import { Dayjs } from 'dayjs'
 import InputFilter from '@/components/form/input/InputFilter'
 import DatePickerInput from '@/components/form/input/DatePicker'
+import WeekPicker from '@/components/form/input/WeekPicker'
 import Button from '@/components/ui/button/Button'
 import { LaporanFilters } from '../stores/laporanStore'
 
@@ -12,19 +13,12 @@ interface FilterOption {
 }
 
 interface FilterSectionProps {
-  filters: {
-    month: number
-    year: number
-    viewMode: 'general' | 'detailed'
-    period: 'daily' | 'weekly' | 'monthly' | 'yearly'
-    classId: string
-    startDate: Dayjs | null
-    endDate: Dayjs | null
-  }
+  filters: LaporanFilters
   periodOptions: FilterOption[]
   classOptions: FilterOption[]
   onFilterChange: (key: string, value: string) => void
   onDateChange: (key: 'startDate' | 'endDate', date: Dayjs | null) => void
+  onWeekChange: (weeks: [Dayjs | null, Dayjs | null]) => void
   onResetFilters: () => void
   hasActiveFilters: boolean
   filterCount: number
@@ -36,6 +30,7 @@ export default function FilterSection({
   classOptions,
   onFilterChange,
   onDateChange,
+  onWeekChange,
   onResetFilters,
   hasActiveFilters,
   filterCount
@@ -140,48 +135,117 @@ export default function FilterSection({
           />
         </div>
       ) : (
-        // Detailed Mode Filters
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4">
-          <InputFilter
-            id="period"
-            label="Periode"
-            value={filters.period}
-            onChange={(value) => onFilterChange('period', value)}
-            options={periodOptions}
-            className="mb-0"
-          />
+        // Detailed Mode Filters - Dynamic based on period
+        <div className="space-y-4">
+          {/* Period and Class Selection */}
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
+            <InputFilter
+              id="period"
+              label="Periode"
+              value={filters.period}
+              onChange={(value) => onFilterChange('period', value)}
+              options={periodOptions}
+              className="mb-0"
+            />
 
-          <InputFilter
-            id="classId"
-            label="Kelas"
-            value={filters.classId ?? ''}
-            onChange={(value) => onFilterChange('classId', value)}
-            options={classOptions}
-            allOptionLabel="Semua Kelas"
-            className="mb-0"
-          />
+            <InputFilter
+              id="classId"
+              label="Kelas"
+              value={filters.classId ?? ''}
+              onChange={(value) => onFilterChange('classId', value)}
+              options={classOptions}
+              allOptionLabel="Semua Kelas"
+              className="mb-0"
+            />
+          </div>
 
-          <DatePickerInput
-            mode="single"
-            label="Tanggal Mulai"
-            value={filters.startDate}
-            onChange={(date) => onDateChange('startDate', date)}
-            format="DD/MM/YYYY"
-            placeholder="Pilih Tanggal"
-          />
+          {/* Period-specific filters */}
+          {filters.period === 'daily' && (
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
+              <DatePickerInput
+                mode="single"
+                label="Tanggal Mulai"
+                value={filters.startDate}
+                onChange={(date) => onDateChange('startDate', date)}
+                format="DD/MM/YYYY"
+                placeholder="Pilih Tanggal"
+              />
 
-          <DatePickerInput
-            mode="single"
-            label="Tanggal Akhir"
-            value={filters.endDate}
-            onChange={(date) => onDateChange('endDate', date)}
-            format="DD/MM/YYYY"
-            placeholder="Pilih Tanggal"
-          />
+              <DatePickerInput
+                mode="single"
+                label="Tanggal Akhir"
+                value={filters.endDate}
+                onChange={(date) => onDateChange('endDate', date)}
+                format="DD/MM/YYYY"
+                placeholder="Pilih Tanggal"
+              />
+            </div>
+          )}
+
+          {filters.period === 'weekly' && (
+            <WeekPicker
+              label="Rentang Minggu"
+              value={[filters.startDate, filters.endDate]}
+              onChange={onWeekChange}
+            />
+          )}
+
+          {filters.period === 'monthly' && (
+            <div className="grid grid-cols-3 lg:grid-cols-3 gap-x-4">
+              <InputFilter
+                id="monthYear"
+                label="Tahun"
+                value={filters.monthYear?.toString() || ''}
+                onChange={(value) => onFilterChange('monthYear', value)}
+                options={yearOptions}
+                className="mb-0"
+              />
+
+              <InputFilter
+                id="startMonth"
+                label="Bulan Mulai"
+                value={filters.startMonth?.toString() || ''}
+                onChange={(value) => onFilterChange('startMonth', value)}
+                options={monthOptions}
+                className="mb-0"
+              />
+
+              <InputFilter
+                id="endMonth"
+                label="Bulan Akhir"
+                value={filters.endMonth?.toString() || ''}
+                onChange={(value) => onFilterChange('endMonth', value)}
+                options={monthOptions}
+                className="mb-0"
+              />
+            </div>
+          )}
+
+          {filters.period === 'yearly' && (
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
+              <InputFilter
+                id="startYear"
+                label="Tahun Mulai"
+                value={filters.startYear?.toString() || ''}
+                onChange={(value) => onFilterChange('startYear', value)}
+                options={yearOptions}
+                className="mb-0"
+              />
+
+              <InputFilter
+                id="endYear"
+                label="Tahun Akhir"
+                value={filters.endYear?.toString() || ''}
+                onChange={(value) => onFilterChange('endYear', value)}
+                options={yearOptions}
+                className="mb-0"
+              />
+            </div>
+          )}
         </div>
       )}
 
-      <div className="mt-6 md:mt-2 flex justify-end gap-2 w-full md:w-auto">
+      <div className="mt-6 md:mt-2 flex gap-2 w-full md:w-auto">
         <Button 
           onClick={onResetFilters} 
           variant="outline" 

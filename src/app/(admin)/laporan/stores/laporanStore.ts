@@ -8,11 +8,28 @@ export interface LaporanFilters {
   year: number
   viewMode: 'general' | 'detailed'
   
-  // Detailed mode filters (existing)
+  // Detailed mode filters - Period-specific
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId: string
+  
+  // Daily filters
   startDate: Dayjs | null
   endDate: Dayjs | null
+  
+  // Weekly filters (for mobile: stored as week numbers, for desktop: converted from Dayjs)
+  weekYear: number        // Year for week selection
+  weekMonth: number       // Month for week selection (1-12)
+  startWeekNumber: number // Week number in month (1-5, dynamically calculated)
+  endWeekNumber: number   // Week number in month (1-5, dynamically calculated)
+  
+  // Monthly filters
+  monthYear: number      // Year for month selection
+  startMonth: number     // 1-12
+  endMonth: number       // 1-12
+  
+  // Yearly filters
+  startYear: number
+  endYear: number
 }
 
 interface LaporanState {
@@ -34,8 +51,25 @@ const defaultFilters: LaporanFilters = {
   // Detailed mode defaults
   period: 'monthly',
   classId: '',
+  
+  // Daily filters
   startDate: null,
-  endDate: null
+  endDate: null,
+  
+  // Weekly filters
+  weekYear: getCurrentYear(),
+  weekMonth: getCurrentMonth(),
+  startWeekNumber: 1,
+  endWeekNumber: 1,
+  
+  // Monthly filters
+  monthYear: getCurrentYear(),
+  startMonth: getCurrentMonth(),
+  endMonth: getCurrentMonth(),
+  
+  // Yearly filters
+  startYear: getCurrentYear(),
+  endYear: getCurrentYear()
 }
 
 export const useLaporanStore = create<LaporanState>()(
@@ -49,9 +83,36 @@ export const useLaporanStore = create<LaporanState>()(
       
       resetFilters: () => set({ filters: defaultFilters }),
       
-      setFilter: (key, value) => set((state) => ({
-        filters: { ...state.filters, [key]: value }
-      }))
+      setFilter: (key, value) => set((state) => {
+        const newFilters = { ...state.filters, [key]: value }
+        
+        // Reset period-specific filters when period changes
+        if (key === 'period') {
+          switch (value) {
+            case 'daily':
+              newFilters.startDate = null
+              newFilters.endDate = null
+              break
+            case 'weekly':
+              newFilters.weekYear = getCurrentYear()
+              newFilters.weekMonth = getCurrentMonth()
+              newFilters.startWeekNumber = 1
+              newFilters.endWeekNumber = 1
+              break
+            case 'monthly':
+              newFilters.monthYear = getCurrentYear()
+              newFilters.startMonth = 10 // October
+              newFilters.endMonth = 12   // December
+              break
+            case 'yearly':
+              newFilters.startYear = getCurrentYear()
+              newFilters.endYear = getCurrentYear()
+              break
+          }
+        }
+        
+        return { filters: newFilters }
+      })
     }),
     {
       name: 'laporan-storage',
@@ -65,6 +126,18 @@ export const useLaporanStore = create<LaporanState>()(
           // Persist detailed mode settings
           period: state.filters.period,
           classId: state.filters.classId,
+          
+          // Persist period-specific settings but reset date-based ones
+          weekYear: state.filters.weekYear,
+          weekMonth: state.filters.weekMonth,
+          startWeekNumber: state.filters.startWeekNumber,
+          endWeekNumber: state.filters.endWeekNumber,
+          monthYear: state.filters.monthYear,
+          startMonth: state.filters.startMonth,
+          endMonth: state.filters.endMonth,
+          startYear: state.filters.startYear,
+          endYear: state.filters.endYear,
+          
           // Don't persist dates as they should be fresh on each visit
           startDate: null,
           endDate: null
