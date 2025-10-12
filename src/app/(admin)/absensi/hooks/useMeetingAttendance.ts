@@ -135,6 +135,21 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
     }
   }
 
+  // Initialize default attendance with "Alfa" (A) for all students if no attendance data exists
+  // This ensures that even if there are no attendance records in the database,
+  // all students will have a default "Alfa" status
+  if (students.length > 0) {
+    students.forEach(student => {
+      // Only set default if this student doesn't have attendance data yet
+      if (!attendanceData[student.id]) {
+        attendanceData[student.id] = {
+          status: 'A', // Default to "Alfa" (Absent)
+          reason: undefined
+        }
+      }
+    })
+  }
+
   return {
     meeting: meetingResult.data,
     attendance: attendanceData,
