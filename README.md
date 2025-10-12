@@ -1,190 +1,207 @@
-# 🚀 Better Planner - Your Ultimate Productivity Companion
+# 🏫 Generus Mandiri - Sistem Manajemen Sekolah Digital
 
-Transform your goals into achievements with Better Planner, the most comprehensive planning and productivity application designed for ambitious individuals and teams who refuse to settle for average.
+Sistem manajemen sekolah digital yang modern dan efisien untuk mengelola data generus, absensi, dan laporan kehadiran dengan teknologi terdepan.
 
-## ✨ **Why Better Planner?**
+## ✨ **Tentang Generus Mandiri**
 
-**Stop planning. Start achieving.** Better Planner isn't just another task manager—it's your strategic partner in turning dreams into reality. Built with cutting-edge technology and designed for peak performance, it's the only planning tool you'll ever need.
+**Kelola generus dengan mudah dan efisien.** Generus Mandiri adalah sistem manajemen sekolah digital yang dirancang khusus untuk mengelola data generus LDII dengan fitur-fitur modern dan antarmuka yang user-friendly.
 
-### 🎯 **What Makes Us Different?**
+### 🎯 **Keunggulan Sistem**
 
-- **🏆 Strategic Planning**: 13-week quarter system that aligns with your natural productivity cycles
-- **⚡ Lightning Fast**: Built with Next.js 15 and React 19 for blazing performance
-- **📱 Install Anywhere**: Progressive Web App (PWA) - works like a native app on any device
-- **🔒 Enterprise Security**: Bank-level security with Supabase and Row Level Security
-- **🎨 Beautiful Design**: Stunning UI that makes planning enjoyable, not a chore
+- **📊 Manajemen Absensi**: Sistem absensi digital yang mudah digunakan
+- **👥 Manajemen Siswa**: Kelola data siswa dengan lengkap dan terstruktur
+- **📈 Laporan Kehadiran**: Laporan dan analisis kehadiran yang detail
+- **🔐 Autentikasi Aman**: Sistem login yang aman dengan Supabase
+- **📱 Responsive Design**: Dapat diakses dari berbagai perangkat
 
-## 🚀 **Powerful Features That Actually Work**
+## 🚀 **Fitur-Fitur Unggulan**
 
-### **🎯 Strategic Planning That Gets Results**
-- **Quarter-Based Mastery**: 13-week planning cycles that sync with your natural productivity rhythms
-- **12-Week Quest System**: Break down big dreams into achievable 12-week sprints
-- **Vision Mapping**: Connect daily actions to your ultimate life vision
-- **Priority Matrix**: Never waste time on low-impact tasks again
+### **🔐 Sistem Autentikasi**
+- **Login/Register**: Sistem autentikasi yang aman dengan email dan password
+- **Google Sign-In**: Login menggunakan akun Google untuk kemudahan akses
+- **Role-based Access**: Kontrol akses berdasarkan peran (Admin, Guru, Siswa)
+- **Session Management**: Manajemen sesi yang aman dan terpercaya
 
-### **⚡ Execution That Drives Success**
-- **Daily Power Sessions**: Start each day with laser-focused planning
-- **Weekly Alignment**: Weekly reviews that keep you on track and motivated
-- **Smart Activity Tracking**: Know exactly where your time goes
-- **Real-Time Progress**: See your success unfold in real-time
+### **📊 Manajemen Absensi**
+- **Input Absensi Harian**: Sistem input absensi yang mudah dan cepat
+- **Status Kehadiran**: Pilihan status H (Hadir), S (Sakit), I (Izin), A (Alpha)
+- **Alasan Izin**: Input alasan khusus untuk siswa yang izin
+- **Real-time Persentase**: Perhitungan persentase kehadiran secara real-time
+- **Auto-save**: Penyimpanan otomatis untuk mencegah kehilangan data
 
-### **📱 Modern Technology, Seamless Experience**
-- **Install Anywhere**: Works on desktop, mobile, tablet - installs like a native app
-- **Lightning Fast**: Built with the latest web technologies for instant responsiveness
-- **Offline Ready**: Keep planning even when you're disconnected
-- **Auto-Sync**: Your data syncs seamlessly across all devices
+### **👥 Manajemen Siswa**
+- **Data Master Siswa**: Kelola data lengkap semua siswa
+- **Filter Berdasarkan Kelas**: Tampilkan siswa berdasarkan kelas tertentu
+- **Informasi Detail**: Nama, gender, kelas, dan informasi penting lainnya
+- **Pencarian Siswa**: Fitur pencarian untuk menemukan siswa dengan cepat
 
-## 🏆 **Built for Excellence**
+### **📈 Laporan dan Analisis**
+- **Laporan Kehadiran**: Laporan detail kehadiran siswa per periode
+- **Filter Berdasarkan Kelas**: Filter laporan berdasarkan kelas tertentu
+- **Filter Periode**: Pilihan periode (Minggu Ini, Bulan Ini)
+- **Visualisasi Data**: Chart dan grafik untuk analisis kehadiran
+- **Export Data**: Kemampuan untuk mengexport data laporan
 
-### **🚀 Cutting-Edge Technology**
-- **Next.js 15**: The most advanced React framework for lightning-fast performance
-- **React 19**: Latest React features for smooth, responsive interactions
-- **TypeScript**: Bulletproof code that catches errors before they happen
-- **Tailwind CSS**: Beautiful, consistent design that scales perfectly
-- **Progressive Web App**: Install on any device, works like a native app
+### **⚙️ Pengaturan Sistem**
+- **Profil Pengguna**: Kelola informasi profil pengguna
+- **PWA Settings**: Pengaturan untuk Progressive Web App
+- **Tema dan Tampilan**: Kustomisasi tampilan aplikasi
+- **Notifikasi**: Sistem notifikasi untuk update penting
 
-### **🔒 Enterprise-Grade Security**
-- **Supabase**: Industry-leading backend with PostgreSQL
-- **Bank-Level Security**: Your data is protected with military-grade encryption
-- **Real-Time Sync**: Changes appear instantly across all your devices
-- **Zero Downtime**: 99.9% uptime guarantee
+## 🏆 **Teknologi Terdepan**
 
-### **⚡ Performance That Impresses**
-- **Lightning Fast**: Loads in under 1 second on any device
-- **Offline First**: Keep working even without internet
-- **Smart Caching**: Intelligent data management for maximum speed
-- **Mobile Optimized**: Perfect experience on phones, tablets, and desktops
+### **🚀 Modern Web Technology**
+- **Next.js 15**: Framework React terdepan untuk performa optimal
+- **React 19**: Fitur React terbaru untuk interaksi yang smooth
+- **TypeScript**: Kode yang aman dan mudah dipelihara
+- **Tailwind CSS**: Desain yang konsisten dan responsif
+- **Progressive Web App**: Dapat diinstall seperti aplikasi native
 
-## 🚀 **Get Started in 60 Seconds**
+### **🔒 Keamanan Enterprise**
+- **Supabase**: Backend PostgreSQL yang terpercaya
+- **Row Level Security**: Keamanan data tingkat baris
+- **Autentikasi Aman**: Sistem login yang aman dan terenkripsi
+- **Real-Time Sync**: Sinkronisasi data secara real-time
+- **Data Privacy**: Perlindungan data pribadi yang ketat
 
-### **For Users (Install the App)**
-1. **Visit**: Open [Better Planner](https://planner.abuabdirohman.com) in your browser
-2. **Install**: Click "Install" when prompted (works on any device!)
-3. **Sign Up**: Create your free account in seconds
-4. **Start Planning**: Begin your journey to peak productivity
+### **⚡ Performa Optimal**
+- **Loading Cepat**: Memuat dalam hitungan detik
+- **Responsive Design**: Tampilan optimal di semua perangkat
+- **Offline Support**: Tetap berfungsi meski tanpa internet
+- **Mobile First**: Didesain khusus untuk mobile dan desktop
 
-### **For Developers (Run Locally)**
+## 🚀 **Cara Memulai**
+
+### **Untuk Pengguna (Install Aplikasi)**
+1. **Kunjungi**: Buka aplikasi di browser
+2. **Install**: Klik "Install" saat diminta (berfungsi di semua perangkat!)
+3. **Daftar/Login**: Buat akun atau login dengan akun yang ada
+4. **Mulai Menggunakan**: Kelola data generus dan absensi dengan mudah
+
+### **Untuk Developer (Jalankan Lokal)**
 ```bash
-# Clone and setup
+# Clone dan setup
 git clone <repository-url>
-cd prj-better-planner
+cd school-management
 npm install
 
-# Configure environment
+# Konfigurasi environment
 cp .env.example .env.local
-# Add your Supabase credentials
+# Tambahkan kredensial Supabase Anda
 
-# Launch development server
+# Jalankan development server
 npm run dev
-# Open http://localhost:3000
+# Buka http://localhost:3000
 ```
 
-## 💎 **Why Developers Love Better Planner**
+## 💎 **Mengapa Developer Menyukai Sistem Ini**
 
-### **🎯 Built with Best Practices**
-- **10/10 Code Quality**: Every line of code meets the highest standards
-- **TypeScript First**: Bulletproof type safety throughout
-- **Performance Optimized**: Built for speed and efficiency
-- **Test Coverage**: 80%+ test coverage ensures reliability
-- **Clean Architecture**: Easy to understand, maintain, and extend
+### **🎯 Dibangun dengan Best Practices**
+- **Kualitas Kode Tinggi**: Setiap baris kode memenuhi standar tertinggi
+- **TypeScript First**: Type safety yang kuat di seluruh aplikasi
+- **Performance Optimized**: Dibangun untuk kecepatan dan efisiensi
+- **Clean Architecture**: Mudah dipahami, dipelihara, dan dikembangkan
+- **Modular Components**: Komponen yang dapat digunakan kembali
 
 ### **🚀 Developer Experience**
 ```bash
 # Quick start
-npm run dev              # Lightning-fast development server
-npm run build            # Optimized production build
-npm run start            # Production server
+npm run dev              # Development server yang cepat
+npm run build            # Build production yang optimal
+npm run start            # Server production
 
 # Quality assurance
-npm run test             # Comprehensive test suite
-npm run lint             # Code quality checks
-npm run type-check       # TypeScript validation
+npm run type-check       # Validasi TypeScript
+npm run format           # Format kode dengan Prettier
+npm run format:check     # Cek format kode
 ```
 
-## 🏗️ **Architecture That Scales**
+## 🏗️ **Arsitektur yang Scalable**
 
-### **📱 Modern App Structure**
+### **📱 Struktur Aplikasi Modern**
 ```
-Better Planner/
-├── 🎯 Strategic Planning    # Quarter-based goal setting
-├── ⚡  Daily Execution       # Task management & tracking  
-├── 📊 Progress Analytics    # Performance insights
-├── 🔒 Secure Backend       # Enterprise-grade data protection
-└── 📱 Cross-Platform       # Works everywhere, beautifully
+Generus Mandiri/
+├── 🔐 Authentication       # Sistem login dan register
+├── 📊 Absensi Management   # Manajemen kehadiran siswa
+├── 👥 Student Management   # Kelola data siswa
+├── 📈 Reports & Analytics  # Laporan dan analisis
+├── ⚙️ Settings & Profile   # Pengaturan sistem
+└── 📱 Responsive Design    # Tampilan optimal di semua perangkat
 ```
 
-### **💻 Developer-Friendly Codebase**
-- **Clean Architecture**: Easy to understand and extend
-- **Modular Components**: Reusable, maintainable code
-- **Type Safety**: TypeScript throughout for reliability
-- **Performance First**: Optimized for speed and efficiency
-- **Testing Ready**: Comprehensive test coverage
+### **💻 Codebase yang Developer-Friendly**
+- **Clean Architecture**: Mudah dipahami dan dikembangkan
+- **Modular Components**: Komponen yang dapat digunakan kembali
+- **Type Safety**: TypeScript di seluruh aplikasi untuk keandalan
+- **Performance First**: Dioptimalkan untuk kecepatan dan efisiensi
+- **Modern Stack**: Menggunakan teknologi web terdepan
 
-## 🎯 **Success Stories**
+## 🎯 **Keunggulan Sistem**
 
-### **📈 Real Results from Real Users**
-- **"Finally, a planning tool that actually works!"** - Sarah M., Entrepreneur
-- **"I've tried every productivity app. This is the only one that stuck."** - Mike R., Software Engineer  
-- **"My productivity increased by 40% in just 2 weeks."** - Lisa K., Project Manager
-- **"The quarter system changed how I think about goals completely."** - David L., Consultant
+### **📈 Manfaat untuk Institusi**
+- **Efisiensi Tinggi**: Kelola data generus dengan lebih efisien
+- **Akurasi Data**: Data absensi yang akurat dan real-time
+- **Laporan Lengkap**: Analisis kehadiran yang detail dan komprehensif
+- **User-Friendly**: Antarmuka yang mudah digunakan untuk semua level pengguna
+- **Mobile Ready**: Dapat diakses dari perangkat mobile dan desktop
 
-### **🏆 What You'll Achieve**
-- **3x More Productive**: Strategic planning that actually works
-- **Zero Overwhelm**: Break big goals into manageable chunks
-- **Crystal Clear Focus**: Know exactly what to do next
-- **Consistent Progress**: Never lose momentum again
-- **Peak Performance**: Optimize your time and energy
+### **🏆 Fitur Unggulan**
+- **Sistem Absensi Digital**: Input absensi yang cepat dan akurat
+- **Manajemen Data Terpusat**: Semua data generus dalam satu sistem
+- **Laporan Otomatis**: Generate laporan kehadiran secara otomatis
+- **Keamanan Data**: Perlindungan data yang aman dan terpercaya
+- **Scalable**: Dapat menangani data dalam skala besar
 
-## 🚀 **Ready to Transform Your Productivity?**
+## 🚀 **Siap Menggunakan Sistem?**
 
-### **🎯 Perfect For**
-- **Entrepreneurs** who need to execute big visions
-- **Professionals** who want to maximize their impact
-- **Students** who need to stay organized and focused
-- **Teams** who want to align and achieve together
-- **Anyone** who refuses to settle for average results
+### **🎯 Cocok Untuk**
+- **Sekolah dan Madrasah** yang membutuhkan sistem manajemen digital
+- **Pondok Pesantren** untuk mengelola data santri dan absensi
+- **Lembaga Pendidikan** yang ingin digitalisasi proses administrasi
+- **Organisasi Keagamaan** untuk mengelola data anggota
+- **Institusi** yang membutuhkan sistem manajemen data terpusat
 
-### **💎 What You Get**
-- **Instant Access**: Start planning in 60 seconds
-- **Cross-Platform**: Works on any device, anywhere
-- **Offline Ready**: Keep planning even without internet
-- **Secure & Private**: Your data is protected and private
-- **Always Updated**: Latest features and improvements
+### **💎 Yang Anda Dapatkan**
+- **Akses Instan**: Mulai menggunakan dalam hitungan menit
+- **Cross-Platform**: Berfungsi di semua perangkat
+- **Offline Ready**: Tetap berfungsi tanpa internet
+- **Aman & Privat**: Data Anda terlindungi dan aman
+- **Selalu Update**: Fitur terbaru dan perbaikan berkelanjutan
 
-### **🔥 Limited Time Bonus**
-- **Free Forever**: No hidden costs, no subscriptions
-- **Premium Features**: All features included at no extra cost
-- **Priority Support**: Get help when you need it
-- **Community Access**: Join thousands of high achievers
+### **🔥 Keunggulan Sistem**
+- **Gratis dan Open Source**: Tidak ada biaya tersembunyi
+- **Semua Fitur Tersedia**: Semua fitur dapat digunakan tanpa batas
+- **Support Lengkap**: Bantuan teknis yang responsif
+- **Komunitas Aktif**: Bergabung dengan komunitas pengguna
 
-## 🎯 **Get Started Today**
+## 🎯 **Mulai Sekarang**
 
-### **🚀 Ready to Transform Your Life?**
-1. **Visit**: [Better Planner](https://planner.abuabdirohman.com)
-2. **Install**: Click "Install" when prompted
-3. **Sign Up**: Create your free account
-4. **Start Planning**: Begin your journey to peak productivity
+### **🚀 Siap Menggunakan Sistem?**
+1. **Clone Repository**: Clone repository ini
+2. **Install Dependencies**: Jalankan `npm install`
+3. **Setup Environment**: Konfigurasi file environment
+4. **Jalankan Aplikasi**: Mulai menggunakan sistem
 
-### **📱 Available Everywhere**
+### **📱 Tersedia di Semua Platform**
 - **Desktop**: Chrome, Edge, Safari, Firefox
 - **Mobile**: iOS Safari, Android Chrome, Samsung Internet
-- **Tablet**: Perfect experience on any screen size
-- **Offline**: Keep planning even without internet
+- **Tablet**: Pengalaman optimal di semua ukuran layar
+- **PWA**: Dapat diinstall seperti aplikasi native
 
-### **💬 Join the Community**
-- **Discord**: Connect with other high achievers
-- **Twitter**: Follow for productivity tips and updates
-- **GitHub**: Star us if you love the code
-- **Support**: Get help when you need it
-
----
-
-## 🏆 **Built for High Achievers, by High Achievers**
-
-**Better Planner** isn't just another app—it's your strategic partner in achieving extraordinary results. Join thousands of ambitious individuals who have transformed their productivity and achieved their biggest goals.
-
-**Ready to stop planning and start achieving?** [Get Better Planner Now →](https://planner.abuabdirohman.com)
+### **💬 Bergabung dengan Komunitas**
+- **GitHub**: Star repository ini jika Anda menyukainya
+- **Issues**: Laporkan bug atau request fitur baru
+- **Discussions**: Diskusi dengan pengguna lain
+- **Support**: Dapatkan bantuan ketika membutuhkan
 
 ---
 
-*Built with ❤️ for people who refuse to settle for average*
+## 🏆 **Dibangun untuk Pendidikan, oleh Developer yang Peduli**
+
+**Generus Mandiri** bukan hanya aplikasi biasa—ini adalah solusi digital yang dirancang khusus untuk memudahkan pengelolaan data generus dan absensi. Bergabunglah dengan institusi yang telah merasakan manfaat digitalisasi sistem manajemen.
+
+**Siap untuk digitalisasi sistem manajemen Anda?** Mulai sekarang!
+
+---
+
+*Dibangun dengan ❤️ untuk kemajuan pendidikan digital*
