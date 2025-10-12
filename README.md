@@ -17,8 +17,9 @@ Sistem manajemen pengajian digital yang modern dan efisien untuk mengelola data 
 ## 🚀 **Fitur-Fitur Unggulan**
 
 ### **🔐 Sistem Autentikasi**
-- **Login/Register**: Sistem autentikasi yang aman dengan email dan password
-- **Google Sign-In**: Login menggunakan akun Google untuk kemudahan akses
+- **Login**: Sistem autentikasi yang aman dengan email dan password
+<!-- - **Login/Register**: Sistem autentikasi yang aman dengan email dan password -->
+<!-- - **Google Sign-In**: Login menggunakan akun Google untuk kemudahan akses -->
 - **Role-based Access**: Kontrol akses berdasarkan peran (Admin, Guru, Siswa)
 - **Session Management**: Manajemen sesi yang aman dan terpercaya
 
@@ -121,13 +122,14 @@ npm run format:check     # Cek format kode
 ### **📱 Struktur Aplikasi Modern**
 ```
 Generus Mandiri/
-├── 🔐 Authentication       # Sistem login dan register
+├── 🔐 Authentication       # Sistem login
 ├── 📊 Absensi Management   # Manajemen kehadiran siswa
 ├── 👥 Student Management   # Kelola data siswa
 ├── 📈 Reports & Analytics  # Laporan dan analisis
 ├── ⚙️ Settings & Profile   # Pengaturan sistem
 └── 📱 Responsive Design    # Tampilan optimal di semua perangkat
 ```
+<!-- ├── 🔐 Authentication       # Sistem login dan register -->
 
 ### **💻 Codebase yang Developer-Friendly**
 - **Clean Architecture**: Mudah dipahami dan dikembangkan
@@ -204,4 +206,4 @@ Generus Mandiri/
 
 ---
 
-*Dibangun dengan ❤️ untuk kemajuan pendidikan digital*
+*Dibangun dengan ❤️ untuk kemajuan generus Indonesia*
