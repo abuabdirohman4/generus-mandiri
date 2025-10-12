@@ -60,7 +60,24 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     period: filters.period,
     classId: filters.classId || undefined,
     startDate: filters.startDate || undefined,
-    endDate: filters.endDate || undefined
+    endDate: filters.endDate || undefined,
+    
+    // Period-specific filters
+    ...(filters.period === 'weekly' && {
+      weekYear: filters.weekYear,
+      weekMonth: filters.weekMonth,
+      startWeekNumber: filters.startWeekNumber,
+      endWeekNumber: filters.endWeekNumber
+    }),
+    ...(filters.period === 'monthly' && {
+      monthYear: filters.monthYear,
+      startMonth: filters.startMonth,
+      endMonth: filters.endMonth
+    }),
+    ...(filters.period === 'yearly' && {
+      startYear: filters.startYear,
+      endYear: filters.endYear
+    })
   }
 
   const swrKey = enabled ? ['report-data', apiFilters, useDummyData] : null

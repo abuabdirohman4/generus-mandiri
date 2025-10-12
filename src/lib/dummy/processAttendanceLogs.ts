@@ -484,25 +484,25 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
   } else {
     // For other periods, use the original daily mapping
     trendChartData = finalFilteredMeetings.map(meeting => {
-      const meetingLogs = filteredLogs.filter(log => log.meeting_id === meeting.id)
-      const totalStudents = studentIds.length
-      const presentCount = meetingLogs.filter(log => log.status === 'H').length
-      const absentCount = meetingLogs.filter(log => log.status === 'A').length
-      const excusedCount = meetingLogs.filter(log => log.status === 'I').length
-      const sickCount = meetingLogs.filter(log => log.status === 'S').length
-      const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0
+    const meetingLogs = filteredLogs.filter(log => log.meeting_id === meeting.id)
+    const totalStudents = studentIds.length
+    const presentCount = meetingLogs.filter(log => log.status === 'H').length
+    const absentCount = meetingLogs.filter(log => log.status === 'A').length
+    const excusedCount = meetingLogs.filter(log => log.status === 'I').length
+    const sickCount = meetingLogs.filter(log => log.status === 'S').length
+    const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0
 
-      return {
-        date: dayjs(meeting.date).format('DD MMM'),
-        fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
-        attendancePercentage,
-        presentCount,
-        absentCount,
-        excusedCount,
-        sickCount,
-        totalRecords: totalStudents
-      }
-    }).sort((a, b) => dayjs(a.fullDate).valueOf() - dayjs(b.fullDate).valueOf())
+    return {
+      date: dayjs(meeting.date).format('DD MMM'),
+      fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
+      attendancePercentage,
+      presentCount,
+      absentCount,
+      excusedCount,
+      sickCount,
+      totalRecords: totalStudents
+    }
+  }).sort((a, b) => dayjs(a.fullDate).valueOf() - dayjs(b.fullDate).valueOf())
   }
 
   // Generate detailed records (student summary format)

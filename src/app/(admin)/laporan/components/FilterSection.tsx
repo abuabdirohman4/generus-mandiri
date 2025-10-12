@@ -105,34 +105,43 @@ export default function FilterSection({
       
       {filters.viewMode === 'general' ? (
         // General Mode Filters
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4">
-          <InputFilter
-            id="month"
-            label="Bulan"
-            value={filters.month.toString()}
-            onChange={(value) => onFilterChange('month', value)}
-            options={monthOptions}
-            className="mb-0"
-          />
+        <div className="space-y-4">
+          {/* Class Filter */}
+          <div className="grid grid-cols1 gap-x-4">
+            <InputFilter
+              id="classId"
+              label="Kelas"
+              value={filters.classId ?? ''}
+              onChange={(value) => onFilterChange('classId', value)}
+              options={classOptions}
+              allOptionLabel="Semua Kelas"
+              className="!mb-0"
+              widthClassName='!max-w-full'
+            />
+          </div>
 
-          <InputFilter
-            id="year"
-            label="Tahun"
-            value={filters.year.toString()}
-            onChange={(value) => onFilterChange('year', value)}
-            options={yearOptions}
-            className="mb-0"
-          />
+          {/* Month and Year Filter */}
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
+            <InputFilter
+              id="month"
+              label="Bulan"
+              value={filters.month.toString()}
+              onChange={(value) => onFilterChange('month', value)}
+              options={monthOptions}
+              className="!mb-0"
+              widthClassName='!max-w-full'
+            />
 
-          <InputFilter
-            id="classId"
-            label="Kelas"
-            value={filters.classId ?? ''}
-            onChange={(value) => onFilterChange('classId', value)}
-            options={classOptions}
-            allOptionLabel="Semua Kelas"
-            className="mb-0"
-          />
+            <InputFilter
+              id="year"
+              label="Tahun"
+              value={filters.year.toString()}
+              onChange={(value) => onFilterChange('year', value)}
+              options={yearOptions}
+              className="!mb-0"
+              widthClassName='!max-w-full'
+            />
+          </div>
         </div>
       ) : (
         // Detailed Mode Filters - Dynamic based on period
@@ -145,7 +154,8 @@ export default function FilterSection({
               value={filters.period}
               onChange={(value) => onFilterChange('period', value)}
               options={periodOptions}
-              className="mb-0"
+              className="!mb-0"
+              widthClassName="!max-w-full"
             />
 
             <InputFilter
@@ -155,7 +165,8 @@ export default function FilterSection({
               onChange={(value) => onFilterChange('classId', value)}
               options={classOptions}
               allOptionLabel="Semua Kelas"
-              className="mb-0"
+              className="!mb-0"
+              widthClassName="!max-w-full"
             />
           </div>
 
@@ -245,7 +256,7 @@ export default function FilterSection({
         </div>
       )}
 
-      <div className="mt-6 md:mt-2 flex gap-2 w-full md:w-auto">
+      <div className="mt-6 md:mt-4 flex gap-2 w-full md:w-auto">
         <Button 
           onClick={onResetFilters} 
           variant="outline" 

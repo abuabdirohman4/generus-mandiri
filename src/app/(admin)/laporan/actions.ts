@@ -328,38 +328,47 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       let groupKey: string
       let displayDate: string
       
-      
-      switch (filters.period) {
-        case 'daily':
-          groupKey = meeting.date
-          displayDate = meeting.date
-          break
-        case 'weekly':
-          // Group by week number in month
-          const weekNumber = getWeekNumberInMonth(meetingDate)
-          groupKey = `week-${weekNumber}`
-          displayDate = `Minggu ${weekNumber}`
-          break
-        case 'monthly':
-          // Only group by month if it's detailed mode with monthly period
-          if (filters.viewMode === 'detailed') {
+      // For general mode, always show daily data
+      if (filters.viewMode === 'general') {
+        groupKey = meeting.date
+        displayDate = meetingDate.toLocaleDateString('id-ID', { 
+          day: '2-digit', 
+          month: 'short' 
+        })
+      } else {
+        // For detailed mode, use period-specific grouping
+        switch (filters.period) {
+          case 'daily':
+            groupKey = meeting.date
+            displayDate = meetingDate.toLocaleDateString('id-ID', { 
+              day: '2-digit', 
+              month: 'short' 
+            })
+            break
+          case 'weekly':
+            // Group by week number in month
+            const weekNumber = getWeekNumberInMonth(meetingDate)
+            groupKey = `week-${weekNumber}`
+            displayDate = `Minggu ${weekNumber}`
+            break
+          case 'monthly':
+            // Group by month for detailed mode with monthly period
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
             groupKey = `${meetingDate.getFullYear()}-${meetingDate.getMonth() + 1}`
             displayDate = monthNames[meetingDate.getMonth()]
-          } else {
-            // For general mode, show daily data
+            break
+          case 'yearly':
+            // Group by year
+            groupKey = meetingDate.getFullYear().toString()
+            displayDate = meetingDate.getFullYear().toString()
+            break
+          default:
             groupKey = meeting.date
-            displayDate = meeting.date
-          }
-          break
-        case 'yearly':
-          // Group by year
-          groupKey = meetingDate.getFullYear().toString()
-          displayDate = meetingDate.getFullYear().toString()
-          break
-        default:
-          groupKey = meeting.date
-          displayDate = meeting.date
+            displayDate = meetingDate.toLocaleDateString('id-ID', { 
+              day: '2-digit', 
+              month: 'short' 
+            })
+        }
       }
       
       if (!acc[groupKey]) {

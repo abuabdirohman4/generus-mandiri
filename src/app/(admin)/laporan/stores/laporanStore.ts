@@ -37,10 +37,18 @@ interface LaporanState {
   setFilters: (filters: Partial<LaporanFilters>) => void
   resetFilters: () => void
   setFilter: (key: keyof LaporanFilters, value: any) => void
+  resetMonthlyFilters: () => void
 }
 
 const getCurrentMonth = () => 10 // Use October for dummy data compatibility
 const getCurrentYear = () => 2025 // Use 2025 for dummy data compatibility
+
+// Helper function to get default monthly range
+const getDefaultMonthlyRange = () => ({
+  monthYear: getCurrentYear(),
+  startMonth: 10, // October
+  endMonth: 12    // December
+})
 
 const defaultFilters: LaporanFilters = {
   // General mode defaults
@@ -63,9 +71,7 @@ const defaultFilters: LaporanFilters = {
   endWeekNumber: 1,
   
   // Monthly filters
-  monthYear: getCurrentYear(),
-  startMonth: getCurrentMonth(),
-  endMonth: getCurrentMonth(),
+  ...getDefaultMonthlyRange(),
   
   // Yearly filters
   startYear: getCurrentYear(),
@@ -82,6 +88,10 @@ export const useLaporanStore = create<LaporanState>()(
       })),
       
       resetFilters: () => set({ filters: defaultFilters }),
+      
+      resetMonthlyFilters: () => set((state) => ({
+        filters: { ...state.filters, ...getDefaultMonthlyRange() }
+      })),
       
       setFilter: (key, value) => set((state) => {
         const newFilters = { ...state.filters, [key]: value }
@@ -100,9 +110,7 @@ export const useLaporanStore = create<LaporanState>()(
               newFilters.endWeekNumber = 1
               break
             case 'monthly':
-              newFilters.monthYear = getCurrentYear()
-              newFilters.startMonth = 10 // October
-              newFilters.endMonth = 12   // December
+              Object.assign(newFilters, getDefaultMonthlyRange())
               break
             case 'yearly':
               newFilters.startYear = getCurrentYear()
@@ -110,7 +118,6 @@ export const useLaporanStore = create<LaporanState>()(
               break
           }
         }
-        
         return { filters: newFilters }
       })
     }),
