@@ -20,20 +20,20 @@ interface DataTableProps {
 
 export default function DataTableComponent({ tableData }: DataTableProps) {
   const columns = [
-    {
-      key: 'no',
-      label: 'No',
-      width: '16',
-      align: 'center' as const,
-    },
+    // {
+    //   key: 'no',
+    //   label: 'No',
+    //   width: '16',
+    //   align: 'center' as const,
+    // },
     {
       key: 'student_name',
       label: 'Nama Siswa',
       align: 'left' as const,
     },
     {
-      key: 'class_name',
-      label: 'Kelas',
+      key: 'attendance_rate',
+      label: 'Tingkat Kehadiran',
       align: 'center' as const,
     },
     {
@@ -62,8 +62,8 @@ export default function DataTableComponent({ tableData }: DataTableProps) {
       align: 'center' as const,
     },
     {
-      key: 'attendance_rate',
-      label: 'Tingkat Kehadiran',
+      key: 'class_name',
+      label: 'Kelas',
       align: 'center' as const,
     },
   ]
