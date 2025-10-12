@@ -38,6 +38,12 @@ const settingsCategories = [
         href: "/settings/pwa",
         available: true
       },
+      {
+        name: "Reset Cookies & Cache",
+        description: "Hapus semua cookies dan cache aplikasi",
+        href: "/settings/cache",
+        available: true
+      },
       // {
       //   name: "Notifikasi",
       //   description: "Pengaturan notifikasi dan alert",
