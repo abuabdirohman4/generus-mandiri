@@ -27,13 +27,13 @@ export default function SplashScreen({ children }: SplashScreenProps) {
           <div className="mx-auto mb-3 rounded-2xl flex items-center justify-center shadow-lg">
             <img 
               src="/images/logo/logo-icon.svg" 
-              alt="Warlob App Logo" 
+              alt="Generus Mandiri Logo" 
               className="w-32 h-32"
             />
           </div>
           
           {/* App Name */}
-          <h1 className="text-2xl font-bold mb-2">Warlob App</h1>
+          <h1 className="text-2xl font-bold mb-2">Generus Mandiri</h1>
           <p className="text-gray-400 text-lg">Semoga Lancar Barokah</p>
 
           {/* Loading indicator */}

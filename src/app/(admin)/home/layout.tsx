@@ -5,8 +5,8 @@ import HomeSkeleton from '@/components/ui/skeleton/HomeSkeleton';
 import HomePage from "./page";
 
 export const metadata: Metadata = {
-  title: "Beranda | Warlob App",
-  description: "Halaman utama Warlob App - Sistem Digital Generus Warlob",
+  title: "Beranda | Generus Mandiri",
+  description: "Halaman utama Generus Mandiri - Sistem Digital Generus LDII",
 };
 
 export default function HomeLayout() {

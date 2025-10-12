@@ -21,13 +21,13 @@ const toastConfig = {
 };
 
 export const metadata: Metadata = {
-  title: "Warlob App - Sistem Digital Generus Warlob",
-  description: "Sistem Digital Generus Warlob untuk manajemen pengajian, absensi dan data siswa",
+  title: "Generus Mandiri - Sistem Digital Generus LDII",
+  description: "Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Warlob App",
+    title: "Generus Mandiri",
   },
   icons: {
     icon: [

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Laporan | Warlob App',
+  title: 'Laporan | Generus Mandiri',
   description: 'Analisis dan visualisasi data kehadiran siswa',
 }
 

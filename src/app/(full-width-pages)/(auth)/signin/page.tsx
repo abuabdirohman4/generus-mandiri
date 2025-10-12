@@ -6,8 +6,8 @@ import SignInForm from "@/components/auth/SignInForm.server";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "SignIn Page | Warlob App",
-  description: "Sistem Digital Generus Warlob Warlob App",
+  title: "SignIn Page | Generus Mandiri",
+  description: "Sistem Digital Generus LDII Generus Mandiri",
 };
 
 export default async function SignIn({ searchParams }: { searchParams?: Promise<{ message?: string }> }) {
@@ -40,7 +40,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
               />
             </Link>
             <p className="text-blue-100 text-base">
-              Sistem Digital Generus Warlob
+              Sistem Digital Generus LDII
             </p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
         {/* Desktop Header */}
         <div className="hidden lg:block mb-5 sm:mb-8">
           <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-            Warlob App
+            Generus Mandiri
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Masukkan username dan password

@@ -1,6 +1,6 @@
-**Judul Proyek:** Pembangunan Aplikasi Absensi "Warlob App"
+**Judul Proyek:** Pembangunan Aplikasi Absensi "Generus Mandiri"
 
-**Tujuan Utama:** Anda ditugaskan untuk membangun aplikasi web absensi siswa bernama "Warlob App". Aplikasi ini bertujuan untuk menyediakan sistem absensi digital yang cepat, mudah, dan efisien bagi para guru. Fase pertama ini fokus pada fungsionalitas absensi inti.
+**Tujuan Utama:** Anda ditugaskan untuk membangun aplikasi web absensi siswa bernama "Generus Mandiri". Aplikasi ini bertujuan untuk menyediakan sistem absensi digital yang cepat, mudah, dan efisien bagi para guru. Fase pertama ini fokus pada fungsionalitas absensi inti.
 
 **1. Spesifikasi Teknologi**
 

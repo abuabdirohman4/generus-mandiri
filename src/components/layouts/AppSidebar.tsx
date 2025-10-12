@@ -391,7 +391,7 @@ function SidebarContent({
               }`}
             >
               <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                Warlob App
+                Generus Mandiri
               </span>
             </div>
           </div>

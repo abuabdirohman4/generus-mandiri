@@ -1,4 +1,4 @@
-// Optimized Service Worker for Warlob App
+// Optimized Service Worker for Generus Mandiri
 // School Management System PWA
 
 const CACHE_NAME = 'warlob-school-v1.0.0';

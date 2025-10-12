@@ -3,7 +3,7 @@ import Link from 'next/link';
 // Icons will be inline SVGs
 
 export const metadata: Metadata = {
-  title: "Settings | Warlob App",
+  title: "Settings | Generus Mandiri",
   description: "Pengaturan aplikasi dan preferensi pengguna",
 };
 

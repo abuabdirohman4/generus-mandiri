@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import SiswaPage from './page'
 
 export const metadata: Metadata = {
-  title: 'Siswa | Warlob App',
+  title: 'Siswa | Generus Mandiri',
   description: 'Kelola data siswa dan informasi kelas',
 }
 

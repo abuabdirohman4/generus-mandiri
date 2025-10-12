@@ -36,7 +36,7 @@ function PageTitle() {
         if (path.startsWith('/absensi')) { // meeting detail pages
           return 'Absensi';
         }
-        return 'Warlob App';
+        return 'Generus Mandiri';
     }
   };
 

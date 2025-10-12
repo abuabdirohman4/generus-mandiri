@@ -29,7 +29,7 @@ export default function AuthLayout({
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">
-                  Sistem Digital Generus Warlob
+                  Sistem Digital Generus LDII
                 </p>
               </div>
             </div>

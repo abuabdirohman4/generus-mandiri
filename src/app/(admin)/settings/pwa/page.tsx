@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import PWASettingsSection from '@/components/PWA/PWASettingsSection';
 
 export const metadata: Metadata = {
-  title: "PWA Settings | Warlob App",
+  title: "PWA Settings | Generus Mandiri",
   description: "Kelola instalasi Progressive Web App (PWA) untuk pengalaman yang lebih baik",
 };
 

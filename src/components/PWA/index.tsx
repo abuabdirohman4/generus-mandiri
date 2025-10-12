@@ -147,7 +147,7 @@ export default function PWAComponents() {
       console.log('🔔 User choice:', outcome);
       
       if (outcome === "accepted") {
-        toast.success("Warlob App berhasil diinstall!");
+        toast.success("Generus Mandiri berhasil diinstall!");
         setIsInstalled(true);
       } else {
         toast.info("Installasi dibatalkan");
@@ -199,7 +199,7 @@ export default function PWAComponents() {
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <Image
                 src="/images/logo/logo-icon.svg"
-                alt="Warlob App Logo"
+                alt="Generus Mandiri Logo"
                 width={32}
                 height={32}
                 priority
@@ -207,7 +207,7 @@ export default function PWAComponents() {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Install Warlob App
+                Install Generus Mandiri
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Tambahkan ke home screen untuk akses cepat

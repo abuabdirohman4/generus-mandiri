@@ -48,7 +48,7 @@ export default function Error404() {
       </div>
       {/* <!-- Footer --> */}
       <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} - Warlob App
+        &copy; {new Date().getFullYear()} - Generus Mandiri
       </p>
     </div>
   );

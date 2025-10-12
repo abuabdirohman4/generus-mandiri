@@ -1,7 +1,7 @@
 {
-  "name": "Warlob App",
-  "short_name": "Warlob App",
-  "description": "Sistem Digital Generus Warlob",
+  "name": "Generus Mandiri",
+  "short_name": "Generus Mandiri",
+  "description": "Sistem Digital Generus LDII",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#f8fafc",
