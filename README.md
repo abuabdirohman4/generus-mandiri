@@ -1,10 +1,10 @@
-# 🏫 Generus Mandiri - Sistem Manajemen Sekolah Digital
+# 🏫 Generus Mandiri - Sistem Manajemen Pengajian
 
-Sistem manajemen sekolah digital yang modern dan efisien untuk mengelola data generus, absensi, dan laporan kehadiran dengan teknologi terdepan.
+Sistem manajemen pengajian digital yang modern dan efisien untuk mengelola data generus, absensi, dan laporan kehadiran dengan teknologi terdepan.
 
 ## ✨ **Tentang Generus Mandiri**
 
-**Kelola generus dengan mudah dan efisien.** Generus Mandiri adalah sistem manajemen sekolah digital yang dirancang khusus untuk mengelola data generus LDII dengan fitur-fitur modern dan antarmuka yang user-friendly.
+**Kelola generus dengan mudah dan efisien.** Generus Mandiri adalah sistem manajemen pengajian digital yang dirancang khusus untuk mengelola data generus LDII dengan fitur-fitur modern dan antarmuka yang user-friendly.
 
 ### 🎯 **Keunggulan Sistem**
 

@@ -129,7 +129,7 @@ export default function LaporanPage() {
             />
 
             {/* Data Table */}
-            {/* <DataTable tableData={tableData} /> */}
+            <DataTable tableData={tableData} />
           </>
         ) : (
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
