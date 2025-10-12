@@ -21,7 +21,7 @@ export async function resetCacheAndLogout(): Promise<{ success: boolean }> {
     return { success: true };
   } catch (error) {
     console.error('Reset cache and logout error:', error);
-    handleApiError(error, 'melakukan reset', 'gagal melakukan reset cache dan logout');
+    handleApiError(error, 'reset', 'gagal melakukan reset cache dan logout');
     throw error;
   }
 }
