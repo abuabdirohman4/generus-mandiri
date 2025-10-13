@@ -8,6 +8,7 @@ import Button from '@/components/ui/button/Button'
 import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
+import { useClasses } from '@/hooks/useClasses'
 import InputFilter from '@/components/form/input/InputFilter'
 import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
@@ -40,17 +41,7 @@ export default function CreateMeetingModal({
   const [selectedClassId, setSelectedClassId] = useState<string>('')
 
   const { students, isLoading: studentsLoading } = useStudents()
-
-  // Get unique classes from students
-  const classes = students.reduce((acc, student) => {
-    if (!acc.find(c => c.id === student.class_id)) {
-      acc.push({
-        id: student.class_id,
-        name: student.class_name || ''
-      })
-    }
-    return acc
-  }, [] as { id: string; name: string }[])
+  const { classes, isLoading: classesLoading } = useClasses()
 
   // Filter students by selected class
   const filteredStudents = students.filter(student => 
@@ -60,7 +51,7 @@ export default function CreateMeetingModal({
   useEffect(() => {
     if (classId) {
       setSelectedClassId(classId)
-    } else if (classes.length > 0) {
+    } else if (classes && classes.length > 0) {
       setSelectedClassId(classes[0].id)
     }
   }, [classId, classes])
@@ -179,10 +170,10 @@ export default function CreateMeetingModal({
               {/* Class Selection */}
               <div className="mb-4">
                 <InputFilter
-                  options={classes.map(cls => ({
+                  options={classes?.map(cls => ({
                     value: cls.id,
                     label: cls.name
-                  }))}
+                  })) || []}
                   value={selectedClassId}
                   onChange={(val: string) => setSelectedClassId(val)}
                   id="classFilter"   
@@ -279,7 +270,7 @@ export default function CreateMeetingModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || studentsLoading || filteredStudents.length === 0}
+                  disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0}
                   variant="primary"
                 >
                   {isSubmitting ? (meeting ? 'Memperbarui...' : 'Membuat...') : (meeting ? 'Perbarui' : 'Buat Pertemuan')}

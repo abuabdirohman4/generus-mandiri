@@ -15,16 +15,66 @@ export interface Class {
 const fetcher = async (): Promise<Class[]> => {
   const supabase = createClient()
   
-  const { data: classes, error } = await supabase
-    .from('classes')
-    .select('id, name, kelompok_id')
-    .order('name')
-
-  if (error) {
-    throw new Error(error.message)
+  // First get user profile to determine role
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('User not authenticated')
   }
 
-  return classes || []
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) {
+    throw new Error('User profile not found')
+  }
+
+  // If user is admin, get all classes in their hierarchy
+  // If user is teacher, get only their assigned classes
+  if (profile.role === 'admin') {
+    const { data: classes, error } = await supabase
+      .from('classes')
+      .select('id, name, kelompok_id')
+      .order('name')
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return classes || []
+  } else if (profile.role === 'teacher') {
+    // Get classes assigned to this teacher
+    const { data: classes, error } = await supabase
+      .from('classes')
+      .select(`
+        id,
+        name,
+        kelompok_id,
+        teacher_classes!inner(teacher_id)
+      `)
+      .eq('teacher_classes.teacher_id', user.id)
+      .order('name')
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return classes || []
+  } else {
+    // For other roles, get all classes (fallback)
+    const { data: classes, error } = await supabase
+      .from('classes')
+      .select('id, name, kelompok_id')
+      .order('name')
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return classes || []
+  }
 }
 
 export function useClasses() {
