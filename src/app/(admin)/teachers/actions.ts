@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { handleApiError } from "@/lib/errorUtils";
+import { isAdmin } from "@/lib/userUtils";
 
 export interface CreateTeacherData {
   username: string;
@@ -30,7 +31,7 @@ export async function createTeacher(formData: FormData) {
       .eq('id', user.id)
       .single();
 
-    if (!adminProfile || adminProfile.role !== 'admin') {
+    if (!adminProfile || !isAdmin(adminProfile.role)) {
       throw new Error('Unauthorized: Only admin can create teachers');
     }
 
@@ -149,7 +150,7 @@ export async function getTeachers() {
       .eq('id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !isAdmin(profile.role)) {
       throw new Error('Unauthorized: Only admin can view teachers');
     }
 
@@ -227,7 +228,7 @@ export async function deleteTeacher(teacherId: string) {
       .eq('id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !isAdmin(profile.role)) {
       throw new Error('Unauthorized: Only admin can delete teachers');
     }
 

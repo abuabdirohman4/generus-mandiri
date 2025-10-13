@@ -1,6 +1,7 @@
 'use client'
 
 import InputFilter from '@/components/form/input/InputFilter'
+import { isAdmin } from '@/lib/userUtils'
 
 interface Class {
   id: string
@@ -63,8 +64,8 @@ export default function ClassFilter({
     )
   }
 
-  // For admin, show class filter dropdown
-  if (userProfile?.role === 'admin') {
+  // For admin or superadmin, show class filter dropdown
+  if (isAdmin(userProfile?.role)) {
     return (
       <InputFilter
         id="classFilter"

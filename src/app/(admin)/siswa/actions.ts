@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { determineCategoryFromClassName } from '@/lib/categoryUtils'
+import { isAdmin } from '@/lib/userUtils'
 
 export interface Student {
   id: string
@@ -352,7 +353,7 @@ export async function deleteStudent(studentId: string) {
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !isAdmin(profile.role)) {
       throw new Error('Unauthorized: Hanya admin yang dapat menghapus siswa')
     }
 

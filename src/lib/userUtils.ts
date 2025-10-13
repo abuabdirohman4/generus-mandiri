@@ -18,6 +18,20 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 /**
+ * Check if user has admin privileges (admin or superadmin)
+ */
+export function isAdmin(role: string | undefined): boolean {
+  return role === 'admin' || role === 'superadmin'
+}
+
+/**
+ * Check if user has superadmin privileges
+ */
+export function isSuperAdmin(role: string | undefined): boolean {
+  return role === 'superadmin'
+}
+
+/**
  * Clear all SWR cache when user logs out
  */
 export function clearUserCache() {

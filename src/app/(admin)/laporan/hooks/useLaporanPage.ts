@@ -4,6 +4,7 @@ import { useMemo, useEffect } from 'react'
 import { useLaporan } from '../stores/laporanStore'
 import { useReportData, useClasses } from './useReportData'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { isAdmin } from '@/lib/userUtils'
 import { Dayjs } from 'dayjs'
 
 /**
@@ -113,7 +114,7 @@ export function useLaporanPage() {
         isTeacher: true,
         isDisabled: true
       }
-    } else if (userProfile?.role === 'admin') {
+    } else if (isAdmin(userProfile?.role)) {
       // For admins, show all classes with "Semua Kelas" option
       return {
         selectedClassId: filters.classId || '',

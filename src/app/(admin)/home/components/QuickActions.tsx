@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, UserIcon } from '@/lib/icons';
@@ -43,7 +43,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   }, [router]);
 
   // Clear loading state when route changes
-  useState(() => {
+  useEffect(() => {
     const handleRouteChange = () => {
       setLoadingRoutes(new Set());
     };
@@ -54,7 +54,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
     };
-  });
+  }, []);
 
   const quickActions: QuickActionItem[] = [
     {

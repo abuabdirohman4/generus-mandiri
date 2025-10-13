@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { classKeys } from '@/lib/swr'
-import { getCurrentUserId } from '@/lib/userUtils'
+import { getCurrentUserId, isAdmin } from '@/lib/userUtils'
 
 export interface Class {
   id: string
@@ -31,9 +31,9 @@ const fetcher = async (): Promise<Class[]> => {
     throw new Error('User profile not found')
   }
 
-  // If user is admin, get all classes in their hierarchy
+  // If user is admin or superadmin, get all classes in their hierarchy
   // If user is teacher, get only their assigned classes
-  if (profile.role === 'admin') {
+  if (isAdmin(profile.role)) {
     const { data: classes, error } = await supabase
       .from('classes')
       .select('id, name, kelompok_id')
