@@ -13,6 +13,10 @@ export interface Student {
   class_id: string
   created_at: string
   updated_at: string
+  category?: string | null
+  kelompok_id?: string | null
+  desa_id?: string | null
+  daerah_id?: string | null
   classes: {
     id: string
     name: string
@@ -35,7 +39,11 @@ const fetcher = async (classId?: string): Promise<Student[]> => {
       id,
       name,
       gender,
+      category,
       class_id,
+      kelompok_id,
+      desa_id,
+      daerah_id,
       created_at,
       updated_at,
       classes (
@@ -60,7 +68,10 @@ const fetcher = async (classId?: string): Promise<Student[]> => {
     const classesData = Array.isArray(student.classes) ? student.classes[0] || null : student.classes
     return {
       ...student,
-      classes: classesData,
+      classes: classesData ? {
+        id: String(classesData.id || ''),
+        name: String(classesData.name || '')
+      } : null,
       // Add class_name for backward compatibility
       class_name: classesData?.name || ''
     }

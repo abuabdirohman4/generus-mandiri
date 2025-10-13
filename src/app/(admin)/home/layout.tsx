@@ -43,9 +43,15 @@ async function HomeContent() {
       id,
       full_name,
       role,
-      classes!classes_teacher_id_fkey (
-        id,
-        name
+      kelompok_id,
+      desa_id,
+      daerah_id,
+      kelompok:kelompok_id(id, name),
+      desa:desa_id(id, name),
+      daerah:daerah_id(id, name),
+      teacher_classes!teacher_classes_teacher_id_fkey(
+        class_id,
+        classes:class_id(id, name)
       )
     `)
     .eq('id', user.id)

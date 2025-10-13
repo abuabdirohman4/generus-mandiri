@@ -501,7 +501,7 @@ export async function getClasses() {
     
     const { data: classes, error } = await supabase
       .from('classes')
-      .select('id, name')
+      .select('id, name, kelompok_id')
       .order('name')
 
     if (error) {

@@ -9,6 +9,7 @@ import { getCurrentUserId } from '@/lib/userUtils'
 export interface Class {
   id: string
   name: string
+  kelompok_id?: string | null
 }
 
 const fetcher = async (): Promise<Class[]> => {
@@ -16,7 +17,7 @@ const fetcher = async (): Promise<Class[]> => {
   
   const { data: classes, error } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, kelompok_id')
     .order('name')
 
   if (error) {

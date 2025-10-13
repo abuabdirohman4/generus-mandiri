@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
+import { determineCategoryFromClassName } from '@/lib/categoryUtils'
 
 export interface Student {
   id: string
@@ -11,6 +12,10 @@ export interface Student {
   class_id: string
   created_at: string
   updated_at: string
+  category?: string | null
+  kelompok_id?: string | null
+  desa_id?: string | null
+  daerah_id?: string | null
   classes: {
     id: string
     name: string
@@ -20,6 +25,7 @@ export interface Student {
 export interface Class {
   id: string
   name: string
+  kelompok_id?: string | null
 }
 
 /**
@@ -38,16 +44,19 @@ export async function getUserProfile() {
       .from('profiles')
       .select(`
         role,
-        classes!classes_teacher_id_fkey(
-          id,
-          name
+        kelompok_id,
+        desa_id,
+        daerah_id,
+        teacher_classes!teacher_classes_teacher_id_fkey(
+          class_id,
+          classes:class_id(id, name)
         )
       `)
       .eq('id', user.id)
       .single()
 
-    // Handle the classes relationship - it could be an array or single object
-    const classesData = Array.isArray(profile?.classes) ? profile.classes : [profile?.classes].filter(Boolean)
+    // Transform teacher_classes to classes array
+    const classesData = profile?.teacher_classes?.map((tc: any) => tc.classes).filter(Boolean) || [];
 
     if (!profile) {
       throw new Error('User profile not found')
@@ -55,6 +64,9 @@ export async function getUserProfile() {
 
     return {
       role: profile.role,
+      kelompok_id: profile.kelompok_id,
+      desa_id: profile.desa_id,
+      daerah_id: profile.daerah_id,
       class_id: classesData[0]?.id || null,
       class_name: classesData[0]?.name || null
     }
@@ -74,7 +86,16 @@ export async function getStudents(classId?: string): Promise<Student[]> {
     let query = supabase
       .from('students')
       .select(`
-        *,
+        id,
+        name,
+        gender,
+        category,
+        class_id,
+        kelompok_id,
+        desa_id,
+        daerah_id,
+        created_at,
+        updated_at,
         class:classes(
           id,
           name
@@ -92,15 +113,26 @@ export async function getStudents(classId?: string): Promise<Student[]> {
       throw error
     }
 
-    const transformedStudents = students?.map(student => ({
-      id: student.id,
-      name: student.name,
-      gender: student.gender,
-      class_id: student.class_id,
-      created_at: student.created_at,
-      updated_at: student.updated_at,
-      classes: student.class || null
-    })) || []
+    const transformedStudents = students?.map(student => {
+      // Handle class data - it could be an array or single object
+      const classData = Array.isArray(student.class) ? student.class[0] : student.class;
+      return {
+        id: student.id,
+        name: student.name,
+        gender: student.gender,
+        category: student.category,
+        class_id: student.class_id,
+        kelompok_id: student.kelompok_id,
+        desa_id: student.desa_id,
+        daerah_id: student.daerah_id,
+        created_at: student.created_at,
+        updated_at: student.updated_at,
+        classes: classData ? {
+          id: String(classData.id || ''),
+          name: String(classData.name || '')
+        } : null
+      };
+    }) || []
 
     return transformedStudents
   } catch (error) {
@@ -118,7 +150,7 @@ export async function getClasses(): Promise<Class[]> {
     
     const { data: classes, error } = await supabase
       .from('classes')
-      .select('id, name')
+      .select('id, name, kelompok_id')
       .order('name')
 
     if (error) {
@@ -153,6 +185,35 @@ export async function createStudent(formData: FormData) {
       throw new Error('Jenis kelamin tidak valid')
     }
 
+    // Get user profile to inherit hierarchy
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('kelompok_id, desa_id, daerah_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!userProfile) {
+      throw new Error('User profile not found')
+    }
+
+    // Get class name to determine category
+    const { data: classData } = await supabase
+      .from('classes')
+      .select('name')
+      .eq('id', classId)
+      .single()
+
+    if (!classData) {
+      throw new Error('Class not found')
+    }
+
+    const category = determineCategoryFromClassName(classData.name)
+
     // Create student with RLS handling auth + class validation
     // RLS policies will handle user authentication and class access
     const { data: newStudent, error } = await supabase
@@ -160,13 +221,21 @@ export async function createStudent(formData: FormData) {
       .insert({
         name,
         gender,
-        class_id: classId
+        class_id: classId,
+        category,
+        kelompok_id: userProfile.kelompok_id,
+        desa_id: userProfile.desa_id,
+        daerah_id: userProfile.daerah_id
       })
       .select(`
         id,
         name,
         gender,
+        category,
         class_id,
+        kelompok_id,
+        desa_id,
+        daerah_id,
         created_at,
         updated_at,
         classes!inner(

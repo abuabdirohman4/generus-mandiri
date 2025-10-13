@@ -23,14 +23,14 @@ export async function createTeacher(formData: FormData) {
       throw new Error('User not authenticated');
     }
 
-    // Cek apakah user adalah admin
-    const { data: profile } = await supabase
+    // Cek apakah user adalah admin dan get hierarchy info
+    const { data: adminProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, kelompok_id, desa_id, daerah_id')
       .eq('id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
+    if (!adminProfile || adminProfile.role !== 'admin') {
       throw new Error('Unauthorized: Only admin can create teachers');
     }
 
@@ -94,7 +94,9 @@ export async function createTeacher(formData: FormData) {
         email,
         full_name: fullName,
         role: 'teacher',
-        class_id: classId,
+        kelompok_id: adminProfile.kelompok_id,
+        desa_id: adminProfile.desa_id,
+        daerah_id: adminProfile.daerah_id,
       })
       .select()
       .single();
@@ -103,6 +105,21 @@ export async function createTeacher(formData: FormData) {
       // Jika gagal membuat profile, hapus user yang sudah dibuat
       await supabase.auth.admin.deleteUser(authUser.user.id);
       throw profileError;
+    }
+
+    // Create teacher_classes junction entry
+    const { error: teacherClassError } = await supabase
+      .from('teacher_classes')
+      .insert({
+        teacher_id: authUser.user.id,
+        class_id: classId
+      });
+
+    if (teacherClassError) {
+      // If junction creation fails, clean up profile and user
+      await supabase.from('profiles').delete().eq('id', authUser.user.id);
+      await supabase.auth.admin.deleteUser(authUser.user.id);
+      throw teacherClassError;
     }
 
     revalidatePath('/admin/teachers');
@@ -143,9 +160,9 @@ export async function getTeachers() {
         full_name,
         role,
         created_at,
-        classes!classes_teacher_id_fkey (
-          id,
-          name
+        teacher_classes!teacher_classes_teacher_id_fkey(
+          class_id,
+          classes:class_id(id, name)
         )
       `)
       .eq('role', 'teacher')
@@ -155,7 +172,13 @@ export async function getTeachers() {
       throw error;
     }
 
-    return teachers || [];
+    // Transform teacher_classes to classes array for backward compatibility
+    const transformedTeachers = teachers?.map(teacher => ({
+      ...teacher,
+      classes: teacher.teacher_classes?.map((tc: any) => tc.classes).filter(Boolean) || []
+    })) || [];
+
+    return transformedTeachers;
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar guru');
     throw error;

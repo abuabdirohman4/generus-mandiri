@@ -7,6 +7,12 @@ interface UserProfile {
   full_name: string;
   role: string;
   email?: string;
+  kelompok_id?: string | null;
+  desa_id?: string | null;
+  daerah_id?: string | null;
+  kelompok?: { id: string; name: string } | null;
+  desa?: { id: string; name: string } | null;
+  daerah?: { id: string; name: string } | null;
   classes?: Array<{
     id: string;
     name: string;

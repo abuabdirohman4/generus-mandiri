@@ -39,9 +39,15 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             id,
             full_name,
             role,
-            classes!classes_teacher_id_fkey (
-              id,
-              name
+            kelompok_id,
+            desa_id,
+            daerah_id,
+            kelompok:kelompok_id(id, name),
+            desa:desa_id(id, name),
+            daerah:daerah_id(id, name),
+            teacher_classes!teacher_classes_teacher_id_fkey(
+              class_id,
+              classes:class_id(id, name)
             )
           `)
           .eq('id', user.id)
@@ -51,13 +57,36 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           throw profileError;
         }
         
-        // Add email to profile data
-        const profileWithEmail = {
+        // Transform teacher_classes to classes array for backward compatibility
+        const classes = profileData.teacher_classes?.map((tc: any) => ({
+          id: String(tc.classes?.id || ''),
+          name: String(tc.classes?.name || '')
+        })).filter(Boolean) || [];
+        
+        // Transform hierarchy objects to ensure proper types
+        const kelompokData = Array.isArray(profileData.kelompok) ? profileData.kelompok[0] : profileData.kelompok;
+        const desaData = Array.isArray(profileData.desa) ? profileData.desa[0] : profileData.desa;
+        const daerahData = Array.isArray(profileData.daerah) ? profileData.daerah[0] : profileData.daerah;
+        
+        const transformedProfile = {
           ...profileData,
-          email: user.email
+          email: user.email,
+          classes: classes,
+          kelompok: kelompokData ? {
+            id: String(kelompokData.id || ''),
+            name: String(kelompokData.name || '')
+          } : null,
+          desa: desaData ? {
+            id: String(desaData.id || ''),
+            name: String(desaData.name || '')
+          } : null,
+          daerah: daerahData ? {
+            id: String(daerahData.id || ''),
+            name: String(daerahData.name || '')
+          } : null
         };
         
-        setProfile(profileWithEmail);
+        setProfile(transformedProfile);
         
       } catch (err) {
         console.error('Error fetching user data:', err);
