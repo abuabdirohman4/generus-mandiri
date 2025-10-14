@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import DataTable from '@/components/table/Table'
+import TableActions from '@/components/table/TableActions'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import { PencilIcon, TrashBinIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
@@ -101,26 +102,37 @@ export default function StudentsTable({
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
-      return (
-        <div className="flex gap-4 justify-center items-center">
-          <button
-            onClick={() => onEdit(students.find(s => s.id === item.actions)!)}
-            className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
-            title="Edit"
-          >
-            <PencilIcon className="w-5 h-5" />
-          </button>
-          {userRole === 'admin' && (
-            <button
-              onClick={() => handleDeleteClick(item.actions, students.find(s => s.id === item.actions)?.name || '')}
-              className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
-              title="Hapus"
-            >
-              <TrashBinIcon className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      )
+      const student = students.find(s => s.id === item.actions)!;
+      
+      // Parent decides which actions to include
+      const actions: Array<{
+        id: string;
+        icon: React.ComponentType<{ className?: string }>;
+        onClick: () => void;
+        title: string;
+        color: 'blue' | 'yellow' | 'red' | 'green' | 'indigo';
+      }> = [
+        {
+          id: 'edit',
+          icon: PencilIcon,
+          onClick: () => onEdit(student),
+          title: 'Edit',
+          color: 'indigo'
+        }
+      ];
+      
+      // Only add delete action if user is admin
+      if (userRole === 'admin') {
+        actions.push({
+          id: 'delete',
+          icon: TrashBinIcon,
+          onClick: () => handleDeleteClick(item.actions, student?.name || ''),
+          title: 'Hapus',
+          color: 'red'
+        });
+      }
+      
+      return <TableActions actions={actions} />;
     }
     return item[column.key] || '-'
   }

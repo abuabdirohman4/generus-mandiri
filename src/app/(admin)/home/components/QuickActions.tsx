@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
-import { GroupIcon, ReportIcon, UserIcon } from '@/lib/icons';
+import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon } from '@/lib/icons';
 
 interface Profile {
   id: string;
@@ -58,6 +58,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
 
   const quickActions: QuickActionItem[] = [
     {
+      id: 'dashboard',
+      name: 'Dashboard',
+      description: 'Overview sistem',
+      href: '/dashboard',
+      icon: <DashboardIcon className="w-6 h-6" />,
+      bgColor: 'bg-indigo-100 dark:bg-indigo-900',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      adminOnly: true,
+      disabled: true
+    },
+    {
       id: 'absensi',
       name: 'Absensi',
       description: 'Kelola kehadiran siswa',
@@ -69,6 +80,16 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-blue-100 dark:bg-blue-900',
       iconColor: 'text-blue-600 dark:text-blue-400',
+      disabled: false
+    },
+    {
+      id: 'laporan',
+      name: 'Laporan',
+      description: 'Laporan absensi',
+      href: '/laporan',
+      icon: <ReportIcon className="w-6 h-6" />,
+      bgColor: 'bg-red-100 dark:bg-red-900',
+      iconColor: 'text-red-600 dark:text-red-400',
       disabled: false
     },
     {
@@ -87,23 +108,35 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       id: 'guru',
       name: 'Guru',
       description: 'Kelola data guru',
-      href: '/admin/teachers',
+      href: '/users/guru',
       icon: (
-        <UserIcon className="w-6 h-6" />
+        <GroupIcon className="w-6 h-6" />
       ),
       bgColor: 'bg-orange-100 dark:bg-orange-900',
       iconColor: 'text-orange-600 dark:text-orange-400',
       adminOnly: true,
-      disabled: true
+      disabled: false
     },
     {
-      id: 'laporan',
-      name: 'Laporan',
-      description: 'Laporan absensi',
-      href: '/laporan',
-      icon: <ReportIcon className="w-6 h-6" />,
-      bgColor: 'bg-red-100 dark:bg-red-900',
-      iconColor: 'text-red-600 dark:text-red-400',
+      id: 'admin-users',
+      name: 'Admin',
+      description: 'Kelola data admin',
+      href: '/users/admin',
+      icon: <GroupIcon className="w-6 h-6" />,
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      adminOnly: true,
+      disabled: false
+    },
+    {
+      id: 'organisasi',
+      name: 'Organisasi',
+      description: 'Kelola data organisasi',
+      href: '/organisasi',
+      icon: <BuildingIcon className="w-6 h-6" />,
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400',
+      adminOnly: true,
       disabled: false
     },
     {

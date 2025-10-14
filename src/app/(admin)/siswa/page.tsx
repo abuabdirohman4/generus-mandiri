@@ -50,7 +50,7 @@ export default function SiswaPage() {
               onClick={openCreateModal}
               className="px-4 py-2"
             >
-              Tambah Siswa
+              Tambah
             </Button>
           </div>
         </div>

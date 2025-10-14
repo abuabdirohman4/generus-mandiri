@@ -11,10 +11,13 @@ import {
   GridIcon,
   GroupIcon,
   ReportIcon,
-  UserIcon,
+  DashboardIcon,
+  BuildingIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
+import { useUserProfile } from "@/stores/userProfileStore";
+import { isSuperAdmin } from "@/lib/userUtils";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -23,38 +26,53 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: SubNavItem[];
+  adminOnly?: boolean;
 };
 
-const mainNav: NavItem[] = [
+const allNavItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <GridIcon className="w-6 h-6" />,
     name: "Beranda",
     path: "/home",
   },
+  // {
+  //   icon: <DashboardIcon className="w-6 h-6" />,
+  //   name: "Dashboard",
+  //   path: "/dashboard",
+  //   adminOnly: true,
+  // },
   {
-    icon: <CheckCircleIcon />,
+    icon: <CheckCircleIcon className="w-6 h-6" />,
     name: "Absensi",
     path: "/absensi",
   },
   {
-    icon: <GroupIcon />,
+    icon: <ReportIcon className="w-6 h-6" />,
+    name: "Laporan",
+    path: "/laporan",
+  },
+  {
+    icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
     path: "/siswa",
   },
-  // {
-  //   icon: <UserIcon />,
-  //   name: "Guru",
-  //   path: "/guru",
-  // },
-  // {
-  //   icon: <UserIcon />,
-  //   name: "Kelas",
-  //   path: "/kelas",
-  // },
   {
-    icon: <ReportIcon />,
-    name: "Laporan",
-    path: "/laporan",
+    icon: <GroupIcon className="w-6 h-6" />,
+    name: "Guru",
+    path: "/users/guru",
+    adminOnly: true,
+  },
+  {
+    icon: <GroupIcon className="w-6 h-6" />,
+    name: "Admin",
+    path: "/users/admin",
+    adminOnly: true,
+  },
+  {
+    icon: <BuildingIcon className="w-6 h-6" />,
+    name: "Organisasi",
+    path: "/organisasi",
+    adminOnly: true,
   },
 ];
 
@@ -212,7 +230,7 @@ function MenuItem({
           }`}
         >
           <span
-            className={isSubmenuOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}
+            className={`w-6 h-6 flex items-center justify-center ${isSubmenuOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
           >
             {nav.icon ? nav.icon : null}
           </span>
@@ -255,9 +273,7 @@ function MenuItem({
           } ${isRouteLoading ? "opacity-70 cursor-wait" : ""}`}
         >
           <span
-            className={
-              isRouteActive ? "menu-item-icon-active" : "menu-item-icon-inactive"
-            }
+            className={`w-6 h-6 flex items-center justify-center ${isRouteActive ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
           >
             {isRouteLoading ? (
               <Spinner size={16} />
@@ -355,6 +371,13 @@ function SidebarContent({
   isLoading: (path: string) => boolean;
   onNavigate: (path: string) => void;
 }) {
+  const { profile } = useUserProfile();
+  const isSuperAdminUser = isSuperAdmin(profile?.role);
+  const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
+  
+  // Filter navigation items based on admin status (same logic as QuickActions)
+  const visibleNavItems = allNavItems.filter(item => !item.adminOnly || isAdminUser);
+  
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 transform
@@ -400,7 +423,7 @@ function SidebarContent({
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="flex flex-col gap-6">
           <MenuItems 
-            navItems={mainNav} 
+            navItems={visibleNavItems} 
             menuType="main"
             isExpanded={isExpanded}
             isHovered={isHovered}
@@ -452,7 +475,7 @@ const AppSidebar: React.FC = () => {
 
   // Prefetch all routes on component mount for better performance
   useEffect(() => {
-    mainNav.forEach(nav => {
+    allNavItems.forEach(nav => {
       if (nav.path) {
         router.prefetch(nav.path);
       }

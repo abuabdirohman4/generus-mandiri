@@ -20,14 +20,18 @@ function PageTitle() {
     switch (path) {
       case '/home':
         return 'Beranda';
-      // case '/absensi':
-      //   return 'Absensi';
       case '/siswa':
         return 'Siswa';
       case '/laporan':
         return 'Laporan';
       case '/settings':
         return 'Pengaturan';
+      case '/users/guru':
+        return 'Guru';
+      case '/users/admin':
+        return 'Admin';
+      case '/organisasi':
+        return 'Organisasi';
       case '/settings/profile':
         return 'Profil';
       case '/settings/pwa':
