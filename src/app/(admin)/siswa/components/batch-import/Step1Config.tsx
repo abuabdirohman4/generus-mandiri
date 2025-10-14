@@ -94,11 +94,27 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
         <Label htmlFor="batchSize">Jumlah Siswa</Label>
         <Input
           id="batchSize"
-          type="number"
-          min="1"
-          max="20"
-          value={batchSize}
-          onChange={(e) => setBatchSize(parseInt(e.target.value) || 1)}
+          type="text"
+          value={batchSize === 0 ? '' : batchSize.toString()}
+          onChange={(e) => {
+            const value = e.target.value
+            console.log('value', value)
+            if (value === '') {
+              setBatchSize(0) // Allow empty state
+            } else {
+              // Only allow numeric input
+              const numericValue = value.replace(/[^0-9]/g, '')
+              if (numericValue !== '') {
+                const numValue = parseInt(numericValue)
+                if (!isNaN(numValue)) {
+                  // Only clamp to max, allow values below 1 temporarily
+                  setBatchSize(Math.min(20, numValue))
+                }
+              } else {
+                setBatchSize(0)
+              }
+            }
+          }}
           placeholder="Masukkan jumlah siswa (1-20)"
           className="w-full"
         />

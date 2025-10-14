@@ -63,7 +63,7 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
   // Individual setters
   setShowBatchModal: (show) => set({ showBatchModal: show }),
   setCurrentStep: (step) => set({ currentStep: step }),
-  setBatchSize: (size) => set({ batchSize: Math.max(1, Math.min(20, size)) }),
+  setBatchSize: (size) => set({ batchSize: Math.max(0, Math.min(20, size)) }),
   setSelectedClassId: (classId) => set({ selectedClassId: classId }),
   setStudents: (students) => set({ students }),
   addStudent: (student) => set((state) => ({ students: [...state.students, student] })),
