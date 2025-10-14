@@ -41,7 +41,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
       const newStudents = Array.from({ length: targetCount - currentCount }, (_, i) => ({
         id: `temp-${Date.now()}-${i}`,
         name: '',
-        gender: ''
+        gender: 'Laki-laki'
       }))
       setStudents([...students, ...newStudents])
     } else if (currentCount > targetCount) {
@@ -104,7 +104,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
       {/* Class Info */}
       {selectedClass && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-4 text-sm">
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300"></span>
               <span className="ml-2 text-gray-900 dark:text-white">Kelas {selectedClass.name}</span>
@@ -159,7 +159,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
               
               <div className="col-span-2">
                 <select
-                  value={student.gender}
+                  value={student.gender || "Laki-laki"}
                   onChange={(e) => updateStudent(student.id, { gender: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8"
                   style={{
@@ -167,12 +167,11 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
                     backgroundPosition: 'right 8px center'
                   }}
                 >
-                  <option value="">Pilih</option>
+                  {/* <option value="">Pilih</option> */}
                   <option value="Laki-laki">L</option>
                   <option value="Perempuan">P</option>
                 </select>
               </div>
-              
               {/* <div className="col-span-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
                 {student.name.trim() && student.gender ? (
                   <span className="text-green-600 dark:text-green-400">✓ Lengkap</span>
