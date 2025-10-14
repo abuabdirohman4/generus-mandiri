@@ -3,7 +3,7 @@
 import Button from '@/components/ui/button/Button'
 import SiswaSkeleton from '@/components/ui/skeleton/SiswaSkeleton'
 import ClassFilter from '@/components/shared/ClassFilter'
-import { StatsCards, StudentModal, StudentsTable } from './components'
+import { StatsCards, StudentModal, StudentsTable, BatchImportModal } from './components'
 import { useSiswaPage } from './hooks'
 
 export default function SiswaPage() {
@@ -17,12 +17,16 @@ export default function SiswaPage() {
     selectedStudent,
     selectedClassFilter,
     submitting,
+    showBatchModal,
     openCreateModal,
     handleEditStudent,
     handleDeleteStudent,
     handleSubmit,
     handleClassFilterChange,
-    closeModal
+    closeModal,
+    openBatchModal,
+    closeBatchModal,
+    handleBatchImportSuccess
   } = useSiswaPage()
 
   if (loading) {
@@ -46,12 +50,21 @@ export default function SiswaPage() {
                 Kelola data siswa
               </p>
             </div>
-            <Button
-              onClick={openCreateModal}
-              className="px-4 py-2"
-            >
-              Tambah Siswa
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={openCreateModal}
+                className="px-4 py-2"
+              >
+                Tambah
+              </Button>
+              <Button
+                onClick={openBatchModal}
+                variant="outline"
+                className="px-4 py-2"
+              >
+                Batch
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -85,6 +98,13 @@ export default function SiswaPage() {
           classes={classes}
           onSubmit={handleSubmit}
           submitting={submitting}
+        />
+
+        {/* Batch Import Modal */}
+        <BatchImportModal
+          isOpen={showBatchModal}
+          onClose={closeBatchModal}
+          onSuccess={handleBatchImportSuccess}
         />
       </div>
     </div>

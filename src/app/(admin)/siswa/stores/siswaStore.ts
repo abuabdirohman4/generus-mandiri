@@ -24,6 +24,7 @@ interface SiswaState {
   showModal: boolean
   modalMode: 'create' | 'edit'
   selectedStudent: Student | null
+  showBatchModal: boolean
   
   // Filter state
   selectedClassFilter: string
@@ -37,11 +38,14 @@ interface SiswaState {
   setSelectedStudent: (student: Student | null) => void
   setSelectedClassFilter: (classId: string) => void
   setSubmitting: (submitting: boolean) => void
+  setShowBatchModal: (show: boolean) => void
   
   // Combined actions
   openCreateModal: () => void
   openEditModal: (student: Student) => void
   closeModal: () => void
+  openBatchModal: () => void
+  closeBatchModal: () => void
 }
 
 export const useSiswaStore = create<SiswaState>((set) => ({
@@ -49,6 +53,7 @@ export const useSiswaStore = create<SiswaState>((set) => ({
   showModal: false,
   modalMode: 'create',
   selectedStudent: null,
+  showBatchModal: false,
   selectedClassFilter: '',
   submitting: false,
   
@@ -58,6 +63,7 @@ export const useSiswaStore = create<SiswaState>((set) => ({
   setSelectedStudent: (student) => set({ selectedStudent: student }),
   setSelectedClassFilter: (classId) => set({ selectedClassFilter: classId }),
   setSubmitting: (submitting) => set({ submitting }),
+  setShowBatchModal: (show) => set({ showBatchModal: show }),
   
   // Combined actions
   openCreateModal: () => set({
@@ -79,5 +85,13 @@ export const useSiswaStore = create<SiswaState>((set) => ({
     modalMode: 'create',
     selectedStudent: null,
     submitting: false
+  }),
+  
+  openBatchModal: () => set({
+    showBatchModal: true
+  }),
+  
+  closeBatchModal: () => set({
+    showBatchModal: false
   })
 }))

@@ -397,6 +397,96 @@ export async function deleteStudent(studentId: string) {
 }
 
 /**
+ * Membuat siswa dalam batch
+ */
+export async function createStudentsBatch(
+  students: Array<{ name: string; gender: string }>,
+  classId: string
+) {
+  try {
+    const supabase = await createClient()
+    
+    // Get user profile for hierarchy fields
+    const profile = await getUserProfile()
+    
+    // Get class info for category determination
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('id, name')
+      .eq('id', classId)
+      .single()
+
+    if (classError || !classData) {
+      throw new Error('Kelas tidak ditemukan')
+    }
+    
+    // Determine category from class name using existing utility
+    const category = determineCategoryFromClassName(classData.name)
+    
+    // Filter out empty students (name === '')
+    const validStudents = students.filter(s => s.name.trim() !== '')
+    
+    if (validStudents.length === 0) {
+      throw new Error('Tidak ada siswa yang valid untuk ditambah')
+    }
+    
+    // Prepare students with hierarchy fields
+    const studentsToInsert = validStudents.map(s => ({
+      name: s.name.trim(),
+      gender: s.gender,
+      class_id: classId,
+      category,
+      kelompok_id: profile.kelompok_id,
+      desa_id: profile.desa_id,
+      daerah_id: profile.daerah_id
+    }))
+    
+    // Bulk insert with RLS handling
+    const { data: insertedStudents, error } = await supabase
+      .from('students')
+      .insert(studentsToInsert)
+      .select(`
+        id,
+        name,
+        gender,
+        class_id,
+        category,
+        kelompok_id,
+        desa_id,
+        daerah_id,
+        created_at,
+        updated_at,
+        classes!inner(
+          id,
+          name
+        )
+      `)
+
+    if (error) {
+      // Handle specific RLS errors
+      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+        throw new Error('Tidak memiliki izin untuk membuat siswa di kelas ini')
+      }
+      if (error.code === '23503') {
+        throw new Error('Kelas tidak ditemukan')
+      }
+      throw error
+    }
+
+    revalidatePath('/siswa')
+    return { 
+      success: true, 
+      imported: insertedStudents?.length || 0,
+      total: validStudents.length,
+      errors: []
+    }
+  } catch (error) {
+    handleApiError(error, 'menyimpan data', 'Gagal mengimport siswa')
+    throw error
+  }
+}
+
+/**
  * Mendapatkan role user saat ini
  */
 export async function getCurrentUserRole(): Promise<string | null> {

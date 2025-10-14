@@ -17,9 +17,12 @@ export function useSiswaPage() {
     selectedStudent,
     selectedClassFilter,
     submitting,
+    showBatchModal,
     openCreateModal,
     openEditModal,
     closeModal,
+    openBatchModal,
+    closeBatchModal,
     setSelectedClassFilter,
     setSubmitting
   } = useSiswaStore()
@@ -131,6 +134,11 @@ export function useSiswaPage() {
     setSelectedClassFilter(classId)
   }, [setSelectedClassFilter])
 
+  const handleBatchImportSuccess = useCallback(async () => {
+    // Refresh students data after successful batch import
+    await mutateStudents()
+  }, [mutateStudents])
+
   return {
     // State
     students,
@@ -142,6 +150,7 @@ export function useSiswaPage() {
     selectedStudent,
     selectedClassFilter,
     submitting,
+    showBatchModal,
     
     // Actions
     openCreateModal,
@@ -149,6 +158,9 @@ export function useSiswaPage() {
     handleDeleteStudent,
     handleSubmit,
     handleClassFilterChange,
-    closeModal
+    closeModal,
+    openBatchModal,
+    closeBatchModal,
+    handleBatchImportSuccess
   }
 }
