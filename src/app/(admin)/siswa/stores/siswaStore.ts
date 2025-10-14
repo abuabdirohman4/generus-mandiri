@@ -63,18 +63,21 @@ export const useSiswaStore = create<SiswaState>((set) => ({
   openCreateModal: () => set({
     showModal: true,
     modalMode: 'create',
-    selectedStudent: null
+    selectedStudent: null,
+    submitting: false
   }),
   
   openEditModal: (student) => set({
     showModal: true,
     modalMode: 'edit',
-    selectedStudent: student
+    selectedStudent: student,
+    submitting: false
   }),
   
   closeModal: () => set({
     showModal: false,
     modalMode: 'create',
-    selectedStudent: null
+    selectedStudent: null,
+    submitting: false
   })
 }))

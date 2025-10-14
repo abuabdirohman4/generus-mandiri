@@ -73,8 +73,8 @@ export function useSiswaPage() {
     try {
       setSubmitting(true)
       await createStudentMutation(formData)
+      await mutateStudents() // Await revalidation before closing
       toast.success('Siswa berhasil ditambahkan')
-      mutateStudents() // Revalidate students data
       closeModal()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
@@ -91,8 +91,8 @@ export function useSiswaPage() {
     try {
       setSubmitting(true)
       await updateStudentMutation({ studentId: selectedStudent.id, formData })
+      await mutateStudents() // Await revalidation before closing
       toast.success('Siswa berhasil diupdate')
-      mutateStudents() // Revalidate students data
       closeModal()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'

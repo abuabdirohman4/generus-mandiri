@@ -54,22 +54,24 @@ export default function StudentModal({
   })
 
   useEffect(() => {
-    if (mode === 'edit' && student) {
-      setFormData({
-        name: student.name,
-        gender: student.gender || '',
-        classId: student.class_id
-      })
-    } else {
-      // Auto-fill class for teachers
-      const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
-      setFormData({
-        name: '',
-        gender: '',
-        classId: classId
-      })
+    if (isOpen) {
+      if (mode === 'edit' && student) {
+        setFormData({
+          name: student.name,
+          gender: student.gender || '',
+          classId: student.class_id
+        })
+      } else {
+        // Auto-fill class for teachers
+        const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
+        setFormData({
+          name: '',
+          gender: '',
+          classId: classId
+        })
+      }
     }
-  }, [mode, student, userProfile])
+  }, [mode, student, userProfile, isOpen])
 
   const handleClose = () => {
     setFormData({
