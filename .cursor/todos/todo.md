@@ -43,24 +43,28 @@ Role Access
 [x] 4 Halaman baru belum pakai layout.tsx
 [x] Buat akun admin daerah & desa Bansel 2
 [x] Data di table beberapa belum muncul
-[] Perbaiki CRUD Data
-    [] Guru
-    [] Admin
-    [] Organisasi
+[x] Perbaiki CRUD Data
+    [x] Guru
+    [x] Admin
+    [x] Organisasi
 [] Update semua pakai accessControl.ts
 [] Minta penjelasan kenapa accessControl ada 2
 
 Organisasi
-[] CRUD
+[x] CRUD
 
 Admin
 [x] Admin desa masih menampilkan admin daerah
+[x] CRUD
 
 Guru
 [x] Admin daerah tidak melihat semua guru (Barujati) -> di db nya tidak ada
 [x] Kolom "Jumlah Kelas" di hilangkan saja
 [x] Data kelompok, desa, daerah masih pada kosong
 [x] Admin Desa Soreang & Admin Kelompok Warlob 1 masih bisa melihat guru dari kelompok Barujati yang mana beda desa
+[x] Edit nama guru masih gagal & error nya masih hanya muncul di username
+[x] CRUD
+[] Sambungkan dengan kelas
 
 Siswa
 [] Merge main

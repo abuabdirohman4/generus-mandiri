@@ -76,6 +76,17 @@ interface DataFilterProps {
     kelompok?: boolean
     kelas?: boolean
   }
+  errors?: {                            // NEW - field-specific error messages
+    daerah?: string
+    desa?: string
+    kelompok?: string
+    kelas?: string
+  }
+  filterLists?: {                       // NEW - override for filtered lists
+    daerahList?: Daerah[]
+    desaList?: Desa[]
+    kelompokList?: Kelompok[]
+  }
 }
 
 export default function DataFilter({
@@ -94,7 +105,9 @@ export default function DataFilter({
   variant = 'page',
   compact = false,
   hideAllOption = false,
-  requiredFields = {}
+  requiredFields = {},
+  errors = {},
+  filterLists
 }: DataFilterProps) {
   
   // Role detection logic
@@ -103,6 +116,11 @@ export default function DataFilter({
   const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id
   const isAdminKelompok = userProfile?.role === 'admin' && userProfile?.kelompok_id
   const isTeacher = userProfile?.role === 'teacher'
+
+  // Use filtered lists if provided, otherwise use full lists
+  const activeDaerahList = filterLists?.daerahList || daerahList
+  const activeDesaList = filterLists?.desaList || desaList
+  const activeKelompokList = filterLists?.kelompokList || kelompokList
 
   // Determine which filters to show (use override props if provided, otherwise use role-based logic)
   const shouldShowDaerah = showDaerah !== undefined ? showDaerah : isSuperAdmin
@@ -140,16 +158,16 @@ export default function DataFilter({
     if (isSuperAdmin) {
       // Superadmin: filter by selected Daerah
       if (filters?.daerah) {
-        return desaList.filter(desa => desa.daerah_id === filters.daerah)
+        return activeDesaList.filter(desa => desa.daerah_id === filters.daerah)
       }
-      return desaList
+      return activeDesaList
     } else if (isAdminDaerah) {
       // Admin Daerah: filter by their daerah_id
-      return desaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
+      return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
     }
     
-    return desaList
-  }, [desaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, shouldShowDesa])
+    return activeDesaList
+  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, shouldShowDesa])
 
   const filteredKelompokList = useMemo(() => {
     if (!shouldShowKelompok) return []
@@ -157,27 +175,27 @@ export default function DataFilter({
     if (isSuperAdmin) {
       // Superadmin: filter by selected Desa, but also consider Daerah filter
       if (filters?.desa) {
-        return kelompokList.filter(kelompok => kelompok.desa_id === filters.desa)
+        return activeKelompokList.filter(kelompok => kelompok.desa_id === filters.desa)
       } else if (filters?.daerah) {
         // If no Desa selected but Daerah is selected, filter by desas in that daerah
         const validDesaIds = filteredDesaList.map(d => d.id)
-        return kelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
+        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
       }
-      return kelompokList
+      return activeKelompokList
     } else if (isAdminDaerah) {
       // Admin Daerah: filter by selected Desa or their desa_id
       const targetDesaId = filters?.desa || userProfile?.desa_id
       if (targetDesaId) {
-        return kelompokList.filter(kelompok => kelompok.desa_id === targetDesaId)
+        return activeKelompokList.filter(kelompok => kelompok.desa_id === targetDesaId)
       }
-      return kelompokList
+      return activeKelompokList
     } else if (isAdminDesa) {
       // Admin Desa: filter by their desa_id
-      return kelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
+      return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
     }
     
-    return kelompokList
-  }, [kelompokList, filters?.desa, filters?.daerah, filteredDesaList, userProfile?.desa_id, isSuperAdmin, isAdminDaerah, isAdminDesa, shouldShowKelompok])
+    return activeKelompokList
+  }, [activeKelompokList, filters?.desa, filters?.daerah, filteredDesaList, userProfile?.desa_id, isSuperAdmin, isAdminDaerah, isAdminDesa, shouldShowKelompok])
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -286,13 +304,15 @@ export default function DataFilter({
             label={variant === 'modal' ? "Daerah" : "Filter Daerah"}
             value={filters?.daerah || ''}
             onChange={handleDaerahChange}
-            options={daerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
+            options={activeDaerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
             allOptionLabel={hideAllOption ? undefined : "Semua Daerah"}
             widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
             variant={variant}
             compact={compact}
             required={requiredFields.daerah}
             placeholder={variant === 'modal' ? 'Pilih Daerah' : undefined}
+            error={!!errors.daerah}
+            hint={errors.daerah}
           />
         </div>
       )}
@@ -311,6 +331,8 @@ export default function DataFilter({
             compact={compact}
             required={requiredFields.desa}
             placeholder={variant === 'modal' ? 'Pilih Desa' : undefined}
+            error={!!errors.desa}
+            hint={errors.desa}
           />
         </div>
       )}
@@ -329,6 +351,8 @@ export default function DataFilter({
             compact={compact}
             required={requiredFields.kelompok}
             placeholder={variant === 'modal' ? 'Pilih Kelompok' : undefined}
+            error={!!errors.kelompok}
+            hint={errors.kelompok}
           />
         </div>
       )}
@@ -347,6 +371,8 @@ export default function DataFilter({
             compact={compact}
             required={requiredFields.kelas}
             placeholder={variant === 'modal' ? 'Pilih Kelas' : undefined}
+            error={!!errors.kelas}
+            hint={errors.kelas}
           />
         </div>
       )}

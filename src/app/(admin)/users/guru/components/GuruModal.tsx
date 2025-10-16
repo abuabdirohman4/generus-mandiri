@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createTeacher, updateTeacher } from '../actions';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
+import PasswordInput from '@/components/form/input/PasswordInput';
 import DataFilter from '@/components/shared/DataFilter';
 import Label from '@/components/form/Label';
 import { useUserProfile } from '@/stores/userProfileStore';
@@ -19,6 +20,7 @@ interface Guru {
   full_name: string;
   email: string;
   daerah_id?: string;
+  desa_id?: string;
   kelompok_id?: string;
   created_at: string;
 }
@@ -59,7 +61,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
-    email: '',
+    password: '',
     daerah_id: '',
     kelompok_id: ''
   });
@@ -69,8 +71,70 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     kelompok: '',
     kelas: ''
   });
+  const [generalError, setGeneralError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [errors, setErrors] = useState<{
+    username?: string;
+    full_name?: string;
+    password?: string;
+    daerah?: string;
+    desa?: string;
+    kelompok?: string;
+  }>({});
+
+  // Computed filtered lists based on user role and selections
+  const filteredLists = useMemo(() => {
+    const isSuperadmin = userProfile?.role === 'superadmin';
+    
+    if (isSuperadmin) {
+      return {
+        daerahList: daerahList,
+        desaList: desaList,
+        kelompokList: kelompokList
+      };
+    }
+    
+    // For Admin Daerah
+    if (userProfile?.daerah_id && !userProfile?.desa_id) {
+      return {
+        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
+        desaList: desaList.filter(d => d.daerah_id === userProfile.daerah_id),
+        kelompokList: dataFilters.desa 
+          ? kelompokList.filter(k => k.desa_id === dataFilters.desa)
+          : kelompokList.filter(k => {
+              const desa = desaList.find(d => d.id === k.desa_id);
+              return desa?.daerah_id === userProfile.daerah_id;
+            })
+      };
+    }
+    
+    // For Admin Desa
+    if (userProfile?.desa_id) {
+      return {
+        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
+        desaList: desaList.filter(d => d.id === userProfile.desa_id),
+        kelompokList: kelompokList.filter(k => k.desa_id === userProfile.desa_id)
+      };
+    }
+    
+    // For Admin Kelompok
+    if (userProfile?.kelompok_id) {
+      const kelompok = kelompokList.find(k => k.id === userProfile.kelompok_id);
+      const desa = desaList.find(d => d.id === kelompok?.desa_id);
+      
+      return {
+        daerahList: daerahList.filter(d => d.id === desa?.daerah_id),
+        desaList: desaList.filter(d => d.id === kelompok?.desa_id),
+        kelompokList: kelompokList.filter(k => k.id === userProfile.kelompok_id)
+      };
+    }
+    
+    return {
+      daerahList: daerahList,
+      desaList: desaList,
+      kelompokList: kelompokList
+    };
+  }, [userProfile, daerahList, desaList, kelompokList, dataFilters.desa]);
   
   // Use the modal organisation filters hook
   const {
@@ -94,36 +158,33 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
   useEffect(() => {
     if (guru) {
-      // Edit mode
+      // Edit mode - no password pre-fill
       setFormData({
         username: guru.username || '',
         full_name: guru.full_name || '',
-        email: guru.email || '',
+        password: '', // Empty for edit mode
         daerah_id: guru.daerah_id || '',
         kelompok_id: guru.kelompok_id || ''
       });
       setDataFilters({
         daerah: guru.daerah_id || '',
-        desa: '',
+        desa: guru.desa_id || '',
         kelompok: guru.kelompok_id || '',
         kelas: ''
       });
     } else {
-      // Create mode - auto-fill from user profile (not for Superadmin)
-      const autoFilledDaerah = userProfile && userProfile.role !== 'superadmin' 
-        ? userProfile.daerah_id || ''
-        : '';
-      const autoFilledDesa = userProfile && userProfile.role !== 'superadmin' 
-        ? userProfile.desa_id || ''
-        : '';
-      const autoFilledKelompok = userProfile && userProfile.role !== 'superadmin' && isAdminKelompok(userProfile)
+      // Create mode - auto-fill organizational fields based on user role
+      const isSuperadmin = userProfile?.role === 'superadmin';
+      const autoFilledDaerah = !isSuperadmin ? userProfile?.daerah_id || '' : '';
+      const autoFilledDesa = !isSuperadmin ? userProfile?.desa_id || '' : '';
+      const autoFilledKelompok = !isSuperadmin && userProfile && isAdminKelompok(userProfile)
         ? userProfile.kelompok_id || ''
         : '';
       
       setFormData({
         username: '',
         full_name: '',
-        email: '',
+        password: '',
         daerah_id: autoFilledDaerah,
         kelompok_id: autoFilledKelompok
       });
@@ -134,7 +195,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         kelas: ''
       });
     }
-    setError(undefined);
+    setErrors({});
+    setGeneralError('');
   }, [guru, isOpen, userProfile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -158,24 +220,48 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(undefined);
+    setErrors({});
+    setGeneralError('');
 
     try {
+      // Generate email from username
+      const generatedEmail = `${formData.username}@generus.com`;
+      
       // Validate required fields
-      const validationErrors = validateForm();
-      if (validationErrors.length > 0) {
-        setError(validationErrors.join(', '));
+      const newErrors: typeof errors = {};
+      
+      if (!formData.username.trim()) {
+        newErrors.username = 'Username harus diisi';
+      }
+      if (!formData.full_name.trim()) {
+        newErrors.full_name = 'Nama lengkap harus diisi';
+      }
+      if (!formData.password && !guru) { // Required for create, optional for edit
+        newErrors.password = 'Password harus diisi';
+      }
+      if (!dataFilters.daerah) {
+        newErrors.daerah = 'Daerah harus dipilih';
+      }
+      if (!dataFilters.kelompok) {
+        newErrors.kelompok = 'Kelompok harus dipilih';
+      }
+      
+      // If errors exist, stop and show them
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         setIsLoading(false);
         return;
       }
 
-      // Get organization data from filters
-      const orgData = getOrgFormData();
-      
-      // Combine form data with organization data
+      // Prepare submit data
       const submitData = {
-        ...formData,
-        ...orgData
+        username: formData.username,
+        full_name: formData.full_name,
+        email: generatedEmail,
+        password: formData.password || undefined, // Optional for edit
+        daerah_id: dataFilters.daerah,
+        desa_id: dataFilters.desa || null,
+        kelompok_id: dataFilters.kelompok
       };
 
       if (guru) {
@@ -186,7 +272,28 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan');
+      // Parse error to set field-specific or general errors
+      if (err instanceof Error) {
+        const message = err.message;
+        
+        // Check if it's a field-specific error
+        if (message.includes('Username')) {
+          setErrors({ username: message });
+        } else if (message.includes('Nama')) {
+          setErrors({ full_name: message });
+        } else if (message.includes('Password')) {
+          setErrors({ password: message });
+        } else if (message.includes('Daerah')) {
+          setErrors({ daerah: message });
+        } else if (message.includes('Desa')) {
+          setErrors({ desa: message });
+        } else if (message.includes('Kelompok')) {
+          setErrors({ kelompok: message });
+        } else {
+          // General error (auth errors, network errors, etc.)
+          setGeneralError(message);
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -199,13 +306,31 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           {guru ? 'Edit Guru' : 'Tambah Guru'}
         </h3>
 
-        {error && (
-          <div className="mb-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* General Error Display */}
+          {generalError && (
+            <div className="mb-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h4>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">{generalError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGeneralError('')}
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="username">Username</Label>
             <InputField
@@ -216,8 +341,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               onChange={handleChange}
               placeholder="Masukkan username"
               required
-              error={!!error}
-              hint={error || undefined}
+              error={!!errors.username}
+              hint={errors.username}
               disabled={isLoading}
             />
           </div>
@@ -232,24 +357,25 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               onChange={handleChange}
               placeholder="Masukkan nama lengkap"
               required
-              error={!!error}
-              hint={error || undefined}
+              error={!!errors.full_name}
+              hint={errors.full_name}
               disabled={isLoading}
             />
           </div>
           
           <div>
-            <Label htmlFor="email">Email</Label>
-            <InputField
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Masukkan email"
-              required
-              error={!!error}
-              hint={error || undefined}
+            <Label htmlFor="password">
+              Password {guru && <span className="text-sm text-gray-500">(kosongkan jika tidak diubah)</span>}
+            </Label>
+            <PasswordInput
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              placeholder={guru ? "Kosongkan jika tidak diubah" : "Masukkan password"}
+              required={!guru} // Required for create, optional for edit
+              error={!!errors.password}
+              hint={errors.password}
               disabled={isLoading}
             />
           </div>
@@ -259,19 +385,24 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               filters={dataFilters}
               onFilterChange={handleDataFilterChange}
               userProfile={userProfile}
-              daerahList={daerahList}
-              desaList={desaList}
-              kelompokList={kelompokList}
+              daerahList={filteredLists.daerahList}
+              desaList={filteredLists.desaList}
+              kelompokList={filteredLists.kelompokList}
               classList={[]}
               showKelas={false}
+              showDaerah={userProfile?.role === 'superadmin'}
+              showDesa={userProfile?.role === 'superadmin' || (!userProfile?.desa_id && !!userProfile?.daerah_id)}
+              showKelompok={true}
               variant="modal"
               compact={true}
               hideAllOption={true}
+              errors={errors} // Pass errors to DataFilter
               requiredFields={{
-                daerah: false,
-                desa: false,
+                daerah: true,
+                desa: true,
                 kelompok: true
               }}
+              filterLists={filteredLists}
             />
           </div>
 

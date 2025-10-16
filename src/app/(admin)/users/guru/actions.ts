@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
@@ -11,7 +11,7 @@ export interface TeacherData {
   email: string;
   password?: string;
   daerah_id: string;
-  desa_id?: string;
+  desa_id?: string | null;
   kelompok_id?: string;
 }
 
@@ -38,10 +38,11 @@ export async function createTeacher(data: TeacherData) {
     }
 
     const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
-    // First create the user in auth.users
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: data.email || `${data.username}@example.com`,
+    // First create the user in auth.users using admin client
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+      email: data.email, // Generated format from frontend
       password: data.password!,
       user_metadata: {
         username: data.username,
@@ -57,7 +58,7 @@ export async function createTeacher(data: TeacherData) {
       throw new Error('Failed to create user');
     }
 
-    // Then create the profile
+    // Then create the profile using regular client
     const { error: profileError } = await supabase
       .from('profiles')
       .insert([{
@@ -72,8 +73,8 @@ export async function createTeacher(data: TeacherData) {
       }]);
 
     if (profileError) {
-      // If profile creation fails, clean up the auth user
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      // If profile creation fails, clean up the auth user using admin client
+      await adminClient.auth.admin.deleteUser(authData.user.id);
       throw profileError;
     }
 
@@ -105,8 +106,9 @@ export async function updateTeacher(id: string, data: TeacherData) {
     }
 
     const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
-    // Update profile
+    // Update profile using regular client
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
@@ -124,9 +126,9 @@ export async function updateTeacher(id: string, data: TeacherData) {
       throw profileError;
     }
 
-    // Update password if provided
+    // Update password if provided using admin client
     if (data.password) {
-      const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+      const { error: passwordError } = await adminClient.auth.admin.updateUserById(id, {
         password: data.password
       });
 
@@ -135,8 +137,8 @@ export async function updateTeacher(id: string, data: TeacherData) {
       }
     }
 
-    // Update user metadata
-    const { error: metadataError } = await supabase.auth.admin.updateUserById(id, {
+    // Update user metadata using admin client
+    const { error: metadataError } = await adminClient.auth.admin.updateUserById(id, {
       user_metadata: {
         username: data.username,
         full_name: data.full_name
@@ -157,10 +159,10 @@ export async function updateTeacher(id: string, data: TeacherData) {
 
 export async function deleteTeacher(id: string) {
   try {
-    const supabase = await createClient();
+    const adminClient = await createAdminClient();
 
     // Delete from auth.users (this will cascade to profiles due to foreign key)
-    const { error } = await supabase.auth.admin.deleteUser(id);
+    const { error } = await adminClient.auth.admin.deleteUser(id);
 
     if (error) {
       throw error;
