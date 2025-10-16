@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 import useSWRMutation from 'swr/mutation'
 import { toast } from 'sonner'
 import { useSiswaStore } from '../stores/siswaStore'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses } from '@/hooks/useClasses'
+import { useDaerah } from '@/hooks/useDaerah'
+import { useDesa } from '@/hooks/useDesa'
+import { useKelompok } from '@/hooks/useKelompok'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { createStudent, updateStudent, deleteStudent, type Student } from '../actions'
 
@@ -32,6 +35,19 @@ export function useSiswaPage() {
 
   // Classes
   const { classes, isLoading: classesLoading } = useClasses()
+
+  // Organisasi data
+  const { daerah } = useDaerah()
+  const { desa } = useDesa()
+  const { kelompok } = useKelompok()
+
+  // Data filter state
+  const [dataFilters, setDataFilters] = useState({
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
+  })
 
   // Students with conditional classId
   const classId = userProfile?.role === 'teacher' 
@@ -139,10 +155,39 @@ export function useSiswaPage() {
     await mutateStudents()
   }, [mutateStudents])
 
+  // Data filter handler
+  const handleDataFilterChange = useCallback((filters: { daerah: string; desa: string; kelompok: string; kelas: string }) => {
+    setDataFilters(filters)
+  }, [])
+
+  // Filter students based on data filters
+  const filteredStudents = useMemo(() => {
+    let result = students || []
+    
+    // Apply data filters
+    if (dataFilters.daerah) {
+      result = result.filter(s => s.daerah_id === dataFilters.daerah)
+    }
+    if (dataFilters.desa) {
+      result = result.filter(s => s.desa_id === dataFilters.desa)
+    }
+    if (dataFilters.kelompok) {
+      result = result.filter(s => s.kelompok_id === dataFilters.kelompok)
+    }
+    if (dataFilters.kelas) {
+      result = result.filter(s => s.class_id === dataFilters.kelas)
+    }
+
+    return result
+  }, [students, dataFilters])
+
   return {
     // State
-    students,
+    students: filteredStudents,
     classes,
+    daerah,
+    desa,
+    kelompok,
     userProfile,
     loading,
     showModal,
@@ -151,6 +196,7 @@ export function useSiswaPage() {
     selectedClassFilter,
     submitting,
     showBatchModal,
+    dataFilters,
     
     // Actions
     openCreateModal,
@@ -161,6 +207,7 @@ export function useSiswaPage() {
     closeModal,
     openBatchModal,
     closeBatchModal,
-    handleBatchImportSuccess
+    handleBatchImportSuccess,
+    handleDataFilterChange
   }
 }

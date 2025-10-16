@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import DataTable from '@/components/table/Table'
+import TableActions from '@/components/table/TableActions'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import { PencilIcon, TrashBinIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
+import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 
 interface StudentsTableProps {
   students: Student[]
@@ -58,36 +60,58 @@ export default function StudentsTable({
       studentName: ''
     })
   }
-  // Conditional columns based on user role
-  const baseColumns = [
-    {
-      key: 'name',
-      label: 'Nama',
-      align: 'left' as const,
-    },
-    {
-      key: 'gender',
-      label: 'Jenis Kelamin',
-      align: 'center' as const,
-    },
-  ]
+  // Build columns based on user role
+  const buildColumns = (userProfile: any) => {
+    const baseColumns = [
+      { key: 'name', label: 'Nama', align: 'left' as const },
+      { key: 'gender', label: 'Jenis Kelamin', align: 'center' as const },
+    ];
+    
+    const orgColumns = [];
+    
+    // Only show org columns for admin users
+    if (isAdminLegacy(userProfile?.role)) {
+      // Superadmin sees all
+      if (userProfile?.role === 'superadmin') {
+        orgColumns.push(
+          { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        );
+      }
+      // Admin Daerah
+      else if (isAdminDaerah(userProfile)) {
+        orgColumns.push(
+          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        );
+      }
+      // Admin Desa
+      else if (isAdminDesa(userProfile)) {
+        orgColumns.push(
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        );
+      }
+      // Admin Kelompok - only Kelas
+      else if (isAdminKelompok(userProfile)) {
+        orgColumns.push(
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        );
+      }
+    }
+    // Teacher: no org columns
+    
+    return [
+      ...baseColumns,
+      ...orgColumns,
+      { key: 'actions', label: 'Aksi', align: 'center' as const, width: '24' }
+    ];
+  };
 
-  const classColumn = {
-    key: 'class_name',
-    label: 'Kelas',
-    align: 'center' as const,
-  }
-
-  const actionsColumn = {
-    key: 'actions',
-    label: 'Aksi',
-    align: 'center' as const,
-    width: '24',
-  }
-
-  const columns = userProfile?.role === 'admin' 
-    ? [...baseColumns, classColumn, actionsColumn]
-    : [...baseColumns, actionsColumn]
+  const columns = buildColumns(userProfile);
 
   const tableData = students
     .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
@@ -95,32 +119,51 @@ export default function StudentsTable({
       name: student.name,
       gender: student.gender || '-',
       class_name: student.class_name || '-',
+      daerah_name: student.daerah_name || '-',
+      desa_name: student.desa_name || '-',
+      kelompok_name: student.kelompok_name || '-',
       actions: student.id, // We'll use this in renderCell
     }))
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
-      return (
-        <div className="flex gap-4 justify-center items-center">
-          <button
-            onClick={() => onEdit(students.find(s => s.id === item.actions)!)}
-            className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
-            title="Edit"
-          >
-            <PencilIcon className="w-5 h-5" />
-          </button>
-          {userRole === 'admin' && (
-            <button
-              onClick={() => handleDeleteClick(item.actions, students.find(s => s.id === item.actions)?.name || '')}
-              className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
-              title="Hapus"
-            >
-              <TrashBinIcon className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      )
+      const student = students.find(s => s.id === item.actions)!;
+      
+      // Parent decides which actions to include
+      const actions: Array<{
+        id: string;
+        icon: React.ComponentType<{ className?: string }>;
+        onClick: () => void;
+        title: string;
+        color: 'blue' | 'yellow' | 'red' | 'green' | 'indigo';
+      }> = [
+        {
+          id: 'edit',
+          icon: PencilIcon,
+          onClick: () => onEdit(student),
+          title: 'Edit',
+          color: 'indigo'
+        }
+      ];
+      
+      // Only add delete action if user is admin
+      if (userRole === 'admin') {
+        actions.push({
+          id: 'delete',
+          icon: TrashBinIcon,
+          onClick: () => handleDeleteClick(item.actions, student?.name || ''),
+          title: 'Hapus',
+          color: 'red'
+        });
+      }
+      
+      return <TableActions actions={actions} />;
     }
+    // Handle organizational columns
+    if (['daerah_name', 'desa_name', 'kelompok_name', 'class_name'].includes(column.key)) {
+      return item[column.key] || '-';
+    }
+    
     return item[column.key] || '-'
   }
 

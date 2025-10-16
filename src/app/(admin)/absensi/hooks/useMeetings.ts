@@ -16,9 +16,24 @@ interface Meeting {
   student_snapshot: any
   created_at: any
   classes: {
-    id: any
-    name: any
-  }[]
+    id: string
+    name: string
+    kelompok_id?: string
+    kelompok?: {
+      id: string
+      name: string
+      desa_id?: string
+      desa?: {
+        id: string
+        name: string
+        daerah_id?: string
+        daerah?: {
+          id: string
+          name: string
+        }
+      }
+    }
+  }
 }
 
 interface MeetingWithStats extends Meeting {
@@ -90,7 +105,10 @@ export function useMeetings(classId?: string) {
     total: number
   }>(
     swrKey,
-    async () => {
+    async (): Promise<{
+      allMeetings: MeetingWithStats[]
+      total: number
+    }> => {
       // If using dummy data, return processed dummy data
       if (useDummyData) {
         const processedDummy = processDummyData([])
@@ -99,7 +117,7 @@ export function useMeetings(classId?: string) {
         setTotalPages(totalPages)
         
         return {
-          allMeetings: processedDummy,
+          allMeetings: processedDummy as MeetingWithStats[],
           total: processedDummy.length
         }
       }
@@ -116,7 +134,7 @@ export function useMeetings(classId?: string) {
       setTotalPages(totalPages)
 
       return {
-        allMeetings,
+        allMeetings: allMeetings as MeetingWithStats[],
         total: allMeetings.length
       }
     },

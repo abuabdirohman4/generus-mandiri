@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { determineCategoryFromClassName } from '@/lib/categoryUtils'
+import { isAdmin } from '@/lib/userUtils'
 
 export interface Student {
   id: string
@@ -20,6 +21,10 @@ export interface Student {
     id: string
     name: string
   } | null
+  daerah_name?: string
+  desa_name?: string
+  kelompok_name?: string
+  class_name?: string
 }
 
 export interface Class {
@@ -99,7 +104,10 @@ export async function getStudents(classId?: string): Promise<Student[]> {
         class:classes(
           id,
           name
-        )
+        ),
+        daerah:daerah_id(name),
+        desa:desa_id(name),
+        kelompok:kelompok_id(name)
       `)
 
     // Filter by class if classId provided
@@ -130,7 +138,11 @@ export async function getStudents(classId?: string): Promise<Student[]> {
         classes: classData ? {
           id: String(classData.id || ''),
           name: String(classData.name || '')
-        } : null
+        } : null,
+        daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
+        desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
+        kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || '',
+        class_name: classData ? String(classData.name || '') : ''
       };
     }) || []
 
@@ -352,7 +364,7 @@ export async function deleteStudent(studentId: string) {
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !isAdmin(profile.role)) {
       throw new Error('Unauthorized: Hanya admin yang dapat menghapus siswa')
     }
 

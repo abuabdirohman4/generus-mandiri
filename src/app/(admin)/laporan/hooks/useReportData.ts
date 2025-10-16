@@ -7,6 +7,7 @@ import { generateDummyReportData } from '@/lib/dummy/processAttendanceLogs'
 interface Class {
   id: string
   name: string
+  kelompok_id?: string | null
 }
 
 interface UseReportDataOptions {

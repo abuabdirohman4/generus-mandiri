@@ -16,6 +16,15 @@ interface AbsensiUIStore {
   selectedClassFilter: string
   setSelectedClassFilter: (classId: string) => void
   
+  // Organisation filter state
+  dataFilters: {
+    daerah: string
+    desa: string
+    kelompok: string
+    kelas: string
+  }
+  setDataFilters: (filters: { daerah: string; desa: string; kelompok: string; kelas: string }) => void
+  
   // Modal state
   showCreateModal: boolean
   setShowCreateModal: (show: boolean) => void
@@ -32,6 +41,7 @@ const initialState = {
   viewMode: 'list' as ViewMode,
   currentPage: 1,
   selectedClassFilter: '',
+  dataFilters: { daerah: '', desa: '', kelompok: '', kelas: '' },
   showCreateModal: false,
   editingMeeting: null,
 }
@@ -44,6 +54,7 @@ export const useAbsensiUIStore = create<AbsensiUIStore>()(
       setViewMode: (mode: ViewMode) => set({ viewMode: mode }),
       setCurrentPage: (page: number) => set({ currentPage: page }),
       setSelectedClassFilter: (classId: string) => set({ selectedClassFilter: classId }),
+      setDataFilters: (filters) => set({ dataFilters: filters }),
       setShowCreateModal: (show: boolean) => set({ showCreateModal: show }),
       setEditingMeeting: (meeting: any | null) => set({ editingMeeting: meeting }),
       

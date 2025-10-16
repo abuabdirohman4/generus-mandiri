@@ -8,3 +8,9 @@ alwaysApply: true
 - Gunakan server actions untuk proses dengan backend
 
 - Untuk button, modal, input, pop up delete kalau tampilannya tidak khusus atau umum, pakai components yang sudah ada di src/components
+
+## Access Control & Utilities
+
+- **Client Components/Hooks**: Selalu gunakan `import { isSuperAdmin, isAdminDaerah, ... } from '@/lib/userUtils'`
+- **Server Actions**: Gunakan `import { canAccessFeature, getDataFilter, getCurrentUserProfile } from '@/lib/accessControlServer'`
+- **JANGAN** import langsung dari `@/lib/accessControl.ts`

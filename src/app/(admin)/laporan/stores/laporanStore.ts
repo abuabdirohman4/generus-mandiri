@@ -12,6 +12,14 @@ export interface LaporanFilters {
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId: string
   
+  // Organisation filters
+  organisasi: {
+    daerah: string
+    desa: string
+    kelompok: string
+    kelas: string
+  }
+  
   // Daily filters
   startDate: Dayjs | null
   endDate: Dayjs | null
@@ -59,6 +67,14 @@ const defaultFilters: LaporanFilters = {
   // Detailed mode defaults
   period: 'monthly',
   classId: '',
+  
+  // Organisation filters
+  organisasi: {
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
+  },
   
   // Daily filters
   startDate: null,

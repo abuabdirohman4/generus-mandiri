@@ -17,6 +17,30 @@ export async function getCurrentUserId(): Promise<string | null> {
   }
 }
 
+// Re-export from accessControl.ts for backward compatibility
+export { 
+  isSuperAdmin,
+  isAdminDaerah,
+  isAdminDesa,
+  isAdminKelompok,
+  isTeacher,
+  isAdmin,
+  shouldShowDaerahFilter,
+  shouldShowDesaFilter,
+  shouldShowKelompokFilter,
+  shouldShowKelasFilter,
+  getRequiredOrgFields,
+  getAutoFilledOrgValues,
+  canAccessFeature,
+  getDataFilter,
+  type UserProfile
+} from './accessControl'
+
+// Legacy function for backward compatibility (takes role string instead of profile)
+export function isAdminLegacy(role: string | undefined): boolean {
+  return role === 'admin' || role === 'superadmin'
+}
+
 /**
  * Clear all SWR cache when user logs out
  */

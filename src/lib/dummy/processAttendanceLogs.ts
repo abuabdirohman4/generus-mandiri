@@ -10,17 +10,23 @@ interface AttendanceLog {
   date: string
   status: 'H' | 'A' | 'I' | 'S'
   reason: string | null
+  recorded_by: string | null
+  created_at: string
+  updated_at: string
 }
 
 interface Meeting {
   id: string
   class_id: string
+  teacher_id: string | null
+  meeting_number: number
   title: string
   date: string
   topic?: string
   description?: string
   student_snapshot: string[]
   created_at: string
+  updated_at: string
 }
 
 interface ReportFilters {
@@ -510,7 +516,7 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
     student_id: summary.student_id,
     student_name: summary.student_name,
     student_gender: 'L', // Default gender
-    class_name: 'Kelas Pengajian',
+    class_name: 'Kelas 1', // Will be varied in getDummyMeetings
     total_days: summary.total_meetings,
     hadir: summary.present_count,
     izin: summary.excused_count,
@@ -550,18 +556,91 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
 
 // Helper function to get dummy meetings data
 export function getDummyMeetings(classId?: string) {
+  // Define class names based on the list from the image
+  const classNames = [
+    'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6',
+    'Paud', 'Pra Nikah', 'Pra Remaja', 'Remaja'
+  ]
+  
+  // Define organization structure
+  const organizationData = [
+    // Bandung Selatan 2
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-1', name: 'Baleendah' },
+      kelompok: { id: 'kelompok-1', name: 'Warlob 1' }
+    },
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-2', name: 'Soreang' },
+      kelompok: { id: 'kelompok-2', name: 'Warlob 1' }
+    },
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-2', name: 'Soreang' },
+      kelompok: { id: 'kelompok-3', name: 'Warlob 2' }
+    },
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-3', name: 'Banjaran' },
+      kelompok: { id: 'kelompok-4', name: 'Warlob 1' }
+    },
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-4', name: 'Ciparay' },
+      kelompok: { id: 'kelompok-5', name: 'Warlob 1' }
+    },
+    {
+      daerah: { id: 'daerah-1', name: 'Bandung Selatan 2' },
+      desa: { id: 'desa-5', name: 'Majalaya' },
+      kelompok: { id: 'kelompok-6', name: 'Warlob 1' }
+    },
+    // Kendal
+    {
+      daerah: { id: 'daerah-2', name: 'Kendal' },
+      desa: { id: 'desa-6', name: 'Kendal' },
+      kelompok: { id: 'kelompok-7', name: 'Warlob 1' }
+    }
+  ]
+  
   // For dummy data, ignore classId filtering since we use 'class-1' in dummy data
   const filteredMeetings = (meetings as Meeting[])
-    .map(meeting => ({
-      ...meeting,
-      classes: [{ id: meeting.class_id, name: 'Kelas Pengajian' }],
-      attendancePercentage: 0, // Will be calculated
-      totalStudents: 25,
-      presentCount: 0,
-      absentCount: 0,
-      sickCount: 0,
-      excusedCount: 0
-    }))
+    .map((meeting, index) => {
+      // Cycle through class names for variety
+      const className = classNames[index % classNames.length]
+      
+      // Cycle through organization data for variety
+      const orgData = organizationData[index % organizationData.length]
+      
+      return {
+        ...meeting,
+        classes: { 
+          id: meeting.class_id, 
+          name: className,
+          kelompok_id: orgData.kelompok.id,
+          kelompok: {
+            id: orgData.kelompok.id,
+            name: orgData.kelompok.name,
+            desa_id: orgData.desa.id,
+            desa: {
+              id: orgData.desa.id,
+              name: orgData.desa.name,
+              daerah_id: orgData.daerah.id,
+              daerah: {
+                id: orgData.daerah.id,
+                name: orgData.daerah.name
+              }
+            }
+          }
+        },
+        attendancePercentage: 0, // Will be calculated
+        totalStudents: 25,
+        presentCount: 0,
+        absentCount: 0,
+        sickCount: 0,
+        excusedCount: 0
+      }
+    })
 
   // Calculate attendance statistics for each meeting
   return filteredMeetings.map(meeting => {

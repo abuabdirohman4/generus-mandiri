@@ -6,6 +6,7 @@ import Button from '@/components/ui/button/Button'
 import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
 import InputFilter from '@/components/form/input/InputFilter'
+import { isAdminLegacy } from '@/lib/userUtils'
 
 interface Student {
   id: string
@@ -137,8 +138,8 @@ export default function StudentModal({
             </select>
           </div>
 
-          {/* Only show class selection for admins */}
-          {userProfile?.role === 'admin' && (
+          {/* Only show class selection for admins or superadmins */}
+          {isAdminLegacy(userProfile?.role) && (
             <div>
               <InputFilter
                 id="classId"

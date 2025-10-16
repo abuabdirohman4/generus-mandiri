@@ -1,9 +1,13 @@
 'use client'
 
-import { useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useCallback } from 'react'
 import { useLaporan } from '../stores/laporanStore'
 import { useReportData, useClasses } from './useReportData'
+import { useDaerah } from '@/hooks/useDaerah'
+import { useDesa } from '@/hooks/useDesa'
+import { useKelompok } from '@/hooks/useKelompok'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { isAdmin } from '@/lib/userUtils'
 import { Dayjs } from 'dayjs'
 
 /**
@@ -16,6 +20,11 @@ export function useLaporanPage() {
   // User profile for class filtering
   const { profile: userProfile } = useUserProfile()
   
+  // Organisasi data
+  const { daerah } = useDaerah()
+  const { desa } = useDesa()
+  const { kelompok } = useKelompok()
+  
   // SWR hooks
   const { data: reportData, error, isLoading, mutate } = useReportData({ 
     filters: {
@@ -26,7 +35,7 @@ export function useLaporanPage() {
       
       // Detailed mode filters
       period: filters.period,
-      classId: filters.classId || undefined,
+      classId: filters.organisasi?.kelas || filters.classId || undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -98,46 +107,12 @@ export function useLaporanPage() {
     return reportData.trendChartData
   }, [reportData?.trendChartData])
 
-  // Class filter logic based on user role
-  const classFilterLogic = useMemo(() => {
-    if (userProfile?.role === 'teacher') {
-      // For teachers, auto-select their class
-      const classId = (userProfile as any).class_id || userProfile.classes?.[0]?.id || ''
-      const className = (userProfile as any).class_name || userProfile.classes?.[0]?.name || ''
-      const classOptions = userProfile.classes?.map((c: any) => ({ value: c.id, label: c.name })) || 
-                          (classId ? [{ value: classId, label: className }] : [])
-      
-      return {
-        selectedClassId: classId,
-        classOptions,
-        isTeacher: true,
-        isDisabled: true
-      }
-    } else if (userProfile?.role === 'admin') {
-      // For admins, show all classes with "Semua Kelas" option
-      return {
-        selectedClassId: filters.classId || '',
-        classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),
-        isTeacher: false,
-        isDisabled: false
-      }
-    }
-    
-    // Default fallback
-    return {
-      selectedClassId: filters.classId || '',
-      classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),
-      isTeacher: false,
-      isDisabled: false
-    }
-  }, [userProfile, filters.classId, classes])
-
   // Auto-set class filter for teachers
   useEffect(() => {
-    if (userProfile?.role === 'teacher' && classFilterLogic.selectedClassId && !filters.classId) {
-      setFilter('classId', classFilterLogic.selectedClassId)
+    if (userProfile?.role === 'teacher' && userProfile.classes?.[0]?.id && !filters.classId) {
+      setFilter('classId', userProfile.classes[0].id)
     }
-  }, [userProfile?.role, classFilterLogic.selectedClassId, filters.classId, setFilter])
+  }, [userProfile?.role, userProfile?.classes, filters.classId, setFilter])
 
   // Actions
   const handleFilterChange = (key: string, value: string) => {
@@ -165,6 +140,10 @@ export function useLaporanPage() {
     resetFilters()
   }
 
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string; desa: string; kelompok: string; kelas: string }) => {
+    setFilter('organisasi', organisasiFilters)
+  }, [setFilter])
+
   // Loading states
   const loading = isLoading || isLoadingClasses
   const hasError = !!error
@@ -178,6 +157,10 @@ export function useLaporanPage() {
     chartData,
     trendChartData,
     classes,
+    daerah,
+    desa,
+    kelompok,
+    userProfile,
     
     // State
     filters,
@@ -193,19 +176,17 @@ export function useLaporanPage() {
     handleDateChange,
     handleWeekChange,
     handleResetFilters,
+    handleOrganisasiFilterChange,
     mutate,
     
     // Computed
-    classOptions: classFilterLogic.classOptions,
+    classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),
     periodOptions: [
       { value: 'daily', label: 'Harian' },
       // { value: 'weekly', label: 'Mingguan' },
       { value: 'monthly', label: 'Bulanan' },
       // { value: 'yearly', label: 'Tahunan' }
-    ],
-    
-    // Class filter logic
-    classFilterLogic
+    ]
   }
 }
 

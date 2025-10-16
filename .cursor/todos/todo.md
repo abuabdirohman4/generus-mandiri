@@ -33,52 +33,46 @@ Components
 [x] Button & Loading
 [x] Icon sidebar & bottom samain dengan di home
 
-Bug
-- Terkadang terkena error berikut
-AuthSessionMissingError: Auth session missing!
-    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:1219:59)
-    at SupabaseAuthClient._useSession (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:1107:26)
-    at async SupabaseAuthClient._getUser (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:1211:20)
-    at async eval (webpack-internal:///(app-pages-browser)/./node_modules/@supabase/auth-js/dist/module/GoTrueClient.js:1198:20)
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
- GET /signin 200 in 95ms
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-[Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found] {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-[Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found] {
-  __isAuthError: true,
-  status: 400,
-  code: 'refresh_token_not_found'
-}
-- 
+Role Access
+[x] Gabungin User Management dari satu halaman bukan 3 folder terpisah
+[x] Buat seperti ClassFilter untuk Daerah, Desa, Kelompok
+[x] DataTable gk usah dibuat khusus di components/superadmin, cukup pakai di components/table
+[x] Review component di folder src/components/superadmin
+[x] Filter di modal guru, admin & organisasi belum pakai components
+[x] Nama Halaman tiap halaman belum bener
+[x] 4 Halaman baru belum pakai layout.tsx
+[x] Buat akun admin daerah & desa Bansel 2
+[x] Data di table beberapa belum muncul
+[x] Perbaiki CRUD Data
+    [x] Guru
+    [x] Admin
+    [x] Organisasi
+[x] Update semua pakai accessControl.ts
+[x] Minta penjelasan kenapa accessControl ada 2
+
+Organisasi
+[x] CRUD
+
+Admin
+[x] Admin desa masih menampilkan admin daerah
+[x] CRUD
+
+Guru
+[x] Admin daerah tidak melihat semua guru (Barujati) -> di db nya tidak ada
+[x] Kolom "Jumlah Kelas" di hilangkan saja
+[x] Data kelompok, desa, daerah masih pada kosong
+[x] Admin Desa Soreang & Admin Kelompok Warlob 1 masih bisa melihat guru dari kelompok Barujati yang mana beda desa
+[x] Edit nama guru masih gagal & error nya masih hanya muncul di username
+[x] CRUD
+[] Sambungkan dengan kelas
+
+Siswa
+[] Merge main
+[] Update tampilan table siswa
+
+Kelas
+[] Buat table kelas & kelompok_kelas
+[] Dibuat flexibel, satu kelas isinya terdiri dari type apa
+
+Testing
+[] Unit Test?

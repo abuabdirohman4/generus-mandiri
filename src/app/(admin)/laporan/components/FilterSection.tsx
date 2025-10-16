@@ -16,12 +16,6 @@ interface FilterSectionProps {
   filters: LaporanFilters
   periodOptions: FilterOption[]
   classOptions: FilterOption[]
-  classFilterLogic: {
-    selectedClassId: string
-    classOptions: FilterOption[]
-    isTeacher: boolean
-    isDisabled: boolean
-  }
   onFilterChange: (key: string, value: string) => void
   onDateChange: (key: 'startDate' | 'endDate', date: Dayjs | null) => void
   onWeekChange: (weeks: [Dayjs | null, Dayjs | null]) => void
@@ -34,7 +28,6 @@ export default function FilterSection({
   filters,
   periodOptions,
   classOptions,
-  classFilterLogic,
   onFilterChange,
   onDateChange,
   onWeekChange,
@@ -118,10 +111,10 @@ export default function FilterSection({
             <InputFilter
               id="classId"
               label="Kelas"
-              value={classFilterLogic.selectedClassId}
+              value={filters.classId}
               onChange={(value) => onFilterChange('classId', value)}
-              options={classFilterLogic.classOptions}
-              allOptionLabel={classFilterLogic.isTeacher ? undefined : "Semua Kelas"}
+              options={classOptions}
+              allOptionLabel="Semua Kelas"
               className="!mb-0"
               widthClassName='!max-w-full'
             />
@@ -168,10 +161,10 @@ export default function FilterSection({
             <InputFilter
               id="classId"
               label="Kelas"
-              value={classFilterLogic.selectedClassId}
+              value={filters.classId}
               onChange={(value) => onFilterChange('classId', value)}
-              options={classFilterLogic.classOptions}
-              allOptionLabel={classFilterLogic.isTeacher ? undefined : "Semua Kelas"}
+              options={classOptions}
+              allOptionLabel="Semua Kelas"
               className="!mb-0"
               widthClassName="!max-w-full"
             />

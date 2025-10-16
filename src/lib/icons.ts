@@ -59,6 +59,10 @@ import FilePdfDarkIcon from "../../public/icons/file-types/file-pdf-dark.svg";
 import FileVideoIcon from "../../public/icons/file-types/file-video.svg";
 import FileVideoDarkIcon from "../../public/icons/file-types/file-video-dark.svg";
 import ReportIcon from "../../public/icons/report.svg";
+import DashboardIcon from "../../public/icons/dashboard.svg";
+import BuildingIcon from "../../public/icons/building.svg";
+import SettingsIcon from "../../public/icons/settings.svg";
+import KeyIcon from "../../public/icons/key.svg";
 
 export {
   DownloadIcon,
@@ -122,4 +126,8 @@ export {
   FileVideoIcon,
   FileVideoDarkIcon,
   ReportIcon,
+  DashboardIcon,
+  BuildingIcon,
+  SettingsIcon,
+  KeyIcon,
 };

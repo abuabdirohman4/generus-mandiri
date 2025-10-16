@@ -27,16 +27,16 @@ const navItems: NavItem[] = [
     activeIcon: <CheckCircleIcon />,
   },
   {
-    href: "/siswa",
-    label: "Siswa",
-    icon: <GroupIcon />,
-    activeIcon: <GroupIcon />,
-  },
-  {
     href: "/laporan",
     label: "Laporan",
     icon: <ReportIcon />,
     activeIcon: <ReportIcon />,
+  },
+  {
+    href: "/siswa",
+    label: "Siswa",
+    icon: <GroupIcon />,
+    activeIcon: <GroupIcon />,
   },
 ];
 
