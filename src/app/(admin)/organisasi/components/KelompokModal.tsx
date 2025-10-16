@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import { createKelompok, updateKelompok } from '../actions/kelompok';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
+import DataFilter from '@/components/shared/DataFilter';
 import Label from '@/components/form/Label';
+import { useUserProfile } from '@/stores/userProfileStore';
+import { useDaerah } from '@/hooks/useDaerah';
+import { useDesa } from '@/hooks/useDesa';
 
 interface Kelompok {
   id: string;
@@ -28,9 +32,19 @@ interface KelompokModalProps {
 }
 
 export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onSuccess }: KelompokModalProps) {
+  const { profile: userProfile } = useUserProfile();
+  const { daerah: daerahList = [] } = useDaerah();
+  const { desa: allDesaList = [] } = useDesa();
+  
   const [formData, setFormData] = useState({
     name: '',
     desa_id: ''
+  });
+  const [dataFilters, setDataFilters] = useState({
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -41,14 +55,30 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
         name: kelompok.name,
         desa_id: kelompok.desa_id
       });
+      // Set data filters based on kelompok's desa
+      const desa = allDesaList.find((d: any) => d.id === kelompok.desa_id);
+      if (desa) {
+        setDataFilters({
+          daerah: desa.daerah_id || '',
+          desa: kelompok.desa_id,
+          kelompok: '',
+          kelas: ''
+        });
+      }
     } else {
       setFormData({
         name: '',
         desa_id: ''
       });
+      setDataFilters({
+        daerah: '',
+        desa: '',
+        kelompok: '',
+        kelas: ''
+      });
     }
     setError(undefined);
-  }, [kelompok, isOpen]);
+  }, [kelompok, isOpen, allDesaList]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -56,6 +86,17 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleDataFilterChange = (filters: typeof dataFilters) => {
+    setDataFilters(filters);
+    // Update formData desa_id when desa filter changes
+    if (filters.desa !== dataFilters.desa) {
+      setFormData(prev => ({
+        ...prev,
+        desa_id: filters.desa
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,23 +151,25 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
             </div>
             
             <div>
-              <Label htmlFor="desa_id">Desa</Label>
-              <select
-                id="desa_id"
-                name="desa_id"
-                value={formData.desa_id}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              >
-                <option value="">Pilih Desa</option>
-                {desaList.map((desa) => (
-                  <option key={desa.id} value={desa.id}>
-                    {desa.name} {desa.daerah_name && `(${desa.daerah_name})`}
-                  </option>
-                ))}
-              </select>
+              <DataFilter
+                filters={dataFilters}
+                onFilterChange={handleDataFilterChange}
+                userProfile={userProfile}
+                daerahList={daerahList}
+                desaList={allDesaList}
+                kelompokList={[]}
+                classList={[]}
+                showKelas={false}
+                variant="modal"
+                compact={true}
+                hideAllOption={true}
+                requiredFields={{
+                  daerah: false,
+                  desa: true,
+                  kelompok: false
+                }}
+                className="space-y-2"
+              />
             </div>
           </div>
 

@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { createTeacher, updateTeacher } from '../actions';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
+import DataFilter from '@/components/shared/DataFilter';
 import Label from '@/components/form/Label';
+import { useUserProfile } from '@/stores/userProfileStore';
+import { useModalOrganisationFilters } from '@/hooks/useModalOrganisationFilters';
+import { useDaerah } from '@/hooks/useDaerah';
+import { useDesa } from '@/hooks/useDesa';
+import { useKelompok } from '@/hooks/useKelompok';
 
 interface Guru {
   id: string;
@@ -44,6 +50,11 @@ interface GuruModalProps {
 }
 
 export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompok, onSuccess }: GuruModalProps) {
+  const { profile: userProfile } = useUserProfile();
+  const { daerah: daerahList = [] } = useDaerah();
+  const { desa: desaList = [] } = useDesa();
+  const { kelompok: kelompokList = [] } = useKelompok();
+  
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
@@ -51,10 +62,34 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     daerah_id: '',
     kelompok_id: ''
   });
+  const [dataFilters, setDataFilters] = useState({
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [selectedDaerah, setSelectedDaerah] = useState('');
-  const [selectedDesa, setSelectedDesa] = useState('');
+  
+  // Use the modal organisation filters hook
+  const {
+    selectedDaerah,
+    selectedDesa,
+    selectedKelompok,
+    handleDaerahChange,
+    handleDesaChange,
+    handleKelompokChange,
+    getFormData: getOrgFormData,
+    validateForm
+  } = useModalOrganisationFilters({
+    userProfile,
+    daerahList,
+    desaList,
+    kelompokList,
+    initialDaerah: guru?.daerah_id || '',
+    initialDesa: '',
+    initialKelompok: guru?.kelompok_id || ''
+  });
 
   useEffect(() => {
     if (guru) {
@@ -65,7 +100,12 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         daerah_id: guru.daerah_id || '',
         kelompok_id: guru.kelompok_id || ''
       });
-      setSelectedDaerah(guru.daerah_id || '');
+      setDataFilters({
+        daerah: guru.daerah_id || '',
+        desa: '',
+        kelompok: guru.kelompok_id || '',
+        kelas: ''
+      });
     } else {
       setFormData({
         username: '',
@@ -74,20 +114,15 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         daerah_id: '',
         kelompok_id: ''
       });
-      setSelectedDaerah('');
+      setDataFilters({
+        daerah: '',
+        desa: '',
+        kelompok: '',
+        kelas: ''
+      });
     }
-    setSelectedDesa('');
     setError(undefined);
   }, [guru, isOpen]);
-
-  // Filter lists based on selection
-  const filteredDesa = selectedDaerah 
-    ? desa.filter(d => d.daerah_id === selectedDaerah)
-    : desa;
-    
-  const filteredKelompok = selectedDesa
-    ? kelompok.filter(k => k.desa_id === selectedDesa)
-    : kelompok;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -97,17 +132,14 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     }));
   };
 
-  const handleDaerahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedDaerah(value);
-    setSelectedDesa('');
-    setFormData(prev => ({ ...prev, daerah_id: value, kelompok_id: '' }));
-  };
-  
-  const handleDesaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedDesa(value);
-    setFormData(prev => ({ ...prev, kelompok_id: '' }));
+  const handleDataFilterChange = (filters: typeof dataFilters) => {
+    setDataFilters(filters);
+    // Update formData when filters change
+    setFormData(prev => ({
+      ...prev,
+      daerah_id: filters.daerah,
+      kelompok_id: filters.kelompok
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,10 +148,27 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     setError(undefined);
 
     try {
+      // Validate required fields
+      const validationErrors = validateForm();
+      if (validationErrors.length > 0) {
+        setError(validationErrors.join(', '));
+        setIsLoading(false);
+        return;
+      }
+
+      // Get organization data from filters
+      const orgData = getOrgFormData();
+      
+      // Combine form data with organization data
+      const submitData = {
+        ...formData,
+        ...orgData
+      };
+
       if (guru) {
-        await updateTeacher(guru.id, formData);
+        await updateTeacher(guru.id, submitData);
       } else {
-        await createTeacher(formData);
+        await createTeacher(submitData);
       }
       onSuccess();
       onClose();
@@ -131,7 +180,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[600px] m-4">
       <div className="p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           {guru ? 'Edit Guru' : 'Tambah Guru'}
@@ -143,107 +192,75 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <InputField
-                id="username"
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Masukkan username"
-                required
-                error={!!error}
-                hint={error || undefined}
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="full_name">Nama Lengkap</Label>
-              <InputField
-                id="full_name"
-                type="text"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                placeholder="Masukkan nama lengkap"
-                required
-                error={!!error}
-                hint={error || undefined}
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <InputField
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Masukkan email"
-                required
-                error={!!error}
-                hint={error || undefined}
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="daerah">Daerah</Label>
-              <select
-                id="daerah"
-                name="daerah"
-                value={selectedDaerah}
-                onChange={handleDaerahChange}
-                disabled={isLoading}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              >
-                <option value="">Pilih Daerah</option>
-                {daerah.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <Label htmlFor="desa">Desa</Label>
-              <select
-                id="desa"
-                name="desa"
-                value={selectedDesa}
-                onChange={handleDesaChange}
-                disabled={isLoading || !selectedDaerah}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              >
-                <option value="">Pilih Desa</option>
-                {filteredDesa.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="md:col-span-3">
-              <Label htmlFor="kelompok_id">Kelompok</Label>
-              <select
-                id="kelompok_id"
-                name="kelompok_id"
-                value={formData.kelompok_id}
-                onChange={handleChange}
-                required
-                disabled={isLoading || !selectedDesa}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              >
-                <option value="">Pilih Kelompok</option>
-                {filteredKelompok.map((k) => (
-                  <option key={k.id} value={k.id}>{k.name}</option>
-                ))}
-              </select>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="username">Username</Label>
+            <InputField
+              id="username"
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Masukkan username"
+              required
+              error={!!error}
+              hint={error || undefined}
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="full_name">Nama Lengkap</Label>
+            <InputField
+              id="full_name"
+              type="text"
+              name="full_name"
+              value={formData.full_name}
+              onChange={handleChange}
+              placeholder="Masukkan nama lengkap"
+              required
+              error={!!error}
+              hint={error || undefined}
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <InputField
+              id="email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Masukkan email"
+              required
+              error={!!error}
+              hint={error || undefined}
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div className="md:col-span-3">
+            <DataFilter
+              filters={dataFilters}
+              onFilterChange={handleDataFilterChange}
+              userProfile={userProfile}
+              daerahList={daerahList}
+              desaList={desaList}
+              kelompokList={kelompokList}
+              classList={[]}
+              showKelas={false}
+              variant="modal"
+              compact={true}
+              hideAllOption={true}
+              requiredFields={{
+                daerah: false,
+                desa: false,
+                kelompok: true
+              }}
+              className="space-y-2"
+            />
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

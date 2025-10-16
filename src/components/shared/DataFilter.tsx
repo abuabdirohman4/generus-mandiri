@@ -67,6 +67,15 @@ interface DataFilterProps {
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
   className?: string
+  variant?: 'page' | 'modal'           // NEW
+  compact?: boolean                     // NEW
+  hideAllOption?: boolean               // NEW - for modals (must select specific)
+  requiredFields?: {                    // NEW - mark which fields are required
+    daerah?: boolean
+    desa?: boolean
+    kelompok?: boolean
+    kelas?: boolean
+  }
 }
 
 export default function DataFilter({
@@ -81,7 +90,11 @@ export default function DataFilter({
   showDaerah,
   showDesa,
   showKelompok,
-  className = "grid gap-x-4"
+  className = "grid gap-x-4",
+  variant = 'page',
+  compact = false,
+  hideAllOption = false,
+  requiredFields = {}
 }: DataFilterProps) {
   
   // Role detection logic
@@ -239,18 +252,27 @@ export default function DataFilter({
 
   // Responsive layout classes
   const containerClass = cn(
-    "grid gap-x-4",
-    filterCount === 1 && "grid-cols-1 md:grid-cols-4",
-    filterCount === 2 && "grid-cols-2 md:grid-cols-4",
-    filterCount === 3 && "grid-cols-2 md:grid-cols-4",
-    filterCount === 4 && "grid-cols-2 md:grid-cols-4",
+    variant === 'modal' 
+      ? (compact ? "space-y-2" : "space-y-4")
+      : "grid gap-x-4",
+    variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
+    variant === 'page' && filterCount === 2 && "grid-cols-2 md:grid-cols-4",
+    variant === 'page' && filterCount === 3 && "grid-cols-2 md:grid-cols-4",
+    variant === 'page' && filterCount === 4 && "grid-cols-2 md:grid-cols-4",
+    variant === 'modal' && filterCount === 1 && "grid-cols-1",
+    variant === 'modal' && filterCount === 2 && "grid-cols-1 md:grid-cols-2",
+    variant === 'modal' && filterCount === 3 && "grid-cols-1 md:grid-cols-2",
+    variant === 'modal' && filterCount === 4 && "grid-cols-1 md:grid-cols-2",
     className
   )
 
   // For 3 filters: last filter (lowest level) spans 2 columns on mobile
   const getFilterClass = (index: number) => {
-    if (filterCount === 3 && index === 2) {
+    if (variant === 'page' && filterCount === 3 && index === 2) {
       return "col-span-2 md:col-span-1" // Last filter full width on mobile
+    }
+    if (variant === 'modal' && filterCount === 3 && index === 2) {
+      return "md:col-span-2" // Last filter spans 2 columns in modal
     }
     return ""
   }
@@ -261,12 +283,15 @@ export default function DataFilter({
         <div className={getFilterClass(0)}>
           <InputFilter
             id="daerahFilter"
-            label="Filter Daerah"
+            label={variant === 'modal' ? "Daerah" : "Filter Daerah"}
             value={filters?.daerah || ''}
             onChange={handleDaerahChange}
             options={daerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
-            allOptionLabel="Semua Daerah"
-            widthClassName="!max-w-full"
+            allOptionLabel={hideAllOption ? undefined : "Semua Daerah"}
+            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
+            variant={variant}
+            compact={compact}
+            required={requiredFields.daerah}
           />
         </div>
       )}
@@ -275,12 +300,15 @@ export default function DataFilter({
         <div className={getFilterClass(1)}>
           <InputFilter
             id="desaFilter"
-            label="Filter Desa"
+            label={variant === 'modal' ? "Desa" : "Filter Desa"}
             value={filters?.desa || ''}
             onChange={handleDesaChange}
             options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
-            allOptionLabel="Semua Desa"
-            widthClassName="!max-w-full"
+            allOptionLabel={hideAllOption ? undefined : "Semua Desa"}
+            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
+            variant={variant}
+            compact={compact}
+            required={requiredFields.desa}
           />
         </div>
       )}
@@ -289,12 +317,15 @@ export default function DataFilter({
         <div className={getFilterClass(2)}>
           <InputFilter
             id="kelompokFilter"
-            label="Filter Kelompok"
+            label={variant === 'modal' ? "Kelompok" : "Filter Kelompok"}
             value={filters?.kelompok || ''}
             onChange={handleKelompokChange}
             options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
-            allOptionLabel="Semua Kelompok"
-            widthClassName="!max-w-full"
+            allOptionLabel={hideAllOption ? undefined : "Semua Kelompok"}
+            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
+            variant={variant}
+            compact={compact}
+            required={requiredFields.kelompok}
           />
         </div>
       )}
@@ -303,12 +334,15 @@ export default function DataFilter({
         <div className={getFilterClass(3)}>
           <InputFilter
             id="kelasFilter"
-            label="Filter Kelas"
+            label={variant === 'modal' ? "Kelas" : "Filter Kelas"}
             value={filters?.kelas || ''}
             onChange={handleKelasChange}
             options={filteredClassList.map(cls => ({ value: cls.id, label: cls.name }))}
-            allOptionLabel="Semua Kelas"
-            widthClassName="!max-w-full"
+            allOptionLabel={hideAllOption ? undefined : "Semua Kelas"}
+            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
+            variant={variant}
+            compact={compact}
+            required={requiredFields.kelas}
           />
         </div>
       )}

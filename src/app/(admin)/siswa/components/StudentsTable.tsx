@@ -6,7 +6,7 @@ import TableActions from '@/components/table/TableActions'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import { PencilIcon, TrashBinIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
-import { isAdmin } from '@/lib/userUtils'
+import { isAdminLegacy } from '@/lib/userUtils'
 
 interface StudentsTableProps {
   students: Student[]
@@ -87,7 +87,7 @@ export default function StudentsTable({
     width: '24',
   }
 
-  const columns = isAdmin(userProfile?.role) 
+  const columns = isAdminLegacy(userProfile?.role) 
     ? [...baseColumns, classColumn, actionsColumn]
     : [...baseColumns, actionsColumn]
 

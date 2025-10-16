@@ -84,25 +84,29 @@ AuthApiError: Invalid Refresh Token: Refresh Token Not Found {
 - 
 
 Role Access
-[] Update semua pakai accessControl.ts
 [x] Gabungin User Management dari satu halaman bukan 3 folder terpisah
 [x] Buat seperti ClassFilter untuk Daerah, Desa, Kelompok
 [x] DataTable gk usah dibuat khusus di components/superadmin, cukup pakai di components/table
 [x] Review component di folder src/components/superadmin
-[] Filter di modal guru, admin & organisasi belum pakai components
+[x] Filter di modal guru, admin & organisasi belum pakai components
 [x] Nama Halaman tiap halaman belum bener
-[] 4 Halaman baru belum pakai layout.tsx
+[x] 4 Halaman baru belum pakai layout.tsx
+[x] Buat akun admin daerah & desa Bansel 2
 [] Perbaiki CRUD Data
     [] Guru
     [] Admin
     [] Organisasi
+[] Update semua pakai accessControl.ts
 [] Minta penjelasan kenapa accessControl ada 2
-[] Buat akun admin daerah & desa Bansel 2
+[] Data di table bebera belum muncul
 
+Siswa
+[] Merge main
+[] Update tampilan table siswa
 
 Kelas
+[] Buat table kelas & kelompok_kelas
 [] Dibuat flexibel, satu kelas isinya terdiri dari type apa
-
 
 Testing
 [] Unit Test?

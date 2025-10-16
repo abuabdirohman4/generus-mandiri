@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { createDesa, updateDesa } from '../actions/desa';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
+import InputFilter from '@/components/form/input/InputFilter';
 import Label from '@/components/form/Label';
+import { useUserProfile } from '@/stores/userProfileStore';
+import { shouldShowDaerahFilter } from '@/lib/accessControl';
 
 interface Desa {
   id: string;
@@ -27,12 +30,16 @@ interface DesaModalProps {
 }
 
 export default function DesaModal({ isOpen, onClose, desa, daerahList, onSuccess }: DesaModalProps) {
+  const { profile: userProfile } = useUserProfile();
   const [formData, setFormData] = useState({
     name: '',
     daerah_id: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
+  
+  // Determine if daerah filter should be shown
+  const showDaerahFilter = userProfile ? shouldShowDaerahFilter(userProfile) : true;
 
   useEffect(() => {
     if (desa) {
@@ -108,25 +115,20 @@ export default function DesaModal({ isOpen, onClose, desa, daerahList, onSuccess
               />
             </div>
             
-            <div>
-              <Label htmlFor="daerah_id">Daerah</Label>
-              <select
-                id="daerah_id"
-                name="daerah_id"
-                value={formData.daerah_id}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              >
-                <option value="">Pilih Daerah</option>
-                {daerahList.map((daerah) => (
-                  <option key={daerah.id} value={daerah.id}>
-                    {daerah.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {showDaerahFilter && (
+              <div>
+                <InputFilter
+                  id="daerah_id"
+                  label="Daerah"
+                  value={formData.daerah_id}
+                  onChange={(value) => setFormData(prev => ({ ...prev, daerah_id: value }))}
+                  options={daerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
+                  variant="modal"
+                  compact={true}
+                  required={true}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

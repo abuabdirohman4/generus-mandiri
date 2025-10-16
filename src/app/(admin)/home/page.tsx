@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { isAdmin } from '@/lib/userUtils';
+import { isAdminLegacy } from '@/lib/userUtils';
 
 export default function HomePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -116,7 +116,7 @@ export default function HomePage() {
         {/* Quick Actions */}
         {profile && (
           <QuickActions 
-            isAdmin={isAdmin(profile.role)} 
+            isAdmin={isAdminLegacy(profile.role)} 
             profile={profile} 
           />
         )}

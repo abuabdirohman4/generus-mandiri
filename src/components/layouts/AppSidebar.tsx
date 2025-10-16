@@ -375,7 +375,7 @@ function SidebarContent({
   onNavigate: (path: string) => void;
 }) {
   const { profile } = useUserProfile();
-  const isSuperAdminUser = isSuperAdmin(profile?.role);
+  const isSuperAdminUser = profile ? isSuperAdmin(profile) : false;
   const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
   
   // Filter navigation items based on admin status and role-specific exclusions
@@ -386,7 +386,7 @@ function SidebarContent({
     }
     
     // Filter out items that exclude Admin Kelompok
-    if (item.excludeAdminKelompok && isAdminKelompok(profile)) {
+    if (item.excludeAdminKelompok && profile && isAdminKelompok(profile)) {
       return false
     }
     

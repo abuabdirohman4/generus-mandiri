@@ -17,39 +17,19 @@ export async function getCurrentUserId(): Promise<string | null> {
   }
 }
 
-/**
- * Check if user has admin privileges (admin or superadmin)
- */
-export function isAdmin(role: string | undefined): boolean {
+// Re-export from accessControl.ts for backward compatibility
+export { 
+  isSuperAdmin,
+  isAdminDaerah,
+  isAdminDesa,
+  isAdminKelompok,
+  isTeacher,
+  isAdmin
+} from './accessControl'
+
+// Legacy function for backward compatibility (takes role string instead of profile)
+export function isAdminLegacy(role: string | undefined): boolean {
   return role === 'admin' || role === 'superadmin'
-}
-
-/**
- * Check if user has superadmin privileges
- */
-export function isSuperAdmin(role: string | undefined): boolean {
-  return role === 'superadmin'
-}
-
-/**
- * Check if user is admin at daerah level
- */
-export function isAdminDaerah(userProfile: any): boolean {
-  return userProfile?.role === 'admin' && !!userProfile?.daerah_id && !userProfile?.desa_id
-}
-
-/**
- * Check if user is admin at desa level
- */
-export function isAdminDesa(userProfile: any): boolean {
-  return userProfile?.role === 'admin' && !!userProfile?.desa_id && !userProfile?.kelompok_id
-}
-
-/**
- * Check if user is admin at kelompok level
- */
-export function isAdminKelompok(userProfile: any): boolean {
-  return userProfile?.role === 'admin' && !!userProfile?.kelompok_id
 }
 
 /**
