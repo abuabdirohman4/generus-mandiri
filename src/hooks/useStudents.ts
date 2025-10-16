@@ -23,6 +23,9 @@ export interface Student {
   } | null
   // For backward compatibility with existing components
   class_name?: string
+  daerah_name?: string
+  desa_name?: string
+  kelompok_name?: string
 }
 
 interface UseStudentsOptions {

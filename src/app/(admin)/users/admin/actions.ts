@@ -174,13 +174,23 @@ export async function getAllAdmins() {
       .order('username');
     
     // Apply filtering for admin users
-    if (filter?.daerah_id) {
-      query = query.eq('daerah_id', filter.daerah_id);
-    } else if (filter?.desa_id) {
-      query = query.eq('desa_id', filter.desa_id);
-    } else if (filter?.kelompok_id) {
+    if (filter?.kelompok_id) {
+      // Admin Kelompok: only see admins in their kelompok or lower
       query = query.eq('kelompok_id', filter.kelompok_id);
+    } else if (filter?.desa_id) {
+      // Admin Desa: only see admins in their desa (Admin Kelompok only)
+      // Filter out Admin Daerah by ensuring they have a desa_id
+      query = query
+        .eq('desa_id', filter.desa_id)
+        .not('desa_id', 'is', null);
+    } else if (filter?.daerah_id) {
+      // Admin Daerah: see Admin Desa and Admin Kelompok in their daerah
+      // Filter out other Admin Daerah by ensuring they have a desa_id
+      query = query
+        .eq('daerah_id', filter.daerah_id)
+        .not('desa_id', 'is', null);
     }
+    // Superadmin: no filter, see all
     
     const { data, error } = await query;
 
@@ -188,7 +198,15 @@ export async function getAllAdmins() {
       throw error;
     }
 
-    return data || [];
+    // Transform the data to flatten org names
+    const transformedData = data?.map(admin => ({
+      ...admin,
+      daerah_name: Array.isArray(admin.daerah) ? admin.daerah[0]?.name : admin.daerah?.name || '',
+      desa_name: Array.isArray(admin.desa) ? admin.desa[0]?.name : admin.desa?.name || '',
+      kelompok_name: Array.isArray(admin.kelompok) ? admin.kelompok[0]?.name : admin.kelompok?.name || ''
+    })) || [];
+
+    return transformedData;
   } catch (error) {
     console.error('Error fetching admins:', error);
     throw handleApiError(error, 'memuat data', 'Gagal mengambil data admin');

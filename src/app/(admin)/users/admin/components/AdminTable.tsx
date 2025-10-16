@@ -3,6 +3,8 @@
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import { PencilIcon, TrashBinIcon, LockIcon } from '@/lib/icons';
+import { isAdminDaerah, isAdminDesa } from '@/lib/userUtils';
+import { UserProfile } from '@/lib/accessControl';
 
 interface Admin {
   id: string;
@@ -10,6 +12,8 @@ interface Admin {
   email: string;
   role: string;
   kelompok_name?: string;
+  daerah_name?: string;
+  desa_name?: string;
   created_at: string;
 }
 
@@ -18,17 +22,52 @@ interface AdminTableProps {
   onEdit: (admin: Admin) => void;
   onDelete: (admin: Admin) => void;
   onResetPassword: (admin: Admin) => void;
+  userProfile?: UserProfile | null;
 }
 
-export default function AdminTable({ data, onEdit, onDelete, onResetPassword }: AdminTableProps) {
-  const columns = [
-    { key: 'full_name', label: 'Nama Lengkap', sortable: true },
-    { key: 'email', label: 'Email', sortable: true },
-    { key: 'role', label: 'Role', sortable: true },
-    { key: 'kelompok_name', label: 'Kelompok', sortable: true },
-    { key: 'created_at', label: 'Dibuat', sortable: true },
-    { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
-  ];
+export default function AdminTable({ data, onEdit, onDelete, onResetPassword, userProfile }: AdminTableProps) {
+  // Build columns based on user role
+  const buildColumns = (userProfile: UserProfile | null | undefined) => {
+    const baseColumns = [
+      { key: 'full_name', label: 'Nama Lengkap', sortable: true },
+      { key: 'email', label: 'Email', sortable: true },
+      { key: 'role', label: 'Role', sortable: true },
+    ];
+    
+    const orgColumns = [];
+    
+    // Superadmin sees all org levels
+    if (userProfile?.role === 'superadmin') {
+      orgColumns.push(
+        { key: 'daerah_name', label: 'Daerah', sortable: true },
+        { key: 'desa_name', label: 'Desa', sortable: true },
+        { key: 'kelompok_name', label: 'Kelompok', sortable: true }
+      );
+    }
+    // Admin Daerah sees Desa & Kelompok
+    else if (userProfile && isAdminDaerah(userProfile)) {
+      orgColumns.push(
+        { key: 'desa_name', label: 'Desa', sortable: true },
+        { key: 'kelompok_name', label: 'Kelompok', sortable: true }
+      );
+    }
+    // Admin Desa sees Kelompok only
+    else if (userProfile && isAdminDesa(userProfile)) {
+      orgColumns.push(
+        { key: 'kelompok_name', label: 'Kelompok', sortable: true }
+      );
+    }
+    // Teacher & Admin Kelompok: no org columns
+    
+    return [
+      ...baseColumns,
+      ...orgColumns,
+      { key: 'created_at', label: 'Dibuat', sortable: true },
+      { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
+    ];
+  };
+
+  const columns = buildColumns(userProfile);
 
   const renderCell = (column: any, item: any) => {
     if (column.key === 'role') {
@@ -76,6 +115,11 @@ export default function AdminTable({ data, onEdit, onDelete, onResetPassword }: 
           ]}
         />
       );
+    }
+    
+    // Handle organizational columns
+    if (['daerah_name', 'desa_name', 'kelompok_name'].includes(column.key)) {
+      return item[column.key] || '-';
     }
     
     return item[column.key] || '-';

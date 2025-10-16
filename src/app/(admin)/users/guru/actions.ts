@@ -175,13 +175,17 @@ export async function getAllTeachers() {
       .order('username');
     
     // Apply filtering for admin users
-    if (filter?.daerah_id) {
-      query = query.eq('daerah_id', filter.daerah_id);
-    } else if (filter?.desa_id) {
-      query = query.eq('desa_id', filter.desa_id);
-    } else if (filter?.kelompok_id) {
+    if (filter?.kelompok_id) {
+      // Admin Kelompok: only see teachers in their kelompok
       query = query.eq('kelompok_id', filter.kelompok_id);
+    } else if (filter?.desa_id) {
+      // Admin Desa: only see teachers in their desa
+      query = query.eq('desa_id', filter.desa_id);
+    } else if (filter?.daerah_id) {
+      // Admin Daerah: see teachers in their daerah
+      query = query.eq('daerah_id', filter.daerah_id);
     }
+    // Superadmin: no filter, see all
     
     const { data, error } = await query;
 
@@ -189,10 +193,13 @@ export async function getAllTeachers() {
       throw error;
     }
 
-    // Transform the data to include classes count
+    // Transform the data to include classes count and flattened org names
     const transformedData = data?.map(teacher => ({
       ...teacher,
-      classes_count: teacher.teacher_classes?.[0]?.count || 0
+      classes_count: teacher.teacher_classes?.[0]?.count || 0,
+      daerah_name: Array.isArray(teacher.daerah) ? teacher.daerah[0]?.name : teacher.daerah?.name || '',
+      desa_name: Array.isArray(teacher.desa) ? teacher.desa[0]?.name : teacher.desa?.name || '',
+      kelompok_name: Array.isArray(teacher.kelompok) ? teacher.kelompok[0]?.name : teacher.kelompok?.name || ''
     })) || [];
 
     return transformedData;

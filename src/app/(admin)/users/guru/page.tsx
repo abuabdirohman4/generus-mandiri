@@ -96,6 +96,7 @@ export default function GuruManagementPage() {
           onEdit={openEditModal}
           onResetPassword={openResetPasswordModal}
           onDelete={openDeleteConfirm}
+          userProfile={userProfile}
         />
 
         {/* Modals */}
