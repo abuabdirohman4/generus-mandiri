@@ -132,7 +132,10 @@ export async function getAllKelompok() {
     // Transform the data to include counts and flatten daerah info
     const transformedData = data?.map(kelompok => ({
       ...kelompok,
-      daerah_name: kelompok.desa?.daerah?.name || '',
+      desa_name: Array.isArray(kelompok.desa) ? kelompok.desa[0]?.name : kelompok.desa?.name || '',
+      daerah_name: Array.isArray(kelompok.desa) 
+        ? kelompok.desa[0]?.daerah?.name 
+        : kelompok.desa?.daerah?.name || '',
       kelas_count: kelompok.classes?.[0]?.count || 0,
       siswa_count: kelompok.students?.[0]?.count || 0
     })) || [];
@@ -166,7 +169,10 @@ export async function getKelompokByDesa(desaId: string) {
     // Transform the data to include counts and flatten daerah info
     const transformedData = data?.map(kelompok => ({
       ...kelompok,
-      daerah_name: kelompok.desa?.daerah?.name || '',
+      desa_name: Array.isArray(kelompok.desa) ? kelompok.desa[0]?.name : kelompok.desa?.name || '',
+      daerah_name: Array.isArray(kelompok.desa) 
+        ? kelompok.desa[0]?.daerah?.name 
+        : kelompok.desa?.daerah?.name || '',
       kelas_count: kelompok.classes?.[0]?.count || 0,
       siswa_count: kelompok.students?.[0]?.count || 0
     })) || [];

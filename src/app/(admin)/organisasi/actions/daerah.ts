@@ -127,16 +127,29 @@ export async function getAllDaerah() {
     let kelompokCounts: { [key: string]: number } = {};
     
     if (daerahIds.length > 0) {
-      const { data: kelompokData } = await supabase
-        .from('kelompok')
-        .select('desa_id, desa!inner(daerah_id)')
-        .in('desa.daerah_id', daerahIds);
+      // Get kelompok count by first getting desa IDs for each daerah, then kelompok
+      const { data: desaData } = await supabase
+        .from('desa')
+        .select('id, daerah_id')
+        .in('daerah_id', daerahIds);
       
-      kelompokCounts = kelompokData?.reduce((acc, k) => {
-        const daerahId = k.desa?.[0]?.daerah_id;
-        acc[daerahId] = (acc[daerahId] || 0) + 1;
-        return acc;
-      }, {} as { [key: string]: number }) || {};
+      if (desaData && desaData.length > 0) {
+        const desaIds = desaData.map(d => d.id);
+        const { data: kelompokData } = await supabase
+          .from('kelompok')
+          .select('desa_id')
+          .in('desa_id', desaIds);
+        
+        // Count kelompok per daerah
+        kelompokCounts = kelompokData?.reduce((acc, k) => {
+          const desa = desaData.find(d => d.id === k.desa_id);
+          if (desa) {
+            const daerahId = desa.daerah_id;
+            acc[daerahId] = (acc[daerahId] || 0) + 1;
+          }
+          return acc;
+        }, {} as { [key: string]: number }) || {};
+      }
     }
 
     // Transform the data to include counts

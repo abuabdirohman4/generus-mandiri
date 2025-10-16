@@ -74,6 +74,16 @@ export default function OrganisasiManagementPage() {
     }
   }, [userProfile, router])
 
+  // Set default active tab based on user role
+  useEffect(() => {
+    if (userProfile && tabs.length > 0) {
+      const currentTabExists = tabs.some(tab => tab.id === activeTab)
+      if (!currentTabExists) {
+        setActiveTab(tabs[0].id as TabType)
+      }
+    }
+  }, [userProfile, tabs, activeTab, setActiveTab])
+
   if (isLoading) {
     return <SuperadminTableSkeleton />;
   }

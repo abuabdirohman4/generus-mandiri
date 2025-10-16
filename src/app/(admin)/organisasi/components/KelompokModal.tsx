@@ -160,6 +160,7 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
                 kelompokList={[]}
                 classList={[]}
                 showKelas={false}
+                showKelompok={false}
                 variant="modal"
                 compact={true}
                 hideAllOption={true}

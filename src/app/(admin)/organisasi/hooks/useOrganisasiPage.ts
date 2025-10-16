@@ -9,6 +9,7 @@ import { useOrganisasiStore } from '../stores/organisasiStore'
 import { deleteDaerah } from '../actions/daerah'
 import { deleteDesa } from '../actions/desa'
 import { deleteKelompok } from '../actions/kelompok'
+import { isAdminDaerah, isAdminDesa } from '@/lib/userUtils'
 import { toast } from 'sonner'
 
 export function useOrganisasiPage() {
@@ -78,11 +79,24 @@ export function useOrganisasiPage() {
     closeModal()
   }, [activeTab, mutateDaerah, mutateDesa, mutateKelompok, closeModal])
 
+  // Filter tabs based on user role
   const tabs = [
     { id: 'daerah', label: 'Daerah', count: daerah?.length || 0 },
     { id: 'desa', label: 'Desa', count: desa?.length || 0 },
     { id: 'kelompok', label: 'Kelompok', count: kelompok?.length || 0 }
-  ]
+  ].filter(tab => {
+    if (!userProfile) return false
+    
+    const isSuperAdmin = userProfile.role === 'superadmin'
+    const isAdminDaerahUser = isAdminDaerah(userProfile)
+    const isAdminDesaUser = isAdminDesa(userProfile)
+    
+    if (isSuperAdmin) return true // See all tabs
+    if (isAdminDaerahUser) return tab.id !== 'daerah' // See Desa & Kelompok only
+    if (isAdminDesaUser) return tab.id === 'kelompok' // See Kelompok only
+    
+    return false
+  })
 
   return {
     daerah,

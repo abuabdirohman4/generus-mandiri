@@ -126,6 +126,7 @@ export async function getAllDesa() {
     // Transform the data to include counts
     const transformedData = data?.map(desa => ({
       ...desa,
+      daerah_name: Array.isArray(desa.daerah) ? desa.daerah[0]?.name : desa.daerah?.name || '',
       kelompok_count: desa.kelompok?.[0]?.count || 0,
       siswa_count: desa.students?.[0]?.count || 0
     })) || [];
@@ -159,6 +160,7 @@ export async function getDesaByDaerah(daerahId: string) {
     // Transform the data to include counts
     const transformedData = data?.map(desa => ({
       ...desa,
+      daerah_name: Array.isArray(desa.daerah) ? desa.daerah[0]?.name : desa.daerah?.name || '',
       kelompok_count: desa.kelompok?.[0]?.count || 0,
       siswa_count: desa.students?.[0]?.count || 0
     })) || [];
