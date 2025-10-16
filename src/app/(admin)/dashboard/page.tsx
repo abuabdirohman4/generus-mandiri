@@ -2,7 +2,11 @@
 
 import { useUserProfile } from '@/stores/userProfileStore';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useDaerah } from '@/hooks/useDaerah';
+import { useDesa } from '@/hooks/useDesa';
+import { useKelompok } from '@/hooks/useKelompok';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
+import DataFilter from '@/components/shared/DataFilter';
 import StatCard from './components/StatCard';
 import DistributionChart from './components/DistributionChart';
 import TrendChart from './components/TrendChart';
@@ -10,6 +14,9 @@ import TrendChart from './components/TrendChart';
 export default function AdminDashboard() {
   const { profile } = useUserProfile();
   const { stats, isLoading, error } = useDashboard();
+  const { daerah } = useDaerah();
+  const { desa } = useDesa();
+  const { kelompok } = useKelompok();
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -36,6 +43,25 @@ export default function AdminDashboard() {
         <p className="mt-2 text-gray-600 dark:text-gray-400">
           Overview sistem manajemen generus
         </p>
+      </div>
+
+      {/* Organisasi Filter */}
+      <div className="mb-6">
+        <DataFilter
+          filters={{
+            daerah: '',
+            desa: '',
+            kelompok: '',
+            kelas: ''
+          }}
+          onFilterChange={() => {}} // TODO: Implement organisasi filtering
+          userProfile={profile}
+          daerahList={daerah || []}
+          desaList={desa || []}
+          kelompokList={kelompok || []}
+          classList={[]}
+          showKelas={false}
+        />
       </div>
 
       {/* Statistics Cards */}

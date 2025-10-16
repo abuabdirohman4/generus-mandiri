@@ -1,90 +1,39 @@
 "use client";
 
-import { useState } from 'react';
-import { useAdmins } from '@/hooks/useAdmins';
-import { useDaerah } from '@/hooks/useDaerah';
-import { useDesa } from '@/hooks/useDesa';
-import { useKelompok } from '@/hooks/useKelompok';
+import { useAdminPage } from './hooks/useAdminPage';
 import AdminTable from './components/AdminTable';
 import AdminModal from './components/AdminModal';
 import ResetPasswordModal from './components/ResetPasswordModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
-import InputFilter from '@/components/form/input/InputFilter';
+import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
 import Button from '@/components/ui/button/Button';
 
 export default function AdminManagementPage() {
-  const { admins, isLoading, error, mutate } = useAdmins();
-  const { daerah } = useDaerah();
-  const { desa } = useDesa();
-  const { kelompok } = useKelompok();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAdmin, setEditingAdmin] = useState<any>(null);
-  const [resetPasswordModal, setResetPasswordModal] = useState<{ isOpen: boolean; admin: any }>({
-    isOpen: false,
-    admin: null
-  });
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; admin: any }>({
-    isOpen: false,
-    admin: null
-  });
-  const [filters, setFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    search: ''
-  });
-
-  const handleCreate = () => {
-    setEditingAdmin(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (admin: any) => {
-    setEditingAdmin(admin);
-    setIsModalOpen(true);
-  };
-
-  const handleResetPassword = (admin: any) => {
-    setResetPasswordModal({ isOpen: true, admin });
-  };
-
-  const handleDelete = (admin: any) => {
-    setDeleteConfirm({ isOpen: true, admin });
-  };
-
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setEditingAdmin(null);
-  };
-
-  const handleResetPasswordClose = () => {
-    setResetPasswordModal({ isOpen: false, admin: null });
-  };
-
-  const handleDeleteClose = () => {
-    setDeleteConfirm({ isOpen: false, admin: null });
-  };
-
-  const handleFilterChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
-  };
-
-  // Filter admins based on selected filters
-  const filteredAdmins = admins?.filter(admin => {
-    if (filters.daerah && admin.daerah_id !== filters.daerah) return false;
-    if (filters.desa && admin.desa_id !== filters.desa) return false;
-    if (filters.kelompok && admin.kelompok_id !== filters.kelompok) return false;
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      return (
-        admin.username?.toLowerCase().includes(searchTerm) ||
-        admin.full_name?.toLowerCase().includes(searchTerm) ||
-        admin.email?.toLowerCase().includes(searchTerm)
-      );
-    }
-    return true;
-  }) || [];
+  const {
+    admins,
+    daerah,
+    desa,
+    kelompok,
+    userProfile,
+    isLoading,
+    error,
+    isModalOpen,
+    editingAdmin,
+    resetPasswordModal,
+    deleteConfirm,
+    filters,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    openResetPasswordModal,
+    closeResetPasswordModal,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    handleDelete,
+    handleOrganisasiFilterChange,
+    mutate
+  } = useAdminPage();
 
   if (isLoading) {
     return <SuperadminTableSkeleton />;
@@ -116,7 +65,7 @@ export default function AdminManagementPage() {
               </p>
             </div>
             <Button
-              onClick={handleCreate}
+              onClick={openCreateModal}
               className="px-4 py-2"
             >
               Tambah
@@ -125,54 +74,57 @@ export default function AdminManagementPage() {
         </div>
 
         {/* Filter */}
-        <InputFilter
-          id="daerah-filter"
-          label="Filter Daerah"
-          value={filters.daerah}
-          onChange={(daerahId) => handleFilterChange({ ...filters, daerah: daerahId, desa: '', kelompok: '' })}
-          options={daerah?.map(d => ({ value: d.id, label: d.name })) || []}
-          allOptionLabel="Semua Daerah"
+        <DataFilter
+          filters={{
+            daerah: filters.daerah,
+            desa: filters.desa,
+            kelompok: filters.kelompok,
+            kelas: filters.kelas
+          }}
+          onFilterChange={handleOrganisasiFilterChange}
+          userProfile={userProfile}
+          daerahList={daerah || []}
+          desaList={desa || []}
+          kelompokList={kelompok || []}
+          classList={[]}
+          showKelas={false}
         />
 
         {/* Table */}
         <AdminTable
-          data={filteredAdmins}
-          onEdit={handleEdit}
-          onResetPassword={handleResetPassword}
-          onDelete={handleDelete}
+          data={admins}
+          onEdit={openEditModal}
+          onResetPassword={openResetPasswordModal}
+          onDelete={openDeleteConfirm}
         />
 
         {/* Modals */}
         <AdminModal
           isOpen={isModalOpen}
-          onClose={handleModalClose}
+          onClose={closeModal}
           admin={editingAdmin}
           daerah={daerah || []}
           desa={desa || []}
           kelompok={kelompok || []}
           onSuccess={() => {
             mutate();
-            handleModalClose();
+            closeModal();
           }}
         />
 
         <ResetPasswordModal
           isOpen={resetPasswordModal.isOpen}
-          onClose={handleResetPasswordClose}
+          onClose={closeResetPasswordModal}
           admin={resetPasswordModal.admin}
           onSuccess={() => {
-            handleResetPasswordClose();
+            closeResetPasswordModal();
           }}
         />
 
         <ConfirmModal
           isOpen={deleteConfirm.isOpen}
-          onClose={handleDeleteClose}
-          onConfirm={async () => {
-            // Handle delete logic here
-            mutate();
-            handleDeleteClose();
-          }}
+          onClose={closeDeleteConfirm}
+          onConfirm={handleDelete}
           title="Hapus Admin?"
           message={`Apakah Anda yakin ingin menghapus admin "${deleteConfirm.admin?.username}"?`}
           confirmText="Hapus"

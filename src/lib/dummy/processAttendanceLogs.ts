@@ -554,7 +554,25 @@ export function getDummyMeetings(classId?: string) {
   const filteredMeetings = (meetings as Meeting[])
     .map(meeting => ({
       ...meeting,
-      classes: [{ id: meeting.class_id, name: 'Kelas Pengajian' }],
+      classes: { 
+        id: meeting.class_id, 
+        name: 'Kelas Pengajian',
+        kelompok_id: 'kelompok-1',
+        kelompok: {
+          id: 'kelompok-1',
+          name: 'Warlob 1',
+          desa_id: 'desa-1',
+          desa: {
+            id: 'desa-1',
+            name: 'Soreang',
+            daerah_id: 'daerah-1',
+            daerah: {
+              id: 'daerah-1',
+              name: 'Bandung Selatan 2'
+            }
+          }
+        }
+      },
       attendancePercentage: 0, // Will be calculated
       totalStudents: 25,
       presentCount: 0,

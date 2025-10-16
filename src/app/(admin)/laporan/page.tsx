@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { useLaporanPage } from './hooks'
 import { FilterSection, SummaryCards, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
+import DataFilter from '@/components/shared/DataFilter'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 
 // Set Indonesian locale
@@ -18,6 +19,10 @@ export default function LaporanPage() {
     chartData,
     trendChartData,
     classes,
+    daerah,
+    desa,
+    kelompok,
+    userProfile,
     filters,
     loading,
     error,
@@ -29,9 +34,9 @@ export default function LaporanPage() {
     handleDateChange,
     handleWeekChange,
     handleResetFilters,
+    handleOrganisasiFilterChange,
     classOptions,
-    periodOptions,
-    classFilterLogic
+    periodOptions
   } = useLaporanPage()
 
   if (hasError) {
@@ -66,34 +71,45 @@ export default function LaporanPage() {
         {/* Dummy Data Indicator */}
         {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                    </div>
-                    <div className="ml-3">
-                <p className="text-sm text-orange-800 dark:text-orange-200">
-                  <strong>Mode Dummy Data:</strong> Data yang ditampilkan adalah data dummy untuk keperluan pengembangan.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+          <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+              </div>
+              <div className="ml-3">
+          <p className="text-sm text-orange-800 dark:text-orange-200">
+            <strong>Mode Dummy Data:</strong> Data yang ditampilkan adalah data dummy untuk keperluan pengembangan.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Filter Section */}
-        <FilterSection
-          filters={filters}
-          periodOptions={periodOptions}
-          classOptions={classOptions}
-          classFilterLogic={classFilterLogic}
-          onFilterChange={handleFilterChange}
-          onDateChange={handleDateChange}
-          onWeekChange={handleWeekChange}
-          onResetFilters={handleResetFilters}
-          hasActiveFilters={hasActiveFilters}
-          filterCount={filterCount}
-        />
+        <div className="space-y-4">
+          {/* <DataFilter
+            filters={filters.organisasi}
+            onFilterChange={handleOrganisasiFilterChange}
+            userProfile={userProfile}
+            daerahList={daerah || []}
+            desaList={desa || []}
+            kelompokList={kelompok || []}
+            classList={classes || []}
+            showKelas={true}
+          /> */}
+          <FilterSection
+            filters={filters}
+            periodOptions={periodOptions}
+            classOptions={classOptions}
+            onFilterChange={handleFilterChange}
+            onDateChange={handleDateChange}
+            onWeekChange={handleWeekChange}
+            onResetFilters={handleResetFilters}
+            hasActiveFilters={hasActiveFilters}
+            filterCount={filterCount}
+          />
+        </div>
 
         {loading ? (
           <LaporanSkeleton />

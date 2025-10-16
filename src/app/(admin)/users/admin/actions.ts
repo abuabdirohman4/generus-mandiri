@@ -57,7 +57,7 @@ export async function createAdmin(data: AdminData) {
       throw profileError;
     }
 
-    revalidatePath('/superadmin/users/admin');
+    revalidatePath('/users/admin');
     return { success: true };
   } catch (error) {
     console.error('Error creating admin:', error);
@@ -110,7 +110,7 @@ export async function updateAdmin(id: string, data: AdminData) {
       throw metadataError;
     }
 
-    revalidatePath('/superadmin/users/admin');
+    revalidatePath('/users/admin');
     return { success: true };
   } catch (error) {
     console.error('Error updating admin:', error);
@@ -129,7 +129,7 @@ export async function deleteAdmin(id: string) {
       throw error;
     }
 
-    revalidatePath('/superadmin/users/admin');
+    revalidatePath('/users/admin');
     return { success: true };
   } catch (error) {
     console.error('Error deleting admin:', error);

@@ -32,6 +32,27 @@ export function isSuperAdmin(role: string | undefined): boolean {
 }
 
 /**
+ * Check if user is admin at daerah level
+ */
+export function isAdminDaerah(userProfile: any): boolean {
+  return userProfile?.role === 'admin' && !!userProfile?.daerah_id && !userProfile?.desa_id
+}
+
+/**
+ * Check if user is admin at desa level
+ */
+export function isAdminDesa(userProfile: any): boolean {
+  return userProfile?.role === 'admin' && !!userProfile?.desa_id && !userProfile?.kelompok_id
+}
+
+/**
+ * Check if user is admin at kelompok level
+ */
+export function isAdminKelompok(userProfile: any): boolean {
+  return userProfile?.role === 'admin' && !!userProfile?.kelompok_id
+}
+
+/**
  * Clear all SWR cache when user logs out
  */
 export function clearUserCache() {

@@ -17,7 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
-import { isSuperAdmin } from "@/lib/userUtils";
+import { isSuperAdmin, isAdminKelompok } from "@/lib/userUtils";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -27,6 +27,7 @@ type NavItem = {
   path?: string;
   subItems?: SubNavItem[];
   adminOnly?: boolean;
+  excludeAdminKelompok?: boolean;
 };
 
 const allNavItems: NavItem[] = [
@@ -67,12 +68,14 @@ const allNavItems: NavItem[] = [
     name: "Admin",
     path: "/users/admin",
     adminOnly: true,
+    excludeAdminKelompok: true,
   },
   {
     icon: <BuildingIcon className="w-6 h-6" />,
     name: "Organisasi",
     path: "/organisasi",
     adminOnly: true,
+    excludeAdminKelompok: true,
   },
 ];
 
@@ -375,8 +378,20 @@ function SidebarContent({
   const isSuperAdminUser = isSuperAdmin(profile?.role);
   const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
   
-  // Filter navigation items based on admin status (same logic as QuickActions)
-  const visibleNavItems = allNavItems.filter(item => !item.adminOnly || isAdminUser);
+  // Filter navigation items based on admin status and role-specific exclusions
+  const visibleNavItems = allNavItems.filter(item => {
+    // Filter out admin-only items for non-admins
+    if (item.adminOnly && !isAdminUser) {
+      return false
+    }
+    
+    // Filter out items that exclude Admin Kelompok
+    if (item.excludeAdminKelompok && isAdminKelompok(profile)) {
+      return false
+    }
+    
+    return true
+  });
   
   return (
     <aside

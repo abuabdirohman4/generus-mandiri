@@ -12,9 +12,59 @@ import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import MeetingChartSkeleton from '@/components/ui/skeleton/MeetingChartSkeleton'
 import { TrendChart } from '@/components/charts'
+import { useUserProfile } from '@/stores/userProfileStore'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa } from '@/lib/userUtils'
 
 // Set Indonesian locale
 dayjs.locale('id')
+
+// Helper function to format meeting location based on user role
+const formatMeetingLocation = (meeting: any, userProfile: any) => {
+  if (!meeting.classes) return ''
+  
+  const isSuperAdminUser = isSuperAdmin(userProfile?.role)
+  const isAdminDaerahUser = isAdminDaerah(userProfile)
+  const isAdminDesaUser = isAdminDesa(userProfile)
+  
+  const parts: string[] = []
+  
+  // Superadmin: Show Daerah, Desa, Kelompok, Class
+  if (isSuperAdminUser) {
+    if (meeting.classes.kelompok?.desa?.daerah?.name) {
+      parts.push(meeting.classes.kelompok.desa.daerah.name)
+    }
+    if (meeting.classes.kelompok?.desa?.name) {
+      parts.push(meeting.classes.kelompok.desa.name)
+    }
+    if (meeting.classes.kelompok?.name) {
+      parts.push(meeting.classes.kelompok.name)
+    }
+    parts.push(meeting.classes.name)
+  }
+  // Admin Daerah: Show Desa, Kelompok, Class
+  else if (isAdminDaerahUser) {
+    if (meeting.classes.kelompok?.desa?.name) {
+      parts.push(meeting.classes.kelompok.desa.name)
+    }
+    if (meeting.classes.kelompok?.name) {
+      parts.push(meeting.classes.kelompok.name)
+    }
+    parts.push(meeting.classes.name)
+  }
+  // Admin Desa: Show Kelompok, Class
+  else if (isAdminDesaUser) {
+    if (meeting.classes.kelompok?.name) {
+      parts.push(meeting.classes.kelompok.name)
+    }
+    parts.push(meeting.classes.name)
+  }
+  // Teacher & Admin Kelompok: Show only Class
+  else {
+    parts.push(meeting.classes.name)
+  }
+  
+  return parts.join(', ')
+}
 
 interface Meeting {
   id: string
@@ -28,7 +78,22 @@ interface Meeting {
   classes: {
     id: string
     name: string
-  }[]
+    kelompok_id?: string
+    kelompok?: {
+      id: string
+      name: string
+      desa_id?: string
+      desa?: {
+        id: string
+        name: string
+        daerah_id?: string
+        daerah?: {
+          id: string
+          name: string
+        }
+      }
+    }
+  }
   attendancePercentage: number
   totalStudents: number
   presentCount: number
@@ -65,6 +130,8 @@ export default function MeetingChart({
     meetingId: '',
     meetingTitle: ''
   })
+
+  const { profile: userProfile } = useUserProfile()
 
   const handleEdit = async (meeting: Meeting) => {
     if (onEdit) {
@@ -153,7 +220,7 @@ export default function MeetingChart({
       sickCount: meeting.sickCount,
       totalStudents: meeting.totalStudents,
       topic: meeting.topic,
-      classes: meeting.classes[0]?.name || ''
+      classes: formatMeetingLocation(meeting, userProfile)
     }))
 
 

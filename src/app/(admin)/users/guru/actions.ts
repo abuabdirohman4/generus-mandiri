@@ -57,7 +57,7 @@ export async function createTeacher(data: TeacherData) {
       throw profileError;
     }
 
-    revalidatePath('/superadmin/users/guru');
+    revalidatePath('/users/guru');
     return { success: true };
   } catch (error) {
     console.error('Error creating teacher:', error);
@@ -110,7 +110,7 @@ export async function updateTeacher(id: string, data: TeacherData) {
       throw metadataError;
     }
 
-    revalidatePath('/superadmin/users/guru');
+    revalidatePath('/users/guru');
     return { success: true };
   } catch (error) {
     console.error('Error updating teacher:', error);
@@ -129,7 +129,7 @@ export async function deleteTeacher(id: string) {
       throw error;
     }
 
-    revalidatePath('/superadmin/users/guru');
+    revalidatePath('/users/guru');
     return { success: true };
   } catch (error) {
     console.error('Error deleting teacher:', error);
@@ -218,7 +218,7 @@ export async function assignTeacherToKelompok(teacherId: string, kelompokId: str
       throw error;
     }
 
-    revalidatePath('/superadmin/users/guru');
+    revalidatePath('/users/guru');
     return { success: true };
   } catch (error) {
     console.error('Error assigning teacher to kelompok:', error);
@@ -241,7 +241,7 @@ export async function assignTeacherToClass(teacherId: string, classId: string) {
       throw error;
     }
 
-    revalidatePath('/superadmin/users/guru');
+    revalidatePath('/users/guru');
     return { success: true };
   } catch (error) {
     console.error('Error assigning teacher to class:', error);

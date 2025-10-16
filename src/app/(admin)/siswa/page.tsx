@@ -2,7 +2,7 @@
 
 import Button from '@/components/ui/button/Button'
 import SiswaSkeleton from '@/components/ui/skeleton/SiswaSkeleton'
-import ClassFilter from '@/components/shared/ClassFilter'
+import DataFilter from '@/components/shared/DataFilter'
 import { StatsCards, StudentModal, StudentsTable } from './components'
 import { useSiswaPage } from './hooks'
 
@@ -10,6 +10,9 @@ export default function SiswaPage() {
   const {
     students,
     classes,
+    daerah,
+    desa,
+    kelompok,
     userProfile,
     loading,
     showModal,
@@ -17,11 +20,13 @@ export default function SiswaPage() {
     selectedStudent,
     selectedClassFilter,
     submitting,
+    dataFilters,
     openCreateModal,
     handleEditStudent,
     handleDeleteStudent,
     handleSubmit,
     handleClassFilterChange,
+    handleDataFilterChange,
     closeModal
   } = useSiswaPage()
 
@@ -56,11 +61,15 @@ export default function SiswaPage() {
         </div>
 
         {/* Filter Section */}
-        <ClassFilter
+        <DataFilter
+          filters={dataFilters}
+          onFilterChange={handleDataFilterChange}
           userProfile={userProfile}
-          classes={classes}
-          selectedClassFilter={selectedClassFilter}
-          onClassFilterChange={handleClassFilterChange}
+          daerahList={daerah || []}
+          desaList={desa || []}
+          kelompokList={kelompok || []}
+          classList={classes || []}
+          showKelas={true}
         />
 
         {/* Stats Cards */}

@@ -537,9 +537,24 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         description,
         student_snapshot,
         created_at,
-        classes (
+        classes!inner (
           id,
-          name
+          name,
+          kelompok_id,
+          kelompok:kelompok_id (
+            id,
+            name,
+            desa_id,
+            desa:desa_id (
+              id,
+              name,
+              daerah_id,
+              daerah:daerah_id (
+                id,
+                name
+              )
+            )
+          )
         )
       `)
       .order('date', { ascending: false })
@@ -613,8 +628,48 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         ? Math.round((presentCount / totalStudents) * 100)
         : 0
 
+      // Transform classes from array to single object to match our interface
+      let classes: any = meeting.classes
+      if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
+        classes = meeting.classes[0]
+      }
+      
+      // Transform kelompok from array to single object if needed
+      if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
+        classes = {
+          ...classes,
+          kelompok: classes.kelompok[0]
+        }
+      }
+      
+      // Transform desa from array to single object if needed
+      if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
+        classes = {
+          ...classes,
+          kelompok: {
+            ...classes.kelompok,
+            desa: classes.kelompok.desa[0]
+          }
+        }
+      }
+      
+      // Transform daerah from array to single object if needed
+      if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
+        classes = {
+          ...classes,
+          kelompok: {
+            ...classes.kelompok,
+            desa: {
+              ...classes.kelompok.desa,
+              daerah: classes.kelompok.desa.daerah[0]
+            }
+          }
+        }
+      }
+
       return {
         ...meeting,
+        classes,
         attendancePercentage,
         totalStudents,
         presentCount,

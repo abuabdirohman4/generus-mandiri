@@ -46,10 +46,13 @@ function PageTitle() {
 
   // If page needs back button
   const needsBackButton = (path: string) => {
-    return path === '/absensi' || 
-           path.startsWith('/absensi/'); // Include all absensi sub-pages including meeting IDs
+    return path.startsWith('/absensi/') || // Include all absensi sub-pages including meeting IDs
+          // path === '/absensi' || 
           //  path === '/siswa' || 
-          //  path === '/laporan';
+          //  path === '/laporan' || 
+          path === '/users/guru' || 
+          path === '/users/admin' || 
+          path === '/organisasi';
   };
 
   if (!mounted) {

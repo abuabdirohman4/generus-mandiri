@@ -1,105 +1,78 @@
 "use client";
 
-import { useState } from 'react';
-import { useDaerah } from '@/hooks/useDaerah';
-import { useDesa } from '@/hooks/useDesa';
-import { useKelompok } from '@/hooks/useKelompok';
-import { deleteDaerah } from './actions/daerah';
-import { deleteDesa } from './actions/desa';
-import { deleteKelompok } from './actions/kelompok';
+import { useOrganisasiPage } from './hooks/useOrganisasiPage';
 import DaerahTable from './components/DaerahTable';
 import DesaTable from './components/DesaTable';
 import KelompokTable from './components/KelompokTable';
 import DaerahModal from './components/DaerahModal';
 import DesaModal from './components/DesaModal';
 import KelompokModal from './components/KelompokModal';
+import DataFilter from '@/components/shared/DataFilter';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
+import { isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 type TabType = 'daerah' | 'desa' | 'kelompok';
 
-export default function OrganisasiManagementPage() {
-  const { daerah, isLoading: daerahLoading, error: daerahError, mutate: mutateDaerah } = useDaerah();
-  const { desa, isLoading: desaLoading, error: desaError, mutate: mutateDesa } = useDesa();
-  const { kelompok, isLoading: kelompokLoading, error: kelompokError, mutate: mutateKelompok } = useKelompok();
+// Helper function to generate dynamic description based on user role
+const getPageDescription = (userProfile: any) => {
+  const isSuperAdminUser = userProfile?.role === 'superadmin'
+  const isAdminDaerahUser = isAdminDaerah(userProfile)
+  const isAdminDesaUser = isAdminDesa(userProfile)
   
-  const [activeTab, setActiveTab] = useState<TabType>('daerah');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; item: any; type: TabType }>({
-    isOpen: false,
-    item: null,
-    type: 'daerah'
-  });
+  if (isSuperAdminUser) {
+    return 'Kelola data daerah, desa, dan kelompok dalam sistem'
+  } else if (isAdminDaerahUser) {
+    return 'Kelola data desa dan kelompok dalam sistem'
+  } else if (isAdminDesaUser) {
+    return 'Kelola data kelompok dalam sistem'
+  }
+  
+  return 'Kelola struktur organisasi'
+}
 
-  const isLoading = daerahLoading || desaLoading || kelompokLoading;
-  const error = daerahError || desaError || kelompokError;
+export default function OrganisasiManagementPage() {
+  const router = useRouter();
+  const {
+    daerah,
+    desa,
+    kelompok,
+    userProfile,
+    isLoading,
+    error,
+    activeTab,
+    isModalOpen,
+    editingItem,
+    deleteConfirm,
+    daerahFilter,
+    desaFilter,
+    tabs,
+    setActiveTab,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    setDaerahFilter,
+    setDesaFilter,
+    handleDelete,
+    handleSuccess
+  } = useOrganisasiPage();
 
-  const handleCreate = () => {
-    setEditingItem(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (item: any) => {
-    setEditingItem(item);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = (item: any, type: TabType) => {
-    setDeleteConfirm({ isOpen: true, item, type });
-  };
-
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setEditingItem(null);
-  };
-
-  const handleDeleteClose = () => {
-    setDeleteConfirm({ isOpen: false, item: null, type: 'daerah' });
-  };
-
-  const handleDeleteConfirm = async () => {
-    try {
-      switch (deleteConfirm.type) {
-        case 'daerah':
-          await deleteDaerah(deleteConfirm.item.id);
-          mutateDaerah();
-          break;
-        case 'desa':
-          await deleteDesa(deleteConfirm.item.id);
-          mutateDesa();
-          break;
-        case 'kelompok':
-          await deleteKelompok(deleteConfirm.item.id);
-          mutateKelompok();
-          break;
-      }
-      handleDeleteClose();
-    } catch (error) {
-      console.error('Error deleting item:', error);
+  // Check if user has access to this page
+  useEffect(() => {
+    if (!userProfile) return
+    
+    const isAdminKelompokUser = isAdminKelompok(userProfile)
+    const isTeacher = userProfile.role === 'teacher'
+    
+    if (isAdminKelompokUser || isTeacher) {
+      // Redirect to home page
+      router.push('/home')
     }
-  };
-
-  const handleSuccess = () => {
-    switch (activeTab) {
-      case 'daerah':
-        mutateDaerah();
-        break;
-      case 'desa':
-        mutateDesa();
-        break;
-      case 'kelompok':
-        mutateKelompok();
-        break;
-    }
-    handleModalClose();
-  };
-
-  const tabs = [
-    { id: 'daerah', label: 'Daerah', count: daerah?.length || 0 },
-    { id: 'desa', label: 'Desa', count: desa?.length || 0 },
-    { id: 'kelompok', label: 'Kelompok', count: kelompok?.length || 0 }
-  ];
+  }, [userProfile, router])
 
   if (isLoading) {
     return <SuperadminTableSkeleton />;
@@ -124,14 +97,14 @@ export default function OrganisasiManagementPage() {
             <div className="flex justify-between items-center">
                 <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Manajemen Organisasi
+                    Organisasi
                 </h1>
                 <p className="mt-2 text-gray-600 dark:text-gray-400">
-                    Kelola data daerah, desa, dan kelompok dalam sistem
+                    {getPageDescription(userProfile)}
                 </p>
                 </div>
                 <button
-                onClick={handleCreate}
+                onClick={openCreateModal}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                 Tambah
@@ -140,7 +113,7 @@ export default function OrganisasiManagementPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="-mb-px flex space-x-8">
             {tabs.map((tab) => (
                 <button
@@ -165,38 +138,86 @@ export default function OrganisasiManagementPage() {
             </nav>
         </div>
 
+        {/* Conditional Filters */}
+        {activeTab === 'desa' && (
+          <div className="mt-6">
+            <DataFilter
+              filters={{
+                daerah: daerahFilter,
+                desa: '',
+                kelompok: '',
+                kelas: ''
+              }}
+              onFilterChange={(filters) => {
+                setDaerahFilter(filters.daerah);
+                setDesaFilter('');
+              }}
+              userProfile={userProfile}
+              daerahList={daerah || []}
+              desaList={desa || []}
+              kelompokList={kelompok || []}
+              classList={[]}
+              showKelas={false}
+              showDesa={false}
+              showKelompok={false}
+            />
+          </div>
+        )}
+        
+        {activeTab === 'kelompok' && (
+          <div className="mt-6">
+            <DataFilter
+              filters={{
+                daerah: daerahFilter,
+                desa: desaFilter,
+                kelompok: '',
+                kelas: ''
+              }}
+              onFilterChange={(filters) => {
+                setDaerahFilter(filters.daerah);
+                setDesaFilter(filters.desa);
+              }}
+              userProfile={userProfile}
+              daerahList={daerah || []}
+              desaList={desa || []}
+              kelompokList={kelompok || []}
+              classList={[]}
+              showKelas={false}
+              showKelompok={false}
+            />
+          </div>
+        )}
+
         {/* Content */}
-        <div className="mt-6">
-            {activeTab === 'daerah' && (
-            <DaerahTable
-                data={daerah || []}
-                onEdit={handleEdit}
-                onDelete={(item) => handleDelete(item, 'daerah')}
-            />
-            )}
-            
-            {activeTab === 'desa' && (
-            <DesaTable
-                data={desa || []}
-                onEdit={handleEdit}
-                onDelete={(item) => handleDelete(item, 'desa')}
-            />
-            )}
-            
-            {activeTab === 'kelompok' && (
-            <KelompokTable
-                data={kelompok || []}
-                onEdit={handleEdit}
-                onDelete={(item) => handleDelete(item, 'kelompok')}
-            />
-            )}
-        </div>
+        {activeTab === 'daerah' && (
+          <DaerahTable
+              data={daerah || []}
+              onEdit={openEditModal}
+              onDelete={(item) => openDeleteConfirm(item, 'daerah')}
+          />
+        )}
+        
+        {activeTab === 'desa' && (
+          <DesaTable
+              data={desa || []}
+              onEdit={openEditModal}
+              onDelete={(item) => openDeleteConfirm(item, 'desa')}
+          />
+        )}
+        
+        {activeTab === 'kelompok' && (
+          <KelompokTable
+              data={kelompok || []}
+              onEdit={openEditModal}
+              onDelete={(item) => openDeleteConfirm(item, 'kelompok')}
+          />
+        )}
 
         {/* Modals */}
         {activeTab === 'daerah' && (
             <DaerahModal
             isOpen={isModalOpen}
-            onClose={handleModalClose}
+            onClose={closeModal}
             daerah={editingItem}
             onSuccess={handleSuccess}
             />
@@ -205,7 +226,7 @@ export default function OrganisasiManagementPage() {
         {activeTab === 'desa' && (
             <DesaModal
             isOpen={isModalOpen}
-            onClose={handleModalClose}
+            onClose={closeModal}
             desa={editingItem}
             daerahList={daerah || []}
             onSuccess={handleSuccess}
@@ -215,7 +236,7 @@ export default function OrganisasiManagementPage() {
         {activeTab === 'kelompok' && (
             <KelompokModal
             isOpen={isModalOpen}
-            onClose={handleModalClose}
+            onClose={closeModal}
             kelompok={editingItem}
             desaList={desa || []}
             onSuccess={handleSuccess}
@@ -225,8 +246,8 @@ export default function OrganisasiManagementPage() {
         {/* Delete Confirmation Modal */}
         <ConfirmModal
             isOpen={deleteConfirm.isOpen}
-            onClose={handleDeleteClose}
-            onConfirm={handleDeleteConfirm}
+            onClose={closeDeleteConfirm}
+            onConfirm={handleDelete}
             title={`Hapus ${tabs.find(t => t.id === deleteConfirm.type)?.label}?`}
             message={`Apakah Anda yakin ingin menghapus ${deleteConfirm.type} "${deleteConfirm.item?.name}"?`}
             confirmText="Hapus"

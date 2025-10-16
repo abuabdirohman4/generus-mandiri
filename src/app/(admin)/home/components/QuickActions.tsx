@@ -4,11 +4,19 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon } from '@/lib/icons';
+import { isAdminKelompok } from '@/lib/userUtils';
 
 interface Profile {
   id: string;
   full_name: string;
   role: string;
+  email?: string;
+  kelompok_id?: string | null;
+  desa_id?: string | null;
+  daerah_id?: string | null;
+  kelompok?: { id: string; name: string } | null;
+  desa?: { id: string; name: string } | null;
+  daerah?: { id: string; name: string } | null;
   classes?: Array<{
     id: string;
     name: string;
@@ -29,6 +37,7 @@ interface QuickActionItem {
   bgColor: string;
   iconColor: string;
   adminOnly?: boolean;
+  excludeAdminKelompok?: boolean;
   disabled?: boolean;
 }
 
@@ -126,6 +135,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-blue-100 dark:bg-blue-900',
       iconColor: 'text-blue-600 dark:text-blue-400',
       adminOnly: true,
+      excludeAdminKelompok: true,
       disabled: false
     },
     {
@@ -137,6 +147,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-green-100 dark:bg-green-900',
       iconColor: 'text-green-600 dark:text-green-400',
       adminOnly: true,
+      excludeAdminKelompok: true,
       disabled: false
     },
     {
@@ -156,8 +167,20 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     },
   ];
 
-  // Filter actions based on admin status
-  const visibleActions = quickActions.filter(action => !action.adminOnly || isAdmin);
+  // Filter actions based on admin status and role-specific exclusions
+  const visibleActions = quickActions.filter(action => {
+    // Filter out admin-only actions for non-admins
+    if (action.adminOnly && !isAdmin) {
+      return false
+    }
+    
+    // Filter out actions that exclude Admin Kelompok
+    if (action.excludeAdminKelompok && isAdminKelompok(profile)) {
+      return false
+    }
+    
+    return true
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
