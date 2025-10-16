@@ -9,6 +9,7 @@ import Label from '@/components/form/Label';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';
+import { isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 
 interface Kelompok {
   id: string;
@@ -51,11 +52,7 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
 
   useEffect(() => {
     if (kelompok) {
-      setFormData({
-        name: kelompok.name,
-        desa_id: kelompok.desa_id
-      });
-      // Set data filters based on kelompok's desa
+      // Edit mode - load kelompok data
       const desa = allDesaList.find((d: any) => d.id === kelompok.desa_id);
       if (desa) {
         setDataFilters({
@@ -65,20 +62,32 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
           kelas: ''
         });
       }
-    } else {
       setFormData({
-        name: '',
-        desa_id: ''
+        name: kelompok.name,
+        desa_id: kelompok.desa_id
       });
+    } else {
+      // Create mode - auto-fill from user profile (not for Superadmin)
+      const autoFilledDaerah = userProfile && userProfile.role !== 'superadmin' 
+        ? userProfile.daerah_id || ''
+        : '';
+      const autoFilledDesa = userProfile && userProfile.role !== 'superadmin' && (isAdminDesa(userProfile) || isAdminKelompok(userProfile))
+        ? userProfile.desa_id || ''
+        : '';
+      
       setDataFilters({
-        daerah: '',
-        desa: '',
+        daerah: autoFilledDaerah,
+        desa: autoFilledDesa,
         kelompok: '',
         kelas: ''
       });
+      setFormData({
+        name: '',
+        desa_id: autoFilledDesa
+      });
     }
     setError(undefined);
-  }, [kelompok, isOpen, allDesaList]);
+  }, [kelompok, isOpen, userProfile, allDesaList]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -169,7 +178,6 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
                   desa: true,
                   kelompok: false
                 }}
-                className="space-y-2"
               />
             </div>
           </div>

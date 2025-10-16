@@ -17,6 +17,26 @@ export interface TeacherData {
 
 export async function createTeacher(data: TeacherData) {
   try {
+    // Validate required fields
+    if (!data.username?.trim()) {
+      throw new Error('Username harus diisi');
+    }
+    if (!data.full_name?.trim()) {
+      throw new Error('Nama lengkap harus diisi');
+    }
+    if (!data.email?.trim()) {
+      throw new Error('Email harus diisi');
+    }
+    if (!data.password) {
+      throw new Error('Password harus diisi');
+    }
+    if (!data.daerah_id) {
+      throw new Error('Daerah harus dipilih');
+    }
+    if (!data.kelompok_id) {
+      throw new Error('Kelompok harus dipilih');
+    }
+
     const supabase = await createClient();
 
     // First create the user in auth.users
@@ -47,7 +67,7 @@ export async function createTeacher(data: TeacherData) {
         email: data.email,
         role: 'teacher',
         daerah_id: data.daerah_id,
-        desa_id: data.desa_id,
+        desa_id: data.desa_id || null,
         kelompok_id: data.kelompok_id
       }]);
 
@@ -67,6 +87,23 @@ export async function createTeacher(data: TeacherData) {
 
 export async function updateTeacher(id: string, data: TeacherData) {
   try {
+    // Validate required fields
+    if (!data.username?.trim()) {
+      throw new Error('Username harus diisi');
+    }
+    if (!data.full_name?.trim()) {
+      throw new Error('Nama lengkap harus diisi');
+    }
+    if (!data.email?.trim()) {
+      throw new Error('Email harus diisi');
+    }
+    if (!data.daerah_id) {
+      throw new Error('Daerah harus dipilih');
+    }
+    if (!data.kelompok_id) {
+      throw new Error('Kelompok harus dipilih');
+    }
+
     const supabase = await createClient();
 
     // Update profile
@@ -77,7 +114,7 @@ export async function updateTeacher(id: string, data: TeacherData) {
         full_name: data.full_name,
         email: data.email,
         daerah_id: data.daerah_id,
-        desa_id: data.desa_id,
+        desa_id: data.desa_id || null,
         kelompok_id: data.kelompok_id,
         updated_at: new Date().toISOString()
       })

@@ -20,6 +20,7 @@ interface InputFilterProps {
   variant?: 'page' | 'modal'  // NEW
   compact?: boolean           // NEW - removes margin, max-width
   required?: boolean          // NEW - for form validation
+  placeholder?: string        // NEW - placeholder option text
 }
 
 export default function InputFilter({ 
@@ -34,7 +35,8 @@ export default function InputFilter({
   widthClassName = '',
   variant = 'page',
   compact = false,
-  required = false
+  required = false,
+  placeholder
 }: InputFilterProps) {
   // Determine styling based on variant and compact mode
   const containerClass = variant === 'modal' 
@@ -64,6 +66,11 @@ export default function InputFilter({
             backgroundPosition: 'right 8px center'
           }}
         >
+          {placeholder && (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          )}
           {allOptionLabel && (
             <option value="">{allOptionLabel}</option>
           )}

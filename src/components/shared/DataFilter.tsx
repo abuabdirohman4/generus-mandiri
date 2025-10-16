@@ -253,16 +253,16 @@ export default function DataFilter({
   // Responsive layout classes
   const containerClass = cn(
     variant === 'modal' 
-      ? (compact ? "space-y-2" : "space-y-4")
+      ? (compact ? "space-y-6" : "space-y-4")
       : "grid gap-x-4",
     variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
     variant === 'page' && filterCount === 2 && "grid-cols-2 md:grid-cols-4",
     variant === 'page' && filterCount === 3 && "grid-cols-2 md:grid-cols-4",
     variant === 'page' && filterCount === 4 && "grid-cols-2 md:grid-cols-4",
     variant === 'modal' && filterCount === 1 && "grid-cols-1",
-    variant === 'modal' && filterCount === 2 && "grid-cols-1 md:grid-cols-2",
-    variant === 'modal' && filterCount === 3 && "grid-cols-1 md:grid-cols-2",
-    variant === 'modal' && filterCount === 4 && "grid-cols-1 md:grid-cols-2",
+    variant === 'modal' && filterCount === 2 && "grid-cols-1",
+    variant === 'modal' && filterCount === 3 && "grid-cols-1",
+    variant === 'modal' && filterCount === 4 && "grid-cols-1",
     className
   )
 
@@ -271,9 +271,9 @@ export default function DataFilter({
     if (variant === 'page' && filterCount === 3 && index === 2) {
       return "col-span-2 md:col-span-1" // Last filter full width on mobile
     }
-    if (variant === 'modal' && filterCount === 3 && index === 2) {
-      return "md:col-span-2" // Last filter spans 2 columns in modal
-    }
+    // if (variant === 'modal' && filterCount === 3 && index === 2) {
+    //   return "md:col-span-2" // Last filter spans 2 columns in modal
+    // }
     return ""
   }
 
@@ -292,6 +292,7 @@ export default function DataFilter({
             variant={variant}
             compact={compact}
             required={requiredFields.daerah}
+            placeholder={variant === 'modal' ? 'Pilih Daerah' : undefined}
           />
         </div>
       )}
@@ -309,6 +310,7 @@ export default function DataFilter({
             variant={variant}
             compact={compact}
             required={requiredFields.desa}
+            placeholder={variant === 'modal' ? 'Pilih Desa' : undefined}
           />
         </div>
       )}
@@ -326,6 +328,7 @@ export default function DataFilter({
             variant={variant}
             compact={compact}
             required={requiredFields.kelompok}
+            placeholder={variant === 'modal' ? 'Pilih Kelompok' : undefined}
           />
         </div>
       )}
@@ -343,6 +346,7 @@ export default function DataFilter({
             variant={variant}
             compact={compact}
             required={requiredFields.kelas}
+            placeholder={variant === 'modal' ? 'Pilih Kelas' : undefined}
           />
         </div>
       )}

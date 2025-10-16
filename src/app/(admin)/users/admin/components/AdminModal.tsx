@@ -12,6 +12,7 @@ import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
 import InputFilter from '@/components/form/input/InputFilter';
+import { isAdminKelompok } from '@/lib/userUtils';
 
 interface Admin {
   id: string;
@@ -96,6 +97,7 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
 
   useEffect(() => {
     if (admin) {
+      // Edit mode
       setFormData({
         username: admin.username || '',
         full_name: admin.full_name || '',
@@ -111,23 +113,34 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         kelas: ''
       });
     } else {
+      // Create mode - auto-fill from user profile (not for Superadmin)
+      const autoFilledDaerah = userProfile && userProfile.role !== 'superadmin' 
+        ? userProfile.daerah_id || ''
+        : '';
+      const autoFilledDesa = userProfile && userProfile.role !== 'superadmin' 
+        ? userProfile.desa_id || ''
+        : '';
+      const autoFilledKelompok = userProfile && userProfile.role !== 'superadmin' && isAdminKelompok(userProfile)
+        ? userProfile.kelompok_id || ''
+        : '';
+      
       setFormData({
         username: '',
         full_name: '',
         email: '',
         role: 'admin',
-        daerah_id: '',
-        kelompok_id: ''
+        daerah_id: autoFilledDaerah,
+        kelompok_id: autoFilledKelompok
       });
       setDataFilters({
-        daerah: '',
-        desa: '',
-        kelompok: '',
+        daerah: autoFilledDaerah,
+        desa: autoFilledDesa,
+        kelompok: autoFilledKelompok,
         kelas: ''
       });
     }
     setError(undefined);
-  }, [admin, isOpen]);
+  }, [admin, isOpen, userProfile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -261,27 +274,24 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
             />
           </div>
           
-          <div className="md:col-span-3">
-            <DataFilter
-              filters={dataFilters}
-              onFilterChange={handleDataFilterChange}
-              userProfile={userProfile}
-              daerahList={daerahList}
-              desaList={desaList}
-              kelompokList={kelompokList}
-              classList={[]}
-              showKelas={false}
-              variant="modal"
-              compact={true}
-              hideAllOption={true}
-              requiredFields={{
-                daerah: false,
-                desa: false,
-                kelompok: false // Optional for admin
-              }}
-              className="space-y-2"
-            />
-          </div>
+          <DataFilter
+            filters={dataFilters}
+            onFilterChange={handleDataFilterChange}
+            userProfile={userProfile}
+            daerahList={daerahList}
+            desaList={desaList}
+            kelompokList={kelompokList}
+            classList={[]}
+            showKelas={false}
+            variant="modal"
+            compact={true}
+            hideAllOption={true}
+            requiredFields={{
+              daerah: false,
+              desa: false,
+              kelompok: false // Optional for admin
+            }}
+          />
 
           <div className="flex justify-end gap-3 mt-6">
             <button

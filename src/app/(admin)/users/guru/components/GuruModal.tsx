@@ -11,6 +11,7 @@ import { useModalOrganisationFilters } from '@/hooks/useModalOrganisationFilters
 import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
+import { isAdminKelompok } from '@/lib/userUtils';
 
 interface Guru {
   id: string;
@@ -93,6 +94,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
   useEffect(() => {
     if (guru) {
+      // Edit mode
       setFormData({
         username: guru.username || '',
         full_name: guru.full_name || '',
@@ -107,22 +109,33 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         kelas: ''
       });
     } else {
+      // Create mode - auto-fill from user profile (not for Superadmin)
+      const autoFilledDaerah = userProfile && userProfile.role !== 'superadmin' 
+        ? userProfile.daerah_id || ''
+        : '';
+      const autoFilledDesa = userProfile && userProfile.role !== 'superadmin' 
+        ? userProfile.desa_id || ''
+        : '';
+      const autoFilledKelompok = userProfile && userProfile.role !== 'superadmin' && isAdminKelompok(userProfile)
+        ? userProfile.kelompok_id || ''
+        : '';
+      
       setFormData({
         username: '',
         full_name: '',
         email: '',
-        daerah_id: '',
-        kelompok_id: ''
+        daerah_id: autoFilledDaerah,
+        kelompok_id: autoFilledKelompok
       });
       setDataFilters({
-        daerah: '',
-        desa: '',
-        kelompok: '',
+        daerah: autoFilledDaerah,
+        desa: autoFilledDesa,
+        kelompok: autoFilledKelompok,
         kelas: ''
       });
     }
     setError(undefined);
-  }, [guru, isOpen]);
+  }, [guru, isOpen, userProfile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -259,7 +272,6 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                 desa: false,
                 kelompok: true
               }}
-              className="space-y-2"
             />
           </div>
 

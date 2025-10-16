@@ -12,6 +12,14 @@ export interface DesaData {
 
 export async function createDesa(data: DesaData) {
   try {
+    // Validate required fields
+    if (!data.name?.trim()) {
+      throw new Error('Nama desa harus diisi');
+    }
+    if (!data.daerah_id) {
+      throw new Error('Daerah harus dipilih');
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -35,6 +43,14 @@ export async function createDesa(data: DesaData) {
 
 export async function updateDesa(id: string, data: DesaData) {
   try {
+    // Validate required fields
+    if (!data.name?.trim()) {
+      throw new Error('Nama desa harus diisi');
+    }
+    if (!data.daerah_id) {
+      throw new Error('Daerah harus dipilih');
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase

@@ -12,6 +12,14 @@ export interface KelompokData {
 
 export async function createKelompok(data: KelompokData) {
   try {
+    // Validate required fields
+    if (!data.name?.trim()) {
+      throw new Error('Nama kelompok harus diisi');
+    }
+    if (!data.desa_id) {
+      throw new Error('Desa harus dipilih');
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase
@@ -35,6 +43,14 @@ export async function createKelompok(data: KelompokData) {
 
 export async function updateKelompok(id: string, data: KelompokData) {
   try {
+    // Validate required fields
+    if (!data.name?.trim()) {
+      throw new Error('Nama kelompok harus diisi');
+    }
+    if (!data.desa_id) {
+      throw new Error('Desa harus dipilih');
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase

@@ -8,6 +8,7 @@ import InputFilter from '@/components/form/input/InputFilter';
 import Label from '@/components/form/Label';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { shouldShowDaerahFilter } from '@/lib/accessControl';
+import { isAdminDaerah } from '@/lib/userUtils';
 
 interface Desa {
   id: string;
@@ -48,13 +49,18 @@ export default function DesaModal({ isOpen, onClose, desa, daerahList, onSuccess
         daerah_id: desa.daerah_id
       });
     } else {
+      // Auto-fill daerah_id for Admin Daerah only (not for Superadmin)
+      const autoFilledDaerah = userProfile && isAdminDaerah(userProfile) && userProfile.role !== 'superadmin'
+        ? userProfile.daerah_id || ''
+        : '';
+      
       setFormData({
         name: '',
-        daerah_id: ''
+        daerah_id: autoFilledDaerah
       });
     }
     setError(undefined);
-  }, [desa, isOpen]);
+  }, [desa, isOpen, userProfile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -126,6 +132,7 @@ export default function DesaModal({ isOpen, onClose, desa, daerahList, onSuccess
                   variant="modal"
                   compact={true}
                   required={true}
+                  placeholder="Pilih Daerah"
                 />
               </div>
             )}
