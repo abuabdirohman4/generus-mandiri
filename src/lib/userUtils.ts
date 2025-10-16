@@ -24,7 +24,16 @@ export {
   isAdminDesa,
   isAdminKelompok,
   isTeacher,
-  isAdmin
+  isAdmin,
+  shouldShowDaerahFilter,
+  shouldShowDesaFilter,
+  shouldShowKelompokFilter,
+  shouldShowKelasFilter,
+  getRequiredOrgFields,
+  getAutoFilledOrgValues,
+  canAccessFeature,
+  getDataFilter,
+  type UserProfile
 } from './accessControl'
 
 // Legacy function for backward compatibility (takes role string instead of profile)

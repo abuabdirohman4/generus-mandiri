@@ -7,8 +7,7 @@ import InputField from '@/components/form/input/InputField';
 import InputFilter from '@/components/form/input/InputFilter';
 import Label from '@/components/form/Label';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { shouldShowDaerahFilter } from '@/lib/accessControl';
-import { isAdminDaerah } from '@/lib/userUtils';
+import { shouldShowDaerahFilter, isAdminDaerah } from '@/lib/userUtils';
 
 interface Desa {
   id: string;

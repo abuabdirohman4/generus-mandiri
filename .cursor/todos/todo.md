@@ -47,8 +47,8 @@ Role Access
     [x] Guru
     [x] Admin
     [x] Organisasi
-[] Update semua pakai accessControl.ts
-[] Minta penjelasan kenapa accessControl ada 2
+[x] Update semua pakai accessControl.ts
+[x] Minta penjelasan kenapa accessControl ada 2
 
 Organisasi
 [x] CRUD

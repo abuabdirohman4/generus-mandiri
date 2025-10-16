@@ -3,8 +3,7 @@
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import { PencilIcon, TrashBinIcon, LockIcon } from '@/lib/icons';
-import { isAdminDaerah, isAdminDesa } from '@/lib/userUtils';
-import { UserProfile } from '@/lib/accessControl';
+import { isAdminDaerah, isAdminDesa, UserProfile } from '@/lib/userUtils';
 
 interface Guru {
   id: string;

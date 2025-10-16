@@ -8,7 +8,7 @@ import {
   getRequiredOrgFields,
   getAutoFilledOrgValues,
   type UserProfile 
-} from '@/lib/accessControl'
+} from '@/lib/userUtils'
 
 interface Daerah {
   id: string
