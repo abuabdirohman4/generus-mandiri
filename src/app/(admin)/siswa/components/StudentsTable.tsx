@@ -147,7 +147,7 @@ export default function StudentsTable({
       ];
       
       // Only add delete action if user is admin
-      if (userRole === 'admin') {
+      if (userRole === 'admin' || userRole === 'superadmin') {
         actions.push({
           id: 'delete',
           icon: TrashBinIcon,

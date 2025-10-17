@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
-import { isAdmin } from '@/lib/userUtils'
 
 export interface Class {
   id: string
@@ -35,7 +34,7 @@ export async function getAllClasses(): Promise<Class[]> {
 
     // If user is admin or superadmin, get all classes in their hierarchy
     // If user is teacher, get only their assigned classes
-    if (isAdmin(profile.role)) {
+    if (profile.role === 'admin' || profile.role === 'superadmin') {
       const { data: classes, error } = await supabase
         .from('classes')
         .select('id, name, kelompok_id')

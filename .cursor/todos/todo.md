@@ -67,7 +67,8 @@ Guru
 
 Siswa
 [x] Merge main
-[] Update tampilan table siswa (data hirarki di table belum muncul)
+[x] Update tampilan table siswa (data hirarki di table belum muncul)
+[] Pindahkan ke dalam folder user
 
 Merge
 [x] Test all previous feature
