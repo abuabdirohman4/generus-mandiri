@@ -388,6 +388,35 @@ export async function deleteMeeting(meetingId: string) {
   try {
     const supabase = await createClient()
     
+    // 1. Check if meeting has attendance logs
+    const { data: attendanceLogs, error: checkError } = await supabase
+      .from('attendance_logs')
+      .select('id')
+      .eq('meeting_id', meetingId)
+      .limit(1)
+    
+    if (checkError) {
+      console.error('Error checking attendance logs:', checkError)
+      return { success: false, error: checkError.message }
+    }
+    
+    // 2. If attendance logs exist, delete them first
+    if (attendanceLogs && attendanceLogs.length > 0) {
+      const { error: deleteLogsError } = await supabase
+        .from('attendance_logs')
+        .delete()
+        .eq('meeting_id', meetingId)
+      
+      if (deleteLogsError) {
+        console.error('Error deleting attendance logs:', deleteLogsError)
+        return { 
+          success: false, 
+          error: 'Gagal menghapus data absensi: ' + deleteLogsError.message 
+        }
+      }
+    }
+    
+    // 3. Now delete the meeting
     const { error } = await supabase
       .from('meetings')
       .delete()

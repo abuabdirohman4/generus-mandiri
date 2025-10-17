@@ -40,13 +40,20 @@ export default function CreateMeetingModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassId, setSelectedClassId] = useState<string>('')
 
-  const { students, isLoading: studentsLoading } = useStudents()
+  const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
 
   // Filter students by selected class
   const filteredStudents = students.filter(student => 
     !selectedClassId || student.class_id === selectedClassId
   )
+
+  // Force revalidate students when modal opens to get fresh data
+  useEffect(() => {
+    if (isOpen) {
+      mutateStudents()
+    }
+  }, [isOpen, mutateStudents])
 
   useEffect(() => {
     if (classId) {

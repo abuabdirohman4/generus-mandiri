@@ -24,7 +24,7 @@ dayjs.locale('id')
 const formatMeetingLocation = (meeting: any, userProfile: any) => {
   if (!meeting.classes) return ''
   
-  const isSuperAdminUser = isSuperAdmin(userProfile?.role)
+  const isSuperAdminUser = isSuperAdmin(userProfile)
   const isAdminDaerahUser = isAdminDaerah(userProfile)
   const isAdminDesaUser = isAdminDesa(userProfile)
   

@@ -64,15 +64,25 @@ Guru
 [x] Admin Desa Soreang & Admin Kelompok Warlob 1 masih bisa melihat guru dari kelompok Barujati yang mana beda desa
 [x] Edit nama guru masih gagal & error nya masih hanya muncul di username
 [x] CRUD
-[] Sambungkan dengan kelas
 
 Siswa
-[] Merge main
-[] Update tampilan table siswa
+[x] Merge main
+[] Update tampilan table siswa (data hirarki di table belum muncul)
+
+Merge
+[x] Test all previous feature
+[x] Tidak bisa buat meeting
 
 Kelas
 [] Buat table kelas & kelompok_kelas
 [] Dibuat flexibel, satu kelas isinya terdiri dari type apa
+[] Sambungkan dengan kelas
 
 Testing
 [] Unit Test?
+
+Advance
+[] create student_archive, profiles_archive
+
+Laporan
+[] Add datafilter
