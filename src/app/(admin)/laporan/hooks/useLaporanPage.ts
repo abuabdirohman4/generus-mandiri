@@ -2,7 +2,8 @@
 
 import { useMemo, useEffect, useCallback } from 'react'
 import { useLaporan } from '../stores/laporanStore'
-import { useReportData, useClasses } from './useReportData'
+import { useReportData } from './useReportData'
+import { useClasses } from '@/hooks/useClasses'
 import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
 import { useKelompok } from '@/hooks/useKelompok'

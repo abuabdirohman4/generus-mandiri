@@ -1,2 +1,2 @@
-export { useReportData, useClasses } from './useReportData'
+export { useReportData } from './useReportData'
 export { useLaporanPage } from './useLaporanPage'

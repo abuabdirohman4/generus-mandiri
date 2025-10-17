@@ -1,14 +1,9 @@
 'use client'
 
 import useSWR from 'swr'
-import { getAttendanceReport, getClasses, type ReportData, type ReportFilters } from '../actions'
+import { getAttendanceReport, type ReportData, type ReportFilters } from '../actions'
 import { generateDummyReportData } from '@/lib/dummy/processAttendanceLogs'
 
-interface Class {
-  id: string
-  name: string
-  kelompok_id?: string | null
-}
 
 interface UseReportDataOptions {
   filters: {
@@ -124,34 +119,3 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
   }
 }
 
-/**
- * Hook untuk fetching daftar kelas
- */
-export function useClasses() {
-  const { data, error, isLoading, mutate } = useSWR<Class[]>(
-    'classes-list',
-    async () => {
-      const classes = await getClasses()
-      return classes
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 10000, // 10 seconds for classes (less frequent updates)
-      revalidateIfStale: true,
-      revalidateOnMount: true,
-      refreshInterval: 0,
-      onError: (error) => {
-        console.error('Error fetching classes:', error)
-      }
-    }
-  )
-
-  return {
-    classes: data || [],
-    error,
-    isLoading,
-    mutate,
-    hasClasses: !!data && data.length > 0
-  }
-}

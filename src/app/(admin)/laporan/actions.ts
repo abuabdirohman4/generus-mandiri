@@ -495,22 +495,3 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 /**
  * Mendapatkan daftar kelas untuk filter dropdown
  */
-export async function getClasses() {
-  try {
-    const supabase = await createClient()
-    
-    const { data: classes, error } = await supabase
-      .from('classes')
-      .select('id, name, kelompok_id')
-      .order('name')
-
-    if (error) {
-      throw error
-    }
-
-    return classes || []
-  } catch (error) {
-    handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
-    throw error
-  }
-}

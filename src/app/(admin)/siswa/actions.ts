@@ -27,11 +27,6 @@ export interface Student {
   class_name?: string
 }
 
-export interface Class {
-  id: string
-  name: string
-  kelompok_id?: string | null
-}
 
 /**
  * Mendapatkan profile user saat ini
@@ -84,7 +79,7 @@ export async function getUserProfile() {
 /**
  * Mendapatkan daftar siswa dengan informasi kelas
  */
-export async function getStudents(classId?: string): Promise<Student[]> {
+export async function getAllStudents(classId?: string): Promise<Student[]> {
   try {
     const supabase = await createClient()
     
@@ -101,80 +96,45 @@ export async function getStudents(classId?: string): Promise<Student[]> {
         daerah_id,
         created_at,
         updated_at,
-        class:classes(
-          id,
-          name
-        ),
+        classes (id, name),
         daerah:daerah_id(name),
         desa:desa_id(name),
         kelompok:kelompok_id(name)
       `)
+      .order('name')
 
     // Filter by class if classId provided
     if (classId) {
       query = query.eq('class_id', classId)
     }
 
-    const { data: students, error } = await query.order('name')
+    const { data: students, error } = await query
 
     if (error) {
       throw error
     }
 
-    const transformedStudents = students?.map(student => {
-      // Handle class data - it could be an array or single object
-      const classData = Array.isArray(student.class) ? student.class[0] : student.class;
+    // Transform data (same logic as in useStudents hook)
+    return (students || []).map(student => {
+      const classesData = Array.isArray(student.classes) ? student.classes[0] || null : student.classes
       return {
-        id: student.id,
-        name: student.name,
-        gender: student.gender,
-        category: student.category,
-        class_id: student.class_id,
-        kelompok_id: student.kelompok_id,
-        desa_id: student.desa_id,
-        daerah_id: student.daerah_id,
-        created_at: student.created_at,
-        updated_at: student.updated_at,
-        classes: classData ? {
-          id: String(classData.id || ''),
-          name: String(classData.name || '')
+        ...student,
+        classes: classesData ? {
+          id: String(classesData.id || ''),
+          name: String(classesData.name || '')
         } : null,
+        class_name: classesData?.name || '',
         daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
         desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
-        kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || '',
-        class_name: classData ? String(classData.name || '') : ''
-      };
-    }) || []
-
-    return transformedStudents
+        kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || ''
+      }
+    })
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
   }
 }
 
-/**
- * Mendapatkan daftar kelas untuk dropdown
- */
-export async function getClasses(): Promise<Class[]> {
-  try {
-    const supabase = await createClient()
-    
-    const { data: classes, error } = await supabase
-      .from('classes')
-      .select('id, name, kelompok_id')
-      .order('name')
-
-    if (error) {
-      throw error
-    }
-
-    return classes || []
-  } catch (error) {
-    handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
-    throw error
-  }
-}
 
 /**
  * Membuat siswa baru
