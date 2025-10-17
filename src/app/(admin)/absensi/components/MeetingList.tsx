@@ -14,7 +14,7 @@ import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isSuperAdmin, isAdminDaerah, isAdminDesa } from '@/lib/userUtils'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -26,6 +26,7 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
   const isSuperAdminUser = isSuperAdmin(userProfile)
   const isAdminDaerahUser = isAdminDaerah(userProfile)
   const isAdminDesaUser = isAdminDesa(userProfile)
+  const isAdminKelompokUser = isAdminKelompok(userProfile)
   
   const parts: string[] = []
   
@@ -59,8 +60,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     }
     parts.push(meeting.classes.name)
   }
-  // Teacher & Admin Kelompok: Show only Class
-  else {
+  // Admin Kelompok: Show only Class
+  else if (isAdminKelompokUser) {
     parts.push(meeting.classes.name)
   }
   
@@ -251,13 +252,13 @@ export default function MeetingList({
                       <div className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="gap-3 mb-2">
                               <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {meeting.title}
                               </h4>
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
                                 {formatMeetingLocation(meeting, userProfile)}
-                              </span>
+                              </div>
                             </div>
 
                             {meeting.topic && (

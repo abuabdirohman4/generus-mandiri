@@ -4,6 +4,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.3.0]
+- Fix organization hirarchy in meeting list
+
+## [1.3.0]
 
 ### Added
 - **Organizational Management Page**: Data management with role-based filtering and tab filtering
