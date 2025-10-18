@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.1]
 
-- Fix organization hirarchy in meeting list
+### Fixed
+- **Organization Hierarchy**: Fixed organization hierarchy display in meeting list
+- **Sign In Messages**: Fixed "Sesi anda telah berakhir" and "Username tidak ditemukan" messages
+- **Student Management**: Moved student management to user folder structure
 
 ## [1.3.0]
 
