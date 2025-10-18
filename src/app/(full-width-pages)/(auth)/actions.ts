@@ -32,7 +32,8 @@ export async function login(formData: FormData) {
       .single();
 
     if (profileError || !profile) {
-      return redirect("/signin?message=Username tidak ditemukan");
+      // return redirect("/signin?message=Username tidak ditemukan");
+      return redirect("/signin?message=Username atau password salah. Silakan coba lagi.");
     }
 
     if (!profile.email) {

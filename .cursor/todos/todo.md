@@ -6,14 +6,14 @@ Kelas
 
 ## v1.3.1
 Siswa
-- [ ] Pindahkan ke dalam folder user
+- [x] Pindahkan ke dalam folder user
 
 Absensi
 - [x] Fix organization hierachy in meeting list
 
 Sign In
-- [ ] Fix message "Sesi anda telah berakhir"
-- [ ] Username tidak ditemukan
+- [x] Fix message "Sesi anda telah berakhir"
+- [x] Username tidak ditemukan
 
 ## Backlog
 - [ ] Add Bulk Insert Guru, Admin, Organisasi

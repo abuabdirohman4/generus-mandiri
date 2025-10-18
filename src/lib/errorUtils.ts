@@ -132,7 +132,7 @@ export const handleNetworkError = (error: unknown): string => {
 export const handleAuthError = (error: unknown): string => {
   const message = getErrorMessage(error);
   if (message.includes('auth') || message.includes('login')) {
-    return 'Sesi Anda telah berakhir. Silakan login kembali.';
+    return 'Username atau password salah. Silakan coba lagi.';
   }
   return message;
 };
