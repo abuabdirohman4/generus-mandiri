@@ -20,7 +20,7 @@ function PageTitle() {
     switch (path) {
       case '/home':
         return 'Beranda';
-      case '/siswa':
+      case '/users/siswa':
         return 'Siswa';
       case '/laporan':
         return 'Laporan';
@@ -47,9 +47,6 @@ function PageTitle() {
   // If page needs back button
   const needsBackButton = (path: string) => {
     return path.startsWith('/absensi/') || // Include all absensi sub-pages including meeting IDs
-          // path === '/absensi' || 
-          //  path === '/siswa' || 
-          //  path === '/laporan' || 
           path === '/users/guru' || 
           path === '/users/admin' || 
           path === '/organisasi';

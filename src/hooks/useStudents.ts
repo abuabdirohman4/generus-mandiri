@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { studentKeys } from '@/lib/swr'
 import { getCurrentUserId } from '@/lib/userUtils'
-import { getAllStudents, type Student } from '@/app/(admin)/siswa/actions'
+import { getAllStudents, type Student } from '@/app/(admin)/users/siswa/actions'
 
 interface UseStudentsOptions {
   classId?: string

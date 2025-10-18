@@ -38,7 +38,16 @@ export async function middleware(request: NextRequest) {
 
     // Define route categories
     const publicRoutes = ['/signin', '/signup']
-    const protectedRoutes = ['/home', '/absensi', '/siswa', '/laporan', '/teachers', '/settings']
+    const protectedRoutes = [
+      '/home', 
+      '/absensi',
+      '/laporan',
+      '/users/siswa',
+      '/users/guru',
+      '/users/admin',
+      '/organisasi',
+      '/settings'
+    ]
     
     const isPublicRoute = publicRoutes.includes(pathname)
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { classKeys } from '@/lib/swr'
 import { getCurrentUserId } from '@/lib/userUtils'
-import { getAllClasses, type Class } from '@/app/(admin)/siswa/actions/classes'
+import { getAllClasses, type Class } from '@/app/(admin)/users/siswa/actions/classes'
 
 const fetcher = async (): Promise<Class[]> => {
   return await getAllClasses()

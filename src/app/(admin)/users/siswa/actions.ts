@@ -228,7 +228,7 @@ export async function createStudent(formData: FormData) {
       throw error
     }
 
-    revalidatePath('/siswa')
+    revalidatePath('/users/siswa')
     return { success: true, student: newStudent }
   } catch (error) {
     handleApiError(error, 'menyimpan data', 'Gagal membuat siswa')
@@ -296,7 +296,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
       throw error
     }
 
-    revalidatePath('/siswa')
+    revalidatePath('/users/siswa')
     return { success: true, student: updatedStudent }
   } catch (error) {
     handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa')
@@ -360,7 +360,7 @@ export async function deleteStudent(studentId: string) {
       throw error
     }
 
-    revalidatePath('/siswa')
+    revalidatePath('/users/siswa')
     return { success: true }
   } catch (error) {
     handleApiError(error, 'menghapus data', 'Gagal menghapus siswa')
@@ -445,7 +445,7 @@ export async function createStudentsBatch(
       throw error
     }
 
-    revalidatePath('/siswa')
+    revalidatePath('/users/siswa')
     return { 
       success: true, 
       imported: insertedStudents?.length || 0,

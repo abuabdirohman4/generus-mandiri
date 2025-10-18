@@ -105,7 +105,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       id: 'siswa',
       name: 'Siswa',
       description: 'Kelola data siswa',
-      href: '/siswa',
+      href: '/users/siswa',
       icon: (
         <GroupIcon className="w-6 h-6" />
       ),

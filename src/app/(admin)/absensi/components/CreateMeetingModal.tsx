@@ -249,7 +249,7 @@ export default function CreateMeetingModal({
               {filteredStudents.length > 0 && (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Jumlah Siswa untuk pertemuan ini ada <Link href={`/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
+                    Jumlah Siswa untuk pertemuan ini ada <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
                   </h4>
                   {/* <div className="max-h-32 overflow-y-auto">
                     <div className="flex flex-wrap gap-1">

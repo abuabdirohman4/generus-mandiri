@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
     activeIcon: <ReportIcon />,
   },
   {
-    href: "/siswa",
+    href: "/users/siswa",
     label: "Siswa",
     icon: <GroupIcon />,
     activeIcon: <GroupIcon />,

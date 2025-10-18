@@ -3,7 +3,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.3.0]
+## [1.3.1]
+
 - Fix organization hirarchy in meeting list
 
 ## [1.3.0]

@@ -55,7 +55,7 @@ const allNavItems: NavItem[] = [
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
-    path: "/siswa",
+    path: "/users/siswa",
   },
   {
     icon: <GroupIcon className="w-6 h-6" />,
