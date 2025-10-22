@@ -221,6 +221,33 @@ export default function DataFilter({
     return classList
   }, [classList, filteredKelompokList, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter])
 
+  // Deduplicate class names and count occurrences
+  const uniqueClassList = useMemo(() => {
+    if (!filteredClassList.length) return []
+    
+    // Group classes by name
+    const classGroups = filteredClassList.reduce((acc, cls) => {
+      if (!acc[cls.name]) {
+        acc[cls.name] = {
+          name: cls.name,
+          ids: [],
+          count: 0
+        }
+      }
+      acc[cls.name].ids.push(cls.id)
+      acc[cls.name].count++
+      return acc
+    }, {} as Record<string, { name: string; ids: string[]; count: number }>)
+    
+    // Convert to array with formatted labels
+    return Object.values(classGroups).map(group => ({
+      value: group.ids.join(','), // Store all IDs comma-separated
+      label: group.count > 1 ? `${group.name} (${group.count} kelompok)` : group.name,
+      name: group.name,
+      ids: group.ids
+    }))
+  }, [filteredClassList])
+
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string) => {
     onFilterChange({
@@ -364,7 +391,10 @@ export default function DataFilter({
             label={variant === 'modal' ? "Kelas" : "Filter Kelas"}
             value={filters?.kelas || ''}
             onChange={handleKelasChange}
-            options={filteredClassList.map(cls => ({ value: cls.id, label: cls.name }))}
+            options={uniqueClassList.map(cls => ({ 
+              value: cls.value, // This now contains comma-separated IDs
+              label: cls.label  // This includes count if > 1
+            }))}
             allOptionLabel={hideAllOption ? undefined : "Semua Kelas"}
             widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
             variant={variant}

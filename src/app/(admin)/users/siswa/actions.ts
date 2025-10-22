@@ -106,7 +106,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
 
     // Filter by class if classId provided
     if (classId) {
-      query = query.eq('class_id', classId)
+      const classIds = classId.split(',')
+      query = query.in('class_id', classIds)
     }
 
     const { data: students, error } = await query

@@ -9,6 +9,9 @@ Kelas
 Guru
 - [x] Assign satu guru ke beberapa kelas
 
+Filter
+- Multi Select Filter
+
 ## v1.3.1
 Siswa
 - [x] Pindahkan ke dalam folder user

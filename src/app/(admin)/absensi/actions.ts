@@ -300,7 +300,8 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
         return { success: true, data: [], hasMore: false }
       }
     } else if (classId) {
-      query = query.eq('class_id', classId)
+      const classIds = classId.split(',')
+      query = query.in('class_id', classIds)
     }
 
     const { data, error } = await query
@@ -608,7 +609,8 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         return { success: true, data: [], hasMore: false }
       }
     } else if (classId) {
-      query = query.eq('class_id', classId)
+      const classIds = classId.split(',')
+      query = query.in('class_id', classIds)
     }
 
     const { data: meetings, error: meetingsError } = await query
