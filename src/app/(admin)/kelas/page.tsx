@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
+import { useKelasStore } from './stores/kelasStore';
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 import ClassMastersTab from './components/ClassMastersTab';
 import ClassesKelompokTab from './components/ClassesKelompokTab';
+import Button from '@/components/ui/button/Button';
 
 type TabType = 'masters' | 'kelompok';
 
@@ -11,10 +14,43 @@ export default function KelasPage() {
   const { profile: userProfile } = useUserProfile();
   const [activeTab, setActiveTab] = useState<TabType>('kelompok');
   
+  // Get store actions for buttons
+  const { openCreateKelompokModal, openCreateMasterModal } = useKelasStore();
+  
   const tabs = [
     { id: 'kelompok', label: 'Kelas' },
     { id: 'masters', label: 'Master' }
   ];
+
+  // Determine which button to show based on active tab and user permissions
+  const canManageKelompok = userProfile ? (
+    isSuperAdmin(userProfile) || 
+    isAdminDaerah(userProfile) || 
+    isAdminDesa(userProfile) || 
+    isAdminKelompok(userProfile)
+  ) : false;
+
+  const canManageMasters = userProfile ? isSuperAdmin(userProfile) : false;
+
+  const handleCreateClick = () => {
+    if (activeTab === 'kelompok') {
+      openCreateKelompokModal();
+    } else if (activeTab === 'masters') {
+      openCreateMasterModal();
+    }
+  };
+
+  const getButtonText = () => {
+    if (activeTab === 'kelompok') return 'Tambah Kelas';
+    if (activeTab === 'masters') return 'Tambah Master';
+    return 'Tambah';
+  };
+
+  const canShowButton = () => {
+    if (activeTab === 'kelompok') return canManageKelompok;
+    if (activeTab === 'masters') return canManageMasters;
+    return false;
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
@@ -30,6 +66,14 @@ export default function KelasPage() {
                 Kelola kelas di setiap kelompok
               </p>
             </div>
+            {canShowButton() && (
+              <Button
+                onClick={handleCreateClick}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                {getButtonText()}
+              </Button>
+            )}
           </div>
         </div>
 

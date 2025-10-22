@@ -3,7 +3,14 @@ Laporan
 - [ ] Add DataFilter in Laporan
 
 Filter
-- Multi Select Filter
+- [ ] Multi Select Filter
+
+Components
+- [ ] Change All <button> to <Button>
+
+## v1.4.1
+- [ ] Fix
+- [ ] Move button "Tambah" di kelas
 
 ## v1.4.0
 Kelas
