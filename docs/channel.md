@@ -1,4 +1,4 @@
-Update v1.4.0 - Class Management System
+*Update v1.4.0 - Class Management System*
 
 Fitur Baru:
 - Sistem Manajemen Kelas - Struktur kelas yang fleksibel dan dinamis
@@ -9,7 +9,7 @@ Fitur Baru:
 - Database Structure - Tabel kelas dan kelompok_kelas yang lebih fleksibel
 
 
-Update v1.3.1 - Fix Bug
+*Update v1.3.1 - Fix Bug*
 
 Perbaikan:
 - Perbaikan hierarki organisasi di daftar meeting
@@ -17,7 +17,7 @@ Perbaikan:
 - Pindahkan manajemen siswa ke struktur folder user
 
 
-Update v1.3.0 - Organisasi, Guru & Admin Management
+*Update v1.3.0 - Organisasi, Guru & Admin Management*
 
 Fitur Baru:
 - Halaman Organisasi - Manajemen data organisasi dengan role-based filtering
@@ -34,7 +34,7 @@ Perbaikan:
 - Input Validation - Perbaikan validasi input dalam berbagai form
 
 
-Update v1.2.0
+*Update v1.2.0*
 
 Penambahan Fitur Batch Import Siswa, Kegunaan:
 - Efisiensi - Import hingga 20 siswa sekaligus dalam 1 operasi
@@ -43,7 +43,7 @@ Penambahan Fitur Batch Import Siswa, Kegunaan:
 - User Experience - Wizard 3 langkah yang mudah diikuti
 
 
-Update v1.1.0
+*Update v1.1.0*
 
 Penambahan Fitur Reset Cookies & Cache, Kegunaan: 
 - Troubleshooting - Ketika ada masalah dengan data tersimpan
