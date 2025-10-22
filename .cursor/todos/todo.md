@@ -2,12 +2,12 @@
 Kelas
 - [x] Buat table kelas & kelompok_kelas
 - [x] Dibuat flexibel, satu kelas isinya terdiri dari type apa
-- [ ] Sambungkan dengan kelompok & guru
-- [ ] Implementasi SWR + Zustand
+- [x] Sambungkan dengan kelompok & guru
+- [x] Implementasi SWR + Zustand
 - [ ] Perbaiki filter kelas yang duplicate
 
 Guru
-- [ ] Assign satu guru ke beberapa kelas
+- [x] Assign satu guru ke beberapa kelas
 
 ## v1.3.1
 Siswa

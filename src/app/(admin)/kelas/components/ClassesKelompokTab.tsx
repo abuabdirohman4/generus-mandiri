@@ -1,13 +1,8 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useUserProfile } from '@/stores/userProfileStore';
-import { getAllClassesByKelompok, deleteClass } from '../actions/classes';
-import { ClassWithMaster } from '../actions/classes';
+import { useKelasPage } from '../hooks/useKelasPage';
+import { deleteClass } from '../actions/classes';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
-import { useDaerah } from '@/hooks/useDaerah';
-import { useDesa } from '@/hooks/useDesa';
-import { useKelompok } from '@/hooks/useKelompok';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon, UsersIcon } from '@/lib/icons';
 import ClassModal from './ClassModal';
@@ -16,29 +11,28 @@ import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import DataFilter from '@/components/shared/DataFilter';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import { toast } from 'sonner';
 
 export default function ClassesKelompokTab() {
-  const { profile: userProfile } = useUserProfile();
-  const [classes, setClasses] = useState<ClassWithMaster[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingClass, setEditingClass] = useState<ClassWithMaster | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [classToDelete, setClassToDelete] = useState<ClassWithMaster | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
-  // Add filter state
-  const [filters, setFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
-  });
-
-  // Fetch organisasi data
-  const { daerah: daerahList } = useDaerah();
-  const { desa: desaList } = useDesa();
-  const { kelompok: kelompokList } = useKelompok();
+  const {
+    classes,
+    isLoading,
+    mutate,
+    userProfile,
+    daerah,
+    desa,
+    kelompok,
+    isModalOpen,
+    editingClass,
+    deleteConfirm,
+    filters,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    setFilters
+  } = useKelasPage();
 
   const canManage = userProfile ? (
     isSuperAdmin(userProfile) || 
@@ -47,74 +41,26 @@ export default function ClassesKelompokTab() {
     isAdminKelompok(userProfile)
   ) : false;
 
-  useEffect(() => {
-    loadClasses();
-  }, [filters]); // Re-load when filters change
-
-  const loadClasses = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllClassesByKelompok();
-      
-      // Apply client-side filtering based on selected organisasi
-      const filtered = data.filter(classItem => {
-        if (filters.kelompok && classItem.kelompok_id !== filters.kelompok) return false;
-        if (filters.desa && classItem.kelompok?.desa_id !== filters.desa) return false;
-        if (filters.daerah && classItem.kelompok?.desa?.daerah_id !== filters.daerah) return false;
-        return true;
-      });
-      
-      setClasses(filtered);
-    } catch (error) {
-      console.error('Error loading classes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreate = () => {
-    setEditingClass(null);
-    setShowModal(true);
-  };
-
-  const handleEdit = (classItem: ClassWithMaster) => {
-    setEditingClass(classItem);
-    setShowModal(true);
-  };
-
-  const handleDelete = (classItem: ClassWithMaster) => {
-    setClassToDelete(classItem);
-    setShowDeleteModal(true);
-  };
-
   const confirmDelete = async () => {
-    if (!classToDelete) return;
+    if (!deleteConfirm.classItem) return;
 
     try {
-      setDeleting(true);
-      await deleteClass(classToDelete.id);
-      await loadClasses();
-      setShowDeleteModal(false);
-      setClassToDelete(null);
+      await deleteClass(deleteConfirm.classItem.id);
+      await mutate(); // Refresh data using SWR mutate
+      closeDeleteConfirm();
+      toast.success('Kelas berhasil dihapus');
     } catch (error) {
       console.error('Error deleting class:', error);
-    } finally {
-      setDeleting(false);
+      toast.error('Gagal menghapus kelas');
     }
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setClassToDelete(null);
   };
 
   const handleModalClose = () => {
-    setShowModal(false);
-    setEditingClass(null);
-    loadClasses();
+    closeModal();
+    mutate(); // Refresh data after modal operations
   };
 
-  if (loading) {
+  if (isLoading) {
     return <KelasTableSkeleton />;
   }
 
@@ -131,7 +77,7 @@ export default function ClassesKelompokTab() {
           </p>
         </div>
         {canManage && (
-          <Button onClick={handleCreate} className="flex items-center gap-2">
+          <Button onClick={openCreateModal} className="flex items-center gap-2">
             Tambah Kelas
           </Button>
         )}
@@ -143,9 +89,9 @@ export default function ClassesKelompokTab() {
           filters={filters}
           onFilterChange={setFilters}
           userProfile={userProfile}
-          daerahList={daerahList || []}
-          desaList={desaList || []}
-          kelompokList={kelompokList || []}
+          daerahList={daerah || []}
+          desaList={desa || []}
+          kelompokList={kelompok || []}
           classList={[]}
           showKelas={false}
         />
@@ -196,14 +142,14 @@ export default function ClassesKelompokTab() {
                     {
                       id: 'edit',
                       icon: PencilIcon,
-                      onClick: () => handleEdit(classItem),
+                      onClick: () => openEditModal(classItem),
                       title: 'Edit',
                       color: 'blue'
                     },
                     {
                       id: 'delete',
                       icon: TrashBinIcon,
-                      onClick: () => handleDelete(classItem),
+                      onClick: () => openDeleteConfirm(classItem),
                       title: 'Hapus',
                       color: 'red'
                     }
@@ -219,24 +165,25 @@ export default function ClassesKelompokTab() {
       />
 
       {/* Modal */}
-      {showModal && (
+      {isModalOpen && (
         <ClassModal
           classItem={editingClass}
           onClose={handleModalClose}
+          onSuccess={mutate}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={showDeleteModal}
-        onClose={cancelDelete}
+        isOpen={deleteConfirm.isOpen}
+        onClose={closeDeleteConfirm}
         onConfirm={confirmDelete}
         title="Hapus Kelas"
-        message={`Apakah Anda yakin ingin menghapus kelas "${classToDelete?.name}"?`}
+        message={`Apakah Anda yakin ingin menghapus kelas "${deleteConfirm.classItem?.name}"?`}
         confirmText="Hapus"
         cancelText="Batal"
         isDestructive={true}
-        isLoading={deleting}
+        isLoading={false}
       />
     </div>
   );
