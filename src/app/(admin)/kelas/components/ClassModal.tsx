@@ -62,8 +62,14 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
         kelompok_id: classItem.kelompok_id,
         masterIds: classItem.class_master_mappings?.map(mapping => mapping.class_master.id) || []
       });
+    } else if (userProfile && isAdminKelompok(userProfile)) {
+      // Auto-fill kelompok_id for Admin Kelompok when creating new class
+      setFormData(prev => ({
+        ...prev,
+        kelompok_id: userProfile.kelompok_id || ''
+      }));
     }
-  }, [classItem]);
+  }, [classItem, userProfile]);
 
   // Update kelompok_id when filter changes
   useEffect(() => {
@@ -85,6 +91,20 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+
+
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setErrors({ name: 'Nama kelas harus diisi' });
+      setLoading(false);
+      return;
+    }
+
+    if (!isEditing && !formData.kelompok_id) {
+      setErrors({ kelompok_id: 'Kelompok harus dipilih' });
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isEditing) {
@@ -163,9 +183,26 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
           </>
         )}
 
+        {/* Show kelompok info for Admin Kelompok */}
+        {userProfile && isAdminKelompok(userProfile) && !isEditing && (
+          <div>
+            <Label>Kelompok</Label>
+            <InputField
+              id="kelompok_info"
+              type="text"
+              value={userProfile.kelompok?.name || 'Kelompok Anda'}
+              disabled
+              className="bg-gray-100 dark:bg-gray-700"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Kelas akan dibuat untuk kelompok ini
+            </p>
+          </div>
+        )}
+
         {/* Always show template selection */}
         <div>
-          <Label>Template Kelas</Label>
+          <Label>Master Kelas</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
             {masters.map(master => (
               <label key={master.id} className="flex items-center">
@@ -203,6 +240,11 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
             required
             error={!!errors.name}
           />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.name}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

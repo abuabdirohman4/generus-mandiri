@@ -9,7 +9,6 @@ export interface ClassWithMaster {
   id: string
   name: string
   kelompok_id: string
-  is_active: boolean
   created_at: string
   updated_at: string
   kelompok?: {
@@ -170,8 +169,7 @@ export async function createClassFromMaster(
       .from('classes')
       .insert({
         name: className,
-        kelompok_id: kelompokId,
-        is_active: true
+        kelompok_id: kelompokId
       })
       .select()
       .single()
@@ -218,8 +216,7 @@ export async function createCustomClass(kelompokId: string, className: string) {
       .from('classes')
       .insert({
         name: className,
-        kelompok_id: kelompokId,
-        is_active: true
+        kelompok_id: kelompokId
       })
       .select()
       .single()

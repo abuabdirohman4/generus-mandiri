@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { getAllClassMasters, deleteClassMaster, toggleClassMasterActive } from '../actions/masters';
+import { getAllClassMasters, deleteClassMaster } from '../actions/masters';
 import { ClassMaster } from '../actions/masters';
 import { isSuperAdmin } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
-import { PlusIcon, PencilIcon, TrashBinIcon, EyeIcon, EyeOffIcon } from '@/lib/icons';
+import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 import ClassMasterModal from './ClassMasterModal';
 import KelasSkeleton from '@/components/ui/skeleton/KelasSkeleton';
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
+import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 
 export default function ClassMastersTab() {
   const { profile: userProfile } = useUserProfile();
@@ -18,6 +19,9 @@ export default function ClassMastersTab() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingMaster, setEditingMaster] = useState<ClassMaster | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [masterToDelete, setMasterToDelete] = useState<ClassMaster | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const canEdit = userProfile ? isSuperAdmin(userProfile) : false;
 
@@ -47,27 +51,32 @@ export default function ClassMastersTab() {
     setShowModal(true);
   };
 
-  const handleDelete = async (master: ClassMaster) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus "${master.name}"?`)) {
-      return;
-    }
+  const handleDelete = (master: ClassMaster) => {
+    setMasterToDelete(master);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!masterToDelete) return;
 
     try {
-      await deleteClassMaster(master.id);
+      setDeleting(true);
+      await deleteClassMaster(masterToDelete.id);
       await loadMasters();
+      setShowDeleteModal(false);
+      setMasterToDelete(null);
     } catch (error) {
       console.error('Error deleting master:', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const handleToggleActive = async (master: ClassMaster) => {
-    try {
-      await toggleClassMasterActive(master.id, !master.is_active);
-      await loadMasters();
-    } catch (error) {
-      console.error('Error toggling master status:', error);
-    }
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setMasterToDelete(null);
   };
+
 
   const handleModalClose = () => {
     setShowModal(false);
@@ -85,15 +94,15 @@ export default function ClassMastersTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Template Kelas
+            Master Kelas
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {canEdit ? 'Kelola template kelas yang tersedia' : 'Lihat template kelas yang tersedia'}
+            {canEdit ? 'Kelola kelas yang tersedia' : 'Lihat kelas yang tersedia'}
           </p>
         </div>
         {canEdit && (
           <Button onClick={handleCreate} className="flex items-center gap-2">
-            Tambah Template
+            Tambah Master
           </Button>
         )}
       </div>
@@ -104,7 +113,6 @@ export default function ClassMastersTab() {
           { key: 'sort_order', label: 'No.', width: '0px', align: 'center' },
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'description', label: 'Deskripsi' },
-          // { key: 'is_active', label: 'Status', width: '120px', align: 'center' },
           ...(canEdit ? [{ key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }] : [])
         ]}
         data={masters}
@@ -128,27 +136,10 @@ export default function ClassMastersTab() {
                   {master.description || '-'}
                 </div>
               );
-            // case 'is_active':
-            //   return (
-            //     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            //       master.is_active 
-            //         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            //         : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-            //     }`}>
-            //       {master.is_active ? 'Aktif' : 'Tidak Aktif'}
-            //     </span>
-            //   );
             case 'actions':
               return (
                 <TableActions
                   actions={[
-                    // {
-                    //   id: 'toggle-active',
-                    //   icon: master.is_active ? EyeOffIcon : EyeIcon,
-                    //   onClick: () => handleToggleActive(master),
-                    //   title: master.is_active ? 'Nonaktifkan' : 'Aktifkan',
-                    //   color: 'indigo'
-                    // },
                     {
                       id: 'edit',
                       icon: PencilIcon,
@@ -170,7 +161,7 @@ export default function ClassMastersTab() {
               return null;
           }
         }}
-        searchPlaceholder="Cari template kelas..."
+        searchPlaceholder="Cari Master Kelas..."
         defaultItemsPerPage={10}
       />
 
@@ -181,6 +172,19 @@ export default function ClassMastersTab() {
           onClose={handleModalClose}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Hapus Master Kelas"
+        message={`Apakah Anda yakin ingin menghapus template "${masterToDelete?.name}"?`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+        isLoading={deleting}
+      />
     </div>
   );
 }

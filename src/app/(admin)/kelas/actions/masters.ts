@@ -10,7 +10,6 @@ export interface ClassMaster {
   name: string
   description?: string | null
   sort_order: number
-  is_active: boolean
   created_at?: string
   updated_at?: string
 }
@@ -19,7 +18,6 @@ interface ClassMasterData {
   name: string
   description: string
   sort_order: number
-  is_active: boolean
 }
 
 // Get all class masters (visible to all authenticated users)
@@ -29,7 +27,6 @@ export async function getAllClassMasters(): Promise<ClassMaster[]> {
     const { data, error } = await supabase
       .from('class_masters')
       .select('*')
-      .eq('is_active', true)
       .order('sort_order')
     
     if (error) throw error
@@ -50,7 +47,7 @@ export async function createClassMaster(data: ClassMasterData) {
       throw new Error('Anda tidak memiliki akses untuk membuat master kelas')
     }
 
-    const { name, description, sort_order, is_active } = data
+    const { name, description, sort_order } = data
     
     if (!name) {
       throw new Error('Nama kelas harus diisi')
@@ -58,7 +55,7 @@ export async function createClassMaster(data: ClassMasterData) {
 
     const { data: result, error } = await supabase
       .from('class_masters')
-      .insert({ name, description, sort_order, is_active })
+      .insert({ name, description, sort_order })
       .select()
       .single()
 
@@ -87,7 +84,7 @@ export async function updateClassMaster(masterId: string, data: ClassMasterData)
       throw new Error('Anda tidak memiliki akses untuk mengupdate master kelas')
     }
 
-    const { name, description, sort_order, is_active } = data
+    const { name, description, sort_order } = data
     
     if (!name) {
       throw new Error('Nama kelas harus diisi')
@@ -99,7 +96,6 @@ export async function updateClassMaster(masterId: string, data: ClassMasterData)
         name,
         description,
         sort_order,
-        is_active,
         updated_at: new Date().toISOString()
       })
       .eq('id', masterId)
@@ -141,27 +137,4 @@ export async function deleteClassMaster(masterId: string) {
   }
 }
 
-// Toggle active status
-export async function toggleClassMasterActive(masterId: string, isActive: boolean) {
-  try {
-    const supabase = await createClient()
-    const profile = await getCurrentUserProfile()
-    
-    if (!profile || !canAccessFeature(profile, 'manage_class_masters')) {
-      throw new Error('Anda tidak memiliki akses')
-    }
-
-    const { error } = await supabase
-      .from('class_masters')
-      .update({ is_active: isActive })
-      .eq('id', masterId)
-
-    if (error) throw error
-
-    revalidatePath('/kelas')
-    return { success: true }
-  } catch (error) {
-    handleApiError(error, 'mengupdate status', 'Gagal mengupdate status')
-    throw error
-  }
-}
+// Note: toggleClassMasterActive function removed as is_active column no longer exists

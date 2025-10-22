@@ -16,8 +16,7 @@ export default function ClassMasterModal({ master, onClose }: ClassMasterModalPr
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    sort_order: 0,
-    is_active: true
+    sort_order: 0
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,8 +28,7 @@ export default function ClassMasterModal({ master, onClose }: ClassMasterModalPr
       setFormData({
         name: master.name,
         description: master.description || '',
-        sort_order: master.sort_order,
-        is_active: master.is_active
+        sort_order: master.sort_order
       });
     }
   }, [master]);
@@ -67,7 +65,7 @@ export default function ClassMasterModal({ master, onClose }: ClassMasterModalPr
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={isEditing ? 'Edit Template Kelas' : 'Tambah Template Kelas'}
+      title={isEditing ? 'Edit Master Kelas' : 'Tambah Master Kelas'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {errors.general && (
@@ -114,18 +112,6 @@ export default function ClassMasterModal({ master, onClose }: ClassMasterModalPr
           />
         </div>
 
-        <div className="flex items-center">
-          <input
-            id="is_active"
-            type="checkbox"
-            checked={formData.is_active}
-            onChange={(e) => handleChange('is_active', e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <Label htmlFor="is_active" className="ml-2">
-            Aktif
-          </Label>
-        </div>
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button
