@@ -234,7 +234,8 @@ export default function DataTable({
                     <th
                       key={column.key}
                       onClick={() => isSortable(column) && handleSort(column.key)}
-                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap ${column.width ? `w-${column.width}` : ''} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
+                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
+                      style={column.width ? { width: column.width } : {}}
                     >
                       <div className={`flex items-center gap-2 ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : 'justify-start'}`}>
                         {column.label}
@@ -276,6 +277,7 @@ export default function DataTable({
                         <td
                           key={column.key}
                           className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''}`}
+                          style={column.width ? { width: column.width } : {}}
                         >
                           {renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)}
                         </td>

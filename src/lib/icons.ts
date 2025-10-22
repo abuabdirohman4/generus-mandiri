@@ -63,6 +63,9 @@ import DashboardIcon from "../../public/icons/dashboard.svg";
 import BuildingIcon from "../../public/icons/building.svg";
 import SettingsIcon from "../../public/icons/settings.svg";
 import KeyIcon from "../../public/icons/key.svg";
+import BookOpenIcon from "../../public/icons/docs.svg";
+import UsersIcon from "../../public/icons/group.svg";
+import EyeOffIcon from "../../public/icons/eye-close.svg";
 
 export {
   DownloadIcon,
@@ -130,4 +133,7 @@ export {
   BuildingIcon,
   SettingsIcon,
   KeyIcon,
+  BookOpenIcon,
+  UsersIcon,
+  EyeOffIcon,
 };

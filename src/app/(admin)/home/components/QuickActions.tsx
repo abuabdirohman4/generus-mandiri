@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
-import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon } from '@/lib/icons';
+import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon } from '@/lib/icons';
 import { isAdminKelompok } from '@/lib/userUtils';
 
 interface Profile {
@@ -137,6 +137,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       adminOnly: true,
       excludeAdminKelompok: true,
       disabled: false
+    },
+    {
+      id: 'kelas',
+      name: 'Kelas',
+      description: 'Kelola data kelas',
+      href: '/kelas',
+      icon: <TableIcon className="w-6 h-6" />,
+      bgColor: 'bg-teal-100 dark:bg-teal-900',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      adminOnly: true,
+      disabled: true
     },
     {
       id: 'organisasi',

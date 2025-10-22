@@ -8,6 +8,7 @@ alwaysApply: true
 - Gunakan server actions untuk proses dengan backend
 
 - Untuk button, modal, input, pop up delete kalau tampilannya tidak khusus atau umum, pakai components yang sudah ada di src/components
+- Untuk icons pakai yang ada di public/icons & src/lib/icons.ts kalau belum ada, bisa buat saja dan masukkan ke public/icons & src/lib/icons.ts
 
 ## Access Control & Utilities
 

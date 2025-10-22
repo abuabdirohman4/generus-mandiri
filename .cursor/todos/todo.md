@@ -2,7 +2,7 @@
 Kelas
 - [ ] Buat table kelas & kelompok_kelas
 - [ ] Dibuat flexibel, satu kelas isinya terdiri dari type apa
-- [ ] Sambungkan dengan kelas
+- [ ] Sambungkan dengan kelompok & guru
 
 ## v1.3.1
 Siswa
