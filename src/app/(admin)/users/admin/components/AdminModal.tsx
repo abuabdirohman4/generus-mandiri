@@ -264,7 +264,7 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     try {
       // Generate final username with _admin suffix
       const finalUsername = `${formData.username}_admin`;
-      const generatedEmail = `${formData.username}@generus.com`;
+      const generatedEmail = `${finalUsername}@generus.com`;
       
       // Determine requirements based on admin level
       const needsDesa = adminLevel !== 'daerah';

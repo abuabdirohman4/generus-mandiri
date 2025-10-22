@@ -5,6 +5,7 @@ import InputFilter from '@/components/form/input/InputFilter'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import WeekPicker from '@/components/form/input/WeekPicker'
 import Button from '@/components/ui/button/Button'
+import DataFilter from '@/components/shared/DataFilter'
 import { LaporanFilters } from '../stores/laporanStore'
 
 interface FilterOption {
@@ -22,6 +23,14 @@ interface FilterSectionProps {
   onResetFilters: () => void
   hasActiveFilters: boolean
   filterCount: number
+  // NEW: Add these props
+  userProfile: any
+  daerahList: any[]
+  desaList: any[]
+  kelompokList: any[]
+  classList: any[]
+  organisasiFilters: { daerah: string; desa: string; kelompok: string; kelas: string }
+  onOrganisasiFilterChange: (filters: { daerah: string; desa: string; kelompok: string; kelas: string }) => void
 }
 
 export default function FilterSection({
@@ -33,7 +42,15 @@ export default function FilterSection({
   onWeekChange,
   onResetFilters,
   hasActiveFilters,
-  filterCount
+  filterCount,
+  // NEW: Add these props
+  userProfile,
+  daerahList,
+  desaList,
+  kelompokList,
+  classList,
+  organisasiFilters,
+  onOrganisasiFilterChange
 }: FilterSectionProps) {
   const monthOptions = [
     { value: '1', label: 'Januari' },
@@ -105,20 +122,18 @@ export default function FilterSection({
       
       {filters.viewMode === 'general' ? (
         // General Mode Filters
-        <div className="space-y-4">
-          {/* Class Filter */}
-          <div className="grid grid-cols1 gap-x-4">
-            <InputFilter
-              id="classId"
-              label="Kelas"
-              value={filters.classId}
-              onChange={(value) => onFilterChange('classId', value)}
-              options={classOptions}
-              allOptionLabel="Semua Kelas"
-              className="!mb-0"
-              widthClassName='!max-w-full'
-            />
-          </div>
+        <>
+          {/* Organizational Filters */}
+          <DataFilter
+            filters={organisasiFilters}
+            onFilterChange={onOrganisasiFilterChange}
+            userProfile={userProfile}
+            daerahList={daerahList}
+            desaList={desaList}
+            kelompokList={kelompokList}
+            classList={classList}
+            showKelas={true}
+          />
 
           {/* Month and Year Filter */}
           <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
@@ -128,7 +143,6 @@ export default function FilterSection({
               value={filters.month.toString()}
               onChange={(value) => onFilterChange('month', value)}
               options={monthOptions}
-              className="!mb-0"
               widthClassName='!max-w-full'
             />
 
@@ -138,34 +152,33 @@ export default function FilterSection({
               value={filters.year.toString()}
               onChange={(value) => onFilterChange('year', value)}
               options={yearOptions}
-              className="!mb-0"
               widthClassName='!max-w-full'
             />
           </div>
-        </div>
+        </>
       ) : (
         // Detailed Mode Filters - Dynamic based on period
-        <div className="space-y-4">
-          {/* Period and Class Selection */}
-          <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
+        <>
+          {/* Organizational Filters */}
+          <DataFilter
+            filters={organisasiFilters}
+            onFilterChange={onOrganisasiFilterChange}
+            userProfile={userProfile}
+            daerahList={daerahList}
+            desaList={desaList}
+            kelompokList={kelompokList}
+            classList={classList}
+            showKelas={true}
+          />
+
+          {/* Period Selection */}
+          <div className="grid grid-cols-1 gap-x-4">
             <InputFilter
               id="period"
               label="Periode"
               value={filters.period}
               onChange={(value) => onFilterChange('period', value)}
               options={periodOptions}
-              className="!mb-0"
-              widthClassName="!max-w-full"
-            />
-
-            <InputFilter
-              id="classId"
-              label="Kelas"
-              value={filters.classId}
-              onChange={(value) => onFilterChange('classId', value)}
-              options={classOptions}
-              allOptionLabel="Semua Kelas"
-              className="!mb-0"
               widthClassName="!max-w-full"
             />
           </div>
@@ -253,10 +266,10 @@ export default function FilterSection({
               />
             </div>
           )}
-        </div>
+        </>
       )}
 
-      <div className="mt-6 md:mt-4 flex gap-2 w-full md:w-auto">
+      <div className="mt-4 flex gap-2 w-full md:w-auto">
         <Button 
           onClick={onResetFilters} 
           variant="outline" 

@@ -88,16 +88,6 @@ export default function LaporanPage() {
 
         {/* Filter Section */}
         <div className="space-y-4">
-          {/* <DataFilter
-            filters={filters.organisasi}
-            onFilterChange={handleOrganisasiFilterChange}
-            userProfile={userProfile}
-            daerahList={daerah || []}
-            desaList={desa || []}
-            kelompokList={kelompok || []}
-            classList={classes || []}
-            showKelas={true}
-          /> */}
           <FilterSection
             filters={filters}
             periodOptions={periodOptions}
@@ -108,6 +98,14 @@ export default function LaporanPage() {
             onResetFilters={handleResetFilters}
             hasActiveFilters={hasActiveFilters}
             filterCount={filterCount}
+            // NEW: Add these props
+            userProfile={userProfile}
+            daerahList={daerah || []}
+            desaList={desa || []}
+            kelompokList={kelompok || []}
+            classList={classes || []}
+            organisasiFilters={filters.organisasi || { daerah: '', desa: '', kelompok: '', kelas: '' }}
+            onOrganisasiFilterChange={handleOrganisasiFilterChange}
           />
         </div>
 

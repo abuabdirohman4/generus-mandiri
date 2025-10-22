@@ -44,6 +44,7 @@ export async function createTeacher(data: TeacherData) {
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email: data.email, // Generated format from frontend
       password: data.password!,
+      email_confirm: true, // Auto-confirm email
       user_metadata: {
         username: data.username,
         full_name: data.full_name
