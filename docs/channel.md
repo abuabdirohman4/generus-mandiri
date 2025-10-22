@@ -1,3 +1,11 @@
+*Update v1.4.1 - Bug Fixes*
+
+Perbaikan:
+- Sistem Manajemen Kelas - Perbaikan masalah dan peningkatan stabilitas
+- Assignment Guru - Resolusi konflik assignment guru dan validasi error
+- Database Performance - Optimasi query database untuk performa lebih baik
+- UI/UX - Perbaikan masalah UI minor dan peningkatan user experience
+
 *Update v1.4.0 - Class Management System*
 
 Fitur Baru:
