@@ -183,7 +183,8 @@ export function useSiswaPage() {
       result = result.filter(s => s.kelompok_id === dataFilters.kelompok)
     }
     if (dataFilters.kelas) {
-      result = result.filter(s => s.class_id === dataFilters.kelas)
+      const classIds = dataFilters.kelas.split(',')
+      result = result.filter(s => classIds.includes(s.class_id))
     }
 
     return result
