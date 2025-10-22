@@ -5,12 +5,16 @@ import { useUserProfile } from '@/stores/userProfileStore';
 import { getAllClassesByKelompok, deleteClass } from '../actions/classes';
 import { ClassWithMaster } from '../actions/classes';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
+import { useDaerah } from '@/hooks/useDaerah';
+import { useDesa } from '@/hooks/useDesa';
+import { useKelompok } from '@/hooks/useKelompok';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon, UsersIcon } from '@/lib/icons';
 import ClassModal from './ClassModal';
 import KelasTableSkeleton from '@/components/ui/skeleton/KelasTableSkeleton';
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
+import DataFilter from '@/components/shared/DataFilter';
 
 export default function ClassesKelompokTab() {
   const { profile: userProfile } = useUserProfile();
@@ -18,6 +22,19 @@ export default function ClassesKelompokTab() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassWithMaster | null>(null);
+
+  // Add filter state
+  const [filters, setFilters] = useState({
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
+  });
+
+  // Fetch organisasi data
+  const { daerah: daerahList } = useDaerah();
+  const { desa: desaList } = useDesa();
+  const { kelompok: kelompokList } = useKelompok();
 
   const canManage = userProfile ? (
     isSuperAdmin(userProfile) || 
@@ -28,13 +45,22 @@ export default function ClassesKelompokTab() {
 
   useEffect(() => {
     loadClasses();
-  }, []);
+  }, [filters]); // Re-load when filters change
 
   const loadClasses = async () => {
     try {
       setLoading(true);
       const data = await getAllClassesByKelompok();
-      setClasses(data);
+      
+      // Apply client-side filtering based on selected organisasi
+      const filtered = data.filter(classItem => {
+        if (filters.kelompok && classItem.kelompok_id !== filters.kelompok) return false;
+        if (filters.desa && classItem.kelompok?.desa_id !== filters.desa) return false;
+        if (filters.daerah && classItem.kelompok?.desa?.daerah_id !== filters.daerah) return false;
+        return true;
+      });
+      
+      setClasses(filtered);
     } catch (error) {
       console.error('Error loading classes:', error);
     } finally {
@@ -94,20 +120,36 @@ export default function ClassesKelompokTab() {
         )}
       </div>
 
+      {/* Data Filter - hidden for Admin Kelompok */}
+      {userProfile && !isAdminKelompok(userProfile) && (
+        <DataFilter
+          filters={filters}
+          onFilterChange={setFilters}
+          userProfile={userProfile}
+          daerahList={daerahList || []}
+          desaList={desaList || []}
+          kelompokList={kelompokList || []}
+          classList={[]}
+          showKelas={false}
+        />
+      )}
+
       {/* Classes Table */}
       <DataTable
         columns={[
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'kelompok_name', label: 'Kelompok', sortable: true },
-          { key: 'template_name', label: 'Template', sortable: true },
-          { key: 'is_active', label: 'Status', width: '120px', align: 'center' },
+          { key: 'combined_classes', label: 'Gabungan Kelas', sortable: true },
+          // { key: 'is_active', label: 'Status', width: '120px', align: 'center' },
           ...(canManage ? [{ key: 'actions', label: 'Aksi', width: '100px', align: 'center' as const }] : [])
         ]}
-        data={classes.map(classItem => ({
-          ...classItem,
-          kelompok_name: classItem.kelompok?.name || '-',
-          template_name: classItem.class_master?.name || 'Custom'
-        }))}
+            data={classes.map(classItem => ({
+              ...classItem,
+              kelompok_name: classItem.kelompok?.name || '-',
+              combined_classes: classItem.class_master_mappings?.length 
+                ? classItem.class_master_mappings.map(mapping => mapping.class_master.name).join(', ')
+                : '-'
+            }))}
         renderCell={(column, classItem) => {
           switch (column.key) {
             case 'name':
@@ -125,22 +167,22 @@ export default function ClassesKelompokTab() {
                   {classItem.kelompok_name}
                 </div>
               );
-            case 'template_name':
+            case 'combined_classes':
               return (
                 <div className="text-sm text-gray-900 dark:text-white">
-                  {classItem.template_name}
+                  {classItem.combined_classes}
                 </div>
               );
-            case 'is_active':
-              return (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  classItem.is_active 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                }`}>
-                  {classItem.is_active ? 'Aktif' : 'Tidak Aktif'}
-                </span>
-              );
+            // case 'is_active':
+            //   return (
+            //     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            //       classItem.is_active 
+            //         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            //         : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+            //     }`}>
+            //       {classItem.is_active ? 'Aktif' : 'Tidak Aktif'}
+            //     </span>
+            //   );
             case 'actions':
               return (
                 <TableActions
