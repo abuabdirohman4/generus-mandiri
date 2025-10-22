@@ -3,6 +3,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2]
+
+### Fixed
+- **PWA Support**: Fixed PWA functionality on iPhone devices
+- **Reports**: Fixed "Tren Kehadiran" and "Detail Siswa" data accuracy in reports
+- **Authentication**: Fixed direct login issue for teachers and admins
+- **UI/UX**: 
+  - Fixed minor width column in table "Kelas"
+  - Move button "tambah" in "Kelas" page
+
+### Added
+- **DataFilter in Reports**: Added DataFilter component to reports page for better filtering
+
 ## [1.4.1]
 
 ### Fixed
