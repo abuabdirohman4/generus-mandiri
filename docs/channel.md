@@ -4,7 +4,6 @@ Perbaikan:
 - PWA Support - Perbaikan fungsi PWA di perangkat iPhone
 - Laporan - Perbaikan data "Tren Kehadiran" dan "Detail Siswa" di laporan
 - Authentication - Perbaikan masalah login langsung untuk guru dan admin
-- UI/UX - Perbaikan lebar kolom tabel "Kelas" dan memindahkan button "Tambah"
 
 Fitur Baru:
 - DataFilter di Laporan - Tambahan komponen DataFilter untuk filtering yang lebih baik
