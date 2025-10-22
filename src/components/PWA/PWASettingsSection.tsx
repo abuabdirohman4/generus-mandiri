@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
+import { isIOS } from '@/lib/utils';
+import { isInStandaloneMode } from '@/lib/pwaUtils';
+import IOSInstallInstructions from './IOSInstallInstructions';
 import PWADebug from './PWADebug';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,17 +20,25 @@ export default function PWASettingsSection() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [installStatus, setInstallStatus] = useState<'not-supported' | 'available' | 'installed' | 'dismissed'>('not-supported');
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const [installStatus, setInstallStatus] = useState<'not-supported' | 'available' | 'installed' | 'dismissed' | 'ios-manual'>('not-supported');
   const { profile } = useUserProfile();
 
   useEffect(() => {
+    // Detect iOS
+    setIsIOSDevice(isIOS());
+    
     // Check if app is already installed
     const checkInstallStatus = () => {
-      // Check if running in standalone mode (installed PWA)
-      if (window.matchMedia('(display-mode: standalone)').matches || 
-          (window.navigator as any).standalone === true) {
+      if (isInStandaloneMode()) {
         setIsInstalled(true);
         setInstallStatus('installed');
+        return;
+      }
+      
+      // For iOS, show manual installation
+      if (isIOS()) {
+        setInstallStatus('ios-manual');
         return;
       }
       
@@ -109,6 +120,15 @@ export default function PWASettingsSection() {
           color: 'text-green-600 dark:text-green-400',
           bgColor: 'bg-green-50 dark:bg-green-900/20',
           borderColor: 'border-green-200 dark:border-green-800'
+        };
+      case 'ios-manual':
+        return {
+          title: 'Manual Installation (iOS)',
+          description: 'Ikuti instruksi di bawah untuk menginstall di iOS',
+          icon: '📱',
+          color: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+          borderColor: 'border-blue-200 dark:border-blue-800'
         };
       case 'available':
         return {
@@ -214,6 +234,48 @@ export default function PWASettingsSection() {
           </div>
         </div>
       </div>
+
+      {/* iOS Instructions */}
+      {isIOSDevice && !isInstalled && (
+        <IOSInstallInstructions />
+      )}
+
+      {/* Android/Desktop Install Button */}
+      {!isIOSDevice && installStatus === 'available' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  Install Aplikasi
+                </h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Install PWA untuk akses offline dan performa lebih baik
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleInstallClick}
+              disabled={isInstalling}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center"
+            >
+              {isInstalling ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
+                  Installing...
+                </>
+              ) : (
+                'Install'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Benefits Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">

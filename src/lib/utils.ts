@@ -55,10 +55,20 @@ export function isTouchDevice(): boolean {
 }
 
 /**
+ * Detects if the user is on an iOS device (iPhone, iPad, iPod)
+ * @returns {boolean} True if running on iOS, false otherwise
+ */
+export function isIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(userAgent);
+}
+
+/**
  * Detects if should use mobile UI (actual mobile device)
  * @returns {boolean} True if should use mobile native inputs
  */
 export function shouldUseMobileUI(): boolean {
   return isMobile() && isTouchDevice();
 }
-
