@@ -1,16 +1,20 @@
+## v1.5.0
+Laporan
+- [ ] Add DataFilter in Laporan
+
+Filter
+- Multi Select Filter
+
 ## v1.4.0
 Kelas
 - [x] Buat table kelas & kelompok_kelas
 - [x] Dibuat flexibel, satu kelas isinya terdiri dari type apa
 - [x] Sambungkan dengan kelompok & guru
 - [x] Implementasi SWR + Zustand
-- [ ] Perbaiki filter kelas yang duplicate
+- [x] Perbaiki filter kelas yang duplicate
 
 Guru
 - [x] Assign satu guru ke beberapa kelas
-
-Filter
-- Multi Select Filter
 
 ## v1.3.1
 Siswa
@@ -25,7 +29,7 @@ Sign In
 
 ## Backlog
 - [ ] Add Bulk Insert Guru, Admin, Organisasi
-- [ ] Add DataFilter in Laporan
+- [ ] Add Bulk with CSV, Excel, Text
 - [ ] Add Halaman Materi
 - [ ] Add Pengajian Desa
 - [ ] Add Pengajian Daerah
