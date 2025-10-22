@@ -4,7 +4,7 @@ import { useKelasPage } from '../hooks/useKelasPage';
 import { deleteClass } from '../actions/classes';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
-import { PencilIcon, TrashBinIcon, UsersIcon } from '@/lib/icons';
+import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 import ClassModal from './ClassModal';
 import KelasTableSkeleton from '@/components/ui/skeleton/KelasTableSkeleton';
 import DataTable from '@/components/table/Table';
@@ -102,7 +102,7 @@ export default function ClassesKelompokTab() {
         columns={[
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'kelompok_name', label: 'Kelompok', sortable: true },
-          { key: 'combined_classes', label: 'Gabungan Kelas', sortable: true },
+          { key: 'combined_classes', label: 'Gabungan Kelas', widthMobile: '150px', sortable: true },
           ...(canManage ? [{ key: 'actions', label: 'Aksi', width: '100px', align: 'center' as const }] : [])
         ]}
             data={classes.map(classItem => ({
@@ -117,7 +117,6 @@ export default function ClassesKelompokTab() {
             case 'name':
               return (
                 <div className="flex items-center">
-                  <UsersIcon className="w-5 h-5 text-gray-400 mr-3" />
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {classItem.name}
                   </div>

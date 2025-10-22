@@ -75,7 +75,7 @@ export default function ClassMastersTab() {
       {/* Masters Table */}
       <DataTable
         columns={[
-          { key: 'sort_order', label: 'No.', width: '0px', align: 'center' },
+          { key: 'sort_order', label: 'No.', align: 'center' },
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'description', label: 'Deskripsi' },
           ...(canEdit ? [{ key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }] : [])

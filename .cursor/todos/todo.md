@@ -28,6 +28,7 @@ Sign In
 - [x] Username tidak ditemukan
 
 ## Backlog
+- [ ] Detail Kehadiran Siswa seperti Better Habit
 - [ ] Add Bulk Insert Guru, Admin, Organisasi
 - [ ] Add Bulk with CSV, Excel, Text
 - [ ] Add Halaman Materi
