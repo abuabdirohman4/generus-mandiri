@@ -1,6 +1,6 @@
 ## v1.5.0
-Laporan
-- [ ] Add DataFilter in Laporan
+Siswa
+- [ ] Detail Kehadiran Siswa seperti Better Habit
 
 Filter
 - [ ] Multi Select Filter
@@ -8,9 +8,20 @@ Filter
 Components
 - [ ] Change All <button> to <Button>
 
+Meetings
+- [ ] Add Template name
+
+## v1.4.2
+- [ ] Di Iphone PWA tidak jalan
+- [x] Di Laporan Tren Kehadiran & Detail Siswa salah
+- [x] Buat guru & admin tidak bisa langsung login
+
+Laporan
+- [x] Add DataFilter in Laporan
+
 ## v1.4.1
-- [ ] Fix
-- [ ] Move button "Tambah" di kelas
+- [x] Fix
+- [x] Move button "Tambah" di kelas
 
 ## v1.4.0
 Kelas
@@ -44,3 +55,5 @@ Sign In
 - [ ] Continue Dashboard Feature
 - [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing
+- [ ] Ubah Siswa -> Jamaah
+- [ ] Ubah Guru -> Penanggung Jawab
