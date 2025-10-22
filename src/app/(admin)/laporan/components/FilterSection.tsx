@@ -67,10 +67,10 @@ export default function FilterSection({
     { value: '12', label: 'Desember' }
   ]
 
-  const currentYear = new Date().getFullYear()
-  const yearOptions = Array.from({ length: 10 }, (_, i) => ({
-    value: (currentYear - 5 + i).toString(),
-    label: (currentYear - 5 + i).toString()
+  const currentYear = 2025
+  const yearOptions = Array.from({ length: 5 }, (_, i) => ({
+    value: (currentYear + i).toString(),
+    label: (currentYear + i).toString()
   }))
 
   return (

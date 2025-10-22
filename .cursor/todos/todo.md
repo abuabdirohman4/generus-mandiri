@@ -12,7 +12,7 @@ Meetings
 - [ ] Add Template name
 
 ## v1.4.2
-- [ ] Di Iphone PWA tidak jalan
+- [x] Di Iphone PWA tidak jalan
 - [x] Di Laporan Tren Kehadiran & Detail Siswa salah
 - [x] Buat guru & admin tidak bisa langsung login
 
@@ -55,5 +55,5 @@ Sign In
 - [ ] Continue Dashboard Feature
 - [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing
-- [ ] Ubah Siswa -> Jamaah
+- [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
