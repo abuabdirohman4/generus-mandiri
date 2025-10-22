@@ -68,7 +68,8 @@ export async function getUserProfile() {
       desa_id: profile.desa_id,
       daerah_id: profile.daerah_id,
       class_id: classesData[0]?.id || null,
-      class_name: classesData[0]?.name || null
+      class_name: classesData[0]?.name || null,
+      classes: classesData  // Return all classes, not just the first one
     }
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat profile user')

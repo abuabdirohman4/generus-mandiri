@@ -12,7 +12,7 @@ interface Guru {
   kelompok_name?: string;
   daerah_name?: string;
   desa_name?: string;
-  class_count?: number;
+  class_names?: string;
   created_at: string;
 }
 
@@ -60,6 +60,7 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
     return [
       ...baseColumns,
       ...orgColumns,
+      { key: 'class_names', label: 'Kelas yang Diajar', sortable: true },
       { key: 'created_at', label: 'Dibuat', sortable: true },
       { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
     ];
@@ -99,6 +100,15 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
             }
           ]}
         />
+      );
+    }
+    
+    // Handle class names
+    if (column.key === 'class_names') {
+      return (
+        <div className="text-sm text-gray-900 dark:text-white">
+          {item.class_names || '-'}
+        </div>
       );
     }
     

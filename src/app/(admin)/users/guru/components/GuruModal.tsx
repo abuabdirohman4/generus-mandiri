@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { createTeacher, updateTeacher } from '../actions';
+import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses } from '../actions';
+import { useKelas } from '@/hooks/useKelas';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
 import PasswordInput from '@/components/form/input/PasswordInput';
@@ -57,13 +58,15 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   const { daerah: daerahList = [] } = useDaerah();
   const { desa: desaList = [] } = useDesa();
   const { kelompok: kelompokList = [] } = useKelompok();
+  const { kelas: allClasses = [] } = useKelas();
   
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
     password: '',
     daerah_id: '',
-    kelompok_id: ''
+    kelompok_id: '',
+    classIds: [] as string[]
   });
   const [dataFilters, setDataFilters] = useState({
     daerah: '',
@@ -157,47 +160,79 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   });
 
   useEffect(() => {
-    if (guru) {
-      // Edit mode - no password pre-fill
-      setFormData({
-        username: guru.username || '',
-        full_name: guru.full_name || '',
-        password: '', // Empty for edit mode
-        daerah_id: guru.daerah_id || '',
-        kelompok_id: guru.kelompok_id || ''
-      });
-      setDataFilters({
-        daerah: guru.daerah_id || '',
-        desa: guru.desa_id || '',
-        kelompok: guru.kelompok_id || '',
-        kelas: ''
-      });
-    } else {
-      // Create mode - auto-fill organizational fields based on user role
-      const isSuperadmin = userProfile?.role === 'superadmin';
-      const autoFilledDaerah = !isSuperadmin ? userProfile?.daerah_id || '' : '';
-      const autoFilledDesa = !isSuperadmin ? userProfile?.desa_id || '' : '';
-      const autoFilledKelompok = !isSuperadmin && userProfile && isAdminKelompok(userProfile)
-        ? userProfile.kelompok_id || ''
-        : '';
-      
-      setFormData({
-        username: '',
-        full_name: '',
-        password: '',
-        daerah_id: autoFilledDaerah,
-        kelompok_id: autoFilledKelompok
-      });
-      setDataFilters({
-        daerah: autoFilledDaerah,
-        desa: autoFilledDesa,
-        kelompok: autoFilledKelompok,
-        kelas: ''
-      });
-    }
-    setErrors({});
-    setGeneralError('');
+    if (!isOpen) return; // Don't run when modal is closed
+    
+    const loadData = async () => {
+      if (guru) {
+        // Load teacher's assigned classes
+        try {
+          const teacherClasses = await getTeacherClasses(guru.id);
+          const classIds = teacherClasses.map(tc => tc.class_id);
+          
+          setFormData({
+            username: guru.username || '',
+            full_name: guru.full_name || '',
+            password: '', // Empty for edit mode
+            daerah_id: guru.daerah_id || '',
+            kelompok_id: guru.kelompok_id || '',
+            classIds: classIds
+          });
+        } catch (error) {
+          console.error('Error loading teacher classes:', error);
+          setFormData({
+            username: guru.username || '',
+            full_name: guru.full_name || '',
+            password: '', // Empty for edit mode
+            daerah_id: guru.daerah_id || '',
+            kelompok_id: guru.kelompok_id || '',
+            classIds: []
+          });
+        }
+        
+        setDataFilters({
+          daerah: guru.daerah_id || '',
+          desa: guru.desa_id || '',
+          kelompok: guru.kelompok_id || '',
+          kelas: ''
+        });
+      } else {
+        // Create mode - auto-fill organizational fields based on user role
+        const isSuperadmin = userProfile?.role === 'superadmin';
+        const autoFilledDaerah = !isSuperadmin ? userProfile?.daerah_id || '' : '';
+        const autoFilledDesa = !isSuperadmin ? userProfile?.desa_id || '' : '';
+        const autoFilledKelompok = !isSuperadmin && userProfile && isAdminKelompok(userProfile)
+          ? userProfile.kelompok_id || ''
+          : '';
+        
+        setFormData({
+          username: '',
+          full_name: '',
+          password: '',
+          daerah_id: autoFilledDaerah,
+          kelompok_id: autoFilledKelompok,
+          classIds: []
+        });
+        setDataFilters({
+          daerah: autoFilledDaerah,
+          desa: autoFilledDesa,
+          kelompok: autoFilledKelompok,
+          kelas: ''
+        });
+      }
+      setErrors({});
+      setGeneralError('');
+    };
+    
+    loadData();
   }, [guru, isOpen, userProfile]);
+
+  // Filter classes based on selected kelompok using useMemo
+  const availableClasses = useMemo(() => {
+    if (dataFilters.kelompok && allClasses.length > 0) {
+      return allClasses.filter(cls => cls.kelompok_id === dataFilters.kelompok);
+    }
+    return [];
+  }, [dataFilters.kelompok, JSON.stringify(allClasses)]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -266,8 +301,12 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
       if (guru) {
         await updateTeacher(guru.id, submitData);
+        await updateTeacherClasses(guru.id, formData.classIds);
       } else {
-        await createTeacher(submitData);
+        const result = await createTeacher(submitData);
+        if (result.teacher?.id && formData.classIds.length > 0) {
+          await updateTeacherClasses(result.teacher.id, formData.classIds);
+        }
       }
       onSuccess();
       onClose();
@@ -362,6 +401,52 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               disabled={isLoading}
             />
           </div>
+
+          {/* Class Selection - only if kelompok is selected */}
+          {dataFilters.kelompok && availableClasses.length > 0 && (
+            <div>
+              <Label>Kelas yang Diajar</Label>
+              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
+                {availableClasses.map(cls => (
+                  <label key={cls.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.classIds.includes(cls.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            classIds: [...prev.classIds, cls.id]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            classIds: prev.classIds.filter(id => id !== cls.id)
+                          }));
+                        }
+                      }}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      disabled={isLoading}
+                    />
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      {cls.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Pilih satu atau lebih kelas yang akan diajar oleh guru ini
+              </p>
+            </div>
+          )}
+
+          {dataFilters.kelompok && availableClasses.length === 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded p-3">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                Belum ada kelas di kelompok ini. Silakan buat kelas terlebih dahulu di halaman Kelas.
+              </p>
+            </div>
+          )}
           
           <div>
             <Label htmlFor="password">

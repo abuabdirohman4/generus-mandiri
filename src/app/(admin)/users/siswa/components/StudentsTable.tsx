@@ -63,7 +63,7 @@ export default function StudentsTable({
   // Build columns based on user role
   const buildColumns = (userProfile: any) => {
     const baseColumns = [
-      { key: 'name', label: 'Nama', align: 'left' as const },
+      { key: 'name', label: 'Nama', widthMobile: '200px', align: 'left' as const },
       { key: 'gender', label: 'Jenis Kelamin', align: 'center' as const },
     ];
     
@@ -102,7 +102,13 @@ export default function StudentsTable({
         );
       }
     }
-    // Teacher: no org columns
+    
+    // Teacher with multiple classes: show class_name column
+    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      orgColumns.push(
+        { key: 'class_name', label: 'Kelas', align: 'center' as const }
+      );
+    }
     
     return [
       ...baseColumns,
@@ -159,6 +165,7 @@ export default function StudentsTable({
       
       return <TableActions actions={actions} />;
     }
+    
     // Handle organizational columns
     if (['daerah_name', 'desa_name', 'kelompok_name', 'class_name'].includes(column.key)) {
       return item[column.key] || '-';

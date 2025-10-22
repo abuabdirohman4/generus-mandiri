@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
-import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
+import { getCurrentUserProfile, getDataFilter, canAccessFeature } from '@/lib/accessControlServer';
 
 export interface TeacherData {
   username: string;
@@ -79,7 +79,7 @@ export async function createTeacher(data: TeacherData) {
     }
 
     revalidatePath('/users/guru');
-    return { success: true };
+    return { success: true, teacher: { id: authData.user.id, username: data.username, full_name: data.full_name, email: data.email, role: 'teacher', daerah_id: data.daerah_id, desa_id: data.desa_id, kelompok_id: data.kelompok_id } };
   } catch (error) {
     console.error('Error creating teacher:', error);
     throw handleApiError(error, 'menyimpan data', 'Gagal membuat guru');
@@ -208,7 +208,9 @@ export async function getAllTeachers() {
         daerah:daerah_id(name),
         desa:desa_id(name),
         kelompok:kelompok_id(name),
-        teacher_classes(count)
+        teacher_classes(
+          class:class_id(id, name)
+        )
       `)
       .eq('role', 'teacher')
       .order('username');
@@ -232,10 +234,10 @@ export async function getAllTeachers() {
       throw error;
     }
 
-    // Transform the data to include classes count and flattened org names
+    // Transform the data to include class names and flattened org names
     const transformedData = data?.map(teacher => ({
       ...teacher,
-      classes_count: teacher.teacher_classes?.[0]?.count || 0,
+      class_names: teacher.teacher_classes?.map((tc: any) => tc.class?.name).filter(Boolean).join(', ') || '-',
       daerah_name: Array.isArray(teacher.daerah) ? teacher.daerah[0]?.name : teacher.daerah?.name || '',
       desa_name: Array.isArray(teacher.desa) ? teacher.desa[0]?.name : teacher.desa?.name || '',
       kelompok_name: Array.isArray(teacher.kelompok) ? teacher.kelompok[0]?.name : teacher.kelompok?.name || ''
@@ -269,6 +271,76 @@ export async function assignTeacherToKelompok(teacherId: string, kelompokId: str
   } catch (error) {
     console.error('Error assigning teacher to kelompok:', error);
     throw handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelompok');
+  }
+}
+
+// Get classes for a specific teacher
+export async function getTeacherClasses(teacherId: string) {
+  try {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+      .from('teacher_classes')
+      .select(`
+        id,
+        class_id,
+        class:class_id (
+          id,
+          name,
+          kelompok_id
+        )
+      `)
+      .eq('teacher_id', teacherId);
+    
+    if (error) throw error;
+    
+    return data?.map((tc: any) => ({
+      id: tc.id,
+      class_id: tc.class_id,
+      class_name: tc.class?.name || '',
+      kelompok_id: tc.class?.kelompok_id || ''
+    })) || [];
+  } catch (error) {
+    throw handleApiError(error, 'memuat data', 'Gagal memuat kelas guru');
+  }
+}
+
+// Update teacher class assignments
+export async function updateTeacherClasses(teacherId: string, classIds: string[]) {
+  try {
+    const supabase = await createClient();
+    const profile = await getCurrentUserProfile();
+    
+    if (!profile || !canAccessFeature(profile, 'users')) {
+      throw new Error('Anda tidak memiliki akses untuk mengubah kelas guru');
+    }
+    
+    // Delete existing assignments
+    const { error: deleteError } = await supabase
+      .from('teacher_classes')
+      .delete()
+      .eq('teacher_id', teacherId);
+    
+    if (deleteError) throw deleteError;
+    
+    // Insert new assignments
+    if (classIds.length > 0) {
+      const mappings = classIds.map(classId => ({
+        teacher_id: teacherId,
+        class_id: classId
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('teacher_classes')
+        .insert(mappings);
+      
+      if (insertError) throw insertError;
+    }
+    
+    revalidatePath('/users/guru');
+    return { success: true };
+  } catch (error) {
+    throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate kelas guru');
   }
 }
 

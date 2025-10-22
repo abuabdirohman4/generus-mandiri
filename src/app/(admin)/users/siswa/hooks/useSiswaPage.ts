@@ -50,8 +50,10 @@ export function useSiswaPage() {
   })
 
   // Students with conditional classId
+  // For teachers, don't filter by classId - fetch all students and filter client-side
+  // For admins, use selectedClassFilter
   const classId = userProfile?.role === 'teacher' 
-    ? userProfile.classes?.[0]?.id || undefined
+    ? undefined  // Don't filter by classId for teachers
     : selectedClassFilter || undefined
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents({
@@ -160,9 +162,15 @@ export function useSiswaPage() {
     setDataFilters(filters)
   }, [])
 
-  // Filter students based on data filters
+  // Filter students based on data filters and teacher classes
   const filteredStudents = useMemo(() => {
     let result = students || []
+    
+    // For teachers, filter by their assigned classes
+    if (userProfile?.role === 'teacher' && userProfile.classes?.length) {
+      const teacherClassIds = userProfile.classes.map(c => c.id)
+      result = result.filter(s => teacherClassIds.includes(s.class_id))
+    }
     
     // Apply data filters
     if (dataFilters.daerah) {
@@ -179,7 +187,7 @@ export function useSiswaPage() {
     }
 
     return result
-  }, [students, dataFilters])
+  }, [students, dataFilters, userProfile])
 
   return {
     // State

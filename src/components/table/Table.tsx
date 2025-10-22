@@ -6,6 +6,7 @@ interface Column {
   key: string
   label: string
   width?: string
+  widthMobile?: string
   align?: 'left' | 'center' | 'right'
   className?: string
   sortable?: boolean
@@ -46,6 +47,17 @@ export default function DataTable({
   const [searchQuery, setSearchQuery] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Screen size detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Helper function to check if column is sortable
   const isSortable = (column: Column) => {
@@ -165,7 +177,29 @@ export default function DataTable({
   }
 
   const defaultRenderCell = (column: Column, item: any) => {
-    return item[column.key] || '-'
+    const value = item[column.key] || '-'
+    
+    // If column has width defined, apply truncation with ellipsis
+    if (column.width || column.widthMobile) {
+      const desktopWidth = column.width
+      
+      // Create dynamic classes based on whether desktop width is defined
+      const classes = [
+        'truncate overflow-hidden whitespace-nowrap',
+        desktopWidth ? 'md:whitespace-nowrap' : 'md:whitespace-normal md:overflow-visible'
+      ].join(' ')
+      
+      return (
+        <div 
+          className={classes}
+          title={String(value)}
+        >
+          {value}
+        </div>
+      )
+    }
+    
+    return value
   }
 
   return (
@@ -234,8 +268,16 @@ export default function DataTable({
                     <th
                       key={column.key}
                       onClick={() => isSortable(column) && handleSort(column.key)}
-                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
-                      style={column.width ? { width: column.width } : {}}
+                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
+                      style={column.width ? {
+                        width: column.width,
+                        minWidth: column.width,
+                        maxWidth: column.width
+                      } : (column.widthMobile && isMobile) ? {
+                        width: column.widthMobile,
+                        minWidth: column.widthMobile,
+                        maxWidth: column.widthMobile
+                      } : {}}
                     >
                       <div className={`flex items-center gap-2 ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : 'justify-start'}`}>
                         {column.label}
@@ -276,8 +318,16 @@ export default function DataTable({
                       return (
                         <td
                           key={column.key}
-                          className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white whitespace-nowrap ${column.className || ''}`}
-                          style={column.width ? { width: column.width } : {}}
+                          className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
+                          style={column.width ? {
+                            width: column.width,
+                            minWidth: column.width,
+                            maxWidth: column.width
+                          } : (column.widthMobile && isMobile) ? {
+                            width: column.widthMobile,
+                            minWidth: column.widthMobile,
+                            maxWidth: column.widthMobile
+                          } : {}}
                         >
                           {renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)}
                         </td>
