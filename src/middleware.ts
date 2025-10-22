@@ -46,6 +46,7 @@ export async function middleware(request: NextRequest) {
       '/users/guru',
       '/users/admin',
       '/organisasi',
+      '/kelas',
       '/settings'
     ]
     

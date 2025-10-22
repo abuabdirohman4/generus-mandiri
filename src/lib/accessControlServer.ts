@@ -12,7 +12,7 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
   if (profile.role === 'superadmin') return true;
   if (profile.role === 'admin') {
     // Admin can access all features but with filtered data
-    return ['dashboard', 'organisasi', 'users'].includes(feature);
+    return ['dashboard', 'organisasi', 'users', 'manage_class_masters', 'manage_classes'].includes(feature);
   }
   return false;
 }
@@ -47,3 +47,6 @@ export async function getCurrentUserProfile() {
     
   return profile as UserProfile | null;
 }
+
+// Alias for consistency with server actions
+export const getUserProfile = getCurrentUserProfile;

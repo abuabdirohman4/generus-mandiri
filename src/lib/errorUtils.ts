@@ -19,6 +19,9 @@ export type ErrorContext =
   | 'memuat data'
   | 'menghapus data'
   | 'mengupdate data'
+  | 'membuat kelas'
+  | 'memperbarui data'
+  | 'mengupdate status'
   | 'reset'
   | 'autentikasi'
   | 'validasi'
@@ -81,6 +84,9 @@ export const createErrorContext = (operation: string, context: ErrorContext): st
     'memuat data': 'memuat',
     'menghapus data': 'menghapus',
     'mengupdate data': 'mengupdate',
+    'membuat kelas': 'membuat',
+    'memperbarui data': 'memperbarui',
+    'mengupdate status': 'mengupdate',
     'reset': 'mereset',
     'autentikasi': 'autentikasi',
     'validasi': 'validasi',

@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from "react";
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
   className?: string;
   children: React.ReactNode;
   showCloseButton?: boolean; // New prop to control close button visibility
@@ -13,6 +14,7 @@ interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
+  title,
   children,
   className,
   showCloseButton = true, // Default to true for backwards compatibility
@@ -52,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
+    : "relative w-full rounded-3xl bg-white max-w-[600px] m-4";
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
@@ -88,8 +90,21 @@ export const Modal: React.FC<ModalProps> = ({
             </svg>
           </button>
         )}
-        <div>{children}</div>
+        <div>
+          {title && (
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {title}
+              </h3>
+            </div>
+          )}
+          <div className="px-6 py-4">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+export default Modal;

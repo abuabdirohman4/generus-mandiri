@@ -11,8 +11,8 @@ import {
   GridIcon,
   GroupIcon,
   ReportIcon,
-  DashboardIcon,
   BuildingIcon,
+  TableIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
@@ -69,6 +69,12 @@ const allNavItems: NavItem[] = [
     path: "/users/admin",
     adminOnly: true,
     excludeAdminKelompok: true,
+  },
+  {
+    icon: <TableIcon className="w-6 h-6" />,
+    name: "Kelas",
+    path: "/kelas",
+    adminOnly: true,
   },
   {
     icon: <BuildingIcon className="w-6 h-6" />,
