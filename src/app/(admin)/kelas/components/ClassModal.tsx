@@ -4,10 +4,15 @@ import { useState, useEffect } from 'react';
 import { ClassWithMaster, createClassFromMaster, createCustomClass, updateClass } from '../actions/classes';
 import { getAllClassMasters } from '../actions/masters';
 import { ClassMaster } from '../actions/masters';
+import { useUserProfile } from '@/stores/userProfileStore';
+import { useDaerah } from '@/hooks/useDaerah';
+import { useDesa } from '@/hooks/useDesa';
+import { useKelompok } from '@/hooks/useKelompok';
+import { isAdminKelompok } from '@/lib/userUtils';
 import Modal from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
-import InputFilter from '@/components/form/input/InputFilter';
+import DataFilter from '@/components/shared/DataFilter';
 import Button from '@/components/ui/button/Button';
 
 interface ClassModalProps {
@@ -16,29 +21,56 @@ interface ClassModalProps {
 }
 
 export default function ClassModal({ classItem, onClose }: ClassModalProps) {
+  const { profile: userProfile } = useUserProfile();
   const [formData, setFormData] = useState({
     name: '',
     kelompok_id: '',
-    class_master_id: '',
-    is_from_template: true
+    masterIds: [] as string[]
   });
   const [masters, setMasters] = useState<ClassMaster[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    daerah: '',
+    desa: '',
+    kelompok: '',
+    kelas: ''
+  });
+  
+  // Fetch organisasi data
+  const { daerah: daerahList } = useDaerah();
+  const { desa: desaList } = useDesa();
+  const { kelompok: kelompokList } = useKelompok();
 
   const isEditing = !!classItem;
 
   useEffect(() => {
     loadMasters();
     if (classItem) {
+      // Pre-fill filters when editing
+      setFilters({
+        daerah: classItem.kelompok?.desa?.daerah_id || '',
+        desa: classItem.kelompok?.desa_id || '',
+        kelompok: classItem.kelompok_id,
+        kelas: ''
+      });
+      
       setFormData({
         name: classItem.name,
         kelompok_id: classItem.kelompok_id,
-        class_master_id: classItem.class_master_id || '',
-        is_from_template: !!classItem.class_master_id
+        masterIds: classItem.class_master_mappings?.map(mapping => mapping.class_master.id) || []
       });
     }
   }, [classItem]);
+
+  // Update kelompok_id when filter changes
+  useEffect(() => {
+    if (filters.kelompok) {
+      handleChange('kelompok_id', filters.kelompok);
+    }
+  }, [filters.kelompok]);
 
   const loadMasters = async () => {
     try {
@@ -56,17 +88,17 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
 
     try {
       if (isEditing) {
-        await updateClass(classItem!.id, { name: formData.name });
+        await updateClass(classItem!.id, { 
+          name: formData.name,
+          masterIds: formData.masterIds
+        });
       } else {
-        if (formData.is_from_template) {
-          await createClassFromMaster(
-            formData.kelompok_id,
-            formData.class_master_id,
-            formData.name
-          );
-        } else {
-          await createCustomClass(formData.kelompok_id, formData.name);
-        }
+        // Always use createClassFromMaster, allowing empty array for no templates
+        await createClassFromMaster(
+          formData.kelompok_id,
+          formData.masterIds,
+          formData.name
+        );
       }
       onClose();
     } catch (error: any) {
@@ -85,11 +117,6 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
     }
   };
 
-  const masterOptions = masters.map(master => ({
-    value: master.id,
-    label: master.name
-  }));
-
   return (
     <Modal
       isOpen={true}
@@ -103,67 +130,67 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
           </div>
         )}
 
-        {!isEditing && (
-          <div>
-            <Label>Kelompok *</Label>
-            <InputFilter
-              id="kelompok"
-              label=""
-              options={[]}
-              value={formData.kelompok_id}
-              onChange={(value: string) => handleChange('kelompok_id', value)}
-              placeholder="Pilih kelompok"
-              error={!!errors.kelompok_id}
-            />
-          </div>
+        {/* DataFilter - hidden for Admin Kelompok, show readonly text when editing */}
+        {userProfile && !isAdminKelompok(userProfile) && (
+          <>
+            {isEditing ? (
+              <div>
+                <Label>Kelompok</Label>
+                <InputField
+                  id="kelompok_readonly"
+                  type="text"
+                  value={classItem?.kelompok?.name || ''}
+                  disabled
+                  className="bg-gray-100 dark:bg-gray-700"
+                />
+              </div>
+            ) : (
+              <DataFilter
+                filters={filters}
+                onFilterChange={setFilters}
+                userProfile={userProfile}
+                daerahList={daerahList || []}
+                desaList={desaList || []}
+                kelompokList={kelompokList || []}
+                classList={[]}
+                showKelas={false}
+                variant="modal"
+                hideAllOption={true}
+                requiredFields={{ kelompok: true }}
+                errors={{ kelompok: errors.kelompok_id }}
+              />
+            )}
+          </>
         )}
 
-        {!isEditing && (
-          <div>
-            <Label>Jenis Kelas</Label>
-            <div className="space-y-2">
-              <label className="flex items-center">
+        {/* Always show template selection */}
+        <div>
+          <Label>Template Kelas</Label>
+          <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
+            {masters.map(master => (
+              <label key={master.id} className="flex items-center">
                 <input
-                  type="radio"
-                  name="class_type"
-                  checked={formData.is_from_template}
-                  onChange={() => handleChange('is_from_template', true)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  type="checkbox"
+                  checked={formData.masterIds.includes(master.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      handleChange('masterIds', [...formData.masterIds, master.id]);
+                    } else {
+                      handleChange('masterIds', formData.masterIds.filter(id => id !== master.id));
+                    }
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Dari Template
+                  {master.name}
                 </span>
               </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="class_type"
-                  checked={!formData.is_from_template}
-                  onChange={() => handleChange('is_from_template', false)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Custom
-                </span>
-              </label>
-            </div>
+            ))}
           </div>
-        )}
-
-        {!isEditing && formData.is_from_template && (
-          <div>
-            <Label>Template Kelas *</Label>
-            <InputFilter
-              id="class_master"
-              label=""
-              options={masterOptions}
-              value={formData.class_master_id}
-              onChange={(value) => handleChange('class_master_id', value)}
-              placeholder="Pilih template kelas"
-              error={!!errors.class_master_id}
-            />
-          </div>
-        )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Pilih satu atau lebih template, atau biarkan kosong untuk kelas custom
+          </p>
+        </div>
 
         <div>
           <Label htmlFor="name">Nama Kelas *</Label>

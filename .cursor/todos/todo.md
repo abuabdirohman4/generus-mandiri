@@ -4,6 +4,9 @@ Kelas
 - [ ] Dibuat flexibel, satu kelas isinya terdiri dari type apa
 - [ ] Sambungkan dengan kelompok & guru
 
+Guru
+- [ ] Assign satu guru ke beberapa kelas
+
 ## v1.3.1
 Siswa
 - [x] Pindahkan ke dalam folder user
