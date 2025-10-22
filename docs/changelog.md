@@ -6,10 +6,9 @@ All notable changes to this project will be documented in this file.
 ## [1.4.1]
 
 ### Fixed
-- **Class Management**: Fixed class management system issues and improved stability
-- **Teacher Assignment**: Resolved teacher assignment conflicts and validation errors
-- **Database Performance**: Optimized database queries for better performance
-- **UI/UX**: Fixed minor UI issues and improved user experience
+- **UI/UX**: 
+  - Fixed minor width column in table "Kelas"
+  - Move button "tambah" in "Kelas" page
 
 ## [1.4.0]
 

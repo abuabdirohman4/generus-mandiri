@@ -34,12 +34,6 @@ export default function ClassesKelompokTab() {
     setFilters
   } = useKelasPage();
 
-  const canManage = userProfile ? (
-    isSuperAdmin(userProfile) || 
-    isAdminDaerah(userProfile) || 
-    isAdminDesa(userProfile) || 
-    isAdminKelompok(userProfile)
-  ) : false;
 
   const confirmDelete = async () => {
     if (!deleteConfirm.classItem) return;
@@ -76,11 +70,6 @@ export default function ClassesKelompokTab() {
             Kelola implementasi kelas per kelompok
           </p>
         </div>
-        {canManage && (
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
-            Tambah Kelas
-          </Button>
-        )}
       </div>
 
       {/* Data Filter - hidden for Admin Kelompok */}
@@ -103,7 +92,7 @@ export default function ClassesKelompokTab() {
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'kelompok_name', label: 'Kelompok', sortable: true },
           { key: 'combined_classes', label: 'Gabungan Kelas', widthMobile: '150px', sortable: true },
-          ...(canManage ? [{ key: 'actions', label: 'Aksi', width: '100px', align: 'center' as const }] : [])
+          { key: 'actions', label: 'Aksi', width: '100px', align: 'center' as const }
         ]}
             data={classes.map(classItem => ({
               ...classItem,

@@ -28,7 +28,6 @@ export default function ClassMastersTab() {
     closeDeleteConfirm
   } = useClassMastersPage();
 
-  const canEdit = userProfile ? isSuperAdmin(userProfile) : false;
 
   const confirmDelete = async () => {
     if (!deleteConfirm.master) return;
@@ -62,14 +61,9 @@ export default function ClassMastersTab() {
             Master Kelas
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {canEdit ? 'Kelola kelas yang tersedia' : 'Lihat kelas yang tersedia'}
+            Kelola kelas yang tersedia
           </p>
         </div>
-        {canEdit && (
-          <Button onClick={openCreateModal} className="flex items-center gap-2">
-            Tambah Master
-          </Button>
-        )}
       </div>
 
       {/* Masters Table */}
@@ -78,7 +72,7 @@ export default function ClassMastersTab() {
           { key: 'sort_order', label: 'No.', align: 'center' },
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'description', label: 'Deskripsi' },
-          ...(canEdit ? [{ key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }] : [])
+          { key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }
         ]}
         data={masters}
         renderCell={(column, master) => {
