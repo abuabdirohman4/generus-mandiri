@@ -1,8 +1,8 @@
 ## v1.4.0
 Kelas
-- [ ] Buat table kelas & kelompok_kelas
-- [ ] Dibuat flexibel, satu kelas isinya terdiri dari type apa
-- [ ] Sambungkan dengan kelompok & guru
+- [x] Buat table kelas & kelompok_kelas
+- [x] Dibuat flexibel, satu kelas isinya terdiri dari type apa
+- [] Sambungkan dengan kelompok & guru
 
 Guru
 - [ ] Assign satu guru ke beberapa kelas

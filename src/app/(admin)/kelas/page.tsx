@@ -9,11 +9,11 @@ type TabType = 'masters' | 'kelompok';
 
 export default function KelasPage() {
   const { profile: userProfile } = useUserProfile();
-  const [activeTab, setActiveTab] = useState<TabType>('masters');
+  const [activeTab, setActiveTab] = useState<TabType>('kelompok');
   
   const tabs = [
-    { id: 'masters', label: 'Template Kelas' },
-    { id: 'kelompok', label: 'Kelas Kelompok' }
+    { id: 'kelompok', label: 'Kelas' },
+    { id: 'masters', label: 'Master' }
   ];
 
   return (

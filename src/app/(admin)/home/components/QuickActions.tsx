@@ -147,7 +147,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-teal-100 dark:bg-teal-900',
       iconColor: 'text-teal-600 dark:text-teal-400',
       adminOnly: true,
-      disabled: true
+      disabled: false
     },
     {
       id: 'organisasi',

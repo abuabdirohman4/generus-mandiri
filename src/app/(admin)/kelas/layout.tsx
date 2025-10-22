@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Manajemen Kelas',
-  description: 'Kelola template kelas dan implementasi kelas per kelompok',
+  title: 'Kelas | Generus Mandiri',
+  description: 'Kelola Kelas dan implementasi kelas per kelompok',
 };
 
 export default function KelasLayout({

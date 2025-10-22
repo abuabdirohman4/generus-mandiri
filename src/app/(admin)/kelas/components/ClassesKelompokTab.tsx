@@ -15,6 +15,7 @@ import KelasTableSkeleton from '@/components/ui/skeleton/KelasTableSkeleton';
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import DataFilter from '@/components/shared/DataFilter';
+import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 
 export default function ClassesKelompokTab() {
   const { profile: userProfile } = useUserProfile();
@@ -22,6 +23,9 @@ export default function ClassesKelompokTab() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassWithMaster | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [classToDelete, setClassToDelete] = useState<ClassWithMaster | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Add filter state
   const [filters, setFilters] = useState({
@@ -78,17 +82,30 @@ export default function ClassesKelompokTab() {
     setShowModal(true);
   };
 
-  const handleDelete = async (classItem: ClassWithMaster) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus kelas "${classItem.name}"?`)) {
-      return;
-    }
+  const handleDelete = (classItem: ClassWithMaster) => {
+    setClassToDelete(classItem);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!classToDelete) return;
 
     try {
-      await deleteClass(classItem.id);
+      setDeleting(true);
+      await deleteClass(classToDelete.id);
       await loadClasses();
+      setShowDeleteModal(false);
+      setClassToDelete(null);
     } catch (error) {
       console.error('Error deleting class:', error);
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setClassToDelete(null);
   };
 
   const handleModalClose = () => {
@@ -140,7 +157,6 @@ export default function ClassesKelompokTab() {
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'kelompok_name', label: 'Kelompok', sortable: true },
           { key: 'combined_classes', label: 'Gabungan Kelas', sortable: true },
-          // { key: 'is_active', label: 'Status', width: '120px', align: 'center' },
           ...(canManage ? [{ key: 'actions', label: 'Aksi', width: '100px', align: 'center' as const }] : [])
         ]}
             data={classes.map(classItem => ({
@@ -173,16 +189,6 @@ export default function ClassesKelompokTab() {
                   {classItem.combined_classes}
                 </div>
               );
-            // case 'is_active':
-            //   return (
-            //     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            //       classItem.is_active 
-            //         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            //         : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-            //     }`}>
-            //       {classItem.is_active ? 'Aktif' : 'Tidak Aktif'}
-            //     </span>
-            //   );
             case 'actions':
               return (
                 <TableActions
@@ -219,6 +225,19 @@ export default function ClassesKelompokTab() {
           onClose={handleModalClose}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Hapus Kelas"
+        message={`Apakah Anda yakin ingin menghapus kelas "${classToDelete?.name}"?`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+        isLoading={deleting}
+      />
     </div>
   );
 }
