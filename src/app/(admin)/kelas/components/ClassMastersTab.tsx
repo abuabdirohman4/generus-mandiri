@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useUserProfile } from '@/stores/userProfileStore';
-import { getAllClassMasters, deleteClassMaster } from '../actions/masters';
-import { ClassMaster } from '../actions/masters';
+import { useClassMastersPage } from '../hooks/useClassMastersPage';
+import { deleteClassMaster } from '../actions/masters';
 import { isSuperAdmin } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
@@ -12,79 +10,46 @@ import KelasSkeleton from '@/components/ui/skeleton/KelasSkeleton';
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
+import { toast } from 'sonner';
 
 export default function ClassMastersTab() {
-  const { profile: userProfile } = useUserProfile();
-  const [masters, setMasters] = useState<ClassMaster[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingMaster, setEditingMaster] = useState<ClassMaster | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [masterToDelete, setMasterToDelete] = useState<ClassMaster | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const {
+    masters,
+    isLoading,
+    mutate,
+    userProfile,
+    isModalOpen,
+    editingMaster,
+    deleteConfirm,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    openDeleteConfirm,
+    closeDeleteConfirm
+  } = useClassMastersPage();
 
   const canEdit = userProfile ? isSuperAdmin(userProfile) : false;
 
-  useEffect(() => {
-    loadMasters();
-  }, []);
-
-  const loadMasters = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllClassMasters();
-      setMasters(data);
-    } catch (error) {
-      console.error('Error loading masters:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreate = () => {
-    setEditingMaster(null);
-    setShowModal(true);
-  };
-
-  const handleEdit = (master: ClassMaster) => {
-    setEditingMaster(master);
-    setShowModal(true);
-  };
-
-  const handleDelete = (master: ClassMaster) => {
-    setMasterToDelete(master);
-    setShowDeleteModal(true);
-  };
-
   const confirmDelete = async () => {
-    if (!masterToDelete) return;
+    if (!deleteConfirm.master) return;
 
     try {
-      setDeleting(true);
-      await deleteClassMaster(masterToDelete.id);
-      await loadMasters();
-      setShowDeleteModal(false);
-      setMasterToDelete(null);
+      await deleteClassMaster(deleteConfirm.master.id);
+      await mutate(); // Refresh data using SWR mutate
+      closeDeleteConfirm();
+      toast.success('Master kelas berhasil dihapus');
     } catch (error) {
       console.error('Error deleting master:', error);
-    } finally {
-      setDeleting(false);
+      toast.error('Gagal menghapus master kelas');
     }
   };
 
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setMasterToDelete(null);
-  };
-
-
   const handleModalClose = () => {
-    setShowModal(false);
-    setEditingMaster(null);
-    loadMasters();
+    closeModal();
+    mutate(); // Refresh data after modal operations
   };
 
-  if (loading) {
+  if (isLoading) {
     return <KelasSkeleton />;
   }
 
@@ -101,7 +66,7 @@ export default function ClassMastersTab() {
           </p>
         </div>
         {canEdit && (
-          <Button onClick={handleCreate} className="flex items-center gap-2">
+          <Button onClick={openCreateModal} className="flex items-center gap-2">
             Tambah Master
           </Button>
         )}
@@ -143,14 +108,14 @@ export default function ClassMastersTab() {
                     {
                       id: 'edit',
                       icon: PencilIcon,
-                      onClick: () => handleEdit(master),
+                      onClick: () => openEditModal(master),
                       title: 'Edit',
                       color: 'blue'
                     },
                     {
                       id: 'delete',
                       icon: TrashBinIcon,
-                      onClick: () => handleDelete(master),
+                      onClick: () => openDeleteConfirm(master),
                       title: 'Hapus',
                       color: 'red'
                     }
@@ -166,24 +131,25 @@ export default function ClassMastersTab() {
       />
 
       {/* Modal */}
-      {showModal && (
+      {isModalOpen && (
         <ClassMasterModal
           master={editingMaster}
           onClose={handleModalClose}
+          onSuccess={mutate}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={showDeleteModal}
-        onClose={cancelDelete}
+        isOpen={deleteConfirm.isOpen}
+        onClose={closeDeleteConfirm}
         onConfirm={confirmDelete}
         title="Hapus Master Kelas"
-        message={`Apakah Anda yakin ingin menghapus template "${masterToDelete?.name}"?`}
+        message={`Apakah Anda yakin ingin menghapus template "${deleteConfirm.master?.name}"?`}
         confirmText="Hapus"
         cancelText="Batal"
         isDestructive={true}
-        isLoading={deleting}
+        isLoading={false}
       />
     </div>
   );

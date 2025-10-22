@@ -10,9 +10,10 @@ import Button from '@/components/ui/button/Button';
 interface ClassMasterModalProps {
   master: ClassMaster | null;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function ClassMasterModal({ master, onClose }: ClassMasterModalProps) {
+export default function ClassMasterModal({ master, onClose, onSuccess }: ClassMasterModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -44,6 +45,7 @@ export default function ClassMasterModal({ master, onClose }: ClassMasterModalPr
       } else {
         await createClassMaster(formData);
       }
+      onSuccess?.(); // Call onSuccess callback to refresh data
       onClose();
     } catch (error: any) {
       if (error.message) {

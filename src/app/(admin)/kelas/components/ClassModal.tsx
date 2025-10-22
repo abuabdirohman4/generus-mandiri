@@ -18,9 +18,10 @@ import Button from '@/components/ui/button/Button';
 interface ClassModalProps {
   classItem: ClassWithMaster | null;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function ClassModal({ classItem, onClose }: ClassModalProps) {
+export default function ClassModal({ classItem, onClose, onSuccess }: ClassModalProps) {
   const { profile: userProfile } = useUserProfile();
   const [formData, setFormData] = useState({
     name: '',
@@ -120,6 +121,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
           formData.name
         );
       }
+      onSuccess?.(); // Call onSuccess callback to refresh data
       onClose();
     } catch (error: any) {
       if (error.message) {
