@@ -5,12 +5,9 @@ Fitur Baru:
 - Manajemen Kelompok Kelas - Satu kelas dapat berisi berbagai jenis kelompok
 - Integrasi Guru & Kelas - Satu guru dapat mengajar di beberapa kelas
 - Filter Kelas - Sistem filtering yang lebih baik tanpa duplikasi
-- State Management - Implementasi SWR + Zustand untuk performa optimal
-
-Perbaikan:
+- Performance - Implementasi SWR + Zustand untuk performa optimal
 - Database Structure - Tabel kelas dan kelompok_kelas yang lebih fleksibel
-- User Experience - Workflow manajemen kelas dan guru yang lebih streamlined
-- Performance - State management yang lebih efisien dengan SWR + Zustand
+
 
 Update v1.3.1 - Fix Bug
 
