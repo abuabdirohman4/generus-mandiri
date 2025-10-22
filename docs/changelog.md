@@ -3,6 +3,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0]
+
+### Added
+- **Class Management System**: New flexible class and group management system
+  - Dynamic class structure supporting multiple types within one class
+  - Integration with groups and teachers
+  - SWR + Zustand implementation for state management
+- **Teacher Assignment**: Enhanced teacher management allowing assignment to multiple classes
+- **Class Filtering**: Improved class filtering system to prevent duplicates
+
+### Improved
+- **Database Structure**: New tables for classes and kelompok_kelas with flexible design
+- **State Management**: Better state management with SWR and Zustand integration
+- **User Experience**: Streamlined class and teacher management workflows
+
 ## [1.3.1]
 
 ### Fixed
