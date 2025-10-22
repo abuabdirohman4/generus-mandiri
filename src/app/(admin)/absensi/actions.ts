@@ -180,10 +180,10 @@ export async function createMeeting(data: CreateMeetingData) {
     // If user is a teacher, verify they teach this class
     if (profile.role === 'teacher') {
       const { data: teacherClass } = await supabase
-        .from('classes')
+        .from('teacher_classes')
         .select('id')
         .eq('teacher_id', user.id)
-        .eq('id', data.classId)
+        .eq('class_id', data.classId)
         .single()
 
       if (!teacherClass) {
@@ -288,14 +288,14 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
 
     // If user is a teacher, only get their class meetings
     if (profile.role === 'teacher') {
-      const { data: teacherClass } = await supabase
-        .from('classes')
-        .select('id')
+      const { data: teacherClasses } = await supabase
+        .from('teacher_classes')
+        .select('class_id')
         .eq('teacher_id', user.id)
-        .single()
 
-      if (teacherClass) {
-        query = query.eq('class_id', teacherClass.id)
+      if (teacherClasses && teacherClasses.length > 0) {
+        const classIds = teacherClasses.map(tc => tc.class_id)
+        query = query.in('class_id', classIds)
       } else {
         return { success: true, data: [], hasMore: false }
       }
@@ -596,14 +596,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
 
     // If user is a teacher, only get their class meetings
     if (profile.role === 'teacher') {
-      const { data: teacherClass } = await supabase
-        .from('classes')
-        .select('id')
+      const { data: teacherClasses } = await supabase
+        .from('teacher_classes')
+        .select('class_id')
         .eq('teacher_id', user.id)
-        .single()
 
-      if (teacherClass) {
-        query = query.eq('class_id', teacherClass.id)
+      if (teacherClasses && teacherClasses.length > 0) {
+        const classIds = teacherClasses.map(tc => tc.class_id)
+        query = query.in('class_id', classIds)
       } else {
         return { success: true, data: [], hasMore: false }
       }

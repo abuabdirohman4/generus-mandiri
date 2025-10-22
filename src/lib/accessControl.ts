@@ -98,6 +98,10 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
     // Admin can access all features but with filtered data
     return ['dashboard', 'organisasi', 'users'].includes(feature);
   }
+  if (profile.role === 'teacher') {
+    // Teachers can access users (students) and absensi features
+    return ['users', 'absensi'].includes(feature);
+  }
   return false;
 }
 

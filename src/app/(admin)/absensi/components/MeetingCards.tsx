@@ -15,7 +15,7 @@ import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingCardSkeleton from '@/components/ui/skeleton/MeetingCardSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isSuperAdmin, isAdminDaerah, isAdminDesa } from '@/lib/userUtils'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -27,6 +27,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
   const isSuperAdminUser = isSuperAdmin(userProfile)
   const isAdminDaerahUser = isAdminDaerah(userProfile)
   const isAdminDesaUser = isAdminDesa(userProfile)
+  const isAdminKelompokUser = isAdminKelompok(userProfile)
+  const isTeacherUser = userProfile?.role === 'teacher'
   
   const parts: string[] = []
   
@@ -60,9 +62,16 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     }
     parts.push(meeting.classes.name)
   }
-  // Teacher & Admin Kelompok: Show only Class
-  else {
+  // Admin Kelompok: Show only Class
+  else if (isAdminKelompokUser) {
     parts.push(meeting.classes.name)
+  }
+  // Teacher: Show location + class name only if multiple classes
+  else if (isTeacherUser) {
+    // Add class name only if teacher has multiple classes
+    if (userProfile?.classes && userProfile.classes.length > 1) {
+      parts.push(meeting.classes.name)
+    }
   }
   
   return parts.join(', ')

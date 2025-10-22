@@ -27,6 +27,7 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
   const isAdminDaerahUser = isAdminDaerah(userProfile)
   const isAdminDesaUser = isAdminDesa(userProfile)
   const isAdminKelompokUser = isAdminKelompok(userProfile)
+  const isTeacherUser = userProfile?.role === 'teacher'
   
   const parts: string[] = []
   
@@ -63,6 +64,13 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
   // Admin Kelompok: Show only Class
   else if (isAdminKelompokUser) {
     parts.push(meeting.classes.name)
+  }
+  // Teacher: Show location + class name only if multiple classes
+  else if (isTeacherUser) {
+    // Add class name only if teacher has multiple classes
+    if (userProfile?.classes && userProfile.classes.length > 1) {
+      parts.push(meeting.classes.name)
+    }
   }
   
   return parts.join(', ')
