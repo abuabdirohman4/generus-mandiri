@@ -201,7 +201,8 @@ export default function MeetingChart({
         absent: meeting.absentCount,
         excused: meeting.excusedCount,
         sick: meeting.sickCount,
-        total: meeting.totalStudents
+        total: meeting.totalStudents,
+        meetings: 1 // Each meeting represents 1 meeting per day
       }
     }))
 

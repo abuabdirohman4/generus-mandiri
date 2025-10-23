@@ -98,7 +98,6 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
           value={batchSize === 0 ? '' : batchSize.toString()}
           onChange={(e) => {
             const value = e.target.value
-            console.log('value', value)
             if (value === '') {
               setBatchSize(0) // Allow empty state
             } else {

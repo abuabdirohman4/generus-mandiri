@@ -42,10 +42,10 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
     desa_id: ''
   });
   const [dataFilters, setDataFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: [] as string[]
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -56,10 +56,10 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
       const desa = allDesaList.find((d: any) => d.id === kelompok.desa_id);
       if (desa) {
         setDataFilters({
-          daerah: desa.daerah_id || '',
-          desa: kelompok.desa_id,
-          kelompok: '',
-          kelas: ''
+          daerah: desa.daerah_id ? [desa.daerah_id] : [],
+          desa: [kelompok.desa_id],
+          kelompok: [],
+          kelas: []
         });
       }
       setFormData({
@@ -76,10 +76,10 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
         : '';
       
       setDataFilters({
-        daerah: autoFilledDaerah,
-        desa: autoFilledDesa,
-        kelompok: '',
-        kelas: ''
+        daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
+        desa: autoFilledDesa ? [autoFilledDesa] : [],
+        kelompok: [],
+        kelas: []
       });
       setFormData({
         name: '',
@@ -100,10 +100,10 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
   const handleDataFilterChange = (filters: typeof dataFilters) => {
     setDataFilters(filters);
     // Update formData desa_id when desa filter changes
-    if (filters.desa !== dataFilters.desa) {
+    if (filters.desa.length > 0 && filters.desa[0] !== dataFilters.desa[0]) {
       setFormData(prev => ({
         ...prev,
-        desa_id: filters.desa
+        desa_id: filters.desa[0]
       }));
     }
   };

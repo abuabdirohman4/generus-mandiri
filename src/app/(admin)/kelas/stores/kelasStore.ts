@@ -15,10 +15,10 @@ interface KelasState {
   
   // Filter states
   filters: {
-    daerah: string
-    desa: string
-    kelompok: string
-    kelas: string
+    daerah: string[]
+    desa: string[]
+    kelompok: string[]
+    kelas: string[]
   }
   
   // Actions for Kelompok tab
@@ -50,7 +50,7 @@ export const useKelasStore = create<KelasState>((set) => ({
   editingMaster: null,
   deleteMasterConfirm: { isOpen: false, master: null },
   
-  filters: { daerah: '', desa: '', kelompok: '', kelas: '' },
+  filters: { daerah: [], desa: [], kelompok: [], kelas: [] },
   
   // Kelompok actions
   openCreateKelompokModal: () => set({ isKelompokModalOpen: true, editingClass: null }),
@@ -70,5 +70,5 @@ export const useKelasStore = create<KelasState>((set) => ({
   setFilters: (newFilters) => set((state) => ({ 
     filters: { ...state.filters, ...newFilters } 
   })),
-  resetFilters: () => set({ filters: { daerah: '', desa: '', kelompok: '', kelas: '' } })
+  resetFilters: () => set({ filters: { daerah: [], desa: [], kelompok: [], kelas: [] } })
 }))

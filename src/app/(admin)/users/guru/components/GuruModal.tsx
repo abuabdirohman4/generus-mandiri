@@ -69,10 +69,10 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     classIds: [] as string[]
   });
   const [dataFilters, setDataFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: [] as string[]
   });
   const [generalError, setGeneralError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -190,10 +190,10 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         }
         
         setDataFilters({
-          daerah: guru.daerah_id || '',
-          desa: guru.desa_id || '',
-          kelompok: guru.kelompok_id || '',
-          kelas: ''
+          daerah: guru.daerah_id ? [guru.daerah_id] : [],
+          desa: guru.desa_id ? [guru.desa_id] : [],
+          kelompok: guru.kelompok_id ? [guru.kelompok_id] : [],
+          kelas: []
         });
       } else {
         // Create mode - auto-fill organizational fields based on user role
@@ -213,10 +213,10 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           classIds: []
         });
         setDataFilters({
-          daerah: autoFilledDaerah,
-          desa: autoFilledDesa,
-          kelompok: autoFilledKelompok,
-          kelas: ''
+          daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
+          desa: autoFilledDesa ? [autoFilledDesa] : [],
+          kelompok: autoFilledKelompok ? [autoFilledKelompok] : [],
+          kelas: []
         });
       }
       setErrors({});
@@ -228,8 +228,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
   // Filter classes based on selected kelompok using useMemo
   const availableClasses = useMemo(() => {
-    if (dataFilters.kelompok && allClasses.length > 0) {
-      return allClasses.filter(cls => cls.kelompok_id === dataFilters.kelompok);
+    if (dataFilters.kelompok.length > 0 && allClasses.length > 0) {
+      return allClasses.filter(cls => cls.kelompok_id === dataFilters.kelompok[0]);
     }
     return [];
   }, [dataFilters.kelompok, JSON.stringify(allClasses)]);
@@ -247,8 +247,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     // Update formData when filters change
     setFormData(prev => ({
       ...prev,
-      daerah_id: filters.daerah,
-      kelompok_id: filters.kelompok
+      daerah_id: filters.daerah.length > 0 ? filters.daerah[0] : '',
+      kelompok_id: filters.kelompok.length > 0 ? filters.kelompok[0] : ''
     }));
   };
 
@@ -294,9 +294,9 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         full_name: formData.full_name,
         email: generatedEmail,
         password: formData.password || undefined, // Optional for edit
-        daerah_id: dataFilters.daerah,
-        desa_id: dataFilters.desa || null,
-        kelompok_id: dataFilters.kelompok
+        daerah_id: dataFilters.daerah.length > 0 ? dataFilters.daerah[0] : '',
+        desa_id: dataFilters.desa.length > 0 ? dataFilters.desa[0] : null,
+        kelompok_id: dataFilters.kelompok.length > 0 ? dataFilters.kelompok[0] : ''
       };
 
       if (guru) {

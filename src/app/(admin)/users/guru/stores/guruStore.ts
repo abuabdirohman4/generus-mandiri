@@ -9,10 +9,10 @@ interface GuruState {
   
   // Filter states
   filters: {
-    daerah: string
-    desa: string
-    kelompok: string
-    kelas: string
+    daerah: string[]
+    desa: string[]
+    kelompok: string[]
+    kelas: string[]
     search: string
   }
   
@@ -34,7 +34,7 @@ export const useGuruStore = create<GuruState>((set) => ({
   editingGuru: null,
   resetPasswordModal: { isOpen: false, guru: null },
   deleteConfirm: { isOpen: false, guru: null },
-  filters: { daerah: '', desa: '', kelompok: '', kelas: '', search: '' },
+  filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' },
   
   // Actions
   openCreateModal: () => set({ isModalOpen: true, editingGuru: null }),
@@ -47,5 +47,5 @@ export const useGuruStore = create<GuruState>((set) => ({
   setFilters: (newFilters) => set((state) => ({ 
     filters: { ...state.filters, ...newFilters } 
   })),
-  resetFilters: () => set({ filters: { daerah: '', desa: '', kelompok: '', kelas: '', search: '' } })
+  resetFilters: () => set({ filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' } })
 }))

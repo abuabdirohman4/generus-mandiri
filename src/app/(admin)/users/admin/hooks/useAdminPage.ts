@@ -37,14 +37,14 @@ export function useAdminPage() {
   const filteredAdmins = useMemo(() => {
     let result = admins || []
     
-    if (filters.daerah) {
-      result = result.filter(a => a.daerah_id === filters.daerah)
+    if (filters.daerah.length > 0) {
+      result = result.filter(a => a.daerah_id && filters.daerah.includes(a.daerah_id))
     }
-    if (filters.desa) {
-      result = result.filter(a => a.desa_id === filters.desa)
+    if (filters.desa.length > 0) {
+      result = result.filter(a => a.desa_id && filters.desa.includes(a.desa_id))
     }
-    if (filters.kelompok) {
-      result = result.filter(a => a.kelompok_id === filters.kelompok)
+    if (filters.kelompok.length > 0) {
+      result = result.filter(a => a.kelompok_id && filters.kelompok.includes(a.kelompok_id))
     }
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase()
@@ -80,7 +80,7 @@ export function useAdminPage() {
     }
   }, [deleteConfirm.admin, deleteAdminMutation, mutate, closeDeleteConfirm])
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string; desa: string; kelompok: string }) => {
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setFilters(organisasiFilters)
   }, [setFilters])
 

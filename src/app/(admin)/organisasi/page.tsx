@@ -153,13 +153,13 @@ export default function OrganisasiManagementPage() {
           <div className="mt-6">
             <DataFilter
               filters={{
-                daerah: daerahFilter,
-                desa: '',
-                kelompok: '',
-                kelas: ''
+                daerah: daerahFilter ? [daerahFilter] : [],
+                desa: [],
+                kelompok: [],
+                kelas: []
               }}
               onFilterChange={(filters) => {
-                setDaerahFilter(filters.daerah);
+                setDaerahFilter(filters.daerah.length > 0 ? filters.daerah[0] : '');
                 setDesaFilter('');
               }}
               userProfile={userProfile}
@@ -178,14 +178,14 @@ export default function OrganisasiManagementPage() {
           <div className="mt-6">
             <DataFilter
               filters={{
-                daerah: daerahFilter,
-                desa: desaFilter,
-                kelompok: '',
-                kelas: ''
+                daerah: daerahFilter ? [daerahFilter] : [],
+                desa: desaFilter ? [desaFilter] : [],
+                kelompok: [],
+                kelas: []
               }}
               onFilterChange={(filters) => {
-                setDaerahFilter(filters.daerah);
-                setDesaFilter(filters.desa);
+                setDaerahFilter(filters.daerah.length > 0 ? filters.daerah[0] : '');
+                setDesaFilter(filters.desa.length > 0 ? filters.desa[0] : '');
               }}
               userProfile={userProfile}
               daerahList={daerah || []}

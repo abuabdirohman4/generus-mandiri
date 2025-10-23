@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
+import MultiSelectFilter from '@/components/form/input/MultiSelectFilter'
 
 interface Daerah {
   id: string
@@ -48,10 +49,10 @@ interface UserProfile {
 }
 
 interface DataFilters {
-  daerah: string
-  desa: string
-  kelompok: string
-  kelas: string
+  daerah: string[]
+  desa: string[]
+  kelompok: string[]
+  kelas: string[]
 }
 
 interface DataFilterProps {
@@ -133,14 +134,16 @@ export default function DataFilter({
   if (isTeacher && teacherHasMultipleClasses && showKelas) {
     return (
       <div className={cn("grid gap-x-4 grid-cols-1", className)}>
-        <InputFilter
+        <MultiSelectFilter
           id="kelasFilter"
-          label="Filter Kelas"
-          value={filters.kelas}
+          label="Kelas"
+          value={filters.kelas || []}
           onChange={(value) => onFilterChange({ ...filters, kelas: value })}
           options={userProfile.classes?.map(c => ({ value: c.id, label: c.name })) || []}
           allOptionLabel="Semua Kelas"
           widthClassName="!max-w-full"
+          variant={variant}
+          compact={compact}
         />
       </div>
     )
@@ -157,8 +160,8 @@ export default function DataFilter({
     
     if (isSuperAdmin) {
       // Superadmin: filter by selected Daerah
-      if (filters?.daerah) {
-        return activeDesaList.filter(desa => desa.daerah_id === filters.daerah)
+      if (filters?.daerah && filters.daerah.length > 0) {
+        return activeDesaList.filter(desa => filters.daerah.includes(desa.daerah_id))
       }
       return activeDesaList
     } else if (isAdminDaerah) {
@@ -174,9 +177,9 @@ export default function DataFilter({
     
     if (isSuperAdmin) {
       // Superadmin: filter by selected Desa, but also consider Daerah filter
-      if (filters?.desa) {
-        return activeKelompokList.filter(kelompok => kelompok.desa_id === filters.desa)
-      } else if (filters?.daerah) {
+      if (filters?.desa && filters.desa.length > 0) {
+        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
+      } else if (filters?.daerah && filters.daerah.length > 0) {
         // If no Desa selected but Daerah is selected, filter by desas in that daerah
         const validDesaIds = filteredDesaList.map(d => d.id)
         return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
@@ -184,9 +187,10 @@ export default function DataFilter({
       return activeKelompokList
     } else if (isAdminDaerah) {
       // Admin Daerah: filter by selected Desa or their desa_id
-      const targetDesaId = filters?.desa || userProfile?.desa_id
-      if (targetDesaId) {
-        return activeKelompokList.filter(kelompok => kelompok.desa_id === targetDesaId)
+      if (filters?.desa && filters.desa.length > 0) {
+        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
+      } else if (userProfile?.desa_id) {
+        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile.desa_id)
       }
       return activeKelompokList
     } else if (isAdminDesa) {
@@ -241,7 +245,7 @@ export default function DataFilter({
     
     // Convert to array with formatted labels
     return Object.values(classGroups).map(group => ({
-      value: group.ids.join(','), // Store all IDs comma-separated
+      value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
       label: group.count > 1 ? `${group.name} (${group.count} kelompok)` : group.name,
       name: group.name,
       ids: group.ids
@@ -249,38 +253,38 @@ export default function DataFilter({
   }, [filteredClassList])
 
   // Handlers with cascading reset logic
-  const handleDaerahChange = useCallback((value: string) => {
+  const handleDaerahChange = useCallback((value: string[]) => {
     onFilterChange({
       daerah: value,
-      desa: '', // Reset desa when daerah changes
-      kelompok: '', // Reset kelompok when daerah changes
-      kelas: '' // Reset kelas when daerah changes
+      desa: [], // Reset desa when daerah changes
+      kelompok: [], // Reset kelompok when daerah changes
+      kelas: [] // Reset kelas when daerah changes
     })
   }, [onFilterChange])
 
-  const handleDesaChange = useCallback((value: string) => {
+  const handleDesaChange = useCallback((value: string[]) => {
     onFilterChange({
-      daerah: filters?.daerah || '',
+      daerah: filters?.daerah || [],
       desa: value,
-      kelompok: '', // Reset kelompok when desa changes
-      kelas: '' // Reset kelas when desa changes
+      kelompok: [], // Reset kelompok when desa changes
+      kelas: [] // Reset kelas when desa changes
     })
   }, [filters?.daerah, onFilterChange])
 
-  const handleKelompokChange = useCallback((value: string) => {
+  const handleKelompokChange = useCallback((value: string[]) => {
     onFilterChange({
-      daerah: filters?.daerah || '',
-      desa: filters?.desa || '',
+      daerah: filters?.daerah || [],
+      desa: filters?.desa || [],
       kelompok: value,
-      kelas: '' // Reset kelas when kelompok changes
+      kelas: [] // Reset kelas when kelompok changes
     })
   }, [filters?.daerah, filters?.desa, onFilterChange])
 
-  const handleKelasChange = useCallback((value: string) => {
+  const handleKelasChange = useCallback((value: string[]) => {
     onFilterChange({
-      daerah: filters?.daerah || '',
-      desa: filters?.desa || '',
-      kelompok: filters?.kelompok || '',
+      daerah: filters?.daerah || [],
+      desa: filters?.desa || [],
+      kelompok: filters?.kelompok || [],
       kelas: value
     })
   }, [filters?.daerah, filters?.desa, filters?.kelompok, onFilterChange])
@@ -326,84 +330,143 @@ export default function DataFilter({
     <div className={containerClass}>
       {shouldShowDaerah && (
         <div className={getFilterClass(0)}>
-          <InputFilter
-            id="daerahFilter"
-            label={variant === 'modal' ? "Daerah" : "Filter Daerah"}
-            value={filters?.daerah || ''}
-            onChange={handleDaerahChange}
-            options={activeDaerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
-            allOptionLabel={hideAllOption ? undefined : "Semua Daerah"}
-            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
-            variant={variant}
-            compact={compact}
-            required={requiredFields.daerah}
-            placeholder={variant === 'modal' ? 'Pilih Daerah' : undefined}
-            error={!!errors.daerah}
-            hint={errors.daerah}
-          />
+          {variant === 'page' ? (
+            <MultiSelectFilter
+              id="daerahFilter"
+              label="Daerah"
+              value={filters?.daerah || []}
+              onChange={handleDaerahChange}
+              options={activeDaerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
+              allOptionLabel="Semua Daerah"
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              placeholder="Pilih Daerah"
+            />
+          ) : (
+            <InputFilter
+              id="daerahFilter"
+              label="Daerah"
+              value={filters?.daerah[0] || ''}
+              onChange={(value) => handleDaerahChange(value ? [value] : [])}
+              options={activeDaerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
+              allOptionLabel={hideAllOption ? undefined : "Semua Daerah"}
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              required={requiredFields.daerah}
+              error={!!errors.daerah}
+              hint={errors.daerah}
+            />
+          )}
         </div>
       )}
       
       {shouldShowDesa && (
         <div className={getFilterClass(1)}>
-          <InputFilter
-            id="desaFilter"
-            label={variant === 'modal' ? "Desa" : "Filter Desa"}
-            value={filters?.desa || ''}
-            onChange={handleDesaChange}
-            options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
-            allOptionLabel={hideAllOption ? undefined : "Semua Desa"}
-            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
-            variant={variant}
-            compact={compact}
-            required={requiredFields.desa}
-            placeholder={variant === 'modal' ? 'Pilih Desa' : undefined}
-            error={!!errors.desa}
-            hint={errors.desa}
-          />
+          {variant === 'page' ? (
+            <MultiSelectFilter
+              id="desaFilter"
+              label="Desa"
+              value={filters?.desa || []}
+              onChange={handleDesaChange}
+              options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
+              allOptionLabel="Semua Desa"
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              placeholder="Pilih Desa"
+            />
+          ) : (
+            <InputFilter
+              id="desaFilter"
+              label="Desa"
+              value={filters?.desa[0] || ''}
+              onChange={(value) => handleDesaChange(value ? [value] : [])}
+              options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
+              allOptionLabel={hideAllOption ? undefined : "Semua Desa"}
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              required={requiredFields.desa}
+              error={!!errors.desa}
+              hint={errors.desa}
+            />
+          )}
         </div>
       )}
       
       {shouldShowKelompok && (
         <div className={getFilterClass(2)}>
-          <InputFilter
-            id="kelompokFilter"
-            label={variant === 'modal' ? "Kelompok" : "Filter Kelompok"}
-            value={filters?.kelompok || ''}
-            onChange={handleKelompokChange}
-            options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
-            allOptionLabel={hideAllOption ? undefined : "Semua Kelompok"}
-            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
-            variant={variant}
-            compact={compact}
-            required={requiredFields.kelompok}
-            placeholder={variant === 'modal' ? 'Pilih Kelompok' : undefined}
-            error={!!errors.kelompok}
-            hint={errors.kelompok}
-          />
+          {variant === 'page' ? (
+            <MultiSelectFilter
+              id="kelompokFilter"
+              label="Kelompok"
+              value={filters?.kelompok || []}
+              onChange={handleKelompokChange}
+              options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
+              allOptionLabel="Semua Kelompok"
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              placeholder="Pilih Kelompok"
+            />
+          ) : (
+            <InputFilter
+              id="kelompokFilter"
+              label="Kelompok"
+              value={filters?.kelompok[0] || ''}
+              onChange={(value) => handleKelompokChange(value ? [value] : [])}
+              options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
+              allOptionLabel={hideAllOption ? undefined : "Semua Kelompok"}
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              required={requiredFields.kelompok}
+              error={!!errors.kelompok}
+              hint={errors.kelompok}
+            />
+          )}
         </div>
       )}
       
       {showKelasFilter && (
         <div className={getFilterClass(3)}>
-          <InputFilter
-            id="kelasFilter"
-            label={variant === 'modal' ? "Kelas" : "Filter Kelas"}
-            value={filters?.kelas || ''}
-            onChange={handleKelasChange}
-            options={uniqueClassList.map(cls => ({ 
-              value: cls.value, // This now contains comma-separated IDs
-              label: cls.label  // This includes count if > 1
-            }))}
-            allOptionLabel={hideAllOption ? undefined : "Semua Kelas"}
-            widthClassName={variant === 'modal' ? "!max-w-full" : "!max-w-full"}
-            variant={variant}
-            compact={compact}
-            required={requiredFields.kelas}
-            placeholder={variant === 'modal' ? 'Pilih Kelas' : undefined}
-            error={!!errors.kelas}
-            hint={errors.kelas}
-          />
+          {variant === 'page' ? (
+            <MultiSelectFilter
+              id="kelasFilter"
+              label="Kelas"
+              value={filters?.kelas || []}
+              onChange={handleKelasChange}
+              options={uniqueClassList.map(cls => ({ 
+                value: cls.value, // This now contains comma-separated IDs
+                label: cls.label  // This includes count if > 1
+              }))}
+              allOptionLabel="Semua Kelas"
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              placeholder="Pilih Kelas"
+            />
+          ) : (
+            <InputFilter
+              id="kelasFilter"
+              label="Kelas"
+              value={filters?.kelas[0] || ''}
+              onChange={(value) => handleKelasChange(value ? [value] : [])}
+              options={uniqueClassList.map(cls => ({ 
+                value: cls.value, // This now contains comma-separated IDs
+                label: cls.label  // This includes count if > 1
+              }))}
+              allOptionLabel={hideAllOption ? undefined : "Semua Kelas"}
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              required={requiredFields.kelas}
+              error={!!errors.kelas}
+              hint={errors.kelas}
+            />
+          )}
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ interface TrendChartData {
     excused: number
     sick: number
     total: number
+    meetings: number
   }
 }
 
@@ -88,13 +89,16 @@ export default function TrendChart({
             {data.details && (
               <>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {data.details.meetings} Pertemuan
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {data.details.total} Peserta
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {data.details.present} hadir, {data.details.absent} alfa
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {data.details.excused} izin, {data.details.sick} sakit
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Total: {data.details.total} catatan
                 </p>
               </>
             )}

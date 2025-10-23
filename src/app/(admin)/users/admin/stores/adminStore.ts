@@ -9,10 +9,10 @@ interface AdminState {
   
   // Filter states
   filters: {
-    daerah: string
-    desa: string
-    kelompok: string
-    kelas: string
+    daerah: string[]
+    desa: string[]
+    kelompok: string[]
+    kelas: string[]
     search: string
   }
   
@@ -34,7 +34,7 @@ export const useAdminStore = create<AdminState>((set) => ({
   editingAdmin: null,
   resetPasswordModal: { isOpen: false, admin: null },
   deleteConfirm: { isOpen: false, admin: null },
-  filters: { daerah: '', desa: '', kelompok: '', kelas: '', search: '' },
+  filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' },
   
   // Actions
   openCreateModal: () => set({ isModalOpen: true, editingAdmin: null }),
@@ -47,5 +47,5 @@ export const useAdminStore = create<AdminState>((set) => ({
   setFilters: (newFilters) => set((state) => ({ 
     filters: { ...state.filters, ...newFilters } 
   })),
-  resetFilters: () => set({ filters: { daerah: '', desa: '', kelompok: '', kelas: '', search: '' } })
+  resetFilters: () => set({ filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' } })
 }))

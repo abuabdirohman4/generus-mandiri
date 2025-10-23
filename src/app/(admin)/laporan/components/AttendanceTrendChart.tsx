@@ -12,6 +12,7 @@ interface TrendChartData {
   excusedCount: number
   sickCount: number
   totalRecords: number
+  meetingsCount: number
 }
 
 interface AttendanceTrendChartProps {
@@ -39,7 +40,8 @@ const AttendanceTrendChart = memo(function AttendanceTrendChart({
       absent: item.absentCount,
       excused: item.excusedCount,
       sick: item.sickCount,
-      total: item.totalRecords
+      total: item.totalRecords,
+      meetings: item.meetingsCount
     }
   }))
   

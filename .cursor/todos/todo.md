@@ -10,6 +10,30 @@ Components
 
 Meetings
 - [ ] Add Template name
+- [ ] Add Data Filter
+- [ ] Add Tipe Sambung
+    - Kelompok
+    - Desa
+    - Daerah
+    - Pusat
+- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [ ] Add Pengajian Desa
+    - Nama
+    - Tipe (Desa)
+    - Peserta
+        - Kelas (Remaja, Orang Tua dll)
+        - Kelompok (Warlob, Junti dll)
+- [ ] Add Pengajian Daerah
+    - Nama
+    - Tipe (Daerah)
+    - Peserta
+        - Kelas (Remaja, Orang Tua dll)
+        - Desa (Soreang, Baleendah dll)
+
+Kelas
+- [ ] Saat add kelas gabungan
+    - Kalau single kelasnya sudah ada datanya, berarti langsung keinsert di gabungan
+    - Kalau di gabungan sudah ada, di single nya juga ikut keisi
 
 ## v1.4.2
 - [x] Di Iphone PWA tidak jalan
@@ -50,8 +74,6 @@ Sign In
 - [ ] Add Bulk Insert Guru, Admin, Organisasi
 - [ ] Add Bulk with CSV, Excel, Text
 - [ ] Add Halaman Materi
-- [ ] Add Pengajian Desa
-- [ ] Add Pengajian Daerah
 - [ ] Continue Dashboard Feature
 - [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing

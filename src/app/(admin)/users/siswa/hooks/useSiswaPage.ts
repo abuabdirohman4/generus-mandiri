@@ -43,10 +43,10 @@ export function useSiswaPage() {
 
   // Data filter state
   const [dataFilters, setDataFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: [] as string[]
   })
 
   // Students with conditional classId
@@ -158,7 +158,7 @@ export function useSiswaPage() {
   }, [mutateStudents])
 
   // Data filter handler
-  const handleDataFilterChange = useCallback((filters: { daerah: string; desa: string; kelompok: string; kelas: string }) => {
+  const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setDataFilters(filters)
   }, [])
 
@@ -173,18 +173,17 @@ export function useSiswaPage() {
     }
     
     // Apply data filters
-    if (dataFilters.daerah) {
-      result = result.filter(s => s.daerah_id === dataFilters.daerah)
+    if (dataFilters.daerah.length > 0) {
+      result = result.filter(s => s.daerah_id && dataFilters.daerah.includes(s.daerah_id))
     }
-    if (dataFilters.desa) {
-      result = result.filter(s => s.desa_id === dataFilters.desa)
+    if (dataFilters.desa.length > 0) {
+      result = result.filter(s => s.desa_id && dataFilters.desa.includes(s.desa_id))
     }
-    if (dataFilters.kelompok) {
-      result = result.filter(s => s.kelompok_id === dataFilters.kelompok)
+    if (dataFilters.kelompok.length > 0) {
+      result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
     }
-    if (dataFilters.kelas) {
-      const classIds = dataFilters.kelas.split(',')
-      result = result.filter(s => classIds.includes(s.class_id))
+    if (dataFilters.kelas.length > 0) {
+      result = result.filter(s => dataFilters.kelas.includes(s.class_id))
     }
 
     return result
