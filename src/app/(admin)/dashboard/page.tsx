@@ -49,10 +49,10 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <DataFilter
           filters={{
-            daerah: '',
-            desa: '',
-            kelompok: '',
-            kelas: ''
+            daerah: [],
+            desa: [],
+            kelompok: [],
+            kelas: []
           }}
           onFilterChange={() => {}} // TODO: Implement organisasi filtering
           userProfile={profile}

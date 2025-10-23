@@ -34,10 +34,10 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
   
   // Filter state
   const [filters, setFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: [] as string[]
   });
   
   // Fetch organisasi data
@@ -52,10 +52,10 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
     if (classItem) {
       // Pre-fill filters when editing
       setFilters({
-        daerah: classItem.kelompok?.desa?.daerah_id || '',
-        desa: classItem.kelompok?.desa_id || '',
-        kelompok: classItem.kelompok_id,
-        kelas: ''
+        daerah: classItem.kelompok?.desa?.daerah_id ? [classItem.kelompok.desa.daerah_id] : [],
+        desa: classItem.kelompok?.desa_id ? [classItem.kelompok.desa_id] : [],
+        kelompok: classItem.kelompok_id ? [classItem.kelompok_id] : [],
+        kelas: []
       });
       
       setFormData({

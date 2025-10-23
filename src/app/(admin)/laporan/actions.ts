@@ -102,6 +102,7 @@ export interface ReportData {
     excusedCount: number
     sickCount: number
     totalRecords: number
+    meetingsCount: number
   }>
   detailedRecords: Array<{
     student_id: string
@@ -267,7 +268,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     // Apply filters
     if (filters.classId) {
-      query = query.eq('students.class_id', filters.classId)
+      const classIds = filters.classId.split(',')
+      query = query.in('students.class_id', classIds)
     }
 
     // Apply date filter
@@ -312,13 +314,55 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     // Apply class filter to meetings if specified
     const filteredMeetings = filters.classId 
-      ? meetings?.filter(meeting => meeting.class_id === filters.classId) || []
+      ? meetings?.filter(meeting => {
+          const classIds = filters.classId!.split(',')
+          return classIds.includes(meeting.class_id)
+        }) || []
       : meetings || []
 
-    // Generate trend chart data from meetings (not just attendance logs)
-    console.log('🔍 Debug: Processing trend data for period =', filters.period, 'viewMode =', filters.viewMode)
-    console.log('🔍 Debug: filteredMeetings count =', filteredMeetings.length)
-    
+    // First, group meetings by period to count unique meetings per period
+    const meetingsByPeriod = filteredMeetings.reduce((acc: any, meeting: any) => {
+      const meetingDate = new Date(meeting.date)
+      
+      // Group by period type
+      let groupKey: string
+      
+      // For general mode, always show daily data
+      if (filters.viewMode === 'general') {
+        groupKey = meeting.date
+      } else {
+        // For detailed mode, use period-specific grouping
+        switch (filters.period) {
+          case 'daily':
+            groupKey = meeting.date
+            break
+          case 'weekly':
+            // Group by week number in month
+            const weekNumber = getWeekNumberInMonth(meetingDate)
+            groupKey = `week-${weekNumber}`
+            break
+          case 'monthly':
+            // Group by month for detailed mode with monthly period
+            groupKey = `${meetingDate.getFullYear()}-${meetingDate.getMonth() + 1}`
+            break
+          case 'yearly':
+            // Group by year
+            groupKey = meetingDate.getFullYear().toString()
+            break
+          default:
+            groupKey = meeting.date
+        }
+      }
+      
+      if (!acc[groupKey]) {
+        acc[groupKey] = []
+      }
+      acc[groupKey].push(meeting)
+      
+      return acc
+    }, {})
+
+    // Then process attendance data and count meetings per period
     const dailyData = filteredMeetings.reduce((acc: any, meeting: any) => {
       const meetingDate = new Date(meeting.date)
       const meetingLogs = attendanceLogs?.filter(log => log.meeting_id === meeting.id) || []
@@ -379,7 +423,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           absentCount: 0,
           excusedCount: 0,
           sickCount: 0,
-          totalRecords: 0
+          totalRecords: 0,
+          meetingsCount: meetingsByPeriod[groupKey]?.length || 0
         }
       }
       
@@ -423,7 +468,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           absentCount: day.absentCount,
           excusedCount: day.excusedCount,
           sickCount: day.sickCount,
-          totalRecords: day.totalRecords
+          totalRecords: day.totalRecords,
+          meetingsCount: day.meetingsCount
         }
       })
     

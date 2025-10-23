@@ -32,14 +32,14 @@ export function useKelasPage() {
   const filteredClasses = useMemo(() => {
     let result = kelas || []
     
-    if (filters.kelompok) {
-      result = result.filter(c => c.kelompok_id === filters.kelompok)
+    if (filters.kelompok.length > 0) {
+      result = result.filter(c => c.kelompok_id && filters.kelompok.includes(c.kelompok_id))
     }
-    if (filters.desa) {
-      result = result.filter(c => c.kelompok?.desa_id === filters.desa)
+    if (filters.desa.length > 0) {
+      result = result.filter(c => c.kelompok?.desa_id && filters.desa.includes(c.kelompok.desa_id))
     }
-    if (filters.daerah) {
-      result = result.filter(c => c.kelompok?.desa?.daerah_id === filters.daerah)
+    if (filters.daerah.length > 0) {
+      result = result.filter(c => c.kelompok?.desa?.daerah_id && filters.daerah.includes(c.kelompok.desa.daerah_id))
     }
     
     return result

@@ -38,6 +38,10 @@ export default function AbsensiPage() {
     editingMeeting,
     setEditingMeeting
   } = useAbsensiUIStore()
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
   
   // Calculate valid class IDs based on organisasi filters
   const validClassIds = useMemo(() => {
@@ -48,9 +52,9 @@ export default function AbsensiPage() {
     let filtered = classes || []
     
     // Filter by organisasi hierarchy
-    if (dataFilters.daerah) {
+    if (dataFilters.daerah.length > 0) {
       // Get desa IDs in selected daerah
-      const desaInDaerah = (desa || []).filter(d => d.daerah_id === dataFilters.daerah)
+      const desaInDaerah = (desa || []).filter(d => dataFilters.daerah.includes(d.daerah_id))
       const desaIds = desaInDaerah.map(d => d.id)
       
       // Get kelompok IDs in those desas
@@ -61,23 +65,23 @@ export default function AbsensiPage() {
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
     }
     
-    if (dataFilters.desa) {
+    if (dataFilters.desa.length > 0) {
       // Get kelompok IDs in selected desa
-      const kelompokInDesa = (kelompok || []).filter(k => k.desa_id === dataFilters.desa)
+      const kelompokInDesa = (kelompok || []).filter(k => dataFilters.desa.includes(k.desa_id))
       const kelompokIds = kelompokInDesa.map(k => k.id)
       
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
     }
     
-    if (dataFilters.kelompok) {
+    if (dataFilters.kelompok.length > 0) {
       // Filter classes by selected kelompok
-      filtered = filtered.filter(c => c.kelompok_id === dataFilters.kelompok)
+      filtered = filtered.filter(c => c.kelompok_id && dataFilters.kelompok.includes(c.kelompok_id))
     }
     
-    if (dataFilters.kelas) {
-      // Specific class selected
-      filtered = filtered.filter(c => c.id === dataFilters.kelas)
+    if (dataFilters.kelas.length > 0) {
+      // Filter by specific classes
+      filtered = filtered.filter(c => dataFilters.kelas.includes(c.id))
     }
     
     return filtered.map(c => c.id)
@@ -90,8 +94,8 @@ export default function AbsensiPage() {
     }
     
     // If specific class is selected, use that
-    if (dataFilters.kelas && dataFilters.kelas.trim() !== '') {
-      return dataFilters.kelas
+    if (dataFilters.kelas.length > 0) {
+      return dataFilters.kelas.join(',') // Use all selected classes for API call
     }
     
     // If "Semua Kelas" is selected (no specific class), return undefined
@@ -101,22 +105,24 @@ export default function AbsensiPage() {
 
   const { 
     meetings: allMeetings, 
-    currentPage,
-    totalPages,
-    goToPage,
     isLoading, 
     error, 
     mutate 
   } = useMeetings(classId)
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [dataFilters, validClassIds])
+
   // Filter meetings based on valid class IDs when "Semua Kelas" is selected
-  const meetings = useMemo(() => {
+  const filteredMeetings = useMemo(() => {
     if (userProfile?.role === 'teacher') {
       return allMeetings || []
     }
     
     // If specific class is selected, return all meetings (already filtered by backend)
-    if (dataFilters.kelas && dataFilters.kelas.trim() !== '') {
+    if (dataFilters.kelas.length > 0) {
       return allMeetings || []
     }
     
@@ -144,8 +150,20 @@ export default function AbsensiPage() {
     return []
   }, [allMeetings, validClassIds, dataFilters.kelas, userProfile])
 
+  // Paginate filtered meetings
+  const paginatedMeetings = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    return filteredMeetings.slice(startIndex, endIndex)
+  }, [filteredMeetings, currentPage])
+
+  // Calculate total pages from filtered data
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredMeetings.length / ITEMS_PER_PAGE)
+  }, [filteredMeetings.length])
+
   // Track revalidating state
-  const isRevalidating = isLoading && meetings.length > 0
+  const isRevalidating = isLoading && paginatedMeetings.length > 0
 
   const handleCreateSuccess = () => {
     mutate() // Refresh meetings list
@@ -169,7 +187,7 @@ export default function AbsensiPage() {
   }, [currentPage])
 
   // Only show loading skeleton on initial load (when no data yet)
-  const initialLoading = (isLoading && meetings.length === 0) || classesLoading
+  const initialLoading = (isLoading && paginatedMeetings.length === 0) || classesLoading
 
   if (initialLoading) {
     return <LoadingState />
@@ -271,7 +289,7 @@ export default function AbsensiPage() {
           {viewMode === 'list' && (
             <>
               <MeetingList
-                meetings={meetings}
+                meetings={paginatedMeetings}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={isLoading}
@@ -280,7 +298,7 @@ export default function AbsensiPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={goToPage}
+                  onPageChange={setCurrentPage}
                   className="mt-6"
                 />
               )}
@@ -290,7 +308,7 @@ export default function AbsensiPage() {
           {viewMode === 'card' && (
             <>
               <MeetingCards
-                meetings={meetings}
+                meetings={paginatedMeetings}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={isLoading}
@@ -299,7 +317,7 @@ export default function AbsensiPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={goToPage}
+                  onPageChange={setCurrentPage}
                   className="mt-6"
                 />
               )}
@@ -309,7 +327,7 @@ export default function AbsensiPage() {
           {viewMode === 'chart' && (
             <>
               <MeetingChart
-                meetings={meetings}
+                meetings={paginatedMeetings}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={isLoading}
@@ -318,7 +336,7 @@ export default function AbsensiPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={goToPage}
+                  onPageChange={setCurrentPage}
                   className="mt-6"
                 />
               )}

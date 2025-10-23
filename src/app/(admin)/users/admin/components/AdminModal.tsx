@@ -90,10 +90,10 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     kelompok_id: ''
   });
   const [dataFilters, setDataFilters] = useState({
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: [] as string[]
   });
   const [adminLevel, setAdminLevel] = useState<'daerah' | 'desa' | 'kelompok'>('daerah');
   const [generalError, setGeneralError] = useState<string>('');
@@ -193,10 +193,10 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         kelompok_id: admin.kelompok_id || ''
       });
       setDataFilters({
-        daerah: admin.daerah_id || '',
-        desa: admin.desa_id || '',
-        kelompok: admin.kelompok_id || '',
-        kelas: ''
+        daerah: admin.daerah_id ? [admin.daerah_id] : [],
+        desa: admin.desa_id ? [admin.desa_id] : [],
+        kelompok: admin.kelompok_id ? [admin.kelompok_id] : [],
+        kelas: []
       });
     } else {
       // Create mode - set default level based on user role
@@ -222,10 +222,10 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         kelompok_id: autoFilledKelompok
       });
       setDataFilters({
-        daerah: autoFilledDaerah,
-        desa: autoFilledDesa,
-        kelompok: autoFilledKelompok,
-        kelas: ''
+        daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
+        desa: autoFilledDesa ? [autoFilledDesa] : [],
+        kelompok: autoFilledKelompok ? [autoFilledKelompok] : [],
+        kelas: []
       });
     }
     setErrors({});
@@ -250,8 +250,8 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     // Update formData when filters change
     setFormData(prev => ({
       ...prev,
-      daerah_id: filters.daerah,
-      kelompok_id: filters.kelompok
+      daerah_id: filters.daerah.length > 0 ? filters.daerah[0] : '',
+      kelompok_id: filters.kelompok.length > 0 ? filters.kelompok[0] : ''
     }));
   };
 
@@ -306,9 +306,9 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         email: generatedEmail,
         password: formData.password || undefined, // Optional for edit
         role: formData.role,
-        daerah_id: dataFilters.daerah,
-        desa_id: needsDesa ? dataFilters.desa : null,
-        kelompok_id: needsKelompok ? dataFilters.kelompok : null
+        daerah_id: dataFilters.daerah.length > 0 ? dataFilters.daerah[0] : '',
+        desa_id: needsDesa && dataFilters.desa.length > 0 ? dataFilters.desa[0] : null,
+        kelompok_id: needsKelompok && dataFilters.kelompok.length > 0 ? dataFilters.kelompok[0] : null
       };
 
       if (admin) {

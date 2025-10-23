@@ -90,6 +90,7 @@ interface TrendChartData {
   excusedCount: number
   sickCount: number
   totalRecords: number
+  meetingsCount: number
 }
 
 interface DetailedRecord {
@@ -121,6 +122,7 @@ interface ReportData {
     excusedCount: number
     sickCount: number
     totalRecords: number
+    meetingsCount: number
   }>
   detailedRecords: Array<{
     student_id: string
@@ -484,7 +486,8 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
           absentCount: month.absentCount,
           excusedCount: month.excusedCount,
           sickCount: month.sickCount,
-          totalRecords: month.totalRecords
+          totalRecords: month.totalRecords,
+          meetingsCount: month.meetingCount
         }
       })
   } else {
@@ -506,7 +509,8 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
       absentCount,
       excusedCount,
       sickCount,
-      totalRecords: totalStudents
+      totalRecords: totalStudents,
+      meetingsCount: 1 // Each meeting represents 1 meeting per day
     }
   }).sort((a, b) => dayjs(a.fullDate).valueOf() - dayjs(b.fullDate).valueOf())
   }

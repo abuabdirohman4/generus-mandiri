@@ -37,14 +37,14 @@ export function useGuruPage() {
   const filteredTeachers = useMemo(() => {
     let result = teachers || []
     
-    if (filters.daerah) {
-      result = result.filter(t => t.daerah_id === filters.daerah)
+    if (filters.daerah.length > 0) {
+      result = result.filter(t => t.daerah_id && filters.daerah.includes(t.daerah_id))
     }
-    if (filters.desa) {
-      result = result.filter(t => t.desa_id === filters.desa)
+    if (filters.desa.length > 0) {
+      result = result.filter(t => t.desa_id && filters.desa.includes(t.desa_id))
     }
-    if (filters.kelompok) {
-      result = result.filter(t => t.kelompok_id === filters.kelompok)
+    if (filters.kelompok.length > 0) {
+      result = result.filter(t => t.kelompok_id && filters.kelompok.includes(t.kelompok_id))
     }
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase()
@@ -80,7 +80,7 @@ export function useGuruPage() {
     }
   }, [deleteConfirm.guru, deleteGuruMutation, mutate, closeDeleteConfirm])
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string; desa: string; kelompok: string }) => {
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setFilters(organisasiFilters)
   }, [setFilters])
 

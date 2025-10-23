@@ -64,7 +64,7 @@ export default function InputFilter({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           required={required}
-          className={`w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`w-full px-3 py-2 border bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${
             error 
               ? "border-red-500 focus:ring-red-500 focus:border-red-500" 
               : "border-gray-100 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"

@@ -104,7 +104,7 @@ export default function LaporanPage() {
             desaList={desa || []}
             kelompokList={kelompok || []}
             classList={classes || []}
-            organisasiFilters={filters.organisasi || { daerah: '', desa: '', kelompok: '', kelas: '' }}
+            organisasiFilters={filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }}
             onOrganisasiFilterChange={handleOrganisasiFilterChange}
           />
         </div>

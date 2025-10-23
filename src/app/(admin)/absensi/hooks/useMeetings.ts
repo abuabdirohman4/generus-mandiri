@@ -48,7 +48,6 @@ interface MeetingWithStats extends Meeting {
 export function useMeetings(classId?: string) {
   const [userId, setUserId] = useState<string | null>(null)
   const [isGettingUserId, setIsGettingUserId] = useState(true)
-  const [totalPages, setTotalPages] = useState(1)
   
   // Use environment variable to control dummy data
   const isDummy = process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true'
@@ -58,11 +57,6 @@ export function useMeetings(classId?: string) {
   useEffect(() => {
     setUseDummyData(isDummy)
   }, [isDummy])
-  
-  // Temporarily use local state for currentPage
-  const [currentPage, setCurrentPage] = useState(1)
-  
-  const ITEMS_PER_PAGE = 10
 
   // Get current user ID for cache key
   useEffect(() => {
@@ -72,10 +66,6 @@ export function useMeetings(classId?: string) {
     })
   }, [])
 
-  // Reset page when classId changes
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [classId, setCurrentPage])
 
   // Process dummy data with realistic stats from attendance logs
   const processDummyData = (meetings: any[]) => {
@@ -83,17 +73,6 @@ export function useMeetings(classId?: string) {
     return getDummyMeetings()
   }
 
-  // Calculate cursor from page number
-  const getCursor = async (pageNum: number) => {
-    if (pageNum === 1) return undefined
-    
-    // Get the last meeting date from previous page
-    const result = await getMeetingsByClass(classId, ITEMS_PER_PAGE * (pageNum - 1))
-    if (result.success && result.data && result.data.length > 0) {
-      return result.data[result.data.length - 1].date
-    }
-    return undefined
-  }
 
   // Base SWR key without pagination for better caching
   const swrKey = userId 
@@ -113,9 +92,6 @@ export function useMeetings(classId?: string) {
       if (useDummyData) {
         const processedDummy = processDummyData([])
         
-        const totalPages = Math.ceil(processedDummy.length / ITEMS_PER_PAGE)
-        setTotalPages(totalPages)
-        
         return {
           allMeetings: processedDummy as MeetingWithStats[],
           total: processedDummy.length
@@ -130,8 +106,6 @@ export function useMeetings(classId?: string) {
       }
 
       const allMeetings = result.data || []
-      const totalPages = Math.ceil(allMeetings.length / ITEMS_PER_PAGE)
-      setTotalPages(totalPages)
 
       return {
         allMeetings: allMeetings as MeetingWithStats[],
@@ -154,37 +128,15 @@ export function useMeetings(classId?: string) {
     }
   )
 
-  // Client-side pagination
-  const paginatedMeetings = React.useMemo(() => {
-    if (!data?.allMeetings) return []
-    
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    const endIndex = startIndex + ITEMS_PER_PAGE
-    return data.allMeetings.slice(startIndex, endIndex)
-  }, [data?.allMeetings, currentPage])
-
-  const goToPage = (pageNum: number) => {
-    if (pageNum >= 1 && pageNum <= totalPages) {
-      setCurrentPage(pageNum)
-    }
-  }
-
   const toggleDummyData = () => {
     setUseDummyData(!useDummyData)
-    setCurrentPage(1) // Reset to first page
   }
 
   // Combined loading state: getting userId OR SWR loading
   const combinedLoading = isGettingUserId || isLoading
 
   return {
-    meetings: paginatedMeetings,
-    currentPage,
-    totalPages,
-    hasMore: currentPage < totalPages,
-    goToPage,
-    nextPage: () => goToPage(currentPage + 1),
-    prevPage: () => goToPage(currentPage - 1),
+    meetings: data?.allMeetings || [],
     useDummyData,
     toggleDummyData,
     isDummy,

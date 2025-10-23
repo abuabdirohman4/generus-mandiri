@@ -35,7 +35,7 @@ export function useLaporanPage() {
       
       // Detailed mode filters
       period: filters.period,
-      classId: filters.organisasi?.kelas || filters.classId || undefined,
+      classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -140,7 +140,7 @@ export function useLaporanPage() {
     resetFilters()
   }
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string; desa: string; kelompok: string; kelas: string }) => {
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setFilter('organisasi', organisasiFilters)
   }, [setFilter])
 

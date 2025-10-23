@@ -29,8 +29,8 @@ interface FilterSectionProps {
   desaList: any[]
   kelompokList: any[]
   classList: any[]
-  organisasiFilters: { daerah: string; desa: string; kelompok: string; kelas: string }
-  onOrganisasiFilterChange: (filters: { daerah: string; desa: string; kelompok: string; kelas: string }) => void
+  organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }
+  onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => void
 }
 
 export default function FilterSection({

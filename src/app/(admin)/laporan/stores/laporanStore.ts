@@ -14,10 +14,10 @@ export interface LaporanFilters {
   
   // Organisation filters
   organisasi: {
-    daerah: string
-    desa: string
-    kelompok: string
-    kelas: string
+    daerah: string[]
+    desa: string[]
+    kelompok: string[]
+    kelas: string[]
   }
   
   // Daily filters
@@ -70,10 +70,10 @@ const defaultFilters: LaporanFilters = {
   
   // Organisation filters
   organisasi: {
-    daerah: '',
-    desa: '',
-    kelompok: '',
-    kelas: ''
+    daerah: [],
+    desa: [],
+    kelompok: [],
+    kelas: []
   },
   
   // Daily filters

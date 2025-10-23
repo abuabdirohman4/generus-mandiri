@@ -59,9 +59,9 @@ export default function ClassesKelompokTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Kelas Kelompok
@@ -173,6 +173,6 @@ export default function ClassesKelompokTab() {
         isDestructive={true}
         isLoading={false}
       />
-    </div>
+    </>
   );
 }
