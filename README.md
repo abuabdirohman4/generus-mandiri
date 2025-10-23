@@ -6,204 +6,140 @@ Sistem manajemen pengajian digital yang modern dan efisien untuk mengelola data 
 
 **Kelola generus dengan mudah dan efisien.** Generus Mandiri adalah sistem manajemen pengajian digital yang dirancang khusus untuk mengelola data generus LDII dengan fitur-fitur modern dan antarmuka yang user-friendly.
 
-### 🎯 **Keunggulan Sistem**
+### 🎯 **Fitur Utama**
 
-- **📊 Manajemen Absensi**: Sistem absensi digital yang mudah digunakan
-- **👥 Manajemen Siswa**: Kelola data siswa dengan lengkap dan terstruktur
-- **📈 Laporan Kehadiran**: Laporan dan analisis kehadiran yang detail
+- **📊 Manajemen Absensi**: Sistem absensi digital dengan real-time tracking
+- **👥 Manajemen Siswa**: Kelola data siswa dengan batch import (1-20 siswa)
+- **👨‍🏫 Manajemen Guru**: Assignment guru ke multiple kelas
+- **📈 Laporan & Analytics**: Laporan kehadiran dengan DataFilter
+- **🏢 Manajemen Organisasi**: Role-based filtering dan tab management
 - **🔐 Autentikasi Aman**: Sistem login yang aman dengan Supabase
-- **📱 Responsive Design**: Dapat diakses dari berbagai perangkat
+- **📱 PWA Support**: Dapat diinstall seperti aplikasi native
 
-## 🚀 **Fitur-Fitur Unggulan**
+## 🚀 **Fitur Lengkap**
 
-### **🔐 Sistem Autentikasi**
-- **Login**: Sistem autentikasi yang aman dengan email dan password
-<!-- - **Login/Register**: Sistem autentikasi yang aman dengan email dan password -->
-<!-- - **Google Sign-In**: Login menggunakan akun Google untuk kemudahan akses -->
-- **Role-based Access**: Kontrol akses berdasarkan peran (Admin, Guru, Siswa)
-- **Session Management**: Manajemen sesi yang aman dan terpercaya
+### **👥 Manajemen Data**
+- **Batch Import Siswa**: Import hingga 20 siswa sekaligus dengan wizard 3 langkah
+- **Manajemen Kelas**: Sistem kelas fleksibel dengan multiple jenis kelompok
+- **Assignment Guru**: Satu guru dapat mengajar di beberapa kelas
+- **Role-based Access**: Kontrol akses Admin, Guru, dan Siswa
 
-### **📊 Manajemen Absensi**
-- **Input Absensi Harian**: Sistem input absensi yang mudah dan cepat
-- **Status Kehadiran**: Pilihan status H (Hadir), S (Sakit), I (Izin), A (Alpha)
-- **Alasan Izin**: Input alasan khusus untuk siswa yang izin
-- **Real-time Persentase**: Perhitungan persentase kehadiran secara real-time
-- **Auto-save**: Penyimpanan otomatis untuk mencegah kehilangan data
+### **📊 Absensi & Laporan**
+- **Input Absensi**: Status H/S/I/A dengan alasan izin
+- **Real-time Tracking**: Persentase kehadiran otomatis
+- **Laporan Detail**: Tren kehadiran dan analisis data
+- **DataFilter**: Filtering canggih untuk laporan
 
-### **👥 Manajemen Siswa**
-- **Data Master Siswa**: Kelola data lengkap semua siswa
-- **Filter Berdasarkan Kelas**: Tampilkan siswa berdasarkan kelas tertentu
-- **Informasi Detail**: Nama, gender, kelas, dan informasi penting lainnya
-- **Pencarian Siswa**: Fitur pencarian untuk menemukan siswa dengan cepat
+### **🏢 Organisasi & Admin**
+- **Manajemen Organisasi**: Role-based filtering dan tab management
+- **User Management**: Kelola admin dan guru dengan validasi
+- **Meeting Management**: Manajemen pertemuan dan data siswa
+- **Reset Cache**: Troubleshooting dan maintenance tools
 
-### **📈 Laporan dan Analisis**
-- **Laporan Kehadiran**: Laporan detail kehadiran siswa per periode
-- **Filter Berdasarkan Kelas**: Filter laporan berdasarkan kelas tertentu
-- **Filter Periode**: Pilihan periode (Minggu Ini, Bulan Ini)
-- **Visualisasi Data**: Chart dan grafik untuk analisis kehadiran
-- **Export Data**: Kemampuan untuk mengexport data laporan
+## 🏆 **Teknologi Modern**
 
-### **⚙️ Pengaturan Sistem**
-- **Profil Pengguna**: Kelola informasi profil pengguna
-- **PWA Settings**: Pengaturan untuk Progressive Web App
-- **Tema dan Tampilan**: Kustomisasi tampilan aplikasi
-- **Notifikasi**: Sistem notifikasi untuk update penting
+### **🚀 Tech Stack**
+- **Next.js 15** + **React 19**: Framework terdepan untuk performa optimal
+- **TypeScript**: Type safety dan kode yang maintainable
+- **Tailwind CSS**: Desain responsif dan konsisten
+- **Supabase**: Backend PostgreSQL dengan Row Level Security
+- **PWA**: Dapat diinstall seperti aplikasi native
 
-## 🏆 **Teknologi Terdepan**
+### **⚡ Performa & Keamanan**
+- **Real-time Sync**: Sinkronisasi data otomatis
+- **Offline Support**: Berfungsi tanpa internet
+- **Mobile First**: Optimal di semua perangkat
+- **Data Privacy**: Perlindungan data yang ketat
 
-### **🚀 Modern Web Technology**
-- **Next.js 15**: Framework React terdepan untuk performa optimal
-- **React 19**: Fitur React terbaru untuk interaksi yang smooth
-- **TypeScript**: Kode yang aman dan mudah dipelihara
-- **Tailwind CSS**: Desain yang konsisten dan responsif
-- **Progressive Web App**: Dapat diinstall seperti aplikasi native
+## 🚀 **Quick Start**
 
-### **🔒 Keamanan Enterprise**
-- **Supabase**: Backend PostgreSQL yang terpercaya
-- **Row Level Security**: Keamanan data tingkat baris
-- **Autentikasi Aman**: Sistem login yang aman dan terenkripsi
-- **Real-Time Sync**: Sinkronisasi data secara real-time
-- **Data Privacy**: Perlindungan data pribadi yang ketat
+### **📱 Untuk Pengguna**
+1. **Buka Aplikasi**: Kunjungi di browser
+2. **Install PWA**: Klik "Install" untuk install seperti aplikasi native
+3. **Login**: Masuk dengan akun yang ada
+4. **Mulai**: Kelola data siswa dan absensi
 
-### **⚡ Performa Optimal**
-- **Loading Cepat**: Memuat dalam hitungan detik
-- **Responsive Design**: Tampilan optimal di semua perangkat
-- **Offline Support**: Tetap berfungsi meski tanpa internet
-- **Mobile First**: Didesain khusus untuk mobile dan desktop
-
-## 🚀 **Cara Memulai**
-
-### **Untuk Pengguna (Install Aplikasi)**
-1. **Kunjungi**: Buka aplikasi di browser
-2. **Install**: Klik "Install" saat diminta (berfungsi di semua perangkat!)
-3. **Daftar/Login**: Buat akun atau login dengan akun yang ada
-4. **Mulai Menggunakan**: Kelola data generus dan absensi dengan mudah
-
-### **Untuk Developer (Jalankan Lokal)**
+### **💻 Untuk Developer**
 ```bash
-# Clone dan setup
+# Setup
 git clone <repository-url>
 cd school-management
 npm install
 
-# Konfigurasi environment
+# Environment
 cp .env.example .env.local
-# Tambahkan kredensial Supabase Anda
+# Tambahkan kredensial Supabase
 
-# Jalankan development server
+# Run
 npm run dev
-# Buka http://localhost:3000
+# http://localhost:3000
 ```
 
-## 💎 **Mengapa Developer Menyukai Sistem Ini**
+## 💎 **Developer Experience**
 
-### **🎯 Dibangun dengan Best Practices**
-- **Kualitas Kode Tinggi**: Setiap baris kode memenuhi standar tertinggi
-- **TypeScript First**: Type safety yang kuat di seluruh aplikasi
-- **Performance Optimized**: Dibangun untuk kecepatan dan efisiensi
-- **Clean Architecture**: Mudah dipahami, dipelihara, dan dikembangkan
-- **Modular Components**: Komponen yang dapat digunakan kembali
+### **🎯 Best Practices**
+- **TypeScript First**: Type safety di seluruh aplikasi
+- **Clean Architecture**: Mudah dipahami dan maintainable
+- **Performance Optimized**: Dibangun untuk kecepatan
+- **Modular Components**: Reusable dan scalable
 
-### **🚀 Developer Experience**
+### **🚀 Commands**
 ```bash
-# Quick start
-npm run dev              # Development server yang cepat
-npm run build            # Build production yang optimal
-npm run start            # Server production
-
-# Quality assurance
-npm run type-check       # Validasi TypeScript
-npm run format           # Format kode dengan Prettier
-npm run format:check     # Cek format kode
+npm run dev              # Development server
+npm run build            # Production build
+npm run type-check       # TypeScript validation
+npm run format           # Code formatting
 ```
 
-## 🏗️ **Arsitektur yang Scalable**
-
-### **📱 Struktur Aplikasi Modern**
+### **📱 Struktur Aplikasi**
 ```
 Generus Mandiri/
-├── 🔐 Authentication       # Sistem login
-├── 📊 Absensi Management   # Manajemen kehadiran siswa
-├── 👥 Student Management   # Kelola data siswa
-├── 📈 Reports & Analytics  # Laporan dan analisis
-├── ⚙️ Settings & Profile   # Pengaturan sistem
-└── 📱 Responsive Design    # Tampilan optimal di semua perangkat
+├── 🔐 Authentication       # Login & roles
+├── 📊 Absensi Management   # Kehadiran siswa
+├── 👥 Student Management   # Data siswa + batch import
+├── 👨‍🏫 Teacher Management   # Assignment guru
+├── 🏢 Organization        # Manajemen organisasi
+├── 📈 Reports & Analytics  # Laporan + DataFilter
+└── ⚙️ Settings            # PWA & cache management
 ```
-<!-- ├── 🔐 Authentication       # Sistem login dan register -->
 
-### **💻 Codebase yang Developer-Friendly**
-- **Clean Architecture**: Mudah dipahami dan dikembangkan
-- **Modular Components**: Komponen yang dapat digunakan kembali
-- **Type Safety**: TypeScript di seluruh aplikasi untuk keandalan
-- **Performance First**: Dioptimalkan untuk kecepatan dan efisiensi
-- **Modern Stack**: Menggunakan teknologi web terdepan
+## 🎯 **Cocok Untuk**
 
-## 🎯 **Keunggulan Sistem**
+- **Sekolah & Madrasah**: Sistem manajemen digital lengkap
+- **Pondok Pesantren**: Kelola data santri dan absensi
+- **Lembaga Pendidikan**: Digitalisasi administrasi
+- **Organisasi**: Manajemen data anggota terpusat
 
-### **📈 Manfaat untuk Institusi**
-- **Efisiensi Tinggi**: Kelola data generus dengan lebih efisien
-- **Akurasi Data**: Data absensi yang akurat dan real-time
-- **Laporan Lengkap**: Analisis kehadiran yang detail dan komprehensif
-- **User-Friendly**: Antarmuka yang mudah digunakan untuk semua level pengguna
-- **Mobile Ready**: Dapat diakses dari perangkat mobile dan desktop
+## 💎 **Keunggulan**
 
-### **🏆 Fitur Unggulan**
-- **Sistem Absensi Digital**: Input absensi yang cepat dan akurat
-- **Manajemen Data Terpusat**: Semua data generus dalam satu sistem
-- **Laporan Otomatis**: Generate laporan kehadiran secara otomatis
-- **Keamanan Data**: Perlindungan data yang aman dan terpercaya
-- **Scalable**: Dapat menangani data dalam skala besar
+- **✅ Gratis & Open Source**: Tidak ada biaya tersembunyi
+- **✅ Cross-Platform**: Berfungsi di semua perangkat
+- **✅ Offline Ready**: Tetap berfungsi tanpa internet
+- **✅ PWA Support**: Install seperti aplikasi native
+- **✅ Real-time Sync**: Data selalu up-to-date
+- **✅ Batch Import**: Import 20 siswa sekaligus
+- **✅ Role-based Access**: Kontrol akses yang aman
 
-## 🚀 **Siap Menggunakan Sistem?**
+## 🚀 **Mulai Sekarang**
 
-### **🎯 Cocok Untuk**
-- **Sekolah dan Madrasah** yang membutuhkan sistem manajemen digital
-- **Pondok Pesantren** untuk mengelola data santri dan absensi
-- **Lembaga Pendidikan** yang ingin digitalisasi proses administrasi
-- **Organisasi Keagamaan** untuk mengelola data anggota
-- **Institusi** yang membutuhkan sistem manajemen data terpusat
+1. **Clone**: `git clone <repository-url>`
+2. **Install**: `npm install`
+3. **Setup**: Konfigurasi environment
+4. **Run**: `npm run dev`
 
-### **💎 Yang Anda Dapatkan**
-- **Akses Instan**: Mulai menggunakan dalam hitungan menit
-- **Cross-Platform**: Berfungsi di semua perangkat
-- **Offline Ready**: Tetap berfungsi tanpa internet
-- **Aman & Privat**: Data Anda terlindungi dan aman
-- **Selalu Update**: Fitur terbaru dan perbaikan berkelanjutan
-
-### **🔥 Keunggulan Sistem**
-- **Gratis dan Open Source**: Tidak ada biaya tersembunyi
-- **Semua Fitur Tersedia**: Semua fitur dapat digunakan tanpa batas
-- **Support Lengkap**: Bantuan teknis yang responsif
-- **Komunitas Aktif**: Bergabung dengan komunitas pengguna
-
-## 🎯 **Mulai Sekarang**
-
-### **🚀 Siap Menggunakan Sistem?**
-1. **Clone Repository**: Clone repository ini
-2. **Install Dependencies**: Jalankan `npm install`
-3. **Setup Environment**: Konfigurasi file environment
-4. **Jalankan Aplikasi**: Mulai menggunakan sistem
-
-### **📱 Tersedia di Semua Platform**
+### **📱 Tersedia di**
 - **Desktop**: Chrome, Edge, Safari, Firefox
-- **Mobile**: iOS Safari, Android Chrome, Samsung Internet
-- **Tablet**: Pengalaman optimal di semua ukuran layar
-- **PWA**: Dapat diinstall seperti aplikasi native
-
-### **💬 Bergabung dengan Komunitas**
-- **GitHub**: Star repository ini jika Anda menyukainya
-- **Issues**: Laporkan bug atau request fitur baru
-- **Discussions**: Diskusi dengan pengguna lain
-- **Support**: Dapatkan bantuan ketika membutuhkan
+- **Mobile**: iOS Safari, Android Chrome
+- **PWA**: Install seperti aplikasi native
 
 ---
 
 ## 🏆 **Dibangun untuk Pendidikan, oleh Developer yang Peduli**
 
-**Generus Mandiri** bukan hanya aplikasi biasa—ini adalah solusi digital yang dirancang khusus untuk memudahkan pengelolaan data generus dan absensi. Bergabunglah dengan institusi yang telah merasakan manfaat digitalisasi sistem manajemen.
+**Generus Mandiri** adalah solusi digital yang dirancang khusus untuk memudahkan pengelolaan data sekolah dan absensi dengan teknologi modern.
 
 **Siap untuk digitalisasi sistem manajemen Anda?** Mulai sekarang!
 
 ---
 
-*Dibangun dengan ❤️ untuk kemajuan generus Indonesia*
+*Dibangun dengan ❤️ untuk kemajuan pendidikan Indonesia*
