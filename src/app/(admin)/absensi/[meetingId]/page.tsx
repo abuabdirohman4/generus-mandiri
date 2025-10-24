@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useMeetingAttendance } from '../hooks/useMeetingAttendance'
 import { saveAttendanceForMeeting } from '../actions'
@@ -15,6 +15,8 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId } from '@/lib/userUtils'
 import { mutate as globalMutate } from 'swr'
 import { invalidateMeetingsCache } from '../utils/cache'
+import { useUserProfile } from '@/stores/userProfileStore'
+import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -40,6 +42,7 @@ export default function MeetingAttendancePage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [localAttendance, setLocalAttendance] = useState(attendance)
   const hasInitialized = useRef(false)
+  const { profile: userProfile } = useUserProfile()
 
   // Update local attendance when data changes (only once when data loads)
   React.useEffect(() => {
@@ -109,6 +112,60 @@ export default function MeetingAttendancePage() {
     }
   }
 
+  // Calculate stats from local attendance state (real-time updates)
+  const calculateLocalStats = () => {
+    const records = Object.values(localAttendance)
+    return {
+      total: records.length,
+      hadir: records.filter(record => record.status === 'H').length,
+      izin: records.filter(record => record.status === 'I').length,
+      sakit: records.filter(record => record.status === 'S').length,
+      absen: records.filter(record => record.status === 'A').length
+    }
+  }
+
+  const calculateLocalAttendancePercentage = () => {
+    if (!meeting) return 0
+    
+    const totalStudents = meeting.student_snapshot?.length || 0
+    if (totalStudents === 0) return 0
+    
+    const presentCount = Object.values(localAttendance).filter(
+      record => record.status === 'H'
+    ).length
+    
+    return Math.round((presentCount / totalStudents) * 100)
+  }
+
+  // Check if current user is meeting creator
+  const isMeetingCreator = meeting?.teacher_id === userProfile?.id
+
+  // Filter students based on user role
+  const visibleStudents = useMemo(() => {
+    if (userProfile?.role === 'teacher' && !isMeetingCreator) {
+      // Non-creator teacher: only see their class students
+      const myClassIds = userProfile.classes?.map(c => c.id) || []
+      return students.filter(s => myClassIds.includes(s.class_id))
+    }
+    // Creator or admin: see all students
+    return students
+  }, [students, userProfile, isMeetingCreator])
+
+  // Determine if a specific student's attendance can be edited
+  const canEditStudent = useCallback((studentId: string) => {
+    if (!userProfile || !meeting) return false
+    
+    const student = students.find(s => s.id === studentId)
+    if (!student) return false
+
+    return canUserEditMeetingAttendance(
+      userProfile.role,
+      isMeetingCreator,
+      student.class_id,
+      userProfile.classes?.map(c => c.id) || []
+    )
+  }, [userProfile, meeting, students, isMeetingCreator])
+
   const goBack = () => {
     router.push('/absensi')
   }
@@ -143,31 +200,6 @@ export default function MeetingAttendancePage() {
         </div>
       </div>
     )
-  }
-
-  // Calculate stats from local attendance state (real-time updates)
-  const calculateLocalStats = () => {
-    const records = Object.values(localAttendance)
-    return {
-      total: records.length,
-      hadir: records.filter(record => record.status === 'H').length,
-      izin: records.filter(record => record.status === 'I').length,
-      sakit: records.filter(record => record.status === 'S').length,
-      absen: records.filter(record => record.status === 'A').length
-    }
-  }
-
-  const calculateLocalAttendancePercentage = () => {
-    if (!meeting) return 0
-    
-    const totalStudents = meeting.student_snapshot?.length || 0
-    if (totalStudents === 0) return 0
-    
-    const presentCount = Object.values(localAttendance).filter(
-      record => record.status === 'H'
-    ).length
-    
-    return Math.round((presentCount / totalStudents) * 100)
   }
 
   const localStats = calculateLocalStats()
@@ -221,7 +253,7 @@ export default function MeetingAttendancePage() {
 
           {/* Summary Card */}
           <SummaryCard
-            title={`Siswa (${meeting.student_snapshot?.length} orang)`}
+            title={`Siswa (${visibleStudents.length} orang)`}
             subtitle={`${localStats.hadir} hadir, ${localStats.absen} alfa, ${localStats.izin} izin, ${localStats.sakit} sakit`}
             percentage={localAttendancePercentage}
             percentageLabel="Kehadiran"
@@ -231,9 +263,10 @@ export default function MeetingAttendancePage() {
         {/* Attendance Table */}
         <div className="mb-8">
           <AttendanceTable
-            students={students}
+            students={visibleStudents}
             attendance={localAttendance}
             onStatusChange={handleStatusChange}
+            canEditStudent={canEditStudent}
           />
         </div>
 

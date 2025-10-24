@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
@@ -10,8 +10,10 @@ import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses } from '@/hooks/useClasses'
 import InputFilter from '@/components/form/input/InputFilter'
+import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
+import { useUserProfile } from '@/stores/userProfileStore'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -38,14 +40,23 @@ export default function CreateMeetingModal({
     description: meeting?.description || ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedClassId, setSelectedClassId] = useState<string>('')
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
+  const { profile: userProfile } = useUserProfile()
 
-  // Filter students by selected class
+  // Filter available classes based on user role
+  const availableClasses = useMemo(() => {
+    if (userProfile?.role === 'teacher') {
+      return userProfile.classes || []
+    }
+    return classes || []
+  }, [userProfile, classes])
+
+  // Filter students by selected classes
   const filteredStudents = students.filter(student => 
-    !selectedClassId || student.class_id === selectedClassId
+    selectedClassIds.length === 0 || selectedClassIds.includes(student.class_id)
   )
 
   // Force revalidate students when modal opens to get fresh data
@@ -55,15 +66,21 @@ export default function CreateMeetingModal({
     }
   }, [isOpen, mutateStudents])
 
+  // Initialize selectedClassIds based on mode
   useEffect(() => {
-    if (classId) {
-      setSelectedClassId(classId)
-    } else if (classes && classes.length > 0) {
-      setSelectedClassId(classes[0].id)
+    if (meeting) {
+      // Edit mode: populate from meeting.class_ids
+      setSelectedClassIds(meeting.class_ids || (meeting.class_id ? [meeting.class_id] : []))
+    } else if (classId) {
+      // Create mode with specific class
+      setSelectedClassIds([classId])
+    } else if (availableClasses && availableClasses.length > 0) {
+      // Create mode: default to first available class
+      setSelectedClassIds([availableClasses[0].id])
     }
-  }, [classId, classes])
+  }, [classId, availableClasses, meeting])
 
-  // Update useEffect to reinitialize when meeting changes
+  // Update form data when meeting changes
   useEffect(() => {
     if (meeting) {
       setFormData({
@@ -78,7 +95,7 @@ export default function CreateMeetingModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedClassId) {
+    if (selectedClassIds.length === 0) {
       toast.error('Pilih kelas terlebih dahulu')
       return
     }
@@ -93,7 +110,7 @@ export default function CreateMeetingModal({
       if (meeting) {
         // Edit mode
         const result = await updateMeeting(meeting.id, {
-          classId: selectedClassId,
+          classIds: selectedClassIds,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
@@ -110,7 +127,7 @@ export default function CreateMeetingModal({
       } else {
         // Create mode
         const result = await createMeeting({
-          classId: selectedClassId,
+          classIds: selectedClassIds,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
@@ -176,17 +193,16 @@ export default function CreateMeetingModal({
             <form onSubmit={handleSubmit}>
               {/* Class Selection */}
               <div className="mb-4">
-                <InputFilter
-                  options={classes?.map(cls => ({
-                    value: cls.id,
+                <MultiSelectCheckbox
+                  label="Pilih Kelas"
+                  items={availableClasses.map(cls => ({
+                    id: cls.id,
                     label: cls.name
-                  })) || []}
-                  value={selectedClassId}
-                  onChange={(val: string) => setSelectedClassId(val)}
-                  id="classFilter"   
-                  label="Kelas"
-                  widthClassName="!max-w-full"
-                  className='!mb-0'
+                  }))}
+                  selectedIds={selectedClassIds}
+                  onChange={setSelectedClassIds}
+                  hint="Pilih satu atau lebih kelas untuk pertemuan ini"
+                  disabled={isSubmitting || classesLoading}
                 />
               </div>
 
@@ -250,6 +266,11 @@ export default function CreateMeetingModal({
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Jumlah Siswa untuk pertemuan ini ada <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
+                    {selectedClassIds.length > 1 && (
+                      <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">
+                        ({selectedClassIds.length} kelas gabungan)
+                      </span>
+                    )}
                   </h4>
                   {/* <div className="max-h-32 overflow-y-auto">
                     <div className="flex flex-wrap gap-1">

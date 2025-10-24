@@ -14,7 +14,7 @@ import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -42,7 +42,12 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Admin Daerah: Show Desa, Kelompok, Class
   else if (isAdminDaerahUser) {
@@ -52,33 +57,90 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Admin Desa: Show Kelompok, Class
   else if (isAdminDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Admin Kelompok: Show only Class
   else if (isAdminKelompokUser) {
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Teacher: Show location + class name only if multiple classes
   else if (isTeacherUser) {
     // Add class name only if teacher has multiple classes
     if (userProfile?.classes && userProfile.classes.length > 1) {
-      parts.push(meeting.classes.name)
+      // Show class names for multi-class meetings
+      if (meeting.class_names && meeting.class_names.length > 1) {
+        parts.push(meeting.class_names.join(', '))
+      } else {
+        parts.push(meeting.classes.name)
+      }
     }
   }
   
   return parts.join(', ')
 }
 
+// Helper function to check if user can edit/delete meeting
+const canEditOrDeleteMeeting = (meeting: any, userProfile: any): boolean => {
+  if (!userProfile) return false
+  
+  // Superadmin can edit/delete all meetings
+  if (isSuperAdmin(userProfile)) return true
+  
+  // Meeting creator can edit/delete
+  if (meeting.teacher_id === userProfile.id) return true
+  
+  // Admin hierarchy check
+  const meetingKelompokId = meeting.classes?.kelompok_id
+  const meetingDesaId = meeting.classes?.kelompok?.desa_id
+  const meetingDaerahId = meeting.classes?.kelompok?.desa?.daerah_id
+  
+  // Admin Daerah: can edit meetings in their daerah
+  if (isAdminDaerah(userProfile)) {
+    return meetingDaerahId === userProfile.daerah_id
+  }
+  
+  // Admin Desa: can edit meetings in their desa
+  if (isAdminDesa(userProfile)) {
+    return meetingDesaId === userProfile.desa_id
+  }
+  
+  // Admin Kelompok: can edit meetings in their kelompok
+  if (isAdminKelompok(userProfile)) {
+    return meetingKelompokId === userProfile.kelompok_id
+  }
+  
+  // Teacher can only edit their own meetings
+  return false
+}
+
 interface Meeting {
   id: string
   class_id: string
+  class_ids?: string[]
+  class_names?: string[]
+  teacher_id: string
   title: string
   date: string
   topic?: string
@@ -261,9 +323,16 @@ export default function MeetingList({
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="gap-3 mb-2">
-                              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {meeting.title}
-                              </h4>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {meeting.title}
+                                </h4>
+                                {meeting.class_ids && meeting.class_ids.length > 1 && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                    {meeting.class_ids.length} Kelas
+                                  </span>
+                                )}
+                              </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
                                 {formatMeetingLocation(meeting, userProfile)}
                               </div>
@@ -302,32 +371,40 @@ export default function MeetingList({
                             </div>
 
                             {/* Dropdown Menu */}
-                            <DropdownMenu
-                              items={[
-                                {
-                                  label: 'Edit Info',
-                                  onClick: () => {
-                                    setEditingMeeting(meeting)
-                                    setShowEditModal(true)
+                            {canEditOrDeleteMeeting(meeting, userProfile) ? (
+                              <DropdownMenu
+                                items={[
+                                  {
+                                    label: 'Edit Info',
+                                    onClick: () => {
+                                      setEditingMeeting(meeting)
+                                      setShowEditModal(true)
+                                    },
+                                    icon: (
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                    )
                                   },
-                                  icon: (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                  )
-                                },
-                                {
-                                  label: 'Hapus',
-                                  variant: 'danger',
-                                  onClick: () => handleDeleteClick(meeting.id, meeting.title),
-                                  icon: (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  )
-                                }
-                              ]}
-                            />
+                                  {
+                                    label: 'Hapus',
+                                    variant: 'danger',
+                                    onClick: () => handleDeleteClick(meeting.id, meeting.title),
+                                    icon: (
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    )
+                                  }
+                                ]}
+                              />
+                            ) : (
+                              <div className="relative">
+                                <button className="p-2">
+                                  <svg className="w-5 h-5 text-gray-500"/>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
