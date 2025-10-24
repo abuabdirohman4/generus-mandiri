@@ -241,7 +241,10 @@ export default function MultiSelectFilter({
             {allOptionLabel && (
               <button
                 type="button"
-                onClick={() => handleOptionSelect('all')}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  handleOptionSelect('all')
+                }}
                 className={cn(
                   "w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2",
                   highlightedIndex === filteredOptions.length && "bg-gray-100",
@@ -268,7 +271,10 @@ export default function MultiSelectFilter({
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => handleOptionSelect(option.value)}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      handleOptionSelect(option.value)
+                    }}
                     className={cn(
                       "w-full px-3 py-2 text-left hover:bg-gray-100 flex items-center gap-2",
                       isHighlighted && "bg-gray-100",
