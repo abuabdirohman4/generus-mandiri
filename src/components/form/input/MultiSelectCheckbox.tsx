@@ -24,29 +24,19 @@ export default function MultiSelectCheckbox({
   className = ''
 }: MultiSelectCheckboxProps) {
   const [isAllSelected, setIsAllSelected] = useState(false)
-  const [isIndeterminate, setIsIndeterminate] = useState(false)
 
   // Update select all state when selectedIds changes
   useEffect(() => {
     if (items.length === 0) {
       setIsAllSelected(false)
-      setIsIndeterminate(false)
       return
     }
 
     const selectedCount = selectedIds.length
     const totalCount = items.length
 
-    if (selectedCount === 0) {
-      setIsAllSelected(false)
-      setIsIndeterminate(false)
-    } else if (selectedCount === totalCount) {
-      setIsAllSelected(true)
-      setIsIndeterminate(false)
-    } else {
-      setIsAllSelected(false)
-      setIsIndeterminate(true)
-    }
+    // Only show as selected if ALL items are selected
+    setIsAllSelected(selectedCount === totalCount)
   }, [selectedIds, items.length])
 
   const handleSelectAll = () => {
@@ -84,9 +74,6 @@ export default function MultiSelectCheckbox({
           <input
             type="checkbox"
             checked={isAllSelected}
-            ref={(input) => {
-              if (input) input.indeterminate = isIndeterminate
-            }}
             onChange={handleSelectAll}
             disabled={disabled || items.length === 0}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
