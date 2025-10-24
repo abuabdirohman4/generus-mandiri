@@ -707,7 +707,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
         const { data: attendanceData, error: attendanceError } = await supabase
           .from('attendance_logs')
-          .select('meeting_id, status')
+          .select('meeting_id, student_id, status')
           .in('meeting_id', meetingIds)
 
         if (attendanceError) {
@@ -722,10 +722,53 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           return acc
         }, {} as Record<string, any[]>)
 
+        // For teachers, get their class IDs to filter students
+        let teacherClassIdsTeacher: string[] = []
+        if (profile.role === 'teacher') {
+          const { data: teacherClasses } = await supabase
+            .from('teacher_classes')
+            .select('class_id')
+            .eq('teacher_id', user.id)
+          teacherClassIdsTeacher = teacherClasses?.map(tc => tc.class_id) || []
+        }
+
+        // Fetch student class mappings for filtering
+        const allStudentIds = new Set<string>()
+        filteredMeetings.forEach(meeting => {
+          meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
+        })
+
+        const { data: studentClassData } = await supabase
+          .from('students')
+          .select('id, class_id')
+          .in('id', Array.from(allStudentIds))
+
+        const studentToClassMap = new Map<string, string>()
+        if (studentClassData) {
+          studentClassData.forEach(s => studentToClassMap.set(s.id, s.class_id))
+        }
+
         // Process meetings with stats
         const meetingsWithStats = filteredMeetings.map(meeting => {
-          const meetingAttendance = attendanceByMeeting[meeting.id] || []
-          const totalStudents = meeting.student_snapshot.length
+          let meetingAttendance = attendanceByMeeting[meeting.id] || []
+          let relevantStudentIds = meeting.student_snapshot
+          
+          // For teachers: filter to only their class students
+          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0) {
+            relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
+              const studentClassId = studentToClassMap.get(studentId)
+              return studentClassId && teacherClassIdsTeacher.includes(studentClassId)
+            })
+            
+            // Filter attendance to only relevant students
+            const relevantStudentIdSet = new Set(relevantStudentIds)
+            meetingAttendance = meetingAttendance.filter(record => 
+              relevantStudentIdSet.has(record.student_id)
+            )
+            
+          }
+          
+          const totalStudents = relevantStudentIds.length
           
           const presentCount = meetingAttendance.filter(record => record.status === 'H').length
           const absentCount = meetingAttendance.filter(record => record.status === 'A').length
@@ -841,7 +884,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('attendance_logs')
-      .select('meeting_id, status')
+      .select('meeting_id, student_id, status')
       .in('meeting_id', meetingIds)
 
     if (attendanceError) {
@@ -856,10 +899,53 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       return acc
     }, {} as Record<string, any[]>)
 
+    // For teachers, get their class IDs to filter students (admin/superadmin path)
+    let teacherClassIdsAdmin: string[] = []
+    if (profile.role === 'teacher') {
+      const { data: teacherClasses } = await supabase
+        .from('teacher_classes')
+        .select('class_id')
+        .eq('teacher_id', user.id)
+      teacherClassIdsAdmin = teacherClasses?.map(tc => tc.class_id) || []
+    }
+
+    // Fetch student class mappings for filtering (admin/superadmin path)
+    const allStudentIds = new Set<string>()
+    meetings.forEach(meeting => {
+      meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
+    })
+
+    const { data: studentClassData } = await supabase
+      .from('students')
+      .select('id, class_id')
+      .in('id', Array.from(allStudentIds))
+
+    const studentToClassMap = new Map<string, string>()
+    if (studentClassData) {
+      studentClassData.forEach(s => studentToClassMap.set(s.id, s.class_id))
+    }
+
     // Process meetings with stats
     const meetingsWithStats = meetings.map(meeting => {
-      const meetingAttendance = attendanceByMeeting[meeting.id] || []
-      const totalStudents = meeting.student_snapshot.length
+      let meetingAttendance = attendanceByMeeting[meeting.id] || []
+      let relevantStudentIds = meeting.student_snapshot
+      
+      // For teachers: filter to only their class students
+      if (profile.role === 'teacher' && teacherClassIdsAdmin.length > 0) {
+        relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
+          const studentClassId = studentToClassMap.get(studentId)
+          return studentClassId && teacherClassIdsAdmin.includes(studentClassId)
+        })
+        
+        // Filter attendance to only relevant students
+        const relevantStudentIdSet = new Set(relevantStudentIds)
+        meetingAttendance = meetingAttendance.filter(record => 
+          relevantStudentIdSet.has(record.student_id)
+        )
+        
+      }
+      
+      const totalStudents = relevantStudentIds.length
       
       const presentCount = meetingAttendance.filter(record => record.status === 'H').length
       const absentCount = meetingAttendance.filter(record => record.status === 'A').length
