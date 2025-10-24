@@ -3,6 +3,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1]
+
+### Fixed
+- **Multi Select UI**: Fixed multi-select checkbox behavior to remove indeterminate state
+- **iOS Compatibility**: Improved multi-select component for better iOS experience
+- **Checkbox Logic**: Simplified "Pilih Semua" checkbox to only show checked/unchecked states
+
 ## [1.5.0]
 
 ### Added

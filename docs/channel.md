@@ -1,3 +1,10 @@
+*Update v1.5.1 - Multi Select UI Fix*
+
+Perbaikan:
+- Multi Select UI - Perbaikan behavior checkbox multi-select untuk menghilangkan status indeterminate
+- iOS Compatibility - Peningkatan komponen multi-select untuk pengalaman iOS yang lebih baik
+- Checkbox Logic - Penyederhanaan checkbox "Pilih Semua" hanya menampilkan checked/unchecked
+
 *Update v1.5.0 - Enhanced Filtering & Meeting Management*
 
 Fitur Baru:
