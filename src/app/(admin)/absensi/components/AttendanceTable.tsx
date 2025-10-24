@@ -20,13 +20,15 @@ interface AttendanceTableProps {
   attendance: AttendanceData
   onStatusChange: (studentId: string, status: 'H' | 'I' | 'S' | 'A') => void
   className?: string
+  canEditStudent?: (studentId: string) => boolean
 }
 
 export default function AttendanceTable({ 
   students, 
   attendance, 
   onStatusChange, 
-  className = '' 
+  className = '',
+  canEditStudent
 }: AttendanceTableProps) {
   // Sort students by name and filter out any with invalid IDs
   const sortedStudents = [...students]
@@ -77,20 +79,24 @@ export default function AttendanceTable({
                 </td>
                 
                 {/* Status Radio Buttons */}
-                {(['H', 'I', 'S', 'A'] as const).map((status, index) => (
-                  <td key={status} className={`px-1 py-3 sm:py-4 text-center ${index === 3 ? 'pr-2' : ''}`}>
-                    <label className="flex items-center justify-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`status-${student.id}`}
-                        value={status}
-                        checked={attendance[student.id]?.status === status}
-                        onChange={() => onStatusChange(student.id, status)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </label>
-                  </td>
-                ))}
+                {(['H', 'I', 'S', 'A'] as const).map((status, index) => {
+                  const isDisabled = canEditStudent ? !canEditStudent(student.id) : false
+                  return (
+                    <td key={status} className={`px-1 py-3 sm:py-4 text-center ${index === 3 ? 'pr-2' : ''}`}>
+                      <label className={`flex items-center justify-center ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <input
+                          type="radio"
+                          name={`status-${student.id}`}
+                          value={status}
+                          checked={attendance[student.id]?.status === status}
+                          onChange={() => onStatusChange(student.id, status)}
+                          disabled={isDisabled}
+                          className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                      </label>
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>

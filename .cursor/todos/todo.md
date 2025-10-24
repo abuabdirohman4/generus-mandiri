@@ -3,14 +3,16 @@ Siswa
 - [ ] Detail Kehadiran Siswa seperti Better Habit
 
 Filter
-- [ ] Multi Select Filter
-
-Components
-- [ ] Change All <button> to <Button>
+- [x] Multi Select Filter
 
 Meetings
+- [x] Add Pertemuan Gabungan
+- [x] Add Data Filter
+- [x] Disable edit/delete for non creator
+- [ ] Auto Update attendance log saat refresh
+- [ ] MeetingiD : Sort By Name/Jenis Kelamain & DataFilter
+
 - [ ] Add Template name
-- [ ] Add Data Filter
 - [ ] Add Tipe Sambung
     - Kelompok
     - Desa
@@ -70,7 +72,6 @@ Sign In
 - [x] Username tidak ditemukan
 
 ## Backlog
-- [ ] Detail Kehadiran Siswa seperti Better Habit
 - [ ] Add Bulk Insert Guru, Admin, Organisasi
 - [ ] Add Bulk with CSV, Excel, Text
 - [ ] Add Halaman Materi
@@ -79,3 +80,6 @@ Sign In
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+
+Components
+- [ ] Change All <button> to <Button>

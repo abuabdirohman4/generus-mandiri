@@ -39,7 +39,12 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Admin Daerah: Show Desa, Kelompok, Class
   else if (isAdminDaerahUser) {
@@ -49,18 +54,33 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Admin Desa: Show Kelompok, Class
   else if (isAdminDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   // Teacher & Admin Kelompok: Show only Class
   else {
-    parts.push(meeting.classes.name)
+    // Show class names for multi-class meetings
+    if (meeting.class_names && meeting.class_names.length > 1) {
+      parts.push(meeting.class_names.join(', '))
+    } else {
+      parts.push(meeting.classes.name)
+    }
   }
   
   return parts.join(', ')
@@ -69,6 +89,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
 interface Meeting {
   id: string
   class_id: string
+  class_ids?: string[]
+  class_names?: string[]
   title: string
   date: string
   topic?: string
@@ -211,6 +233,7 @@ export default function MeetingChart({
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((meeting) => ({
       id: meeting.id,
+      class_ids: meeting.class_ids,
       title: meeting.title,
       date: dayjs(meeting.date).format('DD/MM'),
       fullDate: dayjs(meeting.date).format('DD MMM YYYY'),
@@ -282,9 +305,16 @@ export default function MeetingChart({
                     </div>
                   </div>
                   <div>
-                    <h5 className="font-medium text-gray-900 dark:text-white">
-                      {meeting.title}
-                    </h5>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h5 className="font-medium text-gray-900 dark:text-white">
+                        {meeting.title}
+                      </h5>
+                      {meeting.class_ids && meeting.class_ids.length > 1 && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                          {meeting.class_ids.length} Kelas
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {meeting.fullDate} • {meeting.classes}
                     </p>
