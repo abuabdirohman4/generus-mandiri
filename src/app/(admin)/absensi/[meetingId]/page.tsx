@@ -17,6 +17,7 @@ import { mutate as globalMutate } from 'swr'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
+import DataFilter from '@/components/shared/DataFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -43,6 +44,21 @@ export default function MeetingAttendancePage() {
   const [localAttendance, setLocalAttendance] = useState(attendance)
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
+  
+  // DataFilter state
+  const [filters, setFilters] = useState<{
+    daerah: string[]
+    desa: string[]
+    kelompok: string[]
+    kelas: string[]
+    gender?: string
+  }>({
+    daerah: [],
+    desa: [],
+    kelompok: [],
+    kelas: [],
+    gender: ''
+  })
 
   // Update local attendance when data changes (only once when data loads)
   React.useEffect(() => {
@@ -98,7 +114,6 @@ export default function MeetingAttendancePage() {
         if (userId) {
           // Get classId from meeting data to invalidate the correct cache
           const classId = meeting?.class_id
-          console.log('🔄 Triggering cache invalidation after attendance save:', { userId, classId, meetingId })
           await invalidateMeetingsCache(userId, classId)
         }
       } else {
@@ -146,16 +161,30 @@ export default function MeetingAttendancePage() {
   // Check if current user is meeting creator
   const isMeetingCreator = meeting?.teacher_id === userProfile?.id
 
-  // Filter students based on user role
+  // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
+    let filtered = students
+    
+    // Role-based filtering (existing logic)
     if (userProfile?.role === 'teacher' && !isMeetingCreator) {
-      // Non-creator teacher: only see their class students
       const myClassIds = userProfile.classes?.map(c => c.id) || []
-      return students.filter(s => myClassIds.includes(s.class_id))
+      filtered = filtered.filter(s => myClassIds.includes(s.class_id))
     }
-    // Creator or admin: see all students
-    return students
-  }, [students, userProfile, isMeetingCreator])
+    
+    // Gender filter
+    if (filters.gender) {
+      filtered = filtered.filter(s => s.gender === filters.gender)
+    }
+    
+    // Class filter (for multi-class meetings)
+    if (filters.kelas && filters.kelas.length > 0) {
+      // Support comma-separated class IDs from DataFilter
+      const selectedClassIds = filters.kelas.flatMap(k => k.split(','))
+      filtered = filtered.filter(s => selectedClassIds.includes(s.class_id))
+    }
+    
+    return filtered
+  }, [students, userProfile, isMeetingCreator, filters])
 
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
@@ -171,6 +200,45 @@ export default function MeetingAttendancePage() {
       userProfile.classes?.map(c => c.id) || []
     )
   }, [userProfile, meeting, students, isMeetingCreator])
+
+  // Prepare class list for filter - only for multi-class meetings
+  const classListForFilter = useMemo(() => {
+    if (!meeting?.class_ids || meeting.class_ids.length <= 1) return []
+    
+    // Get unique class IDs from students
+    const classIds = new Set(students.map(s => s.class_id))
+    
+    // For teacher non-creator, only show their classes
+    if (userProfile?.role === 'teacher' && !isMeetingCreator) {
+      const myClassIds = userProfile.classes?.map(c => c.id) || []
+      const relevantClassIds = Array.from(classIds).filter(id => myClassIds.includes(id))
+      
+      // Only show filter if teacher has more than 1 class in this meeting
+      if (relevantClassIds.length <= 1) return []
+      
+      return relevantClassIds.map(id => {
+        const student = students.find(s => s.class_id === id)
+        return { 
+          id, 
+          name: student?.class_name || 'Unknown',
+          kelompok_id: null
+        }
+      })
+    }
+    
+    // For admin/creator, show all classes
+    return Array.from(classIds).map(id => {
+      const student = students.find(s => s.class_id === id)
+      return { 
+        id, 
+        name: student?.class_name || 'Unknown',
+        kelompok_id: null
+      }
+    })
+  }, [meeting, students, userProfile, isMeetingCreator])
+
+  // Determine if class filter should show
+  const showClassFilter = meeting?.class_ids && meeting.class_ids.length > 1 && classListForFilter.length > 0
 
   const goBack = () => {
     router.push('/absensi')
@@ -265,6 +333,24 @@ export default function MeetingAttendancePage() {
             percentageLabel="Kehadiran"
           />
         </div>
+
+        {/* Filters */}
+        <DataFilter
+          filters={filters}
+          onFilterChange={setFilters}
+          userProfile={userProfile}
+          daerahList={[]}
+          desaList={[]}
+          kelompokList={[]}
+          classList={classListForFilter}
+          showGender={true}
+          showKelas={showClassFilter}
+          showDaerah={false}
+          showDesa={false}
+          showKelompok={false}
+          variant="page"
+          className="mb-4"
+        />
 
         {/* Attendance Table */}
         <div className="mb-8">

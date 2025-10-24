@@ -1,21 +1,14 @@
-## v1.5.0
+## v1.6.0
 Siswa
 - [ ] Detail Kehadiran Siswa seperti Better Habit
 
-Filter
-- [x] Multi Select Filter
-
 Meetings
-- [x] Add Pertemuan Gabungan
-- [x] Add Data Filter
-- [x] Disable edit/delete for non creator
 - [ ] Add Template name
 - [ ] Add Tipe Sambung
     - Kelompok
     - Desa
     - Daerah
     - Pusat
-- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - [ ] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
@@ -29,16 +22,20 @@ Meetings
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
 
+## v1.5.0
+
+Filter
+- [x] Multi Select Filter
+
+Meetings
+- [x] Add Pertemuan Gabungan
+- [x] Add Data Filter
+- [x] Disable edit/delete for non creator
 
 MeetingId
-- [ ] Sort By Name/Jenis Kelamain & DataFilter
+- [x] Sort By Name/Jenis Kelamain & DataFilter
 - [x] Auto Update attendance log saat refresh
 - [x] Persentase terpisah
-
-Kelas
-- [ ] Saat add kelas gabungan
-    - Kalau single kelasnya sudah ada datanya, berarti langsung keinsert di gabungan
-    - Kalau di gabungan sudah ada, di single nya juga ikut keisi
 
 ## v1.4.2
 - [x] Di Iphone PWA tidak jalan
@@ -83,6 +80,14 @@ Sign In
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+
+Kelas
+- [ ] Saat add kelas gabungan
+    - Kalau single kelasnya sudah ada datanya, berarti langsung keinsert di gabungan
+    - Kalau di gabungan sudah ada, di single nya juga ikut keisi
+
+Meetings
+- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 
 Components
 - [ ] Change All <button> to <Button>
