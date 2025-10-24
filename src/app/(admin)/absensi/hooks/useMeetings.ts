@@ -9,6 +9,9 @@ import { getDummyMeetings } from '@/lib/dummy/processAttendanceLogs'
 interface Meeting {
   id: any
   class_id: any
+  class_ids?: any[]
+  class_names?: string[]
+  teacher_id: any
   title: any
   date: any
   topic?: any
@@ -113,11 +116,11 @@ export function useMeetings(classId?: string) {
       }
     },
     {
-      revalidateOnFocus: false, // Don't revalidate on focus for better UX
+      revalidateOnFocus: true,       // Fetch when window gains focus (changed from false)
       revalidateOnReconnect: true,
-      dedupingInterval: 5000, // 5 seconds deduplication (reduced for better responsiveness)
+      dedupingInterval: 2000, // 2 seconds
       revalidateIfStale: true, // Allow revalidation when data is stale
-      revalidateOnMount: true, // Only revalidate on mount
+      revalidateOnMount: true, // Always fetch on page load
       refreshInterval: 0, // No automatic refresh
       onError: (error) => {
         console.error('Error fetching meetings:', error)

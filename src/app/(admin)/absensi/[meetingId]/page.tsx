@@ -114,7 +114,12 @@ export default function MeetingAttendancePage() {
 
   // Calculate stats from local attendance state (real-time updates)
   const calculateLocalStats = () => {
-    const records = Object.values(localAttendance)
+    // Only count stats for visible students
+    const visibleStudentIds = new Set(visibleStudents.map(s => s.id))
+    const records = Object.entries(localAttendance)
+      .filter(([studentId]) => visibleStudentIds.has(studentId))
+      .map(([_, data]) => data)
+    
     return {
       total: records.length,
       hadir: records.filter(record => record.status === 'H').length,
@@ -125,14 +130,15 @@ export default function MeetingAttendancePage() {
   }
 
   const calculateLocalAttendancePercentage = () => {
-    if (!meeting) return 0
+    if (!meeting || visibleStudents.length === 0) return 0
     
-    const totalStudents = meeting.student_snapshot?.length || 0
-    if (totalStudents === 0) return 0
+    const totalStudents = visibleStudents.length
+    const visibleStudentIds = new Set(visibleStudents.map(s => s.id))
     
-    const presentCount = Object.values(localAttendance).filter(
-      record => record.status === 'H'
-    ).length
+    const presentCount = Object.entries(localAttendance)
+      .filter(([studentId, record]) => 
+        visibleStudentIds.has(studentId) && record.status === 'H'
+      ).length
     
     return Math.round((presentCount / totalStudents) * 100)
   }

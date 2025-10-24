@@ -65,9 +65,11 @@ export function useAttendanceData(selectedDate: Date | string) {
     swrKey,
     fetcher,
     {
-      revalidateOnFocus: false,
+      revalidateOnFocus: true,      // Fetch when window gains focus (changed from false)
+      revalidateOnMount: true,      // Always fetch on page load
       revalidateOnReconnect: true,
-      dedupingInterval: 30000, // 30 seconds cache
+      dedupingInterval: 2000,       // Reduce from 30000 to 2000ms
+      revalidateIfStale: true,
       onError: (error) => {
         console.error('Error fetching attendance:', error)
       }

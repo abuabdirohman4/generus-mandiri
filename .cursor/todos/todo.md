@@ -9,9 +9,6 @@ Meetings
 - [x] Add Pertemuan Gabungan
 - [x] Add Data Filter
 - [x] Disable edit/delete for non creator
-- [ ] Auto Update attendance log saat refresh
-- [ ] MeetingiD : Sort By Name/Jenis Kelamain & DataFilter
-
 - [ ] Add Template name
 - [ ] Add Tipe Sambung
     - Kelompok
@@ -31,6 +28,12 @@ Meetings
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
+
+
+MeetingId
+- [ ] Sort By Name/Jenis Kelamain & DataFilter
+- [x] Auto Update attendance log saat refresh
+- [x] Persentase terpisah
 
 Kelas
 - [ ] Saat add kelas gabungan
