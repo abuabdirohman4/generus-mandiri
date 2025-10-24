@@ -53,6 +53,7 @@ interface DataFilters {
   desa: string[]
   kelompok: string[]
   kelas: string[]
+  gender?: string // NEW - single select for gender
 }
 
 interface DataFilterProps {
@@ -64,6 +65,7 @@ interface DataFilterProps {
   kelompokList: Kelompok[]
   classList: Class[]
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
+  showGender?: boolean // NEW - for pages that need gender filter
   showDaerah?: boolean // Override role-based visibility
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
@@ -99,6 +101,7 @@ export default function DataFilter({
   kelompokList,
   classList,
   showKelas = false,
+  showGender = false, // NEW
   showDaerah,
   showDesa,
   showKelompok,
@@ -131,7 +134,7 @@ export default function DataFilter({
   const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses)
 
   // Teacher special case - only show Kelas filter if they have multiple classes
-  if (isTeacher && teacherHasMultipleClasses && showKelas) {
+  if (isTeacher && teacherHasMultipleClasses && showKelas && !showGender) {
     return (
       <div className={cn("grid gap-x-4 grid-cols-1", className)}>
         <MultiSelectFilter
@@ -150,7 +153,7 @@ export default function DataFilter({
   }
 
   // If no filters to show, return null
-  if (!shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter) {
+  if (!showGender && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter) {
     return null
   }
 
@@ -289,8 +292,16 @@ export default function DataFilter({
     })
   }, [filters?.daerah, filters?.desa, filters?.kelompok, onFilterChange])
 
+  const handleGenderChange = useCallback((value: string) => {
+    onFilterChange({
+      ...filters,
+      gender: value
+    })
+  }, [filters, onFilterChange])
+
   // Determine visible filters and their order
   const visibleFilters = [
+    showGender && 'gender', // NEW - add gender first
     shouldShowDaerah && 'daerah',
     shouldShowDesa && 'desa',
     shouldShowKelompok && 'kelompok',
@@ -315,6 +326,13 @@ export default function DataFilter({
     className
   )
 
+  // Helper function to calculate filter index
+  const getFilterIndex = (filterType: string) => {
+    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas']
+    const visibleOrder = visibleFilters
+    return visibleOrder.indexOf(filterType)
+  }
+
   // For 3 filters: last filter (lowest level) spans 2 columns on mobile
   const getFilterClass = (index: number) => {
     if (variant === 'page' && filterCount === 3 && index === 2) {
@@ -329,7 +347,7 @@ export default function DataFilter({
   return (
     <div className={containerClass}>
       {shouldShowDaerah && (
-        <div className={getFilterClass(0)}>
+        <div className={getFilterClass(getFilterIndex('daerah'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
               id="daerahFilter"
@@ -363,7 +381,7 @@ export default function DataFilter({
       )}
       
       {shouldShowDesa && (
-        <div className={getFilterClass(1)}>
+        <div className={getFilterClass(getFilterIndex('desa'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
               id="desaFilter"
@@ -397,7 +415,7 @@ export default function DataFilter({
       )}
       
       {shouldShowKelompok && (
-        <div className={getFilterClass(2)}>
+        <div className={getFilterClass(getFilterIndex('kelompok'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
               id="kelompokFilter"
@@ -431,7 +449,7 @@ export default function DataFilter({
       )}
       
       {showKelasFilter && (
-        <div className={getFilterClass(3)}>
+        <div className={getFilterClass(getFilterIndex('kelas'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
               id="kelasFilter"
@@ -467,6 +485,25 @@ export default function DataFilter({
               hint={errors.kelas}
             />
           )}
+        </div>
+      )}
+
+      {showGender && (
+        <div className={getFilterClass(getFilterIndex('gender'))}>
+          <InputFilter
+            id="genderFilter"
+            label="Jenis Kelamin"
+            value={filters?.gender || ''}
+            onChange={handleGenderChange}
+            options={[
+              { value: 'Laki-laki', label: 'Laki-Laki' },
+              { value: 'Perempuan', label: 'Perempuan' }
+            ]}
+            allOptionLabel="Semua"
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
         </div>
       )}
     </div>
