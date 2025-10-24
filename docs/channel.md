@@ -1,3 +1,17 @@
+*Update v1.5.0 - Enhanced Filtering & Meeting Management*
+
+Fitur Baru:
+- Multi Select Filter - Sistem filtering dengan kemampuan multi-select
+- Pertemuan Gabungan - Fitur pertemuan gabungan untuk multiple kelas
+- DataFilter di Meetings - Tambahan komponen DataFilter di halaman meetings
+- Auto Update Attendance - Update otomatis log kehadiran saat refresh
+- Separate Percentage - Perhitungan persentase terpisah untuk akurasi lebih baik
+
+Perbaikan:
+- Meeting Security - Disable edit/delete untuk non-creator
+- Sorting Options - Sorting berdasarkan kelas dan jenis kelamin
+- Filter Performance - Optimasi performa sistem filtering
+
 *Update v1.4.2 - Bug Fixes & Improvements*
 
 Perbaikan:
