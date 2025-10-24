@@ -3,6 +3,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0]
+
+### Added
+- **Multi Select Filter**: Enhanced filtering system with multi-select capabilities
+- **Pertemuan Gabungan**: Added combined meetings functionality
+- **DataFilter in Meetings**: Added DataFilter component to meetings page
+- **Auto Update Attendance**: Automatic attendance log updates on refresh
+- **Separate Percentage**: Individual percentage calculation for better accuracy
+
+### Improved
+- **Meeting Security**: Disabled edit/delete for non-creators in meetings
+- **Sorting Options**: Added sorting by class and gender in meeting details
+- **Filter Performance**: Optimized filtering system for better performance
+
 ## [1.4.2]
 
 ### Fixed
