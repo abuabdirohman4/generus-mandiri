@@ -484,3 +484,184 @@ export async function getCurrentUserRole(): Promise<string | null> {
     return null
   }
 }
+
+export interface StudentInfo {
+  id: string
+  name: string
+  gender: string | null
+  class_id: string
+  classes: {
+    id: string
+    name: string
+  } | null
+}
+
+export interface AttendanceLog {
+  id: string
+  date: string
+  status: string
+  reason: string | null
+  meeting_id: string
+  meetings: {
+    id: string
+    title: string
+    topic: string | null
+    description: string | null
+  }
+}
+
+export interface MonthlyStats {
+  total: number
+  hadir: number
+  izin: number
+  sakit: number
+  absen: number
+}
+
+export interface AttendanceHistoryResponse {
+  attendanceLogs: AttendanceLog[]
+  stats: MonthlyStats
+}
+
+/**
+ * Mendapatkan informasi siswa berdasarkan ID
+ */
+export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
+  try {
+    const supabase = await createClient()
+    
+    // Get current user profile for access control
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, daerah_id, desa_id, kelompok_id, teacher_classes(class_id)')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
+    // Query student with RLS - RLS policies will handle access control
+    const { data: student, error } = await supabase
+      .from('students')
+      .select(`
+        id,
+        name,
+        gender,
+        class_id,
+        classes(id, name)
+      `)
+      .eq('id', studentId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new Error('Siswa tidak ditemukan')
+      }
+      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+        throw new Error('Tidak memiliki izin untuk melihat siswa ini')
+      }
+      throw error
+    }
+
+    return {
+      id: student.id,
+      name: student.name,
+      gender: student.gender,
+      class_id: student.class_id,
+      classes: student.classes && Array.isArray(student.classes) && student.classes.length > 0 ? {
+        id: student.classes[0].id,
+        name: student.classes[0].name
+      } : null
+    } as StudentInfo
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat informasi siswa')
+    throw new Error(errorInfo.message)
+  }
+}
+
+/**
+ * Mendapatkan riwayat kehadiran siswa untuk bulan tertentu
+ */
+export async function getStudentAttendanceHistory(
+  studentId: string,
+  year: number,
+  month: number
+): Promise<AttendanceHistoryResponse> {
+  try {
+    const supabase = await createClient()
+    
+    // Get current user profile for access control
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, daerah_id, desa_id, kelompok_id, teacher_classes(class_id)')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
+    // Format date range for the month
+    const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
+    // Get the last day of the month properly
+    const lastDayOfMonth = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDayOfMonth.toString().padStart(2, '0')}`
+    
+    // Query attendance_logs for specific student and month
+    // RLS policies will handle access control
+    const { data: attendanceLogs, error } = await supabase
+      .from('attendance_logs')
+      .select(`
+        id,
+        date,
+        status,
+        reason,
+        meeting_id,
+        meetings!inner(
+          id,
+          title,
+          topic,
+          description
+        )
+      `)
+      .eq('student_id', studentId)
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: true })
+
+    if (error) {
+      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+        throw new Error('Tidak memiliki izin untuk melihat riwayat kehadiran siswa ini')
+      }
+      throw error
+    }
+
+    // Calculate monthly statistics
+    const stats = {
+      total: attendanceLogs?.length || 0,
+      hadir: attendanceLogs?.filter(log => log.status === 'H').length || 0,
+      izin: attendanceLogs?.filter(log => log.status === 'I').length || 0,
+      sakit: attendanceLogs?.filter(log => log.status === 'S').length || 0,
+      absen: attendanceLogs?.filter(log => log.status === 'A').length || 0
+    }
+
+    return { 
+      attendanceLogs: (attendanceLogs || []) as unknown as AttendanceLog[], 
+      stats: stats as MonthlyStats 
+    }
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat riwayat kehadiran siswa')
+    throw new Error(errorInfo.message)
+  }
+}

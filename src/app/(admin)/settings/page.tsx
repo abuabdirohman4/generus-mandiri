@@ -17,7 +17,7 @@ const settingsCategories = [
         name: "Profil Pengguna",
         description: "Edit informasi profil dan foto",
         href: "/settings/profile",
-        available: false
+        available: true
       },
       // {
       //   name: "Keamanan Akun",

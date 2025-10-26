@@ -43,6 +43,8 @@ function PageTitle() {
       default:
         if (path.startsWith('/absensi')) { // meeting detail pages
           return 'Absensi';
+        } else if (path.startsWith('/users/siswa/')) {
+          return 'Detail Siswa';
         }
         return 'Generus Mandiri';
     }
@@ -51,6 +53,7 @@ function PageTitle() {
   // If page needs back button
   const needsBackButton = (path: string) => {
     return path.startsWith('/absensi/') || // Include all absensi sub-pages including meeting IDs
+          path.startsWith('/users/siswa/') ||
           path === '/users/guru' || 
           path === '/users/admin' || 
           path === '/organisasi';
