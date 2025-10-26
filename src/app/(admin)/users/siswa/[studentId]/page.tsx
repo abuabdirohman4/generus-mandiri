@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useStudentDetail } from './hooks/useStudentDetail'
 import { AttendanceCalendar, MonthlyStats, MeetingDetailModal, AttendanceList } from './components'
 import StudentDetailSkeleton from '@/components/ui/skeleton/StudentDetailSkeleton'
@@ -16,9 +16,21 @@ dayjs.locale('id')
 export default function StudentDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const studentId = params.studentId as string
 
-  const [currentDate, setCurrentDate] = useState(dayjs())
+  // Read query parameters
+  const monthParam = searchParams.get('month')
+  const yearParam = searchParams.get('year')
+  const fromParam = searchParams.get('from')
+
+  // Initialize currentDate from query params or default to current month
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (monthParam && yearParam) {
+      return dayjs().year(parseInt(yearParam)).month(parseInt(monthParam) - 1)
+    }
+    return dayjs()
+  })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedMeeting, setSelectedMeeting] = useState<AttendanceLog | null>(null)
 
@@ -48,6 +60,15 @@ export default function StudentDetailPage() {
 
   const handleCloseAttendanceList = () => {
     setSelectedDate(null)
+  }
+
+  // Update back button handler
+  const handleBack = () => {
+    if (fromParam === 'laporan') {
+      router.push('/laporan')
+    } else {
+      router.push('/users/siswa')
+    }
   }
 
   if (isLoading) {
@@ -86,7 +107,7 @@ export default function StudentDetailPage() {
               })()}
             </p>
             <Button
-              onClick={() => router.back()}
+              onClick={handleBack}
               variant="outline"
               className="px-4 py-2"
             >

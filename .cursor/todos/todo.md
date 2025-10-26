@@ -1,7 +1,8 @@
 ## v1.6.0
 Siswa
 - [x] Detail Kehadiran Siswa seperti Better Habit
-- [ ] Bisa masuk lewat laporan
+- [x] Bisa masuk lewat laporan
+- [ ] Tambah 1 action untuk masuk ke detail ini
 
 MultiFIlter
 - [ ] Remove seach feature
