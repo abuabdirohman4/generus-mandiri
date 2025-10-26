@@ -1,6 +1,13 @@
 ## v1.6.0
 Siswa
-- [ ] Detail Kehadiran Siswa seperti Better Habit
+- [x] Detail Kehadiran Siswa seperti Better Habit
+- [ ] Bisa masuk lewat laporan
+
+MultiFIlter
+- [ ] Remove seach feature
+
+Laporan
+- [ ] Bug sorting tingkat kehadiran
 
 Meetings
 - [ ] Add Template name
@@ -80,6 +87,11 @@ Sign In
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+
+Siswa
+- [ ] Tambahkan tab di detail siswa
+    - Kehadiran
+    - Profile Lengkap
 
 Kelas
 - [ ] Saat add kelas gabungan

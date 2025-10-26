@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import TableActions from '@/components/table/TableActions'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
@@ -164,6 +165,19 @@ export default function StudentsTable({
       }
       
       return <TableActions actions={actions} />;
+    }
+    
+    // Handle name column - make it clickable
+    if (column.key === 'name') {
+      const student = students.find(s => s.id === item.actions)!
+      return (
+        <Link 
+          href={`/users/siswa/${student.id}`}
+          className="hover:text-blue-600 hover:underline"
+        >
+          {item.name}
+        </Link>
+      )
     }
     
     // Handle organizational columns
