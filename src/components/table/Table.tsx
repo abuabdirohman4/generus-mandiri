@@ -86,14 +86,36 @@ export default function DataTable({
     if (!sortColumn || !sortDirection) return filteredData
     
     return [...filteredData].sort((a, b) => {
-      const aValue = a[sortColumn]
-      const bValue = b[sortColumn]
+      let aValue = a[sortColumn]
+      let bValue = b[sortColumn]
       
       // Handle null/undefined
       if (aValue == null) return 1
       if (bValue == null) return -1
       
-      // Compare values
+      // Convert percentage strings to numbers for proper sorting
+      // Check if both values are percentage strings (e.g., "90%", "100%")
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const aIsPercentage = aValue.trim().endsWith('%')
+        const bIsPercentage = bValue.trim().endsWith('%')
+        
+        if (aIsPercentage && bIsPercentage) {
+          // Remove '%' and convert to number
+          const aNum = parseFloat(aValue.replace('%', ''))
+          const bNum = parseFloat(bValue.replace('%', ''))
+          
+          // Handle NaN cases
+          if (isNaN(aNum)) return 1
+          if (isNaN(bNum)) return -1
+          
+          // Compare as numbers
+          if (aNum < bNum) return sortDirection === 'asc' ? -1 : 1
+          if (aNum > bNum) return sortDirection === 'asc' ? 1 : -1
+          return 0
+        }
+      }
+      
+      // Default comparison for non-percentage values
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
