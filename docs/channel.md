@@ -1,7 +1,7 @@
 *Update v1.6.0 - Student Attendance Detail & Reports Enhancement*
 
 Fitur Baru:
-- Detail Kehadiran Siswa - Tampilan detail kehadiran siswa seperti Better Habit
+- Detail Kehadiran Siswa - Tampilan detail kehadiran siswa
 - Akses dari Laporan - Akses langsung ke detail kehadiran dari halaman laporan
 - Navigation Actions - Tombol action untuk navigasi ke detail siswa
 
