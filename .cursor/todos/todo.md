@@ -20,7 +20,7 @@ Siswa
 - [x] Tambah 1 action untuk masuk ke detail ini
 
 MultiFIlter
-- [ ] Remove seach feature
+- [x] Disable seach feature
 
 Laporan
 - [x] Bug sorting tingkat kehadiran
