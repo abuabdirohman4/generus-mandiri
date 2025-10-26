@@ -3,6 +3,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0]
+
+### Added
+- **Student Attendance Detail**: Added detailed attendance view for students similar to Better Habit
+- **Quick Access from Reports**: Direct access to student attendance detail from reports page
+- **Navigation Actions**: Added action button to navigate to student detail page
+
+### Fixed
+- **Multi Filter**: Disabled search feature in multi-select filter component
+- **Reports Sorting**: Fixed sorting bug for attendance level in reports
+
+### Improved
+- **User Experience**: Better navigation flow between reports and student detail pages
+- **Reports Accuracy**: Improved sorting and filtering accuracy in reports
+
 ## [1.5.1]
 
 ### Fixed
