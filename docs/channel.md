@@ -1,3 +1,18 @@
+*Update v1.6.0 - Student Attendance Detail & Reports Enhancement*
+
+Fitur Baru:
+- Detail Kehadiran Siswa - Tampilan detail kehadiran siswa seperti Better Habit
+- Akses dari Laporan - Akses langsung ke detail kehadiran dari halaman laporan
+- Navigation Actions - Tombol action untuk navigasi ke detail siswa
+
+Perbaikan:
+- Multi Filter - Nonaktifkan fitur search di multi-select filter
+- Sorting Laporan - Perbaikan bug sorting tingkat kehadiran di laporan
+
+Peningkatan:
+- User Experience - Flow navigasi antara laporan dan detail siswa lebih baik
+- Akurasi Laporan - Peningkatan akurasi sorting dan filtering di laporan
+
 *Update v1.5.1 - Multi Select UI Fix*
 
 Perbaikan:
