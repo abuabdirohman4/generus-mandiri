@@ -204,7 +204,7 @@ export default function MultiSelectFilter({
         </Label>
 
         {/* Input field */}
-        <div className="relative">
+        <div className="relative" onClick={() => !searchable && setIsOpen(!isOpen)}>
           <input
             ref={inputRef}
             id={id}
@@ -212,8 +212,8 @@ export default function MultiSelectFilter({
             value={displayValue}
             readOnly={!searchable}  // read-only when not searchable
             onChange={(e) => searchable && setSearchTerm(e.target.value)}  // only update if searchable
-            onFocus={handleInputFocus}
-            onKeyDown={handleKeyDown}
+            onFocus={searchable ? handleInputFocus : undefined}
+            onKeyDown={searchable ? handleKeyDown : undefined}
             placeholder={selectedOptions.length === 0 ? placeholder : ''}
             className={inputClass}
             autoComplete="off"
