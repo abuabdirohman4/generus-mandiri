@@ -70,6 +70,7 @@ export function useLaporanPage() {
       .sort((a, b) => a.student_name.localeCompare(b.student_name))
       .map((record, index) => ({
         no: index + 1,
+        student_id: record.student_id,
         student_name: record.student_name,
         class_name: record.class_name,
         total_days: record.total_days,

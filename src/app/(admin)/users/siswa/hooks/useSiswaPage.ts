@@ -21,12 +21,14 @@ export function useSiswaPage() {
     selectedClassFilter,
     submitting,
     showBatchModal,
+    dataFilters,
     openCreateModal,
     openEditModal,
     closeModal,
     openBatchModal,
     closeBatchModal,
     setSelectedClassFilter,
+    setDataFilters,
     setSubmitting
   } = useSiswaStore()
 
@@ -40,14 +42,6 @@ export function useSiswaPage() {
   const { daerah } = useDaerah()
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
-
-  // Data filter state
-  const [dataFilters, setDataFilters] = useState({
-    daerah: [] as string[],
-    desa: [] as string[],
-    kelompok: [] as string[],
-    kelas: [] as string[]
-  })
 
   // Students with conditional classId
   // For teachers, don't filter by classId - fetch all students and filter client-side
@@ -160,7 +154,7 @@ export function useSiswaPage() {
   // Data filter handler
   const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setDataFilters(filters)
-  }, [])
+  }, [setDataFilters])
 
   // Filter students based on data filters and teacher classes
   const filteredStudents = useMemo(() => {

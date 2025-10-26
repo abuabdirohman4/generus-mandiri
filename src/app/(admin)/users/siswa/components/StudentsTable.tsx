@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
-import TableActions from '@/components/table/TableActions'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
-import { PencilIcon, TrashBinIcon } from '@/lib/icons'
+import { PencilIcon, TrashBinIcon, EyeIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 
@@ -136,35 +135,38 @@ export default function StudentsTable({
     if (column.key === 'actions') {
       const student = students.find(s => s.id === item.actions)!;
       
-      // Parent decides which actions to include
-      const actions: Array<{
-        id: string;
-        icon: React.ComponentType<{ className?: string }>;
-        onClick: () => void;
-        title: string;
-        color: 'blue' | 'yellow' | 'red' | 'green' | 'indigo';
-      }> = [
-        {
-          id: 'edit',
-          icon: PencilIcon,
-          onClick: () => onEdit(student),
-          title: 'Edit',
-          color: 'indigo'
-        }
-      ];
-      
-      // Only add delete action if user is admin
-      if (userRole === 'admin' || userRole === 'superadmin') {
-        actions.push({
-          id: 'delete',
-          icon: TrashBinIcon,
-          onClick: () => handleDeleteClick(item.actions, student?.name || ''),
-          title: 'Hapus',
-          color: 'red'
-        });
-      }
-      
-      return <TableActions actions={actions} />;
+      return (
+        <div className="flex gap-4 justify-center items-center">
+          {/* View Action - Link to student detail */}
+          <Link 
+            href={`/users/siswa/${student.id}`}
+            className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 transition-colors"
+            title="Lihat Detail"
+          >
+            <EyeIcon className="w-5 h-5" />
+          </Link>
+          
+          {/* Edit Action */}
+          <button
+            onClick={() => onEdit(student)}
+            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+            title="Edit"
+          >
+            <PencilIcon className="w-5 h-5" />
+          </button>
+          
+          {/* Delete Action - only for admin */}
+          {(userRole === 'admin' || userRole === 'superadmin') && (
+            <button
+              onClick={() => handleDeleteClick(item.actions, student?.name || '')}
+              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+              title="Hapus"
+            >
+              <TrashBinIcon className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      );
     }
     
     // Handle name column - make it clickable
