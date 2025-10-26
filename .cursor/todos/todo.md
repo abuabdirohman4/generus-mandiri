@@ -1,22 +1,5 @@
-## v1.6.0
-Siswa
-- [x] Detail Kehadiran Siswa seperti Better Habit
-- [x] Bisa masuk lewat laporan
-- [ ] Tambah 1 action untuk masuk ke detail ini
-
-MultiFIlter
-- [ ] Remove seach feature
-
-Laporan
-- [ ] Bug sorting tingkat kehadiran
-
+## v1.7.0
 Meetings
-- [ ] Add Template name
-- [ ] Add Tipe Sambung
-    - Kelompok
-    - Desa
-    - Daerah
-    - Pusat
 - [ ] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
@@ -29,6 +12,26 @@ Meetings
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
+
+## v1.6.0
+Siswa
+- [x] Detail Kehadiran Siswa seperti Better Habit
+- [x] Bisa masuk lewat laporan
+- [x] Tambah 1 action untuk masuk ke detail ini
+
+MultiFIlter
+- [ ] Remove seach feature
+
+Laporan
+- [x] Bug sorting tingkat kehadiran
+
+Meetings
+- [ ] Add Template name
+- [ ] Add Tipe Sambung
+    - Kelompok
+    - Desa
+    - Daerah
+    - Pusat
 
 ## v1.5.0
 
