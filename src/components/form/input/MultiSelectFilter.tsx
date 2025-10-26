@@ -25,6 +25,7 @@ interface MultiSelectFilterProps {
   hint?: string
   widthClassName?: string
   className?: string
+  searchable?: boolean
 }
 
 export default function MultiSelectFilter({
@@ -41,7 +42,8 @@ export default function MultiSelectFilter({
   error = false,
   hint,
   widthClassName = "!max-w-full",
-  className = ''
+  className = '',
+  searchable = false
 }: MultiSelectFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -64,12 +66,13 @@ export default function MultiSelectFilter({
 
   // Filter options based on search term
   const filteredOptions = useMemo(() => {
-    if (!searchTerm) return options
+    // If not searchable, always return all options
+    if (!searchable || !searchTerm) return options
     
     return options.filter(option =>
       option.label.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [options, searchTerm])
+  }, [searchable, options, searchTerm])
 
   // Get selected options for display
   const selectedOptions = useMemo(() => {
@@ -83,13 +86,15 @@ export default function MultiSelectFilter({
 
   // Compute display value for input
   const displayValue = useMemo(() => {
-    if (searchTerm) return searchTerm
+    // Only show search term if searchable is enabled
+    if (searchable && searchTerm) return searchTerm
+    
     if (selectedOptions.length === 0) return ''
     if (selectedOptions.length <= 3) {
       return selectedOptions.map(opt => opt.label).join(', ')
     }
     return `${selectedOptions.length} dari ${options.length} dipilih`
-  }, [searchTerm, selectedOptions, options.length])
+  }, [searchable, searchTerm, selectedOptions, options.length])
 
   // Handle option selection
   const handleOptionSelect = (optionValue: string) => {
@@ -119,16 +124,6 @@ export default function MultiSelectFilter({
     setSearchTerm('')
   }
 
-  // Handle input blur
-  const handleInputBlur = (e: React.FocusEvent) => {
-    // Don't close if clicking inside dropdown
-    if (dropdownRef.current?.contains(e.relatedTarget as Node)) {
-      return
-    }
-    setIsOpen(false)
-    setSearchTerm('')
-    setHighlightedIndex(-1)
-  }
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,7 +187,8 @@ export default function MultiSelectFilter({
   }, [filteredOptions])
 
   const inputClass = cn(
-    "w-full px-3 py-2 pr-7 border bg-white border-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+    "w-full px-3 py-2 pr-7 border bg-white border-gray-100 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-black disabled:opacity-50 disabled:cursor-not-allowed",
+    !searchable && "cursor-pointer",  // pointer cursor when not searchable
     error && "border-red-300 focus:ring-red-500 focus:border-red-500",
     compact && "px-2 py-1 text-sm pr-7",
     widthClassName
@@ -214,9 +210,9 @@ export default function MultiSelectFilter({
             id={id}
             type="text"
             value={displayValue}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            readOnly={!searchable}  // read-only when not searchable
+            onChange={(e) => searchable && setSearchTerm(e.target.value)}  // only update if searchable
             onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
             placeholder={selectedOptions.length === 0 ? placeholder : ''}
             className={inputClass}
