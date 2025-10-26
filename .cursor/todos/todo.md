@@ -1,5 +1,11 @@
 ## v1.7.0
 Meetings
+- [ ] Add Template name
+- [ ] Add Tipe Sambung
+    - Kelompok
+    - Desa
+    - Daerah
+    - Pusat
 - [ ] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
@@ -24,14 +30,6 @@ MultiFIlter
 
 Laporan
 - [x] Bug sorting tingkat kehadiran
-
-Meetings
-- [ ] Add Template name
-- [ ] Add Tipe Sambung
-    - Kelompok
-    - Desa
-    - Daerah
-    - Pusat
 
 ## v1.5.0
 
@@ -91,11 +89,13 @@ Sign In
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+- [ ] Kalender kegiatan atau agenda kegiatan
 
 Siswa
 - [ ] Tambahkan tab di detail siswa
     - Kehadiran
     - Profile Lengkap
+- [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
 
 Kelas
 - [ ] Saat add kelas gabungan
@@ -104,6 +104,10 @@ Kelas
 
 Meetings
 - [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [ ] Pengaturan Opsi data yang bisa di input
+    - Jam Pengajian
+    - Pemateri
+    - Materi
 
 Components
 - [ ] Change All <button> to <Button>

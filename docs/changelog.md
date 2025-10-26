@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [1.6.0]
 
 ### Added
-- **Student Attendance Detail**: Added detailed attendance view for students similar to Better Habit
+- **Student Attendance Detail**: Added detailed attendance view for students
 - **Quick Access from Reports**: Direct access to student attendance detail from reports page
 - **Navigation Actions**: Added action button to navigate to student detail page
 
