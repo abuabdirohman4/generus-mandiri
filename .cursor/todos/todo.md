@@ -19,6 +19,13 @@ Meetings
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
 
+## v1.6.1
+
+- [x] Hide "Reset FIlter"
+- [x] No Data in first visit in laporan page
+- [x] Improve MultiSelectFilter interaction for non-searchable mode
+- [x] Replaced existing action icon with ReportIcon in both DataTable and StudentsTable for consistency and better representation.
+
 ## v1.6.0
 Siswa
 - [x] Detail Kehadiran Siswa seperti Better Habit

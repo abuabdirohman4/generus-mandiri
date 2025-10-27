@@ -179,22 +179,26 @@ export const useLaporan = () => {
     // Helper to check if any filters are active
     hasActiveFilters: store.filters.viewMode === 'detailed' ? (
       store.filters.classId !== '' || 
+      store.filters.organisasi?.kelas?.length > 0 ||
       store.filters.startDate !== null || 
       store.filters.endDate !== null
     ) : (
       store.filters.month !== getCurrentMonth() || 
       store.filters.year !== getCurrentYear() ||
-      store.filters.classId !== ''
+      store.filters.classId !== '' ||
+      store.filters.organisasi?.kelas?.length > 0
     ),
     // Helper to get filter count
     filterCount: store.filters.viewMode === 'detailed' ? [
       store.filters.classId !== '',
+      store.filters.organisasi?.kelas?.length > 0,
       store.filters.startDate !== null,
       store.filters.endDate !== null
     ].filter(Boolean).length : [
       store.filters.month !== getCurrentMonth(),
       store.filters.year !== getCurrentYear(),
-      store.filters.classId !== ''
+      store.filters.classId !== '',
+      store.filters.organisasi?.kelas?.length > 0
     ].filter(Boolean).length
   }
 }

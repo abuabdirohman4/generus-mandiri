@@ -269,7 +269,8 @@ export default function FilterSection({
         </>
       )}
 
-      <div className="mt-4 flex gap-2 w-full md:w-auto">
+      {/* Hide Reset Filter button for now */}
+      {/* <div className="mt-4 flex gap-2 w-full md:w-auto">
         <Button 
           onClick={onResetFilters} 
           variant="outline" 
@@ -278,7 +279,7 @@ export default function FilterSection({
         >
           Reset Filter
         </Button>
-      </div>
+      </div> */}
     </div>
   )
 }
