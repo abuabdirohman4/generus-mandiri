@@ -76,7 +76,9 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     })
   }
 
-  const swrKey = enabled ? ['report-data', apiFilters, useDummyData] : null
+  // Only fetch if classId is provided (either from classId or organisasi.kelas)
+  const shouldFetch = enabled && !!apiFilters.classId
+  const swrKey = shouldFetch ? ['report-data', apiFilters, useDummyData] : null
 
   const { data, error, isLoading, mutate } = useSWR<ReportData>(
     swrKey,
