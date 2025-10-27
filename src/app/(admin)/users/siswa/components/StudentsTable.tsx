@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
-import { PencilIcon, TrashBinIcon, EyeIcon } from '@/lib/icons'
+import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 
@@ -143,7 +143,8 @@ export default function StudentsTable({
             className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 transition-colors"
             title="Lihat Detail"
           >
-            <EyeIcon className="w-5 h-5" />
+            {/* <EyeIcon className="w-5 h-5" /> */}
+            <ReportIcon className="w-6 h-6" />
           </Link>
           
           {/* Edit Action */}
