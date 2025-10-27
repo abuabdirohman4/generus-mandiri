@@ -139,6 +139,8 @@ export function useLaporanPage() {
 
   const handleResetFilters = () => {
     resetFilters()
+    // Clear SWR cache to remove data from UI
+    mutate(undefined, { revalidate: false })
   }
 
   const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
