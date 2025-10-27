@@ -4,6 +4,7 @@ import { useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectFilter from '@/components/form/input/MultiSelectFilter'
+import { useMeetingTypes } from '@/app/(admin)/absensi/hooks/useMeetingTypes'
 
 interface Daerah {
   id: string
@@ -54,6 +55,7 @@ interface DataFilters {
   kelompok: string[]
   kelas: string[]
   gender?: string // NEW - single select for gender
+  meetingType?: string // NEW - single select for meeting type
 }
 
 interface DataFilterProps {
@@ -66,6 +68,7 @@ interface DataFilterProps {
   classList: Class[]
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
   showGender?: boolean // NEW - for pages that need gender filter
+  showMeetingType?: boolean // NEW - for pages that need meeting type filter
   showDaerah?: boolean // Override role-based visibility
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
@@ -78,12 +81,14 @@ interface DataFilterProps {
     desa?: boolean
     kelompok?: boolean
     kelas?: boolean
+    meetingType?: boolean
   }
   errors?: {                            // NEW - field-specific error messages
     daerah?: string
     desa?: string
     kelompok?: string
     kelas?: string
+    meetingType?: string
   }
   filterLists?: {                       // NEW - override for filtered lists
     daerahList?: Daerah[]
@@ -102,6 +107,7 @@ export default function DataFilter({
   classList,
   showKelas = false,
   showGender = false, // NEW
+  showMeetingType = false, // NEW
   showDaerah,
   showDesa,
   showKelompok,
@@ -113,7 +119,6 @@ export default function DataFilter({
   errors = {},
   filterLists
 }: DataFilterProps) {
-  
   // Role detection logic
   const isSuperAdmin = userProfile?.role === 'superadmin'
   const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id
@@ -153,7 +158,7 @@ export default function DataFilter({
   }
 
   // If no filters to show, return null
-  if (!showGender && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter) {
+  if (!showGender && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter && !showMeetingType) {
     return null
   }
 
@@ -255,6 +260,14 @@ export default function DataFilter({
     }))
   }, [filteredClassList])
 
+  // Get selected class IDs for meeting type filtering
+  const selectedClassIds = useMemo(() => {
+    return filters?.kelas || []
+  }, [filters?.kelas])
+
+  // Get available meeting types based on selected classes
+  const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(selectedClassIds)
+
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string[]) => {
     onFilterChange({
@@ -299,13 +312,21 @@ export default function DataFilter({
     })
   }, [filters, onFilterChange])
 
+  const handleMeetingTypeChange = useCallback((value: string) => {
+    onFilterChange({
+      ...filters,
+      meetingType: value
+    })
+  }, [filters, onFilterChange])
+
   // Determine visible filters and their order
   const visibleFilters = [
     showGender && 'gender', // NEW - add gender first
     shouldShowDaerah && 'daerah',
     shouldShowDesa && 'desa',
     shouldShowKelompok && 'kelompok',
-    showKelasFilter && 'kelas'
+    showKelasFilter && 'kelas',
+    showMeetingType && 'meetingType' // NEW
   ].filter(Boolean)
 
   const filterCount = visibleFilters.length
@@ -328,7 +349,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas']
+    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas', 'meetingType']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -504,6 +525,53 @@ export default function DataFilter({
             variant={variant}
             compact={compact}
           />
+        </div>
+      )}
+
+      {showMeetingType && (
+        <div className={getFilterClass(getFilterIndex('meetingType'))}>
+          {variant === 'page' ? (
+            (meetingTypesLoading || Object.keys(availableTypes).length === 0) ? (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {meetingTypesLoading ? 'Memuat tipe pertemuan...' : 'Pilih kelas terlebih dahulu'}
+              </div>
+            ) : (
+              <MultiSelectFilter
+                id="meetingTypeFilter"
+                label="Tipe Pertemuan"
+                value={filters?.meetingType ? [filters.meetingType] : []}
+                onChange={(value) => handleMeetingTypeChange(value[0] || '')}
+                options={Object.entries(availableTypes).map(([key, type]) => ({
+                  value: type.code,
+                  label: type.label
+                }))}
+                allOptionLabel="Semua Tipe"
+                widthClassName="!max-w-full"
+                variant={variant}
+                compact={compact}
+                placeholder="Pilih Tipe Pertemuan"
+              />
+            )
+          ) : (
+            <InputFilter
+              id="meetingTypeFilter"
+              label="Tipe Pertemuan"
+              value={filters?.meetingType || ''}
+              onChange={handleMeetingTypeChange}
+              options={Object.entries(availableTypes).map(([key, type]) => ({
+                value: type.code,
+                label: type.label
+              }))}
+              allOptionLabel={hideAllOption ? undefined : "Semua Tipe"}
+              widthClassName="!max-w-full"
+              variant={variant}
+              compact={compact}
+              required={requiredFields.meetingType}
+              error={!!errors.meetingType}
+              hint={errors.meetingType}
+              disabled={meetingTypesLoading || Object.keys(availableTypes).length === 0}
+            />
+          )}
         </div>
       )}
     </div>

@@ -147,6 +147,7 @@ interface Meeting {
   description?: string
   student_snapshot: string[]
   created_at: string
+  meeting_type_code?: string | null
   classes: {
     id: string
     name: string

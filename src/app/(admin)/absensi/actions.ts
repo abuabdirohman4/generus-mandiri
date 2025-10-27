@@ -22,6 +22,7 @@ interface Meeting {
   student_snapshot: string[]
   created_at: string
   updated_at: string
+  meeting_type_code?: string | null
 }
 
 interface CreateMeetingData {
@@ -30,6 +31,7 @@ interface CreateMeetingData {
   title: string
   topic?: string
   description?: string
+  meetingTypeCode?: string | null
 }
 
 export async function saveAttendance(attendanceData: AttendanceData[]) {
@@ -224,7 +226,8 @@ export async function createMeeting(data: CreateMeetingData) {
         topic: data.topic,
         description: data.description,
         student_snapshot: students.map(s => s.id),
-        meeting_number: nextMeetingNumber
+        meeting_number: nextMeetingNumber,
+        meeting_type_code: data.meetingTypeCode // NEW: Meeting type code
       })
       .select()
       .single()
@@ -626,6 +629,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         description,
         student_snapshot,
         created_at,
+        meeting_type_code,
         classes (
           id,
           name,

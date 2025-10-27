@@ -117,18 +117,28 @@ export default function AbsensiPage() {
 
   // Filter meetings based on valid class IDs when "Semua Kelas" is selected
   const filteredMeetings = useMemo(() => {
+    let filtered = allMeetings || []
+    
     if (userProfile?.role === 'teacher') {
-      return allMeetings || []
+      // For teachers, apply meeting type filter if selected
+      if (dataFilters.meetingType) {
+        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      }
+      return filtered
     }
     
     // If specific class is selected, return all meetings (already filtered by backend)
     if (dataFilters.kelas.length > 0) {
-      return allMeetings || []
+      // Apply meeting type filter if selected
+      if (dataFilters.meetingType) {
+        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      }
+      return filtered
     }
     
     // If "Semua Kelas" is selected, filter by valid class IDs
     if (validClassIds.length > 0) {
-      return (allMeetings || []).filter(meeting => {
+      filtered = (allMeetings || []).filter(meeting => {
         // Handle the actual database structure: meeting.classes is a single object
         if (meeting.classes && typeof meeting.classes === 'object') {
           // If classes is a single object with id
@@ -144,11 +154,18 @@ export default function AbsensiPage() {
         
         return false
       })
+      
+      // Apply meeting type filter if selected
+      if (dataFilters.meetingType) {
+        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      }
+      
+      return filtered
     }
     
     // If no valid classes found, return empty array
     return []
-  }, [allMeetings, validClassIds, dataFilters.kelas, userProfile])
+  }, [allMeetings, validClassIds, dataFilters.kelas, dataFilters.meetingType, userProfile])
 
   // Paginate filtered meetings
   const paginatedMeetings = useMemo(() => {
@@ -272,6 +289,7 @@ export default function AbsensiPage() {
           kelompokList={kelompok || []}
           classList={classes || []}
           showKelas={true}
+          showMeetingType={false}
         />
 
         {/* Revalidating Overlay */}

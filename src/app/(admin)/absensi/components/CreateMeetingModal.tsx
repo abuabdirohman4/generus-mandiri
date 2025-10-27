@@ -14,6 +14,8 @@ import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { useMeetingTypes } from '../hooks/useMeetingTypes'
+import DataFilter from '@/components/shared/DataFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -41,10 +43,25 @@ export default function CreateMeetingModal({
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
+  const [meetingTypeFilters, setMeetingTypeFilters] = useState<any>({
+    daerah: [],
+    desa: [],
+    kelompok: [],
+    kelas: [],
+    meetingType: ''
+  })
+  
+  const handleMeetingTypeFilterChange = (filters: any) => {
+    setMeetingTypeFilters(filters)
+  }
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
   const { profile: userProfile } = useUserProfile()
+  const { availableTypes, isLoading: typesLoading } = useMeetingTypes(selectedClassIds)
+  
+  // Update meetingType in filters when meetingTypeFilters changes
+  const meetingType = meetingTypeFilters.meetingType
 
   // Filter available classes based on user role
   const availableClasses = useMemo(() => {
@@ -89,8 +106,20 @@ export default function CreateMeetingModal({
         topic: meeting.topic || '',
         description: meeting.description || ''
       })
+      setMeetingTypeFilters((prev: any) => ({
+        ...prev,
+        meetingType: meeting.meeting_type_code || ''
+      }))
     }
   }, [meeting])
+  
+  // Update kelas in meetingTypeFilters when selectedClassIds changes
+  useEffect(() => {
+    setMeetingTypeFilters((prev: any) => ({
+      ...prev,
+      kelas: selectedClassIds
+    }))
+  }, [selectedClassIds])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,6 +131,11 @@ export default function CreateMeetingModal({
 
     if (filteredStudents.length === 0) {
       toast.error('Tidak ada siswa di kelas yang dipilih')
+      return
+    }
+
+    if (!meetingType) {
+      toast.error('Pilih tipe pertemuan terlebih dahulu')
       return
     }
 
@@ -131,7 +165,8 @@ export default function CreateMeetingModal({
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          meetingTypeCode: meetingType
         })
 
         if (result.success) {
@@ -157,6 +192,10 @@ export default function CreateMeetingModal({
       topic: '',
       description: ''
     })
+    setMeetingTypeFilters((prev: any) => ({
+      ...prev,
+      meetingType: ''
+    }))
     onClose()
   }
 
@@ -232,6 +271,23 @@ export default function CreateMeetingModal({
                   placeholder="Pilih Tanggal"
                 />
               </div>
+
+              {/* Meeting Type Selector */}
+              <DataFilter
+                filters={meetingTypeFilters}
+                onFilterChange={handleMeetingTypeFilterChange}
+                userProfile={userProfile}
+                daerahList={[]}
+                desaList={[]}
+                kelompokList={[]}
+                classList={[]}
+                showMeetingType={true}
+                variant="modal"
+                compact={false}
+                hideAllOption={true}
+                requiredFields={{ meetingType: true }}
+                className="mb-4"
+              />
 
               {/* Topic */}
               {/* <div className="mb-4">

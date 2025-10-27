@@ -10,6 +10,7 @@ export interface ClassMaster {
   name: string
   description?: string | null
   sort_order: number
+  category_id?: string | null
   created_at?: string
   updated_at?: string
 }
