@@ -569,14 +569,17 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
       throw error
     }
 
+    // Handle both array and single object cases for classes
+    const classesData = Array.isArray(student.classes) ? student.classes[0] || null : student.classes
+    
     return {
       id: student.id,
       name: student.name,
       gender: student.gender,
       class_id: student.class_id,
-      classes: student.classes && Array.isArray(student.classes) && student.classes.length > 0 ? {
-        id: student.classes[0].id,
-        name: student.classes[0].name
+      classes: classesData ? {
+        id: classesData.id,
+        name: classesData.name
       } : null
     } as StudentInfo
   } catch (error) {
