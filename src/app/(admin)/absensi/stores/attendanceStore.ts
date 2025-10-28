@@ -7,7 +7,6 @@ interface Student {
   gender: string
   class_name: string
   class_id: string
-  category?: string | null
   kelompok_id?: string | null
   desa_id?: string | null
   daerah_id?: string | null

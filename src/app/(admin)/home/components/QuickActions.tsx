@@ -66,17 +66,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   }, []);
 
   const quickActions: QuickActionItem[] = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard',
-      description: 'Overview sistem',
-      href: '/dashboard',
-      icon: <DashboardIcon className="w-6 h-6" />,
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
-      adminOnly: true,
-      disabled: true
-    },
+    // {
+    //   id: 'dashboard',
+    //   name: 'Dashboard',
+    //   description: 'Overview sistem',
+    //   href: '/dashboard',
+    //   icon: <DashboardIcon className="w-6 h-6" />,
+    //   bgColor: 'bg-indigo-100 dark:bg-indigo-900',
+    //   iconColor: 'text-indigo-600 dark:text-indigo-400',
+    //   adminOnly: true,
+    //   disabled: true
+    // },
     {
       id: 'absensi',
       name: 'Absensi',

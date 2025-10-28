@@ -3,7 +3,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
-import { determineCategoryFromClassName } from '@/lib/categoryUtils'
 import { canAccessFeature } from '@/lib/accessControlServer'
 
 export interface Student {
@@ -90,7 +89,6 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         id,
         name,
         gender,
-        category,
         class_id,
         kelompok_id,
         desa_id,
@@ -186,8 +184,6 @@ export async function createStudent(formData: FormData) {
       throw new Error('Class not found')
     }
 
-    const category = determineCategoryFromClassName(classData.name)
-
     // Create student with RLS handling auth + class validation
     // RLS policies will handle user authentication and class access
     const { data: newStudent, error } = await supabase
@@ -196,7 +192,6 @@ export async function createStudent(formData: FormData) {
         name,
         gender,
         class_id: classId,
-        category,
         kelompok_id: userProfile.kelompok_id,
         desa_id: userProfile.desa_id,
         daerah_id: userProfile.daerah_id
@@ -205,7 +200,6 @@ export async function createStudent(formData: FormData) {
         id,
         name,
         gender,
-        category,
         class_id,
         kelompok_id,
         desa_id,
@@ -394,9 +388,6 @@ export async function createStudentsBatch(
       throw new Error('Kelas tidak ditemukan')
     }
     
-    // Determine category from class name using existing utility
-    const category = determineCategoryFromClassName(classData.name)
-    
     // Filter out empty students (name === '')
     const validStudents = students.filter(s => s.name.trim() !== '')
     
@@ -409,7 +400,6 @@ export async function createStudentsBatch(
       name: s.name.trim(),
       gender: s.gender,
       class_id: classId,
-      category,
       kelompok_id: profile.kelompok_id,
       desa_id: profile.desa_id,
       daerah_id: profile.daerah_id
@@ -424,7 +414,6 @@ export async function createStudentsBatch(
         name,
         gender,
         class_id,
-        category,
         kelompok_id,
         desa_id,
         daerah_id,

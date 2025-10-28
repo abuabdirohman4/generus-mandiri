@@ -26,7 +26,7 @@ Meetings
 - [x] Create "Pilih Kelas" hanya muncul untuk kleas > 1
 
 Siswa
-- [ ] Check use case for 'categories' in students table
+- [x] Check use case for 'categories' in students table
 
 Detail Siswa
 - [x] Overlay Loading ketika masuk halaman
@@ -106,29 +106,34 @@ Sign In
 - [x] Fix message "Sesi anda telah berakhir"
 - [x] Username tidak ditemukan
 
-## Backlog
-- [ ] Add Bulk Insert Guru, Admin, Organisasi
-- [ ] Add Bulk with CSV, Excel, Text
-- [ ] Add Halaman Materi
-- [ ] Continue Dashboard Feature
-- [ ] Create student_archive, profiles_archive
-- [ ] Unit Testing
-- [ ] Ubah Siswa -> Jamaah/Generus
-- [ ] Ubah Guru -> Penanggung Jawab
-- [ ] Kalender kegiatan atau agenda kegiatan
+## Archive
+- Add Bulk Insert Guru, Admin, Organisasi
+- Add Bulk with CSV, Excel, Text
+- Continue Dashboard Feature
+- Kalender kegiatan atau agenda kegiatan
 
 Siswa
-- [ ] Tambahkan tab di detail siswa
+- Tambahkan tab di detail siswa
     - Kehadiran
     - Profile Lengkap
-- [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
 
 Meetings
-- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
-- [ ] Pengaturan Opsi data yang bisa di input
+- Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- Pengaturan Opsi data yang bisa di input
     - Jam Pengajian
     - Pemateri
     - Materi
 
+
+## Backlog
+- [ ] Add Halaman Materi
+- [ ] Create student_archive, profiles_archive
+- [ ] Unit Testing
+- [ ] Ubah Siswa -> Jamaah/Generus
+- [ ] Ubah Guru -> Penanggung Jawab
+
 Components
 - [ ] Change All <button> to <Button>
+
+Siswa
+- [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
