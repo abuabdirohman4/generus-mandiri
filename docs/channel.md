@@ -1,3 +1,16 @@
+*Update v1.6.1 - Reports UI & Bug Fixes*
+
+Perbaikan:
+- UI Reports - Sembunyikan button "Reset Filter" untuk interface yang lebih clean
+- No Data Display - Perbaikan tampilan "No Data" pada kunjungan pertama di halaman laporan
+- MultiSelectFilter Interaction - Peningkatan interaksi untuk mode non-searchable
+- Icon Consistency - Ganti icon action dengan ReportIcon untuk konsistensi
+- Reports Bug - Perbaikan bug untuk laporan guru tunggal
+
+Peningkatan:
+- User Experience - Handling state awal yang lebih baik di halaman laporan
+- Component Consistency - Penggunaan icon yang unified di semua table
+
 *Update v1.6.0 - Student Attendance Detail & Reports Enhancement*
 
 Fitur Baru:
