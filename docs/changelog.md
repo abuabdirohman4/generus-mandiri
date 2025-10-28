@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [1.7.0]
 
 ### Added
-- **Meeting Types**: Added support for different meeting types (PAC, PC, DPD, DPP)
+- **Meeting Types**: Added support for different meeting type
 - **Smart Class Selection**: "Pilih Kelas" option only appears when there are multiple classes
 - **Student Categories**: Enhanced student table with category support
 

@@ -18,11 +18,7 @@
 
 ## v1.7.0
 Meetings
-- [x] Add Tipe Sambung
-    - Kelompok
-    - Desa
-    - Daerah
-    - Pusat
+- [x] Add Tipe Pertemuan
 - [x] Create "Pilih Kelas" hanya muncul untuk kleas > 1
 
 Siswa
