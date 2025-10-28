@@ -3,6 +3,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2]
+
+### Fixed
+- **Reports Bug**: Fixed bug for single teacher reports
+- **Student Detail**: Fixed missing class display in student detail page
+
 ## [1.6.1]
 
 ### Fixed
@@ -10,7 +16,6 @@ All notable changes to this project will be documented in this file.
 - **No Data Display**: Fixed "No Data" display on first visit to reports page
 - **MultiSelectFilter Interaction**: Improved interaction for non-searchable mode
 - **Icon Consistency**: Replaced existing action icon with ReportIcon in DataTable and StudentsTable
-- **Reports Bug**: Fixed bug for single teacher reports
 
 ### Improved
 - **User Experience**: Better initial state handling in reports page
