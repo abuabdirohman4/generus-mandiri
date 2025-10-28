@@ -3,6 +3,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3]
+
+### Fixed
+- **Class Creation Bug**: Fixed bug for creating classes in admin PAC and DPD
+- **Class UI**: Improved UI for class creation and management
+
+### Improved
+- **User Experience**: Better interface for class management in admin PAC and DPD
+- **Class Modal**: Enhanced class creation modal with improved validation and UI
+
 ## [1.6.2]
 
 ### Fixed
