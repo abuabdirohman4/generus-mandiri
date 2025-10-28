@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode, useState, useMemo, useEffect } from 'react'
+import Spinner from '../ui/spinner/Spinner'
 
 interface Column {
   key: string
@@ -25,6 +26,10 @@ interface DataTableProps {
   itemsPerPageOptions?: number[]
   defaultItemsPerPage?: number
   searchPlaceholder?: string
+  loadingRowId?: string | null
+  loadingColumnKey?: string | null
+  spinnerSize?: number
+  getRowId?: (item: any, index: number) => string | number
 }
 
 export default function DataTable({
@@ -39,7 +44,11 @@ export default function DataTable({
   searchable = true,
   itemsPerPageOptions = [5, 10, 25, 50],
   defaultItemsPerPage = 10,
-  searchPlaceholder = 'Search...'
+  searchPlaceholder = 'Search...',
+  loadingRowId,
+  loadingColumnKey,
+  spinnerSize = 16,
+  getRowId = (item, index) => item.id || item.student_id || index
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
@@ -322,41 +331,58 @@ export default function DataTable({
             {/* Table Body */}
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {currentPageData.length > 0 ? (
-                currentPageData.map((item, index) => (
-                  <tr 
-                    key={index} 
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName}`}
-                    onClick={() => onRowClick?.(item, index)}
-                  >
-                    {columns.map((column) => {
-                      const getAlignmentClass = (align?: string) => {
-                        switch (align) {
-                          case 'center': return 'text-center'
-                          case 'right': return 'text-right'
-                          default: return 'text-left'
+                currentPageData.map((item, index) => {
+                  const rowId = getRowId(item, index)
+                  
+                  return (
+                    <tr 
+                      key={rowId}
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName}`}
+                      onClick={() => onRowClick?.(item, index)}
+                    >
+                      {columns.map((column) => {
+                        const getAlignmentClass = (align?: string) => {
+                          switch (align) {
+                            case 'center': return 'text-center'
+                            case 'right': return 'text-right'
+                            default: return 'text-left'
+                          }
                         }
-                      }
-                      
-                      return (
-                        <td
-                          key={column.key}
-                          className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
-                          style={column.width ? {
-                            width: column.width,
-                            minWidth: column.width,
-                            maxWidth: column.width
-                          } : (column.widthMobile && isMobile) ? {
-                            width: column.widthMobile,
-                            minWidth: column.widthMobile,
-                            maxWidth: column.widthMobile
-                          } : {}}
-                        >
-                          {renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)}
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))
+                        
+                        return (
+                          <td
+                            key={column.key}
+                            className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
+                            style={column.width ? {
+                              width: column.width,
+                              minWidth: column.width,
+                              maxWidth: column.width
+                            } : (column.widthMobile && isMobile) ? {
+                              width: column.widthMobile,
+                              minWidth: column.widthMobile,
+                              maxWidth: column.widthMobile
+                            } : {}}
+                          >
+                            {(() => {
+                              const isLoadingRow = loadingRowId && String(rowId) === String(loadingRowId)
+                              const isLoadingCell = isLoadingRow && loadingColumnKey === column.key
+                              
+                              if (isLoadingCell) {
+                                return (
+                                  <div className="flex items-center justify-center">
+                                    <Spinner size={spinnerSize} />
+                                  </div>
+                                )
+                              }
+                              
+                              return renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)
+                            })()}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
