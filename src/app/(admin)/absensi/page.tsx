@@ -121,8 +121,10 @@ export default function AbsensiPage() {
     
     if (userProfile?.role === 'teacher') {
       // For teachers, apply meeting type filter if selected
-      if (dataFilters.meetingType) {
-        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+        filtered = filtered.filter(m => 
+          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+        )
       }
       return filtered
     }
@@ -130,8 +132,10 @@ export default function AbsensiPage() {
     // If specific class is selected, return all meetings (already filtered by backend)
     if (dataFilters.kelas.length > 0) {
       // Apply meeting type filter if selected
-      if (dataFilters.meetingType) {
-        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+        filtered = filtered.filter(m => 
+          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+        )
       }
       return filtered
     }
@@ -156,8 +160,10 @@ export default function AbsensiPage() {
       })
       
       // Apply meeting type filter if selected
-      if (dataFilters.meetingType) {
-        filtered = filtered.filter(m => m.meeting_type_code === dataFilters.meetingType)
+      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+        filtered = filtered.filter(m => 
+          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+        )
       }
       
       return filtered
