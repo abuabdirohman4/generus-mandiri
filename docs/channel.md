@@ -1,3 +1,15 @@
+*Update v1.7.0 - Meeting Types & Enhanced Features*
+
+Fitur Baru:
+- Meeting Types - Dukungan tipe pertemuan (PAC, PC, DPD, DPP)
+- Smart Class Selection - Opsi "Pilih Kelas" hanya muncul jika ada lebih dari 1 kelas
+- Student Categories - Peningkatan tabel siswa dengan dukungan kategori
+
+Peningkatan:
+- Meeting Management - Organisasi pertemuan yang lebih baik berdasarkan tipe
+- User Experience - Proses pemilihan kelas yang lebih efisien
+- Student Data - Kategorisasi dan filtering siswa yang lebih baik
+
 *Update v1.6.3 - Class Management Bug Fix & UI Improvement*
 
 Perbaikan:
