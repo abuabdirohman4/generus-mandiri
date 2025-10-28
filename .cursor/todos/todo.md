@@ -125,8 +125,8 @@ Siswa
 
 Kelas
 - [ ] Saat add kelas gabungan
-    - Kalau single kelasnya sudah ada datanya, berarti langsung keinsert di gabungan
-    - Kalau di gabungan sudah ada, di single nya juga ikut keisi
+    - Kalau single kelasnya sudah ada datanya, berarti bisa tampil juga di gabungan
+    - Kalau di gabungan sudah ada, di single nya juga ikut bisa dilihat
 
 Meetings
 - [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
