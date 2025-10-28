@@ -1,3 +1,9 @@
+*Update v1.6.2 - Bug Fixes*
+
+Perbaikan:
+- Reports Bug - Perbaikan bug untuk laporan guru tunggal
+- Student Detail - Perbaikan kelas yang tidak muncul di detail siswa
+
 *Update v1.6.1 - Reports UI & Bug Fixes*
 
 Perbaikan:
@@ -5,7 +11,6 @@ Perbaikan:
 - No Data Display - Perbaikan tampilan "No Data" pada kunjungan pertama di halaman laporan
 - MultiSelectFilter Interaction - Peningkatan interaksi untuk mode non-searchable
 - Icon Consistency - Ganti icon action dengan ReportIcon untuk konsistensi
-- Reports Bug - Perbaikan bug untuk laporan guru tunggal
 
 Peningkatan:
 - User Experience - Handling state awal yang lebih baik di halaman laporan
