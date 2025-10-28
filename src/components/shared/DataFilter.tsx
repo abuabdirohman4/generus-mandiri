@@ -369,6 +369,7 @@ export default function DataFilter({
               onChange={(value) => handleDaerahChange(value ? [value] : [])}
               options={activeDaerahList.map(daerah => ({ value: daerah.id, label: daerah.name }))}
               allOptionLabel={hideAllOption ? undefined : "Semua Daerah"}
+              placeholder={hideAllOption ? "Pilih Daerah" : undefined}
               widthClassName="!max-w-full"
               variant={variant}
               compact={compact}
@@ -403,6 +404,7 @@ export default function DataFilter({
               onChange={(value) => handleDesaChange(value ? [value] : [])}
               options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
               allOptionLabel={hideAllOption ? undefined : "Semua Desa"}
+              placeholder={hideAllOption ? "Pilih Desa" : undefined}
               widthClassName="!max-w-full"
               variant={variant}
               compact={compact}
@@ -437,6 +439,7 @@ export default function DataFilter({
               onChange={(value) => handleKelompokChange(value ? [value] : [])}
               options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
               allOptionLabel={hideAllOption ? undefined : "Semua Kelompok"}
+              placeholder={hideAllOption ? "Pilih Kelompok" : undefined}
               widthClassName="!max-w-full"
               variant={variant}
               compact={compact}
