@@ -65,17 +65,67 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
       });
     } else if (userProfile && isAdminKelompok(userProfile)) {
       // Auto-fill kelompok_id for Admin Kelompok when creating new class
+      const kelompokId = userProfile.kelompok_id || '';
+      
+      // Set filters juga agar dropdown dan formData sync
+      setFilters(prev => ({
+        ...prev,
+        kelompok: kelompokId ? [kelompokId] : []
+      }));
+      
       setFormData(prev => ({
         ...prev,
-        kelompok_id: userProfile.kelompok_id || ''
+        kelompok_id: kelompokId
       }));
     }
   }, [classItem, userProfile]);
 
+  // Auto-select kelompok if only one is available
+  useEffect(() => {
+    if (!isEditing && !classItem && userProfile && kelompokList) {
+      let availableKelompok = kelompokList;
+      
+      if (userProfile.desa_id) {
+        // Admin Desa: only show kelompok from their desa
+        availableKelompok = kelompokList.filter(k => k.desa_id === userProfile.desa_id);
+      } else if (userProfile.daerah_id) {
+        // Admin Daerah: filter by selected desa (if any)
+        if (filters.desa.length > 0) {
+          availableKelompok = kelompokList.filter(k => filters.desa.includes(k.desa_id));
+        } else {
+          // No desa selected yet, don't auto-select kelompok
+          availableKelompok = [];
+        }
+      } else {
+        // Superadmin: filter by selected desa (if any)
+        if (filters.desa.length > 0) {
+          availableKelompok = kelompokList.filter(k => filters.desa.includes(k.desa_id));
+        } else {
+          // No desa selected yet, don't auto-select kelompok
+          availableKelompok = [];
+        }
+      }
+      
+      // Auto-select if only 1 kelompok available AND not already selected
+      if (availableKelompok.length === 1 && filters.kelompok.length === 0) {
+        setFilters(prev => ({
+          ...prev,
+          kelompok: [availableKelompok[0].id]
+        }));
+      }
+    }
+  }, [isEditing, classItem, userProfile, kelompokList, filters.desa, filters.kelompok.length]);
+
   // Update kelompok_id when filter changes
   useEffect(() => {
-    if (filters.kelompok) {
-      handleChange('kelompok_id', filters.kelompok);
+    if (filters.kelompok && filters.kelompok.length > 0) {
+      setFormData(prev => ({ ...prev, kelompok_id: filters.kelompok[0] }));
+      // Clear error jika ada
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.kelompok_id;
+        return newErrors;
+      });
     }
   }, [filters.kelompok]);
 
@@ -93,7 +143,6 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
     setLoading(true);
     setErrors({});
 
-
     // Validate required fields
     if (!formData.name.trim()) {
       setErrors({ name: 'Nama kelas harus diisi' });
@@ -103,6 +152,12 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
 
     if (!isEditing && !formData.kelompok_id) {
       setErrors({ kelompok_id: 'Kelompok harus dipilih' });
+      setLoading(false);
+      return;
+    }
+
+    if (!isEditing && formData.masterIds.length === 0) {
+      setErrors({ masterIds: 'Pilih minimal satu master kelas' });
       setLoading(false);
       return;
     }
@@ -152,60 +207,48 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
           </div>
         )}
 
-        {/* DataFilter - hidden for Admin Kelompok, show readonly text when editing */}
-        {userProfile && !isAdminKelompok(userProfile) && (
-          <>
-            {isEditing ? (
-              <div>
-                <Label>Kelompok</Label>
-                <InputField
-                  id="kelompok_readonly"
-                  type="text"
-                  value={classItem?.kelompok?.name || ''}
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-700"
-                />
-              </div>
-            ) : (
-              <DataFilter
-                filters={filters}
-                onFilterChange={setFilters}
-                userProfile={userProfile}
-                daerahList={daerahList || []}
-                desaList={desaList || []}
-                kelompokList={kelompokList || []}
-                classList={[]}
-                showKelas={false}
-                variant="modal"
-                hideAllOption={true}
-                requiredFields={{ kelompok: true }}
-                errors={{ kelompok: errors.kelompok_id }}
-              />
-            )}
-          </>
-        )}
+        <DataFilter
+          filters={filters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+            // Sync immediately
+            if (newFilters.kelompok && newFilters.kelompok.length > 0) {
+              setFormData(prev => ({ ...prev, kelompok_id: newFilters.kelompok[0] }));
+              // Clear error
+              setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.kelompok_id;
+                return newErrors;
+              });
+            } else {
+              setFormData(prev => ({ ...prev, kelompok_id: '' }));
+            }
+          }}
+          userProfile={userProfile}
+          daerahList={daerahList || []}
+          desaList={desaList || []}
+          kelompokList={kelompokList || []}
+          classList={[]}
+          showKelas={false}
+          variant="modal"
+          hideAllOption={true}
+          requiredFields={{
+            daerah: true,
+            desa: true,
+            kelompok: true
+          }}
+          errors={{ kelompok: errors.kelompok_id }}
+        />
 
-        {/* Show kelompok info for Admin Kelompok */}
-        {userProfile && isAdminKelompok(userProfile) && !isEditing && (
-          <div>
-            <Label>Kelompok</Label>
-            <InputField
-              id="kelompok_info"
-              type="text"
-              value={userProfile.kelompok?.name || 'Kelompok Anda'}
-              disabled
-              className="bg-gray-100 dark:bg-gray-700"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Kelas akan dibuat untuk kelompok ini
-            </p>
-          </div>
-        )}
-
-        {/* Always show template selection */}
         <div>
-          <Label>Master Kelas</Label>
-          <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
+          <Label>
+            Master Kelas<span className="text-red-500 ml-1">*</span>
+          </Label>
+          <div className={`space-y-2 max-h-40 overflow-y-auto border rounded p-3 ${
+            errors.masterIds 
+              ? "border-red-500 dark:border-red-500" 
+              : "border-gray-200 dark:border-gray-600"
+          }`}>
             {masters.map(master => (
               <label key={master.id} className="flex items-center">
                 <input
@@ -217,6 +260,14 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
                     } else {
                       handleChange('masterIds', formData.masterIds.filter(id => id !== master.id));
                     }
+                    // Clear error when user selects a master
+                    if (errors.masterIds) {
+                      setErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.masterIds;
+                        return newErrors;
+                      });
+                    }
                   }}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
@@ -226,13 +277,19 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
               </label>
             ))}
           </div>
+          {errors.masterIds ? (
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+              {errors.masterIds}
+            </p>
+          ) : (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Pilih satu atau lebih template, atau biarkan kosong untuk kelas custom
-          </p>
+            Pilih satu atau lebih master kelas
+            </p>
+          )}
         </div>
 
         <div>
-          <Label htmlFor="name">Nama Kelas *</Label>
+          <Label htmlFor="name">Nama Kelas<span className="text-red-500 ml-1">*</span></Label>
           <InputField
             id="name"
             type="text"
@@ -261,8 +318,10 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
           <Button
             type="submit"
             disabled={loading}
+            loading={loading}
+            loadingText="Menyimpan..."
           >
-            {loading ? 'Menyimpan...' : (isEditing ? 'Update' : 'Simpan')}
+            {isEditing ? 'Update' : 'Simpan'}
           </Button>
         </div>
       </form>
