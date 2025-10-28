@@ -217,8 +217,10 @@ export default function Step3Preview({ selectedClass, onBack, onImport }: Step3P
           onClick={handleImport}
           disabled={validStudents.length === 0 || isImporting || isImportingLocal}
           className="px-4 py-2"
+          loading={isImporting || isImportingLocal}
+          loadingText="Mengimport..."
         >
-          {isImporting || isImportingLocal ? 'Mengimport...' : `Import ${validStudents.length} Siswa`}
+          Import {validStudents.length} Siswa
         </Button>
       </div>
     </div>

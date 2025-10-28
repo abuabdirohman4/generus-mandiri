@@ -14,6 +14,7 @@ import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
 import InputFilter from '@/components/form/input/InputFilter';
 import { isAdminKelompok } from '@/lib/userUtils';
+import Button from '@/components/ui/button/Button';
 
 // Helper function to determine available admin levels based on user role
 const getAvailableAdminLevels = (userProfile: any) => {
@@ -506,21 +507,23 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
           />
 
           <div className="flex justify-end gap-3 mt-6">
-            <button
+            <Button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+              variant="outline"
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              variant="primary"
+              loading={isLoading}
+              loadingText="Menyimpan..."
             >
-              {isLoading ? 'Menyimpan...' : (admin ? 'Update' : 'Simpan')}
-            </button>
+              {admin ? 'Update' : 'Simpan'}
+            </Button>
           </div>
         </form>
       </div>

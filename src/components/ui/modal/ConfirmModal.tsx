@@ -76,13 +76,12 @@ export default function ConfirmModal({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 ${
-              isDestructive 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
+            loading={isLoading}
+            loadingText="Memproses..."
+            variant="danger"
+            className={`px-4 py-2`}
           >
-            {isLoading ? 'Memproses...' : confirmText}
+            {confirmText}
           </Button>
         </div>
       </div>

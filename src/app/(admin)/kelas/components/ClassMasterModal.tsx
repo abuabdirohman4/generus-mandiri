@@ -127,8 +127,10 @@ export default function ClassMasterModal({ master, onClose, onSuccess }: ClassMa
           <Button
             type="submit"
             disabled={loading}
+            loading={loading}
+            loadingText="Menyimpan..."
           >
-            {loading ? 'Menyimpan...' : (isEditing ? 'Update' : 'Simpan')}
+            {isEditing ? 'Update' : 'Simpan'}
           </Button>
         </div>
       </form>

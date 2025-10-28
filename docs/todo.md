@@ -16,6 +16,9 @@
 ## v1.8.0
 - [ ] Add Halaman Materi
 
+Components
+- [x] Change All <button> to <Button>
+
 ## v1.7.0
 Meetings
 - [x] Add Tipe Pertemuan
@@ -127,9 +130,6 @@ Meetings
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
-
-Components
-- [ ] Change All <button> to <Button>
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
