@@ -96,8 +96,30 @@ export default function CreateMeetingModal({
     }
   }, [meeting])
 
+  // Determine if meeting type input should be shown
+  const shouldShowMeetingTypeInput = useMemo(() => {
+    if (typesLoading || Object.keys(availableTypes).length === 0) {
+      return true // Show by default while loading
+    }
+    
+    // If only PEMBINAAN is available, all classes are non-sambung
+    const typeKeys = Object.keys(availableTypes)
+    if (typeKeys.length === 1 && typeKeys[0] === 'PEMBINAAN') {
+      return false
+    }
+    
+    return true
+  }, [availableTypes, typesLoading])
+
   // Auto-select meeting type based on available options
   useEffect(() => {
+    // If input is hidden, force PEMBINAAN
+    if (!shouldShowMeetingTypeInput) {
+      setMeetingType('PEMBINAAN')
+      return
+    }
+    
+    // Existing auto-select logic for when input is shown
     if (!meetingType && !typesLoading && Object.keys(availableTypes).length > 0) {
       const typeValues = Object.values(availableTypes)
       
@@ -116,7 +138,7 @@ export default function CreateMeetingModal({
         }
       }
     }
-  }, [availableTypes, typesLoading, meetingType])
+  }, [availableTypes, typesLoading, meetingType, shouldShowMeetingTypeInput])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -271,20 +293,22 @@ export default function CreateMeetingModal({
               </div>
 
               {/* Meeting Type Selector */}
-              <div className="mb-4">
-                <InputFilter
-                  id="meetingType"
-                  label="Tipe Pertemuan"
-                  value={meetingType}
-                  onChange={setMeetingType}
-                  options={Object.values(availableTypes).map(type => ({
-                    value: type.code,
-                    label: type.label
-                  }))}
-                  disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
-                  widthClassName="!max-w-full"
-                />
-              </div>
+              {shouldShowMeetingTypeInput && (
+                <div className="mb-4">
+                  <InputFilter
+                    id="meetingType"
+                    label="Tipe Pertemuan"
+                    value={meetingType}
+                    onChange={setMeetingType}
+                    options={Object.values(availableTypes).map(type => ({
+                      value: type.code,
+                      label: type.label
+                    }))}
+                    disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
+                    widthClassName="!max-w-full"
+                  />
+                </div>
+              )}
 
               {/* Topic */}
               {/* <div className="mb-4">
