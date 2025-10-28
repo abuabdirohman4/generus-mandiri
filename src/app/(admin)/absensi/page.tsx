@@ -12,7 +12,6 @@ import ViewModeToggle, { ViewMode } from './components/ViewModeToggle'
 import CreateMeetingModal from './components/CreateMeetingModal'
 import MeetingList from './components/MeetingList'
 import MeetingCards from './components/MeetingCards'
-import MeetingChart from './components/MeetingChart'
 import DataFilter from '@/components/shared/DataFilter'
 import LoadingState from './components/LoadingState'
 import Spinner from '@/components/ui/spinner/Spinner'
@@ -331,25 +330,6 @@ export default function AbsensiPage() {
           {viewMode === 'card' && (
             <>
               <MeetingCards
-                meetings={paginatedMeetings}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                isLoading={isLoading}
-              />
-              {!isLoading && totalPages > 1 && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  className="mt-6"
-                />
-              )}
-            </>
-          )}
-
-          {viewMode === 'chart' && (
-            <>
-              <MeetingChart
                 meetings={paginatedMeetings}
                 onEdit={handleEdit}
                 onDelete={handleDelete}

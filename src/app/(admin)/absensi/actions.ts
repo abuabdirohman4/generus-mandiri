@@ -648,6 +648,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 name
               )
             )
+          ),
+          class_master_mappings (
+            class_master:class_master_id (
+              category:category_id (
+                is_sambung_capable
+              )
+            )
           )
         )
       `)

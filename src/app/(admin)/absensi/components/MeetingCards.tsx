@@ -16,6 +16,7 @@ import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingCardSkeleton from '@/components/ui/skeleton/MeetingCardSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
+import MeetingTypeBadge from './MeetingTypeBadge'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -167,6 +168,13 @@ interface Meeting {
         }
       }
     }
+    class_master_mappings?: Array<{
+      class_master?: {
+        category?: {
+          is_sambung_capable: boolean
+        }
+      }
+    }>
   }
   attendancePercentage: number
   totalStudents: number
@@ -324,6 +332,12 @@ export default function MeetingCards({
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                       {dayjs(meeting.date).format('DD MMM YYYY')}
                     </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <MeetingTypeBadge 
+                        meetingTypeCode={meeting.meeting_type_code}
+                        isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
+                      />
+                    </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {formatMeetingLocation(meeting, userProfile)}
                     </p>

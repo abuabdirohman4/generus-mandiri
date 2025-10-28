@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAbsensiUIStore } from '@/app/(admin)/absensi/stores/absensiUIStore'
 
-export type ViewMode = 'list' | 'card' | 'chart'
+export type ViewMode = 'list' | 'card'
 
 interface ViewModeToggleProps {
   className?: string
@@ -22,7 +22,6 @@ export default function ViewModeToggle({
   if (!mounted) {
     return (
       <div className={`flex items-center gap-1 ${className}`}>
-        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
         <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
       </div>
