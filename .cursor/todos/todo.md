@@ -24,7 +24,7 @@ Siswa
 - [ ] Check use case for 'categories' in students table
 
 Detail Siswa
-- [ ] Overlay Loading ketika masuk halaman
+- [x] Overlay Loading ketika masuk halaman
 
 ## v1.6.3
 - [x] Fix bug create kelas admin desa, daerah & improve UI

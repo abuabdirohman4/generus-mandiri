@@ -197,7 +197,6 @@ export default function AbsensiPage() {
     mutate() // Refresh meetings list
   }
 
-
   // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -263,13 +262,13 @@ export default function AbsensiPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Pengajian
-              {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name && (
-                <> {userProfile.classes[0].name}</>
+              Absensi Pertemuan
+              {userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length <= 1 && (
+                <> {userProfile.classes[0]?.name}</>
               )}
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Kelola pertemuan dan kehadiran siswa
+              Kelola pertemuan dan kehadiran
             </p>
           </div>
 
@@ -289,7 +288,7 @@ export default function AbsensiPage() {
           kelompokList={kelompok || []}
           classList={classes || []}
           showKelas={true}
-          showMeetingType={false}
+          showMeetingType={true}
         />
 
         {/* Revalidating Overlay */}
