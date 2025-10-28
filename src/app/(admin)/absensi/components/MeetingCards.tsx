@@ -473,7 +473,7 @@ export default function MeetingCards({
       onClose={handleDeleteCancel}
       onConfirm={handleDeleteConfirm}
       title="Hapus Pertemuan"
-      message={`Apakah Anda yakin ingin menghapus "${deleteModal.meetingTitle}"?`}
+      message={`Apakah Anda yakin ingin menghapus <br> "${deleteModal.meetingTitle}"?`}
       confirmText="Hapus"
       cancelText="Batal"
       isDestructive={true}

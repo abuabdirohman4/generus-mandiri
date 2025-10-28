@@ -127,7 +127,7 @@ export default function AdminManagementPage() {
           onClose={closeDeleteConfirm}
           onConfirm={handleDelete}
           title="Hapus Admin?"
-          message={`Apakah Anda yakin ingin menghapus admin "${deleteConfirm.admin?.username}"?`}
+          message={`Apakah Anda yakin ingin menghapus admin <br> "${deleteConfirm.admin?.username}"?`}
           confirmText="Hapus"
           cancelText="Batal"
           isDestructive={true}

@@ -127,7 +127,7 @@ export default function GuruManagementPage() {
           onClose={closeDeleteConfirm}
           onConfirm={handleDelete}
           title="Hapus Guru?"
-          message={`Apakah Anda yakin ingin menghapus guru "${deleteConfirm.guru?.username}"?`}
+          message={`Apakah Anda yakin ingin menghapus guru <br> "${deleteConfirm.guru?.username}"?`}
           confirmText="Hapus"
           cancelText="Batal"
           isDestructive={true}

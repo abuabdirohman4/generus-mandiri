@@ -167,7 +167,7 @@ export default function ClassesKelompokTab() {
         onClose={closeDeleteConfirm}
         onConfirm={confirmDelete}
         title="Hapus Kelas"
-        message={`Apakah Anda yakin ingin menghapus kelas "${deleteConfirm.classItem?.name}"?`}
+        message={`Apakah Anda yakin ingin menghapus kelas <br> "${deleteConfirm.classItem?.name}"?`}
         confirmText="Hapus"
         cancelText="Batal"
         isDestructive={true}

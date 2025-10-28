@@ -139,7 +139,7 @@ export default function ClassMastersTab() {
         onClose={closeDeleteConfirm}
         onConfirm={confirmDelete}
         title="Hapus Master Kelas"
-        message={`Apakah Anda yakin ingin menghapus template "${deleteConfirm.master?.name}"?`}
+        message={`Apakah Anda yakin ingin menghapus <br> "${deleteConfirm.master?.name}"?`}
         confirmText="Hapus"
         cancelText="Batal"
         isDestructive={true}
