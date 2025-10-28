@@ -3,6 +3,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1]
+
+### Fixed
+- **Reports UI**: Hide "Reset Filter" button for cleaner interface
+- **No Data Display**: Fixed "No Data" display on first visit to reports page
+- **MultiSelectFilter Interaction**: Improved interaction for non-searchable mode
+- **Icon Consistency**: Replaced existing action icon with ReportIcon in DataTable and StudentsTable
+- **Reports Bug**: Fixed bug for single teacher reports
+
+### Improved
+- **User Experience**: Better initial state handling in reports page
+- **Component Consistency**: Unified icon usage across tables
+
 ## [1.6.0]
 
 ### Added
