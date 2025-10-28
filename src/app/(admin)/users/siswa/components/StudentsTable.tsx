@@ -224,7 +224,7 @@ export default function StudentsTable({
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
         title="Hapus Siswa"
-        message={`Apakah Anda yakin ingin menghapus siswa "${deleteModal.studentName}"?`}
+        message={`Apakah Anda yakin ingin menghapus siswa <br> "${deleteModal.studentName}"?`}
         confirmText="Hapus"
         cancelText="Batal"
         isDestructive={true}

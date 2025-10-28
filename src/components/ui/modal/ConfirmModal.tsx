@@ -56,7 +56,7 @@ export default function ConfirmModal({
             {title}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            {message} <br/>
+            <span dangerouslySetInnerHTML={{ __html: message }} /><br />
             Tindakan ini tidak dapat dibatalkan.
           </p>
         </div>
