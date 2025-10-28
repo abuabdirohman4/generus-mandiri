@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import Label from '@/components/form/Label'
 
 interface FilterOption {
@@ -50,6 +51,15 @@ export default function InputFilter({
   const wrapperClass = variant === 'modal'
     ? (compact ? 'w-full' : `w-full ${widthClassName}`)
     : `max-w-xs ${widthClassName}`
+  
+  // Compute effective value: use empty string if value is empty or not in options
+  const effectiveValue = useMemo(() => {
+    if (!value || value === '') return ''
+    // Check if value exists in options or allOptionLabel
+    const hasValue = options.some(opt => opt.value === value)
+    const hasAllOption = allOptionLabel === undefined ? false : value === ''
+    return (hasValue || hasAllOption) ? value : ''
+  }, [value, options, allOptionLabel])
 
   return (
     <div className={`${containerClass} ${className}`}>
@@ -60,7 +70,7 @@ export default function InputFilter({
         </Label>
         <select
           id={id}
-          value={value}
+          value={effectiveValue}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           required={required}

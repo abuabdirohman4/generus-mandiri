@@ -1,3 +1,13 @@
+*Update v1.6.3 - Class Management Bug Fix & UI Improvement*
+
+Perbaikan:
+- Class Creation Bug - Perbaikan bug create kelas untuk admin PAC dan DPD
+- Class UI - Peningkatan UI untuk pembuatan dan manajemen kelas
+
+Peningkatan:
+- User Experience - Interface yang lebih baik untuk manajemen kelas di admin PAC dan DPD
+- Class Modal - Modal pembuatan kelas dengan validasi dan UI yang lebih baik
+
 *Update v1.6.2 - Bug Fixes*
 
 Perbaikan:

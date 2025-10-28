@@ -26,6 +26,9 @@ Siswa
 Detail Siswa
 - [ ] Overlay Loading ketika masuk halaman
 
+## v1.6.3
+- [x] Fix bug create kelas admin desa, daerah & improve UI
+
 ## v1.6.2
 - [x] Bug report for 1 teacher
 - [x] Kelas tidak muncul di detail siswa
