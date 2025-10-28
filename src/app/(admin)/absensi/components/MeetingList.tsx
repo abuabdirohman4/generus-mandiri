@@ -15,6 +15,7 @@ import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
+import { getMeetingTypeLabel } from '@/lib/constants/meetingTypes'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -334,8 +335,15 @@ export default function MeetingList({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatMeetingLocation(meeting, userProfile)}
+                              <div className="flex items-center gap-2 mb-2">
+                                {meeting.meeting_type_code && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    {getMeetingTypeLabel(meeting.meeting_type_code)}
+                                  </span>
+                                )}
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {formatMeetingLocation(meeting, userProfile)}
+                                </div>
                               </div>
                             </div>
 

@@ -405,6 +405,7 @@ export async function updateMeeting(meetingId: string, data: Partial<CreateMeeti
         date: data.date,
         topic: data.topic,
         description: data.description,
+        meeting_type_code: data.meetingTypeCode,
         updated_at: new Date().toISOString()
       })
       .eq('id', meetingId)

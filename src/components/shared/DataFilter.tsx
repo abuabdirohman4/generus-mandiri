@@ -260,13 +260,8 @@ export default function DataFilter({
     }))
   }, [filteredClassList])
 
-  // Get selected class IDs for meeting type filtering
-  const selectedClassIds = useMemo(() => {
-    return filters?.kelas || []
-  }, [filters?.kelas])
-
-  // Get available meeting types based on selected classes
-  const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(selectedClassIds)
+  // Get available meeting types based on user profile
+  const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)
 
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string[]) => {
@@ -337,13 +332,9 @@ export default function DataFilter({
       ? (compact ? "space-y-6" : "space-y-4")
       : "grid gap-x-4",
     variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
-    variant === 'page' && filterCount === 2 && "grid-cols-2 md:grid-cols-4",
-    variant === 'page' && filterCount === 3 && "grid-cols-2 md:grid-cols-4",
-    variant === 'page' && filterCount === 4 && "grid-cols-2 md:grid-cols-4",
-    variant === 'modal' && filterCount === 1 && "grid-cols-1",
-    variant === 'modal' && filterCount === 2 && "grid-cols-1",
-    variant === 'modal' && filterCount === 3 && "grid-cols-1",
-    variant === 'modal' && filterCount === 4 && "grid-cols-1",
+    variant === 'page' && filterCount >= 2 && filterCount <= 4 && "grid-cols-2 md:grid-cols-4",
+    variant === 'page' && filterCount === 5 && "grid-cols-2 md:grid-cols-5",
+    variant === 'modal' && filterCount >= 1 && filterCount <= 5 && "grid-cols-1",
     className
   )
 
@@ -552,7 +543,7 @@ export default function DataFilter({
                 widthClassName="!max-w-full"
                 variant={variant}
                 compact={compact}
-                placeholder="Pilih Tipe Pertemuan"
+                placeholder="Pilih Tipe"
               />
             )
           ) : (

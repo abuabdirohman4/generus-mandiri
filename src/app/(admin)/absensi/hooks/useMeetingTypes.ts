@@ -2,54 +2,95 @@
 
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
-import { getAvailableMeetingTypes, MEETING_TYPES } from '@/lib/constants/meetingTypes'
+import { getAvailableMeetingTypesByRole, MEETING_TYPES } from '@/lib/constants/meetingTypes'
 
-interface Category {
-  is_sambung_capable: boolean
+interface UserProfile {
+  id: string
+  role: string
+  classes?: Array<{
+    id: string
+    master_class?: Array<{
+      category?: Array<{
+        is_sambung_capable: boolean
+        exclude_pembinaan: boolean
+      }>
+    }>
+  }>
 }
 
-interface ClassData {
-  master_class: {
-    category: Category | null
-  } | null
-}
-
-export function useMeetingTypes(classIds: string[]) {
+export function useMeetingTypes(userProfile: UserProfile | null) {
   const { data, isLoading, error } = useSWR(
-    classIds.length > 0 ? ['meeting-types', classIds] : null,
+    userProfile ? ['meeting-types', userProfile.role, userProfile.id] : null,
     async () => {
-      const supabase = createClient()
-      const { data: classesData, error: classesError } = await supabase
-        .from('classes')
-        .select(`
-          master_class:class_master_id (
-            category:category_id (
-              is_sambung_capable
+      if (!userProfile) return {}
+      
+      // For teachers, need to fetch class categories
+      if (userProfile.role === 'teacher') {
+        const classIds = userProfile.classes?.map((c: any) => c.id) || []
+        
+        // If no classes, return default (Pembinaan only)
+        if (classIds.length === 0) {
+          return { PEMBINAAN: MEETING_TYPES.PEMBINAAN }
+        }
+        
+        const supabase = createClient()
+        const { data: classesData, error: classesError } = await supabase
+          .from('classes')
+          .select(`
+            id,
+            class_master_mappings (
+              class_master:class_master_id (
+                category:category_id (
+                  is_sambung_capable,
+                  exclude_pembinaan
+                )
+              )
             )
-          )
-        `)
-        .in('id', classIds)
-      
-      if (classesError) {
-        console.error('Error fetching classes for meeting types:', classesError)
-        return {}
+          `)
+          .in('id', classIds)
+
+        if (classesError) {
+          console.error('Error fetching classes for meeting types:', classesError)
+          // Return default on error
+          return { PEMBINAAN: MEETING_TYPES.PEMBINAAN }
+        }
+
+        // Handle case where Supabase returns null or empty array
+        if (!classesData || classesData.length === 0) {
+          return { PEMBINAAN: MEETING_TYPES.PEMBINAAN }
+        }
+
+        // Transform the data structure to match expected format
+        const transformedClasses = classesData.map((cls: any) => ({
+          id: cls.id,
+          master_class: Array.isArray(cls.class_master_mappings) && cls.class_master_mappings.length > 0 
+            ? cls.class_master_mappings.map((mapping: any) => ({
+                category: mapping.class_master?.category ? [{
+                  is_sambung_capable: mapping.class_master.category.is_sambung_capable || false,
+                  exclude_pembinaan: mapping.class_master.category.exclude_pembinaan || false
+                }] : []
+              }))
+            : []
+        }))
+
+        const enrichedProfile = {
+          ...userProfile,
+          classes: transformedClasses
+        }
+
+        return getAvailableMeetingTypesByRole(enrichedProfile)
       }
-      
-      // Type assertion to fix the type inference issue
-      const classes = classesData as any[]
-      const categories = (classes || [])
-        .map((c) => c.master_class?.category)
-        .filter(Boolean) as Category[]
-      
-      return getAvailableMeetingTypes(categories)
+
+      // For admin roles, no need to fetch additional data
+      return getAvailableMeetingTypesByRole(userProfile)
     },
     {
       revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000 // Cache for 1 minute
+      revalidateOnReconnect: false,
+      dedupingInterval: 300000 // Cache for 5 minutes
     }
   )
-  
+
   return { 
     availableTypes: data || {}, 
     isLoading, 

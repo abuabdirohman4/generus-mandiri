@@ -15,7 +15,6 @@ import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { useMeetingTypes } from '../hooks/useMeetingTypes'
-import DataFilter from '@/components/shared/DataFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -43,25 +42,12 @@ export default function CreateMeetingModal({
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
-  const [meetingTypeFilters, setMeetingTypeFilters] = useState<any>({
-    daerah: [],
-    desa: [],
-    kelompok: [],
-    kelas: [],
-    meetingType: ''
-  })
-  
-  const handleMeetingTypeFilterChange = (filters: any) => {
-    setMeetingTypeFilters(filters)
-  }
+  const [meetingType, setMeetingType] = useState<string>('')
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
   const { profile: userProfile } = useUserProfile()
-  const { availableTypes, isLoading: typesLoading } = useMeetingTypes(selectedClassIds)
-  
-  // Update meetingType in filters when meetingTypeFilters changes
-  const meetingType = meetingTypeFilters.meetingType
+  const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
 
   // Filter available classes based on user role
   const availableClasses = useMemo(() => {
@@ -106,20 +92,31 @@ export default function CreateMeetingModal({
         topic: meeting.topic || '',
         description: meeting.description || ''
       })
-      setMeetingTypeFilters((prev: any) => ({
-        ...prev,
-        meetingType: meeting.meeting_type_code || ''
-      }))
+      setMeetingType(meeting.meeting_type_code || '')
     }
   }, [meeting])
-  
-  // Update kelas in meetingTypeFilters when selectedClassIds changes
+
+  // Auto-select meeting type based on available options
   useEffect(() => {
-    setMeetingTypeFilters((prev: any) => ({
-      ...prev,
-      kelas: selectedClassIds
-    }))
-  }, [selectedClassIds])
+    if (!meetingType && !typesLoading && Object.keys(availableTypes).length > 0) {
+      const typeValues = Object.values(availableTypes)
+      
+      // If only 1 option, auto-select it
+      if (typeValues.length === 1) {
+        setMeetingType(typeValues[0].code)
+      } 
+      // If multiple options and PEMBINAAN exists, default to PEMBINAAN
+      else if (typeValues.length > 1) {
+        const hasPembinaan = typeValues.some(t => t.code === 'PEMBINAAN')
+        if (hasPembinaan) {
+          setMeetingType('PEMBINAAN')
+        } else {
+          // No PEMBINAAN means Sambung classes, default to SAMBUNG_KELOMPOK
+          setMeetingType('SAMBUNG_KELOMPOK')
+        }
+      }
+    }
+  }, [availableTypes, typesLoading, meetingType])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -148,7 +145,8 @@ export default function CreateMeetingModal({
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          meetingTypeCode: meetingType
         })
         
         if (result.success) {
@@ -192,10 +190,7 @@ export default function CreateMeetingModal({
       topic: '',
       description: ''
     })
-    setMeetingTypeFilters((prev: any) => ({
-      ...prev,
-      meetingType: ''
-    }))
+    setMeetingType('')
     onClose()
   }
 
@@ -231,19 +226,22 @@ export default function CreateMeetingModal({
             {/* Form */}
             <form onSubmit={handleSubmit}>
               {/* Class Selection */}
-              <div className="mb-4">
-                <MultiSelectCheckbox
-                  label="Pilih Kelas"
-                  items={availableClasses.map(cls => ({
-                    id: cls.id,
-                    label: cls.name
-                  }))}
-                  selectedIds={selectedClassIds}
-                  onChange={setSelectedClassIds}
-                  hint="Pilih satu atau lebih kelas untuk pertemuan ini"
-                  disabled={isSubmitting || classesLoading}
-                />
-              </div>
+              {/* Class Selector - Only show if user has more than 1 class */}
+              {availableClasses.length > 1 && (
+                <div className="mb-4">
+                  <MultiSelectCheckbox
+                    label="Pilih Kelas"
+                    items={availableClasses.map(cls => ({
+                      id: cls.id,
+                      label: cls.name
+                    }))}
+                    selectedIds={selectedClassIds}
+                    onChange={setSelectedClassIds}
+                    hint="Pilih satu atau lebih kelas untuk pertemuan ini"
+                    disabled={isSubmitting || classesLoading}
+                  />
+                </div>
+              )}
 
               {/* Title Field */}
               <div className="mb-4">
@@ -273,21 +271,20 @@ export default function CreateMeetingModal({
               </div>
 
               {/* Meeting Type Selector */}
-              <DataFilter
-                filters={meetingTypeFilters}
-                onFilterChange={handleMeetingTypeFilterChange}
-                userProfile={userProfile}
-                daerahList={[]}
-                desaList={[]}
-                kelompokList={[]}
-                classList={[]}
-                showMeetingType={true}
-                variant="modal"
-                compact={false}
-                hideAllOption={true}
-                requiredFields={{ meetingType: true }}
-                className="mb-4"
-              />
+              <div className="mb-4">
+                <InputFilter
+                  id="meetingType"
+                  label="Tipe Pertemuan"
+                  value={meetingType}
+                  onChange={setMeetingType}
+                  options={Object.values(availableTypes).map(type => ({
+                    value: type.code,
+                    label: type.label
+                  }))}
+                  disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
+                  widthClassName="!max-w-full"
+                />
+              </div>
 
               {/* Topic */}
               {/* <div className="mb-4">
@@ -318,7 +315,7 @@ export default function CreateMeetingModal({
               </div> */}
 
               {/* Student Preview */}
-              {filteredStudents.length > 0 && (
+              {filteredStudents.length > 0 ? (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Jumlah Siswa untuk pertemuan ini ada <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
@@ -328,18 +325,12 @@ export default function CreateMeetingModal({
                       </span>
                     )}
                   </h4>
-                  {/* <div className="max-h-32 overflow-y-auto">
-                    <div className="flex flex-wrap gap-1">
-                      {filteredStudents.map((student) => (
-                        <span
-                          key={student.id}
-                          className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded"
-                        >
-                          {student.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div> */}
+                </div>
+              ) : (
+                <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tidak ada siswa di kelas yang dipilih
+                  </h4>
                 </div>
               )}
 
