@@ -10,7 +10,6 @@ interface Student {
   class_id: string
   created_at: string
   updated_at: string
-  category?: string | null
   kelompok_id?: string | null
   desa_id?: string | null
   daerah_id?: string | null
