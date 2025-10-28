@@ -1,11 +1,5 @@
-## v1.7.0
-Meetings
+## v1.9.0
 - [ ] Add Template name
-- [ ] Add Tipe Sambung
-    - Kelompok
-    - Desa
-    - Daerah
-    - Pusat
 - [ ] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
@@ -18,7 +12,18 @@ Meetings
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
-- [ ] Create "Pilih Kelas" hanya muncul untuk kleas > 1
+
+## v1.8.0
+- [ ] Add Halaman Materi
+
+## v1.7.0
+Meetings
+- [x] Add Tipe Sambung
+    - Kelompok
+    - Desa
+    - Daerah
+    - Pusat
+- [x] Create "Pilih Kelas" hanya muncul untuk kleas > 1
 
 Siswa
 - [ ] Check use case for 'categories' in students table

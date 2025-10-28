@@ -55,7 +55,7 @@ interface DataFilters {
   kelompok: string[]
   kelas: string[]
   gender?: string // NEW - single select for gender
-  meetingType?: string // NEW - single select for meeting type
+  meetingType?: string[] // NEW - multi select for meeting type
 }
 
 interface DataFilterProps {
@@ -139,23 +139,23 @@ export default function DataFilter({
   const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses)
 
   // Teacher special case - only show Kelas filter if they have multiple classes
-  if (isTeacher && teacherHasMultipleClasses && showKelas && !showGender) {
-    return (
-      <div className={cn("grid gap-x-4 grid-cols-1", className)}>
-        <MultiSelectFilter
-          id="kelasFilter"
-          label="Kelas"
-          value={filters.kelas || []}
-          onChange={(value) => onFilterChange({ ...filters, kelas: value })}
-          options={userProfile.classes?.map(c => ({ value: c.id, label: c.name })) || []}
-          allOptionLabel="Semua Kelas"
-          widthClassName="!max-w-full"
-          variant={variant}
-          compact={compact}
-        />
-      </div>
-    )
-  }
+  // if (isTeacher && teacherHasMultipleClasses && showKelas && !showGender) {
+  //   return (
+  //     <div className={cn("grid gap-x-4 grid-cols-1", className)}>
+  //       <MultiSelectFilter
+  //         id="kelasFilter"
+  //         label="Kelas"
+  //         value={filters.kelas || []}
+  //         onChange={(value) => onFilterChange({ ...filters, kelas: value })}
+  //         options={userProfile.classes?.map(c => ({ value: c.id, label: c.name })) || []}
+  //         allOptionLabel="Semua Kelas"
+  //         widthClassName="!max-w-full"
+  //         variant={variant}
+  //         compact={compact}
+  //       />
+  //     </div>
+  //   )
+  // }
 
   // If no filters to show, return null
   if (!showGender && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter && !showMeetingType) {
@@ -307,7 +307,7 @@ export default function DataFilter({
     })
   }, [filters, onFilterChange])
 
-  const handleMeetingTypeChange = useCallback((value: string) => {
+  const handleMeetingTypeChange = useCallback((value: string[]) => {
     onFilterChange({
       ...filters,
       meetingType: value
@@ -533,8 +533,8 @@ export default function DataFilter({
               <MultiSelectFilter
                 id="meetingTypeFilter"
                 label="Tipe Pertemuan"
-                value={filters?.meetingType ? [filters.meetingType] : []}
-                onChange={(value) => handleMeetingTypeChange(value[0] || '')}
+                value={filters?.meetingType || []}
+                onChange={handleMeetingTypeChange}
                 options={Object.entries(availableTypes).map(([key, type]) => ({
                   value: type.code,
                   label: type.label
@@ -550,8 +550,8 @@ export default function DataFilter({
             <InputFilter
               id="meetingTypeFilter"
               label="Tipe Pertemuan"
-              value={filters?.meetingType || ''}
-              onChange={handleMeetingTypeChange}
+              value={filters?.meetingType?.[0] || ''}
+              onChange={(value) => handleMeetingTypeChange(value ? [value] : [])}
               options={Object.entries(availableTypes).map(([key, type]) => ({
                 value: type.code,
                 label: type.label

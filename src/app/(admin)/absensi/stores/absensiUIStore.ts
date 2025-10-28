@@ -22,9 +22,9 @@ interface AbsensiUIStore {
     desa: string[]
     kelompok: string[]
     kelas: string[]
-    meetingType?: string
+    meetingType?: string[]
   }
-  setDataFilters: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; meetingType?: string }) => void
+  setDataFilters: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; meetingType?: string[] }) => void
   
   // Modal state
   showCreateModal: boolean
@@ -42,9 +42,9 @@ const initialState = {
   viewMode: 'list' as ViewMode,
   currentPage: 1,
   selectedClassFilter: '',
-  dataFilters: { daerah: [], desa: [], kelompok: [], kelas: [], meetingType: '' },
+  dataFilters: { daerah: [], desa: [], kelompok: [], kelas: [], meetingType: [] },
   showCreateModal: false,
-  editingMeeting: null,
+  editingMeeting: null
 }
 
 export const useAbsensiUIStore = create<AbsensiUIStore>()(
