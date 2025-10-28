@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import { useLaporan } from '../stores/laporanStore'
@@ -24,11 +25,18 @@ interface DataTableProps {
 
 export default function DataTableComponent({ tableData }: DataTableProps) {
   const { filters } = useLaporan()
+  const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
+  const [clickedColumn, setClickedColumn] = useState<'actions' | 'student_name' | null>(null)
+  
+  const handleStudentClick = (studentId: string, column: 'actions' | 'student_name') => {
+    setLoadingStudentId(studentId)
+    setClickedColumn(column)
+  }
   
   const columns = [
     {
       key: 'actions',
-      label: 'Aksi',
+      label: 'Detail',
       align: 'center' as const,
       width: '24'
     },
@@ -80,6 +88,7 @@ export default function DataTableComponent({ tableData }: DataTableProps) {
         <Link 
           href={`/users/siswa/${item.student_id}?month=${filters.month}&year=${filters.year}&from=laporan`}
           className="hover:text-blue-600 hover:underline"
+          onClick={() => handleStudentClick(item.student_id, 'student_name')}
         >
           {item.student_name}
         </Link>
@@ -90,13 +99,10 @@ export default function DataTableComponent({ tableData }: DataTableProps) {
       return (
         <Link 
           href={`/users/siswa/${item.student_id}?month=${filters.month}&year=${filters.year}&from=laporan`}
-          className="text-yellow-600 hover:text-yellow-800"
+          className="text-yellow-600 hover:text-yellow-800 block"
+          onClick={() => handleStudentClick(item.student_id, 'actions')}
         >
           <ReportIcon className="w-6 h-6 mx-auto" />
-          {/* <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg> */}
         </Link>
       )
     }
@@ -117,6 +123,9 @@ export default function DataTableComponent({ tableData }: DataTableProps) {
             columns={columns}
             data={tableData}
             renderCell={renderCell}
+            loadingRowId={loadingStudentId}
+            loadingColumnKey={clickedColumn}
+            spinnerSize={16}
             pagination={true}
             searchable={true}
             itemsPerPageOptions={[5, 10, 25, 50]}
