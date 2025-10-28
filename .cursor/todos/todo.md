@@ -18,6 +18,17 @@ Meetings
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
+- [ ] Create "Pilih Kelas" hanya muncul untuk kleas > 1
+
+Siswa
+- [ ] Check use case for 'categories' in students table
+
+Detail Siswa
+- [ ] Overlay Loading ketika masuk halaman
+
+## v1.6.2
+- [x] Bug report for 1 teacher
+- [x] Kelas tidak muncul di detail siswa
 
 ## v1.6.1
 
