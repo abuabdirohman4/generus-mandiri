@@ -26,6 +26,8 @@ export default function StudentsTable({
   onDelete, 
   userProfile 
 }: StudentsTableProps) {
+  const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
+  const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean
     studentId: string
@@ -35,6 +37,11 @@ export default function StudentsTable({
     studentId: '',
     studentName: ''
   })
+  
+  const handleStudentClick = (studentId: string, column: 'name' | 'actions') => {
+    setLoadingStudentId(studentId)
+    setClickedColumn(column)
+  }
 
   const handleDeleteClick = (studentId: string, studentName: string) => {
     setDeleteModal({
@@ -122,6 +129,7 @@ export default function StudentsTable({
   const tableData = students
     .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
     .map((student) => ({
+      id: student.id,
       name: student.name,
       gender: student.gender || '-',
       class_name: student.class_name || '-',
@@ -142,8 +150,8 @@ export default function StudentsTable({
             href={`/users/siswa/${student.id}`}
             className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 transition-colors"
             title="Lihat Detail"
+            onClick={() => handleStudentClick(student.id, 'actions')}
           >
-            {/* <EyeIcon className="w-5 h-5" /> */}
             <ReportIcon className="w-6 h-6" />
           </Link>
           
@@ -177,6 +185,7 @@ export default function StudentsTable({
         <Link 
           href={`/users/siswa/${student.id}`}
           className="hover:text-blue-600 hover:underline"
+          onClick={() => handleStudentClick(student.id, 'name')}
         >
           {item.name}
         </Link>
@@ -197,6 +206,9 @@ export default function StudentsTable({
         columns={columns}
         data={tableData}
         renderCell={renderCell}
+        loadingRowId={loadingStudentId}
+        loadingColumnKey={clickedColumn}
+        spinnerSize={16}
         pagination={true}
         searchable={true}
         itemsPerPageOptions={[5, 10, 25, 50]}

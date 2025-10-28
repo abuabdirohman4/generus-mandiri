@@ -108,12 +108,21 @@ export function useLaporanPage() {
     return reportData.trendChartData
   }, [reportData?.trendChartData])
 
-  // Auto-set class filter for teachers
+  // Auto-set class filter for teachers with exactly 1 class
   useEffect(() => {
-    if (userProfile?.role === 'teacher' && userProfile.classes?.[0]?.id && !filters.classId) {
-      setFilter('classId', userProfile.classes[0].id)
+    if (userProfile?.role === 'teacher' && userProfile.classes?.length === 1) {
+      const teacherClassId = userProfile.classes[0].id
+      // Check if organisasi.kelas is empty or doesn't include the teacher's class
+      if (!filters.organisasi?.kelas?.includes(teacherClassId)) {
+        setFilter('organisasi', {
+          daerah: [],
+          desa: [],
+          kelompok: [],
+          kelas: [teacherClassId]
+        })
+      }
     }
-  }, [userProfile?.role, userProfile?.classes, filters.classId, setFilter])
+  }, [userProfile?.role, userProfile?.classes, filters.organisasi?.kelas, setFilter])
 
   // Actions
   const handleFilterChange = (key: string, value: string) => {
