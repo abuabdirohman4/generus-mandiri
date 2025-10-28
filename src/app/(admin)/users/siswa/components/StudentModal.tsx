@@ -195,8 +195,10 @@ export default function StudentModal({
               type="submit"
               disabled={submitting}
               className="px-4 py-2"
+              loading={submitting}
+              loadingText="Menyimpan..."
             >
-              {submitting ? 'Menyimpan...' : 'Simpan'}
+              Simpan
             </Button>
           </div>
         </form>

@@ -369,8 +369,10 @@ export default function MeetingAttendancePage() {
             disabled={saving}
             variant="primary"
             className="w-full sm:w-auto"
+            loading={saving}
+            loadingText="Menyimpan..."
           >
-            {saving ? 'Menyimpan...' : 'Simpan'}
+            Simpan
           </Button>
         </div>
 

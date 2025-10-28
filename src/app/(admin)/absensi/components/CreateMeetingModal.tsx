@@ -371,8 +371,10 @@ export default function CreateMeetingModal({
                   type="submit"
                   disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0}
                   variant="primary"
+                  loading={isSubmitting}
+                  loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}
                 >
-                  {isSubmitting ? (meeting ? 'Memperbarui...' : 'Membuat...') : (meeting ? 'Perbarui' : 'Buat Pertemuan')}
+                  {meeting ? 'Perbarui' : 'Buat Pertemuan'}
                 </Button>
               </div>
             </form>

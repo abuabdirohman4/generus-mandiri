@@ -174,16 +174,11 @@ export default function CacheSettingsSection() {
                 size="sm"
                 onClick={handleReset}
                 disabled={isResetting}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                variant="danger"
+                loading={isResetting}
+                loadingText="Resetting..."
               >
-                {isResetting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Resetting...
-                  </>
-                ) : (
-                  'Reset Sekarang'
-                )}
+                Reset Sekarang
               </Button>
             </div>
           </div>

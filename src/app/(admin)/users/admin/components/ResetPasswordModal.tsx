@@ -5,6 +5,7 @@ import { resetAdminPassword } from '../actions';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
 
 interface Admin {
   id: string;
@@ -133,21 +134,23 @@ export default function ResetPasswordModal({ isOpen, onClose, admin, onSuccess }
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <button
+            <Button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+              variant="outline"
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              variant="primary"
+              loading={isLoading}
+              loadingText="Resetting..."
             >
-              {isLoading ? 'Menyimpan...' : 'Reset Password'}
-            </button>
+              Reset Password
+            </Button>
           </div>
         </form>
       </div>

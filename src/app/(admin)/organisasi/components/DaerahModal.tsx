@@ -5,6 +5,7 @@ import { createDaerah, updateDaerah } from '../actions/daerah';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
+import Button from '@/components/ui/button/Button';
 
 interface Daerah {
   id: string;
@@ -100,21 +101,23 @@ export default function DaerahModal({ isOpen, onClose, daerah, onSuccess }: Daer
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <button
+            <Button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+              variant="outline"
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              variant="primary"
+              loading={isLoading}
+              loadingText="Menyimpan..."
             >
-              {isLoading ? 'Menyimpan...' : (daerah ? 'Update' : 'Simpan')}
-            </button>
+              {daerah ? 'Update' : 'Simpan'}
+            </Button>
           </div>
         </form>
       </div>
