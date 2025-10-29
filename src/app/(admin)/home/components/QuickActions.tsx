@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
-import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon } from '@/lib/icons';
+import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
 import { isAdminKelompok } from '@/lib/userUtils';
 
 interface Profile {
@@ -111,6 +111,16 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-purple-100 dark:bg-purple-900',
       iconColor: 'text-purple-600 dark:text-purple-400',
+      disabled: false
+    },
+    {
+      id: 'materi',
+      name: 'Materi',
+      description: 'Materi Pembelajaran',
+      href: '/materi',
+      icon: <BookOpenIcon className="w-6 h-6" />,
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
       disabled: false
     },
     {

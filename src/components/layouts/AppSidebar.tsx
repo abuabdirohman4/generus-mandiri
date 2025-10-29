@@ -13,6 +13,7 @@ import {
   ReportIcon,
   BuildingIcon,
   TableIcon,
+  BookOpenIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
@@ -52,6 +53,11 @@ const allNavItems: NavItem[] = [
     name: "Laporan",
     path: "/laporan",
   },
+  // {
+  //   icon: <BookOpenIcon className="w-6 h-6" />,
+  //   name: "Materi",
+  //   path: "/materi",
+  // },
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
