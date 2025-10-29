@@ -17,7 +17,7 @@
 - [ ] Add Halaman Materi
 
 Components
-- [x] Change All <button> to <Button>
+- [x] Change All <button> to <Button> & fix loading button
 
 ## v1.7.0
 Meetings

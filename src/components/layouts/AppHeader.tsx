@@ -32,6 +32,8 @@ function PageTitle() {
         return 'Admin';
       case '/kelas':
         return 'Kelas';
+      case '/materi':
+        return 'Materi';
       case '/organisasi':
         return 'Organisasi';
       case '/settings':
