@@ -1,7 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import { LearningMaterial, getDayName, romanNumeral, getMonthName } from '../types'
-import MaterialCard from './MaterialCard'
+import { MaterialInputModal } from './MaterialInputModal'
+
+// Helper function to safely access content properties
+function getContentTitle(content: string | { title?: string; items?: string[] } | undefined): string {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  return content.title || '';
+}
+
+function getContentText(content: string | { title?: string; items?: string[] } | undefined): string {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content.items)) return content.items.join(', ');
+  return content.items || '';
+}
 
 interface MaterialContentProps {
   material: LearningMaterial | null
@@ -12,11 +27,22 @@ interface MaterialContentProps {
     week: number
     day: number
   }
+  classMasterId?: string
 }
 
-export default function MaterialContent({ material, isLoading, selectedDate }: MaterialContentProps) {
+export default function MaterialContent({ material, isLoading, selectedDate, classMasterId }: MaterialContentProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
   if (isLoading) {
     return <MaterialSkeleton />
+  }
+
+  // Safe dayName calculation with fallback for modal
+  let dayName = 'Senin'; // Default fallback
+  try {
+    dayName = getDayName(selectedDate.day as any);
+  } catch (error) {
+    dayName = 'Senin'; // Fallback
   }
   
   if (!material) {
@@ -30,93 +56,188 @@ export default function MaterialContent({ material, isLoading, selectedDate }: M
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
           Belum ada materi
         </h3>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-gray-500 dark:text-gray-400 mb-4">
           Materi untuk tanggal ini belum tersedia
         </p>
+        {classMasterId && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg"
+          >
+            📝 Input Materi
+          </button>
+        )}
+        
+        {/* Modal for empty state */}
+        {classMasterId && (
+          <MaterialInputModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            classMasterId={classMasterId}
+            semester={selectedDate.semester}
+            month={selectedDate.month}
+            week={selectedDate.week}
+            dayOfWeek={selectedDate.day}
+            dayName={dayName}
+          />
+        )}
       </div>
     )
   }
-  
-  const dayName = getDayName(selectedDate.day as any)
   
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {dayName}, Minggu {romanNumeral(selectedDate.week as any)} - {getMonthName(selectedDate.month as any)}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Semester {selectedDate.semester}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Materi Hari Ini
+              {/* {dayName}, Minggu {romanNumeral(selectedDate.week as any)} - {getMonthName(selectedDate.month as any)} */}
+            </h2>
+            {/* <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Semester {selectedDate.semester}
+            </p> */}
+          </div>
+          {classMasterId && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-sm hover:shadow-md"
+            >
+              ✏️ Edit
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Material Cards */}
       <div className="grid gap-4">
         {material.content.quran && (
-          <MaterialCard 
-            icon="📖"
-            title="Al-Qur'an"
-            content={material.content.quran}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">📖</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.quran) || 'Al-Qur\'an'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.quran)}
+            </div>
+          </div>
         )}
         
         {material.content.hafalan && (
-          <MaterialCard 
-            icon="🎯"
-            title="Hafalan"
-            content={material.content.hafalan}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">🎯</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.hafalan) || 'Hafalan'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.hafalan)}
+            </div>
+          </div>
         )}
         
         {material.content.doa && (
-          <MaterialCard 
-            icon="🤲"
-            title="Do'a"
-            content={material.content.doa}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">🤲</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.doa) || 'Do\'a'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.doa)}
+            </div>
+          </div>
         )}
         
         {material.content.akhlaq && (
-          <MaterialCard 
-            icon="⭐"
-            title="Akhlaqul Karimah"
-            content={material.content.akhlaq}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">⭐</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.akhlaq) || 'Akhlaqul Karimah'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.akhlaq)}
+            </div>
+          </div>
         )}
         
         {material.content.hadits && (
-          <MaterialCard 
-            icon="📜"
-            title="Hadits"
-            content={material.content.hadits}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">📜</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.hadits) || 'Hadits'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.hadits)}
+            </div>
+          </div>
         )}
         
         {material.content.kamis && (
-          <MaterialCard 
-            icon="☀️"
-            title="Kamis"
-            content={material.content.kamis}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">☀️</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.kamis) || 'Kamis'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.kamis)}
+            </div>
+          </div>
         )}
         
         {material.content.jumat && (
-          <MaterialCard 
-            icon="☀️"
-            title="Jum'at"
-            content={material.content.jumat}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">☀️</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.jumat) || 'Jum\'at'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.jumat)}
+            </div>
+          </div>
         )}
         
         {material.content.sabtu && (
-          <MaterialCard 
-            icon="☀️"
-            title="Sabtu"
-            content={material.content.sabtu}
-          />
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">☀️</span>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {getContentTitle(material.content.sabtu) || 'Sabtu'}
+              </h3>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {getContentText(material.content.sabtu)}
+            </div>
+          </div>
         )}
       </div>
+      
+      {/* Modal */}
+      {classMasterId && (
+        <MaterialInputModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          classMasterId={classMasterId}
+          semester={selectedDate.semester}
+          month={selectedDate.month}
+          week={selectedDate.week}
+          dayOfWeek={selectedDate.day}
+          dayName={dayName}
+        />
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import WeekTabs from './WeekTabs'
 import DayTabs from './DayTabs'
 import MaterialContent from './MaterialContent'
 import { getLearningMaterial } from '../actions'
+import DataFilter from '@/components/shared/DataFilter'
 
 interface MaterialsLayoutProps {
   classMasters: ClassMaster[]
@@ -15,7 +16,14 @@ interface MaterialsLayoutProps {
 }
 
 export default function MaterialsLayout({ classMasters, userProfile }: MaterialsLayoutProps) {
-  const [selectedClass, setSelectedClass] = useState<ClassMaster | null>(classMasters[0] || null)
+  // Filter state for DataFilter
+  const [filters, setFilters] = useState({
+    daerah: [] as string[],
+    desa: [] as string[],
+    kelompok: [] as string[],
+    kelas: classMasters.length > 0 ? [classMasters[0].id] : [] as string[]
+  })
+  
   const [semester, setSemester] = useState<Semester>(1)
   const [month, setMonth] = useState<Month>(1)
   const [week, setWeek] = useState<Week>(1)
@@ -23,6 +31,9 @@ export default function MaterialsLayout({ classMasters, userProfile }: Materials
   
   const [material, setMaterial] = useState<LearningMaterial | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Get selected class from filters
+  const selectedClass = classMasters.find(cm => filters.kelas.includes(cm.id)) || classMasters[0] || null
 
   // Fetch material when filters change
   useEffect(() => {
@@ -66,26 +77,28 @@ export default function MaterialsLayout({ classMasters, userProfile }: Materials
 
   return (
     <div className="space-y-4">
-      {/* Class Selector (if multiple) */}
+      {/* DataFilter for Class Selection */}
       {classMasters.length > 1 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border p-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Pilih Kelas
-          </label>
-          <select
-            value={selectedClass.id}
-            onChange={(e) => {
-              const classMaster = classMasters.find(cm => cm.id === e.target.value)
-              if (classMaster) setSelectedClass(classMaster)
-            }}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            {classMasters.map((classMaster) => (
-              <option key={classMaster.id} value={classMaster.id}>
-                {classMaster.name}
-              </option>
-            ))}
-          </select>
+          <DataFilter
+            filters={filters}
+            onFilterChange={setFilters}
+            userProfile={userProfile}
+            daerahList={[]}
+            desaList={[]}
+            kelompokList={[]}
+            classList={classMasters.map(cm => ({
+              id: cm.id,
+              name: cm.name,
+              kelompok_id: null
+            }))}
+            showKelas={true}
+            showDaerah={false}
+            showDesa={false}
+            showKelompok={false}
+            variant="modal"
+            className="md:grid-cols-1"
+          />
         </div>
       )}
       
@@ -122,6 +135,7 @@ export default function MaterialsLayout({ classMasters, userProfile }: Materials
         material={material}
         isLoading={isLoading}
         selectedDate={{ semester, month, week, day }}
+        classMasterId={selectedClass?.id}
       />
     </div>
   )

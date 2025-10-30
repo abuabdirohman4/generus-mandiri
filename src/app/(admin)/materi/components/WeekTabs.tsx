@@ -24,7 +24,9 @@ export default function WeekTabs({ selected, onChange, className = '' }: WeekTab
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
-            Minggu {romanNumeral(week)}
+            {/* Minggu {week} */}
+            <span className="hidden md:block">Minggu {romanNumeral(week)}</span>
+            <span className="block md:hidden">Minggu <br /> {romanNumeral(week)}</span>
           </button>
         ))}
       </div>
