@@ -144,7 +144,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
                 />
               </div>
               
-              <div className="col-span-9">
+              <div className="col-span-8 md:col-span-9">
                 <Input
                   value={student.name}
                   onChange={(e) => updateStudent(student.id, { name: e.target.value })}
@@ -157,7 +157,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
                 />
               </div>
               
-              <div className="col-span-2">
+              <div className="col-span-3 md:col-span-2">
                 <select
                   value={student.gender || "Laki-laki"}
                   onChange={(e) => updateStudent(student.id, { gender: e.target.value })}

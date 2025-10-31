@@ -62,7 +62,7 @@ export default function InputFilter({
   }, [value, options, allOptionLabel])
 
   return (
-    <div className={`${containerClass} ${className}`}>
+    <div className={`${className} ${containerClass}`}>
       <div className={wrapperClass}>
         <Label htmlFor={id}>
           {label}

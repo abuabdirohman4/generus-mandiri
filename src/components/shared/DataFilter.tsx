@@ -212,11 +212,22 @@ export default function DataFilter({
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
     
+    // If kelompok filter is not shown, return all classes (no filtering by kelompok_id)
+    // This is important for pages like meeting detail where we don't filter by kelompok
+    if (!shouldShowKelompok) {
+      return classList
+    }
+    
+    // If kelompok filter is shown but no kelompok selected yet, show all classes
+    if (filteredKelompokList.length === 0) {
+      return classList
+    }
+    
     if (isSuperAdmin || isAdminDaerah || isAdminDesa) {
       // Get valid kelompok IDs from filteredKelompokList
       const validKelompokIds = filteredKelompokList.map(k => k.id)
       
-      // Filter classes by valid kelompok IDs
+      // Filter classes by valid kelompok IDs only if we have valid kelompok IDs
       if (validKelompokIds.length > 0) {
         return classList.filter(cls => 
           cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id)
@@ -226,12 +237,16 @@ export default function DataFilter({
       // If no kelompok filter applied, show all classes
       return classList
     } else if (isAdminKelompok) {
-      // Admin Kelompok: filter by their kelompok_id
-      return classList.filter(cls => cls.kelompok_id === userProfile?.kelompok_id)
+      // Admin Kelompok: filter by their kelompok_id only if kelas have kelompok_id
+      // But if some classes don't have kelompok_id (null), include them too
+      return classList.filter(cls => 
+        !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id
+      )
     }
     
+    // For teacher or other roles, return all classes when kelompok filter is not active
     return classList
-  }, [classList, filteredKelompokList, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter])
+  }, [classList, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter, userProfile?.kelompok_id])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {

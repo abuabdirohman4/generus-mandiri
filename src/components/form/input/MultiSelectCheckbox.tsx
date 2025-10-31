@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface MultiSelectCheckboxProps {
-  label: string
+  label: string | React.ReactNode
   items: { id: string; label: string }[]
   selectedIds: string[]
   onChange: (selectedIds: string[]) => void
@@ -11,6 +11,8 @@ interface MultiSelectCheckboxProps {
   maxHeight?: string
   hint?: string
   className?: string
+  isLoading?: boolean
+  error?: boolean
 }
 
 export default function MultiSelectCheckbox({
@@ -21,7 +23,9 @@ export default function MultiSelectCheckbox({
   disabled = false,
   maxHeight = '10rem',
   hint,
-  className = ''
+  className = '',
+  isLoading = false,
+  error = false
 }: MultiSelectCheckboxProps) {
   const [isAllSelected, setIsAllSelected] = useState(false)
 
@@ -66,41 +70,59 @@ export default function MultiSelectCheckbox({
       </label>
       
       <div 
-        className="space-y-2 border border-gray-200 dark:border-gray-600 rounded-lg p-3 overflow-y-auto"
+        className={`space-y-2 border rounded-lg p-3 overflow-y-auto ${
+          error 
+            ? 'border-red-500 dark:border-red-500' 
+            : 'border-gray-200 dark:border-gray-600'
+        }`}
         style={{ maxHeight }}
       >
-        {/* Select All Option */}
-        <label className="flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isAllSelected}
-            onChange={handleSelectAll}
-            disabled={disabled || items.length === 0}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Pilih Semua
-          </span>
-        </label>
+        {isLoading ? (
+          /* Loading Skeleton */
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center animate-pulse">
+                <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="ml-2 h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Select All Option */}
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                onChange={handleSelectAll}
+                disabled={disabled || items.length === 0}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Pilih Semua
+              </span>
+            </label>
 
-        {/* Individual Items */}
-        {items.map((item) => (
-          <label key={item.id} className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selectedIds.includes(item.id)}
-              onChange={() => handleItemToggle(item.id)}
-              disabled={disabled}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              {item.label}
-            </span>
-          </label>
-        ))}
+            {/* Individual Items */}
+            {items.map((item) => (
+              <label key={item.id} className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(item.id)}
+                  onChange={() => handleItemToggle(item.id)}
+                  disabled={disabled}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  {item.label}
+                </span>
+              </label>
+            ))}
+          </>
+        )}
       </div>
 
-      {hint && (
+      {hint && !isLoading && (
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {hint}
         </p>

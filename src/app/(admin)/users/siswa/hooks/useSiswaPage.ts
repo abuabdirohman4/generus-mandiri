@@ -152,7 +152,7 @@ export function useSiswaPage() {
   }, [mutateStudents])
 
   // Data filter handler
-  const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
+  const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => {
     setDataFilters(filters)
   }, [setDataFilters])
 
@@ -177,7 +177,13 @@ export function useSiswaPage() {
       result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
     }
     if (dataFilters.kelas.length > 0) {
-      result = result.filter(s => dataFilters.kelas.includes(s.class_id))
+      // Support comma-separated class IDs from DataFilter
+      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
+      result = result.filter(s => selectedClassIds.includes(s.class_id))
+    }
+    // Apply gender filter
+    if (dataFilters.gender && dataFilters.gender !== '') {
+      result = result.filter(s => s.gender === dataFilters.gender)
     }
 
     return result

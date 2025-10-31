@@ -3,6 +3,7 @@
 import { Modal } from '@/components/ui/modal'
 import dayjs from 'dayjs'
 import type { AttendanceLog } from '@/app/(admin)/users/siswa/actions'
+import MeetingTypeBadge from '@/app/(admin)/absensi/components/MeetingTypeBadge'
 
 interface MeetingDetailModalProps {
   isOpen: boolean
@@ -63,7 +64,14 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
         <div className="space-y-4">
           {/* Meeting Title */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 flex items-center flex-wrap">
+              {meeting.meetings.meeting_type_code && (
+                <MeetingTypeBadge 
+                  meetingTypeCode={meeting.meetings.meeting_type_code}
+                  isSambungCapable={meeting.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
+                />
+              )}
+              {meeting.meetings.meeting_type_code ? ": " : ""}
               {meeting.meetings.title}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -77,7 +85,10 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Topik
               </label>
-              <p className="text-gray-900 dark:text-white">{meeting.meetings.topic}</p>
+              {/* <p className="text-gray-500 dark:text-white">{meeting.meetings.topic}</p> */}
+              <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                {meeting.meetings.topic}
+              </p>
             </div>
           )}
 
@@ -87,9 +98,12 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Deskripsi
               </label>
-              <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+              <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg whitespace-pre-wrap">
                 {meeting.meetings.description}
               </p>
+              {/* <p className="text-gray-500 dark:text-white whitespace-pre-wrap">
+                {meeting.meetings.description}
+              </p> */}
             </div>
           )}
 

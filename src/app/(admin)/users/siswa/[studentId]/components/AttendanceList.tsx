@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs'
 import type { AttendanceLog } from '@/app/(admin)/users/siswa/actions'
+import MeetingTypeBadge from '@/app/(admin)/absensi/components/MeetingTypeBadge'
 
 interface AttendanceListProps {
   date: string
@@ -41,6 +42,7 @@ const getStatusLabel = (status: string) => {
 }
 
 export default function AttendanceList({ date, meetings, onMeetingClick, onClose }: AttendanceListProps) {
+  console.log(meetings)
   if (meetings.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -95,14 +97,21 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="font-medium text-gray-900 dark:text-white mb-1">
+                <div className="font-medium text-gray-900 dark:text-white mb-2">
+                  {log.meetings.meeting_type_code && (
+                    <MeetingTypeBadge 
+                      meetingTypeCode={log.meetings.meeting_type_code}
+                      isSambungCapable={log.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
+                    />
+                  )}
+                  {log.meetings.meeting_type_code ? ": " : ""}
                   {log.meetings.title}
                 </div>
-                {log.meetings.topic && (
+                {/* {log.meetings.topic && (
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     {log.meetings.topic}
                   </div>
-                )}
+                )} */}
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(log.status)}`}>
                     {getStatusLabel(log.status)}
