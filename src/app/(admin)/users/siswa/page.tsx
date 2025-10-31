@@ -84,6 +84,7 @@ export default function SiswaPage() {
           kelompokList={kelompok || []}
           classList={classes || []}
           showKelas={true}
+          showGender={true}
         />
 
         {/* Stats Cards */}
