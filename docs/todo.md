@@ -19,6 +19,18 @@
 Components
 - [x] Change All <button> to <Button> & fix loading button
 
+## v1.7.1
+- [x] sambung dan kelas kasih br
+- [x] kelas di absensi error
+- [x] ada filter jenis kelamin di siswa
+- [x] di halaman siswa, headernya utk kelas gabungan, antara dinamis kelas yg dipilih atau "Siswa" pas pilih semua kelas
+- [x] di home kalau PJ nya gabungan kelas antara gk ditampilkan atau tampilkan semua (tapi kalau panjang sebut aja PJ berapa kelas)
+- [x] di mobile L gk keliatan pas batch import
+- [x] import step 2 & 3, modal header ketutup
+- [z] import step 3, semua katefori nya caberawit
+- [x] tabel guru, kolom kelas nya di uat text wrap juga
+- [x] kasih loading di multifilter checbox
+
 ## v1.7.0
 Meetings
 - [x] Add Tipe Pertemuan

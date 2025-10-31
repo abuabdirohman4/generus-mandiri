@@ -15,6 +15,7 @@ import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { useMeetingTypes } from '../hooks/useMeetingTypes'
+import Modal from '@/components/ui/modal'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -36,7 +37,7 @@ export default function CreateMeetingModal({
 }: CreateMeetingModalProps) {
   const [formData, setFormData] = useState({
     date: meeting ? dayjs(meeting.date) : dayjs(),
-    title: meeting?.title || 'Pengajian Rutin',
+    title: meeting?.title || '',
     topic: meeting?.topic || '',
     description: meeting?.description || ''
   })
@@ -208,7 +209,7 @@ export default function CreateMeetingModal({
   const handleClose = () => {
     setFormData({
       date: dayjs(),
-      title: 'Pengajian Rutin',
+      title: '',
       topic: '',
       description: ''
     })
@@ -219,34 +220,14 @@ export default function CreateMeetingModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Backdrop */}
-        <div 
-          className="fixed inset-0 bg-black/40 bg-opacity-30 transition-opacity"
-          onClick={handleClose}
-        />
-        
-        {/* Modal */}
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-auto">
-          <div className="p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
-              </h3>
-              <button
-                onClick={handleClose}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
+        <Modal
+          isOpen={isOpen}
+          onClose={handleClose}
+          title={meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
+        >
             {/* Form */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4">
               {/* Class Selection */}
               {/* Class Selector - Only show if user has more than 1 class */}
               {availableClasses.length > 1 && (
@@ -265,18 +246,64 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
+              {/* Meeting Type Selector */}
+              {/* {shouldShowMeetingTypeInput && ( */}
+                <div className="mb-4">
+                  <InputFilter
+                    id="meetingType"
+                    label="Tipe Pertemuan"
+                    value={meetingType}
+                    onChange={setMeetingType}
+                    options={Object.values(availableTypes).map(type => ({
+                      value: type.code,
+                      label: type.label
+                    }))}
+                    disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
+                    widthClassName="!max-w-full"
+                    className='!mb-0'
+                  />
+                </div>
+              {/* )} */}
+
               {/* Title Field */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Judul Pengajian
+                  Judul Pertemuan (Opsional)
                 </label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Pengajian Kelompok, Pengajian Desa, dll"
+                  placeholder="Judul pertemuan..."
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                  required
+                />
+              </div>
+
+              {/* Topic */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Topik (Opsional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.topic}
+                  onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                  placeholder="Topik pertemuan..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Deskripsi (Opsional)
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Deskripsi pertemuan..."
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
                 />
               </div>
 
@@ -291,52 +318,6 @@ export default function CreateMeetingModal({
                   placeholder="Pilih Tanggal"
                 />
               </div>
-
-              {/* Meeting Type Selector */}
-              {shouldShowMeetingTypeInput && (
-                <div className="mb-4">
-                  <InputFilter
-                    id="meetingType"
-                    label="Tipe Pertemuan"
-                    value={meetingType}
-                    onChange={setMeetingType}
-                    options={Object.values(availableTypes).map(type => ({
-                      value: type.code,
-                      label: type.label
-                    }))}
-                    disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
-                    widthClassName="!max-w-full"
-                  />
-                </div>
-              )}
-
-              {/* Topic */}
-              {/* <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Topik (Opsional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.topic}
-                  onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                  placeholder="Contoh: Hafalan"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                />
-              </div> */}
-
-              {/* Description */}
-              {/* <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Deskripsi (Opsional)
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Deskripsi pertemuan..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                />
-              </div> */}
 
               {/* Student Preview */}
               {filteredStudents.length > 0 ? (
@@ -357,9 +338,10 @@ export default function CreateMeetingModal({
                   </h4>
                 </div>
               )}
+              </div>
 
-              {/* Buttons */}
-              <div className="flex justify-end space-x-3">
+              {/* Buttons - Sticky at bottom */}
+              <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
                 <Button
                   type="button"
                   onClick={handleClose}
@@ -378,9 +360,6 @@ export default function CreateMeetingModal({
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
-    </div>
+        </Modal>
   )
 }

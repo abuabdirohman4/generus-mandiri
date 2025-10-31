@@ -3,6 +3,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1]
+
+### Fixed
+- **Attendance Class Error**: Fixed class error in attendance page
+- **Batch Import Mobile**: Fixed visibility issue on mobile L devices during batch import
+- **Import Modal Header**: Fixed modal header being covered in import step 2 & 3
+
+### Improved
+- **Class Display**: Added line breaks for better connection and class display
+- **Student Gender Filter**: Added gender filter in student page
+- **Student Header**: Dynamic header in student page for combined classes (shows selected class or "Siswa" when all classes selected)
+- **Home Page PJ**: Improved PJ display for combined classes on home page
+- **Teacher Table**: Added text wrap for class column in teacher table
+- **MultiFilter Loading**: Added loading indicator in multifilter checkbox
+
 ## [1.7.0]
 
 ### Added

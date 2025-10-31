@@ -31,16 +31,6 @@ export default function Step3Preview({ selectedClass, onBack, onImport }: Step3P
   const validStudents = students.filter(s => s.name.trim() !== '' && s.gender !== '')
   const emptyStudents = students.filter(s => s.name.trim() === '' && s.gender === '')
 
-  const getCategoryFromClassName = (className: string): string => {
-    const lower = className.toLowerCase()
-    if (lower.includes('paud')) return 'Paud'
-    if (/kelas [1-6]/.test(lower)) return 'Caberawit'
-    if (/pra remaja/.test(lower)) return 'Pra Remaja'
-    if (/remaja|pra nikah/.test(lower)) return 'Remaja'
-    if (/kelompok/.test(lower)) return 'Orang Tua'
-    return 'Caberawit'
-  }
-
   const handleImport = async () => {
     if (validStudents.length === 0) {
       alert('Tidak ada siswa yang valid untuk ditambah')
@@ -96,7 +86,7 @@ export default function Step3Preview({ selectedClass, onBack, onImport }: Step3P
 
       {/* Summary Card */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div>
             <span className="font-medium text-blue-900 dark:text-blue-100">Total Baris:</span>
             <span className="ml-2 text-blue-700 dark:text-blue-300">{students.length}</span>
@@ -108,12 +98,6 @@ export default function Step3Preview({ selectedClass, onBack, onImport }: Step3P
           <div>
             <span className="font-medium text-blue-900 dark:text-blue-100">Kelas:</span>
             <span className="ml-2 text-blue-700 dark:text-blue-300">{selectedClass?.name || '-'}</span>
-          </div>
-          <div>
-            <span className="font-medium text-blue-900 dark:text-blue-100">Kategori:</span>
-            <span className="ml-2 text-blue-700 dark:text-blue-300">
-              {selectedClass ? getCategoryFromClassName(selectedClass.name) : '-'}
-            </span>
           </div>
         </div>
       </div>

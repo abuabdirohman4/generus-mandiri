@@ -1,3 +1,18 @@
+*Update v1.7.1 - UI Fixes & Improvements*
+
+Perbaikan:
+- Attendance Class Error - Perbaikan error kelas di halaman absensi
+- Batch Import Mobile - Perbaikan visibilitas di mobile L saat batch import
+- Import Modal Header - Perbaikan header modal yang tertutup di step 2 & 3 import
+
+Peningkatan:
+- Class Display - Penambahan line break untuk tampilan sambung dan kelas yang lebih baik
+- Student Gender Filter - Filter jenis kelamin di halaman siswa
+- Student Header - Header dinamis di halaman siswa untuk kelas gabungan (menampilkan kelas yang dipilih atau "Siswa" saat semua kelas dipilih)
+- Home Page PJ - Peningkatan tampilan PJ untuk kelas gabungan di halaman home
+- Teacher Table - Text wrap untuk kolom kelas di tabel guru
+- MultiFilter Loading - Indikator loading di multifilter checkbox
+
 *Update v1.7.0 - Meeting Types & Enhanced Features*
 
 Fitur Baru:

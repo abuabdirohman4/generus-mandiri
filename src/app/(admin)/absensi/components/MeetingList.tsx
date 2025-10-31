@@ -44,12 +44,6 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
   }
   // Admin Daerah: Show Desa, Kelompok, Class
   else if (isAdminDaerahUser) {
@@ -59,48 +53,33 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
   }
   // Admin Desa: Show Kelompok, Class
   else if (isAdminDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
-  }
-  // Admin Kelompok: Show only Class
-  else if (isAdminKelompokUser) {
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
-  }
-  // Teacher: Show location + class name only if multiple classes
-  else if (isTeacherUser) {
-    // Add class name only if teacher has multiple classes
-    if (userProfile?.classes && userProfile.classes.length > 1) {
-      // Show class names for multi-class meetings
-      if (meeting.class_names && meeting.class_names.length > 1) {
-        parts.push(meeting.class_names.join(', '))
-      } else {
-        parts.push(meeting.classes.name)
-      }
-    }
   }
   
   return parts.join(', ')
+}
+
+const listGroupedClasses = (meeting: any, userProfile: any) => {
+  const isTeacherUser = userProfile?.role === 'teacher'
+  
+  if (!meeting.classes) return ''
+  
+  const parts: string[] = []
+  
+  if (meeting.class_names && meeting.class_names.length > 1) {
+    return meeting.class_names.join(', ')
+  } else {
+    if (isTeacherUser) {
+      return ''
+    } else {
+      return meeting.classes.name
+    }
+  }
 }
 
 // Helper function to check if user can edit/delete meeting
@@ -313,7 +292,7 @@ export default function MeetingList({
           .map(([date, dateMeetings]) => (
             <div key={date}>
               {/* Date Header */}
-              <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 py-2 mb-3">
+              <div className="bg-gray-50 dark:bg-gray-800 py-2 mb-3">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   {dayjs(date).format('dddd, DD MMMM YYYY')}
                 </h3>
@@ -330,63 +309,22 @@ export default function MeetingList({
                   >
                     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer relative">
                       <div className="p-4">
+                        {/* Row 1: Title (left) + Percentage & Menu (right) */}
                         <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="gap-3 mb-2">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                  {meeting.title}
-                                </h4>
-                                {meeting.class_ids && meeting.class_ids.length > 1 && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                    {meeting.class_ids.length} Kelas
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <MeetingTypeBadge 
-                                  meetingTypeCode={meeting.meeting_type_code}
-                                  isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
-                                />
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                  {formatMeetingLocation(meeting, userProfile)}
-                                </div>
-                              </div>
-                            </div>
-
-                            {meeting.topic && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                {meeting.topic}
-                              </p>
+                          <h4 className="text-lg mt-1 font-semibold text-gray-900 dark:text-white">
+                            {meeting.meeting_type_code && (
+                              <MeetingTypeBadge 
+                                meetingTypeCode={meeting.meeting_type_code}
+                                isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
+                              />
                             )}
-
-                            <div className="flex flex-wrap gap-2 md:gap-3 text-xs">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
-                                <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
-                                <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
-                                <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
-                                <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 ml-4">
-                            {/* Attendance Percentage */}
+                            {meeting.meeting_type_code ? ": " : ""}
+                            {meeting.title}
+                          </h4>
+                          <div className="flex items-center gap-2 ml-4 shrink-0">
                             <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBgColor(meeting.attendancePercentage)} ${getStatusColor(meeting.attendancePercentage)}`}>
                               {meeting.attendancePercentage}%
                             </div>
-
-                            {/* Dropdown Menu */}
                             {canEditOrDeleteMeeting(meeting, userProfile) ? (
                               <DropdownMenu
                                 items={[
@@ -414,13 +352,49 @@ export default function MeetingList({
                                   }
                                 ]}
                               />
-                            ) : (
-                              <div className="relative">
-                                <button className="p-2">
-                                  <svg className="w-5 h-5 text-gray-500"/>
-                                </button>
-                              </div>
-                            )}
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Row 2: Location */}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {formatMeetingLocation(meeting, userProfile)}
+                        </div>
+                        
+                        {/* Row 3: Class names / location */}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {meeting.class_ids && meeting.class_ids.length > 1 && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                              {meeting.class_ids.length} Kelas
+                            </span>
+                          )} 
+                          {listGroupedClasses(meeting, userProfile)}
+                        </div>
+
+                        {/* Optional topic */}
+                        {/* {meeting.topic && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            {meeting.topic}
+                          </p>
+                        )} */}
+
+                        {/* Row 4: Attendance stats */}
+                        <div className="flex flex-wrap gap-2 md:gap-3 text-xs mt-2">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
                           </div>
                         </div>
                       </div>

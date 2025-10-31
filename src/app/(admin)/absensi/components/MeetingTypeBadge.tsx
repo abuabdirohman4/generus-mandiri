@@ -17,9 +17,9 @@ const MEETING_TYPE_COLORS = {
 
 export default function MeetingTypeBadge({ meetingTypeCode, isSambungCapable }: MeetingTypeBadgeProps) {
   // Don't show if not sambung capable
-  if (isSambungCapable === false) {
-    return null
-  }
+  // if (isSambungCapable === false && isHasMultipleClasses === false) {
+  //   return null
+  // }
 
   // Don't show if no meeting type
   if (!meetingTypeCode) {
@@ -35,8 +35,9 @@ export default function MeetingTypeBadge({ meetingTypeCode, isSambungCapable }: 
     'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
 
   return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
-      {meetingType.label}
-    </span>
+    // <span className={`inline-flex items-center px-2 py-1 my-2 rounded-full text-xs font-medium ${colorClass}`}>
+    //   {meetingType.label}
+    // </span>
+    <span>{meetingType.label}</span>
   )
 }

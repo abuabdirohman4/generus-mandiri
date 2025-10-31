@@ -29,7 +29,7 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
   const buildColumns = (userProfile: UserProfile | null | undefined) => {
     const baseColumns = [
       { key: 'full_name', label: 'Nama Lengkap', sortable: true },
-      { key: 'email', label: 'Email', sortable: true },
+      // { key: 'email', label: 'Email', sortable: true },
     ];
     
     const orgColumns = [];
@@ -59,9 +59,9 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
     
     return [
       ...baseColumns,
+      { key: 'class_names', label: 'Kelas yang Diajar', widthMobile: '150px', sortable: true },
       ...orgColumns,
-      { key: 'class_names', label: 'Kelas yang Diajar', sortable: true },
-      { key: 'created_at', label: 'Dibuat', sortable: true },
+      // { key: 'created_at', label: 'Dibuat', sortable: true },
       { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
     ];
   };
