@@ -496,6 +496,18 @@ export interface AttendanceLog {
     title: string
     topic: string | null
     description: string | null
+    meeting_type_code?: string | null
+    classes?: {
+      id: string
+      name: string
+      class_master_mappings?: Array<{
+        class_master?: {
+          category?: {
+            is_sambung_capable: boolean
+          }
+        }
+      }>
+    } | null
   }
 }
 
@@ -624,7 +636,19 @@ export async function getStudentAttendanceHistory(
           id,
           title,
           topic,
-          description
+          description,
+          meeting_type_code,
+          classes (
+            id,
+            name,
+            class_master_mappings (
+              class_master:class_master_id (
+                category:category_id (
+                  is_sambung_capable
+                )
+              )
+            )
+          )
         )
       `)
       .eq('student_id', studentId)
