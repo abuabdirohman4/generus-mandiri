@@ -41,10 +41,10 @@ export default function HomePage() {
 
         <div className="relative z-10">
           {/* Top Row - User Profile and Settings */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 gap-3">
             {/* User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 flex-shrink-0">
                 <span className="text-white font-bold text-white">
                   {(() => {
                     const words = profile?.full_name?.split(' ').filter(Boolean) || [];
@@ -62,12 +62,26 @@ export default function HomePage() {
                   })()}
                 </span>
               </div>
-              <div>
-                <h2 className="text-white font-semibold text-lg">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-white font-semibold text-lg truncate">
                   {profile?.full_name || 'User'}
                 </h2>
-                <div className="flex items-center space-x-2 text-blue-200 text-sm">
-                  <span>{profile?.classes?.[0]?.name || 'No Class'}</span>
+                <div className="text-blue-200 text-sm">
+                  <span className="break-words line-clamp-2">
+                    {(() => {
+                      // For teachers with multiple classes
+                      if (profile?.role === 'teacher' && profile.classes && profile.classes.length > 1) {
+                        const classNames = profile.classes.map(c => c.name).join(', ');
+                        return `${profile.classes.length} Kelas: ${classNames}`;
+                      }
+                      // For teachers with single class
+                      if (profile?.role === 'teacher' && profile.classes?.[0]?.name) {
+                        return profile.classes[0].name;
+                      }
+                      // For admin or no class
+                      return 'No Class';
+                    })()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -76,7 +90,7 @@ export default function HomePage() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               title="Logout"
             >
               {isLoggingOut ? (

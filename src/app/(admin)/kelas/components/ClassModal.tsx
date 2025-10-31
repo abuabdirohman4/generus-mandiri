@@ -207,38 +207,23 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
           </div>
         )}
 
-        <DataFilter
-          filters={filters}
-          onFilterChange={(newFilters) => {
-            setFilters(newFilters);
-            // Sync immediately
-            if (newFilters.kelompok && newFilters.kelompok.length > 0) {
-              setFormData(prev => ({ ...prev, kelompok_id: newFilters.kelompok[0] }));
-              // Clear error
-              setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors.kelompok_id;
-                return newErrors;
-              });
-            } else {
-              setFormData(prev => ({ ...prev, kelompok_id: '' }));
-            }
-          }}
-          userProfile={userProfile}
-          daerahList={daerahList || []}
-          desaList={desaList || []}
-          kelompokList={kelompokList || []}
-          classList={[]}
-          showKelas={false}
-          variant="modal"
-          hideAllOption={true}
-          requiredFields={{
-            daerah: true,
-            desa: true,
-            kelompok: true
-          }}
-          errors={{ kelompok: errors.kelompok_id }}
-        />
+        <div>
+          <Label htmlFor="name">Nama Kelas<span className="text-red-500 ml-1">*</span></Label>
+          <InputField
+            id="name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="Masukkan nama kelas"
+            required
+            error={!!errors.name}
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.name}
+            </p>
+          )}
+        </div>
 
         <div>
           <Label>
@@ -288,23 +273,38 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
           )}
         </div>
 
-        <div>
-          <Label htmlFor="name">Nama Kelas<span className="text-red-500 ml-1">*</span></Label>
-          <InputField
-            id="name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Masukkan nama kelas"
-            required
-            error={!!errors.name}
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {errors.name}
-            </p>
-          )}
-        </div>
+        <DataFilter
+          filters={filters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+            // Sync immediately
+            if (newFilters.kelompok && newFilters.kelompok.length > 0) {
+              setFormData(prev => ({ ...prev, kelompok_id: newFilters.kelompok[0] }));
+              // Clear error
+              setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.kelompok_id;
+                return newErrors;
+              });
+            } else {
+              setFormData(prev => ({ ...prev, kelompok_id: '' }));
+            }
+          }}
+          userProfile={userProfile}
+          daerahList={daerahList || []}
+          desaList={desaList || []}
+          kelompokList={kelompokList || []}
+          classList={[]}
+          showKelas={false}
+          variant="modal"
+          hideAllOption={true}
+          requiredFields={{
+            daerah: true,
+            desa: true,
+            kelompok: true
+          }}
+          errors={{ kelompok: errors.kelompok_id }}
+        />
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button

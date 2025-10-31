@@ -46,7 +46,7 @@ export default function SiswaPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name ? (
+                {userProfile?.role === 'teacher' && userProfile.classes?.length === 1 && userProfile.classes[0]?.name ? (
                   <> {userProfile.classes[0].name}</>
                 ) : (
                   'Siswa'
