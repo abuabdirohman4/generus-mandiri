@@ -44,12 +44,6 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
   }
   // Admin Daerah: Show Desa, Kelompok, Class
   else if (isAdminDaerahUser) {
@@ -59,48 +53,33 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
   }
   // Admin Desa: Show Kelompok, Class
   else if (isAdminDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
-  }
-  // Admin Kelompok: Show only Class
-  else if (isAdminKelompokUser) {
-    // Show class names for multi-class meetings
-    if (meeting.class_names && meeting.class_names.length > 1) {
-      parts.push(meeting.class_names.join(', '))
-    } else {
-      parts.push(meeting.classes.name)
-    }
-  }
-  // Teacher: Show location + class name only if multiple classes
-  else if (isTeacherUser) {
-    // Add class name only if teacher has multiple classes
-    if (userProfile?.classes && userProfile.classes.length > 1) {
-      // Show class names for multi-class meetings
-      if (meeting.class_names && meeting.class_names.length > 1) {
-        parts.push(meeting.class_names.join(', '))
-      } else {
-        parts.push(meeting.classes.name)
-      }
-    }
   }
   
   return parts.join(', ')
+}
+
+const listGroupedClasses = (meeting: any, userProfile: any) => {
+  const isTeacherUser = userProfile?.role === 'teacher'
+  
+  if (!meeting.classes) return ''
+  
+  const parts: string[] = []
+  
+  if (meeting.class_names && meeting.class_names.length > 1) {
+    return meeting.class_names.join(', ')
+  } else {
+    if (isTeacherUser) {
+      return ''
+    } else {
+      return meeting.classes.name
+    }
+  }
 }
 
 // Helper function to check if user can edit/delete meeting
@@ -321,25 +300,29 @@ export default function MeetingCards({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {meeting.meeting_type_code && (
+                          <MeetingTypeBadge 
+                            meetingTypeCode={meeting.meeting_type_code}
+                            isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
+                          />
+                        )}
+                        {meeting.meeting_type_code ? ": " : ""}
                         {meeting.title}
                       </h4>
-                      {meeting.class_ids && meeting.class_ids.length > 1 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                          {meeting.class_ids.length} Kelas
-                        </span>
-                      )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                       {dayjs(meeting.date).format('DD MMM YYYY')}
                     </p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <MeetingTypeBadge 
-                        meetingTypeCode={meeting.meeting_type_code}
-                        isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                       {formatMeetingLocation(meeting, userProfile)}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {meeting.class_ids && meeting.class_ids.length > 1 && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                          {meeting.class_ids.length} Kelas
+                        </span>
+                      )} 
+                      {listGroupedClasses(meeting, userProfile)}
                     </p>
                   </div>
 

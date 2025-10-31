@@ -54,10 +54,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-3xl bg-white max-w-[600px] m-4";
+    : "relative w-full rounded-3xl bg-white max-w-[600px] m-4 flex flex-col max-h-[calc(100vh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-2rem)]";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999 pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
       {!isFullscreen && (
         <div
           className="fixed inset-0 h-full w-full bg-black/40 bg-opacity-30"
@@ -66,7 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses}  ${className}`}
+        className={`${contentClasses} ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
@@ -90,17 +90,15 @@ export const Modal: React.FC<ModalProps> = ({
             </svg>
           </button>
         )}
-        <div>
-          {title && (
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {title}
-              </h3>
-            </div>
-          )}
-          <div className="px-6 py-4">
-            {children}
+        {title && (
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {title}
+            </h3>
           </div>
+        )}
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4">
+          {children}
         </div>
       </div>
     </div>

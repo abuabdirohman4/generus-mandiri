@@ -283,7 +283,7 @@ export default function MeetingAttendancePage() {
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           {/* <div className="flex items-center gap-4 mb-4">
             <button
               onClick={goBack}
@@ -305,25 +305,28 @@ export default function MeetingAttendancePage() {
           </div> */}
 
           {/* Meeting Info */}
-          {/* <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+          {/* rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3 */}
+          <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3 p-4 mb-2">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {meeting.topic && (
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Topik: {meeting.topic}
-                  </h3>
+                  <div className="mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900">Topik</h3>
+                    <p className="whitespace-pre-wrap">{meeting.topic}</p>
+                  </div>
                 )}
                 {meeting.description && (
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    Deskripsi: {meeting.description}
-                  </p>
+                  <div className="text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-lg font-semibold text-gray-900">Deskripsi</p>
+                    <p className="whitespace-pre-wrap">{meeting.description}</p>
+                  </div>
                 )}
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span>{dayjs(meeting.date).format('dddd, DD MMMM YYYY')}</span>
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
 
           {/* Summary Card */}
           <SummaryCard
@@ -349,7 +352,6 @@ export default function MeetingAttendancePage() {
           showDesa={false}
           showKelompok={false}
           variant="page"
-          className="mb-4"
         />
 
         {/* Attendance Table */}
