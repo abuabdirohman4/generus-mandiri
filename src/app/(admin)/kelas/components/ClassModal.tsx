@@ -14,6 +14,7 @@ import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import DataFilter from '@/components/shared/DataFilter';
 import Button from '@/components/ui/button/Button';
+import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox';
 
 interface ClassModalProps {
   classItem: ClassWithMaster | null;
@@ -29,6 +30,7 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
     masterIds: [] as string[]
   });
   const [masters, setMasters] = useState<ClassMaster[]>([]);
+  const [mastersLoading, setMastersLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -130,11 +132,14 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
   }, [filters.kelompok]);
 
   const loadMasters = async () => {
+    setMastersLoading(true);
     try {
       const data = await getAllClassMasters();
       setMasters(data);
     } catch (error) {
       console.error('Error loading masters:', error);
+    } finally {
+      setMastersLoading(false);
     }
   };
 
@@ -226,49 +231,34 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
         </div>
 
         <div>
-          <Label>
-            Master Kelas<span className="text-red-500 ml-1">*</span>
-          </Label>
-          <div className={`space-y-2 max-h-40 overflow-y-auto border rounded p-3 ${
-            errors.masterIds 
-              ? "border-red-500 dark:border-red-500" 
-              : "border-gray-200 dark:border-gray-600"
-          }`}>
-            {masters.map(master => (
-              <label key={master.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.masterIds.includes(master.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleChange('masterIds', [...formData.masterIds, master.id]);
-                    } else {
-                      handleChange('masterIds', formData.masterIds.filter(id => id !== master.id));
-                    }
-                    // Clear error when user selects a master
-                    if (errors.masterIds) {
-                      setErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.masterIds;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  {master.name}
-                </span>
-              </label>
-            ))}
-          </div>
-          {errors.masterIds ? (
+          <MultiSelectCheckbox
+            label={
+              <>
+                Master Kelas<span className="text-red-500 ml-1">*</span>
+              </>
+            }
+            items={masters.map(m => ({ id: m.id, label: m.name }))}
+            selectedIds={formData.masterIds}
+            onChange={(ids) => {
+              handleChange('masterIds', ids);
+              // Clear error when user selects a master
+              if (errors.masterIds) {
+                setErrors(prev => {
+                  const newErrors = { ...prev };
+                  delete newErrors.masterIds;
+                  return newErrors;
+                });
+              }
+            }}
+            disabled={loading}
+            isLoading={mastersLoading}
+            error={!!errors.masterIds}
+            hint="Pilih satu atau lebih master kelas"
+            maxHeight="10rem"
+          />
+          {errors.masterIds && (
             <p className="text-sm text-red-600 dark:text-red-400 mt-1">
               {errors.masterIds}
-            </p>
-          ) : (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Pilih satu atau lebih master kelas
             </p>
           )}
         </div>
