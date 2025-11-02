@@ -15,6 +15,12 @@
 
 ## v1.8.0
 - [ ] Add Halaman Materi
+    - Master Data (Show all materi)
+    - Per Kelas
+        Per Materi (Category for info)
+        Per Sub Materi
+    - Per Hari
+        Per Materi
 
 Components
 - [x] Change All <button> to <Button> & fix loading button

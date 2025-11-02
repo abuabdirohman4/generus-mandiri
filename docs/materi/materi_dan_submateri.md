@@ -1,0 +1,259 @@
+# Pengelompokan Submateri berdasarkan 7 Materi Utama
+
+Berdasarkan data dari master.md dan submateri
+
+## Baca Huruf Al Quran
+
+- Al Quran Juz 3 beserta tajwidnya
+- Al quran juz 3 s/d 4 (beserta tajwidnya)
+- Al Quran Juz 4 beserta tajwidnya
+- Al Quran Juz 7 beserta tajwidnya
+- Al quran juz 7 s/d 8 (beserta tajwidnya)
+- Al Quran Juz 8 beserta tajwidnya
+- Al Quran Juz 12
+- Al quran juz 12 s/d 14 (beserta tajwidnya)
+- Al Quran Juz 13
+- Al Quran Juz 14
+- Al Quran Juz 18
+- Al quran juz 18 s/d 20 (beserta tajwidnya)
+- Al Quran Juz 19
+- Al Quran Juz 20
+- Al Quran Juz 21
+- Al Quran Juz 24
+- Al quran juz 24 s/d 26 (beserta tajwid dan Makhrojnya)
+- Al Quran Juz 25
+- Al Quran Juz 26
+- Al Quran Juz 30
+- Al quran juz 30 s/d Tajwid juz 30
+- Bacaan Idhar, idgham bilaghunnah
+- Bacaan mad lazim mutsaqol kalimi dan mad lazim muhoffaf harfi
+- Cara membaca huruf-huruf bersukun
+- Cara membaca Iqlab
+- Cara Membaca Qolqolah
+- Cara membaca qolqolah s/d Tanda-tanda Waqof
+- Hukum Isti'adzah dan Basmalah
+- Hukum Mim Sukun
+- Hukum nun sukun dan tanwin
+- Hukummim tasydid dan nun tasydid
+- K. Ahkam (hal 1 sd 124)
+- K. Sholah (1-75)
+- Melafalkan huruf hijaiyah
+- Membaca angka arab
+- Membaca huruf hijaiyah dengan tanda baca fathah
+- Menderes Harian
+- Mengucapkan 2 huruf hijaiyah
+- Tajwid
+- Tajwid (Hukum Makhorijul Huruf)
+- Tajwid (Mempraktikkan tajwid yang ada di juz 30)
+- Tanda-tanda Waqof
+
+## Tulis Huruf Arab
+
+- Al Quran Juz 7
+- Al Quran Juz 7 s/d 8
+- Al Quran Juz 8
+- Al Quran Juz 10
+- Al Quran Juz 11
+- Al Quran Juz 21
+- Al Quran Juz 23
+- Al Quran Juz 25
+- K. Adab (Hal 1-96)
+- K. Ahkam (hal 1 sd 124)
+- K. Da'wat (Hal 1 sd 65)
+- K. Sholah (1-75)
+- Kitabu janaiz (hal 1 sd 78)
+- Latihan makna pegon dan kode-kodenya dengan menggunakan mushaf
+- Menulis angka arab
+- Menulis huruf sambung (di depan, tengah, dan belakang)
+- Menulis huruf tunggal fathah
+- Menulis huruf tunggal fathah- menulis huruf sambung
+- Menulis huruf tunggal hijaiyah
+- Menulis kata Arab baku/potongan ayat
+- Menulis Kata Arab baku/potongan ayat
+- Menulis rangkaian kata
+- Menulis rangkaian kata - menulis kata arab baku / potongan ayat
+- Terampil menulis Arab
+- Terampil menulis Arab s/d terampil menulis pegon
+- Terampil menulis makna pegon
+
+## Hafalan surat pendek
+
+- Dalil 4 RB
+- Dalil 5 Bab
+- Dalil 6 TL
+- Dalil tentang 5 bab
+- Dalil Wajibnya BerJm
+- Surat Abasa
+- Surat Abasa s/d dalil 4 RB
+- Surat Ad Dhuha
+- Surat Ad Dhuha s/d Surat Al lail
+- Surat Al Alaq
+- Surat Al Ashr
+- Surat Al Bayyinah
+- Surat Al Buruj
+- Surat Al Fajr
+- Surat Al Fajr s/d Surat Al Ghoosiyah
+- Surat Al Falaq
+- Surat Al Fatihah
+- Surat Al Fatihah-Surat Al Kafirun
+- Surat Al Fil
+- Surat Al Ghoosiyah
+- Surat Al Humazah
+- Surat Al Ikhlas
+- Surat Al Kafirun
+- Surat Al Kautsar
+- Surat Al Kautsar-Al Ashr
+- Surat Al Lail
+- Surat Al Ma'un
+- Surat Al Masad
+- Surat Al Mulk
+- Surat Al Muthaffifin
+- Surat Al Qoriah
+- Surat Al-Mu'minun 1-11
+- Surat Al-Mulk
+- Surat Al-Mulk s/d dalil 5 Bab
+- Surat An Nas
+- Surat An Nasr
+- Surat An Naziat
+- Surat At Takatsur
+- Surat At Takatsur - Surat Az Zalzalah
+- Surat Quraisy
+
+## Hafalan Doa Harian
+
+- "Menjaga dan mempraktikkan doa-doa
+- AH 1-10
+- AH 1-20 - Doa masuk dan keluar WC
+- AH 21-30
+- AH 21-30 - Doa memakai pakaian
+- AH 41-50
+- AH 41-50 s/d Doa Mohon Kesehatan
+- AH 61-70
+- AH 61-70 s/d Doa Naik Kendaraan
+- AH 81-99
+- AH 81-99 s/d Kumpulan doa-doa Nabi Muhammad SAW
+- Dalil 5 Syarat Kerukunan
+- Dalil tentang wajibnya berjamaah
+- Doa dan Dzikir kepada Allah
+- Doa Kebaikan Dunia dan Akhirat
+- Doa ketetapan iman
+- Doa Ketika akan makan dan selesai makan
+- Doa Ketika bertempat di tempat yang baru
+- Doa ketika memakai pakaian baru
+- Doa ketika menjenguk orang yang sakit
+- Doa ketika naik kendaraan
+- Doa ketika takut pada orang kafir
+- Doa Masuk dan Keluar WC
+- Doa memakai pakaian
+- Doa minta dimudahkan dalam segala urusan
+- Doa minta dimudahkan dalam segala urusan s/d Doa minta dipilihkan sesuatu yang baik
+- Doa minta dipilihkan sesuatu yang baik
+- Doa minta ilham baik
+- Doa minta ilmu
+- Doa Mohon Kesabaran
+- Doa Mohon Kesehatan
+- Doa perlindungan dari penganiayaan
+- Doa perlindungan dari penganiayaan s/d Doa Ketika bertempat di tempat yang baru
+- Doa sebelum dan bangun tidur
+- Doa Sujud Al Quran
+- Doa Untuk Ortu
+- Kumpulan doa Nabi Muhammad
+- Menjaga dan mempraktikkan doa-doa
+- Menjaga dan mempraktikkan doa-doa yang telah dihafal
+
+## Materi Dasar Keagamaan
+
+- "Dasar-dasar aqidah s/d Pengetahuan
+- Dasar-Dasar Aqidah
+- Dasar-Dasar Aqidah (Pengulangan)
+- Dasar-dasar aqidah - Pengertian QHJ
+- Dasar-dasar aqidah - Pengetahuan wajibnya taat dan haromnya maksiat
+- Dasar-dasar aqidah - Thoharoh & solat
+- Dasar-dasar aqidah s/d Pengetahuan
+- Dasar-dasar aqidah s/d Pengetahuan hukum halal-haram
+- Ilmu Manqul, Musnad, Muttashil
+- Kemurnian Ibadah
+- Pengertian QHJ
+- Pengertian Qur’an Hadits Jama’ah
+- Pengetahuan hukum halal-haram
+- Pengetahuan wajibnya taat dan haromnya maksiat
+- Rukun Iman, Islam, dan Ihsan
+- Rukun Iman, Rukun Islam, dan Ihsan
+- Thoharoh dan solat
+
+## Praktik Ibadah
+
+- "Mempraktikkan doa dan sholat malam/sholat tahajjud s/d Mempraktikkan doa-doa yang telah
+- mempraktikkan dhuha s/d mempraktikkan mandi junub
+- Mempraktikkan doa dan sholat malam/sholat tahajjud
+- Mempraktikkan doa dan sholat malam/sholat tahajjud s/d Mempraktikkan doa-doa yang telah
+- Mempraktikkan doa-doa yang telah dihafal
+- Mempraktikkan dzikir dan doa setiap selesai sholat
+- Mempraktikkan mandi junub
+- Mempraktikkan menjaga diri dari lahan, kemaksiyatan, dan keharoman
+- Mempraktikkan menjaga kesucian (mengenal suci dan najis)
+- Mempraktikkan puasa Romadhon
+- Mempraktikkan puasa sunah
+- Mempraktikkan puasa sunah s/d 2. Mempraktikkan doa-doa yang telah dihafal
+- Mempraktikkan rutin membaca Al-Quran
+- Mempraktikkan rutin membaca Al-Quran Mempraktikkan doa-doa yang telah dihafal
+- Mempraktikkan sholat beserta bacaan dan doanya
+- Mempraktikkan sholat beserta bacaan dan doanya, serta menjaga tuma’ninah dan kekhusyu’annya
+- Mempraktikkan sholat beserta bacaan dan doanya, serta menjaga tuma’ninah dan kekhusyu’annya s/d Mempraktikkan rutin membaca Al-Quran Mempraktikkan doa-doa yang telah dihafal
+- Mempraktikkan sholat dhuha
+- Mempraktikkan sholat sunnah rowatib
+- Mempraktikkan sholat tasbih
+- Mempraktikkan sholat tasbih s/d Mempraktikkan doa-doa yang telah dihafal
+- Mempraktikkan wudu dan doa sebelum dan sesudah wudu
+- Mempraktikkan wudu dan doa sebelum dan sesudah wudu - Mempraktikkan menjaga kesucian (mengenal suci dan najis)
+- Praktek doa
+- Praktek dzikir dan doa setelah sholat
+- Praktek dzikir dan doa setelah sholat - Praktik Doa
+- Praktek puasa Ramadhan
+- Sholat sunnah rawatib s/d doa-doa yang telah dihafal
+
+## Adab
+
+- "Bertamu/Diajak Bertamu Dan Kedatangan
+- "Menghormati Guru Dan Muballigh-
+- "Ta’dim Dan Berbuat Baik Kepada Kedua
+- "Ta’dim Dan Berbuat Baik Kepada Kedua Orangtua s/d Bertamu/diajak bertamu
+- Bergaul dengan teman
+- Bergaul Dengan Teman
+- Bersepeda
+- Bertamu/Diajak Bertamu Dan Kedatangan
+- Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+- Bertamu/diajak bertamu dan kedatangan tamu
+- Ketika Di Masjid
+- Ketika Di Tempat Pengajian Dan Sekolah
+- Ketika makan bersama
+- Menghormati Guru Dan Muballigh-
+- Menghormati guru dan muballigh- muballighot
+- Menghormati Guru Dan Muballigh- Muballighot
+- Menghormati Saudara Yang Lebih Tua Dan Menyayangi Saudara Yang Lebih Muda
+- Menghormati saudara yang lebih tua dan menyayangi saudara yang lebih muda
+- Tata krama berbicara dengan ulil amri
+- Tata krama berpakaian
+- Tata krama bertamu
+- Tata krama bertamu - Tata krama berpakaian
+- Tata krama kerabat s/d ketika makan bersama
+- Tata krama Ulil Amri - Tata krama berpakaian
+- Tatakram kepada orang tua
+- Tatakrama kepada orang tua
+- Ta’dim Dan Berbuat Baik Kepada Kedua
+- Ta’dim Dan Berbuat Baik Kepada Kedua Orangtua
+- Ta’dim dan berbuat baik kepada kedua orangtua - Bergaul dengan teman
+- Ta’dim Dan Berbuat Baik Kepada Kedua Orangtua s/d Bertamu/diajak bertamu
+- Ta’dim Dan Berbuat Baik Kepada Kedua Orangtua s/d Bertamu/diajak bertamu dan kedatangan tamu
+- Ta’dim Dan Berbuat Baik Kepada Kedua Orangtua s/d Ulil Amri
+- Terhadap kerabat
+- Terhadap Lingkungan Dan Alam Sekitar
+- Terhadap tetangga
+- Terhadap Ulil Amri
+- USIA SD 1
+- USIA SD 2
+- USIA SD 3
+- USIA SD 4
+- USIA SD 5
+- USIA SD 6
+

@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ClassMaster, Semester, Month, Week, DayOfWeek, LearningMaterial } from '../types'
+import { useState } from 'react'
+import { ClassMaster, Semester, Month, Week, DayOfWeek } from '../types'
 import SemesterTabs from './SemesterTabs'
 import MonthTabs from './MonthTabs'
 import WeekTabs from './WeekTabs'
 import DayTabs from './DayTabs'
 import MaterialContent from './MaterialContent'
-import { getLearningMaterial } from '../actions'
 import DataFilter from '@/components/shared/DataFilter'
 
 interface MaterialsLayoutProps {
@@ -28,38 +27,9 @@ export default function MaterialsLayout({ classMasters, userProfile }: Materials
   const [month, setMonth] = useState<Month>(1)
   const [week, setWeek] = useState<Week>(1)
   const [day, setDay] = useState<DayOfWeek>(1)
-  
-  const [material, setMaterial] = useState<LearningMaterial | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
   // Get selected class from filters
   const selectedClass = classMasters.find(cm => filters.kelas.includes(cm.id)) || classMasters[0] || null
-
-  // Fetch material when filters change
-  useEffect(() => {
-    if (!selectedClass) return
-
-    const fetchMaterial = async () => {
-      setIsLoading(true)
-      try {
-        const data = await getLearningMaterial({
-          classMasterId: selectedClass.id,
-          semester,
-          month,
-          week,
-          dayOfWeek: day
-        })
-        setMaterial(data)
-      } catch (error) {
-        console.error('Error fetching material:', error)
-        setMaterial(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchMaterial()
-  }, [selectedClass, semester, month, week, day])
 
   // Reset month when semester changes
   const handleSemesterChange = (newSemester: Semester) => {
@@ -132,8 +102,6 @@ export default function MaterialsLayout({ classMasters, userProfile }: Materials
       
       {/* Content Display */}
       <MaterialContent 
-        material={material}
-        isLoading={isLoading}
         selectedDate={{ semester, month, week, day }}
         classMasterId={selectedClass?.id}
       />
