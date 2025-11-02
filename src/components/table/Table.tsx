@@ -8,6 +8,8 @@ interface Column {
   label: string
   width?: string
   widthMobile?: string
+  maxWidth?: string
+  maxWidthMobile?: string
   align?: 'left' | 'center' | 'right'
   className?: string
   sortable?: boolean
@@ -300,15 +302,23 @@ export default function DataTable({
                       key={column.key}
                       onClick={() => isSortable(column) && handleSort(column.key)}
                       className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
-                      style={column.width ? {
-                        width: column.width,
-                        minWidth: column.width,
-                        maxWidth: column.width
-                      } : (column.widthMobile && isMobile) ? {
-                        width: column.widthMobile,
-                        minWidth: column.widthMobile,
-                        maxWidth: column.widthMobile
-                      } : {}}
+                      style={(() => {
+                        const baseStyle: React.CSSProperties = {};
+                        
+                        if (column.width) {
+                          baseStyle.width = column.width;
+                          baseStyle.minWidth = column.width;
+                          baseStyle.maxWidth = column.maxWidth || column.width;
+                        } else if (column.widthMobile && isMobile) {
+                          baseStyle.width = column.widthMobile;
+                          baseStyle.minWidth = column.widthMobile;
+                          baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                        } else if (column.maxWidth) {
+                          baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
+                        }
+                        
+                        return baseStyle;
+                      })()}
                     >
                       <div className={`flex items-center gap-2 ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : 'justify-start'}`}>
                         {column.label}
@@ -353,15 +363,23 @@ export default function DataTable({
                           <td
                             key={column.key}
                             className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
-                            style={column.width ? {
-                              width: column.width,
-                              minWidth: column.width,
-                              maxWidth: column.width
-                            } : (column.widthMobile && isMobile) ? {
-                              width: column.widthMobile,
-                              minWidth: column.widthMobile,
-                              maxWidth: column.widthMobile
-                            } : {}}
+                            style={(() => {
+                              const baseStyle: React.CSSProperties = {};
+                              
+                              if (column.width) {
+                                baseStyle.width = column.width;
+                                baseStyle.minWidth = column.width;
+                                baseStyle.maxWidth = column.maxWidth || column.width;
+                              } else if (column.widthMobile && isMobile) {
+                                baseStyle.width = column.widthMobile;
+                                baseStyle.minWidth = column.widthMobile;
+                                baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                              } else if (column.maxWidth) {
+                                baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
+                              }
+                              
+                              return baseStyle;
+                            })()}
                           >
                             {(() => {
                               const isLoadingRow = loadingRowId && String(rowId) === String(loadingRowId)

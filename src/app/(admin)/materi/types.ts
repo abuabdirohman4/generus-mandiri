@@ -1,49 +1,82 @@
-export interface SimpleMaterialSection {
-  id?: string;
-  title: string;
-  content: string;
-}
-
-export interface DayMaterial {
-  class_master_id: string;
-  semester: number;
-  month: number;
-  week: number;
-  day_of_week: number; // 1-6 (Senin-Sabtu)
-  content: SimpleMaterialSection;
-}
-
 // Types for existing components
 export interface ClassMaster {
   id: string;
   name: string;
 }
 
-export type Semester = 1 | 2;
-export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-export type Week = 1 | 2 | 3 | 4;
-export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6;
+// New flexible material structure types
+export interface MaterialCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
 
-export interface LearningMaterial {
+export interface MaterialType {
+  id: string;
+  category_id: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  category?: MaterialCategory;
+}
+
+export interface MaterialItem {
+  id: string;
+  material_type_id: string;
+  name: string;
+  description: string | null;
+  content: string | null;
+  created_at: string;
+  updated_at: string;
+  material_type?: MaterialType;
+  classes?: ClassMaster[]; // Classes this item is mapped to
+}
+
+export interface MaterialItemClass {
+  id: string;
+  material_item_id: string;
+  class_master_id: string;
+  created_at: string;
+  updated_at: string;
+  material_item?: MaterialItem;
+  class_master?: ClassMaster;
+}
+
+export interface DayMaterialAssignment {
   id: string;
   class_master_id: string;
   semester: number;
   month: number;
   week: number;
   day_of_week: number;
-  content: {
-    quran?: string | { title?: string; items?: string[] };
-    hafalan?: string | { title?: string; items?: string[] };
-    doa?: string | { title?: string; items?: string[] };
-    akhlaq?: string | { title?: string; items?: string[] };
-    hadits?: string | { title?: string; items?: string[] };
-    kamis?: string | { title?: string; items?: string[] };
-    jumat?: string | { title?: string; items?: string[] };
-    sabtu?: string | { title?: string; items?: string[] };
-  };
+  material_type_id: string;
+  notes: string | null;
   created_at: string;
   updated_at: string;
+  material_type?: MaterialType;
+  items?: DayMaterialItem[];
 }
+
+export interface DayMaterialItem {
+  id: string;
+  assignment_id: string;
+  material_item_id: string;
+  display_order: number;
+  custom_content: string | null;
+  created_at: string;
+  updated_at: string;
+  material_item?: MaterialItem;
+}
+
+export type Semester = 1 | 2;
+export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type Week = 1 | 2 | 3 | 4;
+export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6;
 
 // Utility functions
 export function getDayName(day: DayOfWeek): string {
