@@ -16,6 +16,9 @@
 ## v1.8.0
 - [ ] Add Halaman Materi
 
+## v1.8.0
+- [x] Add Filter Gender on Laporan
+
 Components
 - [x] Change All <button> to <Button>
 

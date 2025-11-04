@@ -63,6 +63,7 @@ export interface ReportFilters {
   // Detailed mode filters - Period-specific
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
+  gender?: string
   
   // Daily filters
   startDate?: string
@@ -270,6 +271,11 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     if (filters.classId) {
       const classIds = filters.classId.split(',')
       query = query.in('students.class_id', classIds)
+    }
+
+    // Apply gender filter
+    if (filters.gender) {
+      query = query.eq('students.gender', filters.gender)
     }
 
     // Apply date filter
