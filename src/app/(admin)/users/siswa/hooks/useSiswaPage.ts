@@ -160,10 +160,14 @@ export function useSiswaPage() {
   const filteredStudents = useMemo(() => {
     let result = students || []
     
-    // For teachers, filter by their assigned classes
+    // For teachers, filter by their assigned classes (support multiple classes per student)
     if (userProfile?.role === 'teacher' && userProfile.classes?.length) {
       const teacherClassIds = userProfile.classes.map(c => c.id)
-      result = result.filter(s => teacherClassIds.includes(s.class_id))
+      result = result.filter(s => {
+        // Check if student has at least one class that matches teacher's classes
+        const studentClassIds = (s.classes || []).map(c => c.id)
+        return studentClassIds.some(classId => teacherClassIds.includes(classId))
+      })
     }
     
     // Apply data filters
@@ -178,8 +182,14 @@ export function useSiswaPage() {
     }
     if (dataFilters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
+      // Filter by checking if student has at least one class in selected classes
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
-      result = result.filter(s => selectedClassIds.includes(s.class_id))
+      result = result.filter(s => {
+        const studentClassIds = (s.classes || []).map(c => c.id)
+        // Also check class_id for backward compatibility
+        const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
+        return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+      })
     }
     // Apply gender filter
     if (dataFilters.gender && dataFilters.gender !== '') {

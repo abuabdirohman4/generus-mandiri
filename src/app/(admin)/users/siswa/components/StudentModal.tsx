@@ -7,17 +7,7 @@ import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
 import InputFilter from '@/components/form/input/InputFilter'
 import { isAdminLegacy } from '@/lib/userUtils'
-
-interface Student {
-  id: string
-  name: string
-  gender: string | null
-  class_id: string
-  classes: {
-    id: string
-    name: string
-  } | null
-}
+import type { Student } from '../actions'
 
 interface Class {
   id: string
@@ -28,7 +18,7 @@ interface StudentModalProps {
   isOpen: boolean
   onClose: () => void
   mode: 'create' | 'edit'
-  student?: Student | null
+  student?: Student | null | undefined
   userProfile: { 
     role: string; 
     classes?: Array<{ id: string; name: string }> 

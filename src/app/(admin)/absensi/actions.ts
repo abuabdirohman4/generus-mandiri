@@ -101,9 +101,8 @@ export async function getAttendanceByDate(date: string) {
           id,
           name,
           gender,
-          classes (
-            id,
-            name
+          student_classes(
+            classes:class_id(id, name)
           )
         )
       `)
@@ -190,18 +189,35 @@ export async function createMeeting(data: CreateMeetingData) {
       }
     }
 
-    // Get students for all selected classes to create snapshot
+    // Get students for all selected classes to create snapshot (via junction table)
+    const { data: studentClassData, error: studentClassError } = await supabase
+      .from('student_classes')
+      .select('student_id')
+      .in('class_id', data.classIds)
+
+    if (studentClassError) {
+      return { success: false, error: studentClassError.message }
+    }
+
+    if (!studentClassData || studentClassData.length === 0) {
+      return { success: false, error: 'No students found in selected classes' }
+    }
+
+    // Get unique student IDs (a student might be in multiple selected classes)
+    const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+    
+    // Verify students exist
     const { data: students, error: studentsError } = await supabase
       .from('students')
       .select('id')
-      .in('class_id', data.classIds)
+      .in('id', uniqueStudentIds)
 
     if (studentsError) {
       return { success: false, error: studentsError.message }
     }
 
     if (!students || students.length === 0) {
-      return { success: false, error: 'No students found in this class' }
+      return { success: false, error: 'No students found in selected classes' }
     }
 
     // Generate meeting number (highest from all classes + 1)
@@ -574,9 +590,8 @@ export async function getAttendanceByMeeting(meetingId: string) {
           id,
           name,
           gender,
-          classes (
-            id,
-            name
+          student_classes(
+            classes:class_id(id, name)
           )
         )
       `)
@@ -750,14 +765,25 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
         })
 
+        // Query students with junction table for multiple classes support
         const { data: studentClassData } = await supabase
           .from('students')
-          .select('id, class_id')
+          .select(`
+            id,
+            student_classes(
+              classes:class_id(id)
+            )
+          `)
           .in('id', Array.from(allStudentIds))
 
-        const studentToClassMap = new Map<string, string>()
+        const studentToClassMap = new Map<string, string[]>()
         if (studentClassData) {
-          studentClassData.forEach(s => studentToClassMap.set(s.id, s.class_id))
+          studentClassData.forEach(s => {
+            const classIds = (s.student_classes || [])
+              .map((sc: any) => sc.classes?.id)
+              .filter(Boolean)
+            studentToClassMap.set(s.id, classIds)
+          })
         }
 
         // Process meetings with stats
@@ -765,11 +791,12 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           let meetingAttendance = attendanceByMeeting[meeting.id] || []
           let relevantStudentIds = meeting.student_snapshot
           
-          // For teachers: filter to only their class students
+          // For teachers: filter to only their class students (support multiple classes)
           if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0) {
             relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
-              const studentClassId = studentToClassMap.get(studentId)
-              return studentClassId && teacherClassIdsTeacher.includes(studentClassId)
+              const studentClassIds = studentToClassMap.get(studentId) || []
+              // Check if student has at least one class that matches teacher's classes
+              return studentClassIds.some(classId => teacherClassIdsTeacher.includes(classId))
             })
             
             // Filter attendance to only relevant students

@@ -69,14 +69,23 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
       const studentId = studentData?.id || `temp-${index}-${record.student_id}`
       const studentName = studentData?.name || 'Unknown Student'
       
+      // Extract classes from junction table (support multiple classes)
+      const studentClasses = studentData?.student_classes || []
+      const classesArray = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+      
+      // Get primary class (first class) for display
+      const primaryClass = classesArray[0] || null
+      
       // Only add if we have a valid student ID or can generate one
       if (studentId && studentId !== '') {
         students.push({
           id: studentId,
           name: studentName,
           gender: studentData?.gender || 'L', // Default to 'L' for Laki-laki
-          class_name: studentData?.classes?.name || 'Unknown Class',
-          class_id: studentData?.classes?.id || ''
+          class_name: primaryClass?.name || 'Unknown Class',
+          class_id: primaryClass?.id || ''
         })
       }
     })
@@ -89,16 +98,15 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       
-      // Fetch student details from the snapshot IDs
+      // Fetch student details from the snapshot IDs with junction table for multiple classes
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select(`
           id,
           name,
           gender,
-          classes!inner(
-            id,
-            name
+          student_classes(
+            classes:class_id(id, name)
           )
         `)
         .in('id', meetingResult.data.student_snapshot)
@@ -111,12 +119,21 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
 
       if (studentData) {
         studentData.forEach((student: any) => {
+          // Extract classes from junction table
+          const studentClasses = student.student_classes || []
+          const classesArray = studentClasses
+            .map((sc: any) => sc.classes)
+            .filter(Boolean)
+          
+          // Get primary class (first class) for display
+          const primaryClass = classesArray[0] || null
+          
           students.push({
             id: student.id,
             name: student.name,
-            gender: student.gender,
-            class_name: student.classes.name,
-            class_id: student.classes.id
+            gender: student.gender || 'L',
+            class_name: primaryClass?.name || 'Unknown Class',
+            class_id: primaryClass?.id || ''
           })
         })
       }
