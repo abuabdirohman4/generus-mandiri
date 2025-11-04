@@ -132,7 +132,11 @@ export default function StudentsTable({
       id: student.id,
       name: student.name,
       gender: student.gender || '-',
-      class_name: student.class_name || '-',
+      class_name: student.classes && student.classes.length > 0
+        ? student.classes.length > 1
+          ? `${student.classes[0].name} (+${student.classes.length - 1})`
+          : student.classes[0].name
+        : student.class_name || '-',
       daerah_name: student.daerah_name || '-',
       desa_name: student.desa_name || '-',
       kelompok_name: student.kelompok_name || '-',

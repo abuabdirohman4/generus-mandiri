@@ -2,22 +2,10 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Student } from '../actions'
 
-interface Student {
-  id: string
-  name: string
-  gender: string | null
-  class_id: string
-  created_at: string
-  updated_at: string
-  kelompok_id?: string | null
-  desa_id?: string | null
-  daerah_id?: string | null
-  classes: {
-    id: string
-    name: string
-  } | null
-}
+// Re-export Student type for use in store
+export type { Student }
 
 interface DataFilters {
   daerah: string[]

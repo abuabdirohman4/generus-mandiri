@@ -116,6 +116,14 @@ export interface ReportData {
     alpha: number
     attendance_rate: number
   }>
+  meetings?: Array<{
+    id: string
+    title: string
+    date: string
+    student_snapshot: string[]
+    class_id: string
+    class_ids?: string[]
+  }>
   period: string
   dateRange: {
     start: string | null
@@ -245,7 +253,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }
 
 
-    // Build query
+    // Build query with junction table for multiple classes support
     let query = supabase
       .from('attendance_logs')
       .select(`
@@ -259,17 +267,39 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           id,
           name,
           gender,
-          classes!inner(
-            id,
-            name
+          student_classes(
+            classes:class_id(id, name)
           )
         )
       `)
 
-    // Apply filters
+    // Apply filters - filter via junction table for multiple classes
     if (filters.classId) {
       const classIds = filters.classId.split(',')
-      query = query.in('students.class_id', classIds)
+      // Query students that have at least one of the selected classes via junction table
+      const { data: studentClassData } = await supabase
+        .from('student_classes')
+        .select('student_id')
+        .in('class_id', classIds)
+      
+      if (studentClassData && studentClassData.length > 0) {
+        const studentIds = studentClassData.map(sc => sc.student_id)
+        query = query.in('student_id', studentIds)
+      } else {
+        // If no students found in selected classes, return empty result
+        return {
+          summary: { total: 0, hadir: 0, izin: 0, sakit: 0, alpha: 0 },
+          chartData: [],
+          trendChartData: [],
+          detailedRecords: [],
+          meetings: [],
+          period: filters.period || 'daily',
+          dateRange: {
+            start: dateFilter.date?.gte || null,
+            end: dateFilter.date?.lte || null
+          }
+        }
+      }
     }
 
     // Apply date filter
@@ -307,16 +337,19 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Fetch meetings for the date range to ensure all meetings appear in chart
     const { data: meetings } = await supabase
       .from('meetings')
-      .select('id, title, date, student_snapshot, class_id')
+      .select('id, title, date, student_snapshot, class_id, class_ids')
       .gte('date', dateFilter.date?.gte || '1900-01-01')
       .lte('date', dateFilter.date?.lte || '2100-12-31')
       .order('date')
 
-    // Apply class filter to meetings if specified
+    // Apply class filter to meetings if specified - support multiple classes per meeting
     const filteredMeetings = filters.classId 
-      ? meetings?.filter(meeting => {
+      ? meetings?.filter((meeting: any) => {
           const classIds = filters.classId!.split(',')
-          return classIds.includes(meeting.class_id)
+          // Check if meeting's class_ids array contains any of the selected classes
+          // Also check class_id for backward compatibility
+          const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
+          return meetingClassIds.some((id: string) => classIds.includes(id))
         }) || []
       : meetings || []
 
@@ -477,12 +510,41 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Group by student for detailed view
     const studentSummary = attendanceLogs?.reduce((acc: any, log: any) => {
       const studentId = log.student_id
+      
+      // Extract classes from junction table (support multiple classes)
+      // Structure: log.students.student_classes is an array of objects with 'classes' property
+      const studentClasses = log.students?.student_classes || []
+      let classesArray: any[] = []
+      
+      // Handle both array and single object responses from Supabase
+      if (Array.isArray(studentClasses)) {
+        classesArray = studentClasses
+          .map((sc: any) => {
+            // Handle nested structure: sc.classes might be the class object directly
+            if (sc.classes && typeof sc.classes === 'object') {
+              return sc.classes
+            }
+            return sc
+          })
+          .filter((cls: any) => cls && cls.id && cls.name)
+      } else if (studentClasses && typeof studentClasses === 'object') {
+        // Handle single object case
+        if (studentClasses.classes) {
+          classesArray = [studentClasses.classes]
+        } else {
+          classesArray = [studentClasses]
+        }
+      }
+      
+      // Get primary class (first class) for display
+      const primaryClass = classesArray[0] || null
+      
       if (!acc[studentId]) {
         acc[studentId] = {
           student_id: studentId,
-          student_name: log.students.name,
-          student_gender: log.students.gender,
-          class_name: log.students.classes.name,
+          student_name: log.students?.name || 'Unknown Student',
+          student_gender: log.students?.gender || null,
+          class_name: primaryClass?.name || 'Unknown Class',
           total_days: 0,
           hadir: 0,
           izin: 0,

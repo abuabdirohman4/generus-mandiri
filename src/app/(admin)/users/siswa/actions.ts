@@ -9,21 +9,21 @@ export interface Student {
   id: string
   name: string
   gender: string | null
-  class_id: string
+  class_id?: string | null // Optional untuk backward compatibility
   created_at: string
   updated_at: string
   category?: string | null
   kelompok_id?: string | null
   desa_id?: string | null
   daerah_id?: string | null
-  classes: {
+  classes: Array<{
     id: string
     name: string
-  } | null
+  }> // Changed from single object to array for multiple classes support
   daerah_name?: string
   desa_name?: string
   kelompok_name?: string
-  class_name?: string
+  class_name?: string // Primary class name (first class) untuk backward compatibility
 }
 
 
@@ -77,12 +77,13 @@ export async function getUserProfile() {
 }
 
 /**
- * Mendapatkan daftar siswa dengan informasi kelas
+ * Mendapatkan daftar siswa dengan informasi kelas (mendukung multiple classes via junction table)
  */
 export async function getAllStudents(classId?: string): Promise<Student[]> {
   try {
     const supabase = await createClient()
     
+    // Query dengan junction table student_classes untuk support multiple classes
     let query = supabase
       .from('students')
       .select(`
@@ -95,7 +96,9 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         daerah_id,
         created_at,
         updated_at,
-        classes (id, name),
+        student_classes(
+          classes:class_id(id, name)
+        ),
         daerah:daerah_id(name),
         desa:desa_id(name),
         kelompok:kelompok_id(name)
@@ -103,9 +106,22 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
       .order('name')
 
     // Filter by class if classId provided
+    // Filter via junction table untuk support multiple classes
     if (classId) {
       const classIds = classId.split(',')
-      query = query.in('class_id', classIds)
+      // Query students yang punya class di junction table
+      const { data: studentClassData } = await supabase
+        .from('student_classes')
+        .select('student_id')
+        .in('class_id', classIds)
+      
+      if (studentClassData && studentClassData.length > 0) {
+        const studentIds = studentClassData.map(sc => sc.student_id)
+        query = query.in('id', studentIds)
+      } else {
+        // Jika tidak ada siswa di kelas tersebut, return empty array
+        return []
+      }
     }
 
     const { data: students, error } = await query
@@ -114,16 +130,26 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
       throw error
     }
 
-    // Transform data (same logic as in useStudents hook)
+    // Transform data dengan support untuk multiple classes
     return (students || []).map(student => {
-      const classesData = Array.isArray(student.classes) ? student.classes[0] || null : student.classes
+      // Extract classes dari junction table
+      const studentClasses = student.student_classes || []
+      const classesArray = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: String(cls.id || ''),
+          name: String(cls.name || '')
+        }))
+
+      // Get primary class (first class) untuk backward compatibility
+      const primaryClass = classesArray[0] || null
+      
       return {
         ...student,
-        classes: classesData ? {
-          id: String(classesData.id || ''),
-          name: String(classesData.name || '')
-        } : null,
-        class_name: classesData?.name || '',
+        classes: classesArray,
+        class_id: primaryClass?.id || student.class_id || null,
+        class_name: primaryClass?.name || '',
         daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
         desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
         kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || ''
@@ -224,6 +250,23 @@ export async function createStudent(formData: FormData) {
       throw error
     }
 
+    // Also insert ke junction table untuk support multiple classes
+    if (newStudent?.id) {
+      const { error: junctionError } = await supabase
+        .from('student_classes')
+        .insert({
+          student_id: newStudent.id,
+          class_id: classId
+        })
+        .select()
+
+      // Ignore duplicate error (UNIQUE constraint)
+      if (junctionError && junctionError.code !== '23505') {
+        console.error('Error inserting to junction table:', junctionError)
+        // Don't throw, karena student sudah dibuat dan ini hanya untuk multiple classes support
+      }
+    }
+
     revalidatePath('/users/siswa')
     return { success: true, student: newStudent }
   } catch (error) {
@@ -290,6 +333,34 @@ export async function updateStudent(studentId: string, formData: FormData) {
         throw new Error('Siswa tidak ditemukan')
       }
       throw error
+    }
+
+    // Also sync dengan junction table untuk support multiple classes
+    if (updatedStudent?.id) {
+      // Check apakah sudah ada di junction table
+      const { data: existingJunction } = await supabase
+        .from('student_classes')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('class_id', classId)
+        .single()
+
+      // Jika belum ada, insert ke junction table
+      if (!existingJunction) {
+        const { error: junctionError } = await supabase
+          .from('student_classes')
+          .insert({
+            student_id: studentId,
+            class_id: classId
+          })
+          .select()
+
+        // Ignore duplicate error (UNIQUE constraint)
+        if (junctionError && junctionError.code !== '23505') {
+          console.error('Error inserting to junction table:', junctionError)
+          // Don't throw, karena student sudah diupdate
+        }
+      }
     }
 
     revalidatePath('/users/siswa')
@@ -360,6 +431,107 @@ export async function deleteStudent(studentId: string) {
     return { success: true }
   } catch (error) {
     handleApiError(error, 'menghapus data', 'Gagal menghapus siswa')
+    throw error
+  }
+}
+
+/**
+ * Helper: Mendapatkan semua kelas siswa berdasarkan studentId
+ */
+export async function getStudentClasses(studentId: string): Promise<Array<{ id: string; name: string }>> {
+  try {
+    const supabase = await createClient()
+    
+    const { data: studentClasses, error } = await supabase
+      .from('student_classes')
+      .select(`
+        classes:class_id(id, name)
+      `)
+      .eq('student_id', studentId)
+
+    if (error) {
+      throw error
+    }
+
+    return (studentClasses || [])
+      .map((sc: any) => sc.classes)
+      .filter(Boolean)
+      .map((cls: any) => ({
+        id: String(cls.id || ''),
+        name: String(cls.name || '')
+      }))
+  } catch (error) {
+    console.error('Error getting student classes:', error)
+    return []
+  }
+}
+
+/**
+ * Assign siswa yang sudah ada ke kelas tertentu (batch)
+ * Function ini menambahkan siswa ke kelas tanpa menghapus kelas yang sudah ada
+ */
+export async function assignStudentsToClass(
+  studentIds: string[],
+  classId: string
+): Promise<{ success: boolean; assigned: number; skipped: string[] }> {
+  try {
+    const supabase = await createClient()
+    
+    // Get user profile untuk validasi
+    const profile = await getUserProfile()
+    
+    // Validasi kelas tujuan exists
+    const { data: classData, error: classError } = await supabase
+      .from('classes')
+      .select('id, name')
+      .eq('id', classId)
+      .single()
+
+    if (classError || !classData) {
+      throw new Error('Kelas tidak ditemukan')
+    }
+    
+    if (!studentIds || studentIds.length === 0) {
+      throw new Error('Pilih minimal satu siswa')
+    }
+    
+    // Check siswa yang sudah ada di kelas tersebut
+    const { data: existingAssignments } = await supabase
+      .from('student_classes')
+      .select('student_id')
+      .eq('class_id', classId)
+      .in('student_id', studentIds)
+
+    const existingStudentIds = new Set(existingAssignments?.map(a => a.student_id) || [])
+    const newStudentIds = studentIds.filter(id => !existingStudentIds.has(id))
+    
+    // Batch insert ke junction table untuk siswa yang belum ada
+    if (newStudentIds.length > 0) {
+      const assignmentsToInsert = newStudentIds.map(studentId => ({
+        student_id: studentId,
+        class_id: classId
+      }))
+
+      const { error } = await supabase
+        .from('student_classes')
+        .insert(assignmentsToInsert)
+
+      if (error) {
+        if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+          throw new Error('Tidak memiliki izin untuk mengassign siswa ke kelas ini')
+        }
+        throw error
+      }
+    }
+
+    revalidatePath('/users/siswa')
+    return { 
+      success: true, 
+      assigned: newStudentIds.length,
+      skipped: Array.from(existingStudentIds)
+    }
+  } catch (error) {
+    handleApiError(error, 'mengassign data', 'Gagal mengassign siswa ke kelas')
     throw error
   }
 }
@@ -436,6 +608,24 @@ export async function createStudentsBatch(
       throw error
     }
 
+    // Also insert ke junction table untuk support multiple classes
+    if (insertedStudents && insertedStudents.length > 0) {
+      const junctionInserts = insertedStudents.map(student => ({
+        student_id: student.id,
+        class_id: classId
+      }))
+
+      const { error: junctionError } = await supabase
+        .from('student_classes')
+        .insert(junctionInserts)
+
+      // Ignore duplicate errors (shouldn't happen, but safe)
+      if (junctionError && junctionError.code !== '23505') {
+        console.error('Error inserting to junction table:', junctionError)
+        // Don't throw, karena students sudah dibuat
+      }
+    }
+
     revalidatePath('/users/siswa')
     return { 
       success: true, 
@@ -478,11 +668,11 @@ export interface StudentInfo {
   id: string
   name: string
   gender: string | null
-  class_id: string
-  classes: {
+  class_id?: string | null
+  classes: Array<{
     id: string
     name: string
-  } | null
+  }> // Changed to array for multiple classes support
 }
 
 export interface AttendanceLog {
@@ -547,7 +737,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
       throw new Error('User profile not found')
     }
 
-    // Query student with RLS - RLS policies will handle access control
+    // Query student with junction table for multiple classes support
     const { data: student, error } = await supabase
       .from('students')
       .select(`
@@ -555,7 +745,9 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
         name,
         gender,
         class_id,
-        classes(id, name)
+        student_classes(
+          classes:class_id(id, name)
+        )
       `)
       .eq('id', studentId)
       .single()
@@ -570,18 +762,25 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
       throw error
     }
 
-    // Handle both array and single object cases for classes
-    const classesData = Array.isArray(student.classes) ? student.classes[0] || null : student.classes
+    // Extract classes dari junction table
+    const studentClasses = student.student_classes || []
+    const classesArray = studentClasses
+      .map((sc: any) => sc.classes)
+      .filter(Boolean)
+      .map((cls: any) => ({
+        id: String(cls.id || ''),
+        name: String(cls.name || '')
+      }))
+
+    // Get primary class untuk backward compatibility
+    const primaryClass = classesArray[0] || null
     
     return {
       id: student.id,
       name: student.name,
       gender: student.gender,
-      class_id: student.class_id,
-      classes: classesData ? {
-        id: classesData.id,
-        name: classesData.name
-      } : null
+      class_id: primaryClass?.id || student.class_id || null,
+      classes: classesArray
     } as StudentInfo
   } catch (error) {
     const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat informasi siswa')

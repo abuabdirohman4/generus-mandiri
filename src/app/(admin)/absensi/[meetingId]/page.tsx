@@ -165,9 +165,11 @@ export default function MeetingAttendancePage() {
   const visibleStudents = useMemo(() => {
     let filtered = students
     
-    // Role-based filtering (existing logic)
+    // Role-based filtering (existing logic) - support multiple classes
     if (userProfile?.role === 'teacher' && !isMeetingCreator) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
+      // Note: For meeting attendance, we filter by class_id (primary class)
+      // This is because students in meeting snapshot are already filtered by meeting's classes
       filtered = filtered.filter(s => myClassIds.includes(s.class_id))
     }
     
@@ -176,10 +178,12 @@ export default function MeetingAttendancePage() {
       filtered = filtered.filter(s => s.gender === filters.gender)
     }
     
-    // Class filter (for multi-class meetings)
+    // Class filter (for multi-class meetings) - support multiple classes per student
     if (filters.kelas && filters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
       const selectedClassIds = filters.kelas.flatMap(k => k.split(','))
+      // Filter by primary class_id (for backward compatibility)
+      // Note: In meeting context, students are already filtered by meeting's class_ids
       filtered = filtered.filter(s => selectedClassIds.includes(s.class_id))
     }
     

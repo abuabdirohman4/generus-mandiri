@@ -58,10 +58,16 @@ export default function CreateMeetingModal({
     return classes || []
   }, [userProfile, classes])
 
-  // Filter students by selected classes
-  const filteredStudents = students.filter(student => 
-    selectedClassIds.length === 0 || selectedClassIds.includes(student.class_id)
-  )
+  // Filter students by selected classes - support multiple classes per student
+  const filteredStudents = students.filter(student => {
+    if (selectedClassIds.length === 0) return true
+    
+    // Check if student has at least one class in selected classes
+    const studentClassIds = (student.classes || []).map(c => c.id)
+    // Also check class_id for backward compatibility
+    const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+    return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+  })
 
   // Force revalidate students when modal opens to get fresh data
   useEffect(() => {
@@ -329,6 +335,12 @@ export default function CreateMeetingModal({
                         ({selectedClassIds.length} kelas gabungan)
                       </span>
                     )}
+                    {/* Show multi-class indicator if any student has multiple classes */}
+                    {/* {filteredStudents.some(s => (s.classes || []).length > 1) && (
+                      <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
+                        (termasuk siswa multi-kelas)
+                      </span>
+                    )} */}
                   </h4>
                 </div>
               ) : (
