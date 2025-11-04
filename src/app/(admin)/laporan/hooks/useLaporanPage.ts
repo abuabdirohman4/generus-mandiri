@@ -85,18 +85,25 @@ export function useLaporanPage() {
   const summaryStats = useMemo(() => {
     if (!reportData?.summary) return null
     
-    const { summary } = reportData
+    const { summary, detailedRecords } = reportData
     const attendanceRate = summary.total > 0 
       ? Math.round((summary.hadir / summary.total) * 100)
+      : 0
+
+    // Calculate total meetings from detailedRecords (max total_days)
+    // This represents the number of meetings in the period
+    const totalMeetings = detailedRecords && detailedRecords.length > 0
+      ? Math.max(...detailedRecords.map(record => record.total_days))
       : 0
 
     return {
       ...summary,
       attendanceRate,
       periodLabel: getPeriodLabel(filters.period),
+      totalMeetings,
       dateRange: reportData.dateRange
     }
-  }, [reportData?.summary, filters.period, reportData?.dateRange])
+  }, [reportData?.summary, reportData?.detailedRecords, filters.period, reportData?.dateRange])
 
   const chartData = useMemo(() => {
     if (!reportData?.chartData) return []
