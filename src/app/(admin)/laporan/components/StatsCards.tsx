@@ -8,6 +8,7 @@ interface SummaryStats {
   alpha: number
   attendanceRate: number
   periodLabel: string
+  totalMeetings?: number
   dateRange: {
     start: string | null
     end: string | null
@@ -39,7 +40,7 @@ interface StatsCardsProps {
 export default function StatsCards({ summaryStats, period, viewMode, filters }: StatsCardsProps) {
   if (!summaryStats) return null
 
-  const { total, hadir, izin, sakit, alpha, attendanceRate, periodLabel, dateRange } = summaryStats
+  const { total, hadir, izin, sakit, alpha, attendanceRate, periodLabel, totalMeetings, dateRange } = summaryStats
 
   // Helper function to get month name
   const getMonthName = (monthNumber: number) => {
@@ -122,6 +123,14 @@ export default function StatsCards({ summaryStats, period, viewMode, filters }: 
           </span>
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             {attendanceRate}%
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Jumlah Pertemuan
+          </span>
+          <span className="text-lg font-semibold text-gray-900 dark:text-white">
+            {totalMeetings || 0}
           </span>
         </div>
         <div className="flex justify-between items-center">
