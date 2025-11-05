@@ -13,8 +13,9 @@ import { useModalOrganisationFilters } from '@/hooks/useModalOrganisationFilters
 import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
-import { isAdminKelompok } from '@/lib/userUtils';
+import { isAdminKelompok, isAdminDesa, isAdminDaerah } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
+import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox';
 
 interface Guru {
   id: string;
@@ -75,6 +76,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     kelompok: [] as string[],
     kelas: [] as string[]
   });
+  const [selectedKelompokFilters, setSelectedKelompokFilters] = useState<string[]>([]);
   const [generalError, setGeneralError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
@@ -227,13 +229,129 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     loadData();
   }, [guru, isOpen, userProfile]);
 
-  // Filter classes based on selected kelompok using useMemo
+  // Initialize selectedKelompokFilters when modal opens or userProfile changes
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const canAssignCrossKelompok = userProfile?.role === 'superadmin' || 
+                                    (userProfile && isAdminDesa(userProfile)) || 
+                                    (userProfile && isAdminDaerah(userProfile));
+    
+    // Default: no kelompok selected (empty array)
+    if (canAssignCrossKelompok) {
+      setSelectedKelompokFilters([]);
+    } else {
+      setSelectedKelompokFilters([]);
+    }
+  }, [isOpen, userProfile, filteredLists.kelompokList]);
+
+  // Get all classes in admin scope (before kelompok filter)
+  const allClassesInScope = useMemo(() => {
+    if (!allClasses || allClasses.length === 0) return [];
+    
+    const isSuperadmin = userProfile?.role === 'superadmin';
+    const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id;
+    const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id;
+    
+    // Superadmin: all classes
+    if (isSuperadmin) {
+      return allClasses;
+    }
+    
+    // Admin Daerah: all classes in their daerah
+    if (isAdminDaerah) {
+      return allClasses.filter(cls => {
+        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+        const desa = Array.isArray(kelompok?.desa) ? kelompok.desa[0] : kelompok?.desa;
+        return desa?.daerah_id === userProfile.daerah_id;
+      });
+    }
+    
+    // Admin Desa: all classes in their desa
+    if (isAdminDesa) {
+      return allClasses.filter(cls => {
+        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+        return kelompok?.desa_id === userProfile.desa_id;
+      });
+    }
+    
+    return [];
+  }, [allClasses, userProfile]);
+
+  // Filter classes based on admin scope (cross-kelompok support)
   const availableClasses = useMemo(() => {
-    if (dataFilters.kelompok.length > 0 && allClasses.length > 0) {
+    if (!allClasses || allClasses.length === 0) return [];
+    
+    const isSuperadmin = userProfile?.role === 'superadmin';
+    const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id;
+    const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id;
+    const isAdminKelompok = userProfile?.role === 'admin' && userProfile?.kelompok_id;
+    
+    // Superadmin: filter by selectedKelompokFilters - if empty, show no classes
+    if (isSuperadmin) {
+      if (selectedKelompokFilters.length === 0) {
+        return [];
+      }
+      return allClasses.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+    }
+    
+    // Admin Daerah: filter by selectedKelompokFilters - if empty, show no classes
+    if (isAdminDaerah) {
+      if (selectedKelompokFilters.length === 0) {
+        return [];
+      }
+      
+      let filtered = allClasses.filter(cls => {
+        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+        const desa = Array.isArray(kelompok?.desa) ? kelompok.desa[0] : kelompok?.desa;
+        return desa?.daerah_id === userProfile.daerah_id;
+      });
+      
+      // Apply kelompok filter
+      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+      
+      return filtered;
+    }
+    
+    // Admin Desa: filter by selectedKelompokFilters - if empty, show no classes
+    if (isAdminDesa) {
+      if (selectedKelompokFilters.length === 0) {
+        return [];
+      }
+      
+      let filtered = allClasses.filter(cls => {
+        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+        return kelompok?.desa_id === userProfile.desa_id;
+      });
+      
+      // Apply kelompok filter
+      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+      
+      return filtered;
+    }
+    
+    // Admin Kelompok: show classes from their kelompok + any already assigned classes (even from other kelompok)
+    // This allows them to see and unassign classes that were assigned by Admin Desa/Daerah
+    if (isAdminKelompok) {
+      const myKelompokClasses = allClasses.filter(cls => cls.kelompok_id === userProfile.kelompok_id);
+      // Also include classes that are currently assigned (even if from other kelompok)
+      const assignedClassIds = formData.classIds;
+      const assignedClasses = allClasses.filter(cls => assignedClassIds.includes(cls.id));
+      // Combine and deduplicate
+      const combined = [...myKelompokClasses, ...assignedClasses];
+      const uniqueClasses = combined.filter((cls, index, self) => 
+        index === self.findIndex(c => c.id === cls.id)
+      );
+      return uniqueClasses;
+    }
+    
+    // Fallback: if kelompok filter is selected, show classes from that kelompok
+    if (dataFilters.kelompok.length > 0) {
       return allClasses.filter(cls => cls.kelompok_id === dataFilters.kelompok[0]);
     }
+    
     return [];
-  }, [dataFilters.kelompok, JSON.stringify(allClasses)]);
+  }, [allClasses, userProfile, dataFilters.kelompok, formData.classIds, selectedKelompokFilters]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -403,51 +521,126 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             />
           </div>
 
-          {/* Class Selection - only if kelompok is selected */}
-          {dataFilters.kelompok && availableClasses.length > 0 && (
-            <div>
-              <Label>Kelas yang Diajar</Label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
-                {availableClasses.map(cls => (
-                  <label key={cls.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.classIds.includes(cls.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            classIds: [...prev.classIds, cls.id]
-                          }));
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            classIds: prev.classIds.filter(id => id !== cls.id)
-                          }));
-                        }
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          {/* Class Selection - show for all admins */}
+          {(() => {
+            const canAssignCrossKelompok = userProfile?.role === 'superadmin' || 
+                            (userProfile && isAdminDesa(userProfile)) || 
+                            (userProfile && isAdminDaerah(userProfile));
+            const isAdminKelompokUser = userProfile && isAdminKelompok(userProfile);
+            
+            // Always show section if there are classes or if user can assign
+            if (availableClasses.length === 0 && !canAssignCrossKelompok && !isAdminKelompokUser) return null;
+            
+            return (
+              <div>
+                <Label>Kelas yang Diajar</Label>
+                
+                {/* Multi-checkbox Kelompok Filter - only for Admin Desa/Daerah/Superadmin */}
+                {canAssignCrossKelompok && filteredLists.kelompokList.length > 0 && (
+                  <div className="mb-3">
+                    <MultiSelectCheckbox
+                      label=""
+                      items={filteredLists.kelompokList.map(k => ({ id: k.id, label: k.name }))}
+                      selectedIds={selectedKelompokFilters}
+                      onChange={setSelectedKelompokFilters}
                       disabled={isLoading}
+                      maxHeight="8rem"
+                      hint="Pilih satu atau lebih kelompok untuk menampilkan kelas dari kelompok tersebut."
+                      className="mb-2"
                     />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                      {cls.name}
-                    </span>
-                  </label>
-                ))}
+                  </div>
+                )}
+                
+                {availableClasses.length > 0 ? (
+                  <>
+                    <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded p-3">
+                      {availableClasses.map(cls => {
+                        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+                        const kelompokName = kelompok?.name || 'Tidak diketahui';
+                        
+                        // Determine display name based on user role and selected kelompok count
+                        let displayName: string;
+                        if (isAdminKelompokUser) {
+                          // Admin Kelompok: always show without kelompok name
+                          displayName = cls.name;
+                        } else if (canAssignCrossKelompok) {
+                          // Admin Desa/Daerah/Superadmin: conditional based on selected kelompok count
+                          displayName = selectedKelompokFilters.length === 1
+                            ? cls.name
+                            : `${cls.name} (${kelompokName})`;
+                        } else {
+                          // Fallback: show with kelompok name
+                          displayName = `${cls.name} (${kelompokName})`;
+                        }
+                        
+                        // For Admin Kelompok: only enable checkbox if class is from their kelompok
+                        const isFromMyKelompok = isAdminKelompokUser && cls.kelompok_id === userProfile?.kelompok_id;
+                        const isCheckboxDisabled = isAdminKelompokUser && !isFromMyKelompok;
+                        const isCurrentlyAssigned = formData.classIds.includes(cls.id);
+                        
+                        // Allow uncheck if already assigned (even if from other kelompok - user can remove it)
+                        // But prevent checking new classes from other kelompok
+                        const canToggle = !isAdminKelompokUser || isFromMyKelompok || isCurrentlyAssigned;
+                        
+                        return (
+                          <label key={cls.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.classIds.includes(cls.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    classIds: [...prev.classIds, cls.id]
+                                  }));
+                                } else {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    classIds: prev.classIds.filter(id => id !== cls.id)
+                                  }));
+                                }
+                              }}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              disabled={isLoading || !canToggle}
+                              title={isCheckboxDisabled ? 'Hanya bisa assign kelas dari kelompok Anda' : undefined}
+                            />
+                            <span className={`ml-2 text-sm ${isCheckboxDisabled ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
+                              {displayName}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {canAssignCrossKelompok && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Pilih satu atau lebih kelas yang akan diajar oleh guru ini. Anda dapat memilih kelas dari semua kelompok di {userProfile && isAdminDesa(userProfile) ? 'desa' : userProfile && isAdminDaerah(userProfile) ? 'daerah' : ''} Anda.
+                      </p>
+                    )}
+                    {isAdminKelompokUser && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Anda hanya dapat menambahkan atau menghapus kelas dari kelompok Anda sendiri.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  // Show message only if truly no classes exist, not just because kelompok filter is empty
+                  allClassesInScope.length === 0 ? (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded p-3">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        Belum ada kelas {userProfile && isAdminDesa(userProfile) ? 'di desa ini' : userProfile && isAdminDaerah(userProfile) ? 'di daerah ini' : userProfile && isAdminKelompokUser ? 'di kelompok ini' : 'yang tersedia'}. Silakan buat kelas terlebih dahulu di halaman Kelas.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded p-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Pilih kelompok terlebih dahulu untuk menampilkan daftar kelas.
+                      </p>
+                    </div>
+                  )
+                )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Pilih satu atau lebih kelas yang akan diajar oleh guru ini
-              </p>
-            </div>
-          )}
-
-          {dataFilters.kelompok && availableClasses.length === 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded p-3">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                Belum ada kelas di kelompok ini. Silakan buat kelas terlebih dahulu di halaman Kelas.
-              </p>
-            </div>
-          )}
+            );
+          })()}
           
           <div>
             <Label htmlFor="password">
