@@ -201,6 +201,8 @@ export async function getAllTeachers() {
     const supabase = await createClient();
     const profile = await getCurrentUserProfile();
     const filter = profile ? getDataFilter(profile) : null;
+    // Admin Kelompok: role === 'admin' && memiliki kelompok_id (bisa juga memiliki desa_id)
+    const isAdminKelompok = profile?.role === 'admin' && !!profile?.kelompok_id;
 
     let query = supabase
       .from('profiles')
@@ -210,7 +212,7 @@ export async function getAllTeachers() {
         desa:desa_id(name),
         kelompok:kelompok_id(name),
         teacher_classes(
-          class:class_id(id, name)
+          class_id
         )
       `)
       .eq('role', 'teacher')
@@ -235,14 +237,274 @@ export async function getAllTeachers() {
       throw error;
     }
 
-    // Transform the data to include class names and flattened org names
-    const transformedData = data?.map(teacher => ({
+    // For Admin Kelompok: fetch classes separately to bypass RLS filter on nested select
+    // This allows them to see all classes assigned to teachers in their kelompok, even if classes are from other kelompok
+    let classesMap = new Map<string, any>();
+    if (isAdminKelompok && data && data.length > 0) {
+      // Get all class_ids from teacher_classes
+      const allClassIds = new Set<string>();
+      data.forEach(teacher => {
+        const teacherClasses = Array.isArray(teacher.teacher_classes) ? teacher.teacher_classes : (teacher.teacher_classes ? [teacher.teacher_classes] : []);
+        teacherClasses.forEach((tc: any) => {
+          const classId = Array.isArray(tc.class_id) ? tc.class_id[0] : tc.class_id;
+          if (classId) allClassIds.add(classId);
+        });
+      });
+
+      // Fetch classes with kelompok info separately using admin client to bypass RLS
+      // This allows Admin Kelompok to see all classes assigned to teachers in their kelompok,
+      // even if classes are from other kelompok (assigned by Admin Desa/Daerah)
+      if (allClassIds.size > 0) {
+        try {
+          const adminSupabase = await createAdminClient();
+          
+          if (!adminSupabase) {
+            // Fallback: try with regular client (will be filtered by RLS but better than nothing)
+            const { data: classesData, error: classesError } = await supabase
+              .from('classes')
+              .select(`
+                id,
+                name,
+                kelompok_id
+              `)
+              .in('id', Array.from(allClassIds));
+            
+            if (!classesError && classesData && classesData.length > 0) {
+              // Get unique kelompok_ids and fetch kelompok separately
+              const kelompokIds = [...new Set(classesData.map((cls: any) => cls.kelompok_id).filter(Boolean))];
+              let kelompokMap = new Map<string, any>();
+              
+              if (kelompokIds.length > 0) {
+                const { data: kelompokData, error: kelompokError } = await supabase
+                  .from('kelompok')
+                  .select('id, name')
+                  .in('id', kelompokIds);
+                
+                if (!kelompokError && kelompokData) {
+                  kelompokData.forEach((k: any) => {
+                    kelompokMap.set(k.id, { id: k.id, name: k.name });
+                  });
+                }
+              }
+              
+              classesData.forEach((cls: any) => {
+                const kelompok = kelompokMap.get(cls.kelompok_id);
+                classesMap.set(cls.id, {
+                  name: cls.name,
+                  kelompok_id: cls.kelompok_id,
+                  kelompok: kelompok || null
+                });
+              });
+            }
+          } else {
+            // Fetch classes without nested select (to avoid RLS on nested select)
+            const { data: classesData, error: classesError } = await adminSupabase
+              .from('classes')
+              .select(`
+                id,
+                name,
+                kelompok_id
+              `)
+              .in('id', Array.from(allClassIds));
+
+            if (classesError) {
+              // Fallback to regular client if admin client fails
+              const { data: fallbackData, error: fallbackError } = await supabase
+                .from('classes')
+                .select(`
+                  id,
+                  name,
+                  kelompok_id
+                `)
+                .in('id', Array.from(allClassIds));
+              
+              if (!fallbackError && fallbackData && fallbackData.length > 0) {
+                // Get unique kelompok_ids and fetch kelompok separately
+                const kelompokIds = [...new Set(fallbackData.map((cls: any) => cls.kelompok_id).filter(Boolean))];
+                let kelompokMap = new Map<string, any>();
+                
+                if (kelompokIds.length > 0) {
+                  const { data: kelompokData, error: kelompokError } = await supabase
+                    .from('kelompok')
+                    .select('id, name')
+                    .in('id', kelompokIds);
+                  
+                  if (!kelompokError && kelompokData) {
+                    kelompokData.forEach((k: any) => {
+                      kelompokMap.set(k.id, { id: k.id, name: k.name });
+                    });
+                  }
+                }
+                
+                fallbackData.forEach((cls: any) => {
+                  const kelompok = kelompokMap.get(cls.kelompok_id);
+                  classesMap.set(cls.id, {
+                    name: cls.name,
+                    kelompok_id: cls.kelompok_id,
+                    kelompok: kelompok || null
+                  });
+                });
+              }
+            } else if (classesData && classesData.length > 0) {
+              // Get unique kelompok_ids from classes
+              const kelompokIds = [...new Set(classesData.map((cls: any) => cls.kelompok_id).filter(Boolean))];
+              
+              // Fetch kelompok data separately using admin client
+              let kelompokMap = new Map<string, any>();
+              if (kelompokIds.length > 0) {
+                const { data: kelompokData, error: kelompokError } = await adminSupabase
+                  .from('kelompok')
+                  .select('id, name')
+                  .in('id', kelompokIds);
+                
+                if (!kelompokError && kelompokData) {
+                  kelompokData.forEach((k: any) => {
+                    kelompokMap.set(k.id, { id: k.id, name: k.name });
+                  });
+                }
+              }
+              
+              // Combine classes and kelompok data
+              classesData.forEach((cls: any) => {
+                const kelompok = kelompokMap.get(cls.kelompok_id);
+                classesMap.set(cls.id, {
+                  name: cls.name,
+                  kelompok_id: cls.kelompok_id,
+                  kelompok: kelompok || null
+                });
+              });
+            }
+          }
+        } catch (error) {
+          // Fallback to regular client
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('classes')
+            .select(`
+              id,
+              name,
+              kelompok_id
+            `)
+            .in('id', Array.from(allClassIds));
+          
+          if (!fallbackError && fallbackData && fallbackData.length > 0) {
+            // Get unique kelompok_ids and fetch kelompok separately
+            const kelompokIds = [...new Set(fallbackData.map((cls: any) => cls.kelompok_id).filter(Boolean))];
+            let kelompokMap = new Map<string, any>();
+            
+            if (kelompokIds.length > 0) {
+              const { data: kelompokData, error: kelompokError } = await supabase
+                .from('kelompok')
+                .select('id, name')
+                .in('id', kelompokIds);
+              
+              if (!kelompokError && kelompokData) {
+                kelompokData.forEach((k: any) => {
+                  kelompokMap.set(k.id, { id: k.id, name: k.name });
+                });
+              }
+            }
+            
+            fallbackData.forEach((cls: any) => {
+              const kelompok = kelompokMap.get(cls.kelompok_id);
+              classesMap.set(cls.id, {
+                name: cls.name,
+                kelompok_id: cls.kelompok_id,
+                kelompok: kelompok || null
+              });
+            });
+          }
+        }
+      }
+    }
+
+    // For non-Admin Kelompok: fetch all classes for all teachers at once
+    // This is more efficient than fetching per teacher
+    if (!isAdminKelompok && data && data.length > 0) {
+      const allClassIds = new Set<string>();
+      data.forEach(teacher => {
+        const teacherClasses = Array.isArray(teacher.teacher_classes) ? teacher.teacher_classes : (teacher.teacher_classes ? [teacher.teacher_classes] : []);
+        teacherClasses.forEach((tc: any) => {
+          const classId = Array.isArray(tc.class_id) ? tc.class_id[0] : tc.class_id;
+          if (classId) allClassIds.add(classId);
+        });
+      });
+
+      if (allClassIds.size > 0) {
+        const { data: fetchedClasses, error: classesError } = await supabase
+          .from('classes')
+          .select(`
+            id,
+            name,
+            kelompok_id,
+            kelompok:kelompok_id(id, name)
+          `)
+          .in('id', Array.from(allClassIds));
+
+        if (!classesError && fetchedClasses) {
+          fetchedClasses.forEach((cls: any) => {
+            const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+            classesMap.set(cls.id, {
+              name: cls.name,
+              kelompok_id: cls.kelompok_id,
+              kelompok: kelompok
+            });
+          });
+        }
+      }
+    }
+
+    // Transform the data to include class names with kelompok context and flattened org names
+    const transformedData = data?.map(teacher => {
+      interface ClassData {
+        className: string;
+        kelompokName: string;
+        kelompokId: string;
+      }
+      
+      let classesData: ClassData[] = [];
+      
+      if (classesMap.size > 0) {
+        // Use classesMap for both Admin Kelompok (bypass RLS) and other admins
+        const teacherClasses = Array.isArray(teacher.teacher_classes) ? teacher.teacher_classes : (teacher.teacher_classes ? [teacher.teacher_classes] : []);
+        classesData = teacherClasses.map((tc: any) => {
+          const classId = Array.isArray(tc.class_id) ? tc.class_id[0] : tc.class_id;
+          if (!classId) return null;
+          const classData = classesMap.get(classId);
+          if (!classData) {
+            return null;
+          }
+          const kelompok = classData.kelompok;
+          return {
+            className: classData.name || '',
+            kelompokName: kelompok?.name || '',
+            kelompokId: kelompok?.id || ''
+          };
+        }).filter((c: ClassData | null): c is ClassData => c !== null && !!c.className);
+      }
+      
+      // Check if all classes are from the same kelompok
+      const uniqueKelompokIds = new Set(classesData.map((c: ClassData) => c.kelompokId).filter(Boolean));
+      const isSingleKelompok = uniqueKelompokIds.size <= 1;
+      
+      // Format class names: only show kelompok name if classes are from different kelompok
+      const classNamesWithKelompok = classesData.map((c: ClassData) => {
+        if (isSingleKelompok) {
+          // All classes from same kelompok: don't show kelompok name
+          return c.className;
+        } else {
+          // Classes from different kelompok: show kelompok name to differentiate
+          return c.kelompokName ? `${c.className} (${c.kelompokName})` : c.className;
+        }
+      });
+      
+      return {
       ...teacher,
-      class_names: teacher.teacher_classes?.map((tc: any) => tc.class?.name).filter(Boolean).join(', ') || '-',
+        class_names: classNamesWithKelompok.length > 0 ? classNamesWithKelompok.join(', ') : '-',
       daerah_name: Array.isArray(teacher.daerah) ? teacher.daerah[0]?.name : teacher.daerah?.name || '',
       desa_name: Array.isArray(teacher.desa) ? teacher.desa[0]?.name : teacher.desa?.name || '',
       kelompok_name: Array.isArray(teacher.kelompok) ? teacher.kelompok[0]?.name : teacher.kelompok?.name || ''
-    })) || [];
+      };
+    }) || [];
 
     return transformedData;
   } catch (error) {
@@ -314,6 +576,60 @@ export async function updateTeacherClasses(teacherId: string, classIds: string[]
     
     if (!profile || !canAccessFeature(profile, 'users')) {
       throw new Error('Anda tidak memiliki akses untuk mengubah kelas guru');
+    }
+    
+    // Validate that classes are within admin's scope (for Admin Desa/Daerah)
+    if (classIds.length > 0 && (profile.role === 'admin' || profile.role === 'superadmin')) {
+      const { data: classes, error: classesError } = await supabase
+        .from('classes')
+        .select(`
+          id,
+          kelompok_id,
+          kelompok:kelompok_id (
+            id,
+            desa_id,
+            desa:desa_id (
+              id,
+              daerah_id
+            )
+          )
+        `)
+        .in('id', classIds);
+      
+      if (classesError) throw classesError;
+      
+      // For Admin Desa: validate all classes are in their desa
+      if (profile.desa_id && !profile.kelompok_id) {
+        const invalidClasses = classes?.filter(cls => {
+          const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+          return kelompok?.desa_id !== profile.desa_id;
+        });
+        
+        if (invalidClasses && invalidClasses.length > 0) {
+          throw new Error('Beberapa kelas tidak berada dalam desa Anda');
+        }
+      }
+      
+      // For Admin Daerah: validate all classes are in their daerah
+      if (profile.daerah_id && !profile.desa_id) {
+        const invalidClasses = classes?.filter(cls => {
+          const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+          const desa = Array.isArray(kelompok?.desa) ? kelompok.desa[0] : kelompok?.desa;
+          return desa?.daerah_id !== profile.daerah_id;
+        });
+        
+        if (invalidClasses && invalidClasses.length > 0) {
+          throw new Error('Beberapa kelas tidak berada dalam daerah Anda');
+        }
+      }
+      
+      // For Admin Kelompok: only allow classes from their kelompok
+      if (profile.kelompok_id && !profile.desa_id) {
+        const invalidClasses = classes?.filter(cls => cls.kelompok_id !== profile.kelompok_id);
+        if (invalidClasses && invalidClasses.length > 0) {
+          throw new Error('Anda hanya dapat menambahkan atau menghapus kelas dari kelompok Anda sendiri');
+        }
+      }
     }
     
     // Delete existing assignments
