@@ -350,23 +350,48 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
 
 export async function getMeetingById(meetingId: string) {
   try {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
     
-    const { data, error } = await supabase
+    const { data: meeting, error } = await adminClient
       .from('meetings')
       .select(`
         id,
         class_id,
         class_ids,
+        teacher_id,
         title,
         date,
         topic,
         description,
         student_snapshot,
         created_at,
+        meeting_type_code,
         classes (
           id,
-          name
+          name,
+          kelompok_id,
+          kelompok:kelompok_id (
+            id,
+            name,
+            desa_id,
+            desa:desa_id (
+              id,
+              name,
+              daerah_id,
+              daerah:daerah_id (
+                id,
+                name
+              )
+            )
+          ),
+          class_master_mappings (
+            class_master:class_master_id (
+              category:category_id (
+                is_sambung_capable
+              )
+            )
+          )
         )
       `)
       .eq('id', meetingId)
@@ -377,7 +402,133 @@ export async function getMeetingById(meetingId: string) {
       return { success: false, error: error.message, data: null }
     }
 
-    return { success: true, data }
+    if (!meeting) {
+      return { success: false, error: 'Meeting not found', data: null }
+    }
+
+    // Get all class IDs from meeting
+    const allClassIds = new Set<string>()
+    if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+      meeting.class_ids.forEach((id: string) => allClassIds.add(id))
+    }
+    if (meeting.class_id) allClassIds.add(meeting.class_id)
+
+    // Fetch all class details with kelompok info
+    const { data: allClassesData } = await adminClient
+      .from('classes')
+      .select(`
+        id,
+        name,
+        kelompok_id,
+        kelompok:kelompok_id (
+          id,
+          name,
+          desa_id,
+          desa:desa_id (
+            id,
+            name,
+            daerah_id,
+            daerah:daerah_id (
+              id,
+              name
+            )
+          )
+        )
+      `)
+      .in('id', Array.from(allClassIds))
+
+    // Create a map of all classes data for easy lookup
+    const allClassesMap = new Map<string, any>()
+    if (allClassesData) {
+      allClassesData.forEach(c => {
+        // Transform kelompok from array to single object if needed
+        let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+        if (kelompok) {
+          // Transform desa from array to single object if needed
+          const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+          if (desa) {
+            // Transform daerah from array to single object if needed
+            const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+            kelompok = {
+              ...kelompok,
+              desa: daerah ? { ...desa, daerah } : desa
+            }
+          }
+        }
+        allClassesMap.set(c.id, {
+          id: c.id,
+          name: c.name,
+          kelompok_id: c.kelompok_id,
+          kelompok
+        })
+      })
+    }
+
+    // Transform classes from array to single object to match our interface
+    let classes: any = meeting.classes
+    if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
+      classes = meeting.classes[0]
+    }
+
+    // Transform kelompok from array to single object if needed
+    if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: classes.kelompok[0]
+      }
+    }
+
+    // Transform desa from array to single object if needed
+    if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: {
+          ...classes.kelompok,
+          desa: classes.kelompok.desa[0]
+        }
+      }
+    }
+
+    // Transform daerah from array to single object if needed
+    if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: {
+          ...classes.kelompok,
+          desa: {
+            ...classes.kelompok.desa,
+            daerah: classes.kelompok.desa.daerah[0]
+          }
+        }
+      }
+    }
+
+    // Add allClasses array with complete information for all class_ids
+    const allClasses: any[] = []
+    if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+      meeting.class_ids.forEach((classId: string) => {
+        const classData = allClassesMap.get(classId)
+        if (classData) {
+          allClasses.push(classData)
+        }
+      })
+    }
+    // Also include primary class_id if not already in class_ids
+    if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+      const classData = allClassesMap.get(meeting.class_id)
+      if (classData) {
+        allClasses.push(classData)
+      }
+    }
+
+    return { 
+      success: true, 
+      data: {
+        ...meeting,
+        classes,
+        allClasses // Add allClasses array with complete information
+      }
+    }
   } catch (error) {
     console.error('Error in getMeetingById:', error)
     return { success: false, error: 'Internal server error', data: null }
@@ -586,6 +737,13 @@ export async function getAttendanceByMeeting(meetingId: string) {
           classes (
             id,
             name
+          ),
+          student_classes (
+            class_id,
+            classes:class_id (
+              id,
+              name
+            )
           )
         )
       `)
@@ -626,6 +784,13 @@ export async function getStudentsFromSnapshot(studentIds: string[]) {
         classes (
           id,
           name
+        ),
+        student_classes (
+          class_id,
+          classes:class_id (
+            id,
+            name
+          )
         )
       `)
       .in('id', studentIds)
@@ -639,12 +804,32 @@ export async function getStudentsFromSnapshot(studentIds: string[]) {
     // Transform to match Student interface used in hook
     const transformedStudents = (students || []).map((student: any) => {
       const classData = Array.isArray(student.classes) ? student.classes[0] : student.classes
+      
+      // Get all classes from junction table
+      const studentClasses = student.student_classes || []
+      const allClasses = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: cls.id,
+          name: cls.name
+        }))
+      
+      // If no classes from junction, use primary class
+      if (allClasses.length === 0 && classData) {
+        allClasses.push({
+          id: classData.id,
+          name: classData.name
+        })
+      }
+      
       return {
         id: student.id,
         name: student.name,
         gender: student.gender || 'L',
-        class_name: classData?.name || 'Unknown Class',
-        class_id: classData?.id || student.class_id || ''
+        class_name: allClasses[0]?.name || 'Unknown Class',
+        class_id: allClasses[0]?.id || student.class_id || '',
+        classes: allClasses // Add all classes array
       }
     })
 
