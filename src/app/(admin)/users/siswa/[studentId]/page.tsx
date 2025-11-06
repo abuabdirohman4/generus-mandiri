@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useStudentDetail } from './hooks/useStudentDetail'
 import { AttendanceCalendar, MonthlyStats, MeetingDetailModal, AttendanceList } from './components'
 import StudentDetailSkeleton from '@/components/ui/skeleton/StudentDetailSkeleton'
 import Button from '@/components/ui/button/Button'
+import { useUserProfile } from '@/stores/userProfileStore'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
 import type { AttendanceLog } from '@/app/(admin)/users/siswa/actions'
@@ -36,6 +37,28 @@ export default function StudentDetailPage() {
 
   // Use SWR hook for data fetching
   const { student, attendanceLogs, stats, isLoading, error } = useStudentDetail(studentId, currentDate)
+  const { profile: userProfile } = useUserProfile()
+  
+  // Filter classes based on user role
+  const displayedClasses = useMemo(() => {
+    if (!student?.classes || student.classes.length === 0) {
+      return null
+    }
+    
+    // If admin, show all classes
+    if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+      return student.classes
+    }
+    
+    // If teacher, filter to only classes they teach
+    if (userProfile?.role === 'teacher' && userProfile.classes) {
+      const teacherClassIds = userProfile.classes.map(c => c.id)
+      return student.classes.filter(c => teacherClassIds.includes(c.id))
+    }
+    
+    // Default: return first class for backward compatibility
+    return student.classes[0] ? [student.classes[0]] : null
+  }, [student?.classes, userProfile])
 
   const handlePrevMonth = () => {
     setCurrentDate(currentDate.subtract(1, 'month'))
@@ -127,9 +150,30 @@ export default function StudentDetailPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {student.name}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {student.classes?.name || 'Kelas tidak ditemukan'}
-          </p>
+          <div className="text-gray-600 dark:text-gray-400">
+            {displayedClasses && displayedClasses.length > 0 ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                {displayedClasses.map((cls, index) => (
+                  <span 
+                    key={cls.id} 
+                    className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded-full text-sm"
+                  >
+                    {cls.name}
+                  </span>
+                ))}
+                {/* Show indicator if there are more classes (for admin) */}
+                {userProfile?.role === 'admin' || userProfile?.role === 'superadmin' ? (
+                  student.classes && student.classes.length > displayedClasses.length && (
+                    <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-500">
+                      +{student.classes.length - displayedClasses.length} kelas lainnya
+                    </span>
+                  )
+                ) : null}
+              </div>
+            ) : (
+              <span>Kelas tidak ditemukan</span>
+            )}
+          </div>
         </div>
 
         {/* Monthly Stats */}

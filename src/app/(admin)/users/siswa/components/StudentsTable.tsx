@@ -126,17 +126,38 @@ export default function StudentsTable({
 
   const columns = buildColumns(userProfile);
 
+  // Filter classes based on user role for display
+  const getDisplayClasses = (student: Student): string => {
+    if (!student.classes || student.classes.length === 0) {
+      return student.class_name || '-'
+    }
+    
+    // If admin, show all classes
+    if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+      return student.classes.map(c => c.name).join(', ')
+    }
+    
+    // If teacher, filter to only classes they teach
+    if (userProfile?.role === 'teacher' && userProfile.classes) {
+      const teacherClassIds = userProfile.classes.map(c => c.id)
+      const studentTeacherClasses = student.classes.filter(c => teacherClassIds.includes(c.id))
+      if (studentTeacherClasses.length === 0) {
+        return '-' // Student tidak punya kelas yang diajarkan guru ini
+      }
+      return studentTeacherClasses.map(c => c.name).join(', ')
+    }
+    
+    // Default: return first class
+    return student.classes[0]?.name || '-'
+  }
+
   const tableData = students
     .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
     .map((student) => ({
       id: student.id,
       name: student.name,
       gender: student.gender || '-',
-      class_name: student.classes && student.classes.length > 0
-        ? student.classes.length > 1
-          ? `${student.classes[0].name} (+${student.classes.length - 1})`
-          : student.classes[0].name
-        : student.class_name || '-',
+      class_name: getDisplayClasses(student),
       daerah_name: student.daerah_name || '-',
       desa_name: student.desa_name || '-',
       kelompok_name: student.kelompok_name || '-',
