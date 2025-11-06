@@ -7,6 +7,7 @@ interface AssignStudentsState {
   selectedClassId: string
   selectedStudentIds: string[]
   searchQuery: string
+  filterClassId: string
   
   openModal: () => void
   closeModal: () => void
@@ -15,6 +16,7 @@ interface AssignStudentsState {
   selectAll: (studentIds: string[]) => void
   clearSelection: () => void
   setSearchQuery: (query: string) => void
+  setFilterClassId: (classId: string) => void
 }
 
 export const useAssignStudentsStore = create<AssignStudentsState>((set) => ({
@@ -22,19 +24,22 @@ export const useAssignStudentsStore = create<AssignStudentsState>((set) => ({
   selectedClassId: '',
   selectedStudentIds: [],
   searchQuery: '',
+  filterClassId: '',
   
   openModal: () => set({ 
     showModal: true, 
     selectedClassId: '', 
     selectedStudentIds: [],
-    searchQuery: ''
+    searchQuery: '',
+    filterClassId: ''
   }),
   
   closeModal: () => set({ 
     showModal: false, 
     selectedClassId: '', 
     selectedStudentIds: [],
-    searchQuery: ''
+    searchQuery: '',
+    filterClassId: ''
   }),
   
   setSelectedClassId: (classId) => set({ selectedClassId: classId }),
@@ -54,6 +59,8 @@ export const useAssignStudentsStore = create<AssignStudentsState>((set) => ({
   
   clearSelection: () => set({ selectedStudentIds: [] }),
   
-  setSearchQuery: (query) => set({ searchQuery: query })
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  
+  setFilterClassId: (classId) => set({ filterClassId: classId })
 }))
 
