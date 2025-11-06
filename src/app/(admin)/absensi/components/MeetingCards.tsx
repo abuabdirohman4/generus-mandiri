@@ -146,20 +146,64 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
   // If meeting has multiple classes (class_ids array)
   if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1) {
     // Get all class details with kelompok
-    const classDetails = meeting.class_ids
-      .map((classId: string) => {
-        const classData = classesData.find(c => c.id === classId)
-        if (!classData) return null
-        
-        const kelompok = kelompokData.find(k => k.id === classData.kelompok_id)
-        return {
-          id: classId,
-          name: classData.name,
-          kelompok_id: classData.kelompok_id,
-          kelompok_name: kelompok?.name || null
-        }
-      })
-      .filter(Boolean)
+    // First, try to use meeting.allClasses if available (from backend, bypasses RLS)
+    let classDetails: any[] = []
+    
+    if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+      classDetails = meeting.allClasses.map((classData: any) => ({
+        id: classData.id,
+        name: classData.name,
+        kelompok_id: classData.kelompok_id,
+        kelompok_name: classData.kelompok?.name || null
+      }))
+    } else {
+      // Fallback: try to get from classesData or meeting.classes
+      classDetails = meeting.class_ids
+        .map((classId: string) => {
+          // Try classesData first
+          let classData = classesData.find(c => c.id === classId)
+          let kelompok = null
+          
+          if (classData) {
+            kelompok = kelompokData.find(k => k.id === classData.kelompok_id)
+          } else {
+            // Fallback: try to get from meeting.classes if it's an array
+            if (Array.isArray(meeting.classes)) {
+              const meetingClass = meeting.classes.find((c: any) => c.id === classId)
+              if (meetingClass) {
+                classData = meetingClass
+                // Get kelompok from meeting.classes directly if available
+                if (meetingClass.kelompok) {
+                  kelompok = Array.isArray(meetingClass.kelompok) 
+                    ? meetingClass.kelompok[0] 
+                    : meetingClass.kelompok
+                } else if (meetingClass.kelompok_id) {
+                  kelompok = kelompokData.find(k => k.id === meetingClass.kelompok_id)
+                }
+              }
+            } else if (meeting.classes?.id === classId) {
+              classData = meeting.classes
+              if (meeting.classes.kelompok) {
+                kelompok = Array.isArray(meeting.classes.kelompok) 
+                  ? meeting.classes.kelompok[0] 
+                  : meeting.classes.kelompok
+              } else if (meeting.classes.kelompok_id) {
+                kelompok = kelompokData.find(k => k.id === meeting.classes.kelompok_id)
+              }
+            }
+          }
+          
+          if (!classData) return null
+          
+          return {
+            id: classId,
+            name: classData.name,
+            kelompok_id: classData.kelompok_id,
+            kelompok_name: kelompok?.name || null
+          }
+        })
+        .filter(Boolean)
+    }
     
     // Group by class name
     const groupedByClassName = classDetails.reduce((acc: any, classDetail: any) => {
@@ -200,13 +244,90 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
   if (meeting.class_names && meeting.class_names.length > 1) {
     return meeting.class_names.join(', ')
   } else {
-    // For teacher and admin kelompok, don't show class name (it's redundant)
-    if (isTeacherUser || isAdminKelompokUser) {
-      return ''
-    } else {
+    // For teacher: only show class name if they teach more than one class
+    if (isTeacherUser) {
+      const teacherClassCount = userProfile?.classes?.length || 0
+      if (teacherClassCount > 1) {
+        // Check if teacher teaches classes from different kelompok
+        const teacherKelompokIds = new Set<string>()
+        userProfile?.classes?.forEach((cls: any) => {
+          // Try to get kelompok_id from classesData
+          const classData = classesData.find(c => c.id === cls.id)
+          if (classData?.kelompok_id) {
+            teacherKelompokIds.add(classData.kelompok_id)
+          }
+        })
+        
+        // If teacher teaches classes from different kelompok, show kelompok name
+        if (teacherKelompokIds.size > 1) {
+          // Get kelompok name from meeting.classes or kelompokData
+          let kelompokName: string | null = null
+          
+          if (meeting.classes?.kelompok) {
+            const kelompok = Array.isArray(meeting.classes.kelompok) 
+              ? meeting.classes.kelompok[0] 
+              : meeting.classes.kelompok
+            kelompokName = kelompok?.name || null
+          } else if (meeting.classes?.kelompok_id) {
+            const kelompok = kelompokData.find(k => k.id === meeting.classes.kelompok_id)
+            kelompokName = kelompok?.name || null
+          }
+          
+          if (kelompokName) {
+            return `${meeting.classes.name} (${kelompokName})`
+          }
+        }
+        
+        return meeting.classes.name
+      } else {
+        return '' // Teacher with only one class: don't show (it's redundant)
+      }
+    }
+    // For other: show class name
+    else {
       return meeting.classes.name
     }
   }
+}
+
+// Helper function to count unique kelompok in a meeting
+const countUniqueKelompok = (meeting: any, classesData: any[], kelompokData: any[]): number => {
+  if (!meeting.class_ids || !Array.isArray(meeting.class_ids) || meeting.class_ids.length === 0) {
+    return 0
+  }
+  
+  const kelompokIds = new Set<string>()
+  
+  // First, try to use meeting.allClasses if available (from backend, bypasses RLS)
+  if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+    meeting.allClasses.forEach((classData: any) => {
+      if (classData.kelompok_id) {
+        kelompokIds.add(classData.kelompok_id)
+      }
+    })
+  } else {
+    // Fallback: try to get kelompok_id from classesData or meeting.classes
+    meeting.class_ids.forEach((classId: string) => {
+      // Try to get kelompok_id from classesData first
+      const classData = classesData.find(c => c.id === classId)
+      if (classData && classData.kelompok_id) {
+        kelompokIds.add(classData.kelompok_id)
+      } else {
+        // Fallback: try to get from meeting.classes if it's an array with multiple classes
+        // This handles cases where classesData might be filtered by RLS
+        if (Array.isArray(meeting.classes)) {
+          const meetingClass = meeting.classes.find((c: any) => c.id === classId)
+          if (meetingClass?.kelompok_id) {
+            kelompokIds.add(meetingClass.kelompok_id)
+          }
+        } else if (meeting.classes?.id === classId && meeting.classes?.kelompok_id) {
+          kelompokIds.add(meeting.classes.kelompok_id)
+        }
+      }
+    })
+  }
+  
+  return kelompokIds.size
 }
 
 // Helper function to check if user can edit/delete meeting
@@ -448,11 +569,14 @@ export default function MeetingCards({
                       {formatMeetingLocation(meeting, userProfile, classesData || [], kelompokData || [], desaData || [], daerahData || [])}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {meeting.class_ids && meeting.class_ids.length > 1 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
-                          {meeting.class_ids.length} Kelas
-                        </span>
-                      )} 
+                      {(() => {
+                        const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
+                        return uniqueKelompokCount > 1 ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                            {uniqueKelompokCount} Kelompok
+                          </span>
+                        ) : null
+                      })()}
                       {listGroupedClasses(meeting, userProfile, classesData || [], kelompokData || [])}
                     </p>
                   </div>
