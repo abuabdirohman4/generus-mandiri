@@ -52,6 +52,18 @@ export function clearUserCache() {
     // Clear user profile store
     localStorage.removeItem('user-profile-storage')
     
+    // Clear siswa store (filters and class selection)
+    localStorage.removeItem('siswa-storage')
+    
+    // Clear laporan store (report filters)
+    localStorage.removeItem('laporan-storage')
+    
+    // Clear attendance store (attendance data)
+    localStorage.removeItem('attendance-storage')
+    
+    // Clear absensi UI store (class filters)
+    localStorage.removeItem('absensi-ui-store')
+    
     // Force reload to clear all in-memory caches
     window.location.reload()
   }
