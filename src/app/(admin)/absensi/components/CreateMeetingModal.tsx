@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
@@ -53,6 +53,7 @@ export default function CreateMeetingModal({
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
 
   // Filter available classes based on user role and enrich with kelompok_id for teacher
+  // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
       // Enrich teacher classes with kelompok_id from classes
@@ -67,7 +68,13 @@ export default function CreateMeetingModal({
       return userProfile.classes || []
     }
     return classes || []
-  }, [userProfile, classes])
+  }, [
+    userProfile?.role,
+    userProfile?.classes?.length,
+    userProfile?.classes?.map(c => c.id).join(','),
+    classes?.length,
+    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
+  ])
 
   // Filter students by selected classes
   const filteredStudents = students.filter(student => 
@@ -81,19 +88,61 @@ export default function CreateMeetingModal({
     }
   }, [isOpen, mutateStudents])
 
-  // Initialize selectedClassIds based on mode
+  // Track initialization to prevent infinite loops
+  const initializedRef = useRef(false)
+  const previousIsOpenRef = useRef(isOpen)
+  
+  // Initialize selectedClassIds based on mode - only when modal opens for the first time
   useEffect(() => {
+    // Reset when modal closes
+    if (!isOpen) {
+      if (previousIsOpenRef.current) {
+        initializedRef.current = false
+      }
+      previousIsOpenRef.current = false
+      return
+    }
+    
+    // Only initialize once when modal first opens
+    if (!previousIsOpenRef.current && isOpen) {
+      previousIsOpenRef.current = true
+      initializedRef.current = false
+    }
+    
+    // Only initialize once per modal open
+    if (initializedRef.current) return
+    
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
-      setSelectedClassIds(meeting.class_ids || (meeting.class_id ? [meeting.class_id] : []))
+      const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
+      setSelectedClassIds(meetingClassIds)
+      initializedRef.current = true
     } else if (classId) {
       // Create mode with specific class
       setSelectedClassIds([classId])
+      initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
       // Create mode: default to first available class
+      // Use a separate effect that only runs when availableClasses is ready
       setSelectedClassIds([availableClasses[0].id])
+      initializedRef.current = true
     }
-  }, [classId, availableClasses, meeting])
+  }, [isOpen, classId, meeting])
+  
+  // Separate effect for availableClasses to avoid infinite loop
+  // Only initialize if not already initialized and modal is open
+  useEffect(() => {
+    if (!isOpen || initializedRef.current) return
+    if (!classId && !meeting && availableClasses && availableClasses.length > 0) {
+      setSelectedClassIds(prev => {
+        // Only set if not already set
+        if (prev.length === 0) {
+          return [availableClasses[0].id]
+        }
+        return prev
+      })
+    }
+  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id])
 
   // Update form data when meeting changes
   useEffect(() => {
@@ -125,13 +174,20 @@ export default function CreateMeetingModal({
 
   // Auto-select meeting type based on available options
   useEffect(() => {
-    // If input is hidden, force PEMBINAAN
-    if (!shouldShowMeetingTypeInput) {
-      setMeetingType('PEMBINAAN')
+    // Skip if already has value (unless it's being forced)
+    if (meetingType && shouldShowMeetingTypeInput) {
       return
     }
     
-    // Existing auto-select logic for when input is shown
+    // If input is hidden, force PEMBINAAN
+    if (!shouldShowMeetingTypeInput) {
+      if (meetingType !== 'PEMBINAAN') {
+        setMeetingType('PEMBINAAN')
+      }
+      return
+    }
+    
+    // Existing auto-select logic for when input is shown (only if meetingType is empty)
     if (!meetingType && !typesLoading && Object.keys(availableTypes).length > 0) {
       const typeValues = Object.values(availableTypes)
       
@@ -150,7 +206,7 @@ export default function CreateMeetingModal({
         }
       }
     }
-  }, [availableTypes, typesLoading, meetingType, shouldShowMeetingTypeInput])
+  }, [availableTypes, typesLoading, shouldShowMeetingTypeInput])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

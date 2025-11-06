@@ -13,10 +13,10 @@ interface Student {
   kelompok_id?: string | null
   desa_id?: string | null
   daerah_id?: string | null
-  classes: {
+  classes: Array<{
     id: string
     name: string
-  } | null
+  }>
 }
 
 interface DataFilters {

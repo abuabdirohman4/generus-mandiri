@@ -145,17 +145,22 @@ export default function MeetingAttendancePage() {
   }
 
   const calculateLocalAttendancePercentage = () => {
-    if (!meeting || visibleStudents.length === 0) return 0
+    if (!meeting || visibleStudents.length === 0) {
+      return 0
+    }
     
     const totalStudents = visibleStudents.length
     const visibleStudentIds = new Set(visibleStudents.map(s => s.id))
     
     const presentCount = Object.entries(localAttendance)
-      .filter(([studentId, record]) => 
-        visibleStudentIds.has(studentId) && record.status === 'H'
-      ).length
+      .filter(([studentId, record]) => {
+        const isVisible = visibleStudentIds.has(studentId)
+        const isPresent = record.status === 'H'
+        return isVisible && isPresent
+      }).length
     
-    return Math.round((presentCount / totalStudents) * 100)
+    const percentage = Math.round((presentCount / totalStudents) * 100)
+    return percentage
   }
 
   // Check if current user is meeting creator
