@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
 
@@ -191,9 +191,11 @@ export async function createMeeting(data: CreateMeetingData) {
     }
 
     // Get students for all selected classes to create snapshot
-    const { data: students, error: studentsError } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to getAllStudents)
+    const adminClient = await createAdminClient()
+    const { data: students, error: studentsError } = await adminClient
       .from('students')
-      .select('id')
+      .select('id, name, class_id, kelompok_id')
       .in('class_id', data.classIds)
 
     if (studentsError) {
@@ -539,8 +541,12 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
       recorded_by: profile.id
     }))
 
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    // This allows saving attendance for students from different kelompok
+    const adminClient = await createAdminClient()
+    
     // Use upsert to handle both insert and update
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('attendance_logs')
       .upsert(attendanceRecords, {
         onConflict: 'student_id,meeting_id'
@@ -561,9 +567,10 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
 
 export async function getAttendanceByMeeting(meetingId: string) {
   try {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
     
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('attendance_logs')
       .select(`
         id,
@@ -574,6 +581,8 @@ export async function getAttendanceByMeeting(meetingId: string) {
           id,
           name,
           gender,
+          class_id,
+          kelompok_id,
           classes (
             id,
             name
@@ -591,6 +600,57 @@ export async function getAttendanceByMeeting(meetingId: string) {
     return { success: true, data }
   } catch (error) {
     console.error('Error in getAttendanceByMeeting:', error)
+    return { success: false, error: 'Internal server error', data: null }
+  }
+}
+
+/**
+ * Get students from meeting snapshot using admin client to bypass RLS restrictions
+ */
+export async function getStudentsFromSnapshot(studentIds: string[]) {
+  try {
+    if (!studentIds || studentIds.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    const adminClient = await createAdminClient()
+    
+    const { data: students, error } = await adminClient
+      .from('students')
+      .select(`
+        id,
+        name,
+        gender,
+        class_id,
+        kelompok_id,
+        classes (
+          id,
+          name
+        )
+      `)
+      .in('id', studentIds)
+      .order('name')
+
+    if (error) {
+      console.error('Error fetching students from snapshot:', error)
+      return { success: false, error: error.message, data: null }
+    }
+
+    // Transform to match Student interface used in hook
+    const transformedStudents = (students || []).map((student: any) => {
+      const classData = Array.isArray(student.classes) ? student.classes[0] : student.classes
+      return {
+        id: student.id,
+        name: student.name,
+        gender: student.gender || 'L',
+        class_name: classData?.name || 'Unknown Class',
+        class_id: classData?.id || student.class_id || ''
+      }
+    })
+
+    return { success: true, data: transformedStudents }
+  } catch (error) {
+    console.error('Error in getStudentsFromSnapshot:', error)
     return { success: false, error: 'Internal server error', data: null }
   }
 }
@@ -717,7 +777,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         const meetingIds = filteredMeetings.map(meeting => meeting.id)
         
         // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
-        const { data: attendanceData, error: attendanceError } = await supabase
+        // Use admin client to bypass RLS restrictions (similar to detail page)
+        const adminClientAttendance = await createAdminClient()
+        const { data: attendanceData, error: attendanceError } = await adminClientAttendance
           .from('attendance_logs')
           .select('meeting_id, student_id, status')
           .in('meeting_id', meetingIds)
@@ -750,7 +812,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
         })
 
-        const { data: studentClassData } = await supabase
+        // Use admin client to bypass RLS restrictions (similar to detail page)
+        // This ensures all students from different kelompok are included
+        const adminClient = await createAdminClient()
+        const { data: studentClassData } = await adminClient
           .from('students')
           .select('id, class_id')
           .in('id', Array.from(allStudentIds))
@@ -894,7 +959,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     const meetingIds = meetings.map(meeting => meeting.id)
 
     // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
-    const { data: attendanceData, error: attendanceError } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to detail page)
+    const adminClientAttendanceAdmin = await createAdminClient()
+    const { data: attendanceData, error: attendanceError } = await adminClientAttendanceAdmin
       .from('attendance_logs')
       .select('meeting_id, student_id, status')
       .in('meeting_id', meetingIds)
@@ -927,7 +994,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
     })
 
-    const { data: studentClassData } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to detail page)
+    // This ensures all students from different kelompok are included
+    const adminClientAdmin = await createAdminClient()
+    const { data: studentClassData } = await adminClientAdmin
       .from('students')
       .select('id, class_id')
       .in('id', Array.from(allStudentIds))

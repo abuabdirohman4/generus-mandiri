@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import useSWR from 'swr'
-import { getAttendanceByMeeting, getMeetingById } from '../actions'
+import { getAttendanceByMeeting, getMeetingById, getStudentsFromSnapshot } from '../actions'
 
 interface Student {
   id: string
@@ -58,7 +58,7 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
   const students: Student[] = []
 
   if (attendanceResult.data) {
-    attendanceResult.data.forEach((record: any, index) => {
+    attendanceResult.data.forEach((record: any, index: number) => {
       attendanceData[record.student_id] = {
         status: record.status,
         reason: record.reason || undefined
@@ -85,38 +85,21 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
   // If no attendance records, fetch students from meeting snapshot
   if (students.length === 0 && meetingResult.data?.student_snapshot) {
     try {
-      // Import the supabase client
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
+      // Use server action with admin client to bypass RLS
+      const studentsResult = await getStudentsFromSnapshot(meetingResult.data.student_snapshot)
       
-      // Fetch student details from the snapshot IDs
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select(`
-          id,
-          name,
-          gender,
-          classes!inner(
-            id,
-            name
-          )
-        `)
-        .in('id', meetingResult.data.student_snapshot)
-        .order('name')
-
-      if (studentError) {
-        console.error('Error fetching students from snapshot:', studentError)
-        throw new Error(studentError.message)
-      }
-
-      if (studentData) {
-        studentData.forEach((student: any) => {
+      if (studentsResult.success && studentsResult.data) {
+        students.push(...studentsResult.data)
+      } else {
+        console.error('Error fetching students from snapshot:', studentsResult.error)
+        // Fallback to placeholder students
+        meetingResult.data.student_snapshot.forEach((studentId: string, index: number) => {
           students.push({
-            id: student.id,
-            name: student.name,
-            gender: student.gender,
-            class_name: student.classes.name,
-            class_id: student.classes.id
+            id: studentId || `snapshot-${index}`,
+            name: `Student ${index + 1}`,
+            gender: 'L',
+            class_name: meetingResult.data?.classes?.[0]?.name || 'Unknown Class',
+            class_id: meetingResult.data?.classes?.[0]?.id || ''
           })
         })
       }

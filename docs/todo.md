@@ -21,8 +21,14 @@
 - [ ] Handle multiple class with different kelompok
     - Halaman Guru
     - Halaman Siswa
+        - Di table tampilkan kelompok
     - Halaman Absensi
+        - Filter di detail absensi belum muncul 2 kelompok
+        - Tampilkan nama kelas (kelompok)
+        - Untuk yang punya multiple kelas kayak mudamudi juga harusnya
     - Halaman Laporan
+        - Belum jalan utk warlob 2
+- [ ] Confirm modal pakai [tipe pertemuan/title]
 
 Components
 - [x] Change All <button> to <Button>
