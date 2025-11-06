@@ -62,25 +62,46 @@ export function useLaporanPage() {
   
   const { classes, isLoading: isLoadingClasses } = useClasses()
 
-  // Computed values
+  // Computed values - filter classes based on user role
   const tableData = useMemo(() => {
     if (!reportData?.detailedRecords) return []
     
     return reportData.detailedRecords
       .sort((a, b) => a.student_name.localeCompare(b.student_name))
-      .map((record, index) => ({
-        no: index + 1,
-        student_id: record.student_id,
-        student_name: record.student_name,
-        class_name: record.class_name,
-        total_days: record.total_days,
-        hadir: record.hadir,
-        izin: record.izin,
-        sakit: record.sakit,
-        alpha: record.alpha,
-        attendance_rate: `${record.attendance_rate}%`,
-      }))
-  }, [reportData?.detailedRecords])
+      .map((record, index) => {
+        // Filter classes based on user role
+        let displayClassNames = record.class_name
+        
+        // If we have all_classes data and user is admin or teacher
+        if (record.all_classes && record.all_classes.length > 0) {
+          if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+            // Admin: show all classes
+            displayClassNames = record.all_classes.map(c => c.name).join(', ')
+          } else if (userProfile?.role === 'teacher' && userProfile.classes) {
+            // Teacher: filter to only classes they teach
+            const teacherClassIds = userProfile.classes.map(c => c.id)
+            const studentTeacherClasses = record.all_classes.filter(c => teacherClassIds.includes(c.id))
+            displayClassNames = studentTeacherClasses.length > 0
+              ? studentTeacherClasses.map(c => c.name).join(', ')
+              : '-' // Student tidak punya kelas yang diajarkan guru ini
+          }
+          // Default: use primary class_name
+        }
+        
+        return {
+          no: index + 1,
+          student_id: record.student_id,
+          student_name: record.student_name,
+          class_name: displayClassNames,
+          total_days: record.total_days,
+          hadir: record.hadir,
+          izin: record.izin,
+          sakit: record.sakit,
+          alpha: record.alpha,
+          attendance_rate: `${record.attendance_rate}%`,
+        }
+      })
+  }, [reportData?.detailedRecords, userProfile])
 
   const summaryStats = useMemo(() => {
     if (!reportData?.summary) return null

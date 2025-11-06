@@ -109,6 +109,7 @@ export interface ReportData {
     student_name: string
     student_gender: string
     class_name: string
+    all_classes?: Array<{ id: string; name: string }> // All classes for multi-class support
     total_days: number
     hadir: number
     izin: number
@@ -540,11 +541,13 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       const primaryClass = classesArray[0] || null
       
       if (!acc[studentId]) {
+        // Store all classes for this student (we'll filter by role later in client)
         acc[studentId] = {
           student_id: studentId,
           student_name: log.students?.name || 'Unknown Student',
           student_gender: log.students?.gender || null,
-          class_name: primaryClass?.name || 'Unknown Class',
+          class_name: primaryClass?.name || 'Unknown Class', // Primary class for backward compatibility
+          all_classes: classesArray, // Store all classes for multi-class support
           total_days: 0,
           hadir: 0,
           izin: 0,
@@ -569,18 +572,19 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         : 0
     })
 
-    const detailedRecords = Object.values(studentSummary) as Array<{
-      student_id: string
-      student_name: string
-      student_gender: string
-      class_name: string
-      total_days: number
-      hadir: number
-      izin: number
-      sakit: number
-      alpha: number
-      attendance_rate: number
-    }>
+    const detailedRecords = Object.values(studentSummary).map((student: any) => ({
+      student_id: student.student_id,
+      student_name: student.student_name,
+      student_gender: student.student_gender,
+      class_name: student.class_name,
+      all_classes: student.all_classes || [], // Include all classes
+      total_days: student.total_days,
+      hadir: student.hadir,
+      izin: student.izin,
+      sakit: student.sakit,
+      alpha: student.alpha,
+      attendance_rate: student.attendance_rate
+    }))
 
     return {
       summary,
