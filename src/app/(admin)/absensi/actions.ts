@@ -911,18 +911,64 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
             meeting.class_ids.forEach((id: string) => allClassIds.add(id))
           }
+          if (meeting.class_id) allClassIds.add(meeting.class_id)
         })
 
-        // Fetch class names in one query (use admin client to bypass RLS)
+        // Fetch class names and kelompok info in one query (use admin client to bypass RLS)
         const { data: classesData } = await adminClientTeacher
           .from('classes')
-          .select('id, name')
+          .select(`
+            id,
+            name,
+            kelompok_id,
+            kelompok:kelompok_id (
+              id,
+              name,
+              desa_id,
+              desa:desa_id (
+                id,
+                name,
+                daerah_id,
+                daerah:daerah_id (
+                  id,
+                  name
+                )
+              )
+            )
+          `)
           .in('id', Array.from(allClassIds))
 
         // Create id -> name mapping
         const classNameMap = new Map<string, string>()
         if (classesData) {
           classesData.forEach(c => classNameMap.set(c.id, c.name))
+        }
+        
+        // Create a map of all classes data for easy lookup
+        const allClassesMap = new Map<string, any>()
+        if (classesData) {
+          classesData.forEach(c => {
+            // Transform kelompok from array to single object if needed
+            let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+            if (kelompok) {
+              // Transform desa from array to single object if needed
+              const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+              if (desa) {
+                // Transform daerah from array to single object if needed
+                const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+                kelompok = {
+                  ...kelompok,
+                  desa: daerah ? { ...desa, daerah } : desa
+                }
+              }
+            }
+            allClassesMap.set(c.id, {
+              id: c.id,
+              name: c.name,
+              kelompok_id: c.kelompok_id,
+              kelompok
+            })
+          })
         }
         
         // Continue with stats processing using filteredMeetings
@@ -1060,10 +1106,29 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             if (name) classNamesSet.add(name)
           }
           const class_names = Array.from(classNamesSet)
+          
+          // Add allClasses array with complete information for all class_ids
+          const allClasses: any[] = []
+          if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+            meeting.class_ids.forEach((classId: string) => {
+              const classData = allClassesMap.get(classId)
+              if (classData) {
+                allClasses.push(classData)
+              }
+            })
+          }
+          // Also include primary class_id if not already in class_ids
+          if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+            const classData = allClassesMap.get(meeting.class_id)
+            if (classData) {
+              allClasses.push(classData)
+            }
+          }
 
           return {
             ...meeting,
             classes,
+            allClasses, // Add allClasses array with complete information
             class_names,
             attendancePercentage,
             totalStudents,
@@ -1332,6 +1397,33 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         return acc
       }, {} as Record<string, any[]>)
       
+      // Create a map of all classes data for easy lookup
+      const allClassesMap = new Map<string, any>()
+      if (allClassesData) {
+        allClassesData.forEach(c => {
+          // Transform kelompok from array to single object if needed
+          let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+          if (kelompok) {
+            // Transform desa from array to single object if needed
+            const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+            if (desa) {
+              // Transform daerah from array to single object if needed
+              const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+              kelompok = {
+                ...kelompok,
+                desa: daerah ? { ...desa, daerah } : desa
+              }
+            }
+          }
+          allClassesMap.set(c.id, {
+            id: c.id,
+            name: c.name,
+            kelompok_id: c.kelompok_id,
+            kelompok
+          })
+        })
+      }
+      
       // Process meetings with stats
       const meetingsWithStats = filteredMeetings.map((meeting: any) => {
         const meetingAttendance = attendanceByMeeting[meeting.id] || []
@@ -1402,9 +1494,28 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         }
         const class_names = Array.from(classNamesSet)
         
+        // Add allClasses array with complete information for all class_ids
+        const allClasses: any[] = []
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((classId: string) => {
+            const classData = allClassesMap.get(classId)
+            if (classData) {
+              allClasses.push(classData)
+            }
+          })
+        }
+        // Also include primary class_id if not already in class_ids
+        if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+          const classData = allClassesMap.get(meeting.class_id)
+          if (classData) {
+            allClasses.push(classData)
+          }
+        }
+        
         return {
           ...meeting,
           classes,
+          allClasses, // Add allClasses array with complete information
           class_names,
           attendancePercentage,
           totalStudents,
