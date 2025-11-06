@@ -250,16 +250,74 @@ export default function DataFilter({
       return classList.filter(cls => 
         !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id
       )
+    } else if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
+      // Teacher with multiple classes: filter only classes they teach
+      const teacherClassIds = userProfile.classes.map(c => c.id)
+      return classList.filter(cls => teacherClassIds.includes(cls.id))
     }
     
     // For teacher or other roles, return all classes when kelompok filter is not active
     return classList
-  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter, userProfile?.kelompok_id])
+  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {
     if (!filteredClassList.length) return []
     
+    // Special handling for teacher with multiple classes from different kelompok
+    if (isTeacher && teacherHasMultipleClasses) {
+      // Create mapping kelompok_id -> kelompok name
+      const kelompokMap = new Map(
+        activeKelompokList.map(k => [k.id, k.name])
+      )
+      
+      // Group by name + kelompok_id to get unique combinations
+      const classGroups = filteredClassList.reduce((acc, cls) => {
+        const key = `${cls.name}::${cls.kelompok_id || 'no-kelompok'}`
+        if (!acc[key]) {
+          acc[key] = {
+            name: cls.name,
+            kelompok_id: cls.kelompok_id || null,
+            ids: [],
+            kelompokName: null as string | null
+          }
+        }
+        acc[key].ids.push(cls.id)
+        return acc
+      }, {} as Record<string, { name: string; kelompok_id: string | null; ids: string[]; kelompokName: string | null }>)
+      
+      // Get kelompok names from kelompokMap
+      const groupsWithNames = Object.values(classGroups).map(group => {
+        const kelompokName = group.kelompok_id ? (kelompokMap.get(group.kelompok_id) || null) : null
+        return {
+          ...group,
+          kelompokName
+        }
+      })
+      
+      // Check if there are duplicate class names (same name, different kelompok)
+      const nameCounts = groupsWithNames.reduce((acc, group) => {
+        acc[group.name] = (acc[group.name] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      
+      // Format labels: show kelompok name if there are duplicates with same name from different kelompok
+      return groupsWithNames.map(group => {
+        const hasDuplicate = nameCounts[group.name] > 1
+        const label = hasDuplicate && group.kelompokName
+          ? `${group.name} (${group.kelompokName})`
+          : group.name
+        
+        return {
+          value: group.ids.join(','),
+          label,
+          name: group.name,
+          ids: group.ids
+        }
+      })
+    }
+    
+    // Existing logic for non-teacher or teacher without multiple classes
     // Group classes by name and track unique kelompok IDs
     const classGroups = filteredClassList.reduce((acc, cls) => {
       if (!acc[cls.name]) {
@@ -288,7 +346,7 @@ export default function DataFilter({
         ids: group.ids
       }
     })
-  }, [filteredClassList])
+  }, [filteredClassList, isTeacher, teacherHasMultipleClasses, activeKelompokList])
 
   // Get available meeting types based on user profile
   const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)

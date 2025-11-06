@@ -9,6 +9,7 @@ import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses } from '@/hooks/useClasses'
+import { useKelompok } from '@/hooks/useKelompok'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
@@ -47,12 +48,22 @@ export default function CreateMeetingModal({
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
+  const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
 
-  // Filter available classes based on user role
+  // Filter available classes based on user role and enrich with kelompok_id for teacher
   const availableClasses = useMemo(() => {
-    if (userProfile?.role === 'teacher') {
+    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      // Enrich teacher classes with kelompok_id from classes
+      return userProfile.classes.map(cls => {
+        const fullClass = classes.find(c => c.id === cls.id)
+        return {
+          ...cls,
+          kelompok_id: fullClass?.kelompok_id || null
+        }
+      })
+    } else if (userProfile?.role === 'teacher') {
       return userProfile.classes || []
     }
     return classes || []
@@ -234,10 +245,41 @@ export default function CreateMeetingModal({
                 <div className="mb-4">
                   <MultiSelectCheckbox
                     label="Pilih Kelas"
-                    items={availableClasses.map(cls => ({
-                      id: cls.id,
-                      label: cls.name
-                    }))}
+                    items={(() => {
+                      // For teacher with multiple classes, check for duplicate names
+                      if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
+                        // Create mapping kelompok_id -> kelompok name
+                        const kelompokMap = new Map(
+                          kelompok.map(k => [k.id, k.name])
+                        )
+                        
+                        // Check for duplicate class names
+                        const nameCounts = availableClasses.reduce((acc, cls: any) => {
+                          acc[cls.name] = (acc[cls.name] || 0) + 1
+                          return acc
+                        }, {} as Record<string, number>)
+                        
+                        // Format labels
+                        return availableClasses.map((cls: any) => {
+                          const hasDuplicate = nameCounts[cls.name] > 1
+                          const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
+                          const label = hasDuplicate && kelompokName
+                            ? `${cls.name} (${kelompokName})`
+                            : cls.name
+                          
+                          return {
+                            id: cls.id,
+                            label
+                          }
+                        })
+                      }
+                      
+                      // Default: no format change
+                      return availableClasses.map(cls => ({
+                        id: cls.id,
+                        label: cls.name
+                      }))
+                    })()}
                     selectedIds={selectedClassIds}
                     onChange={setSelectedClassIds}
                     hint="Pilih satu atau lebih kelas untuk pertemuan ini"

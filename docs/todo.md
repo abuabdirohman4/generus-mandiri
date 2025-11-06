@@ -1,4 +1,4 @@
-## v1.9.0
+## v1.10.0
 - [ ] Add Template name
 - [ ] Add Pengajian Desa
     - Nama
@@ -13,11 +13,16 @@
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
 
-## v1.8.0
+## v1.9.0
 - [ ] Add Halaman Materi
 
 ## v1.8.0
 - [x] Add Filter Gender on Laporan
+- [ ] Handle multiple class with different kelompok
+    - Halaman Guru
+    - Halaman Siswa
+    - Halaman Absensi
+    - Halaman Laporan
 
 Components
 - [x] Change All <button> to <Button>
