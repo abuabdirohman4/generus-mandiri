@@ -71,7 +71,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
                   isSambungCapable={meeting.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
                 />
               )}
-              {meeting.meetings.meeting_type_code ? ": " : ""}
+              {meeting.meetings.meeting_type_code && meeting.meetings.title ? ": " : ""}
               {meeting.meetings.title}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">

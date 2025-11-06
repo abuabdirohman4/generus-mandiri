@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature } from '@/lib/accessControlServer'
@@ -83,7 +83,166 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
   try {
     const supabase = await createClient()
     
+    // Get current user profile to check role
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, teacher_classes(class_id)')
+      .eq('id', user.id)
+      .single()
+
+    // For teacher, use admin client to bypass RLS and filter by teacher's classes
     // Query dengan junction table student_classes untuk support multiple classes
+    if (profile?.role === 'teacher' && profile.teacher_classes && profile.teacher_classes.length > 0) {
+      const teacherClassIds = profile.teacher_classes.map((tc: any) => tc.class_id)
+      
+      // Use admin client to bypass RLS
+      const adminClient = await createAdminClient()
+      
+      // Get student IDs from both sources:
+      // 1. student_classes junction table (for students with multiple classes)
+      // 2. students.class_id directly (for students with single class - backward compatibility)
+      const studentIdsFromJunction = new Set<string>()
+      const studentIdsFromClassId = new Set<string>()
+      
+      // Query from junction table
+      const { data: studentClassData } = await adminClient
+        .from('student_classes')
+        .select('student_id')
+        .in('class_id', teacherClassIds)
+      
+      if (studentClassData && studentClassData.length > 0) {
+        studentClassData.forEach((sc: any) => {
+          studentIdsFromJunction.add(sc.student_id)
+        })
+      }
+      
+      // Query from students.class_id directly (backward compatibility)
+      const { data: studentsFromClassId } = await adminClient
+        .from('students')
+        .select('id')
+        .in('class_id', teacherClassIds)
+      
+      if (studentsFromClassId && studentsFromClassId.length > 0) {
+        studentsFromClassId.forEach((s: any) => {
+          studentIdsFromClassId.add(s.id)
+        })
+      }
+      
+      // Combine both sources
+      const studentIds = [...new Set([...studentIdsFromJunction, ...studentIdsFromClassId])]
+      
+      if (studentIds.length === 0) {
+        return []
+      }
+      
+      // Apply additional classId filter if provided
+      if (classId) {
+        const classIds = classId.split(',')
+        const filteredClassIds = classIds.filter(id => teacherClassIds.includes(id))
+        if (filteredClassIds.length === 0) {
+          return []
+        }
+        
+        // Get students for specific classes
+        const filteredStudentIdsFromJunction = new Set<string>()
+        const filteredStudentIdsFromClassId = new Set<string>()
+        
+        const { data: filteredStudentClassData } = await adminClient
+          .from('student_classes')
+          .select('student_id')
+          .in('class_id', filteredClassIds)
+        
+        if (filteredStudentClassData && filteredStudentClassData.length > 0) {
+          filteredStudentClassData.forEach((sc: any) => {
+            filteredStudentIdsFromJunction.add(sc.student_id)
+          })
+        }
+        
+        const { data: filteredStudentsFromClassId } = await adminClient
+          .from('students')
+          .select('id')
+          .in('class_id', filteredClassIds)
+        
+        if (filteredStudentsFromClassId && filteredStudentsFromClassId.length > 0) {
+          filteredStudentsFromClassId.forEach((s: any) => {
+            filteredStudentIdsFromClassId.add(s.id)
+          })
+        }
+        
+        const filteredStudentIds = [...new Set([...filteredStudentIdsFromJunction, ...filteredStudentIdsFromClassId])]
+        // Intersect with teacher's students
+        const finalStudentIds = studentIds.filter(id => filteredStudentIds.includes(id))
+        
+        if (finalStudentIds.length === 0) {
+          return []
+        }
+        
+        // Query students with final filtered IDs using admin client
+        const { data: students, error } = await adminClient
+          .from('students')
+          .select(`
+            id,
+            name,
+            gender,
+            class_id,
+            kelompok_id,
+            desa_id,
+            daerah_id,
+            created_at,
+            updated_at,
+            student_classes(
+              classes:class_id(id, name)
+            ),
+            daerah:daerah_id(name),
+            desa:desa_id(name),
+            kelompok:kelompok_id(name)
+          `)
+          .in('id', finalStudentIds)
+          .order('name')
+        
+        if (error) {
+          throw error
+        }
+        
+        return await transformStudentsData(students || [], adminClient)
+      }
+      
+      // Query students for all teacher's classes using admin client
+      const { data: students, error } = await adminClient
+        .from('students')
+        .select(`
+          id,
+          name,
+          gender,
+          class_id,
+          kelompok_id,
+          desa_id,
+          daerah_id,
+          created_at,
+          updated_at,
+          student_classes(
+            classes:class_id(id, name)
+          ),
+          daerah:daerah_id(name),
+          desa:desa_id(name),
+          kelompok:kelompok_id(name)
+        `)
+        .in('id', studentIds)
+        .order('name')
+      
+      if (error) {
+        throw error
+      }
+      
+      return await transformStudentsData(students || [], adminClient)
+    }
+    
+    // For non-teacher roles, use existing logic with junction table
     let query = supabase
       .from('students')
       .select(`
@@ -159,6 +318,66 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
   }
+}
+
+// Helper function to transform students data for teacher (support multiple classes)
+async function transformStudentsData(students: any[], adminClient?: any): Promise<Student[]> {
+  // Get class names for students that don't have junction table entries
+  const classIdsToQuery = new Set<string>()
+  students.forEach(student => {
+    const studentClasses = student.student_classes || []
+    if (studentClasses.length === 0 && student.class_id) {
+      classIdsToQuery.add(student.class_id)
+    }
+  })
+  
+  // Query class names if needed
+  let classNameMap = new Map<string, string>()
+  if (classIdsToQuery.size > 0 && adminClient) {
+    const { data: classesData } = await adminClient
+      .from('classes')
+      .select('id, name')
+      .in('id', Array.from(classIdsToQuery))
+    
+    if (classesData) {
+      classesData.forEach((c: any) => {
+        classNameMap.set(c.id, c.name)
+      })
+    }
+  }
+  
+  return students.map(student => {
+    // Extract all classes from junction table
+    const studentClasses = student.student_classes || []
+    const classesArray = studentClasses
+      .map((sc: any) => sc.classes)
+      .filter(Boolean)
+      .map((cls: any) => ({
+        id: String(cls.id || ''),
+        name: String(cls.name || '')
+      }))
+    
+    // If no classes from junction table, use class_id directly (backward compatibility)
+    if (classesArray.length === 0 && student.class_id) {
+      const className = classNameMap.get(student.class_id) || student.class_name || 'Unknown Class'
+      classesArray.push({
+        id: String(student.class_id),
+        name: className
+      })
+    }
+    
+    // Get primary class (first class) for backward compatibility
+    const primaryClass = classesArray[0] || null
+    
+    return {
+      ...student,
+      classes: classesArray, // Array of all classes
+      class_name: primaryClass?.name || '',
+      daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
+      desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
+      kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || ''
+    }
+  })
 }
 
 

@@ -1,4 +1,4 @@
-## v1.9.0
+## v1.10.0
 - [ ] Add Template name
 - [ ] Add Pengajian Desa
     - Nama
@@ -13,8 +13,23 @@
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
 
-## v1.8.0
+## v1.9.0
 - [ ] Add Halaman Materi
+
+## v1.8.0
+- [x] Add Filter Gender on Laporan
+- [ ] Handle multiple class with different kelompok
+    [x] Halaman Guru
+    [x] Halaman Siswa
+        [ ] Di table tampilkan kelompok
+    [ ] Halaman Absensi
+        [ ] Filter di detail absensi belum muncul 2 kelompok
+        [x] Tampilkan nama kelas (kelompok)
+        [x] Untuk yang punya multiple kelas kayak mudamudi juga harusnya
+        [ ] Di admin warlob 2 tidak muncul
+    [ ] Halaman Laporan
+        [ ] Belum jalan utk warlob 2
+- [ ] Confirm modal pakai [tipe pertemuan/title]
 
 Components
 - [x] Change All <button> to <Button>

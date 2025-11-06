@@ -36,6 +36,7 @@ export function useLaporanPage() {
       // Detailed mode filters
       period: filters.period,
       classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
+      gender: filters.gender || undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -106,18 +107,25 @@ export function useLaporanPage() {
   const summaryStats = useMemo(() => {
     if (!reportData?.summary) return null
     
-    const { summary } = reportData
+    const { summary, detailedRecords } = reportData
     const attendanceRate = summary.total > 0 
       ? Math.round((summary.hadir / summary.total) * 100)
+      : 0
+
+    // Calculate total meetings from detailedRecords (max total_days)
+    // This represents the number of meetings in the period
+    const totalMeetings = detailedRecords && detailedRecords.length > 0
+      ? Math.max(...detailedRecords.map(record => record.total_days))
       : 0
 
     return {
       ...summary,
       attendanceRate,
       periodLabel: getPeriodLabel(filters.period),
+      totalMeetings,
       dateRange: reportData.dateRange
     }
-  }, [reportData?.summary, filters.period, reportData?.dateRange])
+  }, [reportData?.summary, reportData?.detailedRecords, filters.period, reportData?.dateRange])
 
   const chartData = useMemo(() => {
     if (!reportData?.chartData) return []
@@ -173,8 +181,13 @@ export function useLaporanPage() {
     mutate(undefined, { revalidate: false })
   }
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
-    setFilter('organisasi', organisasiFilters)
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => {
+    // Extract gender from organisasiFilters and update filters.gender separately
+    const { gender, ...organisasi } = organisasiFilters
+    setFilter('organisasi', organisasi)
+    if (gender !== undefined) {
+      setFilter('gender', gender || '')
+    }
   }, [setFilter])
 
   // Loading states
