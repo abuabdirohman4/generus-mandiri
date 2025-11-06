@@ -218,13 +218,21 @@ export default function DataFilter({
       return classList
     }
     
-    // If kelompok filter is shown but no kelompok selected yet, show all classes
+    // PRIORITY: Jika user sudah pilih kelompok, gunakan yang dipilih
+    if (filters?.kelompok && filters.kelompok.length > 0) {
+      // Filter kelas berdasarkan kelompok yang dipilih user
+      return classList.filter(cls => 
+        cls.kelompok_id && filters.kelompok.includes(cls.kelompok_id)
+      )
+    }
+    
+    // Fallback: Jika belum pilih kelompok, tampilkan dari semua kelompok tersedia
     if (filteredKelompokList.length === 0) {
       return classList
     }
     
     if (isSuperAdmin || isAdminDaerah || isAdminDesa) {
-      // Get valid kelompok IDs from filteredKelompokList
+      // Get valid kelompok IDs from filteredKelompokList (kelompok yang tersedia)
       const validKelompokIds = filteredKelompokList.map(k => k.id)
       
       // Filter classes by valid kelompok IDs only if we have valid kelompok IDs
@@ -246,33 +254,40 @@ export default function DataFilter({
     
     // For teacher or other roles, return all classes when kelompok filter is not active
     return classList
-  }, [classList, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter, userProfile?.kelompok_id])
+  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, showKelasFilter, userProfile?.kelompok_id])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {
     if (!filteredClassList.length) return []
     
-    // Group classes by name
+    // Group classes by name and track unique kelompok IDs
     const classGroups = filteredClassList.reduce((acc, cls) => {
       if (!acc[cls.name]) {
         acc[cls.name] = {
           name: cls.name,
           ids: [],
-          count: 0
+          kelompokIds: new Set<string>() // Track unique kelompok IDs for this class name
         }
       }
       acc[cls.name].ids.push(cls.id)
-      acc[cls.name].count++
+      // Track unique kelompok IDs for this class name
+      if (cls.kelompok_id) {
+        acc[cls.name].kelompokIds.add(cls.kelompok_id)
+      }
       return acc
-    }, {} as Record<string, { name: string; ids: string[]; count: number }>)
+    }, {} as Record<string, { name: string; ids: string[]; kelompokIds: Set<string> }>)
     
     // Convert to array with formatted labels
-    return Object.values(classGroups).map(group => ({
-      value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
-      label: group.count > 1 ? `${group.name} (${group.count} kelompok)` : group.name,
-      name: group.name,
-      ids: group.ids
-    }))
+    // Count should be based on unique kelompok IDs, not total class count
+    return Object.values(classGroups).map(group => {
+      const uniqueKelompokCount = group.kelompokIds.size
+      return {
+        value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
+        label: uniqueKelompokCount > 1 ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
+        name: group.name,
+        ids: group.ids
+      }
+    })
   }, [filteredClassList])
 
   // Get available meeting types based on user profile
