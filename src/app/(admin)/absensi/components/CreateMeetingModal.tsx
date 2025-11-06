@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
@@ -9,6 +9,7 @@ import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses } from '@/hooks/useClasses'
+import { useKelompok } from '@/hooks/useKelompok'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
@@ -47,16 +48,33 @@ export default function CreateMeetingModal({
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
+  const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
 
-  // Filter available classes based on user role
+  // Filter available classes based on user role and enrich with kelompok_id for teacher
+  // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
-    if (userProfile?.role === 'teacher') {
+    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      // Enrich teacher classes with kelompok_id from classes
+      return userProfile.classes.map(cls => {
+        const fullClass = classes.find(c => c.id === cls.id)
+        return {
+          ...cls,
+          kelompok_id: fullClass?.kelompok_id || null
+        }
+      })
+    } else if (userProfile?.role === 'teacher') {
       return userProfile.classes || []
     }
     return classes || []
-  }, [userProfile, classes])
+  }, [
+    userProfile?.role,
+    userProfile?.classes?.length,
+    userProfile?.classes?.map(c => c.id).join(','),
+    classes?.length,
+    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
+  ])
 
   // Filter students by selected classes - support multiple classes per student
   const filteredStudents = students.filter(student => {
@@ -76,19 +94,61 @@ export default function CreateMeetingModal({
     }
   }, [isOpen, mutateStudents])
 
-  // Initialize selectedClassIds based on mode
+  // Track initialization to prevent infinite loops
+  const initializedRef = useRef(false)
+  const previousIsOpenRef = useRef(isOpen)
+  
+  // Initialize selectedClassIds based on mode - only when modal opens for the first time
   useEffect(() => {
+    // Reset when modal closes
+    if (!isOpen) {
+      if (previousIsOpenRef.current) {
+        initializedRef.current = false
+      }
+      previousIsOpenRef.current = false
+      return
+    }
+    
+    // Only initialize once when modal first opens
+    if (!previousIsOpenRef.current && isOpen) {
+      previousIsOpenRef.current = true
+      initializedRef.current = false
+    }
+    
+    // Only initialize once per modal open
+    if (initializedRef.current) return
+    
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
-      setSelectedClassIds(meeting.class_ids || (meeting.class_id ? [meeting.class_id] : []))
+      const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
+      setSelectedClassIds(meetingClassIds)
+      initializedRef.current = true
     } else if (classId) {
       // Create mode with specific class
       setSelectedClassIds([classId])
+      initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
       // Create mode: default to first available class
+      // Use a separate effect that only runs when availableClasses is ready
       setSelectedClassIds([availableClasses[0].id])
+      initializedRef.current = true
     }
-  }, [classId, availableClasses, meeting])
+  }, [isOpen, classId, meeting])
+  
+  // Separate effect for availableClasses to avoid infinite loop
+  // Only initialize if not already initialized and modal is open
+  useEffect(() => {
+    if (!isOpen || initializedRef.current) return
+    if (!classId && !meeting && availableClasses && availableClasses.length > 0) {
+      setSelectedClassIds(prev => {
+        // Only set if not already set
+        if (prev.length === 0) {
+          return [availableClasses[0].id]
+        }
+        return prev
+      })
+    }
+  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id])
 
   // Update form data when meeting changes
   useEffect(() => {
@@ -120,14 +180,26 @@ export default function CreateMeetingModal({
 
   // Auto-select meeting type based on available options
   useEffect(() => {
-    // If input is hidden, force PEMBINAAN
-    if (!shouldShowMeetingTypeInput) {
-      setMeetingType('PEMBINAAN')
+    // Don't auto-select in edit mode (meeting type is already set)
+    if (meeting) {
       return
     }
     
-    // Existing auto-select logic for when input is shown
-    if (!meetingType && !typesLoading && Object.keys(availableTypes).length > 0) {
+    // Wait for modal to be open and types to be loaded
+    if (!isOpen || typesLoading) {
+      return
+    }
+    
+    // If input is hidden, force PEMBINAAN
+    if (!shouldShowMeetingTypeInput) {
+      if (meetingType !== 'PEMBINAAN') {
+        setMeetingType('PEMBINAAN')
+      }
+      return
+    }
+    
+    // Auto-select logic for when input is shown (only if meetingType is empty)
+    if (!meetingType && Object.keys(availableTypes).length > 0) {
       const typeValues = Object.values(availableTypes)
       
       // If only 1 option, auto-select it
@@ -145,7 +217,7 @@ export default function CreateMeetingModal({
         }
       }
     }
-  }, [availableTypes, typesLoading, meetingType, shouldShowMeetingTypeInput])
+  }, [isOpen, availableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -240,10 +312,41 @@ export default function CreateMeetingModal({
                 <div className="mb-4">
                   <MultiSelectCheckbox
                     label="Pilih Kelas"
-                    items={availableClasses.map(cls => ({
-                      id: cls.id,
-                      label: cls.name
-                    }))}
+                    items={(() => {
+                      // For teacher with multiple classes, check for duplicate names
+                      if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
+                        // Create mapping kelompok_id -> kelompok name
+                        const kelompokMap = new Map(
+                          kelompok.map(k => [k.id, k.name])
+                        )
+                        
+                        // Check for duplicate class names
+                        const nameCounts = availableClasses.reduce((acc, cls: any) => {
+                          acc[cls.name] = (acc[cls.name] || 0) + 1
+                          return acc
+                        }, {} as Record<string, number>)
+                        
+                        // Format labels
+                        return availableClasses.map((cls: any) => {
+                          const hasDuplicate = nameCounts[cls.name] > 1
+                          const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
+                          const label = hasDuplicate && kelompokName
+                            ? `${cls.name} (${kelompokName})`
+                            : cls.name
+                          
+                          return {
+                            id: cls.id,
+                            label
+                          }
+                        })
+                      }
+                      
+                      // Default: no format change
+                      return availableClasses.map(cls => ({
+                        id: cls.id,
+                        label: cls.name
+                      }))
+                    })()}
                     selectedIds={selectedClassIds}
                     onChange={setSelectedClassIds}
                     hint="Pilih satu atau lebih kelas untuk pertemuan ini"

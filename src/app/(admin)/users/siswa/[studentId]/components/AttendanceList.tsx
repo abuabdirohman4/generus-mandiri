@@ -104,7 +104,7 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
                       isSambungCapable={log.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
                     />
                   )}
-                  {log.meetings.meeting_type_code ? ": " : ""}
+                  {log.meetings.meeting_type_code && log.meetings.title ? ": " : ""}
                   {log.meetings.title}
                 </div>
                 {/* {log.meetings.topic && (

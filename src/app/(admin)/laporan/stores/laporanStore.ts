@@ -20,6 +20,9 @@ export interface LaporanFilters {
     kelas: string[]
   }
   
+  // Gender filter
+  gender: string
+  
   // Daily filters
   startDate: Dayjs | null
   endDate: Dayjs | null
@@ -75,6 +78,9 @@ const defaultFilters: LaporanFilters = {
     kelompok: [],
     kelas: []
   },
+  
+  // Gender filter
+  gender: '',
   
   // Daily filters
   startDate: null,
@@ -149,6 +155,7 @@ export const useLaporanStore = create<LaporanState>()(
           // Persist detailed mode settings
           period: state.filters.period,
           classId: state.filters.classId,
+          gender: state.filters.gender,
           
           // Persist period-specific settings but reset date-based ones
           weekYear: state.filters.weekYear,

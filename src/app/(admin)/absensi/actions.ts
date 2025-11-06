@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
 
@@ -190,7 +190,11 @@ export async function createMeeting(data: CreateMeetingData) {
     }
 
     // Get students for all selected classes to create snapshot (via junction table)
-    const { data: studentClassData, error: studentClassError } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to getAllStudents)
+    const adminClient = await createAdminClient()
+    
+    // Get students via junction table to support multiple classes per student
+    const { data: studentClassData, error: studentClassError } = await adminClient
       .from('student_classes')
       .select('student_id')
       .in('class_id', data.classIds)
@@ -206,10 +210,10 @@ export async function createMeeting(data: CreateMeetingData) {
     // Get unique student IDs (a student might be in multiple selected classes)
     const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
     
-    // Verify students exist
-    const { data: students, error: studentsError } = await supabase
+    // Verify students exist and get their details
+    const { data: students, error: studentsError } = await adminClient
       .from('students')
-      .select('id')
+      .select('id, name, class_id, kelompok_id')
       .in('id', uniqueStudentIds)
 
     if (studentsError) {
@@ -250,6 +254,15 @@ export async function createMeeting(data: CreateMeetingData) {
 
     if (error) {
       console.error('Error creating meeting:', error)
+      
+      // Check if it's an RLS violation error (code 42501)
+      if (error.code === '42501') {
+        return { 
+          success: false, 
+          error: 'Anda tidak dapat membuat pertemuan untuk kelas dari kelompok yang berbeda. Silakan pilih kelas dari kelompok yang sama dengan kelompok Anda.' 
+        }
+      }
+      
       return { success: false, error: error.message }
     }
 
@@ -364,23 +377,48 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
 
 export async function getMeetingById(meetingId: string) {
   try {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
     
-    const { data, error } = await supabase
+    const { data: meeting, error } = await adminClient
       .from('meetings')
       .select(`
         id,
         class_id,
         class_ids,
+        teacher_id,
         title,
         date,
         topic,
         description,
         student_snapshot,
         created_at,
+        meeting_type_code,
         classes (
           id,
-          name
+          name,
+          kelompok_id,
+          kelompok:kelompok_id (
+            id,
+            name,
+            desa_id,
+            desa:desa_id (
+              id,
+              name,
+              daerah_id,
+              daerah:daerah_id (
+                id,
+                name
+              )
+            )
+          ),
+          class_master_mappings (
+            class_master:class_master_id (
+              category:category_id (
+                is_sambung_capable
+              )
+            )
+          )
         )
       `)
       .eq('id', meetingId)
@@ -391,7 +429,133 @@ export async function getMeetingById(meetingId: string) {
       return { success: false, error: error.message, data: null }
     }
 
-    return { success: true, data }
+    if (!meeting) {
+      return { success: false, error: 'Meeting not found', data: null }
+    }
+
+    // Get all class IDs from meeting
+    const allClassIds = new Set<string>()
+    if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+      meeting.class_ids.forEach((id: string) => allClassIds.add(id))
+    }
+    if (meeting.class_id) allClassIds.add(meeting.class_id)
+
+    // Fetch all class details with kelompok info
+    const { data: allClassesData } = await adminClient
+      .from('classes')
+      .select(`
+        id,
+        name,
+        kelompok_id,
+        kelompok:kelompok_id (
+          id,
+          name,
+          desa_id,
+          desa:desa_id (
+            id,
+            name,
+            daerah_id,
+            daerah:daerah_id (
+              id,
+              name
+            )
+          )
+        )
+      `)
+      .in('id', Array.from(allClassIds))
+
+    // Create a map of all classes data for easy lookup
+    const allClassesMap = new Map<string, any>()
+    if (allClassesData) {
+      allClassesData.forEach(c => {
+        // Transform kelompok from array to single object if needed
+        let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+        if (kelompok) {
+          // Transform desa from array to single object if needed
+          const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+          if (desa) {
+            // Transform daerah from array to single object if needed
+            const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+            kelompok = {
+              ...kelompok,
+              desa: daerah ? { ...desa, daerah } : desa
+            }
+          }
+        }
+        allClassesMap.set(c.id, {
+          id: c.id,
+          name: c.name,
+          kelompok_id: c.kelompok_id,
+          kelompok
+        })
+      })
+    }
+
+    // Transform classes from array to single object to match our interface
+    let classes: any = meeting.classes
+    if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
+      classes = meeting.classes[0]
+    }
+
+    // Transform kelompok from array to single object if needed
+    if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: classes.kelompok[0]
+      }
+    }
+
+    // Transform desa from array to single object if needed
+    if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: {
+          ...classes.kelompok,
+          desa: classes.kelompok.desa[0]
+        }
+      }
+    }
+
+    // Transform daerah from array to single object if needed
+    if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
+      classes = {
+        ...classes,
+        kelompok: {
+          ...classes.kelompok,
+          desa: {
+            ...classes.kelompok.desa,
+            daerah: classes.kelompok.desa.daerah[0]
+          }
+        }
+      }
+    }
+
+    // Add allClasses array with complete information for all class_ids
+    const allClasses: any[] = []
+    if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+      meeting.class_ids.forEach((classId: string) => {
+        const classData = allClassesMap.get(classId)
+        if (classData) {
+          allClasses.push(classData)
+        }
+      })
+    }
+    // Also include primary class_id if not already in class_ids
+    if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+      const classData = allClassesMap.get(meeting.class_id)
+      if (classData) {
+        allClasses.push(classData)
+      }
+    }
+
+    return { 
+      success: true, 
+      data: {
+        ...meeting,
+        classes,
+        allClasses // Add allClasses array with complete information
+      }
+    }
   } catch (error) {
     console.error('Error in getMeetingById:', error)
     return { success: false, error: 'Internal server error', data: null }
@@ -455,8 +619,12 @@ export async function deleteMeeting(meetingId: string) {
       return { success: false, error: 'Anda tidak memiliki izin untuk menghapus pertemuan ini' }
     }
     
+    // Use admin client to bypass RLS restrictions when deleting
+    // This ensures we can delete attendance_logs and meetings even if they're from different kelompok
+    const adminClient = await createAdminClient()
+    
     // 1. Check if meeting has attendance logs
-    const { data: attendanceLogs, error: checkError } = await supabase
+    const { data: attendanceLogs, error: checkError } = await adminClient
       .from('attendance_logs')
       .select('id')
       .eq('meeting_id', meetingId)
@@ -467,9 +635,9 @@ export async function deleteMeeting(meetingId: string) {
       return { success: false, error: checkError.message }
     }
     
-    // 2. If attendance logs exist, delete them first
+    // 2. If attendance logs exist, delete them first using admin client
     if (attendanceLogs && attendanceLogs.length > 0) {
-      const { error: deleteLogsError } = await supabase
+      const { error: deleteLogsError } = await adminClient
         .from('attendance_logs')
         .delete()
         .eq('meeting_id', meetingId)
@@ -483,14 +651,23 @@ export async function deleteMeeting(meetingId: string) {
       }
     }
     
-    // 3. Now delete the meeting
-    const { error } = await supabase
+    // 3. Now delete the meeting using admin client
+    const { error } = await adminClient
       .from('meetings')
       .delete()
       .eq('id', meetingId)
 
     if (error) {
       console.error('Error deleting meeting:', error)
+      
+      // Check if it's a foreign key constraint error
+      if (error.code === '23503') {
+        return { 
+          success: false, 
+          error: 'Tidak dapat menghapus pertemuan karena masih terdapat data absensi yang terkait. Silakan hapus data absensi terlebih dahulu.' 
+        }
+      }
+      
       return { success: false, error: error.message }
     }
 
@@ -555,8 +732,12 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
       recorded_by: profile.id
     }))
 
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    // This allows saving attendance for students from different kelompok
+    const adminClient = await createAdminClient()
+    
     // Use upsert to handle both insert and update
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('attendance_logs')
       .upsert(attendanceRecords, {
         onConflict: 'student_id,meeting_id'
@@ -577,9 +758,10 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
 
 export async function getAttendanceByMeeting(meetingId: string) {
   try {
-    const supabase = await createClient()
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
     
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('attendance_logs')
       .select(`
         id,
@@ -590,8 +772,23 @@ export async function getAttendanceByMeeting(meetingId: string) {
           id,
           name,
           gender,
-          student_classes(
-            classes:class_id(id, name)
+          class_id,
+          kelompok_id,
+          classes (
+            id,
+            name
+          ),
+          student_classes (
+            class_id,
+            classes:class_id (
+              id,
+              name,
+              kelompok_id,
+              kelompok:kelompok_id (
+                id,
+                name
+              )
+            )
           )
         )
       `)
@@ -610,6 +807,84 @@ export async function getAttendanceByMeeting(meetingId: string) {
   }
 }
 
+/**
+ * Get students from meeting snapshot using admin client to bypass RLS restrictions
+ */
+export async function getStudentsFromSnapshot(studentIds: string[]) {
+  try {
+    if (!studentIds || studentIds.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    const adminClient = await createAdminClient()
+    
+    const { data: students, error } = await adminClient
+      .from('students')
+      .select(`
+        id,
+        name,
+        gender,
+        class_id,
+        kelompok_id,
+        classes (
+          id,
+          name
+        ),
+        student_classes (
+          class_id,
+          classes:class_id (
+            id,
+            name
+          )
+        )
+      `)
+      .in('id', studentIds)
+      .order('name')
+
+    if (error) {
+      console.error('Error fetching students from snapshot:', error)
+      return { success: false, error: error.message, data: null }
+    }
+
+    // Transform to match Student interface used in hook
+    const transformedStudents = (students || []).map((student: any) => {
+      const classData = Array.isArray(student.classes) ? student.classes[0] : student.classes
+      
+      // Get all classes from junction table
+      const studentClasses = student.student_classes || []
+      const allClasses = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: cls.id,
+          name: cls.name
+        }))
+      
+      // If no classes from junction, use primary class
+      if (allClasses.length === 0 && classData) {
+        allClasses.push({
+          id: classData.id,
+          name: classData.name
+        })
+      }
+      
+      return {
+        id: student.id,
+        name: student.name,
+        gender: student.gender || 'L',
+        class_name: allClasses[0]?.name || 'Unknown Class',
+        class_id: allClasses[0]?.id || student.class_id || '',
+        classes: allClasses // Add all classes array
+      }
+    })
+
+    return { success: true, data: transformedStudents }
+  } catch (error) {
+    console.error('Error in getStudentsFromSnapshot:', error)
+    return { success: false, error: 'Internal server error', data: null }
+  }
+}
+
 export async function getMeetingsWithStats(classId?: string, limit: number = 10, cursor?: string) {
   try {
     const supabase = await createClient()
@@ -620,10 +895,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       return { success: false, error: 'User not authenticated', data: null }
     }
 
-    // Get user profile
+    // Get user profile with hierarchy info for admin filtering
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, role')
+      .select('id, role, kelompok_id, desa_id, daerah_id')
       .eq('id', user.id)
       .single()
 
@@ -691,18 +966,170 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       if (teacherClasses && teacherClasses.length > 0) {
         const teacherClassIds = teacherClasses.map(tc => tc.class_id)
         
-        // Fetch meetings and filter client-side
-        const { data: meetings, error: meetingsError } = await query
+        // For teacher, use admin client to bypass RLS restrictions
+        // This allows teacher to see meetings from all kelompok (if they teach multiple classes)
+        const adminClientTeacher = await createAdminClient()
+        const adminQuery = adminClientTeacher
+          .from('meetings')
+          .select(`
+            id,
+            class_id,
+            class_ids,
+            teacher_id,
+            title,
+            date,
+            topic,
+            description,
+            student_snapshot,
+            created_at,
+            meeting_type_code,
+            classes (
+              id,
+              name,
+              kelompok_id,
+              kelompok:kelompok_id (
+                id,
+                name,
+                desa_id,
+                desa:desa_id (
+                  id,
+                  name,
+                  daerah_id,
+                  daerah:daerah_id (
+                    id,
+                    name
+                  )
+                )
+              ),
+              class_master_mappings (
+                class_master:class_master_id (
+                  category:category_id (
+                    is_sambung_capable
+                  )
+                )
+              )
+            )
+          `)
+          .order('date', { ascending: false })
+          .limit(limit)
+        
+        // If cursor (last meeting date) is provided, get meetings older than cursor
+        if (cursor) {
+          adminQuery.lt('date', cursor)
+        }
+        
+        // Fetch ALL meetings using admin client (bypasses RLS)
+        const { data: meetings, error: meetingsError } = await adminQuery
         
         if (meetingsError) {
           console.error('Error fetching meetings:', meetingsError)
           return { success: false, error: meetingsError.message, data: null }
         }
         
-        // Filter meetings that include any of teacher's classes
-        const filteredMeetings = (meetings || []).filter((meeting: any) => 
-          meeting.class_ids?.some((classId: string) => teacherClassIds.includes(classId))
-        )
+        // If classId is provided, filter by that specific class (and its kelompok)
+        let filteredMeetings: any[]
+        if (classId) {
+          const classIds = classId.split(',')
+          
+          // Verify that the requested classId is one of teacher's classes
+          const invalidClasses = classIds.filter(id => !teacherClassIds.includes(id))
+          if (invalidClasses.length > 0) {
+            return { success: false, error: 'You can only view meetings for your own classes', data: null }
+          }
+          
+          // Fetch ALL class details from meetings to get kelompok_id for each class
+          // This is important for multi-class meetings where meeting.classes only represents primary class
+          const allMeetingClassIds = new Set<string>()
+          meetings.forEach((m: any) => {
+            if (m.class_ids && Array.isArray(m.class_ids)) {
+              m.class_ids.forEach((id: string) => allMeetingClassIds.add(id))
+            }
+            if (m.class_id) allMeetingClassIds.add(m.class_id)
+          })
+          
+          // Fetch all class details to get kelompok_id mapping
+          const { data: allClassesData } = await adminClientTeacher
+            .from('classes')
+            .select('id, kelompok_id')
+            .in('id', Array.from(allMeetingClassIds))
+          
+          // Create mapping: classId -> kelompok_id for ALL classes
+          const allClassToKelompokMap = new Map<string, string>()
+          if (allClassesData) {
+            allClassesData.forEach(c => {
+              if (c.kelompok_id) {
+                allClassToKelompokMap.set(c.id, c.kelompok_id)
+              }
+            })
+          }
+          
+          // Get expected kelompok_id for selected classes
+          const { data: selectedClassesData } = await adminClientTeacher
+            .from('classes')
+            .select('id, name, kelompok_id')
+            .in('id', classIds)
+          
+          // Create mapping: selected classId -> kelompok_id
+          const classToKelompokMap = new Map<string, string>()
+          if (selectedClassesData) {
+            selectedClassesData.forEach(c => {
+              if (c.kelompok_id) {
+                classToKelompokMap.set(c.id, c.kelompok_id)
+              }
+            })
+          }
+          
+          // Get expected kelompok_ids for selected classes
+          const expectedKelompokIds = new Set<string>()
+          classIds.forEach(id => {
+            const kelompokId = classToKelompokMap.get(id)
+            if (kelompokId) expectedKelompokIds.add(kelompokId)
+          })
+          
+          // Filter meetings by selected class(es) and kelompok
+          filteredMeetings = (meetings || []).filter((meeting: any) => {
+            // Check class_ids array first (for multi-class meetings)
+            if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+              const matchingClassId = meeting.class_ids.find((id: string) => classIds.includes(id))
+              if (matchingClassId) {
+                // Get kelompok_id for the matching class (not from meeting.classes)
+                const matchingClassKelompokId = allClassToKelompokMap.get(matchingClassId)
+                const expectedKelompokId = classToKelompokMap.get(matchingClassId)
+                
+                // If both kelompok_ids exist and match, include
+                if (expectedKelompokId && matchingClassKelompokId && expectedKelompokId === matchingClassKelompokId) {
+                  return true
+                }
+                // If no kelompok_id check needed (backward compatibility)
+                if (!expectedKelompokId || !matchingClassKelompokId || expectedKelompokIds.size === 0) {
+                  return true
+                }
+                return false
+              }
+              return false
+            }
+            // Check class_id
+            if (meeting.class_id && classIds.includes(meeting.class_id)) {
+              const classKelompokId = allClassToKelompokMap.get(meeting.class_id)
+              const expectedKelompokId = classToKelompokMap.get(meeting.class_id)
+              
+              if (expectedKelompokId && classKelompokId && expectedKelompokId === classKelompokId) {
+                return true
+              }
+              if (!expectedKelompokId || !classKelompokId || expectedKelompokIds.size === 0) {
+                return true
+              }
+              return false
+            }
+            return false
+          })
+        } else {
+          // If no classId provided, filter to meetings that include any of teacher's classes
+          filteredMeetings = (meetings || []).filter((meeting: any) => 
+            meeting.class_ids?.some((id: string) => teacherClassIds.includes(id)) ||
+            (meeting.class_id && teacherClassIds.includes(meeting.class_id))
+          )
+        }
         
         if (!filteredMeetings || filteredMeetings.length === 0) {
           return { success: true, data: [], hasMore: false }
@@ -710,16 +1137,35 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         
         // Fetch class names for all class_ids
         const allClassIds = new Set<string>()
-        filteredMeetings.forEach(meeting => {
+        filteredMeetings.forEach((meeting: any) => {
           if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
-            meeting.class_ids.forEach(id => allClassIds.add(id))
+            meeting.class_ids.forEach((id: string) => allClassIds.add(id))
           }
+          if (meeting.class_id) allClassIds.add(meeting.class_id)
         })
 
-        // Fetch class names in one query
-        const { data: classesData } = await supabase
+        // Fetch class names and kelompok info in one query (use admin client to bypass RLS)
+        const { data: classesData } = await adminClientTeacher
           .from('classes')
-          .select('id, name')
+          .select(`
+            id,
+            name,
+            kelompok_id,
+            kelompok:kelompok_id (
+              id,
+              name,
+              desa_id,
+              desa:desa_id (
+                id,
+                name,
+                daerah_id,
+                daerah:daerah_id (
+                  id,
+                  name
+                )
+              )
+            )
+          `)
           .in('id', Array.from(allClassIds))
 
         // Create id -> name mapping
@@ -728,11 +1174,40 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           classesData.forEach(c => classNameMap.set(c.id, c.name))
         }
         
+        // Create a map of all classes data for easy lookup
+        const allClassesMap = new Map<string, any>()
+        if (classesData) {
+          classesData.forEach(c => {
+            // Transform kelompok from array to single object if needed
+            let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+            if (kelompok) {
+              // Transform desa from array to single object if needed
+              const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+              if (desa) {
+                // Transform daerah from array to single object if needed
+                const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+                kelompok = {
+                  ...kelompok,
+                  desa: daerah ? { ...desa, daerah } : desa
+                }
+              }
+            }
+            allClassesMap.set(c.id, {
+              id: c.id,
+              name: c.name,
+              kelompok_id: c.kelompok_id,
+              kelompok
+            })
+          })
+        }
+        
         // Continue with stats processing using filteredMeetings
         const meetingIds = filteredMeetings.map(meeting => meeting.id)
         
         // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
-        const { data: attendanceData, error: attendanceError } = await supabase
+        // Use admin client to bypass RLS restrictions (similar to detail page)
+        const adminClientAttendance = await createAdminClient()
+        const { data: attendanceData, error: attendanceError } = await adminClientAttendance
           .from('attendance_logs')
           .select('meeting_id, student_id, status')
           .in('meeting_id', meetingIds)
@@ -766,7 +1241,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         })
 
         // Query students with junction table for multiple classes support
-        const { data: studentClassData } = await supabase
+        // Use admin client to bypass RLS restrictions (similar to detail page)
+        // This ensures all students from different kelompok are included
+        const { data: studentClassData } = await adminClientTeacher
           .from('students')
           .select(`
             id,
@@ -857,12 +1334,43 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             }
           }
 
-          // Add class_names array
-          const class_names = meeting.class_ids?.map((id: string) => classNameMap.get(id) || 'Unknown').filter(Boolean) || []
+          // Add class_names array - include both class_ids and primary class_id
+          const classNamesSet = new Set<string>()
+          if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+            meeting.class_ids.forEach((id: string) => {
+              const name = classNameMap.get(id)
+              if (name) classNamesSet.add(name)
+            })
+          }
+          // Also include primary class_id if not already in class_ids
+          if (meeting.class_id) {
+            const name = classNameMap.get(meeting.class_id)
+            if (name) classNamesSet.add(name)
+          }
+          const class_names = Array.from(classNamesSet)
+          
+          // Add allClasses array with complete information for all class_ids
+          const allClasses: any[] = []
+          if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+            meeting.class_ids.forEach((classId: string) => {
+              const classData = allClassesMap.get(classId)
+              if (classData) {
+                allClasses.push(classData)
+              }
+            })
+          }
+          // Also include primary class_id if not already in class_ids
+          if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+            const classData = allClassesMap.get(meeting.class_id)
+            if (classData) {
+              allClasses.push(classData)
+            }
+          }
 
           return {
             ...meeting,
             classes,
+            allClasses, // Add allClasses array with complete information
             class_names,
             attendancePercentage,
             totalStudents,
@@ -880,6 +1388,390 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         }
       } else {
         return { success: true, data: [], hasMore: false }
+      }
+    } 
+    // Handle admin levels (kelompok, desa, daerah) and superadmin
+    else if (profile.role === 'admin' || profile.role === 'superadmin') {
+      // For all admin levels, use admin client to bypass RLS and filter client-side
+      // This ensures multi-class meetings are properly filtered
+      const adminClientAdmin = await createAdminClient()
+      
+      // Fetch ALL meetings using admin client (bypasses RLS)
+      const adminQuery = adminClientAdmin
+        .from('meetings')
+        .select(`
+          id,
+          class_id,
+          class_ids,
+          teacher_id,
+          title,
+          date,
+          topic,
+          description,
+          student_snapshot,
+          created_at,
+          meeting_type_code,
+          classes (
+            id,
+            name,
+            kelompok_id,
+            kelompok:kelompok_id (
+              id,
+              name,
+              desa_id,
+              desa:desa_id (
+                id,
+                name,
+                daerah_id,
+                daerah:daerah_id (
+                  id,
+                  name
+                )
+              )
+            ),
+            class_master_mappings (
+              class_master:class_master_id (
+                category:category_id (
+                  is_sambung_capable
+                )
+              )
+            )
+          )
+        `)
+        .order('date', { ascending: false })
+        .limit(limit)
+      
+      if (cursor) {
+        adminQuery.lt('date', cursor)
+      }
+      
+      const { data: meetings, error: meetingsError } = await adminQuery
+      
+      if (meetingsError) {
+        console.error('Error fetching meetings:', meetingsError)
+        return { success: false, error: meetingsError.message, data: null }
+      }
+      
+      if (!meetings || meetings.length === 0) {
+        return { success: true, data: [], hasMore: false }
+      }
+      
+      // Get all class IDs from meetings (including class_ids array)
+      const allMeetingClassIds = new Set<string>()
+      meetings.forEach((meeting: any) => {
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((id: string) => allMeetingClassIds.add(id))
+        }
+        if (meeting.class_id) allMeetingClassIds.add(meeting.class_id)
+      })
+      
+      // Fetch all class details to get kelompok_id, desa_id, daerah_id
+      const { data: allClassesData } = await adminClientAdmin
+        .from('classes')
+        .select(`
+          id,
+          name,
+          kelompok_id,
+          kelompok:kelompok_id (
+            id,
+            name,
+            desa_id,
+            desa:desa_id (
+              id,
+              name,
+              daerah_id,
+              daerah:daerah_id (
+                id,
+                name
+              )
+            )
+          )
+        `)
+        .in('id', Array.from(allMeetingClassIds))
+      
+      // Create mappings: classId -> kelompok_id, desa_id, daerah_id
+      const classToKelompokMap = new Map<string, string>()
+      const classToDesaMap = new Map<string, string>()
+      const classToDaerahMap = new Map<string, string>()
+      
+      if (allClassesData) {
+        allClassesData.forEach(c => {
+          if (c.kelompok_id) {
+            classToKelompokMap.set(c.id, c.kelompok_id)
+          }
+          // Handle kelompok as object or array
+          const kelompok = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+          if (kelompok?.desa_id) {
+            classToDesaMap.set(c.id, kelompok.desa_id)
+          }
+          // Handle desa as object or array
+          const desa = Array.isArray(kelompok?.desa) ? kelompok.desa[0] : kelompok?.desa
+          if (desa?.daerah_id) {
+            classToDaerahMap.set(c.id, desa.daerah_id)
+          }
+        })
+      }
+      
+      // Filter meetings based on admin level
+      let filteredMeetings: any[] = []
+      
+      if (profile.role === 'superadmin') {
+        // Superadmin: see all meetings
+        filteredMeetings = meetings
+      } else if (profile.role === 'admin') {
+        // Admin levels: filter by hierarchy
+        if (profile.kelompok_id) {
+          // Admin Kelompok: filter by kelompok_id
+          filteredMeetings = (meetings || []).filter((meeting: any) => {
+            const adminKelompokId = profile.kelompok_id
+            
+            // Check class_ids array first (for multi-class meetings)
+            if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+              return meeting.class_ids.some((classId: string) => {
+                const classKelompokId = classToKelompokMap.get(classId)
+                return classKelompokId === adminKelompokId
+              })
+            }
+            
+            // Check primary class_id
+            if (meeting.class_id) {
+              const classKelompokId = classToKelompokMap.get(meeting.class_id)
+              return classKelompokId === adminKelompokId
+            }
+            
+            return false
+          })
+        } else if (profile.desa_id) {
+          // Admin Desa: filter by desa_id
+          filteredMeetings = (meetings || []).filter((meeting: any) => {
+            const adminDesaId = profile.desa_id
+            
+            // Check class_ids array first (for multi-class meetings)
+            if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+              return meeting.class_ids.some((classId: string) => {
+                const classDesaId = classToDesaMap.get(classId)
+                return classDesaId === adminDesaId
+              })
+            }
+            
+            // Check primary class_id
+            if (meeting.class_id) {
+              const classDesaId = classToDesaMap.get(meeting.class_id)
+              return classDesaId === adminDesaId
+            }
+            
+            return false
+          })
+        } else if (profile.daerah_id) {
+          // Admin Daerah: filter by daerah_id
+          filteredMeetings = (meetings || []).filter((meeting: any) => {
+            const adminDaerahId = profile.daerah_id
+            
+            // Check class_ids array first (for multi-class meetings)
+            if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+              return meeting.class_ids.some((classId: string) => {
+                const classDaerahId = classToDaerahMap.get(classId)
+                return classDaerahId === adminDaerahId
+              })
+            }
+            
+            // Check primary class_id
+            if (meeting.class_id) {
+              const classDaerahId = classToDaerahMap.get(meeting.class_id)
+              return classDaerahId === adminDaerahId
+            }
+            
+            return false
+          })
+        } else {
+          // Fallback: no filter (shouldn't happen for admin)
+          filteredMeetings = meetings
+        }
+      }
+      
+      if (!filteredMeetings || filteredMeetings.length === 0) {
+        return { success: true, data: [], hasMore: false }
+      }
+      
+      // Continue with stats processing using filteredMeetings
+      // Fetch class names for all class_ids
+      const allClassIds = new Set<string>()
+      filteredMeetings.forEach((meeting: any) => {
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((id: string) => allClassIds.add(id))
+        }
+        if (meeting.class_id && !allClassIds.has(meeting.class_id)) {
+          allClassIds.add(meeting.class_id)
+        }
+      })
+      
+      // Fetch class names in one query
+      const { data: classesData } = await adminClientAdmin
+        .from('classes')
+        .select('id, name')
+        .in('id', Array.from(allClassIds))
+      
+      // Create id -> name mapping
+      const classNameMap = new Map<string, string>()
+      if (classesData) {
+        classesData.forEach(c => classNameMap.set(c.id, c.name))
+      }
+      
+      // Get all meeting IDs
+      const meetingIds = filteredMeetings.map((meeting: any) => meeting.id)
+      
+      // Fetch ALL attendance data for these meetings in ONE query
+      const adminClientAttendance = await createAdminClient()
+      const { data: attendanceData, error: attendanceError } = await adminClientAttendance
+        .from('attendance_logs')
+        .select('meeting_id, student_id, status')
+        .in('meeting_id', meetingIds)
+      
+      if (attendanceError) {
+        console.error('Error fetching attendance data:', attendanceError)
+        return { success: false, error: attendanceError.message, data: null }
+      }
+      
+      // Group attendance by meeting_id
+      const attendanceByMeeting = (attendanceData || []).reduce((acc, record) => {
+        if (!acc[record.meeting_id]) acc[record.meeting_id] = []
+        acc[record.meeting_id].push(record)
+        return acc
+      }, {} as Record<string, any[]>)
+      
+      // Create a map of all classes data for easy lookup
+      const allClassesMap = new Map<string, any>()
+      if (allClassesData) {
+        allClassesData.forEach(c => {
+          // Transform kelompok from array to single object if needed
+          let kelompok: any = Array.isArray(c.kelompok) ? c.kelompok[0] : c.kelompok
+          if (kelompok) {
+            // Transform desa from array to single object if needed
+            const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+            if (desa) {
+              // Transform daerah from array to single object if needed
+              const daerah = Array.isArray(desa.daerah) ? desa.daerah[0] : desa.daerah
+              kelompok = {
+                ...kelompok,
+                desa: daerah ? { ...desa, daerah } : desa
+              }
+            }
+          }
+          allClassesMap.set(c.id, {
+            id: c.id,
+            name: c.name,
+            kelompok_id: c.kelompok_id,
+            kelompok
+          })
+        })
+      }
+      
+      // Process meetings with stats
+      const meetingsWithStats = filteredMeetings.map((meeting: any) => {
+        const meetingAttendance = attendanceByMeeting[meeting.id] || []
+        const relevantStudentIds = meeting.student_snapshot
+        
+        const totalStudents = relevantStudentIds.length
+        
+        const presentCount = meetingAttendance.filter(record => record.status === 'H').length
+        const absentCount = meetingAttendance.filter(record => record.status === 'A').length
+        const sickCount = meetingAttendance.filter(record => record.status === 'S').length
+        const excusedCount = meetingAttendance.filter(record => record.status === 'I').length
+        
+        const attendancePercentage = totalStudents > 0 
+          ? Math.round((presentCount / totalStudents) * 100)
+          : 0
+        
+        // Transform classes from array to single object to match our interface
+        let classes: any = meeting.classes
+        if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
+          classes = meeting.classes[0]
+        }
+        
+        // Transform kelompok from array to single object if needed
+        if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
+          classes = {
+            ...classes,
+            kelompok: classes.kelompok[0]
+          }
+        }
+        
+        // Transform desa from array to single object if needed
+        if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
+          classes = {
+            ...classes,
+            kelompok: {
+              ...classes.kelompok,
+              desa: classes.kelompok.desa[0]
+            }
+          }
+        }
+        
+        // Transform daerah from array to single object if needed
+        if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
+          classes = {
+            ...classes,
+            kelompok: {
+              ...classes.kelompok,
+              desa: {
+                ...classes.kelompok.desa,
+                daerah: classes.kelompok.desa.daerah[0]
+              }
+            }
+          }
+        }
+        
+        // Add class_names array - include both class_ids and primary class_id
+        const classNamesSet = new Set<string>()
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((id: string) => {
+            const name = classNameMap.get(id)
+            if (name) classNamesSet.add(name)
+          })
+        }
+        // Also include primary class_id if not already in class_ids
+        if (meeting.class_id) {
+          const name = classNameMap.get(meeting.class_id)
+          if (name) classNamesSet.add(name)
+        }
+        const class_names = Array.from(classNamesSet)
+        
+        // Add allClasses array with complete information for all class_ids
+        const allClasses: any[] = []
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((classId: string) => {
+            const classData = allClassesMap.get(classId)
+            if (classData) {
+              allClasses.push(classData)
+            }
+          })
+        }
+        // Also include primary class_id if not already in class_ids
+        if (meeting.class_id && !allClasses.find(c => c.id === meeting.class_id)) {
+          const classData = allClassesMap.get(meeting.class_id)
+          if (classData) {
+            allClasses.push(classData)
+          }
+        }
+        
+        return {
+          ...meeting,
+          classes,
+          allClasses, // Add allClasses array with complete information
+          class_names,
+          attendancePercentage,
+          totalStudents,
+          presentCount,
+          absentCount,
+          sickCount,
+          excusedCount
+        }
+      })
+      
+      return { 
+        success: true, 
+        data: meetingsWithStats, 
+        hasMore: filteredMeetings.length === limit 
       }
     } else if (classId) {
       const classIds = classId.split(',')
@@ -921,7 +1813,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     const meetingIds = meetings.map(meeting => meeting.id)
 
     // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
-    const { data: attendanceData, error: attendanceError } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to detail page)
+    const adminClientAttendanceAdmin = await createAdminClient()
+    const { data: attendanceData, error: attendanceError } = await adminClientAttendanceAdmin
       .from('attendance_logs')
       .select('meeting_id, student_id, status')
       .in('meeting_id', meetingIds)
@@ -954,7 +1848,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
     })
 
-    const { data: studentClassData } = await supabase
+    // Use admin client to bypass RLS restrictions (similar to detail page)
+    // This ensures all students from different kelompok are included
+    const adminClientAdmin = await createAdminClient()
+    const { data: studentClassData } = await adminClientAdmin
       .from('students')
       .select('id, class_id')
       .in('id', Array.from(allStudentIds))

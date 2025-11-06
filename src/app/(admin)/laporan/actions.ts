@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 
 /**
@@ -63,6 +63,7 @@ export interface ReportFilters {
   // Detailed mode filters - Period-specific
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
+  gender?: string
   
   // Daily filters
   startDate?: string
@@ -254,8 +255,11 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }
 
 
-    // Build query with junction table for multiple classes support
-    let query = supabase
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
+    
+    // Build query with student_classes junction table for multiple classes support
+    let query = adminClient
       .from('attendance_logs')
       .select(`
         id,
@@ -268,42 +272,27 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           id,
           name,
           gender,
-          student_classes(
-            classes:class_id(id, name)
+          class_id,
+          classes!inner(
+            id,
+            name
+          ),
+          student_classes (
+            class_id,
+            classes:class_id (
+              id,
+              name,
+              kelompok_id,
+              kelompok:kelompok_id (
+                id,
+                name
+              )
+            )
           )
         )
       `)
 
-    // Apply filters - filter via junction table for multiple classes
-    if (filters.classId) {
-      const classIds = filters.classId.split(',')
-      // Query students that have at least one of the selected classes via junction table
-      const { data: studentClassData } = await supabase
-        .from('student_classes')
-        .select('student_id')
-        .in('class_id', classIds)
-      
-      if (studentClassData && studentClassData.length > 0) {
-        const studentIds = studentClassData.map(sc => sc.student_id)
-        query = query.in('student_id', studentIds)
-      } else {
-        // If no students found in selected classes, return empty result
-        return {
-          summary: { total: 0, hadir: 0, izin: 0, sakit: 0, alpha: 0 },
-          chartData: [],
-          trendChartData: [],
-          detailedRecords: [],
-          meetings: [],
-          period: filters.period || 'daily',
-          dateRange: {
-            start: dateFilter.date?.gte || null,
-            end: dateFilter.date?.lte || null
-          }
-        }
-      }
-    }
-
-    // Apply date filter
+    // Apply date filter first
     if (dateFilter.date?.eq) {
       query = query.eq('date', dateFilter.date.eq)
     } else if (dateFilter.date?.gte && dateFilter.date?.lte) {
@@ -318,13 +307,36 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       throw error
     }
 
+    // Apply class filter client-side (check both primary class_id and student_classes junction table)
+    let filteredLogs = attendanceLogs || []
+    if (filters.classId) {
+      const classIds = filters.classId.split(',')
+      filteredLogs = filteredLogs.filter((log: any) => {
+        // Check primary class_id
+        if (classIds.includes(log.students.class_id)) return true
+        
+        // Check all classes from junction table
+        const studentClasses = log.students.student_classes || []
+        return studentClasses.some((sc: any) => 
+          sc.classes && classIds.includes(sc.classes.id)
+        )
+      })
+    }
+
+    // Apply gender filter client-side
+    if (filters.gender) {
+      filteredLogs = filteredLogs.filter((log: any) => 
+        log.students.gender === filters.gender
+      )
+    }
+
     // Process data for summary
     const summary = {
-      total: attendanceLogs?.length || 0,
-      hadir: attendanceLogs?.filter(log => log.status === 'H').length || 0,
-      izin: attendanceLogs?.filter(log => log.status === 'I').length || 0,
-      sakit: attendanceLogs?.filter(log => log.status === 'S').length || 0,
-      alpha: attendanceLogs?.filter(log => log.status === 'A').length || 0,
+      total: filteredLogs.length,
+      hadir: filteredLogs.filter((log: any) => log.status === 'H').length,
+      izin: filteredLogs.filter((log: any) => log.status === 'I').length,
+      sakit: filteredLogs.filter((log: any) => log.status === 'S').length,
+      alpha: filteredLogs.filter((log: any) => log.status === 'A').length,
     }
 
     // Prepare chart data
@@ -336,7 +348,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     ].filter(item => item.value > 0) // Only include non-zero values
 
     // Fetch meetings for the date range to ensure all meetings appear in chart
-    const { data: meetings } = await supabase
+    // Use admin client to bypass RLS
+    const { data: meetings } = await adminClient
       .from('meetings')
       .select('id, title, date, student_snapshot, class_id, class_ids')
       .gte('date', dateFilter.date?.gte || '1900-01-01')
@@ -344,13 +357,17 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       .order('date')
 
     // Apply class filter to meetings if specified - support multiple classes per meeting
+    // Check both class_id and class_ids array
     const filteredMeetings = filters.classId 
       ? meetings?.filter((meeting: any) => {
           const classIds = filters.classId!.split(',')
-          // Check if meeting's class_ids array contains any of the selected classes
-          // Also check class_id for backward compatibility
-          const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
-          return meetingClassIds.some((id: string) => classIds.includes(id))
+          // Check primary class_id
+          if (classIds.includes(meeting.class_id)) return true
+          // Check class_ids array for multi-class meetings
+          if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+            return meeting.class_ids.some((id: string) => classIds.includes(id))
+          }
+          return false
         }) || []
       : meetings || []
 
@@ -399,8 +416,14 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Then process attendance data and count meetings per period
     const dailyData = filteredMeetings.reduce((acc: any, meeting: any) => {
       const meetingDate = new Date(meeting.date)
-      const meetingLogs = attendanceLogs?.filter(log => log.meeting_id === meeting.id) || []
-      const totalStudents = meeting.student_snapshot?.length || 0
+      const meetingLogs = filteredLogs.filter((log: any) => log.meeting_id === meeting.id) || []
+      
+      // Calculate total students that are visible (based on filters)
+      // Count unique student IDs from meetingLogs, or use snapshot length if no logs
+      const visibleStudentIds = new Set(meetingLogs.map((log: any) => log.student_id))
+      const totalStudents = visibleStudentIds.size > 0 
+        ? visibleStudentIds.size 
+        : meeting.student_snapshot?.length || 0
       
       // Group by period type
       let groupKey: string
@@ -508,46 +531,70 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       })
     
 
+    // Fetch all kelompok data for formatting class names
+    const { data: kelompokData } = await adminClient
+      .from('kelompok')
+      .select('id, name')
+    
+    const kelompokMap = new Map<string, string>()
+    if (kelompokData) {
+      kelompokData.forEach((k: any) => {
+        kelompokMap.set(k.id, k.name)
+      })
+    }
+
     // Group by student for detailed view
-    const studentSummary = attendanceLogs?.reduce((acc: any, log: any) => {
+    const studentSummary = filteredLogs.reduce((acc: any, log: any) => {
       const studentId = log.student_id
       
-      // Extract classes from junction table (support multiple classes)
-      // Structure: log.students.student_classes is an array of objects with 'classes' property
+      // Get all classes from junction table (support multiple classes with kelompok info)
       const studentClasses = log.students?.student_classes || []
-      let classesArray: any[] = []
+      const allClasses = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          kelompok_id: cls.kelompok_id,
+          kelompok_name: cls.kelompok?.name || kelompokMap.get(cls.kelompok_id) || null
+        }))
       
-      // Handle both array and single object responses from Supabase
-      if (Array.isArray(studentClasses)) {
-        classesArray = studentClasses
-          .map((sc: any) => {
-            // Handle nested structure: sc.classes might be the class object directly
-            if (sc.classes && typeof sc.classes === 'object') {
-              return sc.classes
-            }
-            return sc
-          })
-          .filter((cls: any) => cls && cls.id && cls.name)
-      } else if (studentClasses && typeof studentClasses === 'object') {
-        // Handle single object case
-        if (studentClasses.classes) {
-          classesArray = [studentClasses.classes]
-        } else {
-          classesArray = [studentClasses]
-        }
+      // If no classes from junction, use primary class
+      if (allClasses.length === 0 && log.students.classes) {
+        const primaryClass = log.students.classes
+        allClasses.push({
+          id: primaryClass.id,
+          name: primaryClass.name,
+          kelompok_id: null,
+          kelompok_name: null
+        })
       }
       
-      // Get primary class (first class) for display
-      const primaryClass = classesArray[0] || null
+      // Get primary class (first class) for backward compatibility
+      const primaryClass = allClasses[0] || null
       
       if (!acc[studentId]) {
-        // Store all classes for this student (we'll filter by role later in client)
+        // Format class names: if duplicate names, add kelompok name
+        const nameCounts = allClasses.reduce((counts: Record<string, number>, cls: any) => {
+          counts[cls.name] = (counts[cls.name] || 0) + 1
+          return counts
+        }, {})
+        
+        const formattedClassNames = allClasses.map((cls: any) => {
+          const hasDuplicate = nameCounts[cls.name] > 1
+          if (hasDuplicate && cls.kelompok_name) {
+            return `${cls.name} (${cls.kelompok_name})`
+          }
+          return cls.name
+        })
+        
         acc[studentId] = {
           student_id: studentId,
           student_name: log.students?.name || 'Unknown Student',
           student_gender: log.students?.gender || null,
-          class_name: primaryClass?.name || 'Unknown Class', // Primary class for backward compatibility
-          all_classes: classesArray, // Store all classes for multi-class support
+          class_name: formattedClassNames.length > 0 
+            ? formattedClassNames.join(', ') // Join all class names with kelompok info
+            : primaryClass?.name || 'Unknown Class', // Fallback to primary class
           total_days: 0,
           hadir: 0,
           izin: 0,

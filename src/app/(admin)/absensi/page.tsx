@@ -80,7 +80,9 @@ export default function AbsensiPage() {
     
     if (dataFilters.kelas.length > 0) {
       // Filter by specific classes
-      filtered = filtered.filter(c => dataFilters.kelas.includes(c.id))
+      // Support comma-separated class IDs from DataFilter (for classes with same name)
+      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
+      filtered = filtered.filter(c => selectedClassIds.includes(c.id))
     }
     
     return filtered.map(c => c.id)
@@ -88,13 +90,14 @@ export default function AbsensiPage() {
 
   // Determine classId based on user role and filters
   const classId = useMemo(() => {
-    if (userProfile?.role === 'teacher') {
-      return userProfile.classes?.[0]?.id || undefined
-    }
-    
-    // If specific class is selected, use that
+    // PRIORITY: If specific class is selected, use that (for BOTH teacher and admin)
     if (dataFilters.kelas.length > 0) {
       return dataFilters.kelas.join(',') // Use all selected classes for API call
+    }
+    
+    // FALLBACK: For teacher without filter, use first class
+    if (userProfile?.role === 'teacher') {
+      return userProfile.classes?.[0]?.id || undefined
     }
     
     // If "Semua Kelas" is selected (no specific class), return undefined
@@ -118,8 +121,66 @@ export default function AbsensiPage() {
   const filteredMeetings = useMemo(() => {
     let filtered = allMeetings || []
     
-    if (userProfile?.role === 'teacher') {
-      // For teachers, apply meeting type filter if selected
+    // PRIORITY: If specific class is selected, verify meetings match selected classes (for multi-class meetings)
+    // This applies to BOTH teacher and admin
+    // NOTE: Backend already filters by classId, but we do client-side verification for multi-class meetings
+    if (dataFilters.kelas.length > 0) {
+      // Support comma-separated class IDs from filter
+      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
+      
+      // For teacher: backend already filtered, but verify client-side for multi-class meetings
+      if (userProfile?.role === 'teacher') {
+        // Verify meetings match selected classes (handle multi-class meetings)
+        // This is important for meetings that have multiple classes
+        filtered = filtered.filter((meeting: any) => {
+          // Check class_ids array first (for multi-class meetings)
+          if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+            return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
+          }
+          
+          // Check classes.id
+          if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
+            return true
+          }
+          
+          // Check class_id
+          if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
+            return true
+          }
+          
+          return false
+        })
+        
+        // Apply meeting type filter if needed
+        if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+          filtered = filtered.filter(m => 
+            dataFilters.meetingType?.includes(m.meeting_type_code || '')
+          )
+        }
+        return filtered
+      }
+      
+      // For admin: verify meetings match selected classes (handle multi-class meetings)
+      filtered = filtered.filter((meeting: any) => {
+        // Check class_ids array first (for multi-class meetings)
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
+        }
+        
+        // Check classes.id
+        if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
+          return true
+        }
+        
+        // Check class_id
+        if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
+          return true
+        }
+        
+        return false
+      })
+      
+      // Apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
         filtered = filtered.filter(m => 
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
@@ -128,9 +189,9 @@ export default function AbsensiPage() {
       return filtered
     }
     
-    // If specific class is selected, return all meetings (already filtered by backend)
-    if (dataFilters.kelas.length > 0) {
-      // Apply meeting type filter if selected
+    // FALLBACK: For teachers WITHOUT specific class filter, apply meeting type filter only
+    if (userProfile?.role === 'teacher') {
+      // For teachers, apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
         filtered = filtered.filter(m => 
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
@@ -142,6 +203,12 @@ export default function AbsensiPage() {
     // If "Semua Kelas" is selected, filter by valid class IDs
     if (validClassIds.length > 0) {
       filtered = (allMeetings || []).filter(meeting => {
+        // Check class_ids array first (for multi-class meetings)
+        // This is important for meetings that have classes from multiple kelompok
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => validClassIds.includes(id))
+        }
+        
         // Handle the actual database structure: meeting.classes is a single object
         if (meeting.classes && typeof meeting.classes === 'object') {
           // If classes is a single object with id

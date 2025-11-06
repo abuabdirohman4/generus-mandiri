@@ -29,8 +29,8 @@ interface FilterSectionProps {
   desaList: any[]
   kelompokList: any[]
   classList: any[]
-  organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }
-  onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => void
+  organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }
+  onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => void
 }
 
 export default function FilterSection({
@@ -133,6 +133,7 @@ export default function FilterSection({
             kelompokList={kelompokList}
             classList={classList}
             showKelas={true}
+            showGender={true}
           />
 
           {/* Month and Year Filter */}
@@ -169,6 +170,7 @@ export default function FilterSection({
             kelompokList={kelompokList}
             classList={classList}
             showKelas={true}
+            showGender={true}
           />
 
           {/* Period Selection */}
@@ -223,6 +225,7 @@ export default function FilterSection({
                 onChange={(value) => onFilterChange('monthYear', value)}
                 options={yearOptions}
                 className="mb-0"
+                widthClassName="!max-w-full"
               />
 
               <InputFilter
@@ -232,6 +235,7 @@ export default function FilterSection({
                 onChange={(value) => onFilterChange('startMonth', value)}
                 options={monthOptions}
                 className="mb-0"
+                widthClassName="!max-w-full"
               />
 
               <InputFilter
@@ -241,6 +245,7 @@ export default function FilterSection({
                 onChange={(value) => onFilterChange('endMonth', value)}
                 options={monthOptions}
                 className="mb-0"
+                widthClassName="!max-w-full"
               />
             </div>
           )}

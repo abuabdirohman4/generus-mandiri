@@ -15,6 +15,7 @@ interface UseReportDataOptions {
     // Detailed mode filters - Period-specific
     period: 'daily' | 'weekly' | 'monthly' | 'yearly'
     classId?: string
+    gender?: string
     
     // Daily filters
     startDate?: string
@@ -55,6 +56,7 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     // Detailed mode filters
     period: filters.period,
     classId: filters.classId || undefined,
+    gender: filters.gender || undefined,
     startDate: filters.startDate || undefined,
     endDate: filters.endDate || undefined,
     

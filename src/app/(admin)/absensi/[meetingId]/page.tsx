@@ -18,6 +18,8 @@ import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
 import DataFilter from '@/components/shared/DataFilter'
+import { useClasses } from '@/hooks/useClasses'
+import { useKelompok } from '@/hooks/useKelompok'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -44,6 +46,8 @@ export default function MeetingAttendancePage() {
   const [localAttendance, setLocalAttendance] = useState(attendance)
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
+  const { classes: classesData } = useClasses()
+  const { kelompok: kelompokData } = useKelompok()
   
   // DataFilter state
   const [filters, setFilters] = useState<{
@@ -145,17 +149,22 @@ export default function MeetingAttendancePage() {
   }
 
   const calculateLocalAttendancePercentage = () => {
-    if (!meeting || visibleStudents.length === 0) return 0
+    if (!meeting || visibleStudents.length === 0) {
+      return 0
+    }
     
     const totalStudents = visibleStudents.length
     const visibleStudentIds = new Set(visibleStudents.map(s => s.id))
     
     const presentCount = Object.entries(localAttendance)
-      .filter(([studentId, record]) => 
-        visibleStudentIds.has(studentId) && record.status === 'H'
-      ).length
+      .filter(([studentId, record]) => {
+        const isVisible = visibleStudentIds.has(studentId)
+        const isPresent = record.status === 'H'
+        return isVisible && isPresent
+      }).length
     
-    return Math.round((presentCount / totalStudents) * 100)
+    const percentage = Math.round((presentCount / totalStudents) * 100)
+    return percentage
   }
 
   // Check if current user is meeting creator
@@ -182,9 +191,17 @@ export default function MeetingAttendancePage() {
     if (filters.kelas && filters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
       const selectedClassIds = filters.kelas.flatMap(k => k.split(','))
-      // Filter by primary class_id (for backward compatibility)
-      // Note: In meeting context, students are already filtered by meeting's class_ids
-      filtered = filtered.filter(s => selectedClassIds.includes(s.class_id))
+      filtered = filtered.filter(s => {
+        // Check primary class_id (for backward compatibility)
+        if (selectedClassIds.includes(s.class_id)) return true
+        
+        // Check all classes from junction table (for multi-class students)
+        if (s.classes && Array.isArray(s.classes)) {
+          return s.classes.some(cls => selectedClassIds.includes(cls.id))
+        }
+        
+        return false
+      })
     }
     
     return filtered
@@ -209,37 +226,134 @@ export default function MeetingAttendancePage() {
   const classListForFilter = useMemo(() => {
     if (!meeting?.class_ids || meeting.class_ids.length <= 1) return []
     
-    // Get unique class IDs from students
-    const classIds = new Set(students.map(s => s.class_id))
+    // Get all unique class IDs from students (including from junction table)
+    const classIds = new Set<string>()
+    students.forEach(s => {
+      // Add primary class_id
+      if (s.class_id) classIds.add(s.class_id)
+      
+      // Add all classes from junction table
+      if (s.classes && Array.isArray(s.classes)) {
+        s.classes.forEach(cls => classIds.add(cls.id))
+      }
+    })
+    
+    // Filter to only classes that are in meeting.class_ids
+    const meetingClassIds = new Set(meeting.class_ids)
+    const relevantClassIds = Array.from(classIds).filter(id => meetingClassIds.has(id))
     
     // For teacher non-creator, only show their classes
     if (userProfile?.role === 'teacher' && !isMeetingCreator) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
-      const relevantClassIds = Array.from(classIds).filter(id => myClassIds.includes(id))
+      const teacherRelevantClassIds = relevantClassIds.filter(id => myClassIds.includes(id))
       
       // Only show filter if teacher has more than 1 class in this meeting
-      if (relevantClassIds.length <= 1) return []
+      if (teacherRelevantClassIds.length <= 1) return []
       
-      return relevantClassIds.map(id => {
-        const student = students.find(s => s.class_id === id)
-        return { 
-          id, 
-          name: student?.class_name || 'Unknown',
-          kelompok_id: null
+      // Get class details with kelompok info
+      // First try to use meeting.allClasses if available (from backend, bypasses RLS)
+      let classDetails: Array<{ id: string; name: string; kelompok_id: string | null; kelompok_name: string | null }> = []
+      
+      if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+        // Use allClasses from backend (bypasses RLS)
+        classDetails = meeting.allClasses
+          .filter((c: any) => teacherRelevantClassIds.includes(c.id))
+          .map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            kelompok_id: c.kelompok_id,
+            kelompok_name: c.kelompok?.name || null
+          }))
+      } else {
+        // Fallback: get from classesData and kelompokData
+        classDetails = teacherRelevantClassIds.map(id => {
+          const classData = classesData.find(c => c.id === id)
+          const kelompok = classData?.kelompok_id && kelompokData
+            ? kelompokData.find(k => k.id === classData.kelompok_id)
+            : null
+          
+          return {
+            id,
+            name: classData?.name || 'Unknown',
+            kelompok_id: classData?.kelompok_id || null,
+            kelompok_name: kelompok?.name || null
+          }
+        })
+      }
+      
+      // Check for duplicate class names
+      const nameCounts = classDetails.reduce((acc, cls) => {
+        acc[cls.name] = (acc[cls.name] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      
+      // Format labels with kelompok name if duplicate
+      return classDetails.map(cls => {
+        const hasDuplicate = nameCounts[cls.name] > 1
+        const label = hasDuplicate && cls.kelompok_name
+          ? `${cls.name} (${cls.kelompok_name})`
+          : cls.name
+        
+        return {
+          id: cls.id,
+          name: label,
+          kelompok_id: cls.kelompok_id
         }
       })
     }
     
     // For admin/creator, show all classes
-    return Array.from(classIds).map(id => {
-      const student = students.find(s => s.class_id === id)
-      return { 
-        id, 
-        name: student?.class_name || 'Unknown',
-        kelompok_id: null
+    // Get class details with kelompok info
+    // First try to use meeting.allClasses if available (from backend, bypasses RLS)
+    let classDetails: Array<{ id: string; name: string; kelompok_id: string | null; kelompok_name: string | null }> = []
+    
+    if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+      // Use allClasses from backend (bypasses RLS)
+      classDetails = meeting.allClasses
+        .filter((c: any) => relevantClassIds.includes(c.id))
+        .map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          kelompok_id: c.kelompok_id,
+          kelompok_name: c.kelompok?.name || null
+        }))
+    } else {
+      // Fallback: get from classesData and kelompokData
+      classDetails = relevantClassIds.map(id => {
+        const classData = classesData.find(c => c.id === id)
+        const kelompok = classData?.kelompok_id && kelompokData
+          ? kelompokData.find(k => k.id === classData.kelompok_id)
+          : null
+        
+        return {
+          id,
+          name: classData?.name || 'Unknown',
+          kelompok_id: classData?.kelompok_id || null,
+          kelompok_name: kelompok?.name || null
+        }
+      })
+    }
+    
+    // Check for duplicate class names
+    const nameCounts = classDetails.reduce((acc, cls) => {
+      acc[cls.name] = (acc[cls.name] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    // Format labels with kelompok name if duplicate
+    return classDetails.map(cls => {
+      const hasDuplicate = nameCounts[cls.name] > 1
+      const label = hasDuplicate && cls.kelompok_name
+        ? `${cls.name} (${cls.kelompok_name})`
+        : cls.name
+      
+      return {
+        id: cls.id,
+        name: label,
+        kelompok_id: cls.kelompok_id
       }
     })
-  }, [meeting, students, userProfile, isMeetingCreator])
+  }, [meeting, students, userProfile, isMeetingCreator, classesData, kelompokData])
 
   // Determine if class filter should show
   const showClassFilter = meeting?.class_ids && meeting.class_ids.length > 1 && classListForFilter.length > 0
