@@ -236,6 +236,15 @@ export async function createMeeting(data: CreateMeetingData) {
 
     if (error) {
       console.error('Error creating meeting:', error)
+      
+      // Check if it's an RLS violation error (code 42501)
+      if (error.code === '42501') {
+        return { 
+          success: false, 
+          error: 'Anda tidak dapat membuat pertemuan untuk kelas dari kelompok yang berbeda. Silakan pilih kelas dari kelompok yang sama dengan kelompok Anda.' 
+        }
+      }
+      
       return { success: false, error: error.message }
     }
 
@@ -592,8 +601,12 @@ export async function deleteMeeting(meetingId: string) {
       return { success: false, error: 'Anda tidak memiliki izin untuk menghapus pertemuan ini' }
     }
     
+    // Use admin client to bypass RLS restrictions when deleting
+    // This ensures we can delete attendance_logs and meetings even if they're from different kelompok
+    const adminClient = await createAdminClient()
+    
     // 1. Check if meeting has attendance logs
-    const { data: attendanceLogs, error: checkError } = await supabase
+    const { data: attendanceLogs, error: checkError } = await adminClient
       .from('attendance_logs')
       .select('id')
       .eq('meeting_id', meetingId)
@@ -604,9 +617,9 @@ export async function deleteMeeting(meetingId: string) {
       return { success: false, error: checkError.message }
     }
     
-    // 2. If attendance logs exist, delete them first
+    // 2. If attendance logs exist, delete them first using admin client
     if (attendanceLogs && attendanceLogs.length > 0) {
-      const { error: deleteLogsError } = await supabase
+      const { error: deleteLogsError } = await adminClient
         .from('attendance_logs')
         .delete()
         .eq('meeting_id', meetingId)
@@ -620,14 +633,23 @@ export async function deleteMeeting(meetingId: string) {
       }
     }
     
-    // 3. Now delete the meeting
-    const { error } = await supabase
+    // 3. Now delete the meeting using admin client
+    const { error } = await adminClient
       .from('meetings')
       .delete()
       .eq('id', meetingId)
 
     if (error) {
       console.error('Error deleting meeting:', error)
+      
+      // Check if it's a foreign key constraint error
+      if (error.code === '23503') {
+        return { 
+          success: false, 
+          error: 'Tidak dapat menghapus pertemuan karena masih terdapat data absensi yang terkait. Silakan hapus data absensi terlebih dahulu.' 
+        }
+      }
+      
       return { success: false, error: error.message }
     }
 
