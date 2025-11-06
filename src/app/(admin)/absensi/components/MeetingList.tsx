@@ -17,12 +17,16 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
 import { getMeetingTypeLabel } from '@/lib/constants/meetingTypes'
 import MeetingTypeBadge from './MeetingTypeBadge'
+import { useClasses } from '@/hooks/useClasses'
+import { useKelompok } from '@/hooks/useKelompok'
+import { useDesa } from '@/hooks/useDesa'
+import { useDaerah } from '@/hooks/useDaerah'
 
 // Set Indonesian locale
 dayjs.locale('id')
 
 // Helper function to format meeting location based on user role
-const formatMeetingLocation = (meeting: any, userProfile: any) => {
+const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[], kelompokData: any[], desaData: any[], daerahData: any[]) => {
   if (!meeting.classes) return ''
   
   const isSuperAdminUser = isSuperAdmin(userProfile)
@@ -31,6 +35,71 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
   const isAdminKelompokUser = isAdminKelompok(userProfile)
   const isTeacherUser = userProfile?.role === 'teacher'
   
+  // If meeting has multiple classes (class_ids array), format differently
+  if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1) {
+    // Get all class details with kelompok/desa/daerah
+    const classDetails = meeting.class_ids
+      .map((classId: string) => {
+        const classData = classesData.find(c => c.id === classId)
+        if (!classData) return null
+        
+        const kelompok = kelompokData.find(k => k.id === classData.kelompok_id)
+        const desa = kelompok ? desaData.find(d => d.id === kelompok.desa_id) : null
+        const daerah = desa ? daerahData.find(da => da.id === desa.daerah_id) : null
+        
+        return {
+          id: classId,
+          kelompok_id: classData.kelompok_id,
+          kelompok_name: kelompok?.name || null,
+          desa_id: kelompok?.desa_id || null,
+          desa_name: desa?.name || null,
+          daerah_id: desa?.daerah_id || null,
+          daerah_name: daerah?.name || null
+        }
+      })
+      .filter(Boolean)
+    
+    // Group by level and get unique names
+    const kelompokNames = [...new Set(classDetails.map((c: any) => c.kelompok_name).filter(Boolean))].sort()
+    const desaNames = [...new Set(classDetails.map((c: any) => c.desa_name).filter(Boolean))].sort()
+    const daerahNames = [...new Set(classDetails.map((c: any) => c.daerah_name).filter(Boolean))].sort()
+    
+    const parts: string[] = []
+    
+    // Superadmin: Show Daerah, Desa, Kelompok
+    if (isSuperAdminUser) {
+      if (daerahNames.length > 0) {
+        parts.push(daerahNames.join(' & '))
+      }
+      if (desaNames.length > 0) {
+        parts.push(desaNames.join(' & '))
+      }
+      if (kelompokNames.length > 0) {
+        parts.push(kelompokNames.join(' & '))
+      }
+    }
+    // Admin Daerah: Show Desa, Kelompok
+    else if (isAdminDaerahUser) {
+      if (desaNames.length > 0) {
+        parts.push(desaNames.join(' & '))
+      }
+      if (kelompokNames.length > 0) {
+        parts.push(kelompokNames.join(' & '))
+      }
+    }
+    // Admin Desa: Show Kelompok only
+    else if (isAdminDesaUser) {
+      if (kelompokNames.length > 0) {
+        parts.push(kelompokNames.join(' & '))
+      }
+    }
+    // Admin Kelompok or Teacher: Show nothing
+    else {
+      return ''
+    }
+  }
+  
+  // Single class or fallback to original logic
   const parts: string[] = []
   
   // Superadmin: Show Daerah, Desa, Kelompok, Class
@@ -60,21 +129,79 @@ const formatMeetingLocation = (meeting: any, userProfile: any) => {
       parts.push(meeting.classes.kelompok.name)
     }
   }
+  // Admin Kelompok or Teacher: Show nothing
+  else {
+    return ''
+  }
   
   return parts.join(', ')
 }
 
-const listGroupedClasses = (meeting: any, userProfile: any) => {
+const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], kelompokData: any[]) => {
   const isTeacherUser = userProfile?.role === 'teacher'
+  const isAdminKelompokUser = isAdminKelompok(userProfile)
   
   if (!meeting.classes) return ''
   
-  const parts: string[] = []
+  // If meeting has multiple classes (class_ids array)
+  if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1) {
+    // Get all class details with kelompok
+    const classDetails = meeting.class_ids
+      .map((classId: string) => {
+        const classData = classesData.find(c => c.id === classId)
+        if (!classData) return null
+        
+        const kelompok = kelompokData.find(k => k.id === classData.kelompok_id)
+        return {
+          id: classId,
+          name: classData.name,
+          kelompok_id: classData.kelompok_id,
+          kelompok_name: kelompok?.name || null
+        }
+      })
+      .filter(Boolean)
+    
+    // Group by class name
+    const groupedByClassName = classDetails.reduce((acc: any, classDetail: any) => {
+      if (!acc[classDetail.name]) {
+        acc[classDetail.name] = []
+      }
+      acc[classDetail.name].push(classDetail)
+      return acc
+    }, {})
+    
+    // Check if there are classes with same name but different kelompok
+    const hasDuplicateNames = Object.values(groupedByClassName).some((classes: any) => classes.length > 1)
+    
+    if (hasDuplicateNames) {
+      // Format: "Kelas 1: Warlob 1, Warlob 2"
+      return Object.entries(groupedByClassName)
+        .map(([className, classes]: [string, any]) => {
+          if (classes.length > 1) {
+            // Same class name, different kelompok
+            const kelompokNames = classes
+              .map((c: any) => c.kelompok_name)
+              .filter(Boolean)
+              .join(', ')
+            return `${className}: ${kelompokNames}`
+          } else {
+            // Single class, just show name
+            return className
+          }
+        })
+        .join(', ')
+    } else {
+      // No duplicate names, just show class names
+      return classDetails.map((c: any) => c.name).join(', ')
+    }
+  }
   
+  // Single class or fallback
   if (meeting.class_names && meeting.class_names.length > 1) {
     return meeting.class_names.join(', ')
   } else {
-    if (isTeacherUser) {
+    // For teacher and admin kelompok, don't show class name (it's redundant)
+    if (isTeacherUser || isAdminKelompokUser) {
       return ''
     } else {
       return meeting.classes.name
@@ -193,6 +320,10 @@ export default function MeetingList({
   })
 
   const { profile: userProfile } = useUserProfile()
+  const { classes: classesData } = useClasses()
+  const { kelompok: kelompokData } = useKelompok()
+  const { desa: desaData } = useDesa()
+  const { daerah: daerahData } = useDaerah()
 
   // Group meetings by date
   const groupedMeetings = meetings.reduce((acc, meeting) => {
@@ -358,7 +489,7 @@ export default function MeetingList({
 
                         {/* Row 2: Location */}
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatMeetingLocation(meeting, userProfile)}
+                          {formatMeetingLocation(meeting, userProfile, classesData || [], kelompokData || [], desaData || [], daerahData || [])}
                         </div>
                         
                         {/* Row 3: Class names / location */}
@@ -368,7 +499,7 @@ export default function MeetingList({
                               {meeting.class_ids.length} Kelas
                             </span>
                           )} 
-                          {listGroupedClasses(meeting, userProfile)}
+                          {listGroupedClasses(meeting, userProfile, classesData || [], kelompokData || [])}
                         </div>
 
                         {/* Optional topic */}

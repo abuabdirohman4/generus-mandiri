@@ -174,8 +174,13 @@ export default function CreateMeetingModal({
 
   // Auto-select meeting type based on available options
   useEffect(() => {
-    // Skip if already has value (unless it's being forced)
-    if (meetingType && shouldShowMeetingTypeInput) {
+    // Don't auto-select in edit mode (meeting type is already set)
+    if (meeting) {
+      return
+    }
+    
+    // Wait for modal to be open and types to be loaded
+    if (!isOpen || typesLoading) {
       return
     }
     
@@ -187,8 +192,8 @@ export default function CreateMeetingModal({
       return
     }
     
-    // Existing auto-select logic for when input is shown (only if meetingType is empty)
-    if (!meetingType && !typesLoading && Object.keys(availableTypes).length > 0) {
+    // Auto-select logic for when input is shown (only if meetingType is empty)
+    if (!meetingType && Object.keys(availableTypes).length > 0) {
       const typeValues = Object.values(availableTypes)
       
       // If only 1 option, auto-select it
@@ -206,7 +211,7 @@ export default function CreateMeetingModal({
         }
       }
     }
-  }, [availableTypes, typesLoading, shouldShowMeetingTypeInput])
+  }, [isOpen, availableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
