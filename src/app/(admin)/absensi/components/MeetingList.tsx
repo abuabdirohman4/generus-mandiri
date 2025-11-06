@@ -318,7 +318,7 @@ export default function MeetingList({
                                 isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
                               />
                             )}
-                            {meeting.title ? ": " : ""}
+                            {meeting.meeting_type_code && meeting.title ? ": " : ""}
                             {meeting.title}
                           </h4>
                           <div className="flex items-center gap-2 ml-4 shrink-0">
