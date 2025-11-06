@@ -27,12 +27,14 @@ export default function AssignStudentsModal({
     selectedClassId,
     selectedStudentIds,
     searchQuery,
+    filterClassId,
     closeModal,
     setSelectedClassId,
     toggleStudent,
     selectAll,
     clearSelection,
-    setSearchQuery
+    setSearchQuery,
+    setFilterClassId
   } = useAssignStudentsStore()
 
   const { classes, isLoading: classesLoading } = useClasses()
@@ -52,16 +54,29 @@ export default function AssignStudentsModal({
     }
   }, [selectedClassId, students])
 
-  // Filter students based on search query
+  // Filter students based on search query and class filter
   const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) return students || []
+    let filtered = students || []
     
-    const query = searchQuery.toLowerCase()
-    return (students || []).filter(student => 
-      student.name.toLowerCase().includes(query) ||
-      student.classes?.some(c => c.name.toLowerCase().includes(query))
-    )
-  }, [students, searchQuery])
+    // Apply search query filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(student => 
+        student.name.toLowerCase().includes(query) ||
+        student.classes?.some(c => c.name.toLowerCase().includes(query))
+      )
+    }
+    
+    // Apply class filter (filter by kelas siswa saat ini)
+    if (filterClassId) {
+      filtered = filtered.filter(student => {
+        const studentClassIds = (student.classes || []).map(c => c.id)
+        return studentClassIds.includes(filterClassId)
+      })
+    }
+    
+    return filtered
+  }, [students, searchQuery, filterClassId])
 
   // Filter out students already in selected class
   const availableStudents = useMemo(() => {
@@ -133,129 +148,146 @@ export default function AssignStudentsModal({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} className="max-w-4xl m-4">
-      <div className="p-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-          Assign Siswa ke Kelas
-        </h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+        Assign Siswa ke Kelas
+      </h2>
 
-        <div className="space-y-6">
-          {/* Step 1: Pilih Kelas */}
+      <div className="space-y-6">
+        {/* Step 1: Pilih Kelas */}
+        <div>
+          <InputFilter
+            id="classId"
+            label="Pilih Kelas Tujuan"
+            value={selectedClassId}
+            onChange={setSelectedClassId}
+            options={classes.map((cls) => ({
+              value: cls.id,
+              label: cls.name,
+            }))}
+            allOptionLabel="Pilih kelas"
+            widthClassName="!max-w-full"
+            variant="modal"
+          />
+          {selectedClass && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Siswa yang sudah ada di kelas <strong>{selectedClass.name}</strong> tidak akan ditampilkan
+            </p>
+          )}
+        </div>
+
+        {/* Step 2: Pilih Siswa dengan Search */}
+        {selectedClassId && (
           <div>
-            <InputFilter
-              id="classId"
-              label="Pilih Kelas Tujuan"
-              value={selectedClassId}
-              onChange={setSelectedClassId}
-              options={classes.map((cls) => ({
-                value: cls.id,
-                label: cls.name,
-              }))}
-              allOptionLabel="Pilih kelas"
-              widthClassName="!max-w-full"
-              variant="modal"
-            />
-            {selectedClass && (
+            <div className="flex items-center justify-between mb-4">
+              <Label>Pilih Siswa</Label>
+              {availableStudents.length > 0 && (
+                <Button
+                  onClick={() => {
+                    const allIds = availableStudents.map(s => s.id)
+                    selectAll(allIds)
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  {allFilteredSelected ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                </Button>
+              )}
+            </div>
+
+            {/* Search Input */}
+            <div className="mb-4">
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari siswa berdasarkan nama atau kelas..."
+                className="w-full"
+              />
+            </div>
+
+            {/* Filter by Kelas */}
+            <div className="mb-4">
+              <InputFilter
+                id="filterClassId"
+                label="Filter by Kelas"
+                value={filterClassId}
+                onChange={setFilterClassId}
+                options={classes.map((cls) => ({
+                  value: cls.id,
+                  label: cls.name,
+                }))}
+                allOptionLabel="Semua Kelas"
+                widthClassName="!max-w-full"
+                variant="modal"
+              />
+            </div>
+
+            {/* Student List */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg max-h-96 overflow-y-auto">
+              {availableStudents.length === 0 ? (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  {searchQuery || filterClassId 
+                    ? 'Tidak ada siswa yang cocok dengan filter yang dipilih' 
+                    : 'Semua siswa sudah ada di kelas ini'}
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {availableStudents.map((student) => {
+                    const isSelected = selectedStudentIds.includes(student.id)
+                    const currentClasses = student.classes || []
+                    return (
+                      <label
+                        key={student.id}
+                        className={`flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${
+                          isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleStudent(student.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="ml-3 flex-1">
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {student.name}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {student.gender} • {currentClasses.length > 0 
+                              ? `Kelas: ${currentClasses.map(c => c.name).join(', ')}`
+                              : 'Tidak ada kelas'}
+                          </div>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {selectedStudentIds.length > 0 && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                Siswa yang sudah ada di kelas <strong>{selectedClass.name}</strong> tidak akan ditampilkan
+                <strong>{selectedStudentIds.length}</strong> siswa dipilih
               </p>
             )}
           </div>
+        )}
 
-          {/* Step 2: Pilih Siswa dengan Search */}
-          {selectedClassId && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <Label>Pilih Siswa</Label>
-                {availableStudents.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      const allIds = availableStudents.map(s => s.id)
-                      selectAll(allIds)
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    {allFilteredSelected ? 'Batal Pilih Semua' : 'Pilih Semua'}
-                  </Button>
-                )}
-              </div>
-
-              {/* Search Input */}
-              <div className="mb-4">
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari siswa berdasarkan nama atau kelas..."
-                  className="w-full"
-                />
-              </div>
-
-              {/* Student List */}
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg max-h-96 overflow-y-auto">
-                {availableStudents.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                    {searchQuery ? 'Tidak ada siswa yang cocok dengan pencarian' : 'Semua siswa sudah ada di kelas ini'}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {availableStudents.map((student) => {
-                      const isSelected = selectedStudentIds.includes(student.id)
-                      const currentClasses = student.classes || []
-                      return (
-                        <label
-                          key={student.id}
-                          className={`flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${
-                            isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleStudent(student.id)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <div className="ml-3 flex-1">
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {student.name}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {student.gender} • {currentClasses.length > 0 
-                                ? `Kelas: ${currentClasses.map(c => c.name).join(', ')}`
-                                : 'Tidak ada kelas'}
-                            </div>
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {selectedStudentIds.length > 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  <strong>{selectedStudentIds.length}</strong> siswa dipilih
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              onClick={handleClose}
-              variant="outline"
-              disabled={isAssigning}
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={handleAssign}
-              disabled={!selectedClassId || selectedStudentIds.length === 0 || isAssigning}
-            >
-              {isAssigning ? 'Mengassign...' : `Assign ${selectedStudentIds.length} Siswa`}
-            </Button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Button
+            onClick={handleClose}
+            variant="outline"
+            disabled={isAssigning}
+          >
+            Batal
+          </Button>
+          <Button
+            onClick={handleAssign}
+            disabled={!selectedClassId || selectedStudentIds.length === 0 || isAssigning}
+          >
+            {isAssigning ? 'Mengassign...' : `Assign ${selectedStudentIds.length} Siswa`}
+          </Button>
         </div>
       </div>
     </Modal>

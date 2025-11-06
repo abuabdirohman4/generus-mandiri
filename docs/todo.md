@@ -22,14 +22,22 @@
     [x] Halaman Guru
     [x] Halaman Siswa
         [ ] Di table tampilkan kelompok
-    [ ] Halaman Absensi
-        [ ] Filter di detail absensi belum muncul 2 kelompok
+    [x] Halaman Absensi
+        [x] Filter di detail absensi belum muncul 2 kelompok
         [x] Tampilkan nama kelas (kelompok)
         [x] Untuk yang punya multiple kelas kayak mudamudi juga harusnya
-        [ ] Di admin warlob 2 tidak muncul
+        [x] Di admin warlob 2 tidak muncul
+    [x] Halaman Laporan
+        [x] Belum jalan utk warlob 2
+- [x] Confirm modal pakai [tipe pertemuan/title]
+- [ ] Handle student to have multiple class
+    [ ] Halaman Siswa
+        [x] Assign student by admin
+        [x] Ada filter by kelas
+        [x] Muncul di masing2 kelas
+        [ ] Fitur Edit kelas
+    [ ] Halaman Absensi
     [ ] Halaman Laporan
-        [ ] Belum jalan utk warlob 2
-- [ ] Confirm modal pakai [tipe pertemuan/title]
 
 Components
 - [x] Change All <button> to <Button>

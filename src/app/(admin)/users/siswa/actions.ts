@@ -213,7 +213,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
       }
       
       // Query students for all teacher's classes using admin client
-      const { data: students, error } = await adminClient
+      const { data: students, error: studentsError } = await adminClient
         .from('students')
         .select(`
           id,
@@ -235,8 +235,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         .in('id', studentIds)
         .order('name')
       
-      if (error) {
-        throw error
+      if (studentsError) {
+        throw studentsError
       }
       
       return await transformStudentsData(students || [], adminClient)
@@ -369,9 +369,12 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
     // Get primary class (first class) for backward compatibility
     const primaryClass = classesArray[0] || null
     
+    // Ensure classes is always an array
+    const { classes: _, ...studentWithoutClasses } = student as any
+    
     return {
-      ...student,
-      classes: classesArray, // Array of all classes
+      ...studentWithoutClasses,
+      classes: Array.isArray(classesArray) ? classesArray : [], // Array of all classes
       class_name: primaryClass?.name || '',
       daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
       desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
@@ -750,7 +753,7 @@ export async function assignStudentsToClass(
       skipped: Array.from(existingStudentIds)
     }
   } catch (error) {
-    handleApiError(error, 'mengassign data', 'Gagal mengassign siswa ke kelas')
+    handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa ke kelas')
     throw error
   }
 }

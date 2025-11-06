@@ -165,7 +165,9 @@ export function useSiswaPage() {
       const teacherClassIds = userProfile.classes.map(c => c.id)
       result = result.filter(s => {
         // Check if student has at least one class that matches teacher's classes
-        const studentClassIds = (s.classes || []).map(c => c.id)
+        // Ensure classes is always an array
+        const studentClasses = Array.isArray(s.classes) ? s.classes : []
+        const studentClassIds = studentClasses.map(c => c.id)
         return studentClassIds.some(classId => teacherClassIds.includes(classId))
       })
     }
@@ -180,7 +182,9 @@ export function useSiswaPage() {
     if (dataFilters.kelompok.length > 0) {
       result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
     }
-    if (dataFilters.kelas.length > 0) {
+    // For teachers, skip kelas filter because backend already filtered by teacher's classes
+    // The kelas filter is only for admin/superadmin to filter across all students
+    if (dataFilters.kelas.length > 0 && userProfile?.role !== 'teacher') {
       // Support comma-separated class IDs from DataFilter
       // Filter by checking if student has at least one class in selected classes
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
