@@ -10,6 +10,7 @@ interface Student {
   gender: string
   class_name: string
   class_id: string
+  classes?: Array<{ id: string; name: string }> // Add all classes array for multi-class students
 }
 
 interface AttendanceRecord {
@@ -69,14 +70,33 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
       const studentId = studentData?.id || `temp-${index}-${record.student_id}`
       const studentName = studentData?.name || 'Unknown Student'
       
+      // Get all classes from junction table
+      const studentClasses = studentData?.student_classes || []
+      const allClasses = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: cls.id,
+          name: cls.name
+        }))
+      
+      // If no classes from junction, use primary class
+      if (allClasses.length === 0 && studentData?.classes) {
+        allClasses.push({
+          id: studentData.classes.id,
+          name: studentData.classes.name
+        })
+      }
+      
       // Only add if we have a valid student ID or can generate one
       if (studentId && studentId !== '') {
         students.push({
           id: studentId,
           name: studentName,
           gender: studentData?.gender || 'L', // Default to 'L' for Laki-laki
-          class_name: studentData?.classes?.name || 'Unknown Class',
-          class_id: studentData?.classes?.id || ''
+          class_name: allClasses[0]?.name || 'Unknown Class',
+          class_id: allClasses[0]?.id || '',
+          classes: allClasses // Add all classes array
         })
       }
     })
