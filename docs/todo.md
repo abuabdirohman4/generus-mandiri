@@ -30,14 +30,14 @@
     [x] Halaman Laporan
         [x] Belum jalan utk warlob 2
 - [x] Confirm modal pakai [tipe pertemuan/title]
-- [ ] Handle student to have multiple class
-    [ ] Halaman Siswa
+- [x] Handle student to have multiple class
+    [x] Halaman Siswa
         [x] Assign student by admin
         [x] Ada filter by kelas
         [x] Muncul di masing2 kelas
-        [ ] Fitur Edit kelas
+        [x] Fitur Edit kelas
     [ ] Halaman Absensi
-    [ ] Halaman Laporan
+    [x] Halaman Laporan
 
 Components
 - [x] Change All <button> to <Button>
@@ -160,11 +160,11 @@ Meetings
 
 
 ## Backlog
-- [ ] Add Halaman Materi
 - [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+- [ ] Kalau login gagal usernmae/password, username jangan hilang
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya

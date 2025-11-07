@@ -507,16 +507,26 @@ export async function updateStudent(studentId: string, formData: FormData) {
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
-    const classId = formData.get('classId')?.toString()
+    
+    // Support both classIds (multiple) and classId (single) for backward compatibility
+    const classIdsStr = formData.get('classIds')?.toString() || formData.get('classId')?.toString()
+    const classIds = classIdsStr ? classIdsStr.split(',').filter(Boolean) : []
 
     // Validation
-    if (!name || !gender || !classId) {
-      throw new Error('Semua field harus diisi')
+    if (!name || !gender) {
+      throw new Error('Nama dan jenis kelamin harus diisi')
+    }
+
+    if (classIds.length === 0) {
+      throw new Error('Pilih minimal satu kelas')
     }
 
     if (!['Laki-laki', 'Perempuan'].includes(gender)) {
       throw new Error('Jenis kelamin tidak valid')
     }
+
+    // Set primary class_id = first class in the array
+    const primaryClassId = classIds[0]
 
     // Update student with RLS handling auth + validation
     // RLS policies will handle user authentication and access control
@@ -525,7 +535,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
       .update({
         name,
         gender,
-        class_id: classId,
+        class_id: primaryClassId,
         updated_at: new Date().toISOString()
       })
       .eq('id', studentId)
@@ -557,29 +567,52 @@ export async function updateStudent(studentId: string, formData: FormData) {
       throw error
     }
 
-    // Also sync dengan junction table untuk support multiple classes
+    // Sync dengan junction table untuk support multiple classes
     if (updatedStudent?.id) {
-      // Check apakah sudah ada di junction table
-      const { data: existingJunction } = await supabase
+      // Get current classes from junction table
+      const { data: currentClasses, error: currentClassesError } = await supabase
         .from('student_classes')
-        .select('id')
+        .select('class_id')
         .eq('student_id', studentId)
-        .eq('class_id', classId)
-        .single()
 
-      // Jika belum ada, insert ke junction table
-      if (!existingJunction) {
-        const { error: junctionError } = await supabase
+      if (currentClassesError) {
+        console.error('Error fetching current classes:', currentClassesError)
+        // Continue anyway, will try to sync
+      }
+
+      const currentClassIds = new Set(currentClasses?.map(c => c.class_id) || [])
+      const newClassIds = new Set(classIds)
+
+      // Delete removed classes
+      const toDelete = Array.from(currentClassIds).filter(id => !newClassIds.has(id))
+      if (toDelete.length > 0) {
+        const { error: deleteError } = await supabase
           .from('student_classes')
-          .insert({
-            student_id: studentId,
-            class_id: classId
-          })
-          .select()
+          .delete()
+          .eq('student_id', studentId)
+          .in('class_id', toDelete)
+
+        if (deleteError && deleteError.code !== 'PGRST301') {
+          console.error('Error deleting classes from junction table:', deleteError)
+          // Don't throw, continue with inserts
+        }
+      }
+
+      // Insert new classes
+      const toInsert = Array.from(newClassIds).filter(id => !currentClassIds.has(id))
+      if (toInsert.length > 0) {
+        const assignmentsToInsert = toInsert.map(classId => ({
+          student_id: studentId,
+          class_id: classId
+        }))
+
+        const { error: insertError } = await supabase
+          .from('student_classes')
+          .insert(assignmentsToInsert)
 
         // Ignore duplicate error (UNIQUE constraint)
-        if (junctionError && junctionError.code !== '23505') {
-          console.error('Error inserting to junction table:', junctionError)
+        if (insertError && insertError.code !== '23505' && insertError.code !== 'PGRST301') {
+          console.error('Error inserting to junction table:', insertError)
           // Don't throw, karena student sudah diupdate
         }
       }

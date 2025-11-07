@@ -116,6 +116,9 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(log.status)}`}>
                     {getStatusLabel(log.status)}
                   </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                    {log.meetings.classes?.name}
+                  </span>
                   {log.reason && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {log.reason}

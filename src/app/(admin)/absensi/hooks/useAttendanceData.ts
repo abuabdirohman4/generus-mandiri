@@ -3,20 +3,26 @@
 import useSWR from 'swr'
 import { getAttendanceByDate } from '../actions'
 
-interface AttendanceRecord {
+// Raw data structure from Supabase query
+// students is array because query can return multiple students
+// student_classes is array because student can have multiple classes
+// classes is array because of how Supabase structures the nested query
+interface AttendanceRecordRaw {
   id: any
   student_id: any
   status: any
   reason: any
-  students: {
+  students: Array<{
     id: any
     name: any
     gender: any
-    classes: {
-      id: any
-      name: any
-    }[]
-  }[]
+    student_classes?: Array<{
+      classes: Array<{
+        id: any
+        name: any
+      }>
+    }>
+  }>
 }
 
 interface AttendanceData {
@@ -42,7 +48,7 @@ const fetcher = async (url: string): Promise<AttendanceData> => {
   const attendanceData: AttendanceData = {}
   
   if (result.data) {
-    result.data.forEach((record: AttendanceRecord) => {
+    (result.data as AttendanceRecordRaw[]).forEach((record) => {
       attendanceData[record.student_id] = {
         status: record.status as 'H' | 'I' | 'S' | 'A',
         reason: record.reason || undefined

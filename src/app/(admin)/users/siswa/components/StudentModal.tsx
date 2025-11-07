@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { Modal } from '@/components/ui/modal'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
 import InputFilter from '@/components/form/input/InputFilter'
+import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import { isAdminLegacy } from '@/lib/userUtils'
-import type { Student } from '../actions'
+import { getStudentClasses, type Student } from '../actions'
 
 interface Class {
   id: string
@@ -43,6 +45,8 @@ export default function StudentModal({
     gender: '',
     classId: ''
   })
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
+  const [loadingClasses, setLoadingClasses] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -50,8 +54,25 @@ export default function StudentModal({
         setFormData({
           name: student.name,
           gender: student.gender || '',
-          classId: student.class_id
+          classId: student.class_id || ''
         })
+        
+        // Fetch current classes for admin in edit mode
+        if (isAdminLegacy(userProfile?.role)) {
+          setLoadingClasses(true)
+          getStudentClasses(student.id)
+            .then(classes => {
+              setSelectedClassIds(classes.map(c => c.id))
+            })
+            .catch(err => {
+              console.error('Error loading classes:', err)
+              // Fallback to single class_id if fetch fails
+              if (student.class_id) {
+                setSelectedClassIds([student.class_id])
+              }
+            })
+            .finally(() => setLoadingClasses(false))
+        }
       } else {
         // Auto-fill class for teachers
         const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
@@ -60,6 +81,7 @@ export default function StudentModal({
           gender: '',
           classId: classId
         })
+        setSelectedClassIds([])
       }
     }
   }, [mode, student, userProfile, isOpen])
@@ -70,20 +92,39 @@ export default function StudentModal({
       gender: '',
       classId: ''
     })
+    setSelectedClassIds([])
     onClose()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.name || !formData.gender || !formData.classId) {
+    if (!formData.name || !formData.gender) {
       return
+    }
+
+    // For admin edit mode, use multiple classes
+    if (mode === 'edit' && isAdminLegacy(userProfile?.role)) {
+      if (selectedClassIds.length === 0) {
+        toast.error('Pilih minimal satu kelas')
+        return
+      }
+    } else {
+      // For create mode or teacher, use single classId
+      if (!formData.classId) {
+        return
+      }
     }
 
     const formDataObj = new FormData()
     formDataObj.append('name', formData.name)
     formDataObj.append('gender', formData.gender)
-    formDataObj.append('classId', formData.classId)
+    
+    if (mode === 'edit' && isAdminLegacy(userProfile?.role)) {
+      formDataObj.append('classIds', selectedClassIds.join(','))
+    } else {
+      formDataObj.append('classId', formData.classId)
+    }
 
     await onSubmit(formDataObj)
     handleClose()
@@ -131,18 +172,33 @@ export default function StudentModal({
           {/* Only show class selection for admins or superadmins */}
           {isAdminLegacy(userProfile?.role) && (
             <div>
-              <InputFilter
-                id="classId"
-                label="Kelas"
-                value={formData.classId}
-                onChange={(value: string) => setFormData({ ...formData, classId: value })}
-                options={classes.map((cls) => ({
-                  value: cls.id,
-                  label: cls.name,
-                }))}
-                allOptionLabel="Pilih kelas"
-                widthClassName="!max-w-full"
-              />
+              {mode === 'edit' ? (
+                <MultiSelectCheckbox
+                  label="Kelas"
+                  items={classes.map((cls) => ({
+                    id: cls.id,
+                    label: cls.name,
+                  }))}
+                  selectedIds={selectedClassIds}
+                  onChange={setSelectedClassIds}
+                  isLoading={loadingClasses}
+                  maxHeight="12rem"
+                  hint="Pilih minimal satu kelas"
+                />
+              ) : (
+                <InputFilter
+                  id="classId"
+                  label="Kelas"
+                  value={formData.classId}
+                  onChange={(value: string) => setFormData({ ...formData, classId: value })}
+                  options={classes.map((cls) => ({
+                    value: cls.id,
+                    label: cls.name,
+                  }))}
+                  allOptionLabel="Pilih kelas"
+                  widthClassName="!max-w-full"
+                />
+              )}
             </div>
           )}
 

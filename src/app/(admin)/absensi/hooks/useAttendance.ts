@@ -46,7 +46,8 @@ export function useAttendance() {
         name: student.name,
         gender: student.gender || '',
         class_name: student.class_name || '',
-        class_id: student.class_id
+        // Use primary class_id or first class from classes array as fallback
+        class_id: student.class_id || student.classes?.[0]?.id || ''
       }))
       setStudents(transformedStudents)
     }

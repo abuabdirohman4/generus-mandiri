@@ -73,7 +73,7 @@ export function useLaporanPage() {
         // Filter classes based on user role
         let displayClassNames = record.class_name
         
-        // If we have all_classes data and user is admin or teacher
+        // If we have all_classes data
         if (record.all_classes && record.all_classes.length > 0) {
           if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
             // Admin: show all classes
@@ -82,11 +82,22 @@ export function useLaporanPage() {
             // Teacher: filter to only classes they teach
             const teacherClassIds = userProfile.classes.map(c => c.id)
             const studentTeacherClasses = record.all_classes.filter(c => teacherClassIds.includes(c.id))
-            displayClassNames = studentTeacherClasses.length > 0
-              ? studentTeacherClasses.map(c => c.name).join(', ')
-              : '-' // Student tidak punya kelas yang diajarkan guru ini
+            
+            if (studentTeacherClasses.length > 0) {
+              // For teacher with only 1 class, just show the class name (no need to show all student classes)
+              if (userProfile.classes.length === 1) {
+                // Teacher only teaches 1 class, so just show that class name
+                displayClassNames = studentTeacherClasses[0].name
+              } else {
+                // Teacher teaches multiple classes, show all matching classes
+                displayClassNames = studentTeacherClasses.map(c => c.name).join(', ')
+              }
+            } else {
+              // Student tidak punya kelas yang diajarkan guru ini
+              displayClassNames = '-'
+            }
           }
-          // Default: use primary class_name
+          // Default: use primary class_name if no all_classes or not admin/teacher
         }
         
         return {
