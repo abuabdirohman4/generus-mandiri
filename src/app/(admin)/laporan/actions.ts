@@ -146,6 +146,29 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       throw new Error('User not authenticated')
     }
 
+    // Get user profile with teacher classes
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        role,
+        teacher_classes!teacher_classes_teacher_id_fkey(
+          class_id,
+          classes:class_id(id, name)
+        )
+      `)
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
+    // Get teacher class IDs if user is a teacher
+    const teacherClassIds = profile.role === 'teacher' && profile.teacher_classes
+      ? profile.teacher_classes.map((tc: any) => tc.classes?.id || tc.class_id).filter(Boolean)
+      : []
+
     // Build date range based on filter mode
     let dateFilter: {
       date?: {
@@ -307,8 +330,38 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       throw error
     }
 
-    // Apply class filter client-side (check both primary class_id and student_classes junction table)
+    // Fetch meetings for the date range first (needed for teacher filtering)
+    // Use admin client to bypass RLS
+    const { data: meetings } = await adminClient
+      .from('meetings')
+      .select('id, title, date, student_snapshot, class_id, class_ids')
+      .gte('date', dateFilter.date?.gte || '1900-01-01')
+      .lte('date', dateFilter.date?.lte || '2100-12-31')
+      .order('date')
+
+    // For teacher, filter meetings by their classes first
+    let teacherMeetings = meetings || []
+    if (profile.role === 'teacher' && teacherClassIds.length > 0) {
+      teacherMeetings = meetings?.filter((meeting: any) => {
+        // Check class_ids array first (for multi-class meetings)
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+        }
+        // Check class_id
+        return meeting.class_id && teacherClassIds.includes(meeting.class_id)
+      }) || []
+    }
+
+    // Filter attendance_logs to only include logs from teacher's meetings (if teacher)
     let filteredLogs = attendanceLogs || []
+    if (profile.role === 'teacher' && teacherMeetings.length > 0) {
+      const teacherMeetingIds = new Set(teacherMeetings.map((m: any) => m.id))
+      filteredLogs = filteredLogs.filter((log: any) => 
+        teacherMeetingIds.has(log.meeting_id)
+      )
+    }
+
+    // Apply class filter client-side (check both primary class_id and student_classes junction table)
     if (filters.classId) {
       const classIds = filters.classId.split(',')
       filteredLogs = filteredLogs.filter((log: any) => {
@@ -330,7 +383,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       )
     }
 
-    // Process data for summary
+    // Process data for summary (after all filtering, including teacher meetings filter)
     const summary = {
       total: filteredLogs.length,
       hadir: filteredLogs.filter((log: any) => log.status === 'H').length,
@@ -347,19 +400,16 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       { name: 'Alpha', value: summary.alpha },
     ].filter(item => item.value > 0) // Only include non-zero values
 
-    // Fetch meetings for the date range to ensure all meetings appear in chart
-    // Use admin client to bypass RLS
-    const { data: meetings } = await adminClient
-      .from('meetings')
-      .select('id, title, date, student_snapshot, class_id, class_ids')
-      .gte('date', dateFilter.date?.gte || '1900-01-01')
-      .lte('date', dateFilter.date?.lte || '2100-12-31')
-      .order('date')
-
     // Apply class filter to meetings if specified - support multiple classes per meeting
     // Check both class_id and class_ids array
+    // For teacher, use teacherMeetings (already filtered by teacher classes)
+    // For admin, use all meetings
+    const meetingsToFilter = profile.role === 'teacher' && teacherMeetings.length > 0
+      ? teacherMeetings
+      : meetings || []
+    
     const filteredMeetings = filters.classId 
-      ? meetings?.filter((meeting: any) => {
+      ? meetingsToFilter.filter((meeting: any) => {
           const classIds = filters.classId!.split(',')
           // Check primary class_id
           if (classIds.includes(meeting.class_id)) return true
@@ -368,8 +418,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             return meeting.class_ids.some((id: string) => classIds.includes(id))
           }
           return false
-        }) || []
-      : meetings || []
+        })
+      : meetingsToFilter
 
     // First, group meetings by period to count unique meetings per period
     const meetingsByPeriod = filteredMeetings.reduce((acc: any, meeting: any) => {

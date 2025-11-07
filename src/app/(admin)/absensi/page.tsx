@@ -95,13 +95,9 @@ export default function AbsensiPage() {
       return dataFilters.kelas.join(',') // Use all selected classes for API call
     }
     
-    // FALLBACK: For teacher without filter, use first class
-    if (userProfile?.role === 'teacher') {
-      return userProfile.classes?.[0]?.id || undefined
-    }
-    
-    // If "Semua Kelas" is selected (no specific class), return undefined
-    // This will fetch all meetings, and we'll filter them client-side
+    // FALLBACK: For both teacher and admin, return undefined to fetch all meetings
+    // Backend will handle filtering for teachers (getMeetingsWithStats already filters by teacherClassIds)
+    // For admin, undefined means fetch all meetings
     return undefined
   }, [userProfile, dataFilters.kelas])
 

@@ -125,7 +125,9 @@ export default function CreateMeetingModal({
       initializedRef.current = true
     } else if (classId) {
       // Create mode with specific class
-      setSelectedClassIds([classId])
+      // Handle comma-separated class IDs from filter
+      const classIds = classId.includes(',') ? classId.split(',').filter(Boolean) : [classId]
+      setSelectedClassIds(classIds)
       initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
       // Create mode: default to first available class
