@@ -1,3 +1,27 @@
+*Update v1.8.0 - Multiple Class Support & Enhanced Features*
+
+Fitur Baru:
+- Multiple Class Support - Siswa sekarang bisa diassign ke multiple kelas
+- Gender Filter di Laporan - Filter jenis kelamin di halaman laporan
+- Student Class Assignment - Admin bisa assign siswa ke multiple kelas via batch assignment
+- Class Edit Feature - Fitur edit assignment kelas siswa dari halaman manajemen siswa
+
+Peningkatan:
+- Multiple Class Handling - Peningkatan support untuk siswa dengan multiple kelas di different kelompok
+  - Halaman Guru: Handling multiple kelas yang lebih baik
+  - Halaman Siswa: Tampilan dan filter siswa dengan multiple kelas
+  - Halaman Absensi: Filter dan tampilan untuk multiple kelas dengan different kelompok
+  - Halaman Laporan: Support untuk siswa dengan multiple kelas
+- Confirm Modal - Update confirm modal dengan format [tipe pertemuan/title]
+- Component Consistency - Ganti semua <button> dengan <Button> component untuk konsistensi
+- Meeting Detail - Tambahan informasi kelas di meeting detail modal
+
+Perbaikan:
+- Attendance Filter - Perbaikan filter yang tidak muncul multiple kelompok di detail absensi
+- Class Display - Perbaikan tampilan nama kelas (kelompok) di halaman absensi
+- Multiple Class Visibility - Perbaikan siswa multiple kelas (seperti mudamudi) yang tidak muncul dengan benar
+- Admin Access - Perbaikan admin warlob 2 yang tidak menampilkan siswa dengan benar
+
 *Update v1.7.1 - UI Fixes & Improvements*
 
 Perbaikan:
