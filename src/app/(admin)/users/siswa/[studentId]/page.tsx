@@ -101,7 +101,7 @@ export default function StudentDetailPage() {
   if (error || !student) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@ export default function StudentDetailPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">

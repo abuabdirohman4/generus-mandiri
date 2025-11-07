@@ -369,7 +369,7 @@ export default function MeetingAttendancePage() {
   if (error || !meeting) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+        <div className="mx-auto px-0 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -399,7 +399,7 @@ export default function MeetingAttendancePage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4">
           {/* <div className="flex items-center gap-4 mb-4">
