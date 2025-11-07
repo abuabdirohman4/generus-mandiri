@@ -17,6 +17,7 @@ import DatePickerInput from '@/components/form/input/DatePicker'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { useMeetingTypes } from '../hooks/useMeetingTypes'
 import Modal from '@/components/ui/modal'
+import { invalidateAllMeetingsCache } from '../utils/cache'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -254,6 +255,8 @@ export default function CreateMeetingModal({
         
         if (result.success) {
           toast.success('Pertemuan berhasil diperbarui!')
+          // Invalidate all meetings cache so other users see the update
+          await invalidateAllMeetingsCache()
           onSuccess()
           handleClose()
         } else {
@@ -272,6 +275,8 @@ export default function CreateMeetingModal({
 
         if (result.success) {
           toast.success('Pertemuan berhasil dibuat!')
+          // Invalidate all meetings cache so other users see the new meeting
+          await invalidateAllMeetingsCache()
           onSuccess()
           handleClose()
         } else {

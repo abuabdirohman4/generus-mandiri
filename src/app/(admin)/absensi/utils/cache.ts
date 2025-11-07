@@ -20,6 +20,25 @@ export async function invalidateMeetingsCache(userId: string, classId?: string) 
 }
 
 /**
+ * Invalidate ALL meetings cache for all users
+ * This is useful when a meeting is created/updated by one user
+ * and other users need to see the changes immediately
+ */
+export async function invalidateAllMeetingsCache() {
+  console.log('🔄 Invalidating ALL meetings cache...')
+  
+  // Use SWR's key matcher to invalidate all meeting-related caches
+  // This will match any SWR key that starts with '/api/meetings/'
+  await mutate(
+    (key) => typeof key === 'string' && key.startsWith('/api/meetings/'),
+    undefined,
+    { revalidate: true }
+  )
+  
+  console.log('✅ All meetings cache invalidated')
+}
+
+/**
  * Invalidate specific meeting cache
  */
 export async function invalidateMeetingCache(meetingId: string) {

@@ -18,6 +18,7 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
 import MeetingTypeBadge from './MeetingTypeBadge'
 import { useClasses } from '@/hooks/useClasses'
+import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useDesa } from '@/hooks/useDesa'
 import { useDaerah } from '@/hooks/useDaerah'
@@ -469,6 +470,8 @@ export default function MeetingCards({
       const result = await deleteMeeting(deleteModal.meetingId)
       if (result.success) {
         toast.success('Pertemuan berhasil dihapus')
+        // Invalidate all meetings cache so other users see the deletion
+        await invalidateAllMeetingsCache()
         if (onDelete) {
           onDelete(deleteModal.meetingId)
         }
