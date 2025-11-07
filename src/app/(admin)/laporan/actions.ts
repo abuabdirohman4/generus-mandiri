@@ -595,6 +595,10 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
           class_name: formattedClassNames.length > 0 
             ? formattedClassNames.join(', ') // Join all class names with kelompok info
             : primaryClass?.name || 'Unknown Class', // Fallback to primary class
+          all_classes: allClasses.map((cls: any) => ({
+            id: cls.id,
+            name: cls.name
+          })),
           total_days: 0,
           hadir: 0,
           izin: 0,

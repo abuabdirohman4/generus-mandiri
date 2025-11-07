@@ -575,7 +575,11 @@ export default function MeetingCards({
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
                             {uniqueKelompokCount} Kelompok
                           </span>
-                        ) : null
+                        ) : meeting.class_ids && meeting.class_ids.length > 1 && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                            {meeting.class_ids.length} Kelas
+                          </span>
+                        )
                       })()}
                       {listGroupedClasses(meeting, userProfile, classesData || [], kelompokData || [])}
                     </p>
