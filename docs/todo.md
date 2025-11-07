@@ -18,7 +18,7 @@
 
 ## v1.8.0
 - [x] Add Filter Gender on Laporan
-- [ ] Handle multiple class with different kelompok
+- [x] Handle multiple class with different kelompok
     [x] Halaman Guru
     [x] Halaman Siswa
         [ ] Di table tampilkan kelompok
