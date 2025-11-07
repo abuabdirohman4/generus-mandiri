@@ -128,50 +128,80 @@ export default function StudentsTable({
 
   // Filter classes based on user role for display
   const getDisplayClasses = (student: Student): string => {
-    if (!student.classes || student.classes.length === 0) {
-      return student.class_name || '-'
-    }
-    
-    // If admin, show all classes
-    if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
-      return student.classes.map(c => c.name).join(', ')
-    }
-    
-    // If teacher, filter to only classes they teach
-    if (userProfile?.role === 'teacher' && userProfile.classes) {
-      const teacherClassIds = userProfile.classes.map(c => c.id)
-      const studentTeacherClasses = student.classes.filter(c => teacherClassIds.includes(c.id))
-      if (studentTeacherClasses.length === 0) {
-        return '-' // Student tidak punya kelas yang diajarkan guru ini
+    try {
+      if (!student || typeof student !== 'object') {
+        return '-'
       }
-      return studentTeacherClasses.map(c => c.name).join(', ')
+      
+      if (!student.classes || !Array.isArray(student.classes) || student.classes.length === 0) {
+        return String(student.class_name || '-')
+      }
+      
+      // If admin, show all classes
+      if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+        return student.classes
+          .filter(c => c && c.name)
+          .map(c => String(c.name))
+          .join(', ') || '-'
+      }
+      
+      // If teacher, filter to only classes they teach
+      if (userProfile?.role === 'teacher' && userProfile.classes && Array.isArray(userProfile.classes)) {
+        const teacherClassIds = userProfile.classes
+          .filter(c => c && c.id)
+          .map(c => String(c.id))
+        const studentTeacherClasses = student.classes.filter(c => 
+          c && c.id && teacherClassIds.includes(String(c.id))
+        )
+        if (studentTeacherClasses.length === 0) {
+          return '-' // Student tidak punya kelas yang diajarkan guru ini
+        }
+        return studentTeacherClasses
+          .filter(c => c && c.name)
+          .map(c => String(c.name))
+          .join(', ') || '-'
+      }
+      
+      // Default: return first class
+      const firstClass = student.classes[0]
+      return (firstClass && firstClass.name) ? String(firstClass.name) : '-'
+    } catch (error) {
+      console.error('Error in getDisplayClasses:', error, student)
+      return '-'
     }
-    
-    // Default: return first class
-    return student.classes[0]?.name || '-'
   }
 
   // Ensure students is an array and filter out invalid entries
   const validStudents = Array.isArray(students) 
-    ? students.filter(s => s && s.id && s.name)
+    ? students.filter(s => s && typeof s === 'object' && s.id && s.name)
     : []
 
-  const tableData = validStudents
-    .sort((a, b) => {
-      const nameA = String(a.name || '').toLowerCase()
-      const nameB = String(b.name || '').toLowerCase()
-      return nameA.localeCompare(nameB)
-    })
-    .map((student) => ({
-      id: student.id,
-      name: student.name || '',
-      gender: student.gender || '-',
-      class_name: getDisplayClasses(student),
-      daerah_name: student.daerah_name || '-',
-      desa_name: student.desa_name || '-',
-      kelompok_name: student.kelompok_name || '-',
-      actions: student.id, // We'll use this in renderCell
-    }))
+  const tableData = validStudents.length > 0
+    ? validStudents
+        .sort((a, b) => {
+          const nameA = String(a.name || '').toLowerCase()
+          const nameB = String(b.name || '').toLowerCase()
+          return nameA.localeCompare(nameB)
+        })
+        .map((student) => {
+          try {
+            return {
+              id: String(student.id || ''),
+              name: String(student.name || ''),
+              gender: String(student.gender || '-'),
+              class_name: getDisplayClasses(student),
+              daerah_name: String(student.daerah_name || '-'),
+              desa_name: String(student.desa_name || '-'),
+              kelompok_name: String(student.kelompok_name || '-'),
+              actions: String(student.id || ''), // We'll use this in renderCell
+            }
+          } catch (error) {
+            console.error('Error mapping student to table data:', error, student)
+            return null
+          }
+        })
+        .filter(Boolean) // Remove any null entries
+    : []
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
@@ -218,7 +248,12 @@ export default function StudentsTable({
     
     // Handle name column - make it clickable
     if (column.key === 'name') {
-      const student = students.find(s => s.id === item.actions)!
+      const student = validStudents.find(s => s && s.id === item.actions)
+      
+      if (!student) {
+        return item.name || '-'
+      }
+      
       return (
         <Link 
           href={`/users/siswa/${student.id}`}
