@@ -173,25 +173,29 @@ export async function createMeeting(data: CreateMeetingData) {
       return { success: false, error: 'User profile not found' }
     }
 
+    // Get students for all selected classes to create snapshot (via junction table)
+    // Use admin client to bypass RLS restrictions (similar to getAllStudents)
+    const adminClient = await createAdminClient()
+
     // If user is a teacher, verify they teach all selected classes
+    // Use admin client to bypass RLS restrictions
     if (profile.role === 'teacher') {
-      const { data: teacherClasses } = await supabase
+      // First, get ALL classes that the teacher teaches (not filtered by data.classIds)
+      // This ensures we get all classes regardless of order or filter state
+      const { data: allTeacherClasses } = await adminClient
         .from('teacher_classes')
         .select('class_id')
         .eq('teacher_id', user.id)
-        .in('class_id', data.classIds)
 
-      const teacherClassIds = teacherClasses?.map(tc => tc.class_id) || []
-      const invalidClasses = data.classIds.filter(id => !teacherClassIds.includes(id))
+      const allTeacherClassIds = new Set(allTeacherClasses?.map(tc => tc.class_id) || [])
+      
+      // Now validate that all selected classes are in the teacher's classes
+      const invalidClasses = data.classIds.filter(id => !allTeacherClassIds.has(id))
       
       if (invalidClasses.length > 0) {
         return { success: false, error: 'You can only create meetings for your own classes' }
       }
     }
-
-    // Get students for all selected classes to create snapshot (via junction table)
-    // Use admin client to bypass RLS restrictions (similar to getAllStudents)
-    const adminClient = await createAdminClient()
     
     // Get students via junction table to support multiple classes per student
     const { data: studentClassData, error: studentClassError } = await adminClient
