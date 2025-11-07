@@ -803,14 +803,97 @@ export async function deleteStudent(studentId: string) {
     }
 
     // Check if student exists
-    const { data: existingStudent } = await supabase
+    const { data: existingStudent, error: studentError } = await supabase
       .from('students')
-      .select('id, name')
+      .select('id, name, class_id, kelompok_id, desa_id, daerah_id')
       .eq('id', studentId)
       .single()
 
+    if (studentError) {
+      if (studentError.code === 'PGRST116') {
+        throw new Error('Siswa tidak ditemukan')
+      }
+      throw studentError
+    }
+
     if (!existingStudent) {
       throw new Error('Siswa tidak ditemukan')
+    }
+
+    // For Admin Kelompok: verify student belongs to their kelompok
+    if (profile.kelompok_id) {
+      // Check if student's kelompok_id matches admin's kelompok_id
+      if (existingStudent.kelompok_id !== profile.kelompok_id) {
+        // If student doesn't have kelompok_id, check via class
+        if (!existingStudent.kelompok_id && existingStudent.class_id) {
+          const { data: classData } = await supabase
+            .from('classes')
+            .select('kelompok_id')
+            .eq('id', existingStudent.class_id)
+            .single()
+
+          if (!classData) {
+            throw new Error('Tidak dapat menghapus siswa: kelas siswa tidak ditemukan')
+          }
+
+          if (classData.kelompok_id !== profile.kelompok_id) {
+            throw new Error('Tidak memiliki izin untuk menghapus siswa dari kelompok lain')
+          }
+        } else {
+          throw new Error('Tidak memiliki izin untuk menghapus siswa dari kelompok lain')
+        }
+      }
+    }
+
+    // For Admin Desa: verify student belongs to their desa
+    if (profile.desa_id && !profile.kelompok_id) {
+      if (existingStudent.desa_id !== profile.desa_id) {
+        // If student doesn't have desa_id, check via class -> kelompok -> desa
+        if (!existingStudent.desa_id && existingStudent.class_id) {
+          const { data: classData } = await supabase
+            .from('classes')
+            .select('kelompok_id, kelompok:kelompok_id(desa_id)')
+            .eq('id', existingStudent.class_id)
+            .single()
+
+          if (!classData || !classData.kelompok) {
+            throw new Error('Tidak dapat menghapus siswa: data kelas siswa tidak valid')
+          }
+
+          const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
+          if (kelompok?.desa_id !== profile.desa_id) {
+            throw new Error('Tidak memiliki izin untuk menghapus siswa dari desa lain')
+          }
+        } else {
+          throw new Error('Tidak memiliki izin untuk menghapus siswa dari desa lain')
+        }
+      }
+    }
+
+    // For Admin Daerah: verify student belongs to their daerah
+    if (profile.daerah_id && !profile.desa_id && !profile.kelompok_id) {
+      if (existingStudent.daerah_id !== profile.daerah_id) {
+        // If student doesn't have daerah_id, check via class -> kelompok -> desa -> daerah
+        if (!existingStudent.daerah_id && existingStudent.class_id) {
+          const { data: classData } = await supabase
+            .from('classes')
+            .select('kelompok_id, kelompok:kelompok_id(desa_id, desa:desa_id(daerah_id))')
+            .eq('id', existingStudent.class_id)
+            .single()
+
+          if (!classData || !classData.kelompok) {
+            throw new Error('Tidak dapat menghapus siswa: data kelas siswa tidak valid')
+          }
+
+          const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
+          const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+          if (desa?.daerah_id !== profile.daerah_id) {
+            throw new Error('Tidak memiliki izin untuk menghapus siswa dari daerah lain')
+          }
+        } else {
+          throw new Error('Tidak memiliki izin untuk menghapus siswa dari daerah lain')
+        }
+      }
     }
 
     // Check if student has attendance records
@@ -824,19 +907,33 @@ export async function deleteStudent(studentId: string) {
       throw new Error('Tidak dapat menghapus siswa yang memiliki riwayat absensi')
     }
 
-    // Delete student
-    const { error } = await supabase
+    // Delete student (RLS will handle final permission check)
+    const { error: deleteError } = await supabase
       .from('students')
       .delete()
       .eq('id', studentId)
 
-    if (error) {
-      throw error
+    if (deleteError) {
+      // Handle specific RLS errors
+      if (deleteError.code === 'PGRST301' || deleteError.message.includes('permission denied') || deleteError.message.includes('new row violates row-level security')) {
+        throw new Error('Tidak memiliki izin untuk menghapus siswa ini')
+      }
+      if (deleteError.code === '23503') {
+        throw new Error('Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan')
+      }
+      throw deleteError
     }
 
     revalidatePath('/users/siswa')
     return { success: true }
   } catch (error) {
+    // Don't wrap error if it's already a user-friendly message
+    if (error instanceof Error) {
+      const errorMessage = error.message
+      if (errorMessage.includes('Tidak') || errorMessage.includes('Unauthorized')) {
+        throw error
+      }
+    }
     handleApiError(error, 'menghapus data', 'Gagal menghapus siswa')
     throw error
   }
