@@ -705,8 +705,11 @@ export async function updateStudent(studentId: string, formData: FormData) {
       }
     }
 
-    // Use admin client for teacher to bypass RLS, regular client for admin
-    const client = profile.role === 'teacher' ? await createAdminClient() : supabase
+    // Use admin client for teacher and admin to bypass RLS issues
+    // Admin juga perlu adminClient karena query dengan junction table dan RLS bisa gagal
+    const client = (profile.role === 'teacher' || profile.role === 'admin' || profile.role === 'superadmin') 
+      ? await createAdminClient() 
+      : supabase
 
     // Update student with RLS handling auth + validation
     // For teacher, use admin client to bypass RLS
@@ -828,8 +831,12 @@ export async function deleteStudent(studentId: string) {
       throw new Error('Unauthorized: Hanya admin yang dapat menghapus siswa')
     }
 
+    // Use admin client to bypass RLS issues for admin
+    // RLS policies can be too restrictive for delete operations
+    const adminClient = await createAdminClient()
+
     // Check if student exists
-    const { data: existingStudent, error: studentError } = await supabase
+    const { data: existingStudent, error: studentError } = await adminClient
       .from('students')
       .select('id, name, class_id, kelompok_id, desa_id, daerah_id')
       .eq('id', studentId)
@@ -852,7 +859,7 @@ export async function deleteStudent(studentId: string) {
       if (existingStudent.kelompok_id !== profile.kelompok_id) {
         // If student doesn't have kelompok_id, check via class
         if (!existingStudent.kelompok_id && existingStudent.class_id) {
-          const { data: classData } = await supabase
+          const { data: classData } = await adminClient
             .from('classes')
             .select('kelompok_id')
             .eq('id', existingStudent.class_id)
@@ -876,7 +883,7 @@ export async function deleteStudent(studentId: string) {
       if (existingStudent.desa_id !== profile.desa_id) {
         // If student doesn't have desa_id, check via class -> kelompok -> desa
         if (!existingStudent.desa_id && existingStudent.class_id) {
-          const { data: classData } = await supabase
+          const { data: classData } = await adminClient
             .from('classes')
             .select('kelompok_id, kelompok:kelompok_id(desa_id)')
             .eq('id', existingStudent.class_id)
@@ -901,7 +908,7 @@ export async function deleteStudent(studentId: string) {
       if (existingStudent.daerah_id !== profile.daerah_id) {
         // If student doesn't have daerah_id, check via class -> kelompok -> desa -> daerah
         if (!existingStudent.daerah_id && existingStudent.class_id) {
-          const { data: classData } = await supabase
+          const { data: classData } = await adminClient
             .from('classes')
             .select('kelompok_id, kelompok:kelompok_id(desa_id, desa:desa_id(daerah_id))')
             .eq('id', existingStudent.class_id)
@@ -923,7 +930,7 @@ export async function deleteStudent(studentId: string) {
     }
 
     // Check if student has attendance records
-    const { data: attendanceRecords } = await supabase
+    const { data: attendanceRecords } = await adminClient
       .from('attendance_logs')
       .select('id')
       .eq('student_id', studentId)
@@ -933,8 +940,19 @@ export async function deleteStudent(studentId: string) {
       throw new Error('Tidak dapat menghapus siswa yang memiliki riwayat absensi')
     }
 
-    // Delete student (RLS will handle final permission check)
-    const { error: deleteError } = await supabase
+    // Delete student from junction table first (if exists)
+    const { error: junctionDeleteError } = await adminClient
+      .from('student_classes')
+      .delete()
+      .eq('student_id', studentId)
+
+    if (junctionDeleteError && junctionDeleteError.code !== 'PGRST301') {
+      console.error('Error deleting from junction table:', junctionDeleteError)
+      // Continue anyway, will try to delete student
+    }
+
+    // Delete student using admin client to bypass RLS
+    const { error: deleteError } = await adminClient
       .from('students')
       .delete()
       .eq('id', studentId)
