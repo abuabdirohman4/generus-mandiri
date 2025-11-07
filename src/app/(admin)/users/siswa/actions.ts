@@ -290,30 +290,101 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
     }
 
     // Transform data dengan support untuk multiple classes
-    return (students || []).map(student => {
-      // Extract classes dari junction table
-      const studentClasses = student.student_classes || []
-      const classesArray = studentClasses
-        .map((sc: any) => sc.classes)
-        .filter(Boolean)
-        .map((cls: any) => ({
-          id: String(cls.id || ''),
-          name: String(cls.name || '')
-        }))
+    if (!Array.isArray(students)) {
+      return []
+    }
 
-      // Get primary class (first class) untuk backward compatibility
-      const primaryClass = classesArray[0] || null
-      
-      return {
-        ...student,
-        classes: classesArray,
-        class_id: primaryClass?.id || student.class_id || null,
-        class_name: primaryClass?.name || '',
-        daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
-        desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
-        kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || ''
-      }
-    })
+    return students
+      .filter(student => student && typeof student === 'object')
+      .map(student => {
+        try {
+          // Extract classes dari junction table
+          const studentClasses = Array.isArray(student.student_classes) ? student.student_classes : []
+          const classesArray = studentClasses
+            .filter((sc: any) => sc && sc.classes && typeof sc.classes === 'object')
+            .map((sc: any) => sc.classes)
+            .filter((cls: any) => cls && (cls.id || cls.name))
+            .map((cls: any) => ({
+              id: String(cls.id || ''),
+              name: String(cls.name || '')
+            }))
+
+          // Get primary class (first class) untuk backward compatibility
+          const primaryClass = classesArray[0] || null
+          
+          // Safely extract daerah, desa, kelompok names
+          const getDaerahName = () => {
+            if (!student.daerah) return ''
+            if (Array.isArray(student.daerah)) {
+              if (student.daerah.length > 0 && student.daerah[0] && typeof student.daerah[0] === 'object' && 'name' in student.daerah[0]) {
+                return String((student.daerah[0] as any).name || '')
+              }
+              return ''
+            }
+            if (typeof student.daerah === 'object' && student.daerah !== null && 'name' in student.daerah) {
+              return String((student.daerah as any).name || '')
+            }
+            return ''
+          }
+          
+          const getDesaName = () => {
+            if (!student.desa) return ''
+            if (Array.isArray(student.desa)) {
+              if (student.desa.length > 0 && student.desa[0] && typeof student.desa[0] === 'object' && 'name' in student.desa[0]) {
+                return String((student.desa[0] as any).name || '')
+              }
+              return ''
+            }
+            if (typeof student.desa === 'object' && student.desa !== null && 'name' in student.desa) {
+              return String((student.desa as any).name || '')
+            }
+            return ''
+          }
+          
+          const getKelompokName = () => {
+            if (!student.kelompok) return ''
+            if (Array.isArray(student.kelompok)) {
+              if (student.kelompok.length > 0 && student.kelompok[0] && typeof student.kelompok[0] === 'object' && 'name' in student.kelompok[0]) {
+                return String((student.kelompok[0] as any).name || '')
+              }
+              return ''
+            }
+            if (typeof student.kelompok === 'object' && student.kelompok !== null && 'name' in student.kelompok) {
+              return String((student.kelompok as any).name || '')
+            }
+            return ''
+          }
+          
+          return {
+            ...student,
+            classes: Array.isArray(classesArray) ? classesArray : [],
+            class_id: primaryClass?.id || student.class_id || null,
+            class_name: primaryClass?.name || '',
+            daerah_name: getDaerahName(),
+            desa_name: getDesaName(),
+            kelompok_name: getKelompokName()
+          }
+        } catch (error) {
+          console.error('Error transforming student data:', error, student)
+          // Return minimal valid student object
+          return {
+            id: String(student.id || ''),
+            name: String(student.name || ''),
+            gender: student.gender || null,
+            class_id: student.class_id || null,
+            kelompok_id: student.kelompok_id || null,
+            desa_id: student.desa_id || null,
+            daerah_id: student.daerah_id || null,
+            created_at: String(student.created_at || ''),
+            updated_at: String(student.updated_at || ''),
+            classes: [],
+            class_name: '',
+            daerah_name: '',
+            desa_name: '',
+            kelompok_name: ''
+          }
+        }
+      })
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
@@ -322,65 +393,146 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
 
 // Helper function to transform students data for teacher (support multiple classes)
 async function transformStudentsData(students: any[], adminClient?: any): Promise<Student[]> {
+  if (!Array.isArray(students)) {
+    return []
+  }
+  
   // Get class names for students that don't have junction table entries
   const classIdsToQuery = new Set<string>()
   students.forEach(student => {
-    const studentClasses = student.student_classes || []
+    if (!student || typeof student !== 'object') return
+    const studentClasses = Array.isArray(student.student_classes) ? student.student_classes : []
     if (studentClasses.length === 0 && student.class_id) {
-      classIdsToQuery.add(student.class_id)
+      classIdsToQuery.add(String(student.class_id))
     }
   })
   
   // Query class names if needed
   let classNameMap = new Map<string, string>()
   if (classIdsToQuery.size > 0 && adminClient) {
-    const { data: classesData } = await adminClient
-      .from('classes')
-      .select('id, name')
-      .in('id', Array.from(classIdsToQuery))
-    
-    if (classesData) {
-      classesData.forEach((c: any) => {
-        classNameMap.set(c.id, c.name)
-      })
+    try {
+      const { data: classesData } = await adminClient
+        .from('classes')
+        .select('id, name')
+        .in('id', Array.from(classIdsToQuery))
+      
+      if (Array.isArray(classesData)) {
+        classesData.forEach((c: any) => {
+          if (c && c.id) {
+            classNameMap.set(String(c.id), String(c.name || ''))
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching class names:', error)
+      // Continue without class names
     }
   }
   
-  return students.map(student => {
-    // Extract all classes from junction table
-    const studentClasses = student.student_classes || []
-    const classesArray = studentClasses
-      .map((sc: any) => sc.classes)
-      .filter(Boolean)
-      .map((cls: any) => ({
-        id: String(cls.id || ''),
-        name: String(cls.name || '')
-      }))
-    
-    // If no classes from junction table, use class_id directly (backward compatibility)
-    if (classesArray.length === 0 && student.class_id) {
-      const className = classNameMap.get(student.class_id) || student.class_name || 'Unknown Class'
-      classesArray.push({
-        id: String(student.class_id),
-        name: className
-      })
-    }
-    
-    // Get primary class (first class) for backward compatibility
-    const primaryClass = classesArray[0] || null
-    
-    // Ensure classes is always an array
-    const { classes: _, ...studentWithoutClasses } = student as any
-    
-    return {
-      ...studentWithoutClasses,
-      classes: Array.isArray(classesArray) ? classesArray : [], // Array of all classes
-      class_name: primaryClass?.name || '',
-      daerah_name: Array.isArray(student.daerah) ? student.daerah[0]?.name : (student.daerah as any)?.name || '',
-      desa_name: Array.isArray(student.desa) ? student.desa[0]?.name : (student.desa as any)?.name || '',
-      kelompok_name: Array.isArray(student.kelompok) ? student.kelompok[0]?.name : (student.kelompok as any)?.name || ''
-    }
-  })
+  return students
+    .filter(student => student && typeof student === 'object')
+    .map(student => {
+      try {
+        // Extract all classes from junction table
+        const studentClasses = Array.isArray(student.student_classes) ? student.student_classes : []
+        const classesArray = studentClasses
+          .filter((sc: any) => sc && sc.classes && typeof sc.classes === 'object')
+          .map((sc: any) => sc.classes)
+          .filter((cls: any) => cls && (cls.id || cls.name))
+          .map((cls: any) => ({
+            id: String(cls.id || ''),
+            name: String(cls.name || '')
+          }))
+        
+        // If no classes from junction table, use class_id directly (backward compatibility)
+        if (classesArray.length === 0 && student.class_id) {
+          const className = classNameMap.get(String(student.class_id)) || student.class_name || 'Unknown Class'
+          classesArray.push({
+            id: String(student.class_id),
+            name: String(className)
+          })
+        }
+        
+        // Get primary class (first class) for backward compatibility
+        const primaryClass = classesArray[0] || null
+        
+        // Safely extract student properties without classes
+        const studentWithoutClasses: any = { ...student }
+        delete studentWithoutClasses.classes
+        delete studentWithoutClasses.student_classes
+        
+        // Safely extract daerah, desa, kelompok names
+        const getDaerahName = () => {
+          if (!student.daerah) return ''
+          if (Array.isArray(student.daerah)) {
+            if (student.daerah.length > 0 && student.daerah[0] && typeof student.daerah[0] === 'object' && 'name' in student.daerah[0]) {
+              return String((student.daerah[0] as any).name || '')
+            }
+            return ''
+          }
+          if (typeof student.daerah === 'object' && student.daerah !== null && 'name' in student.daerah) {
+            return String((student.daerah as any).name || '')
+          }
+          return ''
+        }
+        
+        const getDesaName = () => {
+          if (!student.desa) return ''
+          if (Array.isArray(student.desa)) {
+            if (student.desa.length > 0 && student.desa[0] && typeof student.desa[0] === 'object' && 'name' in student.desa[0]) {
+              return String((student.desa[0] as any).name || '')
+            }
+            return ''
+          }
+          if (typeof student.desa === 'object' && student.desa !== null && 'name' in student.desa) {
+            return String((student.desa as any).name || '')
+          }
+          return ''
+        }
+        
+        const getKelompokName = () => {
+          if (!student.kelompok) return ''
+          if (Array.isArray(student.kelompok)) {
+            if (student.kelompok.length > 0 && student.kelompok[0] && typeof student.kelompok[0] === 'object' && 'name' in student.kelompok[0]) {
+              return String((student.kelompok[0] as any).name || '')
+            }
+            return ''
+          }
+          if (typeof student.kelompok === 'object' && student.kelompok !== null && 'name' in student.kelompok) {
+            return String((student.kelompok as any).name || '')
+          }
+          return ''
+        }
+        
+        return {
+          ...studentWithoutClasses,
+          classes: Array.isArray(classesArray) ? classesArray : [], // Array of all classes
+          class_name: primaryClass?.name || '',
+          daerah_name: getDaerahName(),
+          desa_name: getDesaName(),
+          kelompok_name: getKelompokName()
+        }
+      } catch (error) {
+        console.error('Error transforming student data:', error, student)
+        // Return minimal valid student object
+        return {
+          id: String(student.id || ''),
+          name: String(student.name || ''),
+          gender: student.gender || null,
+          class_id: student.class_id || null,
+          kelompok_id: student.kelompok_id || null,
+          desa_id: student.desa_id || null,
+          daerah_id: student.daerah_id || null,
+          created_at: String(student.created_at || ''),
+          updated_at: String(student.updated_at || ''),
+          classes: [],
+          class_name: '',
+          daerah_name: '',
+          desa_name: '',
+          kelompok_name: ''
+        }
+      }
+    })
 }
 
 

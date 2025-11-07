@@ -151,11 +151,20 @@ export default function StudentsTable({
     return student.classes[0]?.name || '-'
   }
 
-  const tableData = students
-    .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
+  // Ensure students is an array and filter out invalid entries
+  const validStudents = Array.isArray(students) 
+    ? students.filter(s => s && s.id && s.name)
+    : []
+
+  const tableData = validStudents
+    .sort((a, b) => {
+      const nameA = String(a.name || '').toLowerCase()
+      const nameB = String(b.name || '').toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
     .map((student) => ({
       id: student.id,
-      name: student.name,
+      name: student.name || '',
       gender: student.gender || '-',
       class_name: getDisplayClasses(student),
       daerah_name: student.daerah_name || '-',
@@ -166,7 +175,11 @@ export default function StudentsTable({
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
-      const student = students.find(s => s.id === item.actions)!;
+      const student = validStudents.find(s => s && s.id === item.actions);
+      
+      if (!student) {
+        return null;
+      }
       
       return (
         <div className="flex gap-4 justify-center items-center">
