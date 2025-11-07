@@ -17,6 +17,7 @@ interface StudentsTableProps {
     role: string; 
     classes?: Array<{ id: string; name: string }> 
   } | null | undefined
+  classes?: Array<{ id: string; name: string; kelompok_id?: string | null }>
 }
 
 export default function StudentsTable({ 
@@ -24,7 +25,8 @@ export default function StudentsTable({
   userRole, 
   onEdit, 
   onDelete, 
-  userProfile 
+  userProfile,
+  classes: classesData
 }: StudentsTableProps) {
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
@@ -112,6 +114,23 @@ export default function StudentsTable({
     
     // Teacher with multiple classes: show class_name column
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      // Cek apakah classes yang diajarkan teacher memiliki kelompok_id yang berbeda
+      const teacherClassIds = userProfile.classes.map((c: { id: string; name: string }) => c.id)
+      const teacherClasses = classesData?.filter((c: { id: string; name: string; kelompok_id?: string | null }) => teacherClassIds.includes(c.id)) || []
+      const uniqueKelompokIds = new Set(
+        teacherClasses
+          .map((c: { id: string; name: string; kelompok_id?: string | null }) => c.kelompok_id)
+          .filter(Boolean)
+      )
+      
+      // Jika teacher mengajar classes dari different kelompok, tambahkan kolom kelompok
+      if (uniqueKelompokIds.size > 1) {
+        orgColumns.push(
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+        )
+      }
+      
+      // Selalu tampilkan class_name untuk teacher dengan multiple classes
       orgColumns.push(
         { key: 'class_name', label: 'Kelas', align: 'center' as const }
       );

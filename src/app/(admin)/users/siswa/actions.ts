@@ -656,6 +656,22 @@ export async function updateStudent(studentId: string, formData: FormData) {
   try {
     const supabase = await createClient()
     
+    // Get current user profile to check role
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, teacher_classes(class_id)')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
@@ -680,9 +696,22 @@ export async function updateStudent(studentId: string, formData: FormData) {
     // Set primary class_id = first class in the array
     const primaryClassId = classIds[0]
 
+    // For teacher, validate that selected classes are their assigned classes
+    if (profile.role === 'teacher') {
+      const teacherClassIds = profile.teacher_classes?.map((tc: any) => tc.class_id) || []
+      const invalidClasses = classIds.filter(id => !teacherClassIds.includes(id))
+      if (invalidClasses.length > 0) {
+        throw new Error('Anda hanya dapat mengupdate siswa ke kelas yang Anda ajarkan')
+      }
+    }
+
+    // Use admin client for teacher to bypass RLS, regular client for admin
+    const client = profile.role === 'teacher' ? await createAdminClient() : supabase
+
     // Update student with RLS handling auth + validation
-    // RLS policies will handle user authentication and access control
-    const { data: updatedStudent, error } = await supabase
+    // For teacher, use admin client to bypass RLS
+    // For admin, RLS policies will handle user authentication and access control
+    const { data: updatedStudent, error } = await client
       .from('students')
       .update({
         name,
@@ -697,11 +726,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
         gender,
         class_id,
         created_at,
-        updated_at,
-        classes!inner(
-          id,
-          name
-        )
+        updated_at
       `)
       .single()
 
@@ -721,8 +746,9 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
     // Sync dengan junction table untuk support multiple classes
     if (updatedStudent?.id) {
+      // Use same client (admin for teacher, regular for admin) for junction table operations
       // Get current classes from junction table
-      const { data: currentClasses, error: currentClassesError } = await supabase
+      const { data: currentClasses, error: currentClassesError } = await client
         .from('student_classes')
         .select('class_id')
         .eq('student_id', studentId)
@@ -738,7 +764,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
       // Delete removed classes
       const toDelete = Array.from(currentClassIds).filter(id => !newClassIds.has(id))
       if (toDelete.length > 0) {
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await client
           .from('student_classes')
           .delete()
           .eq('student_id', studentId)
@@ -758,7 +784,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
           class_id: classId
         }))
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await client
           .from('student_classes')
           .insert(assignmentsToInsert)
 
