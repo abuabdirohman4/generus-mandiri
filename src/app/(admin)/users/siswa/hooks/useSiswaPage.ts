@@ -182,18 +182,31 @@ export function useSiswaPage() {
     if (dataFilters.kelompok.length > 0) {
       result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
     }
-    // For teachers, skip kelas filter because backend already filtered by teacher's classes
-    // The kelas filter is only for admin/superadmin to filter across all students
-    if (dataFilters.kelas.length > 0 && userProfile?.role !== 'teacher') {
+    
+    // Apply kelas filter - for teacher with multiple classes, allow filtering by specific class
+    // This works the same way as absensi page: filter applies to BOTH teacher and admin
+    if (dataFilters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
-      // Filter by checking if student has at least one class in selected classes
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
-      result = result.filter(s => {
-        const studentClassIds = (s.classes || []).map(c => c.id)
-        // Also check class_id for backward compatibility
-        const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
-        return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
-      })
+      
+      // For teacher: filter students by selected classes
+      if (userProfile?.role === 'teacher') {
+        result = result.filter(s => {
+          const studentClassIds = (s.classes || []).map(c => c.id)
+          // Also check class_id for backward compatibility
+          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
+          // Check if student has at least one class in selected classes
+          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+        })
+      } else {
+        // For admin/superadmin: filter by selected classes
+        result = result.filter(s => {
+          const studentClassIds = (s.classes || []).map(c => c.id)
+          // Also check class_id for backward compatibility
+          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
+          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+        })
+      }
     }
     // Apply gender filter
     if (dataFilters.gender && dataFilters.gender !== '') {

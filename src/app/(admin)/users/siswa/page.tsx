@@ -130,6 +130,7 @@ export default function SiswaPage() {
           onEdit={handleEditStudent}
           onDelete={handleDeleteStudent}
           userProfile={userProfile}
+          classes={classes}
         />
 
         {/* Modal Form */}
