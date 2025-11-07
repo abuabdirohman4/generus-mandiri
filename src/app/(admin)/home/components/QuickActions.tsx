@@ -75,7 +75,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     //   bgColor: 'bg-indigo-100 dark:bg-indigo-900',
     //   iconColor: 'text-indigo-600 dark:text-indigo-400',
     //   adminOnly: true,
-    //   disabled: true
+    //   disabled: false
     // },
     {
       id: 'absensi',

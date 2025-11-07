@@ -34,7 +34,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto px-3 pt-28 sm:px-6 lg:px-8 md:py-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

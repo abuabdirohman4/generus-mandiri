@@ -115,7 +115,7 @@ export default function HomePage() {
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto px-3 pt-28 sm:px-6 lg:px-8 md:py-8">
+      <div className="mx-auto px-3 pt-28 sm:px-6 lg:px-8 md:py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="md:flex md:gap-2 text-3xl font-bold text-gray-900 dark:text-white mb-2">

@@ -3,7 +3,7 @@
 export default function LaporanSkeleton() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 sm:px-6 lg:px-8">
         {/* Filter Section Skeleton */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
