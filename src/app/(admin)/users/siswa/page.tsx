@@ -141,6 +141,9 @@ export default function SiswaPage() {
           student={selectedStudent}
           userProfile={userProfile}
           classes={classes}
+          daerah={daerah}
+          desa={desa}
+          kelompok={kelompok}
           onSubmit={handleSubmit}
           submitting={submitting}
         />
