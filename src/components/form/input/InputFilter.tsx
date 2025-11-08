@@ -66,7 +66,7 @@ export default function InputFilter({
       <div className={wrapperClass}>
         <Label htmlFor={id}>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {/* {required && <span className="text-red-500 ml-1">*</span>} */}
         </Label>
         <select
           id={id}

@@ -547,6 +547,7 @@ export async function createStudent(formData: FormData) {
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
     const classId = formData.get('classId')?.toString()
+    const kelompokId = formData.get('kelompok_id')?.toString()
 
     // Validation
     if (!name || !gender || !classId) {
@@ -565,12 +566,57 @@ export async function createStudent(formData: FormData) {
 
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('kelompok_id, desa_id, daerah_id')
+      .select('kelompok_id, desa_id, daerah_id, role')
       .eq('id', user.id)
       .single()
 
     if (!userProfile) {
       throw new Error('User profile not found')
+    }
+
+    // Determine kelompok_id, desa_id, and daerah_id
+    let finalKelompokId: string | null = null
+    let finalDesaId: string | null = null
+    let finalDaerahId: string | null = null
+
+    // If kelompok_id is provided (for admin desa), fetch kelompok data
+    if (kelompokId) {
+      const { data: kelompokData, error: kelompokError } = await supabase
+        .from('kelompok')
+        .select(`
+          id,
+          desa_id,
+          desa:desa_id(
+            id,
+            daerah_id,
+            daerah:daerah_id(id)
+          )
+        `)
+        .eq('id', kelompokId)
+        .single()
+
+      if (kelompokError || !kelompokData) {
+        throw new Error('Kelompok tidak ditemukan')
+      }
+
+      // Validate that kelompok is in admin's desa (for admin desa)
+      if (userProfile.role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
+        const kelompokDesa = Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa
+        if (kelompokDesa?.id !== userProfile.desa_id) {
+          throw new Error('Kelompok tidak berada di desa Anda')
+        }
+      }
+
+      finalKelompokId = kelompokId
+      const desa = Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa
+      finalDesaId = desa?.id || null
+      const daerah = Array.isArray(desa?.daerah) ? desa?.daerah[0] : desa?.daerah
+      finalDaerahId = daerah?.id || null
+    } else {
+      // Use userProfile values (existing behavior)
+      finalKelompokId = userProfile.kelompok_id
+      finalDesaId = userProfile.desa_id
+      finalDaerahId = userProfile.daerah_id
     }
 
     // Get class name to determine category
@@ -592,9 +638,9 @@ export async function createStudent(formData: FormData) {
         name,
         gender,
         class_id: classId,
-        kelompok_id: userProfile.kelompok_id,
-        desa_id: userProfile.desa_id,
-        daerah_id: userProfile.daerah_id
+        kelompok_id: finalKelompokId,
+        desa_id: finalDesaId,
+        daerah_id: finalDaerahId
       })
       .select(`
         id,
@@ -664,7 +710,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, teacher_classes(class_id)')
+      .select('role, teacher_classes(class_id), desa_id, kelompok_id')
       .eq('id', user.id)
       .single()
 
@@ -675,6 +721,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
+    const kelompokId = formData.get('kelompok_id')?.toString()
     
     // Support both classIds (multiple) and classId (single) for backward compatibility
     const classIdsStr = formData.get('classIds')?.toString() || formData.get('classId')?.toString()
@@ -696,6 +743,46 @@ export async function updateStudent(studentId: string, formData: FormData) {
     // Set primary class_id = first class in the array
     const primaryClassId = classIds[0]
 
+    // Determine kelompok_id, desa_id, and daerah_id if kelompok_id is provided
+    let finalKelompokId: string | null | undefined = undefined
+    let finalDesaId: string | null | undefined = undefined
+    let finalDaerahId: string | null | undefined = undefined
+
+    // If kelompok_id is provided (for admin desa), fetch kelompok data
+    if (kelompokId) {
+      const { data: kelompokData, error: kelompokError } = await supabase
+        .from('kelompok')
+        .select(`
+          id,
+          desa_id,
+          desa:desa_id(
+            id,
+            daerah_id,
+            daerah:daerah_id(id)
+          )
+        `)
+        .eq('id', kelompokId)
+        .single()
+
+      if (kelompokError || !kelompokData) {
+        throw new Error('Kelompok tidak ditemukan')
+      }
+
+      // Validate that kelompok is in admin's desa (for admin desa)
+      if (profile.role === 'admin' && profile.desa_id && !profile.kelompok_id) {
+        const kelompokDesa = Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa
+        if (kelompokDesa?.id !== profile.desa_id) {
+          throw new Error('Kelompok tidak berada di desa Anda')
+        }
+      }
+
+      finalKelompokId = kelompokId
+      const desa = Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa
+      finalDesaId = desa?.id || null
+      const daerah = Array.isArray(desa?.daerah) ? desa?.daerah[0] : desa?.daerah
+      finalDaerahId = daerah?.id || null
+    }
+
     // For teacher, validate that selected classes are their assigned classes
     if (profile.role === 'teacher') {
       const teacherClassIds = profile.teacher_classes?.map((tc: any) => tc.class_id) || []
@@ -711,17 +798,27 @@ export async function updateStudent(studentId: string, formData: FormData) {
       ? await createAdminClient() 
       : supabase
 
+    // Prepare update data
+    const updateData: any = {
+      name,
+      gender,
+      class_id: primaryClassId,
+      updated_at: new Date().toISOString()
+    }
+
+    // Add kelompok_id, desa_id, daerah_id if kelompok_id is provided
+    if (finalKelompokId !== undefined) {
+      updateData.kelompok_id = finalKelompokId
+      updateData.desa_id = finalDesaId
+      updateData.daerah_id = finalDaerahId
+    }
+
     // Update student with RLS handling auth + validation
     // For teacher, use admin client to bypass RLS
     // For admin, RLS policies will handle user authentication and access control
     const { data: updatedStudent, error } = await client
       .from('students')
-      .update({
-        name,
-        gender,
-        class_id: primaryClassId,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', studentId)
       .select(`
         id,
