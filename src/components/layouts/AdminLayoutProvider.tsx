@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useUserProfileStore } from '@/stores/userProfileStore';
 import { createClient } from '@/lib/supabase/client';
-import { clearUserCache } from '@/lib/userUtils';
+import { clearUserCache, clearSWRCache } from '@/lib/userUtils';
 
 interface AdminLayoutProviderProps {
   children: React.ReactNode;
@@ -31,6 +31,10 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           setProfile(null);
           return;
         }
+        
+        // Clear SWR cache to ensure fresh data on auto-login
+        // This handles the case when user opens the app again after closing browser
+        clearSWRCache();
         
         // Get user profile from profiles table
         const { data: profileData, error: profileError } = await supabase
@@ -108,7 +112,17 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           setProfile(null);
           setLoading(false);
           setError(null);
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // Clear cache on manual login to ensure fresh data
+          clearSWRCache();
+          fetchUserData();
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Clear cache on token refresh to ensure data stays fresh
+          clearSWRCache();
+          // Optionally fetch user data again (usually not needed, but ensures consistency)
+          fetchUserData();
         } else if (session?.user) {
+          // For other events (like USER_UPDATED), just fetch data without clearing cache
           fetchUserData();
         }
       }
