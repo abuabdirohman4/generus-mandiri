@@ -239,7 +239,9 @@ export async function createMeeting(data: CreateMeetingData) {
     const nextMeetingNumber = (lastMeetings?.[0]?.meeting_number || 0) + 1
 
     // Create meeting with student snapshot
-    const { data: meeting, error } = await supabase
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    // Validation already ensures teacher teaches all selected classes (lines 182-198)
+    const { data: meeting, error } = await adminClient
       .from('meetings')
       .insert({
         class_id: data.classIds[0], // Primary class for backward compatibility
@@ -258,15 +260,6 @@ export async function createMeeting(data: CreateMeetingData) {
 
     if (error) {
       console.error('Error creating meeting:', error)
-      
-      // Check if it's an RLS violation error (code 42501)
-      if (error.code === '42501') {
-        return { 
-          success: false, 
-          error: 'Anda tidak dapat membuat pertemuan untuk kelas dari kelompok yang berbeda. Silakan pilih kelas dari kelompok yang sama dengan kelompok Anda.' 
-        }
-      }
-      
       return { success: false, error: error.message }
     }
 

@@ -17,8 +17,8 @@
 - [ ] Add Halaman Materi
 
 ## v1.8.0
-- [ ] Error Delete siswa
-- [ ] Guru kelas warlob 1, create absensin warlob 2, error
+- [x] Error Delete siswa
+- [x] Guru kelas warlob 1, create absensin warlob 2, error
 - [ ] Tanggal Bulan november salah
 
 ## v1.8.0
