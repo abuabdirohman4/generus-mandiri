@@ -120,10 +120,20 @@ export function useSiswaPage() {
 
   const handleDeleteStudent = useCallback(async (studentId: string) => {
     try {
-      await deleteStudentMutation(studentId)
+      const result = await deleteStudentMutation(studentId)
+      
+      // Handle return value from deleteStudent
+      if (result && !result.success) {
+        // Error case - show error message
+        toast.error(result.error || 'Gagal menghapus siswa')
+        return
+      }
+      
+      // Success case
       toast.success('Siswa berhasil dihapus')
       mutateStudents() // Revalidate students data
     } catch (error) {
+      // Fallback for unexpected errors
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
       toast.error(errorMessage)
       console.error('Error deleting student:', error)

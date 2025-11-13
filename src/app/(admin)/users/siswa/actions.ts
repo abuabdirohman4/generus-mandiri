@@ -906,15 +906,16 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
 /**
  * Menghapus siswa (admin only)
+ * Returns { success: boolean, error?: string } to ensure error messages are properly displayed in production
  */
-export async function deleteStudent(studentId: string) {
+export async function deleteStudent(studentId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      throw new Error('User not authenticated')
+      return { success: false, error: 'User not authenticated' }
     }
 
     // Check if user is admin
@@ -925,7 +926,7 @@ export async function deleteStudent(studentId: string) {
       .single()
 
     if (!profile || !canAccessFeature(profile, 'users')) {
-      throw new Error('Unauthorized: Hanya admin yang dapat menghapus siswa')
+      return { success: false, error: 'Unauthorized: Hanya admin yang dapat menghapus siswa' }
     }
 
     // Use admin client to bypass RLS issues for admin
@@ -941,13 +942,14 @@ export async function deleteStudent(studentId: string) {
 
     if (studentError) {
       if (studentError.code === 'PGRST116') {
-        throw new Error('Siswa tidak ditemukan')
+        return { success: false, error: 'Siswa tidak ditemukan' }
       }
-      throw studentError
+      handleApiError(studentError, 'menghapus data', 'Gagal menghapus siswa')
+      return { success: false, error: 'Gagal menghapus siswa' }
     }
 
     if (!existingStudent) {
-      throw new Error('Siswa tidak ditemukan')
+      return { success: false, error: 'Siswa tidak ditemukan' }
     }
 
     // For Admin Kelompok: verify student belongs to their kelompok
@@ -963,14 +965,14 @@ export async function deleteStudent(studentId: string) {
             .single()
 
           if (!classData) {
-            throw new Error('Tidak dapat menghapus siswa: kelas siswa tidak ditemukan')
+            return { success: false, error: 'Tidak dapat menghapus siswa: kelas siswa tidak ditemukan' }
           }
 
           if (classData.kelompok_id !== profile.kelompok_id) {
-            throw new Error('Tidak memiliki izin untuk menghapus siswa dari kelompok lain')
+            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari kelompok lain' }
           }
         } else {
-          throw new Error('Tidak memiliki izin untuk menghapus siswa dari kelompok lain')
+          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari kelompok lain' }
         }
       }
     }
@@ -987,15 +989,15 @@ export async function deleteStudent(studentId: string) {
             .single()
 
           if (!classData || !classData.kelompok) {
-            throw new Error('Tidak dapat menghapus siswa: data kelas siswa tidak valid')
+            return { success: false, error: 'Tidak dapat menghapus siswa: data kelas siswa tidak valid' }
           }
 
           const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
           if (kelompok?.desa_id !== profile.desa_id) {
-            throw new Error('Tidak memiliki izin untuk menghapus siswa dari desa lain')
+            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari desa lain' }
           }
         } else {
-          throw new Error('Tidak memiliki izin untuk menghapus siswa dari desa lain')
+          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari desa lain' }
         }
       }
     }
@@ -1012,16 +1014,16 @@ export async function deleteStudent(studentId: string) {
             .single()
 
           if (!classData || !classData.kelompok) {
-            throw new Error('Tidak dapat menghapus siswa: data kelas siswa tidak valid')
+            return { success: false, error: 'Tidak dapat menghapus siswa: data kelas siswa tidak valid' }
           }
 
           const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
           const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
           if (desa?.daerah_id !== profile.daerah_id) {
-            throw new Error('Tidak memiliki izin untuk menghapus siswa dari daerah lain')
+            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari daerah lain' }
           }
         } else {
-          throw new Error('Tidak memiliki izin untuk menghapus siswa dari daerah lain')
+          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari daerah lain' }
         }
       }
     }
@@ -1034,7 +1036,7 @@ export async function deleteStudent(studentId: string) {
       .limit(1)
 
     if (attendanceRecords && attendanceRecords.length > 0) {
-      throw new Error('Tidak dapat menghapus siswa yang memiliki riwayat absensi')
+      return { success: false, error: 'Tidak dapat menghapus siswa yang memiliki riwayat absensi' }
     }
 
     // Delete student from junction table first (if exists)
@@ -1057,26 +1059,27 @@ export async function deleteStudent(studentId: string) {
     if (deleteError) {
       // Handle specific RLS errors
       if (deleteError.code === 'PGRST301' || deleteError.message.includes('permission denied') || deleteError.message.includes('new row violates row-level security')) {
-        throw new Error('Tidak memiliki izin untuk menghapus siswa ini')
+        return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
       }
       if (deleteError.code === '23503') {
-        throw new Error('Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan')
+        return { success: false, error: 'Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan' }
       }
-      throw deleteError
+      handleApiError(deleteError, 'menghapus data', 'Gagal menghapus siswa')
+      return { success: false, error: 'Gagal menghapus siswa' }
     }
 
     revalidatePath('/users/siswa')
     return { success: true }
   } catch (error) {
-    // Don't wrap error if it's already a user-friendly message
+    // Extract error message for unknown errors
+    let errorMessage = 'Gagal menghapus siswa'
+    
     if (error instanceof Error) {
-      const errorMessage = error.message
-      if (errorMessage.includes('Tidak') || errorMessage.includes('Unauthorized')) {
-        throw error
-      }
+      errorMessage = error.message
     }
-    handleApiError(error, 'menghapus data', 'Gagal menghapus siswa')
-    throw error
+    
+    handleApiError(error, 'menghapus data', errorMessage)
+    return { success: false, error: errorMessage }
   }
 }
 
