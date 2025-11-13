@@ -17,6 +17,11 @@
 - [ ] Add Halaman Materi
 
 ## v1.8.0
+- [ ] Error Delete siswa
+- [ ] Guru kelas warlob 1, create absensin warlob 2, error
+- [ ] Tanggal Bulan november salah
+
+## v1.8.0
 - [x] Add Filter Gender on Laporan
 - [x] Handle multiple class with different kelompok
     [x] Halaman Guru
