@@ -20,7 +20,6 @@
 - [x] Error Delete siswa
 - [x] Guru kelas warlob 1, create absensin warlob 2, error
 - [x] Tanggal di kalender salah
-- [ ] clear swr
 
 ## v1.8.0
 - [x] Add Filter Gender on Laporan
