@@ -3,16 +3,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
-import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import DeleteStudentModal from './DeleteStudentModal'
 import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
+import { checkStudentHasAttendance } from '../actions'
 
 interface StudentsTableProps {
   students: Student[]
   userRole: string | null
   onEdit: (student: Student) => void
-  onDelete: (studentId: string) => void
+  onDelete: (studentId: string, permanent: boolean) => void
   userProfile: { 
     role: string; 
     classes?: Array<{ id: string; name: string }> 
@@ -34,10 +35,14 @@ export default function StudentsTable({
     isOpen: boolean
     studentId: string
     studentName: string
+    hasAttendance: boolean
+    isLoading: boolean
   }>({
     isOpen: false,
     studentId: '',
-    studentName: ''
+    studentName: '',
+    hasAttendance: false,
+    isLoading: false
   })
   
   const handleStudentClick = (studentId: string, column: 'name' | 'actions') => {
@@ -45,20 +50,52 @@ export default function StudentsTable({
     setClickedColumn(column)
   }
 
-  const handleDeleteClick = (studentId: string, studentName: string) => {
+  const handleDeleteClick = async (studentId: string, studentName: string) => {
+    // Check attendance before opening modal
     setDeleteModal({
       isOpen: true,
       studentId,
-      studentName
+      studentName,
+      hasAttendance: false,
+      isLoading: true
     })
+
+    try {
+      const hasAttendance = await checkStudentHasAttendance(studentId)
+      setDeleteModal(prev => ({
+        ...prev,
+        hasAttendance,
+        isLoading: false
+      }))
+    } catch (error) {
+      console.error('Error checking student attendance:', error)
+      setDeleteModal(prev => ({
+        ...prev,
+        hasAttendance: false,
+        isLoading: false
+      }))
+    }
   }
 
-  const handleDeleteConfirm = () => {
-    onDelete(deleteModal.studentId)
+  const handleSoftDelete = () => {
+    onDelete(deleteModal.studentId, false)
     setDeleteModal({
       isOpen: false,
       studentId: '',
-      studentName: ''
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
+    })
+  }
+
+  const handleHardDelete = () => {
+    onDelete(deleteModal.studentId, true)
+    setDeleteModal({
+      isOpen: false,
+      studentId: '',
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
     })
   }
 
@@ -66,7 +103,9 @@ export default function StudentsTable({
     setDeleteModal({
       isOpen: false,
       studentId: '',
-      studentName: ''
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
     })
   }
   // Build columns based on user role
@@ -311,15 +350,15 @@ export default function StudentsTable({
         rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
       />
 
-      <ConfirmModal
+      <DeleteStudentModal
         isOpen={deleteModal.isOpen}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Hapus Siswa"
-        message={`Apakah Anda yakin ingin menghapus siswa <br> "${deleteModal.studentName}"?`}
-        confirmText="Hapus"
-        cancelText="Batal"
-        isDestructive={true}
+        onSoftDelete={handleSoftDelete}
+        onHardDelete={handleHardDelete}
+        studentId={deleteModal.studentId}
+        studentName={deleteModal.studentName}
+        hasAttendance={deleteModal.hasAttendance}
+        isLoading={deleteModal.isLoading}
       />
     </>
   )
