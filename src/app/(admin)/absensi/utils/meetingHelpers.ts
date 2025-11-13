@@ -1,10 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function canEditOrDeleteMeeting(meetingId: string, userId: string): Promise<boolean> {
   const supabase = await createClient()
+  const adminClient = await createAdminClient()
   
   // Get meeting creator and class info
-  const { data: meeting } = await supabase
+  // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+  // This allows checking permissions for meetings created for classes from different kelompok
+  const { data: meeting } = await adminClient
     .from('meetings')
     .select(`
       teacher_id,
