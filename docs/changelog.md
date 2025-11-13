@@ -3,6 +3,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1]
+
+### Fixed
+- **Student Delete Error**: Fixed error when deleting students, now supports both soft delete and hard delete
+- **Teacher Class Validation**: Fixed error when teacher from one class tries to create attendance for another class
+- **Calendar Date Display**: Fixed incorrect date display in attendance calendar
+- **Soft Delete Filtering**: Added proper filtering for soft-deleted students in all queries
+
+### Improved
+- **Student Deletion**: Enhanced student deletion with soft delete (default) and hard delete options
+  - Soft delete: Marks student as deleted with `deleted_at` timestamp
+  - Hard delete: Permanently removes student from database
+  - Added proper access control validation for admin desa/daerah/kelompok
+- **Student Management**: Improved student create/update with better kelompok_id handling
+  - Admin desa can now specify kelompok_id when creating/updating students
+  - Added validation to ensure kelompok belongs to admin's desa
+  - Teachers can only update students to classes they teach
+- **Data Integrity**: All student queries now properly filter out soft-deleted students
+
 ## [1.8.0]
 
 ### Added
