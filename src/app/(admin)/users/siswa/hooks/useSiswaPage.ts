@@ -77,8 +77,8 @@ export function useSiswaPage() {
 
   const { trigger: deleteStudentMutation } = useSWRMutation(
     '/api/students',
-    async (url, { arg }: { arg: string }) => {
-      const result = await deleteStudent(arg)
+    async (url, { arg }: { arg: { studentId: string; permanent: boolean } }) => {
+      const result = await deleteStudent(arg.studentId, arg.permanent)
       return result
     }
   )
@@ -118,9 +118,9 @@ export function useSiswaPage() {
     }
   }, [selectedStudent, updateStudentMutation, mutateStudents, closeModal, setSubmitting])
 
-  const handleDeleteStudent = useCallback(async (studentId: string) => {
+  const handleDeleteStudent = useCallback(async (studentId: string, permanent: boolean = false) => {
     try {
-      const result = await deleteStudentMutation(studentId)
+      const result = await deleteStudentMutation({ studentId, permanent })
       
       // Handle return value from deleteStudent
       if (result && !result.success) {
@@ -130,7 +130,10 @@ export function useSiswaPage() {
       }
       
       // Success case
-      toast.success('Siswa berhasil dihapus')
+      const message = permanent 
+        ? 'Siswa berhasil dihapus permanen' 
+        : 'Siswa berhasil dihapus (data tersimpan)'
+      toast.success(message)
       mutateStudents() // Revalidate students data
     } catch (error) {
       // Fallback for unexpected errors

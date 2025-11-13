@@ -125,6 +125,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
       const { data: studentsFromClassId } = await adminClient
         .from('students')
         .select('id')
+        .is('deleted_at', null)
         .in('class_id', teacherClassIds)
       
       if (studentsFromClassId && studentsFromClassId.length > 0) {
@@ -166,6 +167,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         const { data: filteredStudentsFromClassId } = await adminClient
           .from('students')
           .select('id')
+          .is('deleted_at', null)
           .in('class_id', filteredClassIds)
         
         if (filteredStudentsFromClassId && filteredStudentsFromClassId.length > 0) {
@@ -202,6 +204,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             desa:desa_id(name),
             kelompok:kelompok_id(name)
           `)
+          .is('deleted_at', null)
           .in('id', finalStudentIds)
           .order('name')
         
@@ -212,28 +215,29 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         return await transformStudentsData(students || [], adminClient)
       }
       
-      // Query students for all teacher's classes using admin client
-      const { data: students, error: studentsError } = await adminClient
-        .from('students')
-        .select(`
-          id,
-          name,
-          gender,
-          class_id,
-          kelompok_id,
-          desa_id,
-          daerah_id,
-          created_at,
-          updated_at,
-          student_classes(
-            classes:class_id(id, name)
-          ),
-          daerah:daerah_id(name),
-          desa:desa_id(name),
-          kelompok:kelompok_id(name)
-        `)
-        .in('id', studentIds)
-        .order('name')
+       // Query students for all teacher's classes using admin client
+       const { data: students, error: studentsError } = await adminClient
+         .from('students')
+         .select(`
+           id,
+           name,
+           gender,
+           class_id,
+           kelompok_id,
+           desa_id,
+           daerah_id,
+           created_at,
+           updated_at,
+           student_classes(
+             classes:class_id(id, name)
+           ),
+           daerah:daerah_id(name),
+           desa:desa_id(name),
+           kelompok:kelompok_id(name)
+         `)
+         .is('deleted_at', null)
+         .in('id', studentIds)
+         .order('name')
       
       if (studentsError) {
         throw studentsError
@@ -262,6 +266,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         desa:desa_id(name),
         kelompok:kelompok_id(name)
       `)
+      .is('deleted_at', null)
       .order('name')
 
     // Filter by class if classId provided
@@ -355,8 +360,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             return ''
           }
           
-          return {
-            ...student,
+      return {
+        ...student,
             classes: Array.isArray(classesArray) ? classesArray : [],
             class_id: primaryClass?.id || student.class_id || null,
             class_name: primaryClass?.name || '',
@@ -383,8 +388,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             desa_name: '',
             kelompok_name: ''
           }
-        }
-      })
+      }
+    })
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
@@ -717,7 +722,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
     if (!profile) {
       throw new Error('User profile not found')
     }
-
+    
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
@@ -800,10 +805,10 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
     // Prepare update data
     const updateData: any = {
-      name,
-      gender,
+        name,
+        gender,
       class_id: primaryClassId,
-      updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
     }
 
     // Add kelompok_id, desa_id, daerah_id if kelompok_id is provided
@@ -905,10 +910,35 @@ export async function updateStudent(studentId: string, formData: FormData) {
 }
 
 /**
+ * Check if student has attendance records
+ */
+export async function checkStudentHasAttendance(studentId: string): Promise<boolean> {
+  try {
+    const adminClient = await createAdminClient()
+    const { data } = await adminClient
+      .from('attendance_logs')
+      .select('id')
+      .eq('student_id', studentId)
+      .limit(1)
+      .maybeSingle()
+    
+    return !!data
+  } catch (error) {
+    console.error('Error checking student attendance:', error)
+    return false
+  }
+}
+
+/**
  * Menghapus siswa (admin only)
+ * @param studentId - ID siswa yang akan dihapus
+ * @param permanent - Jika true, hard delete (permanent). Jika false, soft delete (default)
  * Returns { success: boolean, error?: string } to ensure error messages are properly displayed in production
  */
-export async function deleteStudent(studentId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteStudent(
+  studentId: string, 
+  permanent: boolean = false
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
     
@@ -1028,44 +1058,55 @@ export async function deleteStudent(studentId: string): Promise<{ success: boole
       }
     }
 
-    // Check if student has attendance records
-    const { data: attendanceRecords } = await adminClient
-      .from('attendance_logs')
-      .select('id')
-      .eq('student_id', studentId)
-      .limit(1)
-
-    if (attendanceRecords && attendanceRecords.length > 0) {
-      return { success: false, error: 'Tidak dapat menghapus siswa yang memiliki riwayat absensi' }
-    }
-
-    // Delete student from junction table first (if exists)
-    const { error: junctionDeleteError } = await adminClient
-      .from('student_classes')
-      .delete()
+    if (permanent) {
+      // HARD DELETE: Permanent deletion
+      // Delete student from junction table first (if exists)
+      const { error: junctionDeleteError } = await adminClient
+        .from('student_classes')
+        .delete()
       .eq('student_id', studentId)
 
-    if (junctionDeleteError && junctionDeleteError.code !== 'PGRST301') {
-      console.error('Error deleting from junction table:', junctionDeleteError)
-      // Continue anyway, will try to delete student
+      if (junctionDeleteError && junctionDeleteError.code !== 'PGRST301') {
+        console.error('Error deleting from junction table:', junctionDeleteError)
+        // Continue anyway, will try to delete student
     }
 
-    // Delete student using admin client to bypass RLS
-    const { error: deleteError } = await adminClient
+      // Delete student using admin client to bypass RLS
+      // Cascade will automatically delete attendance_logs
+      const { error: deleteError } = await adminClient
       .from('students')
       .delete()
       .eq('id', studentId)
 
-    if (deleteError) {
-      // Handle specific RLS errors
-      if (deleteError.code === 'PGRST301' || deleteError.message.includes('permission denied') || deleteError.message.includes('new row violates row-level security')) {
-        return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
+      if (deleteError) {
+        // Handle specific RLS errors
+        if (deleteError.code === 'PGRST301' || deleteError.message.includes('permission denied') || deleteError.message.includes('new row violates row-level security')) {
+          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
+        }
+        if (deleteError.code === '23503') {
+          return { success: false, error: 'Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan' }
+        }
+        handleApiError(deleteError, 'menghapus data', 'Gagal menghapus siswa')
+        return { success: false, error: 'Gagal menghapus siswa' }
       }
-      if (deleteError.code === '23503') {
-        return { success: false, error: 'Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan' }
+    } else {
+      // SOFT DELETE: Mark as deleted
+      const { error: updateError } = await adminClient
+        .from('students')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.id
+        })
+        .eq('id', studentId)
+
+      if (updateError) {
+        // Handle specific RLS errors
+        if (updateError.code === 'PGRST301' || updateError.message.includes('permission denied') || updateError.message.includes('new row violates row-level security')) {
+          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
+        }
+        handleApiError(updateError, 'menghapus data', 'Gagal menghapus siswa')
+        return { success: false, error: 'Gagal menghapus siswa' }
       }
-      handleApiError(deleteError, 'menghapus data', 'Gagal menghapus siswa')
-      return { success: false, error: 'Gagal menghapus siswa' }
     }
 
     revalidatePath('/users/siswa')
@@ -1385,7 +1426,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
       throw new Error('User profile not found')
     }
 
-    // Query student with junction table for multiple classes support
+     // Query student with junction table for multiple classes support
     const { data: student, error } = await supabase
       .from('students')
       .select(`
@@ -1393,10 +1434,11 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
         name,
         gender,
         class_id,
-        student_classes(
-          classes:class_id(id, name)
-        )
+          student_classes(
+            classes:class_id(id, name)
+          )
       `)
+        .is('deleted_at', null)
       .eq('id', studentId)
       .single()
 
@@ -1422,7 +1464,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
 
     // Get primary class untuk backward compatibility
     const primaryClass = classesArray[0] || null
-    
+
     return {
       id: student.id,
       name: student.name,
