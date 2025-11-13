@@ -54,7 +54,7 @@ export default function AttendanceCalendar({
     const totalCells = Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7
 
     for (let i = 0; i < totalCells; i++) {
-      const dayNumber = i - firstDayOfMonth + 1
+      const dayNumber = i - firstDayOfMonth + 2
       const isValidDay = dayNumber > 0 && dayNumber <= daysInMonth
       const date = isValidDay ? currentDate.date(dayNumber).format('YYYY-MM-DD') : null
       const isToday = date && dayjs(date).isSame(today, 'day')

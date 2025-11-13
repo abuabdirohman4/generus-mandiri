@@ -1,25 +1,26 @@
 ## v1.10.0
-- [ ] Add Template name
-- [ ] Add Pengajian Desa
-    - Nama
-    - Tipe (Desa)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Kelompok (Warlob, Junti dll)
 - [ ] Add Pengajian Daerah
     - Nama
     - Tipe (Daerah)
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
-
-## v1.9.0
 - [ ] Add Halaman Materi
 
-## v1.8.0
+## v1.9.0
+- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [ ] Add Pengajian Desa
+    - Nama
+    - Tipe (Desa)
+    - Peserta
+        - Kelas (Remaja, Orang Tua dll)
+        - Kelompok (Warlob, Junti dll)
+
+## v1.8.1
 - [x] Error Delete siswa
 - [x] Guru kelas warlob 1, create absensin warlob 2, error
-- [ ] Tanggal Bulan november salah
+- [x] Tanggal di kalender salah
+- [ ] clear swr
 
 ## v1.8.0
 - [x] Add Filter Gender on Laporan
@@ -157,7 +158,6 @@ Siswa
     - Profile Lengkap
 
 Meetings
-- Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - Pengaturan Opsi data yang bisa di input
     - Jam Pengajian
     - Pemateri
@@ -170,6 +170,9 @@ Meetings
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
 - [ ] Kalau login gagal usernmae/password, username jangan hilang
+
+Meetings
+- [ ] Add Template name
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
