@@ -18,6 +18,8 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { useMeetingTypes } from '../hooks/useMeetingTypes'
 import Modal from '@/components/ui/modal'
 import { invalidateAllMeetingsCache } from '../utils/cache'
+import { isTeacherClass } from '@/lib/utils/classHelpers'
+import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -52,6 +54,27 @@ export default function CreateMeetingModal({
   const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
+
+  // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
+  const finalAvailableTypes = useMemo(() => {
+    if (!availableTypes) return availableTypes
+    
+    // Check if any selected class is Pengajar
+    const hasPengajarClass = selectedClassIds.some(classId => {
+      const selectedClass = classes.find(c => c.id === classId)
+      return selectedClass && isTeacherClass(selectedClass)
+    })
+    
+    // If Pengajar class is selected, ensure PEMBINAAN is always available
+    if (hasPengajarClass && !availableTypes.PEMBINAAN) {
+      return {
+        ...availableTypes,
+        PEMBINAAN: MEETING_TYPES.PEMBINAAN
+      }
+    }
+    
+    return availableTypes
+  }, [availableTypes, selectedClassIds, classes])
 
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
@@ -168,18 +191,18 @@ export default function CreateMeetingModal({
 
   // Determine if meeting type input should be shown
   const shouldShowMeetingTypeInput = useMemo(() => {
-    if (typesLoading || Object.keys(availableTypes).length === 0) {
+    if (typesLoading || Object.keys(finalAvailableTypes).length === 0) {
       return true // Show by default while loading
     }
     
     // If only PEMBINAAN is available, all classes are non-sambung
-    const typeKeys = Object.keys(availableTypes)
+    const typeKeys = Object.keys(finalAvailableTypes)
     if (typeKeys.length === 1 && typeKeys[0] === 'PEMBINAAN') {
       return false
     }
     
     return true
-  }, [availableTypes, typesLoading])
+  }, [finalAvailableTypes, typesLoading])
 
   // Auto-select meeting type based on available options
   useEffect(() => {
@@ -202,8 +225,8 @@ export default function CreateMeetingModal({
     }
     
     // Auto-select logic for when input is shown (only if meetingType is empty)
-    if (!meetingType && Object.keys(availableTypes).length > 0) {
-      const typeValues = Object.values(availableTypes)
+    if (!meetingType && Object.keys(finalAvailableTypes).length > 0) {
+      const typeValues = Object.values(finalAvailableTypes)
       
       // If only 1 option, auto-select it
       if (typeValues.length === 1) {
@@ -220,7 +243,7 @@ export default function CreateMeetingModal({
         }
       }
     }
-  }, [isOpen, availableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
+  }, [isOpen, finalAvailableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -370,11 +393,11 @@ export default function CreateMeetingModal({
                     label="Tipe Pertemuan"
                     value={meetingType}
                     onChange={setMeetingType}
-                    options={Object.values(availableTypes).map(type => ({
+                    options={Object.values(finalAvailableTypes).map(type => ({
                       value: type.code,
                       label: type.label
                     }))}
-                    disabled={isSubmitting || typesLoading || Object.keys(availableTypes).length === 0}
+                    disabled={isSubmitting || typesLoading || Object.keys(finalAvailableTypes).length === 0}
                     widthClassName="!max-w-full"
                     className='!mb-0'
                   />

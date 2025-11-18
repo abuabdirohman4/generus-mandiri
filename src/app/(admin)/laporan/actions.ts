@@ -291,12 +291,12 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         date,
         status,
         reason,
-        students!inner(
+        students(
           id,
           name,
           gender,
           class_id,
-          classes!inner(
+          classes(
             id,
             name
           ),
@@ -315,22 +315,65 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         )
       `)
 
-    // Apply date filter first
-    if (dateFilter.date?.eq) {
-      query = query.eq('date', dateFilter.date.eq)
-    } else if (dateFilter.date?.gte && dateFilter.date?.lte) {
-      query = query
-        .gte('date', dateFilter.date.gte)
-        .lte('date', dateFilter.date.lte)
+    // Fetch meetings first to determine date range and meeting IDs (for teachers)
+    const { data: meetingsForFilter } = await adminClient
+      .from('meetings')
+      .select('id, date, class_id, class_ids')
+      .gte('date', dateFilter.date?.gte || '1900-01-01')
+      .lte('date', dateFilter.date?.lte || '2100-12-31')
+      .order('date')
+
+    // For teachers, filter meetings and determine date range
+    let teacherMeetingIdsForQuery: string[] = []
+    let actualDateRange = { gte: dateFilter.date?.gte || '1900-01-01', lte: dateFilter.date?.lte || '2100-12-31' }
+    
+    if (profile.role === 'teacher' && teacherClassIds.length > 0 && meetingsForFilter) {
+      const teacherMeetingsForRange = meetingsForFilter.filter((meeting: any) => {
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+        }
+        return meeting.class_id && teacherClassIds.includes(meeting.class_id)
+      })
+      
+      if (teacherMeetingsForRange.length > 0) {
+        teacherMeetingIdsForQuery = teacherMeetingsForRange.map((m: any) => m.id)
+        const meetingDates = teacherMeetingsForRange.map((m: any) => m.date).filter(Boolean)
+        if (meetingDates.length > 0) {
+          const minDate = meetingDates.reduce((min: string, date: string) => date < min ? date : min)
+          const maxDate = meetingDates.reduce((max: string, date: string) => date > max ? date : max)
+          actualDateRange = { gte: minDate, lte: maxDate }
+        }
+      }
     }
 
-    const { data: attendanceLogs, error } = await query
+    // Apply date filter - use expanded range if needed
+    if (dateFilter.date?.eq) {
+      query = query.eq('date', dateFilter.date.eq)
+    } else {
+      query = query
+        .gte('date', actualDateRange.gte)
+        .lte('date', actualDateRange.lte)
+    }
+
+    // For teachers, also filter by meeting IDs to ensure we get all relevant logs
+    if (teacherMeetingIdsForQuery.length > 0) {
+      query = query.in('meeting_id', teacherMeetingIdsForQuery)
+    }
+
+    // Apply dynamic limit: no limit if filtered by meeting IDs (for teachers),
+    // otherwise use 10000 limit (for admin or unfiltered queries)
+    // For teachers with meeting ID filter, the result set is already limited
+    // so no additional limit is needed
+    const { data: attendanceLogs, error } = teacherMeetingIdsForQuery.length > 0
+      ? await query // No limit needed for teachers with meeting ID filter
+      : await query.limit(10000) // Limit for admin/unfiltered queries
 
     if (error) {
       throw error
     }
 
-    // Fetch meetings for the date range first (needed for teacher filtering)
+
+    // Fetch full meeting details (we already have basic info from meetingsForFilter)
     // Use admin client to bypass RLS
     const { data: meetings } = await adminClient
       .from('meetings')
@@ -339,10 +382,13 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       .lte('date', dateFilter.date?.lte || '2100-12-31')
       .order('date')
 
+
     // For teacher, filter meetings by their classes first
-    let teacherMeetings = meetings || []
+    // Use meetingsForFilter if available, otherwise use full meetings
+    const meetingsToFilterForTeacher = meetingsForFilter || meetings || []
+    let teacherMeetings = meetingsToFilterForTeacher || []
     if (profile.role === 'teacher' && teacherClassIds.length > 0) {
-      teacherMeetings = meetings?.filter((meeting: any) => {
+      teacherMeetings = meetingsToFilterForTeacher.filter((meeting: any) => {
         // Check class_ids array first (for multi-class meetings)
         if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
           return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
@@ -350,15 +396,26 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // Check class_id
         return meeting.class_id && teacherClassIds.includes(meeting.class_id)
       }) || []
+      
+      if (teacherMeetings.length > 0) {
+        // Get full meeting details for teacher meetings
+        const teacherMeetingIds = teacherMeetings.map((m: any) => m.id)
+        teacherMeetings = (meetings || []).filter((m: any) => teacherMeetingIds.includes(m.id))
+      }
     }
 
     // Filter attendance_logs to only include logs from teacher's meetings (if teacher)
     let filteredLogs = attendanceLogs || []
-    if (profile.role === 'teacher' && teacherMeetings.length > 0) {
-      const teacherMeetingIds = new Set(teacherMeetings.map((m: any) => m.id))
-      filteredLogs = filteredLogs.filter((log: any) => 
-        teacherMeetingIds.has(log.meeting_id)
-      )
+    if (profile.role === 'teacher') {
+      if (teacherMeetings.length > 0) {
+        const teacherMeetingIds = new Set(teacherMeetings.map((m: any) => m.id))
+        filteredLogs = filteredLogs.filter((log: any) => 
+          teacherMeetingIds.has(log.meeting_id)
+        )
+      } else {
+        // If teacher but no meetings match, set filteredLogs to empty array
+        filteredLogs = []
+      }
     }
 
     // Apply class filter client-side (check both primary class_id and student_classes junction table)
@@ -610,14 +667,25 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         }))
       
       // If no classes from junction, use primary class
-      if (allClasses.length === 0 && log.students.classes) {
-        const primaryClass = log.students.classes
-        allClasses.push({
-          id: primaryClass.id,
-          name: primaryClass.name,
-          kelompok_id: null,
-          kelompok_name: null
-        })
+      if (allClasses.length === 0) {
+        if (log.students.classes) {
+          const primaryClass = log.students.classes
+          allClasses.push({
+            id: primaryClass.id,
+            name: primaryClass.name,
+            kelompok_id: null,
+            kelompok_name: null
+          })
+        } else if (log.students.class_id) {
+          // Fallback: if classes relation is null but class_id exists, try to get from kelompokMap
+          // Note: This is a fallback - ideally student_classes should have the data
+          allClasses.push({
+            id: log.students.class_id,
+            name: 'Unknown Class', // Will be updated if we can fetch it
+            kelompok_id: null,
+            kelompok_name: null
+          })
+        }
       }
       
       // Get primary class (first class) for backward compatibility

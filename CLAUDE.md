@@ -1,0 +1,203 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**Generus Mandiri** is a Next.js 15 school management system for managing students, teachers, classes, attendance, and reports with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
+
+## Development Commands
+
+```bash
+# Development
+npm run dev              # Start dev server at http://localhost:3000
+
+# Build & Type Checking
+npm run build            # Production build
+npm run type-check       # Run TypeScript compiler without emitting files
+
+# Code Quality
+npm run format           # Format code with Prettier
+npm run format:check     # Check formatting without writing
+npm run fix:all          # Format and type-check in sequence
+```
+
+## Architecture Overview
+
+### App Router Structure
+
+The app uses Next.js 15 App Router with two main layout groups:
+
+1. **`(full-width-pages)`** - Unauthenticated pages (signin, signup, errors)
+2. **`(admin)`** - Authenticated pages (home, dashboard, absensi, laporan, users, kelas, organisasi)
+
+Protected routes are under `src/app/(admin)/`. Each feature has its own directory with co-located:
+- `page.tsx` - Route component
+- `actions.ts` - Server actions for mutations
+- `hooks/` - SWR data fetching hooks
+- `stores/` - Zustand state management
+- `components/` - Feature-specific components
+
+### Database & Supabase
+
+**Database**: `warlob-app` on Supabase
+
+**Key Tables**:
+- `profiles` - User accounts with role-based access (superadmin, admin, teacher, student)
+- `students` - Student records
+- `classes` - Class definitions
+- `meetings` - Class meetings/sessions with support for multiple classes (`class_ids` array)
+- `attendance_logs` - Daily attendance (H/I/S/A status) with composite key (student_id, date)
+- `student_classes` - Junction table for student-class many-to-many
+- `teacher_classes` - Junction table for teacher-class many-to-many
+- `daerah`, `desa`, `kelompok` - Organizational hierarchy (Region > Village > Group)
+
+**Supabase Client Usage**:
+- `createClient()` from `@/lib/supabase/client` - Browser client for client components
+- `createClient()` from `@/lib/supabase/server` - Server client for server actions (uses cookies)
+- `createAdminClient()` from `@/lib/supabase/server` - Service role client to bypass RLS (admin operations only)
+
+### Access Control
+
+**Role Hierarchy**:
+```
+superadmin (global access)
+  └─ admin
+      ├─ admin_daerah (region level)
+      ├─ admin_desa (village level)
+      └─ admin_kelompok (group level)
+teacher (assigned classes only)
+student (own data only)
+```
+
+**CRITICAL ACCESS CONTROL RULES**:
+- **Client Components/Hooks**: ALWAYS use `import { isSuperAdmin, isAdminDaerah, ... } from '@/lib/userUtils'`
+- **Server Actions**: ALWAYS use `import { canAccessFeature, getDataFilter, getCurrentUserProfile } from '@/lib/accessControlServer'`
+- **NEVER** import directly from `@/lib/accessControl.ts`
+
+**Key Functions**:
+- `isSuperAdmin(profile)`, `isAdminDaerah(profile)`, `isAdminDesa(profile)`, `isAdminKelompok(profile)`, `isTeacher(profile)`
+- `canAccessFeature(profile, feature)` - Check feature-level access
+- `getDataFilter(profile)` - Get filter object based on user's organizational level
+- `shouldShowDaerahFilter(profile)`, `shouldShowDesaFilter(profile)`, etc. - UI visibility helpers
+
+### State Management
+
+**Zustand Stores** (persisted to localStorage):
+- `userProfileStore` - Current user profile with organizational hierarchy and assigned classes
+- `sidebarStore`, `themeStore`, `languageStore` - UI preferences
+- `attendanceStore`, `absensiUIStore` - Attendance management state
+- `siswaStore`, `kelasStore`, `guruStore`, `adminStore` - Feature-specific states
+- `laporanStore`, `organisasiStore` - Reports and organization management
+
+**SWR Configuration**:
+- 2-minute deduping interval
+- Revalidates on focus and reconnect
+- localStorage-based persistent cache (survives page refresh)
+- Cache cleared on logout via `clearUserCache()`
+
+### Data Fetching Patterns
+
+**Pattern 1**: Server Action + SWR Hook
+```typescript
+// In actions.ts
+export async function getAllStudents(classId?: string): Promise<Student[]> {
+  'use server'
+  const supabase = await createClient()
+  // Query with RLS
+}
+
+// In hooks or components
+export function useStudents({ classId }: Options) {
+  const { data, mutate } = useSWR(key, () => getAllStudents(classId))
+  return { students: data, mutate }
+}
+```
+
+**Pattern 2**: Direct Server Action for Mutations
+```typescript
+async function handleSubmit(data) {
+  const result = await saveAttendance(data)
+  if (result.success) {
+    mutate() // Revalidate SWR cache
+    revalidatePath('/absensi') // Server-side cache
+  }
+}
+```
+
+### UI Components
+
+**Reusable Components**: Located in `src/components/`
+- Use existing components for buttons, modals, inputs, delete confirmations
+- For icons, use those in `public/icons` & `src/lib/icons.ts` (or add new ones there)
+
+**Key Component Groups**:
+- `components/ui/` - Base UI components (button, modal, dropdown, skeleton, pagination)
+- `components/form/input/` - Form inputs
+- `components/layouts/` - App header, sidebar, bottom navigation
+- `components/charts/` - Recharts-based visualizations
+
+### Special Utilities
+
+**Class Helpers** (`@/lib/utils/classHelpers.ts`):
+- `isCaberawitClass(classData)` - Check if PAUD/Caberawit class
+- `isTeacherClass(classData)` - Check if teacher training class
+
+**Common Utils** (`@/lib/utils.ts`):
+- `cn(...classes)` - Merge Tailwind classes (clsx + tailwind-merge)
+- `isMac()`, `isDesktop()`, `isMobile()`, `isTouchDevice()`, `isIOS()`, `shouldUseMobileUI()`
+
+**User Utils** (`@/lib/userUtils.ts`):
+- `getCurrentUserId()` - Get current user ID for SWR cache keys
+- `clearUserCache()` - Full logout cache clear (with reload)
+- `clearSWRCache()` - Soft cache clear (no reload, for login flow)
+
+## Important Conventions
+
+### Attendance System
+- Status codes: H (Hadir/Present), I (Izin/Excused), S (Sakit/Sick), A (Alpha/Absent)
+- Composite key: (student_id, date) for upsert operations
+- Auto-save with debouncing
+- Meetings can span multiple classes via `class_ids` array
+
+### Multi-class Support
+- Teachers can be assigned to multiple classes via `teacher_classes` junction table
+- Students can be in multiple classes via `student_classes` junction table
+- Profile loads all assigned classes for teachers
+
+### Cache Management
+- Use `revalidatePath()` after mutations in server actions
+- Call `mutate()` on SWR hooks after client-side updates
+- Full logout requires `clearUserCache()` to remove all persistent state
+- Login flow uses `clearSWRCache()` without reload for smooth transition
+
+### Security
+- All sensitive operations must be in server actions with permission checks
+- Use RLS at database level for defense in depth
+- Admin client (`createAdminClient()`) only for cross-organizational admin operations
+- Validate user permissions before any data modification
+
+## Environment Variables
+
+Required in `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Optional:
+```
+NEXT_PUBLIC_USE_DUMMY_DATA=false
+NEXT_PUBLIC_UMAMI_WEBSITE_ID=
+```
+
+## Path Aliases
+
+TypeScript path alias configured: `@/*` maps to `src/*`
+
+Always use `@/` imports for consistency:
+```typescript
+import { createClient } from '@/lib/supabase/server'
+import { isSuperAdmin } from '@/lib/userUtils'
+```

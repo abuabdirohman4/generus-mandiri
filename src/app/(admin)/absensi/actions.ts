@@ -3,26 +3,13 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
+import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
 
 interface AttendanceData {
   student_id: string
   date: string
   status: 'H' | 'I' | 'S' | 'A'
   reason?: string | null
-}
-
-interface Meeting {
-  id: string
-  class_id: string
-  teacher_id: string
-  title: string
-  date: string
-  topic?: string
-  description?: string
-  student_snapshot: string[]
-  created_at: string
-  updated_at: string
-  meeting_type_code?: string | null
 }
 
 interface CreateMeetingData {
@@ -697,25 +684,18 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
       return { success: false, error: 'User profile not found' }
     }
 
-    // Get meeting details
-    const { data: meeting } = await supabase
+    // Use admin client to bypass RLS restrictions for teachers accessing "Pengajar" meetings
+    // This allows teachers (Paud/Kelas 1-6) to save attendance for "Pengajar" meetings
+    const adminClient = await createAdminClient()
+
+    // Get meeting details (including date in one query)
+    const { data: meeting, error: meetingError } = await adminClient
       .from('meetings')
-      .select('teacher_id, class_ids')
+      .select('teacher_id, class_ids, date')
       .eq('id', meetingId)
       .single()
 
-    if (!meeting) {
-      return { success: false, error: 'Meeting not found' }
-    }
-
-    // Get meeting date
-    const { data: meetingDate, error: meetingError } = await supabase
-      .from('meetings')
-      .select('date')
-      .eq('id', meetingId)
-      .single()
-
-    if (meetingError || !meetingDate) {
+    if (meetingError || !meeting) {
       return { success: false, error: 'Meeting not found' }
     }
 
@@ -723,15 +703,11 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
     const attendanceRecords = attendanceData.map(record => ({
       student_id: record.student_id,
       meeting_id: meetingId,
-      date: meetingDate.date, // Include the meeting date
+      date: meeting.date, // Include the meeting date
       status: record.status,
       reason: record.reason,
       recorded_by: profile.id
     }))
-
-    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
-    // This allows saving attendance for students from different kelompok
-    const adminClient = await createAdminClient()
     
     // Use upsert to handle both insert and update
     const { error } = await adminClient
@@ -966,6 +942,38 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         // For teacher, use admin client to bypass RLS restrictions
         // This allows teacher to see meetings from all kelompok (if they teach multiple classes)
         const adminClientTeacher = await createAdminClient()
+        
+        // Fetch kelompok_id dari semua kelas yang diajarkan teacher
+        // Ini diperlukan untuk menampilkan meeting kelas "Pengajar" di kelompok yang sama
+        const { data: teacherClassesData } = await adminClientTeacher
+          .from('classes')
+          .select(`
+            id,
+            name,
+            kelompok_id,
+            class_master_mappings (
+              class_master:class_master_id (
+                id,
+                name,
+                category:category_id (
+                  id,
+                  code,
+                  name
+                )
+              )
+            )
+          `)
+          .in('id', teacherClassIds)
+        
+        const teacherKelompokIds = new Set<string>()
+        // Check apakah teacher mengajar Paud atau Kelas 1-6 menggunakan class_master
+        const teacherCaberawit = teacherClassesData?.some(c => isCaberawitClass(c)) || false
+        
+        teacherClassesData?.forEach(c => {
+          if (c.kelompok_id) {
+            teacherKelompokIds.add(c.kelompok_id)
+          }
+        })
         const adminQuery = adminClientTeacher
           .from('meetings')
           .select(`
@@ -1000,6 +1008,8 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               ),
               class_master_mappings (
                 class_master:class_master_id (
+                  id,
+                  name,
                   category:category_id (
                     is_sambung_capable
                   )
@@ -1022,6 +1032,42 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           console.error('Error fetching meetings:', meetingsError)
           return { success: false, error: meetingsError.message, data: null }
         }
+        
+        // Collect all class IDs from meetings (termasuk dari class_ids array)
+        // Ini diperlukan untuk fetch class details termasuk kelas "Pengajar"
+        const allMeetingClassIds = new Set<string>()
+        meetings?.forEach((m: any) => {
+          if (m.class_ids && Array.isArray(m.class_ids)) {
+            m.class_ids.forEach((id: string) => allMeetingClassIds.add(id))
+          }
+          if (m.class_id) allMeetingClassIds.add(m.class_id)
+        })
+        
+        // Fetch class details untuk semua class IDs (termasuk "Pengajar")
+        const { data: allMeetingClassesData } = await adminClientTeacher
+          .from('classes')
+          .select(`
+            id,
+            name,
+            kelompok_id,
+            class_master_mappings (
+              class_master:class_master_id (
+                id,
+                name
+              )
+            )
+          `)
+          .in('id', Array.from(allMeetingClassIds))
+        
+        // Create mapping: classId -> { name, kelompok_id, class_master_mappings }
+        const classDetailsMap = new Map<string, { name: string; kelompok_id: string | null; class_master_mappings?: any[] }>()
+        allMeetingClassesData?.forEach(c => {
+          classDetailsMap.set(c.id, {
+            name: c.name,
+            kelompok_id: c.kelompok_id,
+            class_master_mappings: c.class_master_mappings || []
+          })
+        })
         
         // If classId is provided, filter by that specific class (and its kelompok)
         let filteredMeetings: any[]
@@ -1118,14 +1164,81 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               }
               return false
             }
+            
+            // NEW: Also check if meeting is for "Pengajar" in same kelompok
+            // (hanya jika selected classId bukan "Pengajar" DAN teacher mengajar Paud/Kelas 1-6)
+            const selectedClassIsPengajar = classIds.some(id => {
+              const classDetails = classDetailsMap.get(id)
+              return classDetails ? isTeacherClass(classDetails) : false
+            })
+            
+            if (!selectedClassIsPengajar && teacherCaberawit) {
+              // Check from primary class
+              if (meeting.classes && isTeacherClass(meeting.classes)) {
+                const pengajarKelompokId = meeting.classes?.kelompok_id
+                if (pengajarKelompokId && teacherKelompokIds.has(pengajarKelompokId)) {
+                  return true
+                }
+              }
+              
+              // Check from class_ids array
+              if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+                const hasPengajarInSameKelompok = meeting.class_ids.some((classId: string) => {
+                  const classDetails = classDetailsMap.get(classId)
+                  if (!classDetails) return false
+                  
+                  if (isTeacherClass(classDetails)) {
+                    return classDetails.kelompok_id && teacherKelompokIds.has(classDetails.kelompok_id)
+                  }
+                  return false
+                })
+                
+                if (hasPengajarInSameKelompok) return true
+              }
+            }
+            
             return false
           })
         } else {
           // If no classId provided, filter to meetings that include any of teacher's classes
-          filteredMeetings = (meetings || []).filter((meeting: any) => 
-            meeting.class_ids?.some((id: string) => teacherClassIds.includes(id)) ||
-            (meeting.class_id && teacherClassIds.includes(meeting.class_id))
-          )
+          // OR meetings for "Pengajar" class in the same kelompok as teacher's classes
+          filteredMeetings = (meetings || []).filter((meeting: any) => {
+            // Existing logic: meetings untuk kelas yang diajarkan teacher
+            const matchesTeacherClass = 
+              meeting.class_ids?.some((id: string) => teacherClassIds.includes(id)) ||
+              (meeting.class_id && teacherClassIds.includes(meeting.class_id))
+            
+            if (matchesTeacherClass) return true
+            
+            // NEW: Check if meeting is for "Pengajar" class in same kelompok
+            // HANYA jika teacher mengajar Paud atau Kelas 1-6
+            if (teacherCaberawit) {
+              // Check from primary class (meeting.classes)
+              if (meeting.classes && isTeacherClass(meeting.classes)) {
+                const pengajarKelompokId = meeting.classes?.kelompok_id
+                if (pengajarKelompokId && teacherKelompokIds.has(pengajarKelompokId)) {
+                  return true
+                }
+              }
+              
+              // Check from class_ids array (for multi-class meetings)
+              if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+                const hasPengajarInSameKelompok = meeting.class_ids.some((classId: string) => {
+                  const classDetails = classDetailsMap.get(classId)
+                  if (!classDetails) return false
+                  
+                  if (isTeacherClass(classDetails)) {
+                    return classDetails.kelompok_id && teacherKelompokIds.has(classDetails.kelompok_id)
+                  }
+                  return false
+                })
+                
+                if (hasPengajarInSameKelompok) return true
+              }
+            }
+            
+            return false
+          })
         }
         
         if (!filteredMeetings || filteredMeetings.length === 0) {
@@ -1265,8 +1378,16 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           let meetingAttendance = attendanceByMeeting[meeting.id] || []
           let relevantStudentIds = meeting.student_snapshot
           
-          // For teachers: filter to only their class students (support multiple classes)
-          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0) {
+          // Check if meeting is for "Pengajar" class
+          const isPengajarMeeting = (meeting.classes && isTeacherClass(meeting.classes)) ||
+            (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.some((classId: string) => {
+              const classDetails = classDetailsMap.get(classId)
+              return classDetails ? isTeacherClass(classDetails) : false
+            }))
+          
+          // For teachers: filter to only their class students (EXCEPT for Pengajar meetings)
+          // Pengajar meetings should show all students from snapshot
+          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0 && !isPengajarMeeting) {
             relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
               const studentClassIds = studentToClassMap.get(studentId) || []
               // Check if student has at least one class that matches teacher's classes

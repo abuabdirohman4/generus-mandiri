@@ -8,6 +8,7 @@
 - [ ] Add Halaman Materi
 
 ## v1.9.0
+- [x] Kelas Pengajar
 - [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - [ ] Add Pengajian Desa
     - Nama

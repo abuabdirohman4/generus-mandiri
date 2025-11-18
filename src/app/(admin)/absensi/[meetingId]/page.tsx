@@ -20,6 +20,7 @@ import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetin
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
+import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -170,12 +171,34 @@ export default function MeetingAttendancePage() {
   // Check if current user is meeting creator
   const isMeetingCreator = meeting?.teacher_id === userProfile?.id
 
+  // Check if meeting is for "Pengajar" class
+  const isPengajarMeeting = useMemo(() => {
+    if (!meeting) return false
+    
+    // Check from primary class
+    if (meeting.classes && isTeacherClass(meeting.classes)) {
+      return true
+    }
+    
+    // Check from class_ids array (for multi-class meetings)
+    // Note: For simplicity, we rely on primary class check first
+    // If needed, we can enhance this to fetch class details for class_ids array
+    return false
+  }, [meeting])
+
+  // Check if teacher teaches Paud or Kelas 1-6
+  const teacherCaberawit = useMemo(() => {
+    if (!userProfile?.classes) return false
+    return userProfile.classes.some(c => isCaberawitClass(c))
+  }, [userProfile?.classes])
+
   // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
     let filtered = students
     
     // Role-based filtering (existing logic) - support multiple classes
-    if (userProfile?.role === 'teacher' && !isMeetingCreator) {
+    // Skip filtering for Pengajar meetings (students should be visible to Paud/Kelas 1-6 teachers)
+    if (userProfile?.role === 'teacher' && !isMeetingCreator && !isPengajarMeeting) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
       // Note: For meeting attendance, we filter by class_id (primary class)
       // This is because students in meeting snapshot are already filtered by meeting's classes
@@ -205,7 +228,7 @@ export default function MeetingAttendancePage() {
     }
     
     return filtered
-  }, [students, userProfile, isMeetingCreator, filters])
+  }, [students, userProfile, isMeetingCreator, isPengajarMeeting, filters])
 
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
@@ -214,13 +237,18 @@ export default function MeetingAttendancePage() {
     const student = students.find(s => s.id === studentId)
     if (!student) return false
 
+    // Special case: Allow teachers (Paud/Kelas 1-6) to edit "Pengajar" meeting attendance
+    if (isPengajarMeeting && teacherCaberawit) {
+      return true
+    }
+
     return canUserEditMeetingAttendance(
       userProfile.role,
       isMeetingCreator,
       student.class_id,
       userProfile.classes?.map(c => c.id) || []
     )
-  }, [userProfile, meeting, students, isMeetingCreator])
+  }, [userProfile, meeting, students, isMeetingCreator, isPengajarMeeting, teacherCaberawit])
 
   // Prepare class list for filter - only for multi-class meetings
   const classListForFilter = useMemo(() => {
