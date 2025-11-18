@@ -48,6 +48,7 @@ export default function CreateMeetingModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [meetingType, setMeetingType] = useState<string>('')
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
@@ -99,6 +100,29 @@ export default function CreateMeetingModal({
     classes?.length,
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
   ])
+
+  // Helper to find matching class for a student
+  const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
+    // Find first class from student.classes that exists in selectedClassIds
+    const matchingClassId = student.classes?.find((c: any) => selectedClassIds.includes(c.id))?.id
+    if (!matchingClassId) return null
+    
+    // Get full class details
+    return classesData.find((c: any) => c.id === matchingClassId)
+  }
+
+  // Check if teacher has multiple kelompok
+  const teacherHasMultipleKelompok = useMemo(() => {
+    if (userProfile?.role !== 'teacher') return false
+    const kelompokIds = new Set(availableClasses.map((c: any) => c.kelompok_id).filter(Boolean))
+    return kelompokIds.size > 1
+  }, [userProfile?.role, availableClasses])
+
+  // Kelompok name map
+  const kelompokMap = useMemo(() => {
+    if (!kelompok || kelompok.length === 0) return new Map()
+    return new Map(kelompok.map((k: any) => [k.id, k.name]))
+  }, [kelompok])
 
   // Filter students by selected classes - support multiple classes per student
   const filteredStudents = students.filter(student => {
@@ -189,6 +213,26 @@ export default function CreateMeetingModal({
     }
   }, [meeting])
 
+  // Initialize selectedStudentIds based on mode
+  useEffect(() => {
+    if (selectedClassIds.length > 0 && filteredStudents.length > 0) {
+      if (meeting && meeting.student_snapshot && meeting.student_snapshot.length > 0) {
+        // Edit mode: initialize from meeting.student_snapshot
+        // Filter to only include students that are still in filteredStudents
+        const validStudentIds = filteredStudents
+          .filter(s => meeting.student_snapshot.includes(s.id))
+          .map(s => s.id)
+        setSelectedStudentIds(validStudentIds.length > 0 ? validStudentIds : filteredStudents.map(s => s.id))
+      } else {
+        // Create mode: auto-select all filtered students
+        const allStudentIds = filteredStudents.map(s => s.id)
+        setSelectedStudentIds(allStudentIds)
+      }
+    } else {
+      setSelectedStudentIds([])
+    }
+  }, [selectedClassIds.join(','), filteredStudents.map(s => s.id).join(','), meeting?.student_snapshot?.join(',')])
+
   // Determine if meeting type input should be shown
   const shouldShowMeetingTypeInput = useMemo(() => {
     if (typesLoading || Object.keys(finalAvailableTypes).length === 0) {
@@ -253,8 +297,8 @@ export default function CreateMeetingModal({
       return
     }
 
-    if (filteredStudents.length === 0) {
-      toast.error('Tidak ada siswa di kelas yang dipilih')
+    if (selectedStudentIds.length === 0) {
+      toast.error('Pilih minimal satu siswa untuk diikutsertakan')
       return
     }
 
@@ -273,7 +317,8 @@ export default function CreateMeetingModal({
           title: formData.title,
           topic: formData.topic || undefined,
           description: formData.description || undefined,
-          meetingTypeCode: meetingType
+          meetingTypeCode: meetingType,
+          studentIds: selectedStudentIds
         })
         
         if (result.success) {
@@ -293,7 +338,8 @@ export default function CreateMeetingModal({
           title: formData.title,
           topic: formData.topic || undefined,
           description: formData.description || undefined,
-          meetingTypeCode: meetingType
+          meetingTypeCode: meetingType,
+          studentIds: selectedStudentIds
         })
 
         if (result.success) {
@@ -322,6 +368,7 @@ export default function CreateMeetingModal({
       description: ''
     })
     setMeetingType('')
+    setSelectedStudentIds([])
     onClose()
   }
 
@@ -462,7 +509,7 @@ export default function CreateMeetingModal({
               {filteredStudents.length > 0 ? (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Jumlah Siswa untuk pertemuan ini ada <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{filteredStudents.length} orang</Link>
+                    Jumlah Siswa: <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{selectedStudentIds.length} dari {filteredStudents.length} siswa dipilih</Link>
                     {selectedClassIds.length > 1 && (
                       <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">
                         ({selectedClassIds.length} kelas gabungan)
@@ -475,6 +522,34 @@ export default function CreateMeetingModal({
                       </span>
                     )} */}
                   </h4>
+                  
+                  {/* Student Selection */}
+                  <div className="mt-4">
+                    <MultiSelectCheckbox
+                      label="Pilih Siswa yang Akan Diikutsertakan"
+                      items={filteredStudents.map(s => {
+                        const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
+                        const className = matchingClass?.name || ''
+                        const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
+                        
+                        let label = s.name
+                        if (className) {
+                          if (teacherHasMultipleKelompok && kelompokName) {
+                            label = `${s.name} (${className} - ${kelompokName})`
+                          } else {
+                            label = `${s.name} (${className})`
+                          }
+                        }
+                        
+                        return { id: s.id, label }
+                      })}
+                      selectedIds={selectedStudentIds}
+                      onChange={setSelectedStudentIds}
+                      maxHeight="15rem"
+                      hint="Pilih siswa yang akan ikut dalam pertemuan ini. Default: semua siswa terpilih."
+                      disabled={isSubmitting}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">

@@ -19,6 +19,7 @@ interface CreateMeetingData {
   topic?: string
   description?: string
   meetingTypeCode?: string | null
+  studentIds?: string[] // Optional: selected student IDs for the meeting
 }
 
 export async function saveAttendance(attendanceData: AttendanceData[]) {
@@ -183,36 +184,81 @@ export async function createMeeting(data: CreateMeetingData) {
         return { success: false, error: 'You can only create meetings for your own classes' }
       }
     }
+
+    // Determine which students to include in the snapshot
+    let studentIdsForSnapshot: string[]
     
-    // Get students via junction table to support multiple classes per student
-    const { data: studentClassData, error: studentClassError } = await adminClient
-      .from('student_classes')
-      .select('student_id')
-      .in('class_id', data.classIds)
+    if (data.studentIds && data.studentIds.length > 0) {
+      // Use provided student IDs (from user selection)
+      // Verify all provided student IDs are valid and in selected classes
+      const { data: studentClassData, error: studentClassError } = await adminClient
+        .from('student_classes')
+        .select('student_id')
+        .in('class_id', data.classIds)
+        .in('student_id', data.studentIds)
 
-    if (studentClassError) {
-      return { success: false, error: studentClassError.message }
-    }
+      if (studentClassError) {
+        return { success: false, error: studentClassError.message }
+      }
 
-    if (!studentClassData || studentClassData.length === 0) {
-      return { success: false, error: 'No students found in selected classes' }
-    }
+      if (!studentClassData || studentClassData.length === 0) {
+        return { success: false, error: 'No valid students found in selected classes' }
+      }
 
-    // Get unique student IDs (a student might be in multiple selected classes)
-    const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
-    
-    // Verify students exist and get their details
-    const { data: students, error: studentsError } = await adminClient
-      .from('students')
-      .select('id, name, class_id, kelompok_id')
-      .in('id', uniqueStudentIds)
+      // Get unique valid student IDs (filter to only include those in selected classes)
+      const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+      studentIdsForSnapshot = data.studentIds.filter(id => validStudentIds.includes(id))
 
-    if (studentsError) {
-      return { success: false, error: studentsError.message }
-    }
+      if (studentIdsForSnapshot.length === 0) {
+        return { success: false, error: 'No valid students found in selected classes' }
+      }
 
-    if (!students || students.length === 0) {
-      return { success: false, error: 'No students found in selected classes' }
+      // Verify students exist
+      const { data: students, error: studentsError } = await adminClient
+        .from('students')
+        .select('id, name, class_id, kelompok_id')
+        .in('id', studentIdsForSnapshot)
+
+      if (studentsError) {
+        return { success: false, error: studentsError.message }
+      }
+
+      if (!students || students.length === 0) {
+        return { success: false, error: 'No students found' }
+      }
+    } else {
+      // Default: get all students from selected classes (backward compatibility)
+      const { data: studentClassData, error: studentClassError } = await adminClient
+        .from('student_classes')
+        .select('student_id')
+        .in('class_id', data.classIds)
+
+      if (studentClassError) {
+        return { success: false, error: studentClassError.message }
+      }
+
+      if (!studentClassData || studentClassData.length === 0) {
+        return { success: false, error: 'No students found in selected classes' }
+      }
+
+      // Get unique student IDs (a student might be in multiple selected classes)
+      const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+      
+      // Verify students exist and get their details
+      const { data: students, error: studentsError } = await adminClient
+        .from('students')
+        .select('id, name, class_id, kelompok_id')
+        .in('id', uniqueStudentIds)
+
+      if (studentsError) {
+        return { success: false, error: studentsError.message }
+      }
+
+      if (!students || students.length === 0) {
+        return { success: false, error: 'No students found in selected classes' }
+      }
+
+      studentIdsForSnapshot = students.map(s => s.id)
     }
 
     // Generate meeting number (highest from all classes + 1)
@@ -238,7 +284,7 @@ export async function createMeeting(data: CreateMeetingData) {
         date: data.date,
         topic: data.topic,
         description: data.description,
-        student_snapshot: students.map(s => s.id),
+        student_snapshot: studentIdsForSnapshot, // Use selected student IDs or all students
         meeting_number: nextMeetingNumber,
         meeting_type_code: data.meetingTypeCode // NEW: Meeting type code
       })
@@ -391,8 +437,8 @@ export async function getMeetingById(meetingId: string) {
               name,
               daerah_id,
               daerah:daerah_id (
-                id,
-                name
+          id,
+          name
               )
             )
           ),
@@ -562,16 +608,66 @@ export async function updateMeeting(meetingId: string, data: Partial<CreateMeeti
       return { success: false, error: 'Anda tidak memiliki izin untuk mengubah pertemuan ini' }
     }
     
-    const { error } = await supabase
+    // Use admin client to bypass RLS for student snapshot update
+    const adminClient = await createAdminClient()
+    
+    // Prepare update data
+    const updateData: any = {
+      title: data.title,
+      date: data.date,
+      topic: data.topic,
+      description: data.description,
+      meeting_type_code: data.meetingTypeCode,
+      updated_at: new Date().toISOString()
+    }
+    
+    // Handle classIds update if provided
+    if (data.classIds && data.classIds.length > 0) {
+      updateData.class_id = data.classIds[0]
+      updateData.class_ids = data.classIds
+    }
+    
+    // Handle studentIds update if provided
+    if (data.studentIds !== undefined) {
+      if (data.studentIds.length > 0) {
+        // Verify all provided student IDs are valid and in selected classes
+        const classIdsToCheck = data.classIds || []
+        
+        if (classIdsToCheck.length > 0) {
+          const { data: studentClassData, error: studentClassError } = await adminClient
+            .from('student_classes')
+            .select('student_id')
+            .in('class_id', classIdsToCheck)
+            .in('student_id', data.studentIds)
+
+          if (studentClassError) {
+            return { success: false, error: studentClassError.message }
+          }
+
+          if (!studentClassData || studentClassData.length === 0) {
+            return { success: false, error: 'No valid students found in selected classes' }
+          }
+
+          // Get unique valid student IDs
+          const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+          updateData.student_snapshot = data.studentIds.filter(id => validStudentIds.includes(id))
+
+          if (updateData.student_snapshot.length === 0) {
+            return { success: false, error: 'No valid students found in selected classes' }
+          }
+        } else {
+          // If no classIds provided, just use the studentIds directly (assume they're valid)
+          updateData.student_snapshot = data.studentIds
+        }
+      } else {
+        // Empty array means no students selected (should not happen, but handle it)
+        updateData.student_snapshot = []
+      }
+    }
+    
+    const { error } = await adminClient
       .from('meetings')
-      .update({
-        title: data.title,
-        date: data.date,
-        topic: data.topic,
-        description: data.description,
-        meeting_type_code: data.meetingTypeCode,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', meetingId)
 
     if (error) {
@@ -708,7 +804,7 @@ export async function saveAttendanceForMeeting(meetingId: string, attendanceData
       reason: record.reason,
       recorded_by: profile.id
     }))
-    
+
     // Use upsert to handle both insert and update
     const { error } = await adminClient
       .from('attendance_logs')
@@ -758,8 +854,8 @@ export async function getAttendanceByMeeting(meetingId: string) {
               name,
               kelompok_id,
               kelompok:kelompok_id (
-                id,
-                name
+            id,
+            name
               )
             )
           )
