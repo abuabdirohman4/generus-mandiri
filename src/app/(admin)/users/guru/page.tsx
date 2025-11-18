@@ -4,6 +4,7 @@ import { useGuruPage } from './hooks/useGuruPage';
 import GuruTable from './components/GuruTable';
 import GuruModal from './components/GuruModal';
 import ResetPasswordModal from './components/ResetPasswordModal';
+import MeetingFormSettingsModal from './components/MeetingFormSettingsModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
@@ -22,6 +23,7 @@ export default function GuruManagementPage() {
     editingGuru,
     resetPasswordModal,
     deleteConfirm,
+    formSettingsModal,
     filters,
     openCreateModal,
     openEditModal,
@@ -30,6 +32,8 @@ export default function GuruManagementPage() {
     closeResetPasswordModal,
     openDeleteConfirm,
     closeDeleteConfirm,
+    openFormSettingsModal,
+    closeFormSettingsModal,
     handleDelete,
     handleOrganisasiFilterChange,
     mutate
@@ -96,6 +100,7 @@ export default function GuruManagementPage() {
           onEdit={openEditModal}
           onResetPassword={openResetPasswordModal}
           onDelete={openDeleteConfirm}
+          onConfigureForm={openFormSettingsModal}
           userProfile={userProfile}
         />
 
@@ -132,6 +137,16 @@ export default function GuruManagementPage() {
           cancelText="Batal"
           isDestructive={true}
           isLoading={false}
+        />
+
+        <MeetingFormSettingsModal
+          isOpen={formSettingsModal.isOpen}
+          onClose={closeFormSettingsModal}
+          userId={formSettingsModal.guru?.id || ''}
+          userName={formSettingsModal.guru?.full_name || ''}
+          onSuccess={() => {
+            mutate();
+          }}
         />
       </div>
     </div>

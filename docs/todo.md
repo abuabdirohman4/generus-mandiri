@@ -9,7 +9,8 @@
 
 ## v1.9.0
 - [x] Kelas Pengajar
-- [ ] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [x] Add Template name
 - [ ] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
@@ -170,9 +171,6 @@ Meetings
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
 - [ ] Kalau login gagal usernmae/password, username jangan hilang
-
-Meetings
-- [ ] Add Template name
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya

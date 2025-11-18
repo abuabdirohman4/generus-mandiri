@@ -49,12 +49,65 @@ export default function CreateMeetingModal({
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [meetingType, setMeetingType] = useState<string>('')
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
+  const [selectedGender, setSelectedGender] = useState<string | null>(null)
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
   const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
+  
+  // Load meeting form settings
+  const [formSettings, setFormSettings] = useState<{
+    showTitle: boolean
+    showTopic: boolean
+    showDescription: boolean
+    showDate: boolean
+    showMeetingType: boolean
+    showClassSelection: boolean
+    showStudentSelection: boolean
+    showGenderFilter: boolean
+  } | null>(null)
+  
+  useEffect(() => {
+    if (isOpen && userProfile?.id) {
+      const loadSettings = async () => {
+        try {
+          const { getMeetingFormSettings } = await import('@/app/(admin)/users/guru/actions')
+          const result = await getMeetingFormSettings(userProfile.id)
+          if (result.success && result.data) {
+            setFormSettings(result.data)
+          } else {
+            // Use defaults if no settings found
+            setFormSettings({
+              showTitle: true,
+              showTopic: false,
+              showDescription: false,
+              showDate: true,
+              showMeetingType: true,
+              showClassSelection: true,
+              showStudentSelection: false,
+              showGenderFilter: false
+            })
+          }
+        } catch (error) {
+          console.error('Error loading form settings:', error)
+          // Use defaults on error
+          setFormSettings({
+            showTitle: true,
+            showTopic: false,
+            showDescription: false,
+            showDate: true,
+            showMeetingType: true,
+            showClassSelection: true,
+            showStudentSelection: false,
+            showGenderFilter: false
+          })
+        }
+      }
+      loadSettings()
+    }
+  }, [isOpen, userProfile?.id])
 
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
@@ -124,15 +177,24 @@ export default function CreateMeetingModal({
     return new Map(kelompok.map((k: any) => [k.id, k.name]))
   }, [kelompok])
 
-  // Filter students by selected classes - support multiple classes per student
+  // Filter students by selected classes and gender - support multiple classes per student
   const filteredStudents = students.filter(student => {
-    if (selectedClassIds.length === 0) return true
+    // Filter by class
+    let matchesClass = true
+    if (selectedClassIds.length > 0) {
+      const studentClassIds = (student.classes || []).map(c => c.id)
+      // Also check class_id for backward compatibility
+      const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+      matchesClass = allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+    }
     
-    // Check if student has at least one class in selected classes
-    const studentClassIds = (student.classes || []).map(c => c.id)
-    // Also check class_id for backward compatibility
-    const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
-    return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+    // Filter by gender
+    let matchesGender = true
+    if (selectedGender && selectedGender !== '') {
+      matchesGender = student.gender === selectedGender
+    }
+    
+    return matchesClass && matchesGender
   })
 
   // Force revalidate students when modal opens to get fresh data
@@ -369,6 +431,7 @@ export default function CreateMeetingModal({
     })
     setMeetingType('')
     setSelectedStudentIds([])
+    setSelectedGender(null)
     onClose()
   }
 
@@ -385,7 +448,7 @@ export default function CreateMeetingModal({
               <div className="flex-1 overflow-y-auto px-6 py-4">
               {/* Class Selection */}
               {/* Class Selector - Only show if user has more than 1 class */}
-              {availableClasses.length > 1 && (
+              {formSettings?.showClassSelection !== false && availableClasses.length > 1 && (
                 <div className="mb-4">
                   <MultiSelectCheckbox
                     label="Pilih Kelas"
@@ -432,8 +495,28 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
+              {/* Gender Filter */}
+              {formSettings?.showGenderFilter !== false && (
+                <div className="mb-4">
+                  <InputFilter
+                    id="genderFilter"
+                    label="Jenis Kelamin (Opsional)"
+                    value={selectedGender || ''}
+                    onChange={(value) => setSelectedGender(value === '' ? null : value)}
+                    options={[
+                      { value: '', label: 'Semua' },
+                      { value: 'Laki-laki', label: 'Laki-laki' },
+                      { value: 'Perempuan', label: 'Perempuan' }
+                    ]}
+                    disabled={isSubmitting}
+                    widthClassName="!max-w-full"
+                    className='!mb-0'
+                  />
+                </div>
+              )}
+
               {/* Meeting Type Selector */}
-              {/* {shouldShowMeetingTypeInput && ( */}
+              {formSettings?.showMeetingType !== false && (
                 <div className="mb-4">
                   <InputFilter
                     id="meetingType"
@@ -449,61 +532,69 @@ export default function CreateMeetingModal({
                     className='!mb-0'
                   />
                 </div>
-              {/* )} */}
+              )}
 
               {/* Title Field */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Judul Pertemuan (Opsional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Judul pertemuan..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                />
-              </div>
+              {formSettings?.showTitle !== false && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Judul Pertemuan (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Judul pertemuan..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+              )}
 
               {/* Topic */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Topik (Opsional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.topic}
-                  onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                  placeholder="Topik pertemuan..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                />
-              </div>
+              {formSettings?.showTopic !== false && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Topik (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.topic}
+                    onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                    placeholder="Topik pertemuan..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+              )}
 
               {/* Description */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Deskripsi (Opsional)
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Deskripsi pertemuan..."
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-                />
-              </div>
+              {formSettings?.showDescription !== false && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Deskripsi (Opsional)
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Deskripsi pertemuan..."
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+                  />
+                </div>
+              )}
 
               {/* Date Picker */}
-              <div className="mb-4">
-                <DatePickerInput
-                  mode="single"
-                  label="Tanggal Pertemuan"
-                  value={formData.date}
-                  onChange={(date) => setFormData(prev => ({ ...prev, date: date || dayjs() }))}
-                  format="DD/MM/YYYY"
-                  placeholder="Pilih Tanggal"
-                />
-              </div>
+              {formSettings?.showDate !== false && (
+                <div className="mb-4">
+                  <DatePickerInput
+                    mode="single"
+                    label="Tanggal Pertemuan"
+                    value={formData.date}
+                    onChange={(date) => setFormData(prev => ({ ...prev, date: date || dayjs() }))}
+                    format="DD/MM/YYYY"
+                    placeholder="Pilih Tanggal"
+                  />
+                </div>
+              )}
 
               {/* Student Preview */}
               {filteredStudents.length > 0 ? (
@@ -524,32 +615,34 @@ export default function CreateMeetingModal({
                   </h4>
                   
                   {/* Student Selection */}
-                  <div className="mt-4">
-                    <MultiSelectCheckbox
-                      label="Pilih Siswa yang Akan Diikutsertakan"
-                      items={filteredStudents.map(s => {
-                        const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
-                        const className = matchingClass?.name || ''
-                        const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
-                        
-                        let label = s.name
-                        if (className) {
-                          if (teacherHasMultipleKelompok && kelompokName) {
-                            label = `${s.name} (${className} - ${kelompokName})`
-                          } else {
-                            label = `${s.name} (${className})`
+                  {formSettings?.showStudentSelection !== false && (
+                    <div className="mt-4">
+                      <MultiSelectCheckbox
+                        label="Pilih Siswa yang Akan Diikutsertakan"
+                        items={filteredStudents.map(s => {
+                          const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
+                          const className = matchingClass?.name || ''
+                          const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
+                          
+                          let label = s.name
+                          if (className) {
+                            if (teacherHasMultipleKelompok && kelompokName) {
+                              label = `${s.name} (${className} - ${kelompokName})`
+                            } else {
+                              label = `${s.name} (${className})`
+                            }
                           }
-                        }
-                        
-                        return { id: s.id, label }
-                      })}
-                      selectedIds={selectedStudentIds}
-                      onChange={setSelectedStudentIds}
-                      maxHeight="15rem"
-                      hint="Pilih siswa yang akan ikut dalam pertemuan ini. Default: semua siswa terpilih."
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                          
+                          return { id: s.id, label }
+                        })}
+                        selectedIds={selectedStudentIds}
+                        onChange={setSelectedStudentIds}
+                        maxHeight="15rem"
+                        hint="Pilih siswa yang akan ikut dalam pertemuan ini. Default: semua siswa terpilih."
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">

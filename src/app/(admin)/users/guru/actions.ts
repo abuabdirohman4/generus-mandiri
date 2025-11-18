@@ -683,3 +683,75 @@ export async function assignTeacherToClass(teacherId: string, classId: string) {
     throw handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelas');
   }
 }
+
+export interface MeetingFormSettings {
+  showTitle: boolean
+  showTopic: boolean
+  showDescription: boolean
+  showDate: boolean
+  showMeetingType: boolean
+  showClassSelection: boolean
+  showStudentSelection: boolean
+  showGenderFilter: boolean
+}
+
+export async function getMeetingFormSettings(userId: string): Promise<{ success: boolean; data?: MeetingFormSettings; error?: string }> {
+  try {
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('meeting_form_settings')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return { success: true, data: undefined } // No settings found, use defaults
+      }
+      throw error
+    }
+
+    return { 
+      success: true, 
+      data: data.meeting_form_settings as MeetingFormSettings || undefined 
+    }
+  } catch (error) {
+    console.error('Error getting meeting form settings:', error)
+    return { 
+      success: false, 
+      error: handleApiError(error, 'memuat data', 'Gagal memuat pengaturan form').message 
+    }
+  }
+}
+
+export async function updateMeetingFormSettings(
+  userId: string, 
+  settings: MeetingFormSettings
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        meeting_form_settings: settings,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+
+    if (error) {
+      throw error
+    }
+
+    revalidatePath('/users/guru')
+    revalidatePath('/absensi')
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating meeting form settings:', error)
+    return { 
+      success: false, 
+      error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan pengaturan form').message 
+    }
+  }
+}
