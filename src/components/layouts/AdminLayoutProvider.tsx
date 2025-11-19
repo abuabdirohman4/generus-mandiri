@@ -113,9 +113,9 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           setLoading(false);
           setError(null);
         } else if (event === 'SIGNED_IN' && session?.user) {
-          // Clear cache on manual login to ensure fresh data
-          clearSWRCache();
-          fetchUserData();
+          // Clear cache and reload page on manual login to ensure fresh data
+          // This prevents stale cache issues (Bug fix: percentages 0%, old account data)
+          clearUserCache();
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Clear cache on token refresh to ensure data stays fresh
           clearSWRCache();
