@@ -6,6 +6,8 @@ import Button from '@/components/ui/button/Button'
 import { getMeetingFormSettings, updateMeetingFormSettings } from '../actions'
 import { toast } from 'sonner'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
+import { mutate } from 'swr'
+import { meetingFormSettingsKeys } from '@/lib/swr'
 
 interface MeetingFormSettings {
   showTitle: boolean
@@ -79,6 +81,11 @@ export default function MeetingFormSettingsModal({
       const result = await updateMeetingFormSettings(userId, settings)
       if (result.success) {
         toast.success('Pengaturan berhasil disimpan')
+
+        // Invalidate SWR cache for this user's settings
+        // This ensures the user will get fresh settings next time they open the modal
+        await mutate(meetingFormSettingsKeys.settings(userId))
+
         onSuccess?.()
         onClose()
       } else {
