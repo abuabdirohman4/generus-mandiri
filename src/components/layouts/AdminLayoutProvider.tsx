@@ -108,14 +108,25 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
       (event, session) => {
         if (event === 'SIGNED_OUT') {
           // Clear all user-related cache when signing out
+          sessionStorage.removeItem('auth-initialized'); // Clear session marker
           clearUserCache();
           setProfile(null);
           setLoading(false);
           setError(null);
         } else if (event === 'SIGNED_IN' && session?.user) {
-          // Clear cache and reload page on manual login to ensure fresh data
-          // This prevents stale cache issues (Bug fix: percentages 0%, old account data)
-          clearUserCache();
+          // Check if this is a fresh login (not a page reload)
+          // We use sessionStorage to track this - it persists during page reloads but clears on new tab/window
+          const isPageReload = sessionStorage.getItem('auth-initialized') === 'true';
+
+          if (!isPageReload) {
+            // Fresh login - clear cache and reload to prevent stale data
+            // Mark that we've initialized auth to prevent infinite reload loop
+            sessionStorage.setItem('auth-initialized', 'true');
+            clearUserCache();
+          } else {
+            // Page reload after login - just fetch data without clearing cache
+            fetchUserData();
+          }
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Clear cache on token refresh to ensure data stays fresh
           clearSWRCache();
