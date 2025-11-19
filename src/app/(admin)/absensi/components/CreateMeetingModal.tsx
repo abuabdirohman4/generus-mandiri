@@ -20,6 +20,7 @@ import Modal from '@/components/ui/modal'
 import { invalidateAllMeetingsCache } from '../utils/cache'
 import { isTeacherClass } from '@/lib/utils/classHelpers'
 import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
+import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -56,68 +57,7 @@ export default function CreateMeetingModal({
   const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
-  
-  // Load meeting form settings
-  const [formSettings, setFormSettings] = useState<{
-    showTitle: boolean
-    showTopic: boolean
-    showDescription: boolean
-    showDate: boolean
-    showMeetingType: boolean
-    showClassSelection: boolean
-    showStudentSelection: boolean
-    showGenderFilter: boolean
-  }>({
-    // Initialize with default values to prevent flash of all fields
-    showTitle: true,
-    showTopic: false,
-    showDescription: false,
-    showDate: true,
-    showMeetingType: true,
-    showClassSelection: true,
-    showStudentSelection: false,
-    showGenderFilter: false
-  })
-  
-  useEffect(() => {
-    if (isOpen && userProfile?.id) {
-      const loadSettings = async () => {
-        try {
-          const { getMeetingFormSettings } = await import('@/app/(admin)/users/guru/actions')
-          const result = await getMeetingFormSettings(userProfile.id)
-          if (result.success && result.data) {
-            setFormSettings(result.data)
-          } else {
-            // Use defaults if no settings found
-            setFormSettings({
-              showTitle: true,
-              showTopic: false,
-              showDescription: false,
-              showDate: true,
-              showMeetingType: true,
-              showClassSelection: true,
-              showStudentSelection: false,
-              showGenderFilter: false
-            })
-          }
-        } catch (error) {
-          console.error('Error loading form settings:', error)
-          // Use defaults on error
-          setFormSettings({
-            showTitle: true,
-            showTopic: false,
-            showDescription: false,
-            showDate: true,
-            showMeetingType: true,
-            showClassSelection: true,
-            showStudentSelection: false,
-            showGenderFilter: false
-          })
-        }
-      }
-      loadSettings()
-    }
-  }, [isOpen, userProfile?.id])
+  const { settings: formSettings, isLoading: isLoadingSettings } = useMeetingFormSettings(userProfile?.id)
 
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
@@ -456,9 +396,19 @@ export default function CreateMeetingModal({
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
               <div className="flex-1 overflow-y-auto px-6 py-4">
+              {isLoadingSettings ? (
+                // Loading skeleton
+                <div className="space-y-4">
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              ) : (
+                <>
               {/* Class Selection */}
               {/* Class Selector - Only show if user has more than 1 class */}
-              {formSettings?.showClassSelection !== false && availableClasses.length > 1 && (
+              {formSettings.showClassSelection && availableClasses.length > 1 && (
                 <div className="mb-4">
                   <MultiSelectCheckbox
                     label="Pilih Kelas"
@@ -506,7 +456,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Gender Filter */}
-              {formSettings?.showGenderFilter !== false && (
+              {formSettings.showGenderFilter && (
                 <div className="mb-4">
                   <InputFilter
                     id="genderFilter"
@@ -526,7 +476,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Meeting Type Selector */}
-              {formSettings?.showMeetingType !== false && (
+              {formSettings.showMeetingType && (
                 <div className="mb-4">
                   <InputFilter
                     id="meetingType"
@@ -545,7 +495,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Title Field */}
-              {formSettings?.showTitle !== false && (
+              {formSettings.showTitle && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Judul Pertemuan (Opsional)
@@ -561,7 +511,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Topic */}
-              {formSettings?.showTopic !== false && (
+              {formSettings.showTopic && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Topik (Opsional)
@@ -577,7 +527,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Description */}
-              {formSettings?.showDescription !== false && (
+              {formSettings.showDescription && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Deskripsi (Opsional)
@@ -593,7 +543,7 @@ export default function CreateMeetingModal({
               )}
 
               {/* Date Picker */}
-              {formSettings?.showDate !== false && (
+              {formSettings.showDate && (
                 <div className="mb-4">
                   <DatePickerInput
                     mode="single"
@@ -625,7 +575,7 @@ export default function CreateMeetingModal({
                   </h4>
                   
                   {/* Student Selection */}
-                  {formSettings?.showStudentSelection !== false && (
+                  {formSettings.showStudentSelection && (
                     <div className="mt-4">
                       <MultiSelectCheckbox
                         label="Pilih Siswa yang Akan Diikutsertakan"
@@ -661,6 +611,8 @@ export default function CreateMeetingModal({
                   </h4>
                 </div>
               )}
+                </>
+              )}
               </div>
 
               {/* Buttons - Sticky at bottom */}
@@ -674,7 +626,7 @@ export default function CreateMeetingModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0}
+                  disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0 || isLoadingSettings}
                   variant="primary"
                   loading={isSubmitting}
                   loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}

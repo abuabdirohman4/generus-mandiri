@@ -16,6 +16,7 @@ import DataFilter from '@/components/shared/DataFilter'
 import LoadingState from './components/LoadingState'
 import Spinner from '@/components/ui/spinner/Spinner'
 import Pagination from '@/components/ui/pagination/Pagination'
+import { useMeetingFormSettings } from './hooks/useMeetingFormSettings'
 
 export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
@@ -23,7 +24,10 @@ export default function AbsensiPage() {
   const { daerah } = useDaerah()
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
-  
+
+  // Prefetch meeting form settings for optimal modal performance
+  useMeetingFormSettings(userProfile?.id)
+
   // Get UI state from Zustand store
   const {
     viewMode,
