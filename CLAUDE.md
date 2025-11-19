@@ -91,10 +91,11 @@ student (own data only)
 - `laporanStore`, `organisasiStore` - Reports and organization management
 
 **SWR Configuration**:
-- 2-minute deduping interval
-- Revalidates on focus and reconnect
+- 2-minute deduping interval (can be customized per hook)
+- Revalidates on focus and reconnect (can be disabled per hook)
 - localStorage-based persistent cache (survives page refresh)
-- Cache cleared on logout via `clearUserCache()`
+- Cache cleared on login/logout via `clearUserCache()` (with page reload)
+- Centralized SWR keys in `@/lib/swr.ts` for consistency (e.g., `meetingFormSettingsKeys`, `studentKeys`, `classKeys`)
 
 ### Data Fetching Patterns
 
@@ -123,6 +124,37 @@ async function handleSubmit(data) {
     revalidatePath('/absensi') // Server-side cache
   }
 }
+```
+
+**Pattern 3**: Prefetch + Custom SWR Configuration (for optimal performance)
+```typescript
+// Example: Meeting form settings with long cache and no revalidation on focus
+// In hook (src/app/(admin)/absensi/hooks/useMeetingFormSettings.ts)
+export function useMeetingFormSettings(userId?: string) {
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? meetingFormSettingsKeys.settings(userId) : null,
+    async () => {
+      const result = await getMeetingFormSettings(userId)
+      return result.success && result.data ? result.data : DEFAULT_SETTINGS
+    },
+    {
+      revalidateOnFocus: false, // Settings rarely change
+      dedupingInterval: 5 * 60 * 1000, // 5 minutes cache
+      fallbackData: DEFAULT_SETTINGS, // Show immediately
+    }
+  )
+  return { settings: data || DEFAULT_SETTINGS, isLoading, error, mutate }
+}
+
+// In page (prefetch for optimal modal performance)
+export default function AbsensiPage() {
+  const { profile } = useUserProfile()
+  useMeetingFormSettings(profile?.id) // Prefetch before modal opens
+  // ...
+}
+
+// After mutation, invalidate cache
+await mutate(meetingFormSettingsKeys.settings(userId))
 ```
 
 ### UI Components
@@ -168,8 +200,11 @@ async function handleSubmit(data) {
 ### Cache Management
 - Use `revalidatePath()` after mutations in server actions
 - Call `mutate()` on SWR hooks after client-side updates
-- Full logout requires `clearUserCache()` to remove all persistent state
-- Login flow uses `clearSWRCache()` without reload for smooth transition
+- Both logout AND login use `clearUserCache()` to remove all persistent state and reload the page
+  - This ensures clean slate and prevents stale cache issues (e.g., wrong percentages, old account data)
+  - `clearSWRCache()` is only used for token refresh (no page reload needed)
+- For targeted cache invalidation (e.g., after saving settings), use `mutate(specificKey)` from SWR
+  - Example: `mutate(meetingFormSettingsKeys.settings(userId))` after updating user's meeting form settings
 
 ### Security
 - All sensitive operations must be in server actions with permission checks
