@@ -67,7 +67,17 @@ export default function CreateMeetingModal({
     showClassSelection: boolean
     showStudentSelection: boolean
     showGenderFilter: boolean
-  } | null>(null)
+  }>({
+    // Initialize with default values to prevent flash of all fields
+    showTitle: true,
+    showTopic: false,
+    showDescription: false,
+    showDate: true,
+    showMeetingType: true,
+    showClassSelection: true,
+    showStudentSelection: false,
+    showGenderFilter: false
+  })
   
   useEffect(() => {
     if (isOpen && userProfile?.id) {
