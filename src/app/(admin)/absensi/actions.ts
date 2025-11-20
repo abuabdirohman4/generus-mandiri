@@ -14,6 +14,7 @@ interface AttendanceData {
 
 interface CreateMeetingData {
   classIds: string[]
+  kelompokIds?: string[] // Optional: kelompok IDs for SAMBUNG_DESA meeting type
   date: string
   title: string
   topic?: string
@@ -279,6 +280,7 @@ export async function createMeeting(data: CreateMeetingData) {
       .insert({
         class_id: data.classIds[0], // Primary class for backward compatibility
         class_ids: data.classIds, // Array of all classes
+        kelompok_ids: data.kelompokIds || null, // Array of kelompok IDs for SAMBUNG_DESA
         teacher_id: profile.id,
         title: data.title,
         date: data.date,
@@ -286,7 +288,7 @@ export async function createMeeting(data: CreateMeetingData) {
         description: data.description,
         student_snapshot: studentIdsForSnapshot, // Use selected student IDs or all students
         meeting_number: nextMeetingNumber,
-        meeting_type_code: data.meetingTypeCode // NEW: Meeting type code
+        meeting_type_code: data.meetingTypeCode // Meeting type code
       })
       .select()
       .single()
@@ -416,6 +418,7 @@ export async function getMeetingById(meetingId: string) {
         id,
         class_id,
         class_ids,
+        kelompok_ids,
         teacher_id,
         title,
         date,
@@ -620,7 +623,12 @@ export async function updateMeeting(meetingId: string, data: Partial<CreateMeeti
       meeting_type_code: data.meetingTypeCode,
       updated_at: new Date().toISOString()
     }
-    
+
+    // Handle kelompokIds update if provided
+    if (data.kelompokIds !== undefined) {
+      updateData.kelompok_ids = data.kelompokIds.length > 0 ? data.kelompokIds : null
+    }
+
     // Handle classIds update if provided
     if (data.classIds && data.classIds.length > 0) {
       updateData.class_id = data.classIds[0]

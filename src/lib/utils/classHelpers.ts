@@ -61,7 +61,16 @@ export function isTeacherClass(classData: ClassData): boolean {
   if (!classData.name) {
     return false
   }
-  
+
   return classData.name.toLowerCase().includes('pengajar')
+}
+
+/**
+ * Check if a class is eligible for Sambung Desa meetings
+ * Returns true if class is NOT Caberawit (PAUD/Kelas 1-6) AND NOT Teacher class
+ * Used to filter classes for Sambung Desa meeting type
+ */
+export function isSambungDesaEligible(classData: ClassData): boolean {
+  return !isCaberawitClass(classData) && !isTeacherClass(classData)
 }
 

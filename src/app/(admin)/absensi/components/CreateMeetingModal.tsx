@@ -18,7 +18,7 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { useMeetingTypes } from '../hooks/useMeetingTypes'
 import Modal from '@/components/ui/modal'
 import { invalidateAllMeetingsCache } from '../utils/cache'
-import { isTeacherClass } from '@/lib/utils/classHelpers'
+import { isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
 
@@ -51,6 +51,8 @@ export default function CreateMeetingModal({
   const [meetingType, setMeetingType] = useState<string>('')
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
+  const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
+  const [selectedEligibleClassIds, setSelectedEligibleClassIds] = useState<string[]>([])
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
@@ -104,12 +106,17 @@ export default function CreateMeetingModal({
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
   ])
 
+  // Filter classes eligible for Sambung Desa (exclude PAUD, Kelas 1-6, and Pengajar)
+  const eligibleClasses = useMemo(() => {
+    return classes.filter(cls => isSambungDesaEligible(cls))
+  }, [classes])
+
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
     // Find first class from student.classes that exists in selectedClassIds
     const matchingClassId = student.classes?.find((c: any) => selectedClassIds.includes(c.id))?.id
     if (!matchingClassId) return null
-    
+
     // Get full class details
     return classesData.find((c: any) => c.id === matchingClassId)
   }
@@ -127,25 +134,65 @@ export default function CreateMeetingModal({
     return new Map(kelompok.map((k: any) => [k.id, k.name]))
   }, [kelompok])
 
-  // Filter students by selected classes and gender - support multiple classes per student
-  const filteredStudents = students.filter(student => {
-    // Filter by class
-    let matchesClass = true
-    if (selectedClassIds.length > 0) {
-      const studentClassIds = (student.classes || []).map(c => c.id)
-      // Also check class_id for backward compatibility
-      const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
-      matchesClass = allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+  // Filter students by selected classes/kelompok and gender - support multiple classes per student
+  const filteredStudents = useMemo(() => {
+    if (meetingType === 'SAMBUNG_DESA') {
+      // For SAMBUNG_DESA: filter by kelompok + eligible classes + gender
+      return students.filter(student => {
+        // Filter by kelompok
+        let matchesKelompok = true
+        if (selectedKelompokIds.length > 0 && student.kelompok_id) {
+          matchesKelompok = selectedKelompokIds.includes(student.kelompok_id)
+        }
+
+        // Filter by eligible classes
+        let matchesClass = true
+        if (selectedEligibleClassIds.length > 0) {
+          const studentClassIds = (student.classes || []).map(c => c.id)
+          const allStudentClassIds = student.class_id
+            ? [...studentClassIds, student.class_id]
+            : studentClassIds
+          matchesClass = allStudentClassIds.some(classId =>
+            selectedEligibleClassIds.includes(classId)
+          )
+        }
+
+        // Filter by gender
+        let matchesGender = true
+        if (selectedGender && selectedGender !== '') {
+          matchesGender = student.gender === selectedGender
+        }
+
+        return matchesKelompok && matchesClass && matchesGender
+      })
+    } else {
+      // Original logic for other meeting types
+      return students.filter(student => {
+        // Filter by class
+        let matchesClass = true
+        if (selectedClassIds.length > 0) {
+          const studentClassIds = (student.classes || []).map(c => c.id)
+          const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+          matchesClass = allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+        }
+
+        // Filter by gender
+        let matchesGender = true
+        if (selectedGender && selectedGender !== '') {
+          matchesGender = student.gender === selectedGender
+        }
+
+        return matchesClass && matchesGender
+      })
     }
-    
-    // Filter by gender
-    let matchesGender = true
-    if (selectedGender && selectedGender !== '') {
-      matchesGender = student.gender === selectedGender
-    }
-    
-    return matchesClass && matchesGender
-  })
+  }, [
+    meetingType,
+    selectedKelompokIds,
+    selectedEligibleClassIds,
+    selectedClassIds,
+    selectedGender,
+    students
+  ])
 
   // Force revalidate students when modal opens to get fresh data
   useEffect(() => {
@@ -222,6 +269,10 @@ export default function CreateMeetingModal({
         description: meeting.description || ''
       })
       setMeetingType(meeting.meeting_type_code || '')
+      // Initialize kelompok_ids for SAMBUNG_DESA in edit mode
+      if (meeting.kelompok_ids && Array.isArray(meeting.kelompok_ids)) {
+        setSelectedKelompokIds(meeting.kelompok_ids)
+      }
     }
   }, [meeting])
 
@@ -303,10 +354,23 @@ export default function CreateMeetingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (selectedClassIds.length === 0) {
-      toast.error('Pilih kelas terlebih dahulu')
-      return
+
+    // Validation for SAMBUNG_DESA
+    if (meetingType === 'SAMBUNG_DESA') {
+      if (selectedKelompokIds.length === 0) {
+        toast.error('Pilih minimal satu kelompok')
+        return
+      }
+      if (selectedEligibleClassIds.length === 0) {
+        toast.error('Pilih minimal satu kelas')
+        return
+      }
+    } else {
+      // Original validation for other meeting types
+      if (selectedClassIds.length === 0) {
+        toast.error('Pilih kelas terlebih dahulu')
+        return
+      }
     }
 
     if (selectedStudentIds.length === 0) {
@@ -324,7 +388,8 @@ export default function CreateMeetingModal({
       if (meeting) {
         // Edit mode
         const result = await updateMeeting(meeting.id, {
-          classIds: selectedClassIds,
+          classIds: meetingType === 'SAMBUNG_DESA' ? selectedEligibleClassIds : selectedClassIds,
+          kelompokIds: meetingType === 'SAMBUNG_DESA' ? selectedKelompokIds : undefined,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
@@ -332,7 +397,7 @@ export default function CreateMeetingModal({
           meetingTypeCode: meetingType,
           studentIds: selectedStudentIds
         })
-        
+
         if (result.success) {
           toast.success('Pertemuan berhasil diperbarui!')
           // Invalidate all meetings cache so other users see the update
@@ -345,7 +410,8 @@ export default function CreateMeetingModal({
       } else {
         // Create mode
         const result = await createMeeting({
-          classIds: selectedClassIds,
+          classIds: meetingType === 'SAMBUNG_DESA' ? selectedEligibleClassIds : selectedClassIds,
+          kelompokIds: meetingType === 'SAMBUNG_DESA' ? selectedKelompokIds : undefined,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
@@ -382,6 +448,8 @@ export default function CreateMeetingModal({
     setMeetingType('')
     setSelectedStudentIds([])
     setSelectedGender(null)
+    setSelectedKelompokIds([])
+    setSelectedEligibleClassIds([])
     onClose()
   }
 
@@ -406,9 +474,45 @@ export default function CreateMeetingModal({
                 </div>
               ) : (
                 <>
-              {/* Class Selection */}
-              {/* Class Selector - Only show if user has more than 1 class */}
-              {formSettings.showClassSelection && availableClasses.length > 1 && (
+              {/* Sambung Desa: Kelompok & Class Selection */}
+              {meetingType === 'SAMBUNG_DESA' && (
+                <>
+                  {/* Kelompok Selector */}
+                  <div className="mb-4">
+                    <MultiSelectCheckbox
+                      label="Pilih Kelompok"
+                      items={(kelompok || []).map(k => ({
+                        id: k.id,
+                        label: k.name
+                      }))}
+                      selectedIds={selectedKelompokIds}
+                      onChange={setSelectedKelompokIds}
+                      hint="Pilih satu atau lebih kelompok untuk pertemuan Sambung Desa"
+                      disabled={isSubmitting}
+                      isLoading={!kelompok}
+                    />
+                  </div>
+
+                  {/* Eligible Class Selector */}
+                  <div className="mb-4">
+                    <MultiSelectCheckbox
+                      label="Pilih Kelas"
+                      items={eligibleClasses.map(cls => ({
+                        id: cls.id,
+                        label: cls.name
+                      }))}
+                      selectedIds={selectedEligibleClassIds}
+                      onChange={setSelectedEligibleClassIds}
+                      hint="Kelas yang tersedia: tidak termasuk PAUD, Kelas 1-6, dan Pengajar"
+                      disabled={isSubmitting || classesLoading}
+                      isLoading={classesLoading}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Regular Class Selection - Hidden for SAMBUNG_DESA */}
+              {formSettings.showClassSelection && availableClasses.length > 1 && meetingType !== 'SAMBUNG_DESA' && (
                 <div className="mb-4">
                   <MultiSelectCheckbox
                     label="Pilih Kelas"
@@ -419,13 +523,13 @@ export default function CreateMeetingModal({
                         const kelompokMap = new Map(
                           kelompok.map(k => [k.id, k.name])
                         )
-                        
+
                         // Check for duplicate class names
                         const nameCounts = availableClasses.reduce((acc, cls: any) => {
                           acc[cls.name] = (acc[cls.name] || 0) + 1
                           return acc
                         }, {} as Record<string, number>)
-                        
+
                         // Format labels
                         return availableClasses.map((cls: any) => {
                           const hasDuplicate = nameCounts[cls.name] > 1
@@ -433,14 +537,14 @@ export default function CreateMeetingModal({
                           const label = hasDuplicate && kelompokName
                             ? `${cls.name} (${kelompokName})`
                             : cls.name
-                          
+
                           return {
                             id: cls.id,
                             label
                           }
                         })
                       }
-                      
+
                       // Default: no format change
                       return availableClasses.map(cls => ({
                         id: cls.id,
