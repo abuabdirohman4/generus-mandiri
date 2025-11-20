@@ -118,11 +118,22 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           // We use sessionStorage to track this - it persists during page reloads but clears on new tab/window
           const isPageReload = sessionStorage.getItem('auth-initialized') === 'true';
 
+          // Check if user switched accounts (different user ID from last login)
+          const lastUserId = sessionStorage.getItem('last-user-id');
+          const isAccountSwitch = lastUserId && lastUserId !== session.user.id;
+
           if (!isPageReload) {
-            // Fresh login - clear cache and reload to prevent stale data
-            // Mark that we've initialized auth to prevent infinite reload loop
+            // Fresh login (not a page reload)
             sessionStorage.setItem('auth-initialized', 'true');
-            clearUserCache();
+            sessionStorage.setItem('last-user-id', session.user.id);
+
+            if (isAccountSwitch) {
+              // Different account - clear cache and reload to prevent stale data
+              clearUserCache();
+            } else {
+              // Same account or first login - just fetch data (no reload needed)
+              fetchUserData();
+            }
           } else {
             // Page reload after login - just fetch data without clearing cache
             fetchUserData();
