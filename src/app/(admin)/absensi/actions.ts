@@ -1234,43 +1234,45 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           })
           
           // Filter meetings by selected class(es) and kelompok
+          // PRIMARY filter: meetings must have at least one matching class that teacher teaches
           filteredMeetings = (meetings || []).filter((meeting: any) => {
-            // Check class_ids array first (for multi-class meetings)
-            if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
-              const matchingClassId = meeting.class_ids.find((id: string) => classIds.includes(id))
-              if (matchingClassId) {
-                // Get kelompok_id for the matching class (not from meeting.classes)
-                const matchingClassKelompokId = allClassToKelompokMap.get(matchingClassId)
-                const expectedKelompokId = classToKelompokMap.get(matchingClassId)
-                
+            // Get all class IDs from this meeting
+            const meetingClassIds = new Set<string>()
+            if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+              meeting.class_ids.forEach((id: string) => meetingClassIds.add(id))
+            }
+            if (meeting.class_id) {
+              meetingClassIds.add(meeting.class_id)
+            }
+
+            // PRIMARY CHECK: Does meeting have ANY of the selected classes?
+            // Also verify kelompok matches if applicable
+            let hasMatchingClass = false
+
+            for (const classId of classIds) {
+              if (meetingClassIds.has(classId)) {
+                // Found matching class - verify kelompok if needed
+                const matchingClassKelompokId = allClassToKelompokMap.get(classId)
+                const expectedKelompokId = classToKelompokMap.get(classId)
+
                 // If both kelompok_ids exist and match, include
-                if (expectedKelompokId && matchingClassKelompokId && expectedKelompokId === matchingClassKelompokId) {
-                  return true
+                if (expectedKelompokId && matchingClassKelompokId) {
+                  if (expectedKelompokId === matchingClassKelompokId) {
+                    hasMatchingClass = true
+                    break
+                  }
+                } else if (!expectedKelompokId || !matchingClassKelompokId || expectedKelompokIds.size === 0) {
+                  // No kelompok_id check needed (backward compatibility)
+                  hasMatchingClass = true
+                  break
                 }
-                // If no kelompok_id check needed (backward compatibility)
-                if (!expectedKelompokId || !matchingClassKelompokId || expectedKelompokIds.size === 0) {
-                  return true
-                }
-                return false
               }
-              return false
             }
-            // Check class_id
-            if (meeting.class_id && classIds.includes(meeting.class_id)) {
-              const classKelompokId = allClassToKelompokMap.get(meeting.class_id)
-              const expectedKelompokId = classToKelompokMap.get(meeting.class_id)
-              
-              if (expectedKelompokId && classKelompokId && expectedKelompokId === classKelompokId) {
-                return true
-              }
-              if (!expectedKelompokId || !classKelompokId || expectedKelompokIds.size === 0) {
-                return true
-              }
-              return false
-            }
-            
-            // NEW: Also check if meeting is for "Pengajar" in same kelompok
-            // (hanya jika selected classId bukan "Pengajar" DAN teacher mengajar Paud/Kelas 1-6)
+
+            if (hasMatchingClass) return true
+
+            // ADDITIONAL ACCESS: Also check if meeting is for "Pengajar" in same kelompok
+            // (only if selected class is NOT "Pengajar" AND teacher teaches Paud/Kelas 1-6)
             const selectedClassIsPengajar = classIds.some(id => {
               const classDetails = classDetailsMap.get(id)
               return classDetails ? isTeacherClass(classDetails) : false
@@ -1300,22 +1302,34 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 if (hasPengajarInSameKelompok) return true
               }
             }
-            
+
+            // No match - hide meeting
             return false
           })
         } else {
-          // If no classId provided, filter to meetings that include any of teacher's classes
-          // OR meetings for "Pengajar" class in the same kelompok as teacher's classes
+          // If no classId provided, filter to meetings that include ANY of teacher's classes
+          // This is the PRIMARY filter - meetings should ONLY appear if teacher teaches at least one class in the meeting
           filteredMeetings = (meetings || []).filter((meeting: any) => {
-            // Existing logic: meetings untuk kelas yang diajarkan teacher
-            const matchesTeacherClass = 
-              meeting.class_ids?.some((id: string) => teacherClassIds.includes(id)) ||
-              (meeting.class_id && teacherClassIds.includes(meeting.class_id))
-            
-            if (matchesTeacherClass) return true
-            
-            // NEW: Check if meeting is for "Pengajar" class in same kelompok
-            // HANYA jika teacher mengajar Paud atau Kelas 1-6
+            // PRIMARY CHECK: Does teacher teach ANY class in this meeting?
+            // Check both class_ids array and single class_id
+            const meetingClassIds = new Set<string>()
+
+            if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+              meeting.class_ids.forEach((id: string) => meetingClassIds.add(id))
+            }
+            if (meeting.class_id) {
+              meetingClassIds.add(meeting.class_id)
+            }
+
+            // Check if teacher teaches ANY of the meeting's classes
+            const teachesAnyMeetingClass = teacherClassIds.some(teacherClassId =>
+              meetingClassIds.has(teacherClassId)
+            )
+
+            if (teachesAnyMeetingClass) return true
+
+            // ADDITIONAL ACCESS: Check if meeting is for "Pengajar" class in same kelompok
+            // This is ONLY for Caberawit teachers (Paud/Kelas 1-6) to also see "Pengajar" meetings
             if (teacherCaberawit) {
               // Check from primary class (meeting.classes)
               if (meeting.classes && isTeacherClass(meeting.classes)) {

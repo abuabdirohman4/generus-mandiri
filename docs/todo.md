@@ -1,4 +1,5 @@
 ## v1.10.0
+- [ ] Add Kelas Desa (Aghniya, MM Desa, Pengurus Desa dll)
 - [ ] Add Pengajian Daerah
     - Nama
     - Tipe (Daerah)
@@ -11,7 +12,7 @@
 - [x] Kelas Pengajar
 - [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - [x] Add Template name
-- [ ] Add Pengajian Desa
+- [x] Add Pengajian Desa
     - Nama
     - Tipe (Desa)
     - Peserta

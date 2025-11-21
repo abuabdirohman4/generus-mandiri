@@ -16,6 +16,8 @@ interface UserProfile {
   classes?: Array<{
     id: string;
     name: string;
+    kelompok_id?: string | null;
+    kelompok?: { id: string; name: string } | null;
   }>;
 }
 
@@ -41,30 +43,30 @@ export const useUserProfileStore = create<UserProfileState>()(
       error: null,
       isInitialized: false,
 
-      setProfile: (profile: UserProfile | null) => set({ 
-        profile, 
-        loading: false, 
+      setProfile: (profile: UserProfile | null) => set({
+        profile,
+        loading: false,
         error: null,
-        isInitialized: true 
+        isInitialized: true
       }),
 
       setAvatarUrl: (avatarUrl: string) => set({ avatarUrl }),
 
       setLoading: (loading: boolean) => set({ loading }),
 
-      setError: (error: string | null) => set({ 
-        error, 
-        loading: false 
+      setError: (error: string | null) => set({
+        error,
+        loading: false
       }),
 
       clearProfile: () => {
         // Clear all user-related cache when logging out
         clearUserCache()
-        set({ 
-          profile: null, 
+        set({
+          profile: null,
           avatarUrl: null,
-          loading: false, 
-          error: null 
+          loading: false,
+          error: null
         })
       },
     }),

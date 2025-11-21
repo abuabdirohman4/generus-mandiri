@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
@@ -8,7 +8,7 @@ import Button from '@/components/ui/button/Button'
 import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
-import { useClasses } from '@/hooks/useClasses'
+import { useKelas } from '@/hooks/useKelas'
 import { useKelompok } from '@/hooks/useKelompok'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
@@ -21,6 +21,7 @@ import { invalidateAllMeetingsCache } from '../utils/cache'
 import { isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
+import { isAdminDesa } from '@/lib/userUtils'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -33,10 +34,10 @@ interface CreateMeetingModalProps {
   meeting?: any // Add meeting prop for edit mode
 }
 
-export default function CreateMeetingModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
+export default function CreateMeetingModal({
+  isOpen,
+  onClose,
+  onSuccess,
   classId,
   meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
@@ -53,9 +54,10 @@ export default function CreateMeetingModal({
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
   const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
   const [selectedEligibleClassIds, setSelectedEligibleClassIds] = useState<string[]>([])
+  const [selectedMasterClassIds, setSelectedMasterClassIds] = useState<string[]>([])
 
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
-  const { classes, isLoading: classesLoading } = useClasses()
+  const { kelas: classes, isLoading: classesLoading } = useKelas()
   const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
@@ -64,13 +66,13 @@ export default function CreateMeetingModal({
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
     if (!availableTypes) return availableTypes
-    
+
     // Check if any selected class is Pengajar
     const hasPengajarClass = selectedClassIds.some(classId => {
       const selectedClass = classes.find(c => c.id === classId)
       return selectedClass && isTeacherClass(selectedClass)
     })
-    
+
     // If Pengajar class is selected, ensure PEMBINAAN is always available
     if (hasPengajarClass && !availableTypes.PEMBINAAN) {
       return {
@@ -82,28 +84,17 @@ export default function CreateMeetingModal({
     return availableTypes
   }, [availableTypes, selectedClassIds, classes])
 
-  // Filter available classes based on user role and enrich with kelompok_id for teacher
-  // Use stable string representation for dependency to avoid infinite loops
+  // Filter available classes based on user role
+  // userProfile.classes now includes full kelompok info, no need to enrich
   const availableClasses = useMemo(() => {
-    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
-      // Enrich teacher classes with kelompok_id from classes
-      return userProfile.classes.map(cls => {
-        const fullClass = classes.find(c => c.id === cls.id)
-        return {
-          ...cls,
-          kelompok_id: fullClass?.kelompok_id || null
-        }
-      })
-    } else if (userProfile?.role === 'teacher') {
+    if (userProfile?.role === 'teacher') {
       return userProfile.classes || []
     }
     return classes || []
   }, [
     userProfile?.role,
-    userProfile?.classes?.length,
-    userProfile?.classes?.map(c => c.id).join(','),
-    classes?.length,
-    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
+    userProfile?.classes,
+    classes
   ])
 
   // Filter classes eligible for Sambung Desa (exclude PAUD, Kelas 1-6, and Pengajar)
@@ -111,14 +102,59 @@ export default function CreateMeetingModal({
     return classes.filter(cls => isSambungDesaEligible(cls))
   }, [classes])
 
+  // Get unique master classes from eligible actual classes (for SAMBUNG_DESA selector)
+  const eligibleMasterClasses = useMemo(() => {
+    const masterMap = new Map<string, { id: string; name: string }>()
+
+    // Filter eligible classes by selected kelompok first
+    const filteredClasses = eligibleClasses.filter(cls => {
+      // If no kelompok selected, include all
+      if (selectedKelompokIds.length === 0) return true
+      // Only include classes from selected kelompok
+      return selectedKelompokIds.includes(cls.kelompok_id || '')
+    })
+
+    filteredClasses.forEach(cls => {
+      const mappings = (cls as any).class_master_mappings || []
+      mappings.forEach((mapping: any) => {
+        const master = mapping.class_master
+        if (master?.id) {
+          masterMap.set(master.id, { id: master.id, name: master.name })
+        }
+      })
+    })
+
+    return Array.from(masterMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [eligibleClasses, selectedKelompokIds])
+
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
-    // Find first class from student.classes that exists in selectedClassIds
-    const matchingClassId = student.classes?.find((c: any) => selectedClassIds.includes(c.id))?.id
-    if (!matchingClassId) return null
+    // For students with multiple classes, filter eligible ones first
+    // This ensures we show eligible classes (not Pengajar/PAUD/Caberawit) when student has multiple classes
+    const eligibleClassIds = (student.classes || [])
+      .map((c: any) => c.id)
+      .filter((classId: string) => {
+        const cls = classesData.find(c => c.id === classId)
+        return cls && isSambungDesaEligible(cls)
+      })
 
-    // Get full class details
-    return classesData.find((c: any) => c.id === matchingClassId)
+    // Find first eligible class that matches selection
+    const matchingClassId = eligibleClassIds.find((classId: string) => selectedClassIds.includes(classId))
+    if (matchingClassId) {
+      return classesData.find((c: any) => c.id === matchingClassId)
+    }
+
+    // If no match but has eligible classes, return first eligible class
+    // This handles case where selectedClassIds is empty (e.g., Admin Desa using master class selector)
+    if (eligibleClassIds.length > 0) {
+      return classesData.find(c => c.id === eligibleClassIds[0])
+    }
+
+    // Fallback: find any class from student.classes that exists in selectedClassIds
+    const fallbackClassId = student.classes?.find((c: any) => selectedClassIds.includes(c.id))?.id
+    if (!fallbackClassId) return null
+
+    return classesData.find((c: any) => c.id === fallbackClassId)
   }
 
   // Check if teacher has multiple kelompok
@@ -137,34 +173,68 @@ export default function CreateMeetingModal({
   // Filter students by selected classes/kelompok and gender - support multiple classes per student
   const filteredStudents = useMemo(() => {
     if (meetingType === 'SAMBUNG_DESA') {
-      // For SAMBUNG_DESA: filter by kelompok + eligible classes + gender
-      return students.filter(student => {
-        // Filter by kelompok
-        let matchesKelompok = true
-        if (selectedKelompokIds.length > 0 && student.kelompok_id) {
-          matchesKelompok = selectedKelompokIds.includes(student.kelompok_id)
-        }
+      // For ADMIN DESA: filter by master class
+      if (userProfile && isAdminDesa(userProfile)) {
+        return students.filter(student => {
+          // 1. Filter by kelompok
+          if (selectedKelompokIds.length > 0 && student.kelompok_id) {
+            if (!selectedKelompokIds.includes(student.kelompok_id)) return false
+          }
 
-        // Filter by eligible classes
-        let matchesClass = true
-        if (selectedEligibleClassIds.length > 0) {
-          const studentClassIds = (student.classes || []).map(c => c.id)
-          const allStudentClassIds = student.class_id
-            ? [...studentClassIds, student.class_id]
-            : studentClassIds
-          matchesClass = allStudentClassIds.some(classId =>
-            selectedEligibleClassIds.includes(classId)
-          )
-        }
+          // 2. Filter by master class
+          if (selectedMasterClassIds.length > 0) {
+            const studentClassIds = (student.classes || []).map((c: any) => c.id)
+            const allIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
 
-        // Filter by gender
-        let matchesGender = true
-        if (selectedGender && selectedGender !== '') {
-          matchesGender = student.gender === selectedGender
-        }
+            const hasMatchingClass = allIds.some(classId => {
+              const actualClass = classes.find(c => c.id === classId) as any
+              if (!actualClass?.class_master_mappings) return false
 
-        return matchesKelompok && matchesClass && matchesGender
-      })
+              // Exclude kelas Pengajar, PAUD, dan Caberawit
+              if (!isSambungDesaEligible(actualClass)) return false
+
+              return actualClass.class_master_mappings.some((mapping: any) =>
+                mapping.class_master?.id && selectedMasterClassIds.includes(mapping.class_master.id)
+              )
+            })
+
+            if (!hasMatchingClass) return false
+          }
+
+          // 3. Filter by gender
+          if (selectedGender && selectedGender !== '') {
+            if (student.gender !== selectedGender) return false
+          }
+
+          return true
+        })
+      } else {
+        // For OTHER ROLES: filter by actual class
+        return students.filter(student => {
+          // 1. Filter by kelompok
+          if (selectedKelompokIds.length > 0 && student.kelompok_id) {
+            if (!selectedKelompokIds.includes(student.kelompok_id)) return false
+          }
+
+          // 2. Filter by eligible classes
+          if (selectedEligibleClassIds.length > 0) {
+            const studentClassIds = (student.classes || []).map(c => c.id)
+            const allStudentClassIds = student.class_id
+              ? [...studentClassIds, student.class_id]
+              : studentClassIds
+            if (!allStudentClassIds.some(classId =>
+              selectedEligibleClassIds.includes(classId)
+            )) return false
+          }
+
+          // 3. Filter by gender
+          if (selectedGender && selectedGender !== '') {
+            if (student.gender !== selectedGender) return false
+          }
+
+          return true
+        })
+      }
     } else {
       // Original logic for other meeting types
       return students.filter(student => {
@@ -189,9 +259,12 @@ export default function CreateMeetingModal({
     meetingType,
     selectedKelompokIds,
     selectedEligibleClassIds,
+    selectedMasterClassIds,
     selectedClassIds,
     selectedGender,
-    students
+    students,
+    classes,
+    userProfile
   ])
 
   // Force revalidate students when modal opens to get fresh data
@@ -269,12 +342,37 @@ export default function CreateMeetingModal({
         description: meeting.description || ''
       })
       setMeetingType(meeting.meeting_type_code || '')
-      // Initialize kelompok_ids for SAMBUNG_DESA in edit mode
-      if (meeting.kelompok_ids && Array.isArray(meeting.kelompok_ids)) {
-        setSelectedKelompokIds(meeting.kelompok_ids)
+
+      // For SAMBUNG_DESA edit mode with Admin Desa: extract kelompok IDs and master class IDs
+      if (meeting.meeting_type_code === 'SAMBUNG_DESA' && meeting.class_ids && Array.isArray(meeting.class_ids) && classes.length > 0) {
+        // Extract unique kelompok IDs from meeting classes
+        const kelompokIds = new Set<string>()
+        const masterClassIds = new Set<string>()
+
+        meeting.class_ids.forEach((classId: string) => {
+          const classData = classes.find(c => c.id === classId)
+          if (classData) {
+            // Add kelompok_id
+            if (classData.kelompok_id) {
+              kelompokIds.add(classData.kelompok_id)
+            }
+
+            // Extract master class IDs from class_master_mappings
+            const mappings = (classData as any).class_master_mappings || []
+            mappings.forEach((mapping: any) => {
+              const master = mapping.class_master
+              if (master?.id) {
+                masterClassIds.add(master.id)
+              }
+            })
+          }
+        })
+
+        setSelectedKelompokIds(Array.from(kelompokIds))
+        setSelectedMasterClassIds(Array.from(masterClassIds))
       }
     }
-  }, [meeting])
+  }, [meeting, classes])
 
   // Initialize selectedStudentIds based on mode
   useEffect(() => {
@@ -295,6 +393,9 @@ export default function CreateMeetingModal({
       setSelectedStudentIds([])
     }
   }, [selectedClassIds.join(','), filteredStudents.map(s => s.id).join(','), meeting?.student_snapshot?.join(',')])
+
+  // Note: For SAMBUNG_DESA, master class selections are independent of kelompok
+  // No need to clear master class selections when kelompok changes
 
   // Determine if meeting type input should be shown
   const shouldShowMeetingTypeInput = useMemo(() => {
@@ -352,6 +453,36 @@ export default function CreateMeetingModal({
     }
   }, [isOpen, finalAvailableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
 
+  // Helper: Convert selected master class IDs to actual class IDs based on kelompok
+  // For SAMBUNG_DESA: excludes Pengajar and Caberawit (PAUD/Kelas 1-6) classes
+  const getActualClassIdsFromMasterClasses = useCallback((
+    masterClassIds: string[],
+    kelompokIds: string[],
+    allClasses: any[]
+  ): string[] => {
+    if (masterClassIds.length === 0) return []
+
+    return allClasses
+      .filter(cls => {
+        // Must be in selected kelompok
+        if (!kelompokIds.includes(cls.kelompok_id || '')) return false
+
+        // Must have one of the selected master classes
+        const mappings = cls.class_master_mappings || []
+        const hasMasterClass = mappings.some((m: any) =>
+          m.class_master?.id && masterClassIds.includes(m.class_master.id)
+        )
+
+        if (!hasMasterClass) return false
+
+        // CRITICAL: For Sambung Desa, exclude Pengajar and Caberawit classes
+        // This prevents "Pengajar" class (which may be mapped to Pra Nikah/Remaja)
+        // from being included in Sambung Desa meetings
+        return isSambungDesaEligible(cls)
+      })
+      .map(cls => cls.id)
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -361,9 +492,18 @@ export default function CreateMeetingModal({
         toast.error('Pilih minimal satu kelompok')
         return
       }
-      if (selectedEligibleClassIds.length === 0) {
-        toast.error('Pilih minimal satu kelas')
-        return
+
+      // Role-based class validation
+      if (userProfile && isAdminDesa(userProfile)) {
+        if (selectedMasterClassIds.length === 0) {
+          toast.error('Pilih minimal satu kelas')
+          return
+        }
+      } else {
+        if (selectedEligibleClassIds.length === 0) {
+          toast.error('Pilih minimal satu kelas')
+          return
+        }
       }
     } else {
       // Original validation for other meeting types
@@ -387,8 +527,23 @@ export default function CreateMeetingModal({
     try {
       if (meeting) {
         // Edit mode
+        // Determine actual class IDs based on meeting type and user role
+        let actualClassIds: string[]
+        if (meetingType === 'SAMBUNG_DESA') {
+          if (userProfile && isAdminDesa(userProfile)) {
+            // Admin Desa: convert master class IDs to actual class IDs
+            actualClassIds = getActualClassIdsFromMasterClasses(selectedMasterClassIds, selectedKelompokIds, classes)
+          } else {
+            // Other roles: use eligible class IDs directly
+            actualClassIds = selectedEligibleClassIds
+          }
+        } else {
+          // Other meeting types: use regular class IDs
+          actualClassIds = selectedClassIds
+        }
+
         const result = await updateMeeting(meeting.id, {
-          classIds: meetingType === 'SAMBUNG_DESA' ? selectedEligibleClassIds : selectedClassIds,
+          classIds: actualClassIds,
           kelompokIds: meetingType === 'SAMBUNG_DESA' ? selectedKelompokIds : undefined,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
@@ -409,8 +564,23 @@ export default function CreateMeetingModal({
         }
       } else {
         // Create mode
+        // Determine actual class IDs based on meeting type and user role
+        let actualClassIds: string[]
+        if (meetingType === 'SAMBUNG_DESA') {
+          if (userProfile && isAdminDesa(userProfile)) {
+            // Admin Desa: convert master class IDs to actual class IDs
+            actualClassIds = getActualClassIdsFromMasterClasses(selectedMasterClassIds, selectedKelompokIds, classes)
+          } else {
+            // Other roles: use eligible class IDs directly
+            actualClassIds = selectedEligibleClassIds
+          }
+        } else {
+          // Other meeting types: use regular class IDs
+          actualClassIds = selectedClassIds
+        }
+
         const result = await createMeeting({
-          classIds: meetingType === 'SAMBUNG_DESA' ? selectedEligibleClassIds : selectedClassIds,
+          classIds: actualClassIds,
           kelompokIds: meetingType === 'SAMBUNG_DESA' ? selectedKelompokIds : undefined,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
@@ -450,30 +620,50 @@ export default function CreateMeetingModal({
     setSelectedGender(null)
     setSelectedKelompokIds([])
     setSelectedEligibleClassIds([])
+    setSelectedMasterClassIds([])
     onClose()
   }
 
   if (!isOpen) return null
 
   return (
-        <Modal
-          isOpen={isOpen}
-          onClose={handleClose}
-          title={meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
-        >
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
-              <div className="flex-1 overflow-y-auto px-6 py-4">
-              {isLoadingSettings ? (
-                // Loading skeleton
-                <div className="space-y-4">
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
+    >
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {isLoadingSettings ? (
+            // Loading skeleton
+            <div className="space-y-4">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          ) : (
+            <>
+              {/* Meeting Type Selector */}
+              {formSettings.showMeetingType && (
+                <div className="mb-4">
+                  <InputFilter
+                    id="meetingType"
+                    label="Tipe Pertemuan"
+                    value={meetingType}
+                    onChange={setMeetingType}
+                    options={Object.values(finalAvailableTypes).map(type => ({
+                      value: type.code,
+                      label: type.label
+                    }))}
+                    disabled={isSubmitting || typesLoading || Object.keys(finalAvailableTypes).length === 0}
+                    widthClassName="!max-w-full"
+                    className='!mb-0'
+                  />
                 </div>
-              ) : (
-                <>
+              )}
+
               {/* Sambung Desa: Kelompok & Class Selection */}
               {meetingType === 'SAMBUNG_DESA' && (
                 <>
@@ -481,10 +671,19 @@ export default function CreateMeetingModal({
                   <div className="mb-4">
                     <MultiSelectCheckbox
                       label="Pilih Kelompok"
-                      items={(kelompok || []).map(k => ({
-                        id: k.id,
-                        label: k.name
-                      }))}
+                      items={(kelompok || [])
+                        .filter(k => {
+                          // For Admin Desa: only show kelompok from their desa
+                          if (userProfile?.role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
+                            return k.desa_id === userProfile.desa_id
+                          }
+                          // For others (superadmin, admin daerah): show all
+                          return true
+                        })
+                        .map(k => ({
+                          id: k.id,
+                          label: k.name
+                        }))}
                       selectedIds={selectedKelompokIds}
                       onChange={setSelectedKelompokIds}
                       hint="Pilih satu atau lebih kelompok untuk pertemuan Sambung Desa"
@@ -493,21 +692,44 @@ export default function CreateMeetingModal({
                     />
                   </div>
 
-                  {/* Eligible Class Selector */}
-                  <div className="mb-4">
-                    <MultiSelectCheckbox
-                      label="Pilih Kelas"
-                      items={eligibleClasses.map(cls => ({
-                        id: cls.id,
-                        label: cls.name
-                      }))}
-                      selectedIds={selectedEligibleClassIds}
-                      onChange={setSelectedEligibleClassIds}
-                      hint="Kelas yang tersedia: tidak termasuk PAUD, Kelas 1-6, dan Pengajar"
-                      disabled={isSubmitting || classesLoading}
-                      isLoading={classesLoading}
-                    />
-                  </div>
+                  {/* Class Selector - Only show when kelompok selected */}
+                  {selectedKelompokIds.length > 0 && (
+                    <div className="mb-4">
+                      {userProfile && isAdminDesa(userProfile) ? (
+                        // ADMIN DESA: Master Class Selector
+                        <MultiSelectCheckbox
+                          label="Pilih Kelas"
+                          items={eligibleMasterClasses.map(master => ({
+                            id: master.id,
+                            label: master.name
+                          }))}
+                          selectedIds={selectedMasterClassIds}
+                          onChange={setSelectedMasterClassIds}
+                          hint="Pilih kelas untuk pertemuan. Sistem akan otomatis mencari siswa dari kelompok yang dipilih."
+                          disabled={isSubmitting}
+                          isLoading={false}
+                        />
+                      ) : (
+                        // OTHER ROLES: Regular Class Selector
+                        <MultiSelectCheckbox
+                          label="Pilih Kelas"
+                          items={eligibleClasses
+                            .filter(cls => {
+                              return selectedKelompokIds.includes(cls.kelompok_id || '')
+                            })
+                            .map(cls => ({
+                              id: cls.id,
+                              label: cls.name
+                            }))}
+                          selectedIds={selectedEligibleClassIds}
+                          onChange={setSelectedEligibleClassIds}
+                          hint="Kelas yang tersedia: tidak termasuk PAUD, Kelas 1-6, dan Pengajar"
+                          disabled={isSubmitting || classesLoading}
+                          isLoading={classesLoading}
+                        />
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -518,11 +740,19 @@ export default function CreateMeetingModal({
                     label="Pilih Kelas"
                     items={(() => {
                       // For teacher with multiple classes, check for duplicate names
-                      if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
-                        // Create mapping kelompok_id -> kelompok name
-                        const kelompokMap = new Map(
-                          kelompok.map(k => [k.id, k.name])
-                        )
+                      if (userProfile?.role === 'teacher' && availableClasses.length > 1) {
+                        // Build kelompok map from enriched availableClasses
+                        const kelompokMap = new Map<string, string>()
+
+                        // Add kelompok from availableClasses (already enriched with full kelompok object)
+                        availableClasses.forEach((cls: any) => {
+                          if (cls.kelompok_id && cls.kelompok) {
+                            const kelompokName = cls.kelompok.name
+                            if (kelompokName) {
+                              kelompokMap.set(cls.kelompok_id, kelompokName)
+                            }
+                          }
+                        })
 
                         // Check for duplicate class names
                         const nameCounts = availableClasses.reduce((acc, cls: any) => {
@@ -530,17 +760,31 @@ export default function CreateMeetingModal({
                           return acc
                         }, {} as Record<string, number>)
 
-                        // Format labels
+                        // Format labels - show kelompok name for ALL duplicates
                         return availableClasses.map((cls: any) => {
                           const hasDuplicate = nameCounts[cls.name] > 1
-                          const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
-                          const label = hasDuplicate && kelompokName
-                            ? `${cls.name} (${kelompokName})`
-                            : cls.name
 
+                          // If duplicate, ALWAYS add kelompok suffix
+                          if (hasDuplicate) {
+                            // Safely get kelompok name, defaulting to 'Unknown' if not found
+                            let suffix = 'Unknown'
+                            if (cls.kelompok_id) {
+                              const kelompokName = kelompokMap.get(cls.kelompok_id)
+                              if (kelompokName) {
+                                suffix = kelompokName
+                              }
+                            }
+
+                            return {
+                              id: cls.id,
+                              label: `${cls.name} (${suffix})`
+                            }
+                          }
+
+                          // No duplicate - show plain name
                           return {
                             id: cls.id,
-                            label
+                            label: cls.name
                           }
                         })
                       }
@@ -573,25 +817,6 @@ export default function CreateMeetingModal({
                       { value: 'Perempuan', label: 'Perempuan' }
                     ]}
                     disabled={isSubmitting}
-                    widthClassName="!max-w-full"
-                    className='!mb-0'
-                  />
-                </div>
-              )}
-
-              {/* Meeting Type Selector */}
-              {formSettings.showMeetingType && (
-                <div className="mb-4">
-                  <InputFilter
-                    id="meetingType"
-                    label="Tipe Pertemuan"
-                    value={meetingType}
-                    onChange={setMeetingType}
-                    options={Object.values(finalAvailableTypes).map(type => ({
-                      value: type.code,
-                      label: type.label
-                    }))}
-                    disabled={isSubmitting || typesLoading || Object.keys(finalAvailableTypes).length === 0}
                     widthClassName="!max-w-full"
                     className='!mb-0'
                   />
@@ -678,8 +903,8 @@ export default function CreateMeetingModal({
                     )} */}
                   </h4>
                   
-                  {/* Student Selection */}
-                  {formSettings.showStudentSelection && (
+                  {/* Student Selection - Hide for Admin Desa */}
+                  {formSettings.showStudentSelection && !(userProfile && isAdminDesa(userProfile)) && (
                     <div className="mt-4">
                       <MultiSelectCheckbox
                         label="Pilih Siswa yang Akan Diikutsertakan"
@@ -687,7 +912,7 @@ export default function CreateMeetingModal({
                           const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
                           const className = matchingClass?.name || ''
                           const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
-                          
+
                           let label = s.name
                           if (className) {
                             if (teacherHasMultipleKelompok && kelompokName) {
@@ -696,7 +921,7 @@ export default function CreateMeetingModal({
                               label = `${s.name} (${className})`
                             }
                           }
-                          
+
                           return { id: s.id, label }
                         })}
                         selectedIds={selectedStudentIds}
@@ -715,30 +940,30 @@ export default function CreateMeetingModal({
                   </h4>
                 </div>
               )}
-                </>
-              )}
-              </div>
+            </>
+          )}
+        </div>
 
-              {/* Buttons - Sticky at bottom */}
-              <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
-                <Button
-                  type="button"
-                  onClick={handleClose}
-                  variant="outline"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0 || isLoadingSettings}
-                  variant="primary"
-                  loading={isSubmitting}
-                  loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}
-                >
-                  {meeting ? 'Perbarui' : 'Buat Pertemuan'}
-                </Button>
-              </div>
-            </form>
-        </Modal>
+        {/* Buttons - Sticky at bottom */}
+        <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
+          <Button
+            type="button"
+            onClick={handleClose}
+            variant="outline"
+          >
+            Batal
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0 || isLoadingSettings}
+            variant="primary"
+            loading={isSubmitting}
+            loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}
+          >
+            {meeting ? 'Perbarui' : 'Buat Pertemuan'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }

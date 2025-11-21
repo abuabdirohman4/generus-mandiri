@@ -51,7 +51,12 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             daerah:daerah_id(id, name),
             teacher_classes!teacher_classes_teacher_id_fkey(
               class_id,
-              classes:class_id(id, name)
+              classes:class_id(
+                id, 
+                name,
+                kelompok_id,
+                kelompok:kelompok_id(id, name)
+              )
             )
           `)
           .eq('id', user.id)
@@ -64,7 +69,13 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
         // Transform teacher_classes to classes array for backward compatibility
         const classes = profileData.teacher_classes?.map((tc: any) => ({
           id: String(tc.classes?.id || ''),
-          name: String(tc.classes?.name || '')
+          name: String(tc.classes?.name || ''),
+          kelompok_id: tc.classes?.kelompok_id || null,
+          kelompok: tc.classes?.kelompok ? (
+            Array.isArray(tc.classes.kelompok)
+              ? tc.classes.kelompok[0]
+              : tc.classes.kelompok
+          ) : null
         })).filter(Boolean) || [];
         
         // Transform hierarchy objects to ensure proper types

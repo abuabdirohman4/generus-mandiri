@@ -22,6 +22,7 @@ import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useDesa } from '@/hooks/useDesa'
 import { useDaerah } from '@/hooks/useDaerah'
+import { isSambungDesaEligible } from '@/lib/utils/classHelpers'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -195,7 +196,8 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
         id: classData.id,
         name: classData.name,
         kelompok_id: classData.kelompok_id,
-        kelompok_name: classData.kelompok?.name || null
+        kelompok_name: classData.kelompok?.name || null,
+        rawClassData: classData
       }))
     } else {
       // Fallback: try to get from classesData or meeting.classes
@@ -204,7 +206,7 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
           // Try classesData first
           let classData = classesData.find(c => c.id === classId)
           let kelompok = null
-          
+
           if (classData) {
             kelompok = kelompokData.find(k => k.id === classData.kelompok_id)
           } else {
@@ -215,8 +217,8 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
                 classData = meetingClass
                 // Get kelompok from meeting.classes directly if available
                 if (meetingClass.kelompok) {
-                  kelompok = Array.isArray(meetingClass.kelompok) 
-                    ? meetingClass.kelompok[0] 
+                  kelompok = Array.isArray(meetingClass.kelompok)
+                    ? meetingClass.kelompok[0]
                     : meetingClass.kelompok
                 } else if (meetingClass.kelompok_id) {
                   kelompok = kelompokData.find(k => k.id === meetingClass.kelompok_id)
@@ -225,27 +227,54 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
             } else if (meeting.classes?.id === classId) {
               classData = meeting.classes
               if (meeting.classes.kelompok) {
-                kelompok = Array.isArray(meeting.classes.kelompok) 
-                  ? meeting.classes.kelompok[0] 
+                kelompok = Array.isArray(meeting.classes.kelompok)
+                  ? meeting.classes.kelompok[0]
                   : meeting.classes.kelompok
               } else if (meeting.classes.kelompok_id) {
                 kelompok = kelompokData.find(k => k.id === meeting.classes.kelompok_id)
               }
             }
           }
-          
+
           if (!classData) return null
-          
+
           return {
             id: classId,
             name: classData.name,
             kelompok_id: classData.kelompok_id,
-            kelompok_name: kelompok?.name || null
+            kelompok_name: kelompok?.name || null,
+            rawClassData: classData
           }
         })
         .filter(Boolean)
     }
-    
+
+    // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
+    if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+      classDetails = classDetails.filter((classDetail: any) => {
+        // Use rawClassData if available, otherwise use what we have
+        const classDataForCheck = classDetail.rawClassData || {
+          name: classDetail.name,
+          class_master_mappings: classesData.find(c => c.id === classDetail.id)?.class_master_mappings
+        }
+        return isSambungDesaEligible(classDataForCheck)
+      })
+    }
+
+    // If no classes remain after filtering, return empty
+    if (classDetails.length === 0) return ''
+
+    // Check unique kelompok count
+    const uniqueKelompokCount = countUniqueKelompok(meeting, classesData, kelompokData)
+
+    // If multiple kelompok, just show class names (badge already shows "X Kelompok")
+    if (uniqueKelompokCount > 1) {
+      // Get unique class names only
+      const uniqueClassNames = [...new Set(classDetails.map((c: any) => c.name))].sort()
+      return uniqueClassNames.join(', ')
+    }
+
+    // Single kelompok: show with kelompok if there are duplicate class names
     // Group by class name
     const groupedByClassName = classDetails.reduce((acc: any, classDetail: any) => {
       if (!acc[classDetail.name]) {
@@ -254,10 +283,10 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
       acc[classDetail.name].push(classDetail)
       return acc
     }, {})
-    
+
     // Check if there are classes with same name but different kelompok
     const hasDuplicateNames = Object.values(groupedByClassName).some((classes: any) => classes.length > 1)
-    
+
     if (hasDuplicateNames) {
       // Format: "Kelas 1: Warlob 1, Warlob 2"
       return Object.entries(groupedByClassName)

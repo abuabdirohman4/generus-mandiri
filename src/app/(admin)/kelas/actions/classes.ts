@@ -90,7 +90,16 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
         
         const { data: masters, error: mastersError } = await supabase
           .from('class_masters')
-          .select('id, name, description')
+          .select(`
+            id,
+            name,
+            description,
+            category:category_id (
+              id,
+              code,
+              name
+            )
+          `)
           .in('id', masterIds)
         
         if (mastersError) {

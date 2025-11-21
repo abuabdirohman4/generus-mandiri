@@ -20,7 +20,7 @@ import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetin
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
-import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
+import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -195,7 +195,7 @@ export default function MeetingAttendancePage() {
   // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
     let filtered = students
-    
+
     // Role-based filtering (existing logic) - support multiple classes
     // Skip filtering for Pengajar meetings (students should be visible to Paud/Kelas 1-6 teachers)
     if (userProfile?.role === 'teacher' && !isMeetingCreator && !isPengajarMeeting) {
@@ -204,12 +204,93 @@ export default function MeetingAttendancePage() {
       // This is because students in meeting snapshot are already filtered by meeting's classes
       filtered = filtered.filter(s => myClassIds.includes(s.class_id))
     }
-    
+
+    // Kelompok-based filtering (for Admin Kelompok and single-kelompok Teachers)
+    if (!isMeetingCreator && (userProfile?.role === 'admin' || userProfile?.role === 'teacher')) {
+      // Get user's kelompok IDs from their classes (for teachers) or direct kelompok_id (for admin kelompok)
+      let userKelompokIds: string[] = []
+
+      if (userProfile.role === 'teacher' && userProfile.classes) {
+        // For teachers: get kelompok IDs from all their classes
+        userKelompokIds = userProfile.classes
+          .map((c: any) => {
+            // Try to get kelompok_id from the class object
+            if (c.kelompok_id) return c.kelompok_id
+            // Otherwise lookup from classesData
+            const fullClass = classesData.find(cls => cls.id === c.id)
+            return fullClass?.kelompok_id
+          })
+          .filter(Boolean) as string[]
+      } else if (userProfile.role === 'admin' && userProfile.kelompok_id) {
+        // For admin kelompok: use their kelompok_id
+        userKelompokIds = [userProfile.kelompok_id]
+      }
+
+      // Check if user has multiple kelompok (special case for teachers teaching multiple kelompok)
+      const uniqueKelompokIds = [...new Set(userKelompokIds)]
+      const hasMultipleKelompok = uniqueKelompokIds.length > 1
+
+      // Apply kelompok filter only if user has kelompok restrictions
+      if (uniqueKelompokIds.length > 0) {
+        filtered = filtered.filter(student => {
+          // Check if student belongs to any of user's kelompok
+          // Get student's kelompok from their classes
+          const studentKelompokIds = new Set<string>()
+
+          // Check from primary class
+          const primaryClass = classesData.find(c => c.id === student.class_id)
+          if (primaryClass?.kelompok_id) {
+            studentKelompokIds.add(primaryClass.kelompok_id)
+          }
+
+          // Check from junction table classes
+          if (student.classes && Array.isArray(student.classes)) {
+            student.classes.forEach(cls => {
+              const fullClass = classesData.find(c => c.id === cls.id)
+              if (fullClass?.kelompok_id) {
+                studentKelompokIds.add(fullClass.kelompok_id)
+              }
+            })
+          }
+
+          // Student is visible if they belong to any of user's kelompok
+          return uniqueKelompokIds.some(kelompokId => studentKelompokIds.has(kelompokId))
+        })
+      }
+    }
+
     // Gender filter
     if (filters.gender) {
       filtered = filtered.filter(s => s.gender === filters.gender)
     }
-    
+
+    // Kelompok filter (from UI filter dropdown)
+    if (filters.kelompok && filters.kelompok.length > 0) {
+      filtered = filtered.filter(student => {
+        // Get student's kelompok IDs
+        const studentKelompokIds = new Set<string>()
+
+        // Check from primary class
+        const primaryClass = classesData.find(c => c.id === student.class_id)
+        if (primaryClass?.kelompok_id) {
+          studentKelompokIds.add(primaryClass.kelompok_id)
+        }
+
+        // Check from junction table classes
+        if (student.classes && Array.isArray(student.classes)) {
+          student.classes.forEach(cls => {
+            const fullClass = classesData.find(c => c.id === cls.id)
+            if (fullClass?.kelompok_id) {
+              studentKelompokIds.add(fullClass.kelompok_id)
+            }
+          })
+        }
+
+        // Student matches if any of their kelompok is in the filter
+        return filters.kelompok.some(kelompokId => studentKelompokIds.has(kelompokId))
+      })
+    }
+
     // Class filter (for multi-class meetings) - support multiple classes per student
     if (filters.kelas && filters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
@@ -217,18 +298,18 @@ export default function MeetingAttendancePage() {
       filtered = filtered.filter(s => {
         // Check primary class_id (for backward compatibility)
         if (selectedClassIds.includes(s.class_id)) return true
-        
+
         // Check all classes from junction table (for multi-class students)
         if (s.classes && Array.isArray(s.classes)) {
           return s.classes.some(cls => selectedClassIds.includes(cls.id))
         }
-        
+
         return false
       })
     }
-    
+
     return filtered
-  }, [students, userProfile, isMeetingCreator, isPengajarMeeting, filters])
+  }, [students, userProfile, isMeetingCreator, isPengajarMeeting, filters, classesData])
 
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
@@ -281,7 +362,7 @@ export default function MeetingAttendancePage() {
       // Get class details with kelompok info
       // First try to use meeting.allClasses if available (from backend, bypasses RLS)
       let classDetails: Array<{ id: string; name: string; kelompok_id: string | null; kelompok_name: string | null }> = []
-      
+
       if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
         // Use allClasses from backend (bypasses RLS)
         classDetails = meeting.allClasses
@@ -299,7 +380,7 @@ export default function MeetingAttendancePage() {
           const kelompok = classData?.kelompok_id && kelompokData
             ? kelompokData.find(k => k.id === classData.kelompok_id)
             : null
-          
+
           return {
             id,
             name: classData?.name || 'Unknown',
@@ -308,7 +389,18 @@ export default function MeetingAttendancePage() {
           }
         })
       }
-      
+
+      // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
+      if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+        classDetails = classDetails.filter(cls => {
+          const classData = classesData.find(c => c.id === cls.id) ||
+                           (meeting.allClasses && Array.isArray(meeting.allClasses)
+                             ? meeting.allClasses.find((c: any) => c.id === cls.id)
+                             : null)
+          return classData && isSambungDesaEligible(classData)
+        })
+      }
+
       // Check for duplicate class names
       const nameCounts = classDetails.reduce((acc, cls) => {
         acc[cls.name] = (acc[cls.name] || 0) + 1
@@ -334,7 +426,7 @@ export default function MeetingAttendancePage() {
     // Get class details with kelompok info
     // First try to use meeting.allClasses if available (from backend, bypasses RLS)
     let classDetails: Array<{ id: string; name: string; kelompok_id: string | null; kelompok_name: string | null }> = []
-    
+
     if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
       // Use allClasses from backend (bypasses RLS)
       classDetails = meeting.allClasses
@@ -352,7 +444,7 @@ export default function MeetingAttendancePage() {
         const kelompok = classData?.kelompok_id && kelompokData
           ? kelompokData.find(k => k.id === classData.kelompok_id)
           : null
-        
+
         return {
           id,
           name: classData?.name || 'Unknown',
@@ -361,7 +453,18 @@ export default function MeetingAttendancePage() {
         }
       })
     }
-    
+
+    // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
+    if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+      classDetails = classDetails.filter(cls => {
+        const classData = classesData.find(c => c.id === cls.id) ||
+                         (meeting.allClasses && Array.isArray(meeting.allClasses)
+                           ? meeting.allClasses.find((c: any) => c.id === cls.id)
+                           : null)
+        return classData && isSambungDesaEligible(classData)
+      })
+    }
+
     // Check for duplicate class names
     const nameCounts = classDetails.reduce((acc, cls) => {
       acc[cls.name] = (acc[cls.name] || 0) + 1
@@ -383,8 +486,53 @@ export default function MeetingAttendancePage() {
     })
   }, [meeting, students, userProfile, isMeetingCreator, classesData, kelompokData])
 
+  // Build kelompok list for filter - only for multi-kelompok meetings
+  const kelompokListForFilter = useMemo(() => {
+    if (!meeting?.class_ids || meeting.class_ids.length === 0) return []
+
+    // Get all unique kelompok IDs from meeting classes
+    const kelompokIds = new Set<string>()
+    const kelompokMap = new Map<string, { id: string; name: string; desa_id: string }>()
+
+    // First try to use meeting.allClasses if available
+    if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+      meeting.allClasses.forEach((classData: any) => {
+        if (classData.kelompok_id && classData.kelompok) {
+          const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
+          if (kelompok?.id && kelompok?.name && kelompok?.desa_id) {
+            kelompokMap.set(kelompok.id, {
+              id: kelompok.id,
+              name: kelompok.name,
+              desa_id: kelompok.desa_id
+            })
+          }
+        }
+      })
+    } else {
+      // Fallback: get from classesData and kelompokData
+      meeting.class_ids.forEach((classId: string) => {
+        const classData = classesData.find(c => c.id === classId)
+        if (classData?.kelompok_id) {
+          const kelompok = kelompokData?.find(k => k.id === classData.kelompok_id)
+          if (kelompok && kelompok.desa_id) {
+            kelompokMap.set(kelompok.id, {
+              id: kelompok.id,
+              name: kelompok.name,
+              desa_id: kelompok.desa_id
+            })
+          }
+        }
+      })
+    }
+
+    return Array.from(kelompokMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [meeting, classesData, kelompokData])
+
   // Determine if class filter should show
   const showClassFilter = meeting?.class_ids && meeting.class_ids.length > 1 && classListForFilter.length > 0
+
+  // Determine if kelompok filter should show
+  const showKelompokFilter = kelompokListForFilter.length > 1
 
   const goBack = () => {
     router.push('/absensi')
@@ -490,13 +638,13 @@ export default function MeetingAttendancePage() {
           userProfile={userProfile}
           daerahList={[]}
           desaList={[]}
-          kelompokList={[]}
+          kelompokList={kelompokListForFilter}
           classList={classListForFilter}
           showGender={true}
           showKelas={showClassFilter}
           showDaerah={false}
           showDesa={false}
-          showKelompok={false}
+          showKelompok={showKelompokFilter}
           variant="page"
         />
 

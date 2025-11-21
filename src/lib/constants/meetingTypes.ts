@@ -60,7 +60,7 @@ export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null):
     }
   }
   
-  // Admin Desa: Pembinaan, Sambung Kelompok, Sambung Desa, Sambung Pusat
+  // Admin Desa: ONLY Sambung Desa (simplified)
   if (role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
     if (userProfile.id && userProfile.full_name) {
       const adminProfile: AccessControlUserProfile = {
@@ -71,14 +71,10 @@ export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null):
         desa_id: userProfile.desa_id,
         kelompok_id: userProfile.kelompok_id
       }
-      
+
       if (isAdminDesa(adminProfile)) {
         return {
-          PEMBINAAN: MEETING_TYPES.PEMBINAAN,
-          SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
-          SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
-          SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH, // hapus nanti
-          SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
+          SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA
         }
       }
     }
