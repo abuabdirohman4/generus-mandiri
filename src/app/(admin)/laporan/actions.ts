@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
+import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 
 /**
  * Helper function to get week start date
@@ -280,42 +281,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
     const adminClient = await createAdminClient()
-    
-    // Build query with student_classes junction table for multiple classes support
-    let query = adminClient
-      .from('attendance_logs')
-      .select(`
-        id,
-        student_id,
-        meeting_id,
-        date,
-        status,
-        reason,
-        students(
-          id,
-          name,
-          gender,
-          class_id,
-          classes(
-            id,
-            name
-          ),
-          student_classes (
-            class_id,
-            classes:class_id (
-              id,
-              name,
-              kelompok_id,
-              kelompok:kelompok_id (
-                id,
-                name
-              )
-            )
-          )
-        )
-      `)
 
-    // Fetch meetings first to determine date range and meeting IDs (for teachers)
+    // Fetch meetings first to determine date range and meeting IDs
     const { data: meetingsForFilter } = await adminClient
       .from('meetings')
       .select('id, date, class_id, class_ids')
@@ -323,10 +290,9 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       .lte('date', dateFilter.date?.lte || '2100-12-31')
       .order('date')
 
-    // For teachers, filter meetings and determine date range
-    let teacherMeetingIdsForQuery: string[] = []
-    let actualDateRange = { gte: dateFilter.date?.gte || '1900-01-01', lte: dateFilter.date?.lte || '2100-12-31' }
-    
+    // For teachers, filter meetings to get relevant meeting IDs
+    let meetingIdsForAttendance: string[] = []
+
     if (profile.role === 'teacher' && teacherClassIds.length > 0 && meetingsForFilter) {
       const teacherMeetingsForRange = meetingsForFilter.filter((meeting: any) => {
         if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
@@ -334,46 +300,89 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         }
         return meeting.class_id && teacherClassIds.includes(meeting.class_id)
       })
-      
-      if (teacherMeetingsForRange.length > 0) {
-        teacherMeetingIdsForQuery = teacherMeetingsForRange.map((m: any) => m.id)
-        const meetingDates = teacherMeetingsForRange.map((m: any) => m.date).filter(Boolean)
-        if (meetingDates.length > 0) {
-          const minDate = meetingDates.reduce((min: string, date: string) => date < min ? date : min)
-          const maxDate = meetingDates.reduce((max: string, date: string) => date > max ? date : max)
-          actualDateRange = { gte: minDate, lte: maxDate }
-        }
-      }
-    }
 
-    // Apply date filter - use expanded range if needed
-    if (dateFilter.date?.eq) {
-      query = query.eq('date', dateFilter.date.eq)
+      meetingIdsForAttendance = teacherMeetingsForRange.map((m: any) => m.id)
     } else {
-      query = query
-        .gte('date', actualDateRange.gte)
-        .lte('date', actualDateRange.lte)
+      // For admin, use all meetings in date range
+      meetingIdsForAttendance = (meetingsForFilter || []).map((m: any) => m.id)
     }
 
-    // For teachers, also filter by meeting IDs to ensure we get all relevant logs
-    if (teacherMeetingIdsForQuery.length > 0) {
-      query = query.in('meeting_id', teacherMeetingIdsForQuery)
+    // Fetch attendance logs in batches to avoid query limits
+    // This ensures all attendance data is retrieved regardless of dataset size
+    const { data: attendanceLogsData, error: attendanceError } = await fetchAttendanceLogsInBatches(
+      adminClient,
+      meetingIdsForAttendance
+    )
+
+    if (attendanceError) {
+      throw attendanceError
     }
 
-    // Apply dynamic limit: no limit if filtered by meeting IDs (for teachers),
-    // otherwise use 10000 limit (for admin or unfiltered queries)
-    // For teachers with meeting ID filter, the result set is already limited
-    // so no additional limit is needed
-    const { data: attendanceLogs, error } = teacherMeetingIdsForQuery.length > 0
-      ? await query // No limit needed for teachers with meeting ID filter
-      : await query.limit(10000) // Limit for admin/unfiltered queries
-
-    if (error) {
-      throw error
+    // Create meeting map to get date for each log
+    const meetingMap = new Map<string, any>()
+    if (meetingsForFilter) {
+      meetingsForFilter.forEach(meeting => {
+        meetingMap.set(meeting.id, meeting)
+      })
     }
 
+    // Enrich attendance logs with student data
+    // Get unique student IDs from attendance logs
+    const studentIds = [...new Set((attendanceLogsData || []).map((log: any) => log.student_id))]
 
-    // Fetch full meeting details (we already have basic info from meetingsForFilter)
+    // Fetch student details with classes info
+    const { data: studentsData, error: studentsError } = await adminClient
+      .from('students')
+      .select(`
+        id,
+        name,
+        gender,
+        class_id,
+        classes(
+          id,
+          name
+        ),
+        student_classes (
+          class_id,
+          classes:class_id (
+            id,
+            name,
+            kelompok_id,
+            kelompok:kelompok_id (
+              id,
+              name
+            )
+          )
+        )
+      `)
+      .in('id', studentIds)
+
+    if (studentsError) {
+      throw studentsError
+    }
+
+    // Create student map for quick lookup
+    const studentMap = new Map<string, any>()
+    if (studentsData) {
+      studentsData.forEach(student => {
+        studentMap.set(student.id, student)
+      })
+    }
+
+    // Enrich attendance logs with student data and date from meetings
+    const attendanceLogs = (attendanceLogsData || []).map((log: any) => {
+      const meeting = meetingMap.get(log.meeting_id)
+      return {
+        id: log.meeting_id + '-' + log.student_id, // Generate unique ID
+        student_id: log.student_id,
+        meeting_id: log.meeting_id,
+        date: meeting?.date || null,
+        status: log.status,
+        reason: null, // Not included in batch fetch
+        students: studentMap.get(log.student_id)
+      }
+    }).filter((log: any) => log.students && log.date) // Filter out logs with missing student or date
+
     // Use admin client to bypass RLS
     const { data: meetings } = await adminClient
       .from('meetings')

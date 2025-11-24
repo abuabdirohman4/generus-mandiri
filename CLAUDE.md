@@ -90,6 +90,20 @@ student (own data only)
 - `siswaStore`, `kelasStore`, `guruStore`, `adminStore` - Feature-specific states
 - `laporanStore`, `organisasiStore` - Reports and organization management
 
+**CRITICAL Store Patterns**:
+- **Dynamic Defaults**: NEVER hardcode dates/months in helper functions for production use
+  ```typescript
+  // ❌ BAD - Hardcoded for dummy data
+  const getCurrentMonth = () => 10 // October
+  const getCurrentYear = () => 2025
+
+  // ✅ GOOD - Dynamic system date
+  const getCurrentMonth = () => new Date().getMonth() + 1 // 1-12
+  const getCurrentYear = () => new Date().getFullYear()
+  ```
+- **Store Initialization**: Default values should use helper functions, not hardcoded values
+- **Filter Defaults**: Monthly/yearly filters should default to current period for better UX
+
 **SWR Configuration**:
 - 2-minute deduping interval (can be customized per hook)
 - Revalidates on focus and reconnect (can be disabled per hook)
@@ -174,6 +188,7 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 **Class Helpers** (`@/lib/utils/classHelpers.ts`):
 - `isCaberawitClass(classData)` - Check if PAUD/Caberawit class
 - `isTeacherClass(classData)` - Check if teacher training class
+- `isSambungDesaEligible(classData)` - Check if class is eligible for Sambung Desa meetings (excludes Pengajar and Caberawit classes)
 
 **Common Utils** (`@/lib/utils.ts`):
 - `cn(...classes)` - Merge Tailwind classes (clsx + tailwind-merge)
@@ -184,6 +199,28 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - `clearUserCache()` - Full logout cache clear (with reload)
 - `clearSWRCache()` - Soft cache clear (no reload, for login flow)
 
+**Batch Fetching** (`@/lib/utils/batchFetching.ts`):
+- `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 50 to avoid database query limits
+- **CRITICAL**: Use this for large datasets (e.g., reports, attendance with many meetings) to prevent data loss from query limits
+- Already implemented in:
+  - `src/app/(admin)/absensi/actions.ts` - For attendance page
+  - `src/app/(admin)/laporan/actions.ts` - For reports page
+- Pattern:
+  ```typescript
+  // 1. Fetch meetings first to get meeting IDs
+  const { data: meetings } = await supabase.from('meetings').select('id, date')
+  const meetingIds = meetings.map(m => m.id)
+
+  // 2. Use batch fetching for attendance logs
+  const { data: attendanceLogs, error } = await fetchAttendanceLogsInBatches(
+    adminClient,
+    meetingIds
+  )
+
+  // 3. Enrich with additional data (students, dates, etc.)
+  // ... map and join data
+  ```
+
 ## Important Conventions
 
 ### Attendance System
@@ -191,6 +228,35 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - Composite key: (student_id, date) for upsert operations
 - Auto-save with debouncing
 - Meetings can span multiple classes via `class_ids` array
+
+### Meeting Types & Class Eligibility
+- **Regular Meetings**: Use actual classes selected by teacher/admin
+- **Sambung Desa Meetings**: Special cross-class meetings with restrictions
+  - Use master classes (Pra Nikah, Remaja, Orang Tua) to select target classes
+  - **CRITICAL**: Must exclude Pengajar and Caberawit (PAUD/Kelas 1-6) classes
+  - Use `isSambungDesaEligible(classData)` helper when converting master classes to actual classes
+  - Example in `CreateMeetingModal.tsx`:
+    ```typescript
+    const getActualClassIdsFromMasterClasses = (masterClassIds, kelompokIds, allClasses) => {
+      return allClasses
+        .filter(cls => {
+          // Must be in selected kelompok
+          if (!kelompokIds.includes(cls.kelompok_id)) return false
+
+          // Must have selected master class
+          const hasMasterClass = cls.class_master_mappings.some(m =>
+            masterClassIds.includes(m.class_master?.id)
+          )
+          if (!hasMasterClass) return false
+
+          // CRITICAL: Exclude Pengajar and Caberawit
+          return isSambungDesaEligible(cls)
+        })
+        .map(cls => cls.id)
+    }
+    ```
+- **Meeting Visibility**: Teachers only see meetings where they teach at least one of the meeting's classes
+- **Class Master Mappings**: Junction table `class_master_mappings` links actual classes to master classes
 
 ### Multi-class Support
 - Teachers can be assigned to multiple classes via `teacher_classes` junction table

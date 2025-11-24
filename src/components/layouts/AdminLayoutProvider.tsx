@@ -52,10 +52,21 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             teacher_classes!teacher_classes_teacher_id_fkey(
               class_id,
               classes:class_id(
-                id, 
+                id,
                 name,
                 kelompok_id,
-                kelompok:kelompok_id(id, name)
+                kelompok:kelompok_id(id, name),
+                class_master_mappings(
+                  class_master:class_master_id(
+                    id,
+                    name,
+                    category:category_id(
+                      id,
+                      code,
+                      name
+                    )
+                  )
+                )
               )
             )
           `)
@@ -75,7 +86,8 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             Array.isArray(tc.classes.kelompok)
               ? tc.classes.kelompok[0]
               : tc.classes.kelompok
-          ) : null
+          ) : null,
+          class_master_mappings: tc.classes?.class_master_mappings || []
         })).filter(Boolean) || [];
         
         // Transform hierarchy objects to ensure proper types

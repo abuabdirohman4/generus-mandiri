@@ -8,6 +8,10 @@
         - Desa (Soreang, Baleendah dll)
 - [ ] Add Halaman Materi
 
+## v1.9.1
+- [x] Fix attendance log in absensi & laporan 
+- [x] Button di meeting detail dibuat floating
+
 ## v1.9.0
 - [x] Kelas Pengajar
 - [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)

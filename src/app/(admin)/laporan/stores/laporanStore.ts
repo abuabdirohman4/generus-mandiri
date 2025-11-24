@@ -51,14 +51,14 @@ interface LaporanState {
   resetMonthlyFilters: () => void
 }
 
-const getCurrentMonth = () => 10 // Use October for dummy data compatibility
-const getCurrentYear = () => 2025 // Use 2025 for dummy data compatibility
+const getCurrentMonth = () => new Date().getMonth() + 1 // 1-12 (getMonth returns 0-11)
+const getCurrentYear = () => new Date().getFullYear()
 
 // Helper function to get default monthly range
 const getDefaultMonthlyRange = () => ({
   monthYear: getCurrentYear(),
-  startMonth: 10, // October
-  endMonth: 12    // December
+  startMonth: getCurrentMonth(), // Current month
+  endMonth: getCurrentMonth()    // Current month
 })
 
 const defaultFilters: LaporanFilters = {

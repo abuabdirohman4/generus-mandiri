@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
+import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 
 interface AttendanceData {
   student_id: string
@@ -1432,13 +1433,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         // Continue with stats processing using filteredMeetings
         const meetingIds = filteredMeetings.map(meeting => meeting.id)
         
-        // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
+        // Fetch ALL attendance data for these meetings in batches (fixes N+1 problem)
         // Use admin client to bypass RLS restrictions (similar to detail page)
         const adminClientAttendance = await createAdminClient()
-        const { data: attendanceData, error: attendanceError } = await adminClientAttendance
-          .from('attendance_logs')
-          .select('meeting_id, student_id, status')
-          .in('meeting_id', meetingIds)
+        const { data: attendanceData, error: attendanceError } = await fetchAttendanceLogsInBatches(
+          adminClientAttendance,
+          meetingIds
+        )
 
         if (attendanceError) {
           console.error('Error fetching attendance data:', attendanceError)
@@ -1514,7 +1515,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             
             // Filter attendance to only relevant students
             const relevantStudentIdSet = new Set(relevantStudentIds)
-            meetingAttendance = meetingAttendance.filter(record => 
+            meetingAttendance = meetingAttendance.filter((record: any) => 
               relevantStudentIdSet.has(record.student_id)
             )
             
@@ -1522,10 +1523,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           
           const totalStudents = relevantStudentIds.length
           
-          const presentCount = meetingAttendance.filter(record => record.status === 'H').length
-          const absentCount = meetingAttendance.filter(record => record.status === 'A').length
-          const sickCount = meetingAttendance.filter(record => record.status === 'S').length
-          const excusedCount = meetingAttendance.filter(record => record.status === 'I').length
+          const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
+          const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
+          const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
+          const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
           
           const attendancePercentage = totalStudents > 0 
             ? Math.round((presentCount / totalStudents) * 100)
@@ -1856,12 +1857,12 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       // Get all meeting IDs
       const meetingIds = filteredMeetings.map((meeting: any) => meeting.id)
       
-      // Fetch ALL attendance data for these meetings in ONE query
+      // Fetch ALL attendance data for these meetings in batches
       const adminClientAttendance = await createAdminClient()
-      const { data: attendanceData, error: attendanceError } = await adminClientAttendance
-        .from('attendance_logs')
-        .select('meeting_id, student_id, status')
-        .in('meeting_id', meetingIds)
+      const { data: attendanceData, error: attendanceError } = await fetchAttendanceLogsInBatches(
+        adminClientAttendance,
+        meetingIds
+      )
       
       if (attendanceError) {
         console.error('Error fetching attendance data:', attendanceError)
@@ -1909,10 +1910,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         
         const totalStudents = relevantStudentIds.length
         
-        const presentCount = meetingAttendance.filter(record => record.status === 'H').length
-        const absentCount = meetingAttendance.filter(record => record.status === 'A').length
-        const sickCount = meetingAttendance.filter(record => record.status === 'S').length
-        const excusedCount = meetingAttendance.filter(record => record.status === 'I').length
+        const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
+        const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
+        const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
+        const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
         
         const attendancePercentage = totalStudents > 0 
           ? Math.round((presentCount / totalStudents) * 100)
@@ -2048,13 +2049,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     // Get all meeting IDs
     const meetingIds = meetings.map(meeting => meeting.id)
 
-    // Fetch ALL attendance data for these meetings in ONE query (fixes N+1 problem)
+    // Fetch ALL attendance data for these meetings in batches (fixes N+1 problem)
     // Use admin client to bypass RLS restrictions (similar to detail page)
     const adminClientAttendanceAdmin = await createAdminClient()
-    const { data: attendanceData, error: attendanceError } = await adminClientAttendanceAdmin
-      .from('attendance_logs')
-      .select('meeting_id, student_id, status')
-      .in('meeting_id', meetingIds)
+    const { data: attendanceData, error: attendanceError } = await fetchAttendanceLogsInBatches(
+      adminClientAttendanceAdmin,
+      meetingIds
+    )
 
     if (attendanceError) {
       console.error('Error fetching attendance data:', attendanceError)
@@ -2111,7 +2112,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         
         // Filter attendance to only relevant students
         const relevantStudentIdSet = new Set(relevantStudentIds)
-        meetingAttendance = meetingAttendance.filter(record => 
+        meetingAttendance = meetingAttendance.filter((record: any) => 
           relevantStudentIdSet.has(record.student_id)
         )
         
@@ -2119,10 +2120,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       
       const totalStudents = relevantStudentIds.length
       
-      const presentCount = meetingAttendance.filter(record => record.status === 'H').length
-      const absentCount = meetingAttendance.filter(record => record.status === 'A').length
-      const sickCount = meetingAttendance.filter(record => record.status === 'S').length
-      const excusedCount = meetingAttendance.filter(record => record.status === 'I').length
+      const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
+      const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
+      const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
+      const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
       
       const attendancePercentage = totalStudents > 0 
         ? Math.round((presentCount / totalStudents) * 100)

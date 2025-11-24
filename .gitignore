@@ -183,5 +183,6 @@ next-env.d.ts
 /templates
 
 .vscode
+
 # MCP configuration with secrets
 .mcp.json
