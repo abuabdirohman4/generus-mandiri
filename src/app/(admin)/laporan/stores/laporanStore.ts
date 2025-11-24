@@ -68,7 +68,7 @@ const defaultFilters: LaporanFilters = {
   viewMode: 'general',
   
   // Detailed mode defaults
-  period: 'monthly',
+  period: 'daily',
   classId: '',
   
   // Organisation filters

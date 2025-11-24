@@ -48,7 +48,7 @@ export default function MeetingAttendancePage() {
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
   const { kelompok: kelompokData } = useKelompok()
-  
+
   // DataFilter state
   const [filters, setFilters] = useState<{
     daerah: string[]
@@ -108,11 +108,11 @@ export default function MeetingAttendancePage() {
       }))
 
       const result = await saveAttendanceForMeeting(meetingId, attendanceData)
-      
+
       if (result.success) {
         toast.success('Data absensi berhasil disimpan!')
         mutate() // Refresh current page data
-        
+
         // Revalidate meetings cache for main absensi page
         const userId = await getCurrentUserId()
         if (userId) {
@@ -138,7 +138,7 @@ export default function MeetingAttendancePage() {
     const records = Object.entries(localAttendance)
       .filter(([studentId]) => visibleStudentIds.has(studentId))
       .map(([_, data]) => data)
-    
+
     return {
       total: records.length,
       hadir: records.filter(record => record.status === 'H').length,
@@ -152,17 +152,17 @@ export default function MeetingAttendancePage() {
     if (!meeting || visibleStudents.length === 0) {
       return 0
     }
-    
+
     const totalStudents = visibleStudents.length
     const visibleStudentIds = new Set(visibleStudents.map(s => s.id))
-    
+
     const presentCount = Object.entries(localAttendance)
       .filter(([studentId, record]) => {
         const isVisible = visibleStudentIds.has(studentId)
         const isPresent = record.status === 'H'
         return isVisible && isPresent
       }).length
-    
+
     const percentage = Math.round((presentCount / totalStudents) * 100)
     return percentage
   }
@@ -173,12 +173,12 @@ export default function MeetingAttendancePage() {
   // Check if meeting is for "Pengajar" class
   const isPengajarMeeting = useMemo(() => {
     if (!meeting) return false
-    
+
     // Check from primary class
     if (meeting.classes && isTeacherClass(meeting.classes)) {
       return true
     }
-    
+
     // Check from class_ids array (for multi-class meetings)
     // Note: For simplicity, we rely on primary class check first
     // If needed, we can enhance this to fetch class details for class_ids array
@@ -313,7 +313,7 @@ export default function MeetingAttendancePage() {
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
     if (!userProfile || !meeting) return false
-    
+
     const student = students.find(s => s.id === studentId)
     if (!student) return false
 
@@ -333,31 +333,31 @@ export default function MeetingAttendancePage() {
   // Prepare class list for filter - only for multi-class meetings
   const classListForFilter = useMemo(() => {
     if (!meeting?.class_ids || meeting.class_ids.length <= 1) return []
-    
+
     // Get all unique class IDs from students (including from junction table)
     const classIds = new Set<string>()
     students.forEach(s => {
       // Add primary class_id
       if (s.class_id) classIds.add(s.class_id)
-      
+
       // Add all classes from junction table
       if (s.classes && Array.isArray(s.classes)) {
         s.classes.forEach(cls => classIds.add(cls.id))
       }
     })
-    
+
     // Filter to only classes that are in meeting.class_ids
     const meetingClassIds = new Set(meeting.class_ids)
     const relevantClassIds = Array.from(classIds).filter(id => meetingClassIds.has(id))
-    
+
     // For teacher non-creator, only show their classes
     if (userProfile?.role === 'teacher' && !isMeetingCreator) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
       const teacherRelevantClassIds = relevantClassIds.filter(id => myClassIds.includes(id))
-      
+
       // Only show filter if teacher has more than 1 class in this meeting
       if (teacherRelevantClassIds.length <= 1) return []
-      
+
       // Get class details with kelompok info
       // First try to use meeting.allClasses if available (from backend, bypasses RLS)
       let classDetails: Array<{ id: string; name: string; kelompok_id: string | null; kelompok_name: string | null }> = []
@@ -405,14 +405,14 @@ export default function MeetingAttendancePage() {
         acc[cls.name] = (acc[cls.name] || 0) + 1
         return acc
       }, {} as Record<string, number>)
-      
+
       // Format labels with kelompok name if duplicate
       return classDetails.map(cls => {
         const hasDuplicate = nameCounts[cls.name] > 1
         const label = hasDuplicate && cls.kelompok_name
           ? `${cls.name} (${cls.kelompok_name})`
           : cls.name
-        
+
         return {
           id: cls.id,
           name: label,
@@ -420,7 +420,7 @@ export default function MeetingAttendancePage() {
         }
       })
     }
-    
+
     // For admin/creator, show all classes
     // Get class details with kelompok info
     // First try to use meeting.allClasses if available (from backend, bypasses RLS)
@@ -469,14 +469,14 @@ export default function MeetingAttendancePage() {
       acc[cls.name] = (acc[cls.name] || 0) + 1
       return acc
     }, {} as Record<string, number>)
-    
+
     // Format labels with kelompok name if duplicate
     return classDetails.map(cls => {
       const hasDuplicate = nameCounts[cls.name] > 1
       const label = hasDuplicate && cls.kelompok_name
         ? `${cls.name} (${cls.kelompok_name})`
         : cls.name
-      
+
       return {
         id: cls.id,
         name: label,
@@ -599,7 +599,7 @@ export default function MeetingAttendancePage() {
 
           {/* Meeting Info */}
           {/* rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3 */}
-          <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3 p-4 mb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-3 p-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {meeting.topic && (
