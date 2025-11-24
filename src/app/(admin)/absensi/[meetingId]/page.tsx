@@ -13,7 +13,6 @@ import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId } from '@/lib/userUtils'
-import { mutate as globalMutate } from 'swr'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
@@ -510,8 +509,8 @@ export default function MeetingAttendancePage() {
           />
         </div>
 
-        {/* Save Button */}
-        <div className="flex justify-center sm:justify-end gap-4">
+        {/* Save Button - Mobile: floating, Desktop: static */}
+        <div className="fixed sm:static bottom-16 left-4 right-4 sm:flex sm:justify-end z-50 shadow-lg sm:shadow-none">
           <Button
             onClick={handleSave}
             disabled={saving}
