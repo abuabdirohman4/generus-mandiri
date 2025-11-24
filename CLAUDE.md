@@ -183,6 +183,13 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - `components/layouts/` - App header, sidebar, bottom navigation
 - `components/charts/` - Recharts-based visualizations
 
+**Mobile UI Patterns**:
+- **Floating Action Buttons**: For primary actions on pages with long scrollable content
+  - Use `fixed sm:static bottom-20 sm:bottom-0 left-4 right-4 z-50 shadow-lg sm:shadow-none`
+  - `bottom-20` accommodates bottom navigation (64-72px height)
+  - Desktop reverts to static positioning
+  - Example: Save button in meeting attendance detail page (`src/app/(admin)/absensi/[meetingId]/page.tsx`)
+
 ### Special Utilities
 
 **Class Helpers** (`@/lib/utils/classHelpers.ts`):
@@ -228,6 +235,10 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - Composite key: (student_id, date) for upsert operations
 - Auto-save with debouncing
 - Meetings can span multiple classes via `class_ids` array
+- **Special Permission Rule**: Teachers who teach PAUD/Kelas 1-6 (Caberawit) can edit attendance for Pengajar (teacher training) class meetings
+  - Implemented in `src/app/(admin)/absensi/[meetingId]/page.tsx` (lines 240-243)
+  - Uses `isPengajarMeeting && teacherCaberawit` check
+  - Requires `class_master_mappings` to be loaded in user profile for `isCaberawitClass()` detection
 
 ### Meeting Types & Class Eligibility
 - **Regular Meetings**: Use actual classes selected by teacher/admin
@@ -261,7 +272,10 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 ### Multi-class Support
 - Teachers can be assigned to multiple classes via `teacher_classes` junction table
 - Students can be in multiple classes via `student_classes` junction table
-- Profile loads all assigned classes for teachers
+- Profile loads all assigned classes for teachers with complete data:
+  - `kelompok_id` and `kelompok` for organizational filtering
+  - `class_master_mappings` with full hierarchy (class_master → category) for class type detection
+- This enables `isCaberawitClass()` to work correctly on user profile classes
 
 ### Cache Management
 - Use `revalidatePath()` after mutations in server actions
