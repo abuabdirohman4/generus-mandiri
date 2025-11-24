@@ -9,6 +9,7 @@
 
 ## v1.9.1
 - [ ] Fix attendance log in absensi & laporan 
+- [ ] Button di meeting detail dibuat floating
 
 ## v1.9.0
 - [x] Kelas Pengajar
