@@ -22,6 +22,7 @@ import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useDesa } from '@/hooks/useDesa'
 import { useDaerah } from '@/hooks/useDaerah'
+import { filterMeetingsForUser } from '@/lib/utils/meetingHelpers'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -532,7 +533,9 @@ export default function MeetingCards({
   return (
     <>
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-        {meetings
+        {/* FILTER: Hide Pengajar meetings from non-Pengajar teachers */}
+        {/* To disable this filter, comment out the filterMeetingsForUser call below */}
+        {filterMeetingsForUser(meetings, userProfile)
           .sort((a, b) => {
             // Sort by created_at descending (newest first)
             return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

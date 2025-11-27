@@ -22,6 +22,7 @@ import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useDesa } from '@/hooks/useDesa'
 import { useDaerah } from '@/hooks/useDaerah'
+import { filterMeetingsForUser } from '@/lib/utils/meetingHelpers'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -447,8 +448,12 @@ export default function MeetingList({
   const { desa: desaData } = useDesa()
   const { daerah: daerahData } = useDaerah()
 
-  // Group meetings by date
-  const groupedMeetings = meetings.reduce((acc, meeting) => {
+  // FILTER: Hide Pengajar meetings from non-Pengajar teachers
+  // To disable this filter, comment out the filterMeetingsForUser call below
+  const filteredMeetings = filterMeetingsForUser(meetings, userProfile)
+
+  // Group filtered meetings by date
+  const groupedMeetings = filteredMeetings.reduce((acc, meeting) => {
     const date = dayjs(meeting.date).format('YYYY-MM-DD')
     if (!acc[date]) {
       acc[date] = []
@@ -542,7 +547,7 @@ export default function MeetingList({
   return (
     <>
       <div className={`space-y-6 ${className}`}>
-        {Object.entries(groupedMeetings)
+        {(Object.entries(groupedMeetings) as [string, Meeting[]][])
           .sort(([a], [b]) => b.localeCompare(a)) // Sort dates descending
           .map(([date, dateMeetings]) => (
             <div key={date}>
