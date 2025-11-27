@@ -33,10 +33,10 @@ interface CreateMeetingModalProps {
   meeting?: any // Add meeting prop for edit mode
 }
 
-export default function CreateMeetingModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
+export default function CreateMeetingModal({
+  isOpen,
+  onClose,
+  onSuccess,
   classId,
   meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
@@ -52,6 +52,15 @@ export default function CreateMeetingModal({
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
 
+  // Track if selections were manually modified by user
+  const isManualSelectionRef = useRef(false)
+
+  // Track previously selected class IDs to detect additions/removals
+  const previousClassIdsRef = useRef<string[]>([])
+
+  // Store full student objects that were previously selected
+  const [previouslySelectedStudents, setPreviouslySelectedStudents] = useState<any[]>([])
+
   const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents()
   const { classes, isLoading: classesLoading } = useClasses()
   const { kelompok } = useKelompok()
@@ -62,13 +71,13 @@ export default function CreateMeetingModal({
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
     if (!availableTypes) return availableTypes
-    
+
     // Check if any selected class is Pengajar
     const hasPengajarClass = selectedClassIds.some(classId => {
       const selectedClass = classes.find(c => c.id === classId)
       return selectedClass && isTeacherClass(selectedClass)
     })
-    
+
     // If Pengajar class is selected, ensure PEMBINAAN is always available
     if (hasPengajarClass && !availableTypes.PEMBINAAN) {
       return {
@@ -76,7 +85,7 @@ export default function CreateMeetingModal({
         PEMBINAAN: MEETING_TYPES.PEMBINAAN
       }
     }
-    
+
     return availableTypes
   }, [availableTypes, selectedClassIds, classes])
 
@@ -109,7 +118,7 @@ export default function CreateMeetingModal({
     // Find first class from student.classes that exists in selectedClassIds
     const matchingClassId = student.classes?.find((c: any) => selectedClassIds.includes(c.id))?.id
     if (!matchingClassId) return null
-    
+
     // Get full class details
     return classesData.find((c: any) => c.id === matchingClassId)
   }
@@ -137,15 +146,26 @@ export default function CreateMeetingModal({
       const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
       matchesClass = allStudentClassIds.some(classId => selectedClassIds.includes(classId))
     }
-    
+
     // Filter by gender
     let matchesGender = true
     if (selectedGender && selectedGender !== '') {
       matchesGender = student.gender === selectedGender
     }
-    
+
     return matchesClass && matchesGender
   })
+
+  // Combine filtered students with previously selected students
+  const combinedStudents = useMemo(() => {
+    // Get previously selected students that are NOT in current filter
+    const previouslySelected = previouslySelectedStudents.filter(
+      prevStudent => !filteredStudents.some(s => s.id === prevStudent.id)
+    )
+
+    // Combine: current filtered + previously selected
+    return [...filteredStudents, ...previouslySelected]
+  }, [filteredStudents, previouslySelectedStudents])
 
   // Force revalidate students when modal opens to get fresh data
   useEffect(() => {
@@ -157,7 +177,7 @@ export default function CreateMeetingModal({
   // Track initialization to prevent infinite loops
   const initializedRef = useRef(false)
   const previousIsOpenRef = useRef(isOpen)
-  
+
   // Initialize selectedClassIds based on mode - only when modal opens for the first time
   useEffect(() => {
     // Reset when modal closes
@@ -168,16 +188,16 @@ export default function CreateMeetingModal({
       previousIsOpenRef.current = false
       return
     }
-    
+
     // Only initialize once when modal first opens
     if (!previousIsOpenRef.current && isOpen) {
       previousIsOpenRef.current = true
       initializedRef.current = false
     }
-    
+
     // Only initialize once per modal open
     if (initializedRef.current) return
-    
+
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
       const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
@@ -196,7 +216,7 @@ export default function CreateMeetingModal({
       initializedRef.current = true
     }
   }, [isOpen, classId, meeting])
-  
+
   // Separate effect for availableClasses to avoid infinite loop
   // Only initialize if not already initialized and modal is open
   useEffect(() => {
@@ -225,38 +245,129 @@ export default function CreateMeetingModal({
     }
   }, [meeting])
 
-  // Initialize selectedStudentIds based on mode
+  // Initialize selectedStudentIds with smart preservation
   useEffect(() => {
-    if (selectedClassIds.length > 0 && filteredStudents.length > 0) {
-      if (meeting && meeting.student_snapshot && meeting.student_snapshot.length > 0) {
-        // Edit mode: initialize from meeting.student_snapshot
-        // Filter to only include students that are still in filteredStudents
-        const validStudentIds = filteredStudents
-          .filter(s => meeting.student_snapshot.includes(s.id))
-          .map(s => s.id)
-        setSelectedStudentIds(validStudentIds.length > 0 ? validStudentIds : filteredStudents.map(s => s.id))
-      } else {
-        // Create mode: auto-select all filtered students
-        const allStudentIds = filteredStudents.map(s => s.id)
-        setSelectedStudentIds(allStudentIds)
+    // Early return if no classes selected
+    if (selectedClassIds.length === 0) {
+      if (selectedStudentIds.length > 0) {
+        setSelectedStudentIds([])
+        setPreviouslySelectedStudents([])
       }
-    } else {
-      setSelectedStudentIds([])
+      previousClassIdsRef.current = []
+      return
     }
-  }, [selectedClassIds.join(','), filteredStudents.map(s => s.id).join(','), meeting?.student_snapshot?.join(',')])
+
+    // Wait for students to load
+    if (filteredStudents.length === 0) return
+
+    // CASE 1: Edit Mode - Initialize from meeting.student_snapshot (ONCE)
+    if (meeting && meeting.student_snapshot && !isManualSelectionRef.current) {
+      const validStudentIds = filteredStudents
+        .filter(s => meeting.student_snapshot.includes(s.id))
+        .map(s => s.id)
+
+      setSelectedStudentIds(validStudentIds.length > 0 ? validStudentIds : filteredStudents.map(s => s.id))
+      setPreviouslySelectedStudents(filteredStudents.filter(s => validStudentIds.includes(s.id)))
+      previousClassIdsRef.current = [...selectedClassIds]
+      return
+    }
+
+    // CASE 2: Initial Auto-selection (Create Mode, first time)
+    if (!isManualSelectionRef.current && previousClassIdsRef.current.length === 0) {
+      const allStudentIds = filteredStudents.map(s => s.id)
+      setSelectedStudentIds(allStudentIds)
+      setPreviouslySelectedStudents([...filteredStudents])
+      previousClassIdsRef.current = [...selectedClassIds]
+      return
+    }
+
+    // CASE 3: Smart Merge (User has made manual changes)
+    if (isManualSelectionRef.current) {
+      const prevClassIds = previousClassIdsRef.current
+      const currentClassIds = selectedClassIds
+
+      // Check if classes actually changed
+      const classIdsChanged = prevClassIds.length !== currentClassIds.length ||
+        prevClassIds.some(id => !currentClassIds.includes(id)) ||
+        currentClassIds.some(id => !prevClassIds.includes(id))
+
+      if (!classIdsChanged) return // No change, skip update
+
+      // Detect added classes
+      const addedClassIds = currentClassIds.filter(id => !prevClassIds.includes(id))
+
+      // Detect removed classes
+      const removedClassIds = prevClassIds.filter(id => !currentClassIds.includes(id))
+
+      if (addedClassIds.length > 0) {
+        // NEW CLASSES ADDED: Auto-select students from new classes only
+        const newStudents = filteredStudents.filter(student => {
+          const studentClassIds = (student.classes || []).map(c => c.id)
+          const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+          return allStudentClassIds.some(classId => addedClassIds.includes(classId))
+        })
+
+        const newStudentIds = newStudents.map(s => s.id)
+
+        // Merge: keep existing selections + add new students
+        setSelectedStudentIds(prev => [...new Set([...prev, ...newStudentIds])])
+
+        // Update previously selected students
+        setPreviouslySelectedStudents(prev => {
+          const merged = [...prev, ...newStudents]
+          return merged.filter((student, index, self) =>
+            index === self.findIndex(s => s.id === student.id)
+          )
+        })
+      }
+
+      if (removedClassIds.length > 0) {
+        // CLASSES REMOVED: Clean up students that are ONLY in removed classes
+        setSelectedStudentIds(prev => {
+          return prev.filter(id => {
+            const student = students.find(s => s.id === id)
+            if (!student) return false
+
+            const studentClassIds = (student.classes || []).map(c => c.id)
+            const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+
+            // Keep if student is in at least one remaining selected class
+            return allStudentClassIds.some(classId => currentClassIds.includes(classId))
+          })
+        })
+
+        // Update previously selected students
+        setPreviouslySelectedStudents(prev => {
+          return prev.filter(student => {
+            const studentClassIds = (student.classes || []).map((c: any) => c.id)
+            const allStudentClassIds = student.class_id ? [...studentClassIds, student.class_id] : studentClassIds
+            return allStudentClassIds.some((classId: string) => currentClassIds.includes(classId))
+          })
+        })
+      }
+
+      // Update ref for next comparison
+      previousClassIdsRef.current = [...selectedClassIds]
+    }
+  }, [
+    selectedClassIds.join(','),
+    filteredStudents.map(s => s.id).join(','),
+    meeting?.student_snapshot?.join(','),
+    students
+  ])
 
   // Determine if meeting type input should be shown
   const shouldShowMeetingTypeInput = useMemo(() => {
     if (typesLoading || Object.keys(finalAvailableTypes).length === 0) {
       return true // Show by default while loading
     }
-    
+
     // If only PEMBINAAN is available, all classes are non-sambung
     const typeKeys = Object.keys(finalAvailableTypes)
     if (typeKeys.length === 1 && typeKeys[0] === 'PEMBINAAN') {
       return false
     }
-    
+
     return true
   }, [finalAvailableTypes, typesLoading])
 
@@ -266,12 +377,12 @@ export default function CreateMeetingModal({
     if (meeting) {
       return
     }
-    
+
     // Wait for modal to be open and types to be loaded
     if (!isOpen || typesLoading) {
       return
     }
-    
+
     // If input is hidden, force PEMBINAAN
     if (!shouldShowMeetingTypeInput) {
       if (meetingType !== 'PEMBINAAN') {
@@ -279,15 +390,15 @@ export default function CreateMeetingModal({
       }
       return
     }
-    
+
     // Auto-select logic for when input is shown (only if meetingType is empty)
     if (!meetingType && Object.keys(finalAvailableTypes).length > 0) {
       const typeValues = Object.values(finalAvailableTypes)
-      
+
       // If only 1 option, auto-select it
       if (typeValues.length === 1) {
         setMeetingType(typeValues[0].code)
-      } 
+      }
       // If multiple options and PEMBINAAN exists, default to PEMBINAAN
       else if (typeValues.length > 1) {
         const hasPembinaan = typeValues.some(t => t.code === 'PEMBINAAN')
@@ -303,7 +414,7 @@ export default function CreateMeetingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (selectedClassIds.length === 0) {
       toast.error('Pilih kelas terlebih dahulu')
       return
@@ -332,7 +443,7 @@ export default function CreateMeetingModal({
           meetingTypeCode: meetingType,
           studentIds: selectedStudentIds
         })
-        
+
         if (result.success) {
           toast.success('Pertemuan berhasil diperbarui!')
           // Invalidate all meetings cache so other users see the update
@@ -382,30 +493,33 @@ export default function CreateMeetingModal({
     setMeetingType('')
     setSelectedStudentIds([])
     setSelectedGender(null)
+    setPreviouslySelectedStudents([])
+    isManualSelectionRef.current = false
+    previousClassIdsRef.current = []
     onClose()
   }
 
   if (!isOpen) return null
 
   return (
-        <Modal
-          isOpen={isOpen}
-          onClose={handleClose}
-          title={meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
-        >
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
-              <div className="flex-1 overflow-y-auto px-6 py-4">
-              {isLoadingSettings ? (
-                // Loading skeleton
-                <div className="space-y-4">
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                </div>
-              ) : (
-                <>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={meeting ? 'Edit Pertemuan' : 'Buat Pertemuan Baru'}
+    >
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="flex flex-col h-full -mx-6 -my-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {isLoadingSettings ? (
+            // Loading skeleton
+            <div className="space-y-4">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          ) : (
+            <>
               {/* Class Selection */}
               {/* Class Selector - Only show if user has more than 1 class */}
               {formSettings.showClassSelection && availableClasses.length > 1 && (
@@ -419,13 +533,13 @@ export default function CreateMeetingModal({
                         const kelompokMap = new Map(
                           kelompok.map(k => [k.id, k.name])
                         )
-                        
+
                         // Check for duplicate class names
                         const nameCounts = availableClasses.reduce((acc, cls: any) => {
                           acc[cls.name] = (acc[cls.name] || 0) + 1
                           return acc
                         }, {} as Record<string, number>)
-                        
+
                         // Format labels
                         return availableClasses.map((cls: any) => {
                           const hasDuplicate = nameCounts[cls.name] > 1
@@ -433,14 +547,14 @@ export default function CreateMeetingModal({
                           const label = hasDuplicate && kelompokName
                             ? `${cls.name} (${kelompokName})`
                             : cls.name
-                          
+
                           return {
                             id: cls.id,
                             label
                           }
                         })
                       }
-                      
+
                       // Default: no format change
                       return availableClasses.map(cls => ({
                         id: cls.id,
@@ -557,10 +671,10 @@ export default function CreateMeetingModal({
               )}
 
               {/* Student Preview */}
-              {filteredStudents.length > 0 ? (
+              {combinedStudents.length > 0 ? (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Jumlah Siswa: <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{selectedStudentIds.length} dari {filteredStudents.length} siswa dipilih</Link>
+                    Jumlah Siswa: <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{selectedStudentIds.length} dari {combinedStudents.length} siswa dipilih</Link>
                     {selectedClassIds.length > 1 && (
                       <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">
                         ({selectedClassIds.length} kelas gabungan)
@@ -573,17 +687,17 @@ export default function CreateMeetingModal({
                       </span>
                     )} */}
                   </h4>
-                  
+
                   {/* Student Selection */}
                   {formSettings.showStudentSelection && (
                     <div className="mt-4">
                       <MultiSelectCheckbox
                         label="Pilih Siswa yang Akan Diikutsertakan"
-                        items={filteredStudents.map(s => {
+                        items={combinedStudents.map(s => {
                           const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
                           const className = matchingClass?.name || ''
                           const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
-                          
+
                           let label = s.name
                           if (className) {
                             if (teacherHasMultipleKelompok && kelompokName) {
@@ -592,11 +706,19 @@ export default function CreateMeetingModal({
                               label = `${s.name} (${className})`
                             }
                           }
-                          
+
                           return { id: s.id, label }
                         })}
                         selectedIds={selectedStudentIds}
-                        onChange={setSelectedStudentIds}
+                        onChange={(newSelectedIds) => {
+                          // Mark as manual selection
+                          isManualSelectionRef.current = true
+                          setSelectedStudentIds(newSelectedIds)
+
+                          // Update previously selected students
+                          const selected = combinedStudents.filter(s => newSelectedIds.includes(s.id))
+                          setPreviouslySelectedStudents(selected)
+                        }}
                         maxHeight="15rem"
                         hint="Pilih siswa yang akan ikut dalam pertemuan ini. Default: semua siswa terpilih."
                         disabled={isSubmitting}
@@ -611,30 +733,30 @@ export default function CreateMeetingModal({
                   </h4>
                 </div>
               )}
-                </>
-              )}
-              </div>
+            </>
+          )}
+        </div>
 
-              {/* Buttons - Sticky at bottom */}
-              <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
-                <Button
-                  type="button"
-                  onClick={handleClose}
-                  variant="outline"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || studentsLoading || classesLoading || filteredStudents.length === 0 || isLoadingSettings}
-                  variant="primary"
-                  loading={isSubmitting}
-                  loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}
-                >
-                  {meeting ? 'Perbarui' : 'Buat Pertemuan'}
-                </Button>
-              </div>
-            </form>
-        </Modal>
+        {/* Buttons - Sticky at bottom */}
+        <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
+          <Button
+            type="button"
+            onClick={handleClose}
+            variant="outline"
+          >
+            Batal
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || studentsLoading || classesLoading || combinedStudents.length === 0 || isLoadingSettings}
+            variant="primary"
+            loading={isSubmitting}
+            loadingText={meeting ? 'Memperbarui...' : 'Membuat...'}
+          >
+            {meeting ? 'Perbarui' : 'Buat Pertemuan'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
