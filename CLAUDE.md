@@ -229,13 +229,37 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - Auto-save with debouncing
 - Meetings can span multiple classes via `class_ids` array
 
+### Class Types & Special Handling
+
+**Kelas Pengajar (Teacher Training Classes)**:
+- Special class type for teacher/educator training programs
+- Identified using `isTeacherClass(classData)` helper from `@/lib/utils/classHelpers.ts`
+- **Special Rules**:
+  - **Meeting Types**: When Kelas Pengajar is selected, PEMBINAAN meeting type is always available
+    - System automatically adds PEMBINAAN to available meeting types if any selected class is Kelas Pengajar
+    - See implementation in `CreateMeetingModal.tsx` lines 71-90
+  - **Sambung Desa Exclusion**: Kelas Pengajar are excluded from Sambung Desa meetings (along with Caberawit classes)
+  - **Student Management**: Students in Kelas Pengajar are typically teachers/educators being trained
+
+**Kelas Caberawit (PAUD/Early Childhood)**:
+- Classes for PAUD (Pendidikan Anak Usia Dini) and early grades (Kelas 1-6)
+- Identified using `isCaberawitClass(classData)` helper
+- **Special Rules**:
+  - Excluded from Sambung Desa meetings
+  - May have age-specific attendance or reporting requirements
+
 ### Meeting Types & Class Eligibility
-- **Regular Meetings**: Use actual classes selected by teacher/admin
+- **Regular Meetings (PEMBINAAN)**: Standard class meetings
+  - Default meeting type for most classes
+  - Always available for Kelas Pengajar
+  - Used for regular instruction and training sessions
+
 - **Sambung Desa Meetings**: Special cross-class meetings with restrictions
   - Use master classes (Pra Nikah, Remaja, Orang Tua) to select target classes
-  - **CRITICAL**: Must exclude Pengajar and Caberawit (PAUD/Kelas 1-6) classes
+  - **CRITICAL**: Must exclude Pengajar and Caberawit classes
   - Use `isSambungDesaEligible(classData)` helper when converting master classes to actual classes
-  - Example in `CreateMeetingModal.tsx`:
+  - Types: SAMBUNG_DESA, SAMBUNG_KELOMPOK
+  - Example implementation:
     ```typescript
     const getActualClassIdsFromMasterClasses = (masterClassIds, kelompokIds, allClasses) => {
       return allClasses
@@ -255,6 +279,7 @@ await mutate(meetingFormSettingsKeys.settings(userId))
         .map(cls => cls.id)
     }
     ```
+
 - **Meeting Visibility**: Teachers only see meetings where they teach at least one of the meeting's classes
 - **Class Master Mappings**: Junction table `class_master_mappings` links actual classes to master classes
 
@@ -262,6 +287,111 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - Teachers can be assigned to multiple classes via `teacher_classes` junction table
 - Students can be in multiple classes via `student_classes` junction table
 - Profile loads all assigned classes for teachers
+
+### Student Selection Preservation Pattern
+
+When working with multi-class scenarios where users can select/deselect students dynamically, use the **Smart Selection Preservation Pattern** to maintain user intent across class changes.
+
+**Implementation** (see [CreateMeetingModal.tsx](src/app/(admin)/absensi/components/CreateMeetingModal.tsx)):
+
+**Key Components**:
+```typescript
+// 1. Track user intent vs. automated actions
+const isManualSelectionRef = useRef(false)
+
+// 2. Track class changes for diff detection
+const previousClassIdsRef = useRef<string[]>([])
+
+// 3. Preserve selected student objects
+const [previouslySelectedStudents, setPreviouslySelectedStudents] = useState<any[]>([])
+
+// 4. Combine filtered + previously selected students
+const combinedStudents = useMemo(() => {
+  const previouslySelected = previouslySelectedStudents.filter(
+    prevStudent => !filteredStudents.some(s => s.id === prevStudent.id)
+  )
+  return [...filteredStudents, ...previouslySelected]
+}, [filteredStudents, previouslySelectedStudents])
+```
+
+**Three-Case Selection Logic** (in useEffect):
+
+1. **CASE 1: Edit Mode** - Initialize from `meeting.student_snapshot` (runs once)
+   - Load previously saved student selections
+   - Validate against current filtered students
+   - Fallback to all students if no valid selections
+
+2. **CASE 2: Initial Auto-selection** - First time selection in create mode
+   - Auto-select ALL students from selected classes
+   - Store as baseline for future comparisons
+   - Only runs when `isManualSelectionRef.current === false` and no previous classes
+
+3. **CASE 3: Smart Merge** - User made manual changes
+   - **Adding Classes**: Auto-select students from NEW classes only, preserve existing selections
+   - **Removing Classes**: Keep students visible if they belong to other selected classes
+   - Uses diff detection: `addedClassIds` and `removedClassIds`
+   - Prevents infinite loops with stable array references and change detection
+
+**User Interaction Tracking**:
+```typescript
+<MultiSelectCheckbox
+  onChange={(newSelectedIds) => {
+    // Mark as manual selection
+    isManualSelectionRef.current = true
+    setSelectedStudentIds(newSelectedIds)
+
+    // Update previously selected students for combined display
+    const selected = combinedStudents.filter(s => newSelectedIds.includes(s.id))
+    setPreviouslySelectedStudents(selected)
+  }}
+/>
+```
+
+**Reset on Modal Close**:
+```typescript
+const handleClose = () => {
+  // ... other resets ...
+  setPreviouslySelectedStudents([])
+  isManualSelectionRef.current = false
+  previousClassIdsRef.current = []
+  onClose()
+}
+```
+
+**Expected Behavior**:
+1. Initial Load → All students auto-selected
+2. User Deselects Students → Selection preserved
+3. User Adds Class → New class students auto-selected, previous deselections maintained
+4. User Removes Class → Students from removed class remain visible until manually deselected
+5. Combined Display → Shows both filtered students AND previously selected students (even from removed classes)
+
+**Example Workflow**:
+```
+1. Select "Kelas 1" → 5 students auto-selected
+2. Manually deselect 2 students → 3 students selected
+3. Add "Kelas 2" → Original 3 stay selected + 4 new from Kelas 2 = 7 total
+4. Remove "Kelas 1" → All 7 remain visible/selected, can manually deselect if needed
+```
+
+**Critical Considerations**:
+- Use stable array references (`[...selectedClassIds]`) to prevent infinite loops
+- Add change detection before processing class changes
+- Conditional setState to avoid unnecessary re-renders
+- Sort combined students by kelompok then name for better UX:
+  ```typescript
+  combinedStudents
+    .map(s => ({ id: s.id, label, kelompokName, studentName }))
+    .sort((a, b) => {
+      if (a.kelompokName !== b.kelompokName) {
+        return a.kelompokName.localeCompare(b.kelompokName, 'id')
+      }
+      return a.studentName.localeCompare(b.studentName, 'id')
+    })
+  ```
+
+**Reference Pattern Sources**:
+- **Pattern A** ([StudentModal.tsx](src/app/(admin)/users/siswa/components/StudentModal.tsx)): Validation filter for preserving valid selections
+- **Pattern B** ([GuruModal.tsx](src/app/(admin)/users/guru/components/GuruModal.tsx)): Additive display with previously selected items
 
 ### Cache Management
 - Use `revalidatePath()` after mutations in server actions
