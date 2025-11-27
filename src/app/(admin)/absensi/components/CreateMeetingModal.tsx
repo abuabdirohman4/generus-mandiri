@@ -693,22 +693,35 @@ export default function CreateMeetingModal({
                     <div className="mt-4">
                       <MultiSelectCheckbox
                         label="Pilih Siswa yang Akan Diikutsertakan"
-                        items={combinedStudents.map(s => {
-                          const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
-                          const className = matchingClass?.name || ''
-                          const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
+                        items={combinedStudents
+                          .map(s => {
+                            const matchingClass = getStudentMatchingClass(s, selectedClassIds, classes)
+                            const className = matchingClass?.name || ''
+                            const kelompokName = matchingClass?.kelompok_id ? kelompokMap.get(matchingClass.kelompok_id) : null
 
-                          let label = s.name
-                          if (className) {
-                            if (teacherHasMultipleKelompok && kelompokName) {
-                              label = `${s.name} (${className} - ${kelompokName})`
-                            } else {
-                              label = `${s.name} (${className})`
+                            let label = s.name
+                            if (className) {
+                              if (teacherHasMultipleKelompok && kelompokName) {
+                                label = `${s.name} (${className} - ${kelompokName})`
+                              } else {
+                                label = `${s.name} (${className})`
+                              }
                             }
-                          }
 
-                          return { id: s.id, label }
-                        })}
+                            return {
+                              id: s.id,
+                              label,
+                              kelompokName: kelompokName || '',
+                              studentName: s.name
+                            }
+                          })
+                          .sort((a, b) => {
+                            // Sort by kelompok first, then by student name
+                            if (a.kelompokName !== b.kelompokName) {
+                              return a.kelompokName.localeCompare(b.kelompokName, 'id')
+                            }
+                            return a.studentName.localeCompare(b.studentName, 'id')
+                          })}
                         selectedIds={selectedStudentIds}
                         onChange={(newSelectedIds) => {
                           // Mark as manual selection
