@@ -532,7 +532,12 @@ export default function MeetingCards({
   return (
     <>
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-        {meetings.map((meeting) => {
+        {meetings
+          .sort((a, b) => {
+            // Sort by created_at descending (newest first)
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
+          .map((meeting) => {
         // Prepare data for pie chart
         const chartData = [
           { name: 'Hadir', value: meeting.presentCount, color: ATTENDANCE_COLORS.hadir },

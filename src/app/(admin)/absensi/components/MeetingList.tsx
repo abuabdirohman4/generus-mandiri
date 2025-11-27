@@ -555,7 +555,12 @@ export default function MeetingList({
 
               {/* Meetings for this date */}
               <div className="space-y-2">
-                {dateMeetings.map((meeting) => (
+                {dateMeetings
+                  .sort((a, b) => {
+                    // Sort by created_at descending (newest first)
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                  })
+                  .map((meeting) => (
                   <Link
                     key={meeting.id}
                     href={`/absensi/${meeting.id}`}
