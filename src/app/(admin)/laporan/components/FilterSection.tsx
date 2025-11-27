@@ -134,6 +134,7 @@ export default function FilterSection({
             classList={classList}
             showKelas={true}
             showGender={true}
+            cascadeFilters={false}
           />
 
           {/* Month and Year Filter */}
@@ -171,6 +172,7 @@ export default function FilterSection({
             classList={classList}
             showKelas={true}
             showGender={true}
+            cascadeFilters={false}
           />
 
           {/* Period Selection */}

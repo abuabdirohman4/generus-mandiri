@@ -95,6 +95,7 @@ interface DataFilterProps {
     desaList?: Desa[]
     kelompokList?: Kelompok[]
   }
+  cascadeFilters?: boolean              // NEW - control cascading behavior (default: true)
 }
 
 export default function DataFilter({
@@ -117,7 +118,8 @@ export default function DataFilter({
   hideAllOption = false,
   requiredFields = {},
   errors = {},
-  filterLists
+  filterLists,
+  cascadeFilters = true
 }: DataFilterProps) {
   // Role detection logic
   const isSuperAdmin = userProfile?.role === 'superadmin'
@@ -339,45 +341,74 @@ export default function DataFilter({
     // Count should be based on unique kelompok IDs, not total class count
     return Object.values(classGroups).map(group => {
       const uniqueKelompokCount = group.kelompokIds.size
+
+      // Show deduplicated names when no kelompok filter is active (Semua Kelompok)
+      // Only show kelompok suffix when specific kelompok is selected AND there are duplicates
+      const shouldShowKelompokSuffix = filters?.kelompok && filters.kelompok.length > 0 && uniqueKelompokCount > 1
+
       return {
         value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
-        label: uniqueKelompokCount > 1 ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
+        label: shouldShowKelompokSuffix ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
         name: group.name,
         ids: group.ids
       }
     })
-  }, [filteredClassList, isTeacher, teacherHasMultipleClasses, activeKelompokList])
+  }, [filteredClassList, isTeacher, teacherHasMultipleClasses, activeKelompokList, filters?.kelompok])
 
   // Get available meeting types based on user profile
   const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)
 
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string[]) => {
-    onFilterChange({
-      daerah: value,
-      desa: [], // Reset desa when daerah changes
-      kelompok: [], // Reset kelompok when daerah changes
-      kelas: [] // Reset kelas when daerah changes
-    })
-  }, [onFilterChange])
+    if (cascadeFilters) {
+      // Cascade mode: reset downstream filters
+      onFilterChange({
+        daerah: value,
+        desa: [], // Reset desa when daerah changes
+        kelompok: [], // Reset kelompok when daerah changes
+        kelas: [], // Reset kelas when daerah changes
+        gender: filters?.gender,
+        meetingType: filters?.meetingType || []
+      })
+    } else {
+      // Independent mode: preserve all other filters
+      onFilterChange({
+        ...filters,
+        daerah: value
+      })
+    }
+  }, [filters, cascadeFilters, onFilterChange])
 
   const handleDesaChange = useCallback((value: string[]) => {
-    onFilterChange({
-      daerah: filters?.daerah || [],
-      desa: value,
-      kelompok: [], // Reset kelompok when desa changes
-      kelas: [] // Reset kelas when desa changes
-    })
-  }, [filters?.daerah, onFilterChange])
+    if (cascadeFilters) {
+      // Cascade mode: reset downstream filters
+      onFilterChange({
+        daerah: filters?.daerah || [],
+        desa: value,
+        kelompok: [], // Reset kelompok when desa changes
+        kelas: [], // Reset kelas when desa changes
+        gender: filters?.gender,
+        meetingType: filters?.meetingType || []
+      })
+    } else {
+      // Independent mode: preserve all other filters
+      onFilterChange({
+        ...filters,
+        desa: value
+      })
+    }
+  }, [filters, cascadeFilters, onFilterChange])
 
   const handleKelompokChange = useCallback((value: string[]) => {
     onFilterChange({
       daerah: filters?.daerah || [],
       desa: filters?.desa || [],
       kelompok: value,
-      kelas: [] // Reset kelas when kelompok changes
+      kelas: cascadeFilters ? [] : (filters?.kelas || []), // Conditional reset based on cascadeFilters
+      gender: filters?.gender,
+      meetingType: filters?.meetingType || []
     })
-  }, [filters?.daerah, filters?.desa, onFilterChange])
+  }, [filters?.daerah, filters?.desa, filters?.kelas, filters?.gender, filters?.meetingType, cascadeFilters, onFilterChange])
 
   const handleKelasChange = useCallback((value: string[]) => {
     onFilterChange({

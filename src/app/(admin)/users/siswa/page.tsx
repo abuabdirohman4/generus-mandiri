@@ -118,6 +118,7 @@ export default function SiswaPage() {
           classList={classes || []}
           showKelas={true}
           showGender={true}
+          cascadeFilters={false}
         />
 
         {/* Stats Cards */}

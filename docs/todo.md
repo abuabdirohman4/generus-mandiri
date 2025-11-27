@@ -1,5 +1,4 @@
 ## v1.10.0
-- [ ] Add Kelas Desa (Aghniya, MM Desa, Pengurus Desa dll)
 - [ ] Add Pengajian Daerah
     - Nama
     - Tipe (Daerah)
@@ -16,12 +15,17 @@
 - [x] Kelas Pengajar
 - [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - [x] Add Template name
-- [x] Add Pengajian Desa
-    - Nama
-    - Tipe (Desa)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Kelompok (Warlob, Junti dll)
+- [ ] Add Pengajian Desa
+    [x] Nama
+    [x] Tipe (Desa)
+    [x] Peserta
+        [x] Kelas (Remaja, Orang Tua dll)
+        [x] Kelompok (Warlob, Junti dll)
+    [x] Meeting Detail
+        [x] Filter Kelompok
+        [ ] Filter Kelas
+- [ ] Tipe Pertmuan di Laporan
+terkait pengajian desa, di @src/app/(admin)/absensi/[meetingId]/page.tsx sudah muncul filter kelompok, tapi seharusnya filter kelompok ini hanya muncul untuk admin desa dan level  
 
 ## v1.8.1
 - [x] Error Delete siswa

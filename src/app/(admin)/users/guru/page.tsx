@@ -92,6 +92,7 @@ export default function GuruManagementPage() {
           kelompokList={kelompok || []}
           classList={[]}
           showKelas={false}
+          cascadeFilters={false}
         />
 
         {/* Table */}

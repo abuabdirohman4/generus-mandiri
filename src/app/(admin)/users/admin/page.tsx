@@ -88,6 +88,7 @@ export default function AdminManagementPage() {
           kelompokList={kelompok || []}
           classList={[]}
           showKelas={false}
+          cascadeFilters={false}
         />
 
         {/* Table */}

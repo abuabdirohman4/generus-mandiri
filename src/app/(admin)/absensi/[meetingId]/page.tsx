@@ -12,7 +12,7 @@ import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
-import { getCurrentUserId } from '@/lib/userUtils'
+import { getCurrentUserId, shouldShowKelompokFilter } from '@/lib/userUtils'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
@@ -400,25 +400,13 @@ export default function MeetingAttendancePage() {
         })
       }
 
-      // Check for duplicate class names
-      const nameCounts = classDetails.reduce((acc, cls) => {
-        acc[cls.name] = (acc[cls.name] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-
-      // Format labels with kelompok name if duplicate
-      return classDetails.map(cls => {
-        const hasDuplicate = nameCounts[cls.name] > 1
-        const label = hasDuplicate && cls.kelompok_name
-          ? `${cls.name} (${cls.kelompok_name})`
-          : cls.name
-
-        return {
-          id: cls.id,
-          name: label,
-          kelompok_id: cls.kelompok_id
-        }
-      })
+      // Return class details without pre-formatting
+      // DataFilter will handle deduplication and formatting
+      return classDetails.map(cls => ({
+        id: cls.id,
+        name: cls.name, // Use original name, not formatted
+        kelompok_id: cls.kelompok_id
+      }))
     }
 
     // For admin/creator, show all classes
@@ -464,25 +452,13 @@ export default function MeetingAttendancePage() {
       })
     }
 
-    // Check for duplicate class names
-    const nameCounts = classDetails.reduce((acc, cls) => {
-      acc[cls.name] = (acc[cls.name] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-
-    // Format labels with kelompok name if duplicate
-    return classDetails.map(cls => {
-      const hasDuplicate = nameCounts[cls.name] > 1
-      const label = hasDuplicate && cls.kelompok_name
-        ? `${cls.name} (${cls.kelompok_name})`
-        : cls.name
-
-      return {
-        id: cls.id,
-        name: label,
-        kelompok_id: cls.kelompok_id
-      }
-    })
+    // Return class details without pre-formatting
+    // DataFilter will handle deduplication and formatting
+    return classDetails.map(cls => ({
+      id: cls.id,
+      name: cls.name, // Use original name, not formatted
+      kelompok_id: cls.kelompok_id
+    }))
   }, [meeting, students, userProfile, isMeetingCreator, classesData, kelompokData])
 
   // Build kelompok list for filter - only for multi-kelompok meetings
@@ -531,7 +507,8 @@ export default function MeetingAttendancePage() {
   const showClassFilter = meeting?.class_ids && meeting.class_ids.length > 1 && classListForFilter.length > 0
 
   // Determine if kelompok filter should show
-  const showKelompokFilter = kelompokListForFilter.length > 1
+  const showKelompokFilter = kelompokListForFilter.length > 1 &&
+                            userProfile ? shouldShowKelompokFilter(userProfile) : false
 
   const goBack = () => {
     router.push('/absensi')
@@ -645,6 +622,7 @@ export default function MeetingAttendancePage() {
           showDesa={false}
           showKelompok={showKelompokFilter}
           variant="page"
+          cascadeFilters={false}
         />
 
         {/* Attendance Table */}

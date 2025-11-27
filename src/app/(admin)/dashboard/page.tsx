@@ -61,6 +61,7 @@ export default function AdminDashboard() {
           kelompokList={kelompok || []}
           classList={[]}
           showKelas={false}
+          cascadeFilters={false}
         />
       </div>
 

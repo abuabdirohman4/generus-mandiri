@@ -83,6 +83,7 @@ export default function ClassesKelompokTab() {
           kelompokList={kelompok || []}
           classList={[]}
           showKelas={false}
+          cascadeFilters={false}
         />
       )}
 
