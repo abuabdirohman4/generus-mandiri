@@ -210,9 +210,19 @@ export default function CreateMeetingModal({
       setSelectedClassIds(classIds)
       initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
-      // Create mode: default to first available class
-      // Use a separate effect that only runs when availableClasses is ready
-      setSelectedClassIds([availableClasses[0].id])
+      // Create mode: Determine selection based on UI visibility
+      // UI is shown when: formSettings.showClassSelection AND availableClasses.length > 1
+      const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
+
+      if (isUIShown) {
+        // Class selection UI IS visible: start with NO classes selected
+        // User must explicitly choose which classes to include
+        setSelectedClassIds([])
+      } else {
+        // Class selection UI is HIDDEN: auto-select available classes
+        // This handles both single-class teachers and showClassSelection=false
+        setSelectedClassIds(availableClasses.map(cls => cls.id))
+      }
       initializedRef.current = true
     }
   }, [isOpen, classId, meeting])
@@ -225,12 +235,23 @@ export default function CreateMeetingModal({
       setSelectedClassIds(prev => {
         // Only set if not already set
         if (prev.length === 0) {
-          return [availableClasses[0].id]
+          // Check if class selection UI is actually shown
+          // UI is shown when: formSettings.showClassSelection AND availableClasses.length > 1
+          const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
+
+          if (isUIShown) {
+            // Class selection UI IS visible: start with NO classes selected
+            return []
+          } else {
+            // Class selection UI is HIDDEN: auto-select available classes
+            // This handles both single-class teachers and showClassSelection=false
+            return availableClasses.map(cls => cls.id)
+          }
         }
         return prev
       })
     }
-  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id])
+  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id, formSettings.showClassSelection])
 
   // Update form data when meeting changes
   useEffect(() => {
@@ -278,6 +299,28 @@ export default function CreateMeetingModal({
       setSelectedStudentIds(allStudentIds)
       setPreviouslySelectedStudents([...filteredStudents])
       previousClassIdsRef.current = [...selectedClassIds]
+      return
+    }
+
+    // CASE 2B: Class selection changed but user hasn't manually changed students
+    // This handles when showClassSelection=false and all classes are auto-selected,
+    // or when user changes classes but hasn't touched student selection yet
+    if (!isManualSelectionRef.current && previousClassIdsRef.current.length > 0) {
+      const prevClassIds = previousClassIdsRef.current
+      const currentClassIds = selectedClassIds
+
+      // Check if classes actually changed
+      const classIdsChanged = prevClassIds.length !== currentClassIds.length ||
+        prevClassIds.some(id => !currentClassIds.includes(id)) ||
+        currentClassIds.some(id => !prevClassIds.includes(id))
+
+      if (classIdsChanged) {
+        // Classes changed but no manual student selection yet - auto-select all students
+        const allStudentIds = filteredStudents.map(s => s.id)
+        setSelectedStudentIds(allStudentIds)
+        setPreviouslySelectedStudents([...filteredStudents])
+        previousClassIdsRef.current = [...selectedClassIds]
+      }
       return
     }
 
