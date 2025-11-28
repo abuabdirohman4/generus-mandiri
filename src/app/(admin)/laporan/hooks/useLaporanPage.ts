@@ -37,6 +37,7 @@ export function useLaporanPage() {
       period: filters.period,
       classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
       gender: filters.gender || undefined,
+      meetingType: filters.meetingType?.length ? filters.meetingType.join(',') : undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -192,12 +193,15 @@ export function useLaporanPage() {
     mutate(undefined, { revalidate: false })
   }
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => {
-    // Extract gender from organisasiFilters and update filters.gender separately
-    const { gender, ...organisasi } = organisasiFilters
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }) => {
+    // Extract gender and meetingType from organisasiFilters and update separately
+    const { gender, meetingType, ...organisasi } = organisasiFilters
     setFilter('organisasi', organisasi)
     if (gender !== undefined) {
       setFilter('gender', gender || '')
+    }
+    if (meetingType !== undefined) {
+      setFilter('meetingType', meetingType)
     }
   }, [setFilter])
 

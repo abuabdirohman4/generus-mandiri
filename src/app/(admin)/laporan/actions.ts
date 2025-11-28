@@ -65,6 +65,7 @@ export interface ReportFilters {
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
   gender?: string
+  meetingType?: string
   
   // Daily filters
   startDate?: string
@@ -282,13 +283,24 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
     const adminClient = await createAdminClient()
 
+    // Parse meeting type filter
+    const meetingTypeFilter = filters.meetingType
+      ? filters.meetingType.split(',').filter(Boolean)
+      : null
+
     // Fetch meetings first to determine date range and meeting IDs
-    const { data: meetingsForFilter } = await adminClient
+    let meetingsForFilterQuery = adminClient
       .from('meetings')
       .select('id, date, class_id, class_ids')
       .gte('date', dateFilter.date?.gte || '1900-01-01')
       .lte('date', dateFilter.date?.lte || '2100-12-31')
-      .order('date')
+
+    // Apply meeting type filter
+    if (meetingTypeFilter && meetingTypeFilter.length > 0) {
+      meetingsForFilterQuery = meetingsForFilterQuery.in('meeting_type_code', meetingTypeFilter)
+    }
+
+    const { data: meetingsForFilter } = await meetingsForFilterQuery.order('date')
 
     // For teachers, filter meetings to get relevant meeting IDs
     let meetingIdsForAttendance: string[] = []
@@ -384,12 +396,18 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }).filter((log: any) => log.students && log.date) // Filter out logs with missing student or date
 
     // Use admin client to bypass RLS
-    const { data: meetings } = await adminClient
+    let meetingsQuery = adminClient
       .from('meetings')
       .select('id, title, date, student_snapshot, class_id, class_ids')
       .gte('date', dateFilter.date?.gte || '1900-01-01')
       .lte('date', dateFilter.date?.lte || '2100-12-31')
-      .order('date')
+
+    // Apply meeting type filter
+    if (meetingTypeFilter && meetingTypeFilter.length > 0) {
+      meetingsQuery = meetingsQuery.in('meeting_type_code', meetingTypeFilter)
+    }
+
+    const { data: meetings } = await meetingsQuery.order('date')
 
 
     // For teacher, filter meetings by their classes first
@@ -427,18 +445,24 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       }
     }
 
-    // Apply class filter client-side (check both primary class_id and student_classes junction table)
+    // Apply class filter - check MEETING's class, not student's class
+    // This ensures we only show attendance from meetings for the selected class
     if (filters.classId) {
       const classIds = filters.classId.split(',')
       filteredLogs = filteredLogs.filter((log: any) => {
+        const meeting = meetingMap.get(log.meeting_id)
+        if (!meeting) return false
+
+        // Check if meeting is for the selected class
         // Check primary class_id
-        if (classIds.includes(log.students.class_id)) return true
-        
-        // Check all classes from junction table
-        const studentClasses = log.students.student_classes || []
-        return studentClasses.some((sc: any) => 
-          sc.classes && classIds.includes(sc.classes.id)
-        )
+        if (classIds.includes(meeting.class_id)) return true
+
+        // Check class_ids array for multi-class meetings
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          return meeting.class_ids.some((id: string) => classIds.includes(id))
+        }
+
+        return false
       })
     }
 

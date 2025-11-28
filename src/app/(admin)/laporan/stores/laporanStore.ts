@@ -22,7 +22,10 @@ export interface LaporanFilters {
   
   // Gender filter
   gender: string
-  
+
+  // Meeting type filter
+  meetingType: string[]
+
   // Daily filters
   startDate: Dayjs | null
   endDate: Dayjs | null
@@ -81,7 +84,10 @@ const defaultFilters: LaporanFilters = {
   
   // Gender filter
   gender: '',
-  
+
+  // Meeting type filter
+  meetingType: [],
+
   // Daily filters
   startDate: null,
   endDate: null,
@@ -156,6 +162,7 @@ export const useLaporanStore = create<LaporanState>()(
           period: state.filters.period,
           classId: state.filters.classId,
           gender: state.filters.gender,
+          meetingType: state.filters.meetingType,
           
           // Persist period-specific settings but reset date-based ones
           weekYear: state.filters.weekYear,
@@ -185,27 +192,31 @@ export const useLaporan = () => {
     ...store,
     // Helper to check if any filters are active
     hasActiveFilters: store.filters.viewMode === 'detailed' ? (
-      store.filters.classId !== '' || 
+      store.filters.classId !== '' ||
       store.filters.organisasi?.kelas?.length > 0 ||
-      store.filters.startDate !== null || 
+      store.filters.meetingType?.length > 0 ||
+      store.filters.startDate !== null ||
       store.filters.endDate !== null
     ) : (
-      store.filters.month !== getCurrentMonth() || 
+      store.filters.month !== getCurrentMonth() ||
       store.filters.year !== getCurrentYear() ||
       store.filters.classId !== '' ||
-      store.filters.organisasi?.kelas?.length > 0
+      store.filters.organisasi?.kelas?.length > 0 ||
+      store.filters.meetingType?.length > 0
     ),
     // Helper to get filter count
     filterCount: store.filters.viewMode === 'detailed' ? [
       store.filters.classId !== '',
       store.filters.organisasi?.kelas?.length > 0,
+      store.filters.meetingType?.length > 0,
       store.filters.startDate !== null,
       store.filters.endDate !== null
     ].filter(Boolean).length : [
       store.filters.month !== getCurrentMonth(),
       store.filters.year !== getCurrentYear(),
       store.filters.classId !== '',
-      store.filters.organisasi?.kelas?.length > 0
+      store.filters.organisasi?.kelas?.length > 0,
+      store.filters.meetingType?.length > 0
     ].filter(Boolean).length
   }
 }

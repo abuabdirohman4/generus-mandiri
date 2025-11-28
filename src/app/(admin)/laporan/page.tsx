@@ -104,7 +104,11 @@ export default function LaporanPage() {
             desaList={desa || []}
             kelompokList={kelompok || []}
             classList={classes || []}
-            organisasiFilters={{ ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }), gender: filters.gender || '' }}
+            organisasiFilters={{
+              ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
+              gender: filters.gender || '',
+              meetingType: filters.meetingType || []
+            }}
             onOrganisasiFilterChange={handleOrganisasiFilterChange}
           />
         </div>

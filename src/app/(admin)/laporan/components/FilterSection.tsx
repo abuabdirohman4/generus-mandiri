@@ -1,11 +1,14 @@
 'use client'
 
+import { useMemo } from 'react'
 import { Dayjs } from 'dayjs'
 import InputFilter from '@/components/form/input/InputFilter'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import WeekPicker from '@/components/form/input/WeekPicker'
 import Button from '@/components/ui/button/Button'
 import DataFilter from '@/components/shared/DataFilter'
+import { useMeetingTypes } from '@/app/(admin)/absensi/hooks/useMeetingTypes'
+import { isAdmin, isTeacher } from '@/lib/userUtils'
 import { LaporanFilters } from '../stores/laporanStore'
 
 interface FilterOption {
@@ -29,8 +32,8 @@ interface FilterSectionProps {
   desaList: any[]
   kelompokList: any[]
   classList: any[]
-  organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }
-  onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => void
+  organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }
+  onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }) => void
 }
 
 export default function FilterSection({
@@ -52,6 +55,28 @@ export default function FilterSection({
   organisasiFilters,
   onOrganisasiFilterChange
 }: FilterSectionProps) {
+  // Get available meeting types based on user role
+  const { availableTypes } = useMeetingTypes(userProfile)
+
+  // Determine if meeting type filter should be shown
+  // Show for all admin roles (always show all options), or teachers with 2+ available types
+  const shouldShowMeetingTypeFilter = useMemo(() => {
+    if (!userProfile) return false
+
+    // Always show for admin roles (they can see all meeting types for filtering purposes)
+    if (isAdmin(userProfile)) {
+      return true
+    }
+
+    // For teachers: only show if they have 2+ available meeting types
+    // Teachers are restricted to their available types via useMeetingTypes hook
+    if (isTeacher(userProfile)) {
+      return Object.keys(availableTypes || {}).length >= 2
+    }
+
+    return false
+  }, [userProfile, availableTypes])
+
   const monthOptions = [
     { value: '1', label: 'Januari' },
     { value: '2', label: 'Februari' },
@@ -134,6 +159,8 @@ export default function FilterSection({
             classList={classList}
             showKelas={true}
             showGender={true}
+            showMeetingType={shouldShowMeetingTypeFilter}
+            forceShowAllMeetingTypes={true}
             cascadeFilters={false}
           />
 
@@ -172,6 +199,8 @@ export default function FilterSection({
             classList={classList}
             showKelas={true}
             showGender={true}
+            showMeetingType={shouldShowMeetingTypeFilter}
+            forceShowAllMeetingTypes={true}
             cascadeFilters={false}
           />
 

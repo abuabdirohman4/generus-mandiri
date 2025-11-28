@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectFilter from '@/components/form/input/MultiSelectFilter'
 import { useMeetingTypes } from '@/app/(admin)/absensi/hooks/useMeetingTypes'
+import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 
 interface Daerah {
   id: string
@@ -69,6 +70,7 @@ interface DataFilterProps {
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
   showGender?: boolean // NEW - for pages that need gender filter
   showMeetingType?: boolean // NEW - for pages that need meeting type filter
+  forceShowAllMeetingTypes?: boolean // NEW - for reporting/filtering pages (bypass role restrictions)
   showDaerah?: boolean // Override role-based visibility
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
@@ -109,6 +111,7 @@ export default function DataFilter({
   showKelas = false,
   showGender = false, // NEW
   showMeetingType = false, // NEW
+  forceShowAllMeetingTypes = false, // NEW
   showDaerah,
   showDesa,
   showKelompok,
@@ -357,6 +360,13 @@ export default function DataFilter({
 
   // Get available meeting types based on user profile
   const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)
+
+  // Determine which meeting types to show
+  // For reporting/filtering pages, show all types regardless of role
+  // For creation pages, use role-restricted types
+  const meetingTypesToShow = forceShowAllMeetingTypes
+    ? MEETING_TYPES  // Show all types for reporting/filtering
+    : availableTypes // Use role-restricted types for creation
 
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string[]) => {
@@ -644,7 +654,7 @@ export default function DataFilter({
       {showMeetingType && (
         <div className={getFilterClass(getFilterIndex('meetingType'))}>
           {variant === 'page' ? (
-            (meetingTypesLoading || Object.keys(availableTypes).length === 0) ? (
+            (meetingTypesLoading || Object.keys(meetingTypesToShow).length === 0) ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 {meetingTypesLoading ? 'Memuat tipe pertemuan...' : 'Pilih kelas terlebih dahulu'}
               </div>
@@ -654,7 +664,7 @@ export default function DataFilter({
                 label="Tipe Pertemuan"
                 value={filters?.meetingType || []}
                 onChange={handleMeetingTypeChange}
-                options={Object.entries(availableTypes).map(([key, type]) => ({
+                options={Object.entries(meetingTypesToShow).map(([key, type]) => ({
                   value: type.code,
                   label: type.label
                 }))}
@@ -671,7 +681,7 @@ export default function DataFilter({
               label="Tipe Pertemuan"
               value={filters?.meetingType?.[0] || ''}
               onChange={(value) => handleMeetingTypeChange(value ? [value] : [])}
-              options={Object.entries(availableTypes).map(([key, type]) => ({
+              options={Object.entries(meetingTypesToShow).map(([key, type]) => ({
                 value: type.code,
                 label: type.label
               }))}
