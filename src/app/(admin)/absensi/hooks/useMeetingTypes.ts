@@ -13,6 +13,8 @@ interface UserProfile {
       category?: Array<{
         is_sambung_capable: boolean
         exclude_pembinaan: boolean
+        code?: string
+        name?: string
       }>
     }>
   }>
@@ -23,26 +25,29 @@ export function useMeetingTypes(userProfile: UserProfile | null) {
     userProfile ? ['meeting-types', userProfile.role, userProfile.id] : null,
     async () => {
       if (!userProfile) return {}
-      
+
       // For teachers, need to fetch class categories
       if (userProfile.role === 'teacher') {
         const classIds = userProfile.classes?.map((c: any) => c.id) || []
-        
+
         // If no classes, return default (Pembinaan only)
         if (classIds.length === 0) {
           return { PEMBINAAN: MEETING_TYPES.PEMBINAAN }
         }
-        
+
         const supabase = createClient()
         const { data: classesData, error: classesError } = await supabase
           .from('classes')
           .select(`
             id,
+            name,
             class_master_mappings (
               class_master:class_master_id (
                 category:category_id (
                   is_sambung_capable,
-                  exclude_pembinaan
+                  exclude_pembinaan,
+                  code,
+                  name
                 )
               )
             )
@@ -63,13 +68,16 @@ export function useMeetingTypes(userProfile: UserProfile | null) {
         // Transform the data structure to match expected format
         const transformedClasses = classesData.map((cls: any) => ({
           id: cls.id,
-          master_class: Array.isArray(cls.class_master_mappings) && cls.class_master_mappings.length > 0 
+          name: cls.name,
+          master_class: Array.isArray(cls.class_master_mappings) && cls.class_master_mappings.length > 0
             ? cls.class_master_mappings.map((mapping: any) => ({
-                category: mapping.class_master?.category ? [{
-                  is_sambung_capable: mapping.class_master.category.is_sambung_capable || false,
-                  exclude_pembinaan: mapping.class_master.category.exclude_pembinaan || false
-                }] : []
-              }))
+              category: mapping.class_master?.category ? [{
+                is_sambung_capable: mapping.class_master.category.is_sambung_capable || false,
+                exclude_pembinaan: mapping.class_master.category.exclude_pembinaan || false,
+                code: mapping.class_master.category.code,
+                name: mapping.class_master.category.name
+              }] : []
+            }))
             : []
         }))
 
@@ -91,9 +99,9 @@ export function useMeetingTypes(userProfile: UserProfile | null) {
     }
   )
 
-  return { 
-    availableTypes: data || {}, 
-    isLoading, 
-    error 
+  return {
+    availableTypes: data || {},
+    isLoading,
+    error
   }
 }

@@ -6,6 +6,7 @@
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
 - [ ] Add Halaman Materi
+- [] Add Tipe Pertemuan ASAD
 
 ## v1.9.1
 - [x] Fix attendance log in absensi & laporan 

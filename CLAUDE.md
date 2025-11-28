@@ -277,6 +277,44 @@ await mutate(meetingFormSettingsKeys.settings(userId))
   - `class_master_mappings` with full hierarchy (class_master → category) for class type detection
 - This enables `isCaberawitClass()` to work correctly on user profile classes
 
+### Filtering & Reporting Conventions
+
+**CRITICAL: Class Filter Logic**
+- When filtering attendance/reports by class, **ALWAYS filter by meeting's class**, NOT student's enrolled class
+- ❌ **WRONG**: Check if student is enrolled in selected class (`log.students.class_id`)
+- ✅ **CORRECT**: Check if meeting was for selected class (`meeting.class_id` or `meeting.class_ids`)
+- **Why**: Students can be enrolled in multiple classes. Filtering by student enrollment shows attendance from ALL meetings across ALL their classes, not just the selected class.
+- **Example Bug**: Selecting "Pra Nikah" + "Pembinaan" showed student "Reta" whose "Pembinaan" meeting was actually for "Pengajar" class, not "Pra Nikah"
+- **Correct Implementation** (see `src/app/(admin)/laporan/actions.ts:448-467`):
+  ```typescript
+  // Apply class filter - check MEETING's class, not student's class
+  if (filters.classId) {
+    const classIds = filters.classId.split(',')
+    filteredLogs = filteredLogs.filter((log: any) => {
+      const meeting = meetingMap.get(log.meeting_id)
+      if (!meeting) return false
+
+      // Check if meeting is for the selected class
+      if (classIds.includes(meeting.class_id)) return true
+
+      // Check class_ids array for multi-class meetings
+      if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+        return meeting.class_ids.some((id: string) => classIds.includes(id))
+      }
+
+      return false
+    })
+  }
+  ```
+
+**Meeting Type Filter for Reporting**
+- Reports page shows ALL meeting types for filtering, regardless of user role
+- Uses `forceShowAllMeetingTypes={true}` prop on DataFilter component
+- **Why**: Separates concerns of "what can I create" vs "what can I filter by"
+  - Meeting creation pages: Use role-restricted types (teacher can only create certain types)
+  - Reporting/filtering pages: Use all types (admin can filter by any type to view data)
+- **Implementation**: `src/components/shared/DataFilter.tsx` + `src/app/(admin)/laporan/components/FilterSection.tsx`
+
 ### Cache Management
 - Use `revalidatePath()` after mutations in server actions
 - Call `mutate()` on SWR hooks after client-side updates

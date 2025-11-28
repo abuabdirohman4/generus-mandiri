@@ -123,28 +123,26 @@ export default function FilterSection({
           <div className="flex w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => onFilterChange('viewMode', 'general')}
-              className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${
-                filters.viewMode === 'general'
+              className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${filters.viewMode === 'general'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               Laporan Umum
             </button>
             <button
               onClick={() => onFilterChange('viewMode', 'detailed')}
-              className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${
-                filters.viewMode === 'detailed'
+              className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${filters.viewMode === 'detailed'
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
+                }`}
             >
               Laporan Detail
             </button>
           </div>
         </div>
       </div>
-      
+
       {filters.viewMode === 'general' ? (
         // General Mode Filters
         <>
@@ -160,7 +158,7 @@ export default function FilterSection({
             showKelas={true}
             showGender={true}
             showMeetingType={shouldShowMeetingTypeFilter}
-            forceShowAllMeetingTypes={true}
+            forceShowAllMeetingTypes={isAdmin(userProfile)}
             cascadeFilters={false}
           />
 
@@ -200,7 +198,7 @@ export default function FilterSection({
             showKelas={true}
             showGender={true}
             showMeetingType={shouldShowMeetingTypeFilter}
-            forceShowAllMeetingTypes={true}
+            forceShowAllMeetingTypes={isAdmin(userProfile)}
             cascadeFilters={false}
           />
 
