@@ -193,9 +193,10 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 ### Special Utilities
 
 **Class Helpers** (`@/lib/utils/classHelpers.ts`):
-- `isCaberawitClass(classData)` - Check if PAUD/Caberawit class
-- `isTeacherClass(classData)` - Check if teacher training class
+- `isCaberawitClass(classData)` - Check if PAUD/Caberawit class (via category code/name)
+- `isTeacherClass(classData)` - Check if teacher training class (via class name contains 'pengajar')
 - `isSambungDesaEligible(classData)` - Check if class is eligible for Sambung Desa meetings (excludes Pengajar and Caberawit classes)
+- **Usage**: These helpers are used in `meetingTypes.ts` to determine which meeting types are available to teachers based on their class assignments
 
 **Common Utils** (`@/lib/utils.ts`):
 - `cn(...classes)` - Merge Tailwind classes (clsx + tailwind-merge)
@@ -241,32 +242,62 @@ await mutate(meetingFormSettingsKeys.settings(userId))
   - Requires `class_master_mappings` to be loaded in user profile for `isCaberawitClass()` detection
 
 ### Meeting Types & Class Eligibility
-- **Regular Meetings**: Use actual classes selected by teacher/admin
-- **Sambung Desa Meetings**: Special cross-class meetings with restrictions
-  - Use master classes (Pra Nikah, Remaja, Orang Tua) to select target classes
-  - **CRITICAL**: Must exclude Pengajar and Caberawit (PAUD/Kelas 1-6) classes
-  - Use `isSambungDesaEligible(classData)` helper when converting master classes to actual classes
-  - Example in `CreateMeetingModal.tsx`:
-    ```typescript
-    const getActualClassIdsFromMasterClasses = (masterClassIds, kelompokIds, allClasses) => {
-      return allClasses
-        .filter(cls => {
-          // Must be in selected kelompok
-          if (!kelompokIds.includes(cls.kelompok_id)) return false
 
-          // Must have selected master class
-          const hasMasterClass = cls.class_master_mappings.some(m =>
-            masterClassIds.includes(m.class_master?.id)
-          )
-          if (!hasMasterClass) return false
+**Available Meeting Types**:
+- `ASAD` - ASAD meetings (available to all except PAUD and Pengajar classes)
+- `PEMBINAAN` - Regular class meetings
+- `SAMBUNG_KELOMPOK` - Group-level meetings
+- `SAMBUNG_DESA` - Village-level meetings
+- `SAMBUNG_DAERAH` - Regional-level meetings
+- `SAMBUNG_PUSAT` - Central-level meetings
 
-          // CRITICAL: Exclude Pengajar and Caberawit
-          return isSambungDesaEligible(cls)
-        })
-        .map(cls => cls.id)
-    }
-    ```
-- **Meeting Visibility**: Teachers only see meetings where they teach at least one of the meeting's classes
+**Meeting Type Access Rules** (`src/lib/constants/meetingTypes.ts`):
+- **Superadmin**: All meeting types
+- **Admin Daerah**: All meeting types including ASAD
+- **Admin Desa**: SAMBUNG_DESA only (no ASAD, no PEMBINAAN)
+- **Admin Kelompok**: ASAD, PEMBINAAN, SAMBUNG_KELOMPOK, SAMBUNG_PUSAT
+- **Teachers**: Dynamic based on class assignments
+  - **PAUD-only teachers**: PEMBINAAN only
+  - **Pengajar-only teachers**: PEMBINAAN only
+  - **Other teachers**: PEMBINAAN + ASAD (if not PAUD/Pengajar)
+  - **Sambung-capable teachers**: PEMBINAAN + SAMBUNG types (if class has `is_sambung_capable`)
+  - **Exclude-pembinaan teachers**: SAMBUNG types only (if class has `exclude_pembinaan`)
+
+**ASAD Meeting Type Restrictions**:
+- **Purpose**: General attendance tracking for ASAD activities
+- **Excluded Classes**:
+  - PAUD classes (category code/name = 'PAUD')
+  - Pengajar classes (class name contains 'pengajar')
+- **Implementation**: Uses `isTeacherClass()` helper and category code checks
+- **Teacher Eligibility**: Teachers must have at least one non-PAUD, non-Pengajar class to create ASAD meetings
+
+**Sambung Desa Meeting Restrictions**:
+- Use master classes (Pra Nikah, Remaja, Orang Tua) to select target classes
+- **CRITICAL**: Must exclude Pengajar and Caberawit (PAUD/Kelas 1-6) classes
+- Use `isSambungDesaEligible(classData)` helper when converting master classes to actual classes
+- Example in `CreateMeetingModal.tsx`:
+  ```typescript
+  const getActualClassIdsFromMasterClasses = (masterClassIds, kelompokIds, allClasses) => {
+    return allClasses
+      .filter(cls => {
+        // Must be in selected kelompok
+        if (!kelompokIds.includes(cls.kelompok_id)) return false
+
+        // Must have selected master class
+        const hasMasterClass = cls.class_master_mappings.some(m =>
+          masterClassIds.includes(m.class_master?.id)
+        )
+        if (!hasMasterClass) return false
+
+        // CRITICAL: Exclude Pengajar and Caberawit
+        return isSambungDesaEligible(cls)
+      })
+      .map(cls => cls.id)
+  }
+  ```
+
+**Meeting Visibility**:
+- Teachers only see meetings where they teach at least one of the meeting's classes
 - **Class Master Mappings**: Junction table `class_master_mappings` links actual classes to master classes
 
 ### Multi-class Support
@@ -308,11 +339,15 @@ await mutate(meetingFormSettingsKeys.settings(userId))
   ```
 
 **Meeting Type Filter for Reporting**
-- Reports page shows ALL meeting types for filtering, regardless of user role
-- Uses `forceShowAllMeetingTypes={true}` prop on DataFilter component
+- Reports page shows meeting types based on user role:
+  - **Admins**: See ALL meeting types for filtering (to view all data)
+  - **Teachers**: See only their available meeting types (types they can create)
+- Uses `forceShowAllMeetingTypes={isAdmin(userProfile)}` prop on DataFilter component
 - **Why**: Separates concerns of "what can I create" vs "what can I filter by"
   - Meeting creation pages: Use role-restricted types (teacher can only create certain types)
-  - Reporting/filtering pages: Use all types (admin can filter by any type to view data)
+  - Reporting/filtering pages: 
+    - Admins can filter by any type to view all organizational data
+    - Teachers can only filter by types they're allowed to create
 - **Implementation**: `src/components/shared/DataFilter.tsx` + `src/app/(admin)/laporan/components/FilterSection.tsx`
 
 ### Cache Management
