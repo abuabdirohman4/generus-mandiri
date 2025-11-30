@@ -115,60 +115,63 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="mx-auto px-3 pt-20 sm:px-6 lg:px-8 md:py-8">
-      {/* Data Filter */}
-      <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <DataFilter
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          userProfile={userProfile}
-          daerahList={daerah || []}
-          desaList={desa || []}
-          kelompokList={kelompok || []}
-          classList={classes || []}
-          showKelas={true}
-          showMeetingType={false}
-          showGender={false}
-        />
-      </div>
+    <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="mx-auto px-0 sm:px-6 lg:px-8">
+        {/* Data Filter */}
+        <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700">
+          <DataFilter
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            userProfile={userProfile}
+            daerahList={daerah || []}
+            desaList={desa || []}
+            kelompokList={kelompok || []}
+            classList={classes || []}
+            showKelas={true}
+            showMeetingType={false}
+            showGender={false}
+          />
+        </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <StatCard
-          title="Total Siswa"
-          value={stats?.siswa || 0}
-          icon="👨‍🎓"
-          color="blue"
-        />
-        <StatCard
-          title="Total Kelas"
-          value={stats?.kelas || 0}
-          icon="📚"
-          color="purple"
-        />
-        <StatCard
-          title={attendanceLabel}
-          value={`${attendanceRate}%`}
-          icon="✅"
-          color="emerald"
-        />
-      </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+          <StatCard
+            title="Total Siswa"
+            value={stats?.siswa || 0}
+            icon="👨‍🎓"
+            color="blue"
+          />
+          <StatCard
+            title="Total Kelas"
+            value={stats?.kelas || 0}
+            icon="📚"
+            color="purple"
+          />
+          <StatCard
+            title={attendanceLabel}
+            value={`${attendanceRate}%`}
+            icon="✅"
+            className="col-span-2 md:col-span-1"
+            color="emerald"
+          />
+        </div>
 
-      {/* Period Tabs */}
-      <PeriodTabs
-        selected={selectedPeriod}
-        onChange={setSelectedPeriod}
-        customDateRange={customDateRange}
-        onCustomDateChange={handleCustomDateChange}
-      />
-
-      {/* Class Monitoring Table */}
-      <div className="mb-6">
-        <ClassMonitoringTable
-          data={monitoringData || []}
-          isLoading={monitoringLoading}
-          period={selectedPeriod}
+        {/* Period Tabs */}
+        <PeriodTabs
+          selected={selectedPeriod}
+          onChange={setSelectedPeriod}
+          customDateRange={customDateRange}
+          onCustomDateChange={handleCustomDateChange}
         />
+
+        {/* Class Monitoring Table */}
+        <div className="mb-6">
+          <ClassMonitoringTable
+            data={monitoringData || []}
+            isLoading={monitoringLoading}
+            period={selectedPeriod}
+          />
+        </div>
       </div>
     </div>
   );

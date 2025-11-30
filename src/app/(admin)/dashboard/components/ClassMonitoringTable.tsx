@@ -18,12 +18,8 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
         {
             key: 'class_name',
             label: 'Kelas',
-            sortable: true
-        },
-        {
-            key: 'organization',
-            label: 'Organisasi',
-            sortable: true
+            sortable: true,
+            width: '120px'
         },
         {
             key: 'meeting_count',
@@ -36,7 +32,12 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
             label: 'Kehadiran',
             sortable: true,
             align: 'center' as const
-        }
+        },
+        {
+            key: 'organization',
+            label: 'Organisasi',
+            sortable: true
+        },
     ];
 
     // Transform data for table
@@ -60,7 +61,7 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
         }
         if (column.key === 'attendance_rate') {
             return (
-                <span className={`font-medium ${item.attendance_rate >= 75 ? 'text-emerald-600' :
+                <span className={`font-medium ${item.attendance_rate >= 75 ? 'text-brand-600' :
                     item.attendance_rate >= 50 ? 'text-yellow-600' :
                         'text-red-600'
                     }`}>
@@ -74,13 +75,13 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
     if (isLoading) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:border-gray-700 p-4">
             <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Monitoring Kelas

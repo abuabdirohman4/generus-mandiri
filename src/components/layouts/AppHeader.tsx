@@ -20,6 +20,8 @@ function PageTitle() {
     switch (path) {
       case '/home':
         return 'Beranda';
+      case '/dashboard':
+        return 'Dashboard';
       case '/kelas':
         return 'Kelas';
       case '/laporan':
@@ -56,7 +58,8 @@ function PageTitle() {
           path.startsWith('/users/siswa/') ||
           path === '/users/guru' || 
           path === '/users/admin' || 
-          path === '/organisasi';
+          path === '/organisasi' ||
+          path === '/dashboard';
   };
 
   if (!mounted) {

@@ -13,6 +13,8 @@ import {
   ReportIcon,
   BuildingIcon,
   TableIcon,
+  DashboardIcon,
+  SettingsIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
@@ -36,12 +38,12 @@ const allNavItems: NavItem[] = [
     name: "Beranda",
     path: "/home",
   },
-  // {
-  //   icon: <DashboardIcon className="w-6 h-6" />,
-  //   name: "Dashboard",
-  //   path: "/dashboard",
-  //   adminOnly: true,
-  // },
+  {
+    icon: <DashboardIcon className="w-6 h-6" />,
+    name: "Dashboard",
+    path: "/dashboard",
+    adminOnly: true,
+  },
   {
     icon: <CheckCircleIcon className="w-6 h-6" />,
     name: "Absensi",
@@ -80,6 +82,13 @@ const allNavItems: NavItem[] = [
     icon: <BuildingIcon className="w-6 h-6" />,
     name: "Organisasi",
     path: "/organisasi",
+    adminOnly: true,
+    excludeAdminKelompok: true,
+  },
+  {
+    icon: <SettingsIcon className="w-6 h-6" />,
+    name: "Pengaturan",
+    path: "/settings",
     adminOnly: true,
     excludeAdminKelompok: true,
   },

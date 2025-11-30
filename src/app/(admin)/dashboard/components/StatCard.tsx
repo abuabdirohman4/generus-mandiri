@@ -2,6 +2,7 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: string;
+  className?: string;
   color: 'blue' | 'green' | 'purple' | 'orange' | 'indigo' | 'pink' | 'teal' | 'emerald';
 }
 
@@ -14,11 +15,12 @@ const colorClasses = {
   pink: 'bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-400',
   teal: 'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400',
   emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-400',
+  brand: 'bg-brand-100 text-brand-600 dark:bg-brand-900 dark:text-brand-400',
 };
 
-export default function StatCard({ title, value, icon, color }: StatCardProps) {
+export default function StatCard({ title, value, icon, className = '', color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 ${className}`}>
       <div className="flex items-center">
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
           <span className="text-2xl">{icon}</span>

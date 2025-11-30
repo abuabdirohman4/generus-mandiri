@@ -31,6 +31,7 @@ export default function PeriodTabs({
     const handleTabClick = (value: PeriodType) => {
         if (value === 'custom') {
             setShowCustomPicker(true);
+            onChange(value);
         } else {
             setShowCustomPicker(false);
             onChange(value);
@@ -48,13 +49,13 @@ export default function PeriodTabs({
     return (
         <div className="mb-6">
             {/* Tab Buttons */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="grid grid-cols-4 gap-2 mb-4">
                 {tabs.map((tab) => (
                     <button
                         key={tab.value}
                         onClick={() => handleTabClick(tab.value)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${selected === tab.value
-                                ? 'bg-emerald-500 text-white'
+                        className={`py-2 rounded-lg shadow-sm font-medium transition-colors ${selected === tab.value
+                                ? 'bg-brand-500 text-white'
                                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                             }`}
                     >
@@ -75,7 +76,7 @@ export default function PeriodTabs({
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white"
                             />
                         </div>
                         <div>
@@ -86,7 +87,7 @@ export default function PeriodTabs({
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white"
                             />
                         </div>
                     </div>
@@ -94,7 +95,7 @@ export default function PeriodTabs({
                         <button
                             onClick={handleApplyCustom}
                             disabled={!startDate || !endDate}
-                            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Terapkan
                         </button>
