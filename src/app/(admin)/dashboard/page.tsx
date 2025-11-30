@@ -130,6 +130,7 @@ export default function AdminDashboard() {
             showKelas={true}
             showMeetingType={false}
             showGender={false}
+            cascadeFilters={false}
           />
         </div>
 
@@ -170,6 +171,7 @@ export default function AdminDashboard() {
             data={monitoringData || []}
             isLoading={monitoringLoading}
             period={selectedPeriod}
+            customDateRange={customDateRange}
           />
         </div>
       </div>

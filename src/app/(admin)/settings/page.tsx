@@ -33,8 +33,8 @@ const settingsCategories = [
     icon: 'cog',
     items: [
       {
-        name: "PWA Settings",
-        description: "Kelola instalasi Progressive Web App",
+        name: "Install Aplikasi",
+        description: "Install aplikasi di perangkat anda",
         href: "/settings/pwa",
         available: true
       },

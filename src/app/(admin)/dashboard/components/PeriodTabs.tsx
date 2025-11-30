@@ -1,6 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/id';
+import DatePickerInput from '@/components/form/input/DatePicker';
+
+// Set Indonesian locale
+dayjs.locale('id');
 
 export type PeriodType = 'today' | 'week' | 'month' | 'custom';
 
@@ -18,8 +24,17 @@ export default function PeriodTabs({
     onCustomDateChange
 }: PeriodTabsProps) {
     const [showCustomPicker, setShowCustomPicker] = useState(false);
-    const [startDate, setStartDate] = useState(customDateRange?.start || '');
-    const [endDate, setEndDate] = useState(customDateRange?.end || '');
+    const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
+
+    // Initialize dateRange from customDateRange prop
+    useEffect(() => {
+        if (customDateRange && customDateRange.start && customDateRange.end) {
+            setDateRange([
+                dayjs(customDateRange.start),
+                dayjs(customDateRange.end)
+            ]);
+        }
+    }, [customDateRange]);
 
     const tabs: { value: PeriodType; label: string }[] = [
         { value: 'today', label: 'Hari Ini' },
@@ -35,14 +50,6 @@ export default function PeriodTabs({
         } else {
             setShowCustomPicker(false);
             onChange(value);
-        }
-    };
-
-    const handleApplyCustom = () => {
-        if (startDate && endDate && onCustomDateChange) {
-            onCustomDateChange(startDate, endDate);
-            onChange('custom');
-            setShowCustomPicker(false);
         }
     };
 
@@ -64,47 +71,47 @@ export default function PeriodTabs({
                 ))}
             </div>
 
-            {/* Custom Date Picker */}
+            {/* Custom Date Picker - Always visible when custom is selected */}
             {showCustomPicker && (
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Tanggal Mulai
-                            </label>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Tanggal Akhir
-                            </label>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                        <button
-                            onClick={handleApplyCustom}
-                            disabled={!startDate || !endDate}
-                            className="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Terapkan
-                        </button>
-                        <button
-                            onClick={() => setShowCustomPicker(false)}
-                            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                        >
-                            Batal
-                        </button>
+                    <div className="grid grid-cols-2 gap-4">
+                        <DatePickerInput
+                            mode="single"
+                            label="Tanggal Mulai"
+                            value={dateRange[0]}
+                            onChange={(date) => {
+                                const newRange: [Dayjs | null, Dayjs | null] = [date, dateRange[1]];
+                                setDateRange(newRange);
+                                // Auto-apply when both dates are selected
+                                if (date && dateRange[1] && onCustomDateChange) {
+                                    onCustomDateChange(
+                                        date.format('YYYY-MM-DD'),
+                                        dateRange[1].format('YYYY-MM-DD')
+                                    );
+                                }
+                            }}
+                            format="DD/MM/YYYY"
+                            placeholder="Pilih Tanggal"
+                        />
+
+                        <DatePickerInput
+                            mode="single"
+                            label="Tanggal Akhir"
+                            value={dateRange[1]}
+                            onChange={(date) => {
+                                const newRange: [Dayjs | null, Dayjs | null] = [dateRange[0], date];
+                                setDateRange(newRange);
+                                // Auto-apply when both dates are selected
+                                if (dateRange[0] && date && onCustomDateChange) {
+                                    onCustomDateChange(
+                                        dateRange[0].format('YYYY-MM-DD'),
+                                        date.format('YYYY-MM-DD')
+                                    );
+                                }
+                            }}
+                            format="DD/MM/YYYY"
+                            placeholder="Pilih Tanggal"
+                        />
                     </div>
                 </div>
             )}

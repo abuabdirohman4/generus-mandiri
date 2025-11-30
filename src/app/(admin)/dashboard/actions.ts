@@ -26,6 +26,7 @@ export interface TodayMeeting {
   attendance_percentage: number;
 }
 
+// Legacy interfaces - kept for backward compatibility with unused components
 export interface ClassPerformance {
   class_id: string;
   class_name: string;
@@ -53,17 +54,6 @@ export interface Dashboard {
   kehadiranHariIni: number;
   kehadiranMingguan: number;
   kehadiranBulanan: number;
-
-  // All Meetings (monthly) - frontend will filter by period
-  allMeetings: TodayMeeting[];
-
-  // Class Performance
-  topClasses: ClassPerformance[];
-  bottomClasses: ClassPerformance[];
-
-  // Charts
-  attendanceTrend: Array<{ date: string; attendance: number }>;
-  meetingTypeDistribution: MeetingTypeDistribution[];
 }
 
 export async function getDashboard(filters?: DashboardFilters): Promise<Dashboard> {
@@ -147,12 +137,7 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         meetingsMonthly: 0,
         kehadiranHariIni: 0,
         kehadiranMingguan: 0,
-        kehadiranBulanan: 0,
-        allMeetings: [],
-        topClasses: [],
-        bottomClasses: [],
-        attendanceTrend: [],
-        meetingTypeDistribution: []
+        kehadiranBulanan: 0
       };
     }
 
@@ -183,12 +168,7 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         meetingsMonthly,
         kehadiranHariIni: 0,
         kehadiranMingguan: 0,
-        kehadiranBulanan: 0,
-        allMeetings: [],
-        topClasses: [],
-        bottomClasses: [],
-        attendanceTrend: [],
-        meetingTypeDistribution: []
+        kehadiranBulanan: 0
       };
     }
 
@@ -211,120 +191,6 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
       ? Math.round((monthAttendance.filter(a => a.status === 'H').length / monthAttendance.length) * 100)
       : 0;
 
-    // Get all monthly meetings with attendance stats (OPTIMIZED - batch fetch)
-    const monthlyMeetingsList = allMeetingsData?.filter(m => m.date >= monthAgoStr) || [];
-    const monthlyMeetingIds = monthlyMeetingsList.map(m => m.id);
-
-    // Fetch ALL attendance logs for monthly meetings in one query
-    const monthlyMeetingAttendance = monthlyMeetingIds.length > 0
-      ? await fetchByIds(
-        supabase,
-        'attendance_logs',
-        'meeting_id',
-        monthlyMeetingIds,
-        'meeting_id, status'
-      )
-      : [];
-
-    // Group attendance by meeting_id
-    const attendanceByMeeting = new Map<string, { total: number; present: number }>();
-    (monthlyMeetingAttendance as any[]).forEach(log => {
-      const existing = attendanceByMeeting.get(log.meeting_id) || { total: 0, present: 0 };
-      existing.total += 1;
-      if (log.status === 'H') existing.present += 1;
-      attendanceByMeeting.set(log.meeting_id, existing);
-    });
-
-    // Build all monthly meetings array (NO MORE N+1 QUERIES!)
-    const allMeetings: TodayMeeting[] = monthlyMeetingsList.map((meeting: any) => {
-      const stats = attendanceByMeeting.get(meeting.id) || { total: 0, present: 0 };
-      const attendancePercentage = stats.total > 0
-        ? Math.round((stats.present / stats.total) * 100)
-        : 0;
-
-      const classData = Array.isArray(meeting.classes) ? meeting.classes[0] : meeting.classes;
-      const teacherData = Array.isArray(meeting.profiles) ? meeting.profiles[0] : meeting.profiles;
-
-      return {
-        id: meeting.id,
-        title: meeting.title,
-        date: meeting.date,
-        class_id: meeting.class_id,
-        class_name: classData?.name || 'Unknown',
-        teacher_name: teacherData?.full_name || 'Unknown',
-        meeting_type_code: meeting.meeting_type_code,
-        total_students: stats.total,
-        present_count: stats.present,
-        attendance_percentage: attendancePercentage
-      };
-    });
-
-    // Calculate class performance (last 30 days)
-    const classAttendanceMap = new Map<string, { totalLogs: number; presentLogs: number; meetings: Set<string> }>();
-
-    monthAttendance.forEach((log: any) => {
-      const meeting = allMeetingsData?.find(m => m.id === log.meeting_id);
-      if (!meeting?.class_id) return;
-
-      const classId = meeting.class_id;
-      const existing = classAttendanceMap.get(classId) || { totalLogs: 0, presentLogs: 0, meetings: new Set() };
-
-      existing.totalLogs += 1;
-      if (log.status === 'H') existing.presentLogs += 1;
-      existing.meetings.add(log.meeting_id);
-
-      classAttendanceMap.set(classId, existing);
-    });
-
-    const classPerformanceList: ClassPerformance[] = Array.from(classAttendanceMap.entries())
-      .map(([classId, stats]) => {
-        const meeting = allMeetingsData?.find(m => m.class_id === classId);
-        const classData = Array.isArray(meeting?.classes) ? meeting?.classes[0] : meeting?.classes;
-        return {
-          class_id: classId,
-          class_name: classData?.name || 'Unknown',
-          attendance_percentage: stats.totalLogs > 0 ? Math.round((stats.presentLogs / stats.totalLogs) * 100) : 0,
-          total_meetings: stats.meetings.size
-        };
-      })
-      .filter(c => c.total_meetings > 0);
-
-    // Sort and get top/bottom 5
-    const sortedPerformance = [...classPerformanceList].sort((a, b) => b.attendance_percentage - a.attendance_percentage);
-    const topClasses = sortedPerformance.slice(0, 5);
-    const bottomClasses = sortedPerformance.slice(-5).reverse();
-
-    // Calculate attendance trend for last 7 days
-    const attendanceTrend = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(jakartaDate);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-
-      const dayAttendance = attendanceData?.filter(item => item.date === dateStr) || [];
-      const totalRecords = dayAttendance.length;
-      const presentRecords = dayAttendance.filter(item => item.status === 'H').length;
-      const attendancePercentage = totalRecords > 0 ? Math.round((presentRecords / totalRecords) * 100) : 0;
-
-      attendanceTrend.push({
-        date: dateStr,
-        attendance: attendancePercentage
-      });
-    }
-
-    // Calculate meeting type distribution
-    const meetingTypeMap = new Map<string, number>();
-    allMeetingsData?.filter(m => m.date >= monthAgoStr).forEach((meeting: any) => {
-      const type = meeting.meeting_type_code || 'PEMBINAAN';
-      meetingTypeMap.set(type, (meetingTypeMap.get(type) || 0) + 1);
-    });
-
-    const meetingTypeDistribution: MeetingTypeDistribution[] = Array.from(meetingTypeMap.entries()).map(([type, count]) => ({
-      type,
-      label: getMeetingTypeLabel(type),
-      count
-    }));
-
     return {
       siswa: siswaCount,
       kelas: kelasCount,
@@ -333,32 +199,13 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
       meetingsMonthly,
       kehadiranHariIni,
       kehadiranMingguan,
-      kehadiranBulanan,
-      allMeetings,
-      topClasses,
-      bottomClasses,
-      attendanceTrend,
-      meetingTypeDistribution
+      kehadiranBulanan
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     throw handleApiError(error, 'memuat data', 'Failed to fetch dashboard statistics');
   }
 }
-
-// Helper function to get meeting type label
-function getMeetingTypeLabel(code: string): string {
-  const labels: Record<string, string> = {
-    'ASAD': 'ASAD',
-    'PEMBINAAN': 'Pembinaan',
-    'SAMBUNG_KELOMPOK': 'Sambung Kelompok',
-    'SAMBUNG_DESA': 'Sambung Desa',
-    'SAMBUNG_DAERAH': 'Sambung Daerah',
-    'SAMBUNG_PUSAT': 'Sambung Pusat'
-  };
-  return labels[code] || code;
-}
-// Append to actions.ts - Class Monitoring Function
 
 // ============================================================================
 // CLASS MONITORING TABLE

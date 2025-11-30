@@ -5,60 +5,155 @@ import useSWR from 'swr';
 import DataTable from '@/components/table/Table';
 import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
-import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton'; // Or use a simpler skeleton
+import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
+import { useUserProfile } from '@/stores/userProfileStore';
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 
 interface ClassMonitoringTableProps {
     data: ClassMonitoringData[];
     isLoading: boolean;
-    period: PeriodType; // Keep for display purposes if needed, or remove if unused
+    period: PeriodType;
+    customDateRange?: { start: string; end: string };
 }
 
-export default function ClassMonitoringTable({ data, isLoading, period }: ClassMonitoringTableProps) {
-    const columns = [
-        {
-            key: 'class_name',
-            label: 'Kelas',
-            sortable: true,
-            width: '120px'
-        },
-        {
-            key: 'meeting_count',
-            label: 'Pertemuan',
-            sortable: true,
-            align: 'center' as const
-        },
-        {
-            key: 'attendance_rate',
-            label: 'Kehadiran',
-            sortable: true,
-            align: 'center' as const
-        },
-        {
-            key: 'organization',
-            label: 'Organisasi',
-            sortable: true
-        },
-    ];
+// Date formatting helper functions
+function formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return `${date.getDate()} ${months[date.getMonth()]}`;
+}
 
-    // Transform data for table
+function formatDateRange(start: string, end: string): string {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+    if (startDate.getMonth() === endDate.getMonth()) {
+        return `${startDate.getDate()} - ${endDate.getDate()} ${months[endDate.getMonth()]}`;
+    } else {
+        const startMonth = months[startDate.getMonth()].substring(0, 3);
+        const endMonth = months[endDate.getMonth()].substring(0, 3);
+        return `${startDate.getDate()} ${startMonth} - ${endDate.getDate()} ${endMonth}`;
+    }
+}
+
+function getMonthName(dateStr: string): string {
+    const date = new Date(dateStr);
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return months[date.getMonth()];
+}
+
+export default function ClassMonitoringTable({ data, isLoading, period, customDateRange }: ClassMonitoringTableProps) {
+    const { profile } = useUserProfile();
+
+    // Calculate date range display based on period
+    const dateRangeDisplay = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+
+        switch (period) {
+            case 'today':
+                return formatDate(today);
+            case 'week':
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return formatDateRange(weekAgo.toISOString().split('T')[0], today);
+            case 'month':
+                return getMonthName(today);
+            case 'custom':
+                if (customDateRange) {
+                    return formatDateRange(customDateRange.start, customDateRange.end);
+                }
+                return '';
+            default:
+                return '';
+        }
+    }, [period, customDateRange]);
+
+    // Determine which organization columns to show based on user level
+    const getOrganizationColumns = useMemo(() => {
+        if (!profile) return [];
+
+        // Admin Kelompok - no org columns
+        if (isAdminKelompok(profile)) {
+            return [];
+        }
+
+        // Admin Desa - show only Kelompok
+        if (isAdminDesa(profile)) {
+            return [{
+                key: 'kelompok_name',
+                label: 'Kelompok',
+                sortable: true
+            }];
+        }
+
+        // Admin Daerah - show Kelompok + Desa
+        if (isAdminDaerah(profile)) {
+            return [
+                { key: 'kelompok_name', label: 'Kelompok', sortable: true },
+                { key: 'desa_name', label: 'Desa', sortable: true }
+            ];
+        }
+
+        // Superadmin - show all (Kelompok + Desa + Daerah)
+        if (isSuperAdmin(profile)) {
+            return [
+                { key: 'kelompok_name', label: 'Kelompok', sortable: true },
+                { key: 'desa_name', label: 'Desa', sortable: true },
+                { key: 'daerah_name', label: 'Daerah', sortable: true }
+            ];
+        }
+
+        return [];
+    }, [profile]);
+
+    // Build dynamic columns array
+    const columns = useMemo(() => {
+        const baseColumns = [
+            {
+                key: 'class_name',
+                label: 'Kelas',
+                sortable: true,
+                width: '120px'
+            },
+            {
+                key: 'meeting_count',
+                label: 'Pertemuan',
+                sortable: true,
+                align: 'center' as const
+            },
+            {
+                key: 'attendance_rate',
+                label: 'Kehadiran',
+                sortable: true,
+                align: 'center' as const
+            }
+        ];
+
+        // Add organization columns based on user level
+        return [...baseColumns, ...getOrganizationColumns];
+    }, [getOrganizationColumns]);
+
+    // Use data directly - no transformation needed
     const tableData = useMemo(() => {
         if (!data) return [];
-        return data.map(item => ({
-            ...item,
-            organization: item.kelompok_name || item.desa_name || item.daerah_name || '-'
-        }));
+        return data;
     }, [data]);
 
     const renderCell = (column: any, item: any) => {
-        if (column.key === 'organization') {
+        // Handle organization columns (kelompok, desa, daerah)
+        if (column.key === 'kelompok_name' || column.key === 'desa_name' || column.key === 'daerah_name') {
             return (
-                <div className="flex flex-col text-xs">
-                    {item.kelompok_name && <span className="font-medium">{item.kelompok_name}</span>}
-                    {item.desa_name && <span className="text-gray-500">{item.desa_name}</span>}
-                    {item.daerah_name && <span className="text-gray-400">{item.daerah_name}</span>}
-                </div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {item[column.key] || '-'}
+                </span>
             );
         }
+
+        // Handle attendance rate with color coding
         if (column.key === 'attendance_rate') {
             return (
                 <span className={`font-medium ${item.attendance_rate >= 75 ? 'text-brand-600' :
@@ -69,13 +164,48 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
                 </span>
             );
         }
+
         return item[column.key];
     };
 
     if (isLoading) {
+        // Calculate dynamic column count: base columns (3) + organization columns
+        const columnCount = 3 + getOrganizationColumns.length;
+
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 min-h-[400px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:border-gray-700 p-4">
+                {/* Header Skeleton */}
+                <div className="mb-4 flex justify-between items-center">
+                    <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+
+                {/* Skeleton Table */}
+                <div className="space-y-3">
+                    {/* Table Header Skeleton - dynamic column count */}
+                    <div className={`grid gap-4 pb-3 border-b border-gray-200 dark:border-gray-700`}
+                         style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                        {Array.from({ length: columnCount }).map((_, i) => (
+                            <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        ))}
+                    </div>
+
+                    {/* Skeleton Rows - dynamic column count */}
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className={`grid gap-4 py-3 border-b border-gray-100 dark:border-gray-800`}
+                             style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                            {Array.from({ length: columnCount }).map((_, j) => (
+                                <div key={j} className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Footer Legend Skeleton */}
+                <div className="mt-4 flex items-center gap-2">
+                    <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
             </div>
         );
     }
@@ -87,7 +217,7 @@ export default function ClassMonitoringTable({ data, isLoading, period }: ClassM
                     Monitoring Kelas
                 </h3>
                 <div className="text-sm text-gray-500">
-                    {tableData.length} Kelas
+                    {dateRangeDisplay}
                 </div>
             </div>
 
