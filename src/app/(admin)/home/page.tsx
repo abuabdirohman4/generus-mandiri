@@ -45,7 +45,7 @@ export default function HomePage() {
             {/* User Profile */}
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 flex-shrink-0">
-                <span className="text-white font-bold text-white">
+                <span className="text-white font-bold">
                   {(() => {
                     const words = profile?.full_name?.split(' ').filter(Boolean) || [];
                     if (words.length > 2) {
