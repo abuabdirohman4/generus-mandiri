@@ -1,0 +1,344 @@
+"use server";
+
+import { createClient } from '@/lib/supabase/server';
+import { handleApiError } from '@/lib/errorUtils';
+import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
+
+// ============================================================================
+// INTERFACES
+// ============================================================================
+
+export interface TodayMeeting {
+  id: string;
+  title: string;
+  date: string;
+  class_id: string;
+  class_name: string;
+  teacher_name: string;
+  meeting_type_code: string | null;
+  total_students: number;
+  present_count: number;
+  attendance_percentage: number;
+}
+
+export interface Dashboard {
+  siswa: number;
+  kelas: number;
+  kehadiranHariIni: number;
+  todayMeetings: TodayMeeting[];
+}
+
+export interface ClassMonitoringData {
+  class_id: string;
+  class_name: string;
+  kelompok_name?: string;
+  desa_name?: string;
+  daerah_name?: string;
+  has_meeting: boolean;
+  meeting_count: number;
+  attendance_rate: number;
+}
+
+export interface ClassMonitoringFilters {
+  period: 'today' | 'week' | 'month' | 'custom';
+  startDate?: string;
+  endDate?: string;
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function getDateRange(filters: ClassMonitoringFilters): { startDate: string; endDate: string } {
+  const jakartaDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+  const today = jakartaDate.toISOString().split('T')[0];
+
+  if (filters.period === 'custom' && filters.startDate && filters.endDate) {
+    return { startDate: filters.startDate, endDate: filters.endDate };
+  }
+
+  if (filters.period === 'today') {
+    return { startDate: today, endDate: today };
+  }
+
+  if (filters.period === 'week') {
+    const weekAgo = new Date(jakartaDate);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return { startDate: weekAgo.toISOString().split('T')[0], endDate: today };
+  }
+
+  // Default: month
+  const monthAgo = new Date(jakartaDate);
+  monthAgo.setDate(monthAgo.getDate() - 30);
+  return { startDate: monthAgo.toISOString().split('T')[0], endDate: today };
+}
+
+// ============================================================================
+// DASHBOARD STATS (Simplified)
+// ============================================================================
+
+export async function getDashboard(): Promise<Dashboard> {
+  try {
+    const supabase = await createClient();
+    const profile = await getCurrentUserProfile();
+    const rlsFilter = profile ? getDataFilter(profile) : null;
+
+    const jakartaDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    const today = jakartaDate.toISOString().split('T')[0];
+
+    // Get basic counts with RLS filtering
+    let siswaQuery = supabase.from('students').select('*', { count: 'exact', head: true });
+    let kelasQuery = supabase.from('classes').select('*', { count: 'exact', head: true });
+
+    // Apply RLS-based filtering
+    if (rlsFilter?.kelompok_id) {
+      siswaQuery = siswaQuery.eq('kelompok_id', rlsFilter.kelompok_id);
+      kelasQuery = kelasQuery.eq('kelompok_id', rlsFilter.kelompok_id);
+    } else if (rlsFilter?.desa_id) {
+      siswaQuery = siswaQuery.eq('desa_id', rlsFilter.desa_id);
+      const { data: kelompokIds } = await supabase.from('kelompok').select('id').eq('desa_id', rlsFilter.desa_id);
+      const kelompokIdList = kelompokIds?.map(k => k.id) || [];
+      if (kelompokIdList.length > 0) {
+        kelasQuery = kelasQuery.in('kelompok_id', kelompokIdList);
+      }
+    } else if (rlsFilter?.daerah_id) {
+      siswaQuery = siswaQuery.eq('daerah_id', rlsFilter.daerah_id);
+      const { data: desaIds } = await supabase.from('desa').select('id').eq('daerah_id', rlsFilter.daerah_id);
+      const desaIdList = desaIds?.map(d => d.id) || [];
+      if (desaIdList.length > 0) {
+        const { data: kelompokIds } = await supabase.from('kelompok').select('id').in('desa_id', desaIdList);
+        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
+        if (kelompokIdList.length > 0) {
+          kelasQuery = kelasQuery.in('kelompok_id', kelompokIdList);
+        }
+      }
+    }
+
+    const [{ count: siswa }, { count: kelas }] = await Promise.all([siswaQuery, kelasQuery]);
+
+    // Get today's attendance percentage
+    const { data: todayAttendance } = await supabase
+      .from('attendance_logs')
+      .select('status')
+      .eq('date', today);
+
+    const kehadiranHariIni = todayAttendance && todayAttendance.length > 0
+      ? Math.round((todayAttendance.filter(a => a.status === 'H').length / todayAttendance.length) * 100)
+      : 0;
+
+    // Get today's meetings with attendance stats
+    const { data: todayMeetingsList } = await supabase
+      .from('meetings')
+      .select(\`
+        id,
+        title,
+        date,
+        class_id,
+        meeting_type_code,
+        classes:class_id(name),
+        profiles:teacher_id(full_name)
+      \`)
+      .eq('date', today)
+      .order('created_at', { ascending: true });
+
+    const todayMeetings: TodayMeeting[] = await Promise.all(
+      (todayMeetingsList || []).map(async (meeting: any) => {
+        const { data: attendanceLogs } = await supabase
+          .from('attendance_logs')
+          .select('status')
+          .eq('meeting_id', meeting.id);
+
+        const totalStudents = attendanceLogs?.length || 0;
+        const presentCount = attendanceLogs?.filter(a => a.status === 'H').length || 0;
+        const attendancePercentage = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+
+        const classData = Array.isArray(meeting.classes) ? meeting.classes[0] : meeting.classes;
+        const teacherData = Array.isArray(meeting.profiles) ? meeting.profiles[0] : meeting.profiles;
+
+        return {
+          id: meeting.id,
+          title: meeting.title,
+          date: meeting.date,
+          class_id: meeting.class_id,
+          class_name: classData?.name || 'Unknown',
+          teacher_name: teacherData?.full_name || 'Unknown',
+          meeting_type_code: meeting.meeting_type_code,
+          total_students: totalStudents,
+          present_count: presentCount,
+          attendance_percentage: attendancePercentage
+        };
+      })
+    );
+
+    return {
+      siswa: siswa || 0,
+      kelas: kelas || 0,
+      kehadiranHariIni,
+      todayMeetings
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    throw handleApiError(error, 'memuat data', 'Failed to fetch dashboard statistics');
+  }
+}
+
+// ============================================================================
+// CLASS MONITORING TABLE
+// ============================================================================
+
+export async function getClassMonitoring(
+  filters: ClassMonitoringFilters
+): Promise<ClassMonitoringData[]> {
+  try {
+    const supabase = await createClient();
+    const profile = await getCurrentUserProfile();
+    const rlsFilter = profile ? getDataFilter(profile) : null;
+
+    const { startDate, endDate } = getDateRange(filters);
+
+    // Get all classes with organizational info (RLS filtered)
+    let classesQuery = supabase
+      .from('classes')
+      .select(\`
+        id,
+        name,
+        kelompok:kelompok_id(
+          id,
+          name,
+          desa:desa_id(
+            id,
+            name,
+            daerah:daerah_id(
+              id,
+              name
+            )
+          )
+        )
+      \`);
+
+    // Apply RLS filtering
+    if (rlsFilter?.kelompok_id) {
+      classesQuery = classesQuery.eq('kelompok_id', rlsFilter.kelompok_id);
+    } else if (rlsFilter?.desa_id) {
+      const { data: kelompokIds } = await supabase.from('kelompok').select('id').eq('desa_id', rlsFilter.desa_id);
+      const kelompokIdList = kelompokIds?.map(k => k.id) || [];
+      if (kelompokIdList.length > 0) {
+        classesQuery = classesQuery.in('kelompok_id', kelompokIdList);
+      } else {
+        return [];
+      }
+    } else if (rlsFilter?.daerah_id) {
+      const { data: desaIds } = await supabase.from('desa').select('id').eq('daerah_id', rlsFilter.daerah_id);
+      const desaIdList = desaIds?.map(d => d.id) || [];
+      if (desaIdList.length > 0) {
+        const { data: kelompokIds } = await supabase.from('kelompok').select('id').in('desa_id', desaIdList);
+        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
+        if (kelompokIdList.length > 0) {
+          classesQuery = classesQuery.in('kelompok_id', kelompokIdList);
+        } else {
+          return [];
+        }
+      } else {
+        return [];
+      }
+    }
+
+    const { data: classes } = await classesQuery;
+
+    if (!classes || classes.length === 0) {
+      return [];
+    }
+
+    // Get all meetings in the date range for these classes
+    const classIds = classes.map(c => c.id);
+    const { data: meetings } = await supabase
+      .from('meetings')
+      .select('id, class_id')
+      .in('class_id', classIds)
+      .gte('date', startDate)
+      .lte('date', endDate);
+
+    // Group meetings by class
+    const meetingsByClass = new Map<string, string[]>();
+    meetings?.forEach(meeting => {
+      const existing = meetingsByClass.get(meeting.class_id) || [];
+      existing.push(meeting.id);
+      meetingsByClass.set(meeting.class_id, existing);
+    });
+
+    // Get all attendance logs for these meetings
+    const allMeetingIds = meetings?.map(m => m.id) || [];
+    let attendanceLogs: any[] = [];
+
+    if (allMeetingIds.length > 0) {
+      const { data } = await supabase
+        .from('attendance_logs')
+        .select('meeting_id, status')
+        .in('meeting_id', allMeetingIds);
+      attendanceLogs = data || [];
+    }
+
+    // Group attendance by meeting
+    const attendanceByMeeting = new Map<string, { total: number; present: number }>();
+    attendanceLogs.forEach(log => {
+      const existing = attendanceByMeeting.get(log.meeting_id) || { total: 0, present: 0 };
+      existing.total += 1;
+      if (log.status === 'H') existing.present += 1;
+      attendanceByMeeting.set(log.meeting_id, existing);
+    });
+
+    // Build result array
+    const result: ClassMonitoringData[] = classes.map((cls: any) => {
+      const kelompokData = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
+      const desaData = kelompokData?.desa ? (Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa) : null;
+      const daerahData = desaData?.daerah ? (Array.isArray(desaData.daerah) ? desaData.daerah[0] : desaData.daerah) : null;
+
+      const classMeetingIds = meetingsByClass.get(cls.id) || [];
+
+      if (classMeetingIds.length === 0) {
+        return {
+          class_id: cls.id,
+          class_name: cls.name,
+          kelompok_name: kelompokData?.name,
+          desa_name: desaData?.name,
+          daerah_name: daerahData?.name,
+          has_meeting: false,
+          meeting_count: 0,
+          attendance_rate: 0
+        };
+      }
+
+      // Calculate average attendance across all meetings
+      let totalAttendance = 0;
+      let totalPresent = 0;
+
+      classMeetingIds.forEach(meetingId => {
+        const attendance = attendanceByMeeting.get(meetingId);
+        if (attendance) {
+          totalAttendance += attendance.total;
+          totalPresent += attendance.present;
+        }
+      });
+
+      const attendanceRate = totalAttendance > 0
+        ? Math.round((totalPresent / totalAttendance) * 100)
+        : 0;
+
+      return {
+        class_id: cls.id,
+        class_name: cls.name,
+        kelompok_name: kelompokData?.name,
+        desa_name: desaData?.name,
+        daerah_name: daerahData?.name,
+        has_meeting: true,
+        meeting_count: classMeetingIds.length,
+        attendance_rate: attendanceRate
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching class monitoring:', error);
+    throw handleApiError(error, 'memuat data monitoring kelas', 'Failed to fetch class monitoring');
+  }
+}

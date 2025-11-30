@@ -1,12 +1,10 @@
 ## v1.10.0
-- [ ] Add Pengajian Daerah
-    - Nama
-    - Tipe (Daerah)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Desa (Soreang, Baleendah dll)
+- [x] Add Tipe Pertemuan ASAD
+- [ ] Add Dashboard Admin
+- [ ] Add Halaman Raport
 - [ ] Add Halaman Materi
-- [] Add Tipe Pertemuan ASAD
+    - [ ] Monitoring Materi
+- [ ] Independent Filter
 
 ## v1.9.1
 - [x] Fix attendance log in absensi & laporan 
@@ -16,7 +14,7 @@
 - [x] Kelas Pengajar
 - [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - [x] Add Template name
-- [ ] Add Pengajian Desa
+- [x] Add Pengajian Desa
     [x] Nama
     [x] Tipe (Desa)
     [x] Peserta
@@ -24,9 +22,8 @@
         [x] Kelompok (Warlob, Junti dll)
     [x] Meeting Detail
         [x] Filter Kelompok
-        [ ] Filter Kelas
-- [ ] Tipe Pertmuan di Laporan
-terkait pengajian desa, di @src/app/(admin)/absensi/[meetingId]/page.tsx sudah muncul filter kelompok, tapi seharusnya filter kelompok ini hanya muncul untuk admin desa dan level  
+        [x] Filter Kelas
+- [x] Tipe Pertemuan di Laporan
 
 ## v1.8.1
 - [x] Error Delete siswa
@@ -162,6 +159,7 @@ Sign In
 - Add Bulk with CSV, Excel, Text
 - Continue Dashboard Feature
 - Kalender kegiatan atau agenda kegiatan
+- Create student_archive, profiles_archive
 
 Siswa
 - Tambahkan tab di detail siswa
@@ -176,7 +174,6 @@ Meetings
 
 
 ## Backlog
-- [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
@@ -184,3 +181,11 @@ Meetings
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
+
+Meeting
+- [ ] Add Pengajian Daerah
+    - Nama
+    - Tipe (Daerah)
+    - Peserta
+        - Kelas (Remaja, Orang Tua dll)
+        - Desa (Soreang, Baleendah dll)

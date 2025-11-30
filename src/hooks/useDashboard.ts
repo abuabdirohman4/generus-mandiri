@@ -1,16 +1,20 @@
 'use client';
 
 import useSWR from 'swr';
-import { getDashboard, Dashboard } from '@/app/(admin)/dashboard/actions';
-import { getCurrentUserId } from '@/lib/userUtils';
+import { getDashboard, Dashboard, DashboardFilters } from '@/app/(admin)/dashboard/actions';
 
-const fetcher = async (): Promise<Dashboard> => {
-  return await getDashboard();
-};
+export function useDashboard(filters?: DashboardFilters) {
+  const fetcher = async (): Promise<Dashboard> => {
+    return await getDashboard(filters);
+  };
 
-export function useDashboard() {
+  // Generate dynamic SWR key based on filters to invalidate cache when filters change
+  const swrKey = filters && (filters.daerahId || filters.desaId || filters.kelompokId || filters.classId)
+    ? `dashboard-stats-${JSON.stringify(filters)}`
+    : 'dashboard-stats';
+
   const { data, error, isLoading, mutate } = useSWR<Dashboard>(
-    'dashboard-stats',
+    swrKey,
     fetcher,
     {
       revalidateOnFocus: true,
