@@ -21,7 +21,7 @@ interface DataTableProps {
   renderCell?: (column: Column, item: any, index: number) => ReactNode
   className?: string
   headerClassName?: string
-  rowClassName?: string
+  rowClassName?: string | ((item: any, index: number) => string)
   onRowClick?: (item: any, index: number) => void
   pagination?: boolean
   searchable?: boolean
@@ -32,6 +32,8 @@ interface DataTableProps {
   loadingColumnKey?: string | null
   spinnerSize?: number
   getRowId?: (item: any, index: number) => string | number
+  defaultSortColumn?: string
+  defaultSortDirection?: 'asc' | 'desc'
 }
 
 export default function DataTable({
@@ -50,14 +52,16 @@ export default function DataTable({
   loadingRowId,
   loadingColumnKey,
   spinnerSize = 16,
-  getRowId = (item, index) => item.id || item.student_id || index
+  getRowId = (item, index) => item.id || item.student_id || index,
+  defaultSortColumn,
+  defaultSortDirection = 'asc'
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortColumn, setSortColumn] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+  const [sortColumn, setSortColumn] = useState<string | null>(defaultSortColumn || null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(defaultSortColumn ? defaultSortDirection : null)
   const [isMobile, setIsMobile] = useState(false)
 
   // Screen size detection
@@ -82,7 +86,7 @@ export default function DataTable({
     if (!searchable || !searchQuery.trim()) {
       return data
     }
-    
+
     return data.filter(item => {
       return columns.some(column => {
         const value = item[column.key]
@@ -95,37 +99,37 @@ export default function DataTable({
   // Sorting functionality
   const sortedData = useMemo(() => {
     if (!sortColumn || !sortDirection) return filteredData
-    
+
     return [...filteredData].sort((a, b) => {
       let aValue = a[sortColumn]
       let bValue = b[sortColumn]
-      
+
       // Handle null/undefined
       if (aValue == null) return 1
       if (bValue == null) return -1
-      
+
       // Convert percentage strings to numbers for proper sorting
       // Check if both values are percentage strings (e.g., "90%", "100%")
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         const aIsPercentage = aValue.trim().endsWith('%')
         const bIsPercentage = bValue.trim().endsWith('%')
-        
+
         if (aIsPercentage && bIsPercentage) {
           // Remove '%' and convert to number
           const aNum = parseFloat(aValue.replace('%', ''))
           const bNum = parseFloat(bValue.replace('%', ''))
-          
+
           // Handle NaN cases
           if (isNaN(aNum)) return 1
           if (isNaN(bNum)) return -1
-          
+
           // Compare as numbers
           if (aNum < bNum) return sortDirection === 'asc' ? -1 : 1
           if (aNum > bNum) return sortDirection === 'asc' ? 1 : -1
           return 0
         }
       }
-      
+
       // Default comparison for non-percentage values
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
@@ -138,7 +142,7 @@ export default function DataTable({
   const totalPages = Math.ceil(totalEntries / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage + 1
   const endIndex = Math.min(currentPage * itemsPerPage, totalEntries)
-  
+
   // Get current page data
   const currentPageData = useMemo(() => {
     if (!pagination) return sortedData
@@ -192,7 +196,7 @@ export default function DataTable({
   const getPageNumbers = () => {
     const pages = []
     const maxVisiblePages = 5
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i)
@@ -200,30 +204,30 @@ export default function DataTable({
     } else {
       const start = Math.max(1, currentPage - 2)
       const end = Math.min(totalPages, start + maxVisiblePages - 1)
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i)
       }
     }
-    
+
     return pages
   }
 
   const defaultRenderCell = (column: Column, item: any) => {
     const value = item[column.key] || '-'
-    
+
     // If column has width defined, apply truncation with ellipsis
     if (column.width || column.widthMobile) {
       const desktopWidth = column.width
-      
+
       // Create dynamic classes based on whether desktop width is defined
       const classes = [
         'truncate overflow-hidden whitespace-nowrap',
         desktopWidth ? 'md:whitespace-nowrap' : 'md:whitespace-normal md:overflow-visible'
       ].join(' ')
-      
+
       return (
-        <div 
+        <div
           className={classes}
           title={String(value)}
         >
@@ -231,7 +235,7 @@ export default function DataTable({
         </div>
       )
     }
-    
+
     return value
   }
 
@@ -296,7 +300,7 @@ export default function DataTable({
                       default: return 'text-left'
                     }
                   }
-                  
+
                   return (
                     <th
                       key={column.key}
@@ -337,17 +341,18 @@ export default function DataTable({
                 })}
               </tr>
             </thead>
-            
+
             {/* Table Body */}
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {currentPageData.length > 0 ? (
                 currentPageData.map((item, index) => {
                   const rowId = getRowId(item, index)
-                  
+
                   return (
-                    <tr 
+                    <tr
                       key={rowId}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${rowClassName}`}
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${typeof rowClassName === 'function' ? rowClassName(item, index) : rowClassName
+                        }`}
                       onClick={() => onRowClick?.(item, index)}
                     >
                       {columns.map((column) => {
@@ -358,7 +363,7 @@ export default function DataTable({
                             default: return 'text-left'
                           }
                         }
-                        
+
                         return (
                           <td
                             key={column.key}
@@ -384,7 +389,7 @@ export default function DataTable({
                             {(() => {
                               const isLoadingRow = loadingRowId && String(rowId) === String(loadingRowId)
                               const isLoadingCell = isLoadingRow && loadingColumnKey === column.key
-                              
+
                               if (isLoadingCell) {
                                 return (
                                   <div className="flex items-center justify-center">
@@ -392,7 +397,7 @@ export default function DataTable({
                                   </div>
                                 )
                               }
-                              
+
                               return renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)
                             })()}
                           </td>
@@ -419,7 +424,7 @@ export default function DataTable({
           <div className="text-sm text-gray-700 dark:text-gray-300">
             Showing {startIndex} to {endIndex} of {totalEntries} entries
           </div>
-          
+
           <div className="flex items-center gap-1">
             {/* First Page */}
             <button
@@ -429,7 +434,7 @@ export default function DataTable({
             >
               First
             </button>
-            
+
             {/* Previous Page */}
             <button
               onClick={goToPreviousPage}
@@ -438,22 +443,21 @@ export default function DataTable({
             >
               Previous
             </button>
-            
+
             {/* Page Numbers */}
             {getPageNumbers().map(pageNum => (
               <button
                 key={pageNum}
                 onClick={() => goToPage(pageNum)}
-                className={`px-3 py-1 text-sm border-t border-b border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 dark:text-white ${
-                  currentPage === pageNum 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600' 
-                    : ''
-                }`}
+                className={`px-3 py-1 text-sm border-t border-b border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-700 dark:text-white ${currentPage === pageNum
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600'
+                  : ''
+                  }`}
               >
                 {pageNum}
               </button>
             ))}
-            
+
             {/* Next Page */}
             <button
               onClick={goToNextPage}
@@ -462,7 +466,7 @@ export default function DataTable({
             >
               Next
             </button>
-            
+
             {/* Last Page */}
             <button
               onClick={goToLastPage}

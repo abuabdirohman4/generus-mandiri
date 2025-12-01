@@ -20,6 +20,12 @@ export interface LaporanFilters {
     kelas: string[]
   }
   
+  // Gender filter
+  gender: string
+
+  // Meeting type filter
+  meetingType: string[]
+
   // Daily filters
   startDate: Dayjs | null
   endDate: Dayjs | null
@@ -48,14 +54,14 @@ interface LaporanState {
   resetMonthlyFilters: () => void
 }
 
-const getCurrentMonth = () => 10 // Use October for dummy data compatibility
-const getCurrentYear = () => 2025 // Use 2025 for dummy data compatibility
+const getCurrentMonth = () => new Date().getMonth() + 1 // 1-12 (getMonth returns 0-11)
+const getCurrentYear = () => new Date().getFullYear()
 
 // Helper function to get default monthly range
 const getDefaultMonthlyRange = () => ({
   monthYear: getCurrentYear(),
-  startMonth: 10, // October
-  endMonth: 12    // December
+  startMonth: getCurrentMonth(), // Current month
+  endMonth: getCurrentMonth()    // Current month
 })
 
 const defaultFilters: LaporanFilters = {
@@ -65,7 +71,7 @@ const defaultFilters: LaporanFilters = {
   viewMode: 'general',
   
   // Detailed mode defaults
-  period: 'monthly',
+  period: 'daily',
   classId: '',
   
   // Organisation filters
@@ -76,6 +82,12 @@ const defaultFilters: LaporanFilters = {
     kelas: []
   },
   
+  // Gender filter
+  gender: '',
+
+  // Meeting type filter
+  meetingType: [],
+
   // Daily filters
   startDate: null,
   endDate: null,
@@ -149,6 +161,8 @@ export const useLaporanStore = create<LaporanState>()(
           // Persist detailed mode settings
           period: state.filters.period,
           classId: state.filters.classId,
+          gender: state.filters.gender,
+          meetingType: state.filters.meetingType,
           
           // Persist period-specific settings but reset date-based ones
           weekYear: state.filters.weekYear,
@@ -178,27 +192,31 @@ export const useLaporan = () => {
     ...store,
     // Helper to check if any filters are active
     hasActiveFilters: store.filters.viewMode === 'detailed' ? (
-      store.filters.classId !== '' || 
+      store.filters.classId !== '' ||
       store.filters.organisasi?.kelas?.length > 0 ||
-      store.filters.startDate !== null || 
+      store.filters.meetingType?.length > 0 ||
+      store.filters.startDate !== null ||
       store.filters.endDate !== null
     ) : (
-      store.filters.month !== getCurrentMonth() || 
+      store.filters.month !== getCurrentMonth() ||
       store.filters.year !== getCurrentYear() ||
       store.filters.classId !== '' ||
-      store.filters.organisasi?.kelas?.length > 0
+      store.filters.organisasi?.kelas?.length > 0 ||
+      store.filters.meetingType?.length > 0
     ),
     // Helper to get filter count
     filterCount: store.filters.viewMode === 'detailed' ? [
       store.filters.classId !== '',
       store.filters.organisasi?.kelas?.length > 0,
+      store.filters.meetingType?.length > 0,
       store.filters.startDate !== null,
       store.filters.endDate !== null
     ].filter(Boolean).length : [
       store.filters.month !== getCurrentMonth(),
       store.filters.year !== getCurrentYear(),
       store.filters.classId !== '',
-      store.filters.organisasi?.kelas?.length > 0
+      store.filters.organisasi?.kelas?.length > 0,
+      store.filters.meetingType?.length > 0
     ].filter(Boolean).length
   }
 }

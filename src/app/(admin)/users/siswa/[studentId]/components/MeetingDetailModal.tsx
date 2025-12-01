@@ -64,20 +64,32 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
         <div className="space-y-4">
           {/* Meeting Title */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 flex items-center flex-wrap">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1 flex items-center flex-wrap">
               {meeting.meetings.meeting_type_code && (
                 <MeetingTypeBadge 
                   meetingTypeCode={meeting.meetings.meeting_type_code}
                   isSambungCapable={meeting.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
                 />
               )}
-              {meeting.meetings.meeting_type_code ? ": " : ""}
+              {meeting.meetings.meeting_type_code && meeting.meetings.title ? ": " : ""}
               {meeting.meetings.title}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {dayjs(meeting.date).format('dddd, DD MMMM YYYY')}
             </p>
           </div>
+
+          {/* Classes */}
+          {meeting.meetings.classes?.name && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Kelas
+              </label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {meeting.meetings.classes?.name}
+              </p>  
+            </div>
+          )}
 
           {/* Topic */}
           {meeting.meetings.topic && (

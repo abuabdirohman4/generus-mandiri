@@ -1,7 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
+import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 
 /**
  * Helper function to get week start date
@@ -63,6 +64,8 @@ export interface ReportFilters {
   // Detailed mode filters - Period-specific
   period: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
+  gender?: string
+  meetingType?: string
   
   // Daily filters
   startDate?: string
@@ -109,12 +112,21 @@ export interface ReportData {
     student_name: string
     student_gender: string
     class_name: string
+    all_classes?: Array<{ id: string; name: string }> // All classes for multi-class support
     total_days: number
     hadir: number
     izin: number
     sakit: number
     alpha: number
     attendance_rate: number
+  }>
+  meetings?: Array<{
+    id: string
+    title: string
+    date: string
+    student_snapshot: string[]
+    class_id: string
+    class_ids?: string[]
   }>
   period: string
   dateRange: {
@@ -135,6 +147,29 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     if (!user) {
       throw new Error('User not authenticated')
     }
+
+    // Get user profile with teacher classes
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        role,
+        teacher_classes!teacher_classes_teacher_id_fkey(
+          class_id,
+          classes:class_id(id, name)
+        )
+      `)
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      throw new Error('User profile not found')
+    }
+
+    // Get teacher class IDs if user is a teacher
+    const teacherClassIds = profile.role === 'teacher' && profile.teacher_classes
+      ? profile.teacher_classes.map((tc: any) => tc.classes?.id || tc.class_id).filter(Boolean)
+      : []
 
     // Build date range based on filter mode
     let dateFilter: {
@@ -245,55 +280,206 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }
 
 
-    // Build query
-    let query = supabase
-      .from('attendance_logs')
+    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
+    const adminClient = await createAdminClient()
+
+    // Parse meeting type filter
+    const meetingTypeFilter = filters.meetingType
+      ? filters.meetingType.split(',').filter(Boolean)
+      : null
+
+    // Fetch meetings first to determine date range and meeting IDs
+    let meetingsForFilterQuery = adminClient
+      .from('meetings')
+      .select('id, date, class_id, class_ids')
+      .gte('date', dateFilter.date?.gte || '1900-01-01')
+      .lte('date', dateFilter.date?.lte || '2100-12-31')
+
+    // Apply meeting type filter
+    if (meetingTypeFilter && meetingTypeFilter.length > 0) {
+      meetingsForFilterQuery = meetingsForFilterQuery.in('meeting_type_code', meetingTypeFilter)
+    }
+
+    const { data: meetingsForFilter } = await meetingsForFilterQuery.order('date')
+
+    // For teachers, filter meetings to get relevant meeting IDs
+    let meetingIdsForAttendance: string[] = []
+
+    if (profile.role === 'teacher' && teacherClassIds.length > 0 && meetingsForFilter) {
+      const teacherMeetingsForRange = meetingsForFilter.filter((meeting: any) => {
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+        }
+        return meeting.class_id && teacherClassIds.includes(meeting.class_id)
+      })
+
+      meetingIdsForAttendance = teacherMeetingsForRange.map((m: any) => m.id)
+    } else {
+      // For admin, use all meetings in date range
+      meetingIdsForAttendance = (meetingsForFilter || []).map((m: any) => m.id)
+    }
+
+    // Fetch attendance logs in batches to avoid query limits
+    // This ensures all attendance data is retrieved regardless of dataset size
+    const { data: attendanceLogsData, error: attendanceError } = await fetchAttendanceLogsInBatches(
+      adminClient,
+      meetingIdsForAttendance
+    )
+
+    if (attendanceError) {
+      throw attendanceError
+    }
+
+    // Create meeting map to get date for each log
+    const meetingMap = new Map<string, any>()
+    if (meetingsForFilter) {
+      meetingsForFilter.forEach(meeting => {
+        meetingMap.set(meeting.id, meeting)
+      })
+    }
+
+    // Enrich attendance logs with student data
+    // Get unique student IDs from attendance logs
+    const studentIds = [...new Set((attendanceLogsData || []).map((log: any) => log.student_id))]
+
+    // Fetch student details with classes info
+    const { data: studentsData, error: studentsError } = await adminClient
+      .from('students')
       .select(`
         id,
-        student_id,
-        meeting_id,
-        date,
-        status,
-        reason,
-        students!inner(
+        name,
+        gender,
+        class_id,
+        classes(
           id,
-          name,
-          gender,
-          classes!inner(
+          name
+        ),
+        student_classes (
+          class_id,
+          classes:class_id (
             id,
-            name
+            name,
+            kelompok_id,
+            kelompok:kelompok_id (
+              id,
+              name
+            )
           )
         )
       `)
+      .in('id', studentIds)
 
-    // Apply filters
+    if (studentsError) {
+      throw studentsError
+    }
+
+    // Create student map for quick lookup
+    const studentMap = new Map<string, any>()
+    if (studentsData) {
+      studentsData.forEach(student => {
+        studentMap.set(student.id, student)
+      })
+    }
+
+    // Enrich attendance logs with student data and date from meetings
+    const attendanceLogs = (attendanceLogsData || []).map((log: any) => {
+      const meeting = meetingMap.get(log.meeting_id)
+      return {
+        id: log.meeting_id + '-' + log.student_id, // Generate unique ID
+        student_id: log.student_id,
+        meeting_id: log.meeting_id,
+        date: meeting?.date || null,
+        status: log.status,
+        reason: null, // Not included in batch fetch
+        students: studentMap.get(log.student_id)
+      }
+    }).filter((log: any) => log.students && log.date) // Filter out logs with missing student or date
+
+    // Use admin client to bypass RLS
+    let meetingsQuery = adminClient
+      .from('meetings')
+      .select('id, title, date, student_snapshot, class_id, class_ids')
+      .gte('date', dateFilter.date?.gte || '1900-01-01')
+      .lte('date', dateFilter.date?.lte || '2100-12-31')
+
+    // Apply meeting type filter
+    if (meetingTypeFilter && meetingTypeFilter.length > 0) {
+      meetingsQuery = meetingsQuery.in('meeting_type_code', meetingTypeFilter)
+    }
+
+    const { data: meetings } = await meetingsQuery.order('date')
+
+
+    // For teacher, filter meetings by their classes first
+    // Use meetingsForFilter if available, otherwise use full meetings
+    const meetingsToFilterForTeacher = meetingsForFilter || meetings || []
+    let teacherMeetings = meetingsToFilterForTeacher || []
+    if (profile.role === 'teacher' && teacherClassIds.length > 0) {
+      teacherMeetings = meetingsToFilterForTeacher.filter((meeting: any) => {
+        // Check class_ids array first (for multi-class meetings)
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+        }
+        // Check class_id
+        return meeting.class_id && teacherClassIds.includes(meeting.class_id)
+      }) || []
+      
+      if (teacherMeetings.length > 0) {
+        // Get full meeting details for teacher meetings
+        const teacherMeetingIds = teacherMeetings.map((m: any) => m.id)
+        teacherMeetings = (meetings || []).filter((m: any) => teacherMeetingIds.includes(m.id))
+      }
+    }
+
+    // Filter attendance_logs to only include logs from teacher's meetings (if teacher)
+    let filteredLogs = attendanceLogs || []
+    if (profile.role === 'teacher') {
+      if (teacherMeetings.length > 0) {
+        const teacherMeetingIds = new Set(teacherMeetings.map((m: any) => m.id))
+        filteredLogs = filteredLogs.filter((log: any) => 
+          teacherMeetingIds.has(log.meeting_id)
+        )
+      } else {
+        // If teacher but no meetings match, set filteredLogs to empty array
+        filteredLogs = []
+      }
+    }
+
+    // Apply class filter - check MEETING's class, not student's class
+    // This ensures we only show attendance from meetings for the selected class
     if (filters.classId) {
       const classIds = filters.classId.split(',')
-      query = query.in('students.class_id', classIds)
+      filteredLogs = filteredLogs.filter((log: any) => {
+        const meeting = meetingMap.get(log.meeting_id)
+        if (!meeting) return false
+
+        // Check if meeting is for the selected class
+        // Check primary class_id
+        if (classIds.includes(meeting.class_id)) return true
+
+        // Check class_ids array for multi-class meetings
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          return meeting.class_ids.some((id: string) => classIds.includes(id))
+        }
+
+        return false
+      })
     }
 
-    // Apply date filter
-    if (dateFilter.date?.eq) {
-      query = query.eq('date', dateFilter.date.eq)
-    } else if (dateFilter.date?.gte && dateFilter.date?.lte) {
-      query = query
-        .gte('date', dateFilter.date.gte)
-        .lte('date', dateFilter.date.lte)
+    // Apply gender filter client-side
+    if (filters.gender) {
+      filteredLogs = filteredLogs.filter((log: any) => 
+        log.students.gender === filters.gender
+      )
     }
 
-    const { data: attendanceLogs, error } = await query
-
-    if (error) {
-      throw error
-    }
-
-    // Process data for summary
+    // Process data for summary (after all filtering, including teacher meetings filter)
     const summary = {
-      total: attendanceLogs?.length || 0,
-      hadir: attendanceLogs?.filter(log => log.status === 'H').length || 0,
-      izin: attendanceLogs?.filter(log => log.status === 'I').length || 0,
-      sakit: attendanceLogs?.filter(log => log.status === 'S').length || 0,
-      alpha: attendanceLogs?.filter(log => log.status === 'A').length || 0,
+      total: filteredLogs.length,
+      hadir: filteredLogs.filter((log: any) => log.status === 'H').length,
+      izin: filteredLogs.filter((log: any) => log.status === 'I').length,
+      sakit: filteredLogs.filter((log: any) => log.status === 'S').length,
+      alpha: filteredLogs.filter((log: any) => log.status === 'A').length,
     }
 
     // Prepare chart data
@@ -304,21 +490,26 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       { name: 'Alpha', value: summary.alpha },
     ].filter(item => item.value > 0) // Only include non-zero values
 
-    // Fetch meetings for the date range to ensure all meetings appear in chart
-    const { data: meetings } = await supabase
-      .from('meetings')
-      .select('id, title, date, student_snapshot, class_id')
-      .gte('date', dateFilter.date?.gte || '1900-01-01')
-      .lte('date', dateFilter.date?.lte || '2100-12-31')
-      .order('date')
-
-    // Apply class filter to meetings if specified
-    const filteredMeetings = filters.classId 
-      ? meetings?.filter(meeting => {
-          const classIds = filters.classId!.split(',')
-          return classIds.includes(meeting.class_id)
-        }) || []
+    // Apply class filter to meetings if specified - support multiple classes per meeting
+    // Check both class_id and class_ids array
+    // For teacher, use teacherMeetings (already filtered by teacher classes)
+    // For admin, use all meetings
+    const meetingsToFilter = profile.role === 'teacher' && teacherMeetings.length > 0
+      ? teacherMeetings
       : meetings || []
+    
+    const filteredMeetings = filters.classId 
+      ? meetingsToFilter.filter((meeting: any) => {
+          const classIds = filters.classId!.split(',')
+          // Check primary class_id
+          if (classIds.includes(meeting.class_id)) return true
+          // Check class_ids array for multi-class meetings
+          if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+            return meeting.class_ids.some((id: string) => classIds.includes(id))
+          }
+          return false
+        })
+      : meetingsToFilter
 
     // First, group meetings by period to count unique meetings per period
     const meetingsByPeriod = filteredMeetings.reduce((acc: any, meeting: any) => {
@@ -365,8 +556,14 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Then process attendance data and count meetings per period
     const dailyData = filteredMeetings.reduce((acc: any, meeting: any) => {
       const meetingDate = new Date(meeting.date)
-      const meetingLogs = attendanceLogs?.filter(log => log.meeting_id === meeting.id) || []
-      const totalStudents = meeting.student_snapshot?.length || 0
+      const meetingLogs = filteredLogs.filter((log: any) => log.meeting_id === meeting.id) || []
+      
+      // Calculate total students that are visible (based on filters)
+      // Count unique student IDs from meetingLogs, or use snapshot length if no logs
+      const visibleStudentIds = new Set(meetingLogs.map((log: any) => log.student_id))
+      const totalStudents = visibleStudentIds.size > 0 
+        ? visibleStudentIds.size 
+        : meeting.student_snapshot?.length || 0
       
       // Group by period type
       let groupKey: string
@@ -474,15 +671,85 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       })
     
 
+    // Fetch all kelompok data for formatting class names
+    const { data: kelompokData } = await adminClient
+      .from('kelompok')
+      .select('id, name')
+    
+    const kelompokMap = new Map<string, string>()
+    if (kelompokData) {
+      kelompokData.forEach((k: any) => {
+        kelompokMap.set(k.id, k.name)
+      })
+    }
+
     // Group by student for detailed view
-    const studentSummary = attendanceLogs?.reduce((acc: any, log: any) => {
+    const studentSummary = filteredLogs.reduce((acc: any, log: any) => {
       const studentId = log.student_id
+      
+      // Get all classes from junction table (support multiple classes with kelompok info)
+      const studentClasses = log.students?.student_classes || []
+      const allClasses = studentClasses
+        .map((sc: any) => sc.classes)
+        .filter(Boolean)
+        .map((cls: any) => ({
+          id: cls.id,
+          name: cls.name,
+          kelompok_id: cls.kelompok_id,
+          kelompok_name: cls.kelompok?.name || kelompokMap.get(cls.kelompok_id) || null
+        }))
+      
+      // If no classes from junction, use primary class
+      if (allClasses.length === 0) {
+        if (log.students.classes) {
+          const primaryClass = log.students.classes
+          allClasses.push({
+            id: primaryClass.id,
+            name: primaryClass.name,
+            kelompok_id: null,
+            kelompok_name: null
+          })
+        } else if (log.students.class_id) {
+          // Fallback: if classes relation is null but class_id exists, try to get from kelompokMap
+          // Note: This is a fallback - ideally student_classes should have the data
+          allClasses.push({
+            id: log.students.class_id,
+            name: 'Unknown Class', // Will be updated if we can fetch it
+            kelompok_id: null,
+            kelompok_name: null
+          })
+        }
+      }
+      
+      // Get primary class (first class) for backward compatibility
+      const primaryClass = allClasses[0] || null
+      
       if (!acc[studentId]) {
+        // Format class names: if duplicate names, add kelompok name
+        const nameCounts = allClasses.reduce((counts: Record<string, number>, cls: any) => {
+          counts[cls.name] = (counts[cls.name] || 0) + 1
+          return counts
+        }, {})
+        
+        const formattedClassNames = allClasses.map((cls: any) => {
+          const hasDuplicate = nameCounts[cls.name] > 1
+          if (hasDuplicate && cls.kelompok_name) {
+            return `${cls.name} (${cls.kelompok_name})`
+          }
+          return cls.name
+        })
+        
         acc[studentId] = {
           student_id: studentId,
-          student_name: log.students.name,
-          student_gender: log.students.gender,
-          class_name: log.students.classes.name,
+          student_name: log.students?.name || 'Unknown Student',
+          student_gender: log.students?.gender || null,
+          class_name: formattedClassNames.length > 0 
+            ? formattedClassNames.join(', ') // Join all class names with kelompok info
+            : primaryClass?.name || 'Unknown Class', // Fallback to primary class
+          all_classes: allClasses.map((cls: any) => ({
+            id: cls.id,
+            name: cls.name
+          })),
           total_days: 0,
           hadir: 0,
           izin: 0,
@@ -507,18 +774,19 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         : 0
     })
 
-    const detailedRecords = Object.values(studentSummary) as Array<{
-      student_id: string
-      student_name: string
-      student_gender: string
-      class_name: string
-      total_days: number
-      hadir: number
-      izin: number
-      sakit: number
-      alpha: number
-      attendance_rate: number
-    }>
+    const detailedRecords = Object.values(studentSummary).map((student: any) => ({
+      student_id: student.student_id,
+      student_name: student.student_name,
+      student_gender: student.student_gender,
+      class_name: student.class_name,
+      all_classes: student.all_classes || [], // Include all classes
+      total_days: student.total_days,
+      hadir: student.hadir,
+      izin: student.izin,
+      sakit: student.sakit,
+      alpha: student.alpha,
+      attendance_rate: student.attendance_rate
+    }))
 
     return {
       summary,

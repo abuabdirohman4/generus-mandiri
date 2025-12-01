@@ -38,6 +38,7 @@ interface ReportFilters {
   // Detailed mode filters - Period-specific
   period?: 'daily' | 'weekly' | 'monthly' | 'yearly'
   classId?: string
+  gender?: string
   
   // Daily filters
   startDate?: string
@@ -172,6 +173,35 @@ const studentNames: Record<string, string> = {
   'student-25': 'Muhammad Al-Amin'
 }
 
+// Student gender mapping (based on typical Indonesian name patterns)
+const studentGenders: Record<string, string> = {
+  'student-1': 'Laki-laki',
+  'student-2': 'Perempuan',
+  'student-3': 'Laki-laki',
+  'student-4': 'Perempuan',
+  'student-5': 'Laki-laki',
+  'student-6': 'Perempuan',
+  'student-7': 'Laki-laki',
+  'student-8': 'Perempuan',
+  'student-9': 'Laki-laki',
+  'student-10': 'Perempuan',
+  'student-11': 'Laki-laki',
+  'student-12': 'Perempuan',
+  'student-13': 'Laki-laki',
+  'student-14': 'Perempuan',
+  'student-15': 'Laki-laki',
+  'student-16': 'Perempuan',
+  'student-17': 'Laki-laki',
+  'student-18': 'Perempuan',
+  'student-19': 'Laki-laki',
+  'student-20': 'Perempuan',
+  'student-21': 'Laki-laki',
+  'student-22': 'Perempuan',
+  'student-23': 'Laki-laki',
+  'student-24': 'Perempuan',
+  'student-25': 'Laki-laki'
+}
+
 // Helper function to filter meetings by date range
 function filterMeetingsByDateRange(
   data: Meeting[],
@@ -293,6 +323,7 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
   const { 
     period = 'monthly', 
     classId, 
+    gender,
     startDate, 
     endDate, 
     month, 
@@ -398,7 +429,15 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
   ).filter(log => {
     const meeting = finalFilteredMeetings.find(m => m.id === log.meeting_id)
     // For dummy data, ignore classId filtering since we use 'class-1' in dummy data
-    return meeting
+    if (!meeting) return false
+    
+    // Filter by gender if specified
+    if (gender) {
+      const studentGender = studentGenders[log.student_id]
+      if (studentGender !== gender) return false
+    }
+    
+    return true
   })
 
   // Get unique students
@@ -519,7 +558,7 @@ export function generateDummyReportData(filters: ReportFilters): ReportData {
   const detailedRecords = studentSummaries.map(summary => ({
     student_id: summary.student_id,
     student_name: summary.student_name,
-    student_gender: 'L', // Default gender
+    student_gender: studentGenders[summary.student_id] || 'Laki-laki', // Use gender mapping
     class_name: 'Kelas 1', // Will be varied in getDummyMeetings
     total_days: summary.total_meetings,
     hadir: summary.present_count,

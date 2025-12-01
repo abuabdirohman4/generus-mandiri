@@ -1,3 +1,46 @@
+*Update v1.8.1 - Bug Fixes & Improvements*
+
+Perbaikan:
+- Error Delete Siswa - Perbaikan error saat menghapus siswa, sekarang support soft delete dan hard delete
+- Validasi Kelas Guru - Perbaikan error saat guru dari satu kelas mencoba create absensi untuk kelas lain
+- Tampilan Tanggal Kalender - Perbaikan tampilan tanggal yang salah di kalender absensi
+- Filter Soft Delete - Penambahan filter yang benar untuk siswa yang di-soft delete di semua query
+
+Peningkatan:
+- Penghapusan Siswa - Peningkatan penghapusan siswa dengan soft delete (default) dan hard delete
+  - Soft delete: Menandai siswa sebagai terhapus dengan timestamp deleted_at
+  - Hard delete: Menghapus siswa secara permanen dari database
+  - Penambahan validasi kontrol akses untuk admin desa/daerah/kelompok
+- Manajemen Siswa - Peningkatan create/update siswa dengan handling kelompok_id yang lebih baik
+  - Admin desa sekarang bisa specify kelompok_id saat create/update siswa
+  - Penambahan validasi untuk memastikan kelompok berada di desa admin
+  - Guru hanya bisa update siswa ke kelas yang mereka ajarkan
+- Integritas Data - Semua query siswa sekarang filter dengan benar siswa yang di-soft delete
+
+*Update v1.8.0 - Multiple Class Support & Enhanced Features*
+
+Fitur Baru:
+- Multiple Class Support - Siswa sekarang bisa diassign ke multiple kelas
+- Gender Filter di Laporan - Filter jenis kelamin di halaman laporan
+- Student Class Assignment - Admin bisa assign siswa ke multiple kelas via batch assignment
+- Class Edit Feature - Fitur edit assignment kelas siswa dari halaman manajemen siswa
+
+Peningkatan:
+- Multiple Class Handling - Peningkatan support untuk siswa dengan multiple kelas di different kelompok
+  - Halaman Guru: Handling multiple kelas yang lebih baik
+  - Halaman Siswa: Tampilan dan filter siswa dengan multiple kelas
+  - Halaman Absensi: Filter dan tampilan untuk multiple kelas dengan different kelompok
+  - Halaman Laporan: Support untuk siswa dengan multiple kelas
+- Confirm Modal - Update confirm modal dengan format [tipe pertemuan/title]
+- Component Consistency - Ganti semua <button> dengan <Button> component untuk konsistensi
+- Meeting Detail - Tambahan informasi kelas di meeting detail modal
+
+Perbaikan:
+- Attendance Filter - Perbaikan filter yang tidak muncul multiple kelompok di detail absensi
+- Class Display - Perbaikan tampilan nama kelas (kelompok) di halaman absensi
+- Multiple Class Visibility - Perbaikan siswa multiple kelas (seperti mudamudi) yang tidak muncul dengan benar
+- Admin Access - Perbaikan admin warlob 2 yang tidak menampilkan siswa dengan benar
+
 *Update v1.7.1 - UI Fixes & Improvements*
 
 Perbaikan:

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useUserProfileStore } from '@/stores/userProfileStore';
 import { createClient } from '@/lib/supabase/client';
-import { clearUserCache } from '@/lib/userUtils';
+import { clearUserCache, clearSWRCache } from '@/lib/userUtils';
 
 interface AdminLayoutProviderProps {
   children: React.ReactNode;
@@ -32,6 +32,10 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           return;
         }
         
+        // Clear SWR cache to ensure fresh data on auto-login
+        // This handles the case when user opens the app again after closing browser
+        clearSWRCache();
+        
         // Get user profile from profiles table
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -47,7 +51,23 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             daerah:daerah_id(id, name),
             teacher_classes!teacher_classes_teacher_id_fkey(
               class_id,
-              classes:class_id(id, name)
+              classes:class_id(
+                id,
+                name,
+                kelompok_id,
+                kelompok:kelompok_id(id, name),
+                class_master_mappings(
+                  class_master:class_master_id(
+                    id,
+                    name,
+                    category:category_id(
+                      id,
+                      code,
+                      name
+                    )
+                  )
+                )
+              )
             )
           `)
           .eq('id', user.id)
@@ -60,7 +80,14 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
         // Transform teacher_classes to classes array for backward compatibility
         const classes = profileData.teacher_classes?.map((tc: any) => ({
           id: String(tc.classes?.id || ''),
-          name: String(tc.classes?.name || '')
+          name: String(tc.classes?.name || ''),
+          kelompok_id: tc.classes?.kelompok_id || null,
+          kelompok: tc.classes?.kelompok ? (
+            Array.isArray(tc.classes.kelompok)
+              ? tc.classes.kelompok[0]
+              : tc.classes.kelompok
+          ) : null,
+          class_master_mappings: tc.classes?.class_master_mappings || []
         })).filter(Boolean) || [];
         
         // Transform hierarchy objects to ensure proper types
@@ -104,11 +131,43 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
       (event, session) => {
         if (event === 'SIGNED_OUT') {
           // Clear all user-related cache when signing out
+          sessionStorage.removeItem('auth-initialized'); // Clear session marker
           clearUserCache();
           setProfile(null);
           setLoading(false);
           setError(null);
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // Check if this is a fresh login (not a page reload)
+          // We use sessionStorage to track this - it persists during page reloads but clears on new tab/window
+          const isPageReload = sessionStorage.getItem('auth-initialized') === 'true';
+
+          // Check if user switched accounts (different user ID from last login)
+          const lastUserId = sessionStorage.getItem('last-user-id');
+          const isAccountSwitch = lastUserId && lastUserId !== session.user.id;
+
+          if (!isPageReload) {
+            // Fresh login (not a page reload)
+            sessionStorage.setItem('auth-initialized', 'true');
+            sessionStorage.setItem('last-user-id', session.user.id);
+
+            if (isAccountSwitch) {
+              // Different account - clear cache and reload to prevent stale data
+              clearUserCache();
+            } else {
+              // Same account or first login - just fetch data (no reload needed)
+              fetchUserData();
+            }
+          } else {
+            // Page reload after login - just fetch data without clearing cache
+            fetchUserData();
+          }
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Clear cache on token refresh to ensure data stays fresh
+          clearSWRCache();
+          // Optionally fetch user data again (usually not needed, but ensures consistency)
+          fetchUserData();
         } else if (session?.user) {
+          // For other events (like USER_UPDATED), just fetch data without clearing cache
           fetchUserData();
         }
       }

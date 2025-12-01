@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "generus-mandiri-v2": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=YOUR_PROJECT_REF_HERE"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "YOUR_ACCESS_TOKEN_HERE"
+      }
+    },
+    "better-planner": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=YOUR_PROJECT_REF_HERE"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "YOUR_ACCESS_TOKEN_HERE"
+      }
+    }
+  }
+}

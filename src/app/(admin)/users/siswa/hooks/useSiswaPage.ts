@@ -77,8 +77,8 @@ export function useSiswaPage() {
 
   const { trigger: deleteStudentMutation } = useSWRMutation(
     '/api/students',
-    async (url, { arg }: { arg: string }) => {
-      const result = await deleteStudent(arg)
+    async (url, { arg }: { arg: { studentId: string; permanent: boolean } }) => {
+      const result = await deleteStudent(arg.studentId, arg.permanent)
       return result
     }
   )
@@ -118,12 +118,25 @@ export function useSiswaPage() {
     }
   }, [selectedStudent, updateStudentMutation, mutateStudents, closeModal, setSubmitting])
 
-  const handleDeleteStudent = useCallback(async (studentId: string) => {
+  const handleDeleteStudent = useCallback(async (studentId: string, permanent: boolean = false) => {
     try {
-      await deleteStudentMutation(studentId)
-      toast.success('Siswa berhasil dihapus')
+      const result = await deleteStudentMutation({ studentId, permanent })
+      
+      // Handle return value from deleteStudent
+      if (result && !result.success) {
+        // Error case - show error message
+        toast.error(result.error || 'Gagal menghapus siswa')
+        return
+      }
+      
+      // Success case
+      const message = permanent 
+        ? 'Siswa berhasil dihapus permanen' 
+        : 'Siswa berhasil dihapus (data tersimpan)'
+      toast.success(message)
       mutateStudents() // Revalidate students data
     } catch (error) {
+      // Fallback for unexpected errors
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
       toast.error(errorMessage)
       console.error('Error deleting student:', error)
@@ -160,10 +173,16 @@ export function useSiswaPage() {
   const filteredStudents = useMemo(() => {
     let result = students || []
     
-    // For teachers, filter by their assigned classes
+    // For teachers, filter by their assigned classes (support multiple classes per student)
     if (userProfile?.role === 'teacher' && userProfile.classes?.length) {
       const teacherClassIds = userProfile.classes.map(c => c.id)
-      result = result.filter(s => teacherClassIds.includes(s.class_id))
+      result = result.filter(s => {
+        // Check if student has at least one class that matches teacher's classes
+        // Ensure classes is always an array
+        const studentClasses = Array.isArray(s.classes) ? s.classes : []
+        const studentClassIds = studentClasses.map(c => c.id)
+        return studentClassIds.some(classId => teacherClassIds.includes(classId))
+      })
     }
     
     // Apply data filters
@@ -176,10 +195,31 @@ export function useSiswaPage() {
     if (dataFilters.kelompok.length > 0) {
       result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
     }
+    
+    // Apply kelas filter - for teacher with multiple classes, allow filtering by specific class
+    // This works the same way as absensi page: filter applies to BOTH teacher and admin
     if (dataFilters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
-      result = result.filter(s => selectedClassIds.includes(s.class_id))
+      
+      // For teacher: filter students by selected classes
+      if (userProfile?.role === 'teacher') {
+        result = result.filter(s => {
+          const studentClassIds = (s.classes || []).map(c => c.id)
+          // Also check class_id for backward compatibility
+          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
+          // Check if student has at least one class in selected classes
+          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+        })
+      } else {
+        // For admin/superadmin: filter by selected classes
+        result = result.filter(s => {
+          const studentClassIds = (s.classes || []).map(c => c.id)
+          // Also check class_id for backward compatibility
+          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
+          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
+        })
+      }
     }
     // Apply gender filter
     if (dataFilters.gender && dataFilters.gender !== '') {

@@ -2,8 +2,8 @@
 
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
-import { PencilIcon, TrashBinIcon, LockIcon } from '@/lib/icons';
-import { isAdminDaerah, isAdminDesa, UserProfile } from '@/lib/userUtils';
+import { PencilIcon, TrashBinIcon, LockIcon, SettingsIcon } from '@/lib/icons';
+import { isAdminDaerah, isAdminDesa, isAdminKelompok, UserProfile } from '@/lib/userUtils';
 
 interface Guru {
   id: string;
@@ -21,10 +21,11 @@ interface GuruTableProps {
   onEdit: (guru: Guru) => void;
   onDelete: (guru: Guru) => void;
   onResetPassword: (guru: Guru) => void;
+  onConfigureForm?: (guru: Guru) => void;
   userProfile?: UserProfile | null;
 }
 
-export default function GuruTable({ data, onEdit, onDelete, onResetPassword, userProfile }: GuruTableProps) {
+export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onConfigureForm, userProfile }: GuruTableProps) {
   // Build columns based on user role
   const buildColumns = (userProfile: UserProfile | null | undefined) => {
     const baseColumns = [
@@ -59,7 +60,7 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
     
     return [
       ...baseColumns,
-      { key: 'class_names', label: 'Kelas yang Diajar', widthMobile: '150px', sortable: true },
+      { key: 'class_names', label: 'Kelas yang Diajar', width: '600px', widthMobile: '150px', sortable: true },
       ...orgColumns,
       // { key: 'created_at', label: 'Dibuat', sortable: true },
       { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
@@ -83,6 +84,13 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, use
               onClick: () => onEdit(item),
               title: 'Edit',
               color: 'indigo'
+            },
+            {
+              id: 'configure-form',
+              icon: SettingsIcon,
+              onClick: () => onConfigureForm?.(item),
+              title: 'Atur Form',
+              color: 'blue'
             },
             {
               id: 'reset-password',

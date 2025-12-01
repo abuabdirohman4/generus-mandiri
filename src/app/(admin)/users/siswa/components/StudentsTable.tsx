@@ -3,20 +3,22 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
-import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import DeleteStudentModal from './DeleteStudentModal'
 import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
+import { checkStudentHasAttendance } from '../actions'
 
 interface StudentsTableProps {
   students: Student[]
   userRole: string | null
   onEdit: (student: Student) => void
-  onDelete: (studentId: string) => void
+  onDelete: (studentId: string, permanent: boolean) => void
   userProfile: { 
     role: string; 
     classes?: Array<{ id: string; name: string }> 
   } | null | undefined
+  classes?: Array<{ id: string; name: string; kelompok_id?: string | null }>
 }
 
 export default function StudentsTable({ 
@@ -24,7 +26,8 @@ export default function StudentsTable({
   userRole, 
   onEdit, 
   onDelete, 
-  userProfile 
+  userProfile,
+  classes: classesData
 }: StudentsTableProps) {
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
@@ -32,10 +35,14 @@ export default function StudentsTable({
     isOpen: boolean
     studentId: string
     studentName: string
+    hasAttendance: boolean
+    isLoading: boolean
   }>({
     isOpen: false,
     studentId: '',
-    studentName: ''
+    studentName: '',
+    hasAttendance: false,
+    isLoading: false
   })
   
   const handleStudentClick = (studentId: string, column: 'name' | 'actions') => {
@@ -43,20 +50,52 @@ export default function StudentsTable({
     setClickedColumn(column)
   }
 
-  const handleDeleteClick = (studentId: string, studentName: string) => {
+  const handleDeleteClick = async (studentId: string, studentName: string) => {
+    // Check attendance before opening modal
     setDeleteModal({
       isOpen: true,
       studentId,
-      studentName
+      studentName,
+      hasAttendance: false,
+      isLoading: true
     })
+
+    try {
+      const hasAttendance = await checkStudentHasAttendance(studentId)
+      setDeleteModal(prev => ({
+        ...prev,
+        hasAttendance,
+        isLoading: false
+      }))
+    } catch (error) {
+      console.error('Error checking student attendance:', error)
+      setDeleteModal(prev => ({
+        ...prev,
+        hasAttendance: false,
+        isLoading: false
+      }))
+    }
   }
 
-  const handleDeleteConfirm = () => {
-    onDelete(deleteModal.studentId)
+  const handleSoftDelete = () => {
+    onDelete(deleteModal.studentId, false)
     setDeleteModal({
       isOpen: false,
       studentId: '',
-      studentName: ''
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
+    })
+  }
+
+  const handleHardDelete = () => {
+    onDelete(deleteModal.studentId, true)
+    setDeleteModal({
+      isOpen: false,
+      studentId: '',
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
     })
   }
 
@@ -64,7 +103,9 @@ export default function StudentsTable({
     setDeleteModal({
       isOpen: false,
       studentId: '',
-      studentName: ''
+      studentName: '',
+      hasAttendance: false,
+      isLoading: false
     })
   }
   // Build columns based on user role
@@ -112,6 +153,23 @@ export default function StudentsTable({
     
     // Teacher with multiple classes: show class_name column
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      // Cek apakah classes yang diajarkan teacher memiliki kelompok_id yang berbeda
+      const teacherClassIds = userProfile.classes.map((c: { id: string; name: string }) => c.id)
+      const teacherClasses = classesData?.filter((c: { id: string; name: string; kelompok_id?: string | null }) => teacherClassIds.includes(c.id)) || []
+      const uniqueKelompokIds = new Set(
+        teacherClasses
+          .map((c: { id: string; name: string; kelompok_id?: string | null }) => c.kelompok_id)
+          .filter(Boolean)
+      )
+      
+      // Jika teacher mengajar classes dari different kelompok, tambahkan kolom kelompok
+      if (uniqueKelompokIds.size > 1) {
+        orgColumns.push(
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+        )
+      }
+      
+      // Selalu tampilkan class_name untuk teacher dengan multiple classes
       orgColumns.push(
         { key: 'class_name', label: 'Kelas', align: 'center' as const }
       );
@@ -126,22 +184,90 @@ export default function StudentsTable({
 
   const columns = buildColumns(userProfile);
 
-  const tableData = students
-    .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
-    .map((student) => ({
-      id: student.id,
-      name: student.name,
-      gender: student.gender || '-',
-      class_name: student.class_name || '-',
-      daerah_name: student.daerah_name || '-',
-      desa_name: student.desa_name || '-',
-      kelompok_name: student.kelompok_name || '-',
-      actions: student.id, // We'll use this in renderCell
-    }))
+  // Filter classes based on user role for display
+  const getDisplayClasses = (student: Student): string => {
+    try {
+      if (!student || typeof student !== 'object') {
+        return '-'
+      }
+      
+      if (!student.classes || !Array.isArray(student.classes) || student.classes.length === 0) {
+        return String(student.class_name || '-')
+      }
+      
+      // If admin, show all classes
+      if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+        return student.classes
+          .filter(c => c && c.name)
+          .map(c => String(c.name))
+          .join(', ') || '-'
+      }
+      
+      // If teacher, filter to only classes they teach
+      if (userProfile?.role === 'teacher' && userProfile.classes && Array.isArray(userProfile.classes)) {
+        const teacherClassIds = userProfile.classes
+          .filter(c => c && c.id)
+          .map(c => String(c.id))
+        const studentTeacherClasses = student.classes.filter(c => 
+          c && c.id && teacherClassIds.includes(String(c.id))
+        )
+        if (studentTeacherClasses.length === 0) {
+          return '-' // Student tidak punya kelas yang diajarkan guru ini
+        }
+        return studentTeacherClasses
+          .filter(c => c && c.name)
+          .map(c => String(c.name))
+          .join(', ') || '-'
+      }
+      
+      // Default: return first class
+      const firstClass = student.classes[0]
+      return (firstClass && firstClass.name) ? String(firstClass.name) : '-'
+    } catch (error) {
+      console.error('Error in getDisplayClasses:', error, student)
+      return '-'
+    }
+  }
+
+  // Ensure students is an array and filter out invalid entries
+  const validStudents = Array.isArray(students) 
+    ? students.filter(s => s && typeof s === 'object' && s.id && s.name)
+    : []
+
+  const tableData = validStudents.length > 0
+    ? validStudents
+        .sort((a, b) => {
+          const nameA = String(a.name || '').toLowerCase()
+          const nameB = String(b.name || '').toLowerCase()
+          return nameA.localeCompare(nameB)
+        })
+        .map((student) => {
+          try {
+            return {
+              id: String(student.id || ''),
+              name: String(student.name || ''),
+              gender: String(student.gender || '-'),
+              class_name: getDisplayClasses(student),
+              daerah_name: String(student.daerah_name || '-'),
+              desa_name: String(student.desa_name || '-'),
+              kelompok_name: String(student.kelompok_name || '-'),
+              actions: String(student.id || ''), // We'll use this in renderCell
+            }
+          } catch (error) {
+            console.error('Error mapping student to table data:', error, student)
+            return null
+          }
+        })
+        .filter(Boolean) // Remove any null entries
+    : []
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
-      const student = students.find(s => s.id === item.actions)!;
+      const student = validStudents.find(s => s && s.id === item.actions);
+      
+      if (!student) {
+        return null;
+      }
       
       return (
         <div className="flex gap-4 justify-center items-center">
@@ -180,7 +306,12 @@ export default function StudentsTable({
     
     // Handle name column - make it clickable
     if (column.key === 'name') {
-      const student = students.find(s => s.id === item.actions)!
+      const student = validStudents.find(s => s && s.id === item.actions)
+      
+      if (!student) {
+        return item.name || '-'
+      }
+      
       return (
         <Link 
           href={`/users/siswa/${student.id}`}
@@ -219,15 +350,15 @@ export default function StudentsTable({
         rowClassName="hover:bg-gray-50 dark:hover:bg-gray-700"
       />
 
-      <ConfirmModal
+      <DeleteStudentModal
         isOpen={deleteModal.isOpen}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Hapus Siswa"
-        message={`Apakah Anda yakin ingin menghapus siswa <br> "${deleteModal.studentName}"?`}
-        confirmText="Hapus"
-        cancelText="Batal"
-        isDestructive={true}
+        onSoftDelete={handleSoftDelete}
+        onHardDelete={handleHardDelete}
+        studentId={deleteModal.studentId}
+        studentName={deleteModal.studentName}
+        hasAttendance={deleteModal.hasAttendance}
+        isLoading={deleteModal.isLoading}
       />
     </>
   )

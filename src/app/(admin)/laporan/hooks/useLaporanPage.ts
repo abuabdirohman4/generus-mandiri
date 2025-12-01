@@ -36,6 +36,8 @@ export function useLaporanPage() {
       // Detailed mode filters
       period: filters.period,
       classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
+      gender: filters.gender || undefined,
+      meetingType: filters.meetingType?.length ? filters.meetingType.join(',') : undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -62,41 +64,80 @@ export function useLaporanPage() {
   
   const { classes, isLoading: isLoadingClasses } = useClasses()
 
-  // Computed values
+  // Computed values - filter classes based on user role
   const tableData = useMemo(() => {
     if (!reportData?.detailedRecords) return []
     
     return reportData.detailedRecords
       .sort((a, b) => a.student_name.localeCompare(b.student_name))
-      .map((record, index) => ({
-        no: index + 1,
-        student_id: record.student_id,
-        student_name: record.student_name,
-        class_name: record.class_name,
-        total_days: record.total_days,
-        hadir: record.hadir,
-        izin: record.izin,
-        sakit: record.sakit,
-        alpha: record.alpha,
-        attendance_rate: `${record.attendance_rate}%`,
-      }))
-  }, [reportData?.detailedRecords])
+      .map((record, index) => {
+        // Filter classes based on user role
+        let displayClassNames = record.class_name
+        
+        // If we have all_classes data
+        if (record.all_classes && record.all_classes.length > 0) {
+          if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
+            // Admin: show all classes
+            displayClassNames = record.all_classes.map(c => c.name).join(', ')
+          } else if (userProfile?.role === 'teacher' && userProfile.classes) {
+            // Teacher: filter to only classes they teach
+            const teacherClassIds = userProfile.classes.map(c => c.id)
+            const studentTeacherClasses = record.all_classes.filter(c => teacherClassIds.includes(c.id))
+            
+            if (studentTeacherClasses.length > 0) {
+              // For teacher with only 1 class, just show the class name (no need to show all student classes)
+              if (userProfile.classes.length === 1) {
+                // Teacher only teaches 1 class, so just show that class name
+                displayClassNames = studentTeacherClasses[0].name
+              } else {
+                // Teacher teaches multiple classes, show all matching classes
+                displayClassNames = studentTeacherClasses.map(c => c.name).join(', ')
+              }
+            } else {
+              // Student tidak punya kelas yang diajarkan guru ini
+              displayClassNames = '-'
+            }
+          }
+          // Default: use primary class_name if no all_classes or not admin/teacher
+        }
+        
+        return {
+          no: index + 1,
+          student_id: record.student_id,
+          student_name: record.student_name,
+          class_name: displayClassNames,
+          total_days: record.total_days,
+          hadir: record.hadir,
+          izin: record.izin,
+          sakit: record.sakit,
+          alpha: record.alpha,
+          attendance_rate: `${record.attendance_rate}%`,
+        }
+      })
+  }, [reportData?.detailedRecords, userProfile])
 
   const summaryStats = useMemo(() => {
     if (!reportData?.summary) return null
     
-    const { summary } = reportData
+    const { summary, detailedRecords } = reportData
     const attendanceRate = summary.total > 0 
       ? Math.round((summary.hadir / summary.total) * 100)
+      : 0
+
+    // Calculate total meetings from detailedRecords (max total_days)
+    // This represents the number of meetings in the period
+    const totalMeetings = detailedRecords && detailedRecords.length > 0
+      ? Math.max(...detailedRecords.map(record => record.total_days))
       : 0
 
     return {
       ...summary,
       attendanceRate,
       periodLabel: getPeriodLabel(filters.period),
+      totalMeetings,
       dateRange: reportData.dateRange
     }
-  }, [reportData?.summary, filters.period, reportData?.dateRange])
+  }, [reportData?.summary, reportData?.detailedRecords, filters.period, reportData?.dateRange])
 
   const chartData = useMemo(() => {
     if (!reportData?.chartData) return []
@@ -152,8 +193,16 @@ export function useLaporanPage() {
     mutate(undefined, { revalidate: false })
   }
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
-    setFilter('organisasi', organisasiFilters)
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }) => {
+    // Extract gender and meetingType from organisasiFilters and update separately
+    const { gender, meetingType, ...organisasi } = organisasiFilters
+    setFilter('organisasi', organisasi)
+    if (gender !== undefined) {
+      setFilter('gender', gender || '')
+    }
+    if (meetingType !== undefined) {
+      setFilter('meetingType', meetingType)
+    }
   }, [setFilter])
 
   // Loading states

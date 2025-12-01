@@ -52,7 +52,37 @@ export function clearUserCache() {
     // Clear user profile store
     localStorage.removeItem('user-profile-storage')
     
+    // Clear siswa store (filters and class selection)
+    localStorage.removeItem('siswa-storage')
+    
+    // Clear laporan store (report filters)
+    localStorage.removeItem('laporan-storage')
+    
+    // Clear attendance store (attendance data)
+    localStorage.removeItem('attendance-storage')
+    
+    // Clear absensi UI store (class filters)
+    localStorage.removeItem('absensi-ui-store')
+    
     // Force reload to clear all in-memory caches
     window.location.reload()
+  }
+}
+
+/**
+ * Clear SWR cache without reloading page
+ * Use this when user logs in to ensure fresh data
+ * This function only clears SWR cache, not other stores
+ */
+export function clearSWRCache() {
+  if (typeof window !== 'undefined') {
+    // Clear SWR cache from localStorage
+    localStorage.removeItem('swr-cache')
+    
+    // Clear SWR cache timestamp if exists
+    localStorage.removeItem('swr-cache-timestamp')
+    
+    // Note: We don't reload the page here to allow smooth login flow
+    // SWR will automatically fetch fresh data on next useSWR call
   }
 }

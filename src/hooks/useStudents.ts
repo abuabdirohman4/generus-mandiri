@@ -12,7 +12,19 @@ interface UseStudentsOptions {
 }
 
 const fetcher = async (classId?: string): Promise<Student[]> => {
-  return await getAllStudents(classId)
+  try {
+    const result = await getAllStudents(classId)
+    // Ensure result is always an array
+    if (!Array.isArray(result)) {
+      console.error('getAllStudents returned non-array:', result)
+      return []
+    }
+    return result
+  } catch (error) {
+    console.error('Error fetching students:', error)
+    // Return empty array instead of throwing to prevent app crash
+    return []
+  }
 }
 
 export function useStudents({ classId, enabled = true }: UseStudentsOptions = {}) {
@@ -20,7 +32,11 @@ export function useStudents({ classId, enabled = true }: UseStudentsOptions = {}
 
   // Get current user ID for cache key
   useEffect(() => {
-    getCurrentUserId().then(setUserId)
+    getCurrentUserId()
+      .then(setUserId)
+      .catch((error) => {
+        console.error('Error getting user ID:', error)
+      })
   }, [])
 
   const key = enabled && userId ? studentKeys.list(classId, userId) : null
@@ -32,11 +48,20 @@ export function useStudents({ classId, enabled = true }: UseStudentsOptions = {}
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes
+      onError: (error) => {
+        console.error('SWR error in useStudents:', error)
+      },
+      shouldRetryOnError: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 1000,
     }
   )
 
+  // Ensure data is always an array
+  const students = Array.isArray(data) ? data : []
+
   return {
-    students: data || [],
+    students,
     isLoading,
     error,
     mutate

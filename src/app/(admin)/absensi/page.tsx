@@ -16,6 +16,7 @@ import DataFilter from '@/components/shared/DataFilter'
 import LoadingState from './components/LoadingState'
 import Spinner from '@/components/ui/spinner/Spinner'
 import Pagination from '@/components/ui/pagination/Pagination'
+import { useMeetingFormSettings } from './hooks/useMeetingFormSettings'
 
 export default function AbsensiPage() {
   const { profile: userProfile } = useUserProfile()
@@ -23,7 +24,10 @@ export default function AbsensiPage() {
   const { daerah } = useDaerah()
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
-  
+
+  // Prefetch meeting form settings for optimal modal performance
+  useMeetingFormSettings(userProfile?.id)
+
   // Get UI state from Zustand store
   const {
     viewMode,
@@ -80,7 +84,9 @@ export default function AbsensiPage() {
     
     if (dataFilters.kelas.length > 0) {
       // Filter by specific classes
-      filtered = filtered.filter(c => dataFilters.kelas.includes(c.id))
+      // Support comma-separated class IDs from DataFilter (for classes with same name)
+      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
+      filtered = filtered.filter(c => selectedClassIds.includes(c.id))
     }
     
     return filtered.map(c => c.id)
@@ -88,17 +94,14 @@ export default function AbsensiPage() {
 
   // Determine classId based on user role and filters
   const classId = useMemo(() => {
-    if (userProfile?.role === 'teacher') {
-      return userProfile.classes?.[0]?.id || undefined
-    }
-    
-    // If specific class is selected, use that
+    // PRIORITY: If specific class is selected, use that (for BOTH teacher and admin)
     if (dataFilters.kelas.length > 0) {
       return dataFilters.kelas.join(',') // Use all selected classes for API call
     }
     
-    // If "Semua Kelas" is selected (no specific class), return undefined
-    // This will fetch all meetings, and we'll filter them client-side
+    // FALLBACK: For both teacher and admin, return undefined to fetch all meetings
+    // Backend will handle filtering for teachers (getMeetingsWithStats already filters by teacherClassIds)
+    // For admin, undefined means fetch all meetings
     return undefined
   }, [userProfile, dataFilters.kelas])
 
@@ -118,8 +121,66 @@ export default function AbsensiPage() {
   const filteredMeetings = useMemo(() => {
     let filtered = allMeetings || []
     
-    if (userProfile?.role === 'teacher') {
-      // For teachers, apply meeting type filter if selected
+    // PRIORITY: If specific class is selected, verify meetings match selected classes (for multi-class meetings)
+    // This applies to BOTH teacher and admin
+    // NOTE: Backend already filters by classId, but we do client-side verification for multi-class meetings
+    if (dataFilters.kelas.length > 0) {
+      // Support comma-separated class IDs from filter
+      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
+      
+      // For teacher: backend already filtered, but verify client-side for multi-class meetings
+      if (userProfile?.role === 'teacher') {
+        // Verify meetings match selected classes (handle multi-class meetings)
+        // This is important for meetings that have multiple classes
+        filtered = filtered.filter((meeting: any) => {
+          // Check class_ids array first (for multi-class meetings)
+          if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+            return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
+          }
+          
+          // Check classes.id
+          if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
+            return true
+          }
+          
+          // Check class_id
+          if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
+            return true
+          }
+          
+          return false
+        })
+        
+        // Apply meeting type filter if needed
+        if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+          filtered = filtered.filter(m => 
+            dataFilters.meetingType?.includes(m.meeting_type_code || '')
+          )
+        }
+        return filtered
+      }
+      
+      // For admin: verify meetings match selected classes (handle multi-class meetings)
+      filtered = filtered.filter((meeting: any) => {
+        // Check class_ids array first (for multi-class meetings)
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
+        }
+        
+        // Check classes.id
+        if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
+          return true
+        }
+        
+        // Check class_id
+        if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
+          return true
+        }
+        
+        return false
+      })
+      
+      // Apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
         filtered = filtered.filter(m => 
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
@@ -128,9 +189,9 @@ export default function AbsensiPage() {
       return filtered
     }
     
-    // If specific class is selected, return all meetings (already filtered by backend)
-    if (dataFilters.kelas.length > 0) {
-      // Apply meeting type filter if selected
+    // FALLBACK: For teachers WITHOUT specific class filter, apply meeting type filter only
+    if (userProfile?.role === 'teacher') {
+      // For teachers, apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
         filtered = filtered.filter(m => 
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
@@ -142,6 +203,12 @@ export default function AbsensiPage() {
     // If "Semua Kelas" is selected, filter by valid class IDs
     if (validClassIds.length > 0) {
       filtered = (allMeetings || []).filter(meeting => {
+        // Check class_ids array first (for multi-class meetings)
+        // This is important for meetings that have classes from multiple kelompok
+        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
+          return meeting.class_ids.some((id: string) => validClassIds.includes(id))
+        }
+        
         // Handle the actual database structure: meeting.classes is a single object
         if (meeting.classes && typeof meeting.classes === 'object') {
           // If classes is a single object with id
@@ -217,7 +284,7 @@ export default function AbsensiPage() {
   if (error) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+        <div className="mx-auto px-0 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +311,7 @@ export default function AbsensiPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 sm:px-6 lg:px-8">
         {/* Dummy Data Indicator */}
         {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
@@ -294,6 +361,7 @@ export default function AbsensiPage() {
           classList={classes || []}
           showKelas={true}
           showMeetingType={true}
+          cascadeFilters={false}
         />
 
         {/* Revalidating Overlay */}

@@ -1,19 +1,13 @@
-## v1.9.0
-- [ ] Add Template name
-- [ ] Add Pengajian Desa
-    - Nama
-    - Tipe (Desa)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Kelompok (Warlob, Junti dll)
-- [ ] Add Pengajian Daerah
-    - Nama
-    - Tipe (Daerah)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Desa (Soreang, Baleendah dll)
-
-## v1.8.0
+## v1.10.0
+- [x] Add Dashboard Admin
+    - [x] Untuk Per hari dibuat flexible hari apa
+    - [x] Untuk Minggu juga bisa flexible
+    - [x] Untuk Bulan bisa diatur bulan apa
+    - [x] Persentase global dibuat dinamis
+- [ ] Add Halaman Raport
+- [ ] Add Halaman Materi
+    - [ ] Monitoring Materi
+- [ ] Menu bisa di klik kanan
 - [ ] Add Halaman Materi
     - Master Data (Show all materi)
     - Per Kelas
@@ -21,6 +15,61 @@
         Per Sub Materi
     - Per Hari
         Per Materi
+
+## v1.9.2
+- [x] Add Tipe Pertemuan ASAD
+- [x] Independent Filter
+- [ ] Fix laporan
+    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+    [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
+
+## v1.9.1
+- [x] Fix attendance log in absensi & laporan 
+- [x] Button di meeting detail dibuat floating
+
+## v1.9.0
+- [x] Kelas Pengajar
+- [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
+- [x] Add Template name
+- [x] Add Pengajian Desa
+    [x] Nama
+    [x] Tipe (Desa)
+    [x] Peserta
+        [x] Kelas (Remaja, Orang Tua dll)
+        [x] Kelompok (Warlob, Junti dll)
+    [x] Meeting Detail
+        [x] Filter Kelompok
+        [x] Filter Kelas
+- [x] Tipe Pertemuan di Laporan
+
+## v1.8.1
+- [x] Error Delete siswa
+- [x] Guru kelas warlob 1, create absensin warlob 2, error
+- [x] Tanggal di kalender salah
+
+## v1.8.0
+- [x] Add Filter Gender on Laporan
+- [x] Handle multiple class with different kelompok
+    [x] Halaman Guru
+    [x] Halaman Siswa
+        [ ] Di table tampilkan kelompok
+    [x] Halaman Absensi
+        [x] Filter di detail absensi belum muncul 2 kelompok
+        [x] Tampilkan nama kelas (kelompok)
+        [x] Untuk yang punya multiple kelas kayak mudamudi juga harusnya
+        [x] Di admin warlob 2 tidak muncul
+    [x] Halaman Laporan
+        [x] Belum jalan utk warlob 2
+- [x] Confirm modal pakai [tipe pertemuan/title]
+- [x] Handle student to have multiple class
+    [x] Halaman Siswa
+        [x] Assign student by admin
+        [x] Ada filter by kelas
+        [x] Muncul di masing2 kelas
+        [x] Fitur Edit kelas
+    [ ] Halaman Absensi
+    [x] Halaman Laporan
 
 Components
 - [x] Change All <button> to <Button> & fix loading button
@@ -128,6 +177,7 @@ Sign In
 - Add Bulk with CSV, Excel, Text
 - Continue Dashboard Feature
 - Kalender kegiatan atau agenda kegiatan
+- Create student_archive, profiles_archive
 
 Siswa
 - Tambahkan tab di detail siswa
@@ -135,7 +185,6 @@ Siswa
     - Profile Lengkap
 
 Meetings
-- Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
 - Pengaturan Opsi data yang bisa di input
     - Jam Pengajian
     - Pemateri
@@ -143,11 +192,18 @@ Meetings
 
 
 ## Backlog
-- [ ] Add Halaman Materi
-- [ ] Create student_archive, profiles_archive
 - [ ] Unit Testing
 - [ ] Ubah Siswa -> Jamaah/Generus
 - [ ] Ubah Guru -> Penanggung Jawab
+- [ ] Kalau login gagal usernmae/password, username jangan hilang
 
 Siswa
 - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
+
+Meeting
+- [ ] Add Pengajian Daerah
+    - Nama
+    - Tipe (Daerah)
+    - Peserta
+        - Kelas (Remaja, Orang Tua dll)
+        - Desa (Soreang, Baleendah dll)

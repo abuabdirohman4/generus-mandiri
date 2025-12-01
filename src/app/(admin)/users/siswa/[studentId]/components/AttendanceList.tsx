@@ -42,7 +42,6 @@ const getStatusLabel = (status: string) => {
 }
 
 export default function AttendanceList({ date, meetings, onMeetingClick, onClose }: AttendanceListProps) {
-  console.log(meetings)
   if (meetings.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -104,7 +103,7 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
                       isSambungCapable={log.meetings.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
                     />
                   )}
-                  {log.meetings.meeting_type_code ? ": " : ""}
+                  {log.meetings.meeting_type_code && log.meetings.title ? ": " : ""}
                   {log.meetings.title}
                 </div>
                 {/* {log.meetings.topic && (
@@ -115,6 +114,9 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(log.status)}`}>
                     {getStatusLabel(log.status)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
+                    {log.meetings.classes?.name}
                   </span>
                   {log.reason && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">

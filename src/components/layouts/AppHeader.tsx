@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import NotificationDropdown from "./header/NotificationDropdown";
 import UserDropdown from "./header/UserDropdown";
 import { useSidebar } from "@/stores/sidebarStore";
+import { isMobile } from "@/lib/utils";
 
 // Page Title Component
 function PageTitle() {
@@ -20,6 +21,8 @@ function PageTitle() {
     switch (path) {
       case '/home':
         return 'Beranda';
+      case '/dashboard':
+        return 'Dashboard';
       case '/kelas':
         return 'Kelas';
       case '/laporan':
@@ -58,7 +61,8 @@ function PageTitle() {
           path.startsWith('/users/siswa/') ||
           path === '/users/guru' || 
           path === '/users/admin' || 
-          path === '/organisasi';
+          path === '/organisasi' ||
+          path === '/dashboard';
   };
 
   if (!mounted) {
@@ -66,15 +70,15 @@ function PageTitle() {
   }
 
   const pageTitle = getPageTitle(pathname);
-  const showBackButton = needsBackButton(pathname);
+  const showBackButton = isMobile() ? needsBackButton(pathname) : pathname !== '/home';
 
   return (
     <div className="flex items-center gap-3">
-      {/* Back Button - Only for Vision, 12 Week Quests, Main Quest */}
+      {/* Back Button */}
       {showBackButton && (
         <button
           onClick={() => window.history.back()}
-          className="lg:hidden absolute flex items-center justify-center w-8 h-8 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          className="absolute flex items-center justify-center w-8 h-8 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label="Go back"
         >
           <svg
@@ -95,7 +99,7 @@ function PageTitle() {
       )}
       
       {/* Page Title */}
-      <h1 className={`text-xl font-semibold text-gray-900 dark:text-white text-center md:text-left flex-1`}>
+      <h1 className={`text-xl font-semibold text-gray-900 dark:text-white text-center md:text-left ${showBackButton && !isMobile() ? "ml-10" : ""} flex-1`}>
         {pageTitle}
       </h1>
     </div>

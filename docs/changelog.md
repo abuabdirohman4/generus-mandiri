@@ -3,6 +3,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1]
+
+### Fixed
+- **Student Delete Error**: Fixed error when deleting students, now supports both soft delete and hard delete
+- **Teacher Class Validation**: Fixed error when teacher from one class tries to create attendance for another class
+- **Calendar Date Display**: Fixed incorrect date display in attendance calendar
+- **Soft Delete Filtering**: Added proper filtering for soft-deleted students in all queries
+
+### Improved
+- **Student Deletion**: Enhanced student deletion with soft delete (default) and hard delete options
+  - Soft delete: Marks student as deleted with `deleted_at` timestamp
+  - Hard delete: Permanently removes student from database
+  - Added proper access control validation for admin desa/daerah/kelompok
+- **Student Management**: Improved student create/update with better kelompok_id handling
+  - Admin desa can now specify kelompok_id when creating/updating students
+  - Added validation to ensure kelompok belongs to admin's desa
+  - Teachers can only update students to classes they teach
+- **Data Integrity**: All student queries now properly filter out soft-deleted students
+
+## [1.8.0]
+
+### Added
+- **Multiple Class Support**: Students can now be assigned to multiple classes
+- **Gender Filter in Reports**: Added gender filter option in reports page
+- **Student Class Assignment**: Admin can assign students to multiple classes via batch assignment
+- **Class Edit Feature**: Edit student class assignments from student management page
+
+### Improved
+- **Multiple Class Handling**: Enhanced support for students with multiple classes across different kelompok
+  - Teacher page: Proper handling of multiple classes
+  - Student page: Display and filter students with multiple classes
+  - Attendance page: Filter and display for multiple classes with different kelompok
+  - Reports page: Support for students with multiple classes
+- **Confirm Modal**: Updated confirmation modal to show meeting type and title format
+- **Component Consistency**: Replaced all `<button>` elements with `<Button>` component for consistency
+- **Meeting Detail**: Added class information display in meeting detail modal
+
+### Fixed
+- **Attendance Filter**: Fixed filter not showing multiple kelompok in attendance detail
+- **Class Display**: Fixed class name (kelompok) display in attendance page
+- **Multiple Class Visibility**: Fixed multiple class students (like mudamudi) not appearing correctly
+- **Admin Access**: Fixed admin warlob 2 not showing students properly
+
 ## [1.7.1]
 
 ### Fixed

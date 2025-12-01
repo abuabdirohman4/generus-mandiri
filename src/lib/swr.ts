@@ -203,6 +203,14 @@ export const userProfileKeys = {
 };
 
 /**
+ * SWR key generator for meeting form settings
+ */
+export const meetingFormSettingsKeys = {
+  all: ['meeting-form-settings'] as const,
+  settings: (userId?: string) => [...meetingFormSettingsKeys.all, userId || 'current'] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -220,4 +228,5 @@ export const dataKeys = {
   students: studentKeys,
   classes: classKeys,
   userProfile: userProfileKeys,
+  meetingFormSettings: meetingFormSettingsKeys,
 }; 
