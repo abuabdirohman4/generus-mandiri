@@ -98,6 +98,8 @@ interface DataFilterProps {
     kelompokList?: Kelompok[]
   }
   cascadeFilters?: boolean              // NEW - control cascading behavior (default: true)
+  classViewMode?: 'separated' | 'combined'  // NEW - for dashboard class monitoring
+  onClassViewModeChange?: (mode: 'separated' | 'combined') => void // NEW
 }
 
 export default function DataFilter({
@@ -122,7 +124,9 @@ export default function DataFilter({
   requiredFields = {},
   errors = {},
   filterLists,
-  cascadeFilters = true
+  cascadeFilters = true,
+  classViewMode,
+  onClassViewModeChange
 }: DataFilterProps) {
   // Role detection logic
   const isSuperAdmin = userProfile?.role === 'superadmin'
@@ -170,7 +174,16 @@ export default function DataFilter({
   // Filter options based on cascading logic
   const filteredDesaList = useMemo(() => {
     if (!shouldShowDesa) return []
-    
+
+    // Independent Mode: Show all options (respecting role restrictions)
+    if (!cascadeFilters) {
+      if (isAdminDaerah) {
+        return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
+      }
+      // Superadmin sees all
+      return activeDesaList
+    }
+
     if (isSuperAdmin) {
       // Superadmin: filter by selected Daerah
       if (filters?.daerah && filters.daerah.length > 0) {
@@ -181,13 +194,26 @@ export default function DataFilter({
       // Admin Daerah: filter by their daerah_id
       return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
     }
-    
+
     return activeDesaList
-  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, shouldShowDesa])
+  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, shouldShowDesa, cascadeFilters])
 
   const filteredKelompokList = useMemo(() => {
     if (!shouldShowKelompok) return []
-    
+
+    // Independent Mode: Show all options (respecting role restrictions)
+    if (!cascadeFilters) {
+      if (isAdminDesa) {
+        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
+      }
+      if (isAdminDaerah) {
+        // Admin daerah sees all groups (assuming data safe or client-side filtering if needed)
+        return activeKelompokList
+      }
+      // Superadmin sees all
+      return activeKelompokList
+    }
+
     if (isSuperAdmin) {
       // Superadmin: filter by selected Desa, but also consider Daerah filter
       if (filters?.desa && filters.desa.length > 0) {
@@ -210,49 +236,70 @@ export default function DataFilter({
       // Admin Desa: filter by their desa_id
       return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
     }
-    
+
     return activeKelompokList
-  }, [activeKelompokList, filters?.desa, filters?.daerah, filteredDesaList, userProfile?.desa_id, isSuperAdmin, isAdminDaerah, isAdminDesa, shouldShowKelompok])
+  }, [activeKelompokList, filters?.desa, filters?.daerah, filteredDesaList, userProfile?.desa_id, isSuperAdmin, isAdminDaerah, isAdminDesa, shouldShowKelompok, cascadeFilters])
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
-    
+
     // If kelompok filter is not shown, return all classes (no filtering by kelompok_id)
     // This is important for pages like meeting detail where we don't filter by kelompok
     if (!shouldShowKelompok) {
       return classList
     }
-    
+
+    // Independent Mode: Show all classes (respecting role restrictions)
+    if (!cascadeFilters) {
+      if (isAdminKelompok) {
+        return classList.filter(cls => !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id)
+      }
+      if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
+        const teacherClassIds = userProfile.classes.map(c => c.id)
+        return classList.filter(cls => teacherClassIds.includes(cls.id))
+      }
+      // Superadmin, Admin Daerah, Admin Desa see all classes (or filtered by selected Kelompok if any)
+      // In Independent Mode, we filter by Kelompok BUT keep selected classes visible
+      if (filters?.kelompok && filters.kelompok.length > 0) {
+        const selectedClassIds = (filters.kelas || []).flatMap(k => k.split(','))
+        return classList.filter(cls =>
+          (cls.kelompok_id && filters.kelompok.includes(cls.kelompok_id)) ||
+          selectedClassIds.includes(cls.id)
+        )
+      }
+      return classList
+    }
+
     // PRIORITY: Jika user sudah pilih kelompok, gunakan yang dipilih
     if (filters?.kelompok && filters.kelompok.length > 0) {
       // Filter kelas berdasarkan kelompok yang dipilih user
-      return classList.filter(cls => 
+      return classList.filter(cls =>
         cls.kelompok_id && filters.kelompok.includes(cls.kelompok_id)
       )
     }
-    
+
     // Fallback: Jika belum pilih kelompok, tampilkan dari semua kelompok tersedia
     if (filteredKelompokList.length === 0) {
       return classList
     }
-    
+
     if (isSuperAdmin || isAdminDaerah || isAdminDesa) {
       // Get valid kelompok IDs from filteredKelompokList (kelompok yang tersedia)
       const validKelompokIds = filteredKelompokList.map(k => k.id)
-      
+
       // Filter classes by valid kelompok IDs only if we have valid kelompok IDs
       if (validKelompokIds.length > 0) {
-        return classList.filter(cls => 
+        return classList.filter(cls =>
           cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id)
         )
       }
-      
+
       // If no kelompok filter applied, show all classes
       return classList
     } else if (isAdminKelompok) {
       // Admin Kelompok: filter by their kelompok_id only if kelas have kelompok_id
       // But if some classes don't have kelompok_id (null), include them too
-      return classList.filter(cls => 
+      return classList.filter(cls =>
         !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id
       )
     } else if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
@@ -260,22 +307,22 @@ export default function DataFilter({
       const teacherClassIds = userProfile.classes.map(c => c.id)
       return classList.filter(cls => teacherClassIds.includes(cls.id))
     }
-    
+
     // For teacher or other roles, return all classes when kelompok filter is not active
     return classList
-  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes])
+  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes, cascadeFilters])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {
     if (!filteredClassList.length) return []
-    
+
     // Special handling for teacher with multiple classes from different kelompok
     if (isTeacher && teacherHasMultipleClasses) {
       // Create mapping kelompok_id -> kelompok name
       const kelompokMap = new Map(
         activeKelompokList.map(k => [k.id, k.name])
       )
-      
+
       // Group by name + kelompok_id to get unique combinations
       const classGroups = filteredClassList.reduce((acc, cls) => {
         const key = `${cls.name}::${cls.kelompok_id || 'no-kelompok'}`
@@ -290,7 +337,7 @@ export default function DataFilter({
         acc[key].ids.push(cls.id)
         return acc
       }, {} as Record<string, { name: string; kelompok_id: string | null; ids: string[]; kelompokName: string | null }>)
-      
+
       // Get kelompok names from kelompokMap
       const groupsWithNames = Object.values(classGroups).map(group => {
         const kelompokName = group.kelompok_id ? (kelompokMap.get(group.kelompok_id) || null) : null
@@ -299,20 +346,20 @@ export default function DataFilter({
           kelompokName
         }
       })
-      
+
       // Check if there are duplicate class names (same name, different kelompok)
       const nameCounts = groupsWithNames.reduce((acc, group) => {
         acc[group.name] = (acc[group.name] || 0) + 1
         return acc
       }, {} as Record<string, number>)
-      
+
       // Format labels: show kelompok name if there are duplicates with same name from different kelompok
       return groupsWithNames.map(group => {
         const hasDuplicate = nameCounts[group.name] > 1
         const label = hasDuplicate && group.kelompokName
           ? `${group.name} (${group.kelompokName})`
           : group.name
-        
+
         return {
           value: group.ids.join(','),
           label,
@@ -321,7 +368,7 @@ export default function DataFilter({
         }
       })
     }
-    
+
     // Existing logic for non-teacher or teacher without multiple classes
     // Group classes by name and track unique kelompok IDs
     const classGroups = filteredClassList.reduce((acc, cls) => {
@@ -339,7 +386,7 @@ export default function DataFilter({
       }
       return acc
     }, {} as Record<string, { name: string; ids: string[]; kelompokIds: Set<string> }>)
-    
+
     // Convert to array with formatted labels
     // Count should be based on unique kelompok IDs, not total class count
     return Object.values(classGroups).map(group => {
@@ -351,7 +398,7 @@ export default function DataFilter({
 
       return {
         value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
-        label: shouldShowKelompokSuffix ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
+        label: shouldShowKelompokSuffix && cascadeFilters ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
         name: group.name,
         ids: group.ids
       }
@@ -368,66 +415,124 @@ export default function DataFilter({
     ? MEETING_TYPES  // Show all types for reporting/filtering
     : availableTypes // Use role-restricted types for creation
 
+  // Validation for Independent Mode
+  const isDesaInvalid = useMemo(() => {
+    if (cascadeFilters || !filters.daerah?.length || !filters.desa?.length) return false
+
+    // Check if selected Desa belongs to selected Daerah
+    const invalidDesa = filters.desa.some(desaId => {
+      const desa = activeDesaList.find(d => d.id === desaId)
+      return desa && !filters.daerah.includes(desa.daerah_id)
+    })
+
+    return invalidDesa
+  }, [filters.daerah, filters.desa, cascadeFilters, activeDesaList])
+
+  const isKelompokInvalid = useMemo(() => {
+    if (cascadeFilters || !filters.desa?.length || !filters.kelompok?.length) return false
+
+    const invalidKelompok = filters.kelompok.some(kelompokId => {
+      const kelompok = activeKelompokList.find(k => k.id === kelompokId)
+      return kelompok && !filters.desa.includes(kelompok.desa_id)
+    })
+
+    return invalidKelompok
+  }, [filters.desa, filters.kelompok, cascadeFilters, activeKelompokList])
+
+  const isKelasInvalid = useMemo(() => {
+    if (cascadeFilters || !filters.kelas?.length) return false
+
+    const hasKelompokFilter = filters.kelompok && filters.kelompok.length > 0
+    const hasDesaFilter = filters.desa && filters.desa.length > 0
+    const hasDaerahFilter = filters.daerah && filters.daerah.length > 0
+
+    if (!hasKelompokFilter && !hasDesaFilter && !hasDaerahFilter) return false
+
+    return filters.kelas.some(classId => {
+      // Handle comma-separated IDs (e.g. "id1,id2")
+      const ids = classId.split(',')
+
+      // Check if ANY of the split IDs are invalid
+      return ids.some(id => {
+        const cls = classList.find(c => c.id === id)
+        if (!cls) return false
+
+        // Check Kelompok
+        if (hasKelompokFilter) {
+          if (!cls.kelompok_id || !filters.kelompok.includes(cls.kelompok_id)) {
+            return true
+          }
+        }
+
+        // Check Desa (only if Kelompok not filtered)
+        if (!hasKelompokFilter && hasDesaFilter) {
+          const kelompok = activeKelompokList.find(k => k.id === cls.kelompok_id)
+          if (!kelompok || !filters.desa.includes(kelompok.desa_id)) {
+            return true
+          }
+        }
+
+        // Check Daerah (only if Kelompok and Desa not filtered)
+        if (!hasKelompokFilter && !hasDesaFilter && hasDaerahFilter) {
+          const kelompok = activeKelompokList.find(k => k.id === cls.kelompok_id)
+          const desa = kelompok ? activeDesaList.find(d => d.id === kelompok.desa_id) : null
+          if (!desa || !filters.daerah.includes(desa.daerah_id)) {
+            return true
+          }
+        }
+
+        return false
+      })
+    })
+  }, [filters.kelas, filters.kelompok, filters.desa, filters.daerah, cascadeFilters, classList, activeKelompokList, activeDesaList])
+
   // Handlers with cascading reset logic
   const handleDaerahChange = useCallback((value: string[]) => {
-    if (cascadeFilters) {
-      // Cascade mode: reset downstream filters
-      onFilterChange({
-        daerah: value,
+    const updates = {
+      daerah: value,
+      ...(cascadeFilters && {
         desa: [], // Reset desa when daerah changes
         kelompok: [], // Reset kelompok when daerah changes
-        kelas: [], // Reset kelas when daerah changes
-        gender: filters?.gender,
-        meetingType: filters?.meetingType || []
-      })
-    } else {
-      // Independent mode: preserve all other filters
-      onFilterChange({
-        ...filters,
-        daerah: value
+        kelas: [] // Reset kelas when daerah changes
       })
     }
+    onFilterChange({
+      ...filters,
+      ...updates
+    })
   }, [filters, cascadeFilters, onFilterChange])
 
   const handleDesaChange = useCallback((value: string[]) => {
-    if (cascadeFilters) {
-      // Cascade mode: reset downstream filters
-      onFilterChange({
-        daerah: filters?.daerah || [],
-        desa: value,
+    const updates = {
+      desa: value,
+      ...(cascadeFilters && {
         kelompok: [], // Reset kelompok when desa changes
-        kelas: [], // Reset kelas when desa changes
-        gender: filters?.gender,
-        meetingType: filters?.meetingType || []
-      })
-    } else {
-      // Independent mode: preserve all other filters
-      onFilterChange({
-        ...filters,
-        desa: value
+        kelas: [] // Reset kelas when desa changes
       })
     }
+    onFilterChange({
+      ...filters,
+      ...updates
+    })
   }, [filters, cascadeFilters, onFilterChange])
 
   const handleKelompokChange = useCallback((value: string[]) => {
-    onFilterChange({
-      daerah: filters?.daerah || [],
-      desa: filters?.desa || [],
+    const updates = {
       kelompok: value,
-      kelas: cascadeFilters ? [] : (filters?.kelas || []), // Conditional reset based on cascadeFilters
-      gender: filters?.gender,
-      meetingType: filters?.meetingType || []
+      ...(cascadeFilters && { kelas: [] })  // Only reset kelas if cascading
+    }
+    onFilterChange({
+      ...filters,  // Spread current filters first
+      ...updates   // Apply updates
     })
-  }, [filters?.daerah, filters?.desa, filters?.kelas, filters?.gender, filters?.meetingType, cascadeFilters, onFilterChange])
+  }, [filters, cascadeFilters, onFilterChange])
 
   const handleKelasChange = useCallback((value: string[]) => {
     onFilterChange({
-      daerah: filters?.daerah || [],
-      desa: filters?.desa || [],
-      kelompok: filters?.kelompok || [],
+      ...filters,
       kelas: value
     })
-  }, [filters?.daerah, filters?.desa, filters?.kelompok, onFilterChange])
+  }, [filters, onFilterChange])
 
   const handleGenderChange = useCallback((value: string) => {
     onFilterChange({
@@ -443,6 +548,12 @@ export default function DataFilter({
     })
   }, [filters, onFilterChange])
 
+  const handleClassViewModeChange = useCallback((value: string) => {
+    if (onClassViewModeChange) {
+      onClassViewModeChange(value as 'separated' | 'combined')
+    }
+  }, [onClassViewModeChange])
+
   // Determine visible filters and their order
   const visibleFilters = [
     showGender && 'gender', // NEW - add gender first
@@ -450,6 +561,7 @@ export default function DataFilter({
     shouldShowDesa && 'desa',
     shouldShowKelompok && 'kelompok',
     showKelasFilter && 'kelas',
+    (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode', // NEW - for dashboard
     showMeetingType && 'meetingType' // NEW
   ].filter(Boolean)
 
@@ -457,7 +569,7 @@ export default function DataFilter({
 
   // Responsive layout classes
   const containerClass = cn(
-    variant === 'modal' 
+    variant === 'modal'
       ? (compact ? "space-y-6" : "space-y-4")
       : "grid gap-x-4",
     variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
@@ -469,7 +581,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas', 'meetingType']
+    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -521,7 +633,7 @@ export default function DataFilter({
           )}
         </div>
       )}
-      
+
       {shouldShowDesa && (
         <div className={getFilterClass(getFilterIndex('desa'))}>
           {variant === 'page' ? (
@@ -536,6 +648,8 @@ export default function DataFilter({
               variant={variant}
               compact={compact}
               placeholder="Pilih Desa"
+              error={!!errors.desa || isDesaInvalid}
+              hint={errors.desa || (isDesaInvalid ? "Pilihan Desa tidak sesuai dengan Daerah" : undefined)}
             />
           ) : (
             <InputFilter
@@ -556,7 +670,7 @@ export default function DataFilter({
           )}
         </div>
       )}
-      
+
       {shouldShowKelompok && (
         <div className={getFilterClass(getFilterIndex('kelompok'))}>
           {variant === 'page' ? (
@@ -571,6 +685,8 @@ export default function DataFilter({
               variant={variant}
               compact={compact}
               placeholder="Pilih Kelompok"
+              error={!!errors.kelompok || isKelompokInvalid}
+              hint={errors.kelompok || (isKelompokInvalid ? "Pilihan Kelompok tidak sesuai dengan Desa" : undefined)}
             />
           ) : (
             <InputFilter
@@ -591,7 +707,7 @@ export default function DataFilter({
           )}
         </div>
       )}
-      
+
       {showKelasFilter && (
         <div className={getFilterClass(getFilterIndex('kelas'))}>
           {variant === 'page' ? (
@@ -600,7 +716,7 @@ export default function DataFilter({
               label="Kelas"
               value={filters?.kelas || []}
               onChange={handleKelasChange}
-              options={uniqueClassList.map(cls => ({ 
+              options={uniqueClassList.map(cls => ({
                 value: cls.value, // This now contains comma-separated IDs
                 label: cls.label  // This includes count if > 1
               }))}
@@ -609,6 +725,8 @@ export default function DataFilter({
               variant={variant}
               compact={compact}
               placeholder="Pilih Kelas"
+            // error={!!errors.kelas || isKelasInvalid}
+            // hint={errors.kelas || (isKelasInvalid ? "Pilihan Kelas tidak sesuai dengan Kelompok/Desa/Daerah" : undefined)}
             />
           ) : (
             <InputFilter
@@ -616,7 +734,7 @@ export default function DataFilter({
               label="Kelas"
               value={filters?.kelas[0] || ''}
               onChange={(value) => handleKelasChange(value ? [value] : [])}
-              options={uniqueClassList.map(cls => ({ 
+              options={uniqueClassList.map(cls => ({
                 value: cls.value, // This now contains comma-separated IDs
                 label: cls.label  // This includes count if > 1
               }))}
@@ -627,8 +745,28 @@ export default function DataFilter({
               required={requiredFields.kelas}
               error={!!errors.kelas}
               hint={errors.kelas}
+            // error={!!errors.kelas || isKelasInvalid}
+            // hint={errors.kelas || (isKelasInvalid ? "Pilihan Kelas tidak sesuai dengan Kelompok/Desa/Daerah" : undefined)}
             />
           )}
+        </div>
+      )}
+
+      {classViewMode !== undefined && onClassViewModeChange && (
+        <div className={getFilterClass(getFilterIndex('classViewMode'))}>
+          <InputFilter
+            id="classViewModeFilter"
+            label="Mode Tampilan"
+            value={classViewMode}
+            onChange={handleClassViewModeChange}
+            options={[
+              { value: 'separated', label: 'Terpisah' },
+              { value: 'combined', label: 'Gabungan' }
+            ]}
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
         </div>
       )}
 

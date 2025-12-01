@@ -220,15 +220,27 @@ export interface ClassMonitoringData {
   has_meeting: boolean;
   meeting_count: number;
   attendance_rate: number;
+  student_count?: number; // Number of enrolled students (per kelompok in separated mode)
 }
 
 export interface ClassMonitoringFilters extends DashboardFilters {
   period: 'today' | 'week' | 'month' | 'custom';
   startDate?: string;
   endDate?: string;
+  classViewMode?: 'separated' | 'combined';
+  // Dynamic date selector parameters
+  specificDate?: string;      // For 'today' with custom date
+  weekOffset?: number;         // For 'week' (0=this week, 1=last week, etc.)
+  monthString?: string;        // For 'month' (format: "YYYY-MM")
 }
 
-function getDateRangeForPeriod(period: 'today' | 'week' | 'month' | 'custom', customRange?: { start: string; end: string }) {
+function getDateRangeForPeriod(
+  period: 'today' | 'week' | 'month' | 'custom',
+  customRange?: { start: string; end: string },
+  specificDate?: string,
+  weekOffset?: number,
+  monthString?: string
+) {
   const jakartaDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
   const today = jakartaDate.toISOString().split('T')[0];
 
@@ -237,16 +249,46 @@ function getDateRangeForPeriod(period: 'today' | 'week' | 'month' | 'custom', cu
   }
 
   if (period === 'today') {
-    return { startDate: today, endDate: today };
+    // Use specific date if provided, otherwise use today
+    const targetDate = specificDate || today;
+    return { startDate: targetDate, endDate: targetDate };
   }
 
   if (period === 'week') {
-    const weekAgo = new Date(jakartaDate);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return { startDate: weekAgo.toISOString().split('T')[0], endDate: today };
+    // Calculate week range based on offset (0 = this week, 1 = last week, etc.)
+    const offset = weekOffset ?? 0;
+    const targetDate = new Date(jakartaDate);
+    targetDate.setDate(targetDate.getDate() - (offset * 7));
+
+    // Get start of week (assuming week starts on Monday)
+    const dayOfWeek = targetDate.getDay();
+    const diff = targetDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust when day is Sunday
+    const weekStart = new Date(targetDate);
+    weekStart.setDate(diff);
+
+    // Get end of week (Sunday)
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    return {
+      startDate: weekStart.toISOString().split('T')[0],
+      endDate: weekEnd.toISOString().split('T')[0]
+    };
   }
 
-  // Default: month
+  if (period === 'month' && monthString) {
+    // Use specific month if provided
+    const [year, month] = monthString.split('-').map(Number);
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0); // Last day of the month
+
+    return {
+      startDate: monthStart.toISOString().split('T')[0],
+      endDate: monthEnd.toISOString().split('T')[0]
+    };
+  }
+
+  // Default: current month
   const monthAgo = new Date(jakartaDate);
   monthAgo.setDate(monthAgo.getDate() - 30);
   return { startDate: monthAgo.toISOString().split('T')[0], endDate: today };
@@ -260,7 +302,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
 
     const { startDate, endDate } = getDateRangeForPeriod(
       filters.period,
-      filters.startDate && filters.endDate ? { start: filters.startDate, end: filters.endDate } : undefined
+      filters.startDate && filters.endDate ? { start: filters.startDate, end: filters.endDate } : undefined,
+      filters.specificDate,
+      filters.weekOffset,
+      filters.monthString
     );
 
     // Build filter conditions using helper (RLS-aware)
@@ -299,21 +344,81 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       return [];
     }
 
-    // Get all meetings in the date range for these classes
+    // Get all class IDs for subsequent queries
     const allClassIds = classes.map(c => c.id);
-    const { data: meetings } = await supabase
+
+    // Query student enrollments per class (via student_classes junction table)
+    // This ensures we only count attendance for students actually enrolled
+    const { data: studentClasses } = await supabase
+      .from('student_classes')
+      .select('class_id, student_id, students!inner(kelompok_id)')
+      .in('class_id', allClassIds);
+
+    // Build class -> students mapping for strict enrollment checking
+    const classStudentsByKelompok = new Map<string, Map<string, Set<string>>>();
+
+    studentClasses?.forEach((sc: any) => {
+      const kelompokId = sc.students?.kelompok_id;
+
+      // Students grouped by kelompok within each class
+      if (!classStudentsByKelompok.has(sc.class_id)) {
+        classStudentsByKelompok.set(sc.class_id, new Map());
+      }
+      const kelompokMap = classStudentsByKelompok.get(sc.class_id)!;
+      if (!kelompokMap.has(kelompokId)) {
+        kelompokMap.set(kelompokId, new Set());
+      }
+      kelompokMap.get(kelompokId)!.add(sc.student_id);
+    });
+
+    // Get all meetings in the date range
+    // Fetch ALL meetings first, then filter to include those involving our classes
+    // This handles both primary class_id AND classes in class_ids array
+    const { data: allMeetings } = await supabase
       .from('meetings')
-      .select('id, class_id')
-      .in('class_id', allClassIds)
+      .select('id, class_id, class_ids')
       .gte('date', startDate)
       .lte('date', endDate);
 
-    // Group meetings by class
+    // Filter to only meetings involving our classes (either as primary class or in class_ids array)
+    const meetings = allMeetings?.filter(meeting => {
+      // Check primary class_id
+      if (allClassIds.includes(meeting.class_id)) return true;
+
+      // Check class_ids array for multi-class meetings
+      if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+        return meeting.class_ids.some(id => allClassIds.includes(id));
+      }
+
+      return false;
+    }) || [];
+
+    // Group meetings by class (support multi-class meetings)
+    // A meeting counts for ALL classes involved (both primary class_id and classes in class_ids array)
     const meetingsByClass = new Map<string, string[]>();
-    meetings?.forEach(meeting => {
-      const existing = meetingsByClass.get(meeting.class_id) || [];
-      existing.push(meeting.id);
-      meetingsByClass.set(meeting.class_id, existing);
+
+    meetings.forEach(meeting => {
+      // Collect all classes involved in this meeting
+      const involvedClassIds = new Set<string>();
+
+      // Add primary class
+      if (meeting.class_id) {
+        involvedClassIds.add(meeting.class_id);
+      }
+
+      // Add all classes from class_ids array (multi-class meetings)
+      if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+        meeting.class_ids.forEach((id: string) => involvedClassIds.add(id));
+      }
+
+      // Count this meeting for ALL involved classes that are in our filter
+      involvedClassIds.forEach(classId => {
+        if (allClassIds.includes(classId)) {
+          const existing = meetingsByClass.get(classId) || [];
+          existing.push(meeting.id);
+          meetingsByClass.set(classId, existing);
+        }
+      });
     });
 
     // Get all attendance logs for these meetings
@@ -322,31 +427,69 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
 
     if (allMeetingIds.length > 0) {
       // Use fetchByIds for batch fetching (handles >1000 IDs)
+      // Fetch student_id to enable per-kelompok filtering
       attendanceLogs = await fetchByIds(
         supabase,
         'attendance_logs',
         'meeting_id',
         allMeetingIds,
-        'meeting_id, status'
+        'meeting_id, student_id, status'
       );
     }
 
-    // Group attendance by meeting
-    const attendanceByMeeting = new Map<string, { total: number; present: number }>();
+    // Fetch student data to map student_id -> kelompok_id
+    const uniqueStudentIds = [...new Set(attendanceLogs.map(log => log.student_id).filter(Boolean))];
+    let studentsData: any[] = [];
+    const studentKelompokMap = new Map<string, string>();
+
+    if (uniqueStudentIds.length > 0) {
+      studentsData = await fetchByIds(
+        supabase,
+        'students',
+        'id',
+        uniqueStudentIds,
+        'id, kelompok_id'
+      );
+
+      // Build student_id -> kelompok_id mapping
+      studentsData.forEach(s => {
+        if (s.id && s.kelompok_id) {
+          studentKelompokMap.set(s.id, s.kelompok_id);
+        }
+      });
+    }
+
+    // Group attendance by meeting with full log details
+    const attendanceByMeeting = new Map<string, {
+      total: number;
+      present: number;
+      logs: Array<{ student_id: string; status: string }>;
+    }>();
+
     (attendanceLogs as any[]).forEach(log => {
-      const existing = attendanceByMeeting.get(log.meeting_id) || { total: 0, present: 0 };
+      const existing = attendanceByMeeting.get(log.meeting_id) || {
+        total: 0,
+        present: 0,
+        logs: []
+      };
       existing.total += 1;
       if (log.status === 'H') existing.present += 1;
+      existing.logs.push({ student_id: log.student_id, status: log.status });
       attendanceByMeeting.set(log.meeting_id, existing);
     });
 
     // Build result array
-    const result: ClassMonitoringData[] = classes.map((cls: any) => {
+    let result: ClassMonitoringData[] = classes.map((cls: any) => {
       const kelompokData = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
       const desaData = kelompokData?.desa ? (Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa) : null;
       const daerahData = desaData?.daerah ? (Array.isArray(desaData.daerah) ? desaData.daerah[0] : desaData.daerah) : null;
 
       const classMeetingIds = meetingsByClass.get(cls.id) || [];
+
+      // Get enrolled students for this class+kelompok for strict checking
+      const kelompokId = kelompokData?.id;
+      const enrolledStudents = classStudentsByKelompok.get(cls.id)?.get(kelompokId);
+      const studentCount = enrolledStudents?.size || 0;
 
       if (classMeetingIds.length === 0) {
         return {
@@ -357,23 +500,33 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
           daerah_name: daerahData?.name,
           has_meeting: false,
           meeting_count: 0,
-          attendance_rate: 0
+          attendance_rate: 0,
+          student_count: studentCount
         };
       }
 
-      // Calculate average attendance across all meetings
+      // Calculate attendance with STRICT enrollment check
       let totalAttendance = 0;
       let totalPresent = 0;
 
-      classMeetingIds.forEach(meetingId => {
-        const attendance = attendanceByMeeting.get(meetingId);
-        if (attendance) {
-          totalAttendance += attendance.total;
-          totalPresent += attendance.present;
-        }
-      });
+      // Only calculate if there are enrolled students
+      if (studentCount > 0 && enrolledStudents) {
+        classMeetingIds.forEach(meetingId => {
+          const attendance = attendanceByMeeting.get(meetingId);
+          if (attendance && attendance.logs) {
+            attendance.logs.forEach(log => {
+              // CRITICAL FIX: Only count if student is ENROLLED in THIS class+kelompok
+              // This prevents cross-kelompok contamination and multi-class meeting leaks
+              if (enrolledStudents.has(log.student_id)) {
+                totalAttendance++;
+                if (log.status === 'H') totalPresent++;
+              }
+            });
+          }
+        });
+      }
 
-      const attendanceRate = totalAttendance > 0
+      const attendanceRate = studentCount > 0 && totalAttendance > 0
         ? Math.round((totalPresent / totalAttendance) * 100)
         : 0;
 
@@ -385,9 +538,105 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         daerah_name: daerahData?.name,
         has_meeting: true,
         meeting_count: classMeetingIds.length,
-        attendance_rate: attendanceRate
+        attendance_rate: attendanceRate,
+        student_count: studentCount
       };
     });
+
+    // Add secondary sorting: class_name ASC, then kelompok_name ASC
+    result.sort((a, b) => {
+      const classCompare = a.class_name.localeCompare(b.class_name);
+      if (classCompare !== 0) return classCompare;
+      return (a.kelompok_name || '').localeCompare(b.kelompok_name || '');
+    });
+
+    // If combined mode, group by class name
+    if (filters.classViewMode === 'combined') {
+      const combinedMap = new Map<string, {
+        classIds: string[];
+        kelompokNames: Set<string>;
+        desaNames: Set<string>;
+        daerahNames: Set<string>;
+        meetingIds: Set<string>;
+        totalAttendance: number;
+        totalPresent: number;
+        totalStudents: number;
+        hasMeeting: boolean;
+      }>();
+
+      result.forEach(item => {
+        if (!combinedMap.has(item.class_name)) {
+          combinedMap.set(item.class_name, {
+            classIds: [],
+            kelompokNames: new Set(),
+            desaNames: new Set(),
+            daerahNames: new Set(),
+            meetingIds: new Set(),
+            totalAttendance: 0,
+            totalPresent: 0,
+            totalStudents: 0,
+            hasMeeting: false
+          });
+        }
+
+        const combined = combinedMap.get(item.class_name)!;
+        combined.classIds.push(item.class_id);
+        if (item.kelompok_name) combined.kelompokNames.add(item.kelompok_name);
+        if (item.desa_name) combined.desaNames.add(item.desa_name);
+        if (item.daerah_name) combined.daerahNames.add(item.daerah_name);
+
+        // Aggregate student count from all kelompok
+        combined.totalStudents += (item.student_count || 0);
+
+        // For meetings, we need to aggregate from the original data
+        const classMeetingIds = meetingsByClass.get(item.class_id) || [];
+        classMeetingIds.forEach(id => combined.meetingIds.add(id));
+
+        if (item.has_meeting) combined.hasMeeting = true;
+
+        // Aggregate attendance with STRICT enrollment check (combined from all kelompok)
+        const kelompokData = classes.find((c: any) => c.id === item.class_id)?.kelompok;
+        const kelompokDataResolved = Array.isArray(kelompokData) ? kelompokData[0] : kelompokData;
+        const kelompokId = kelompokDataResolved?.id;
+        const enrolledStudents = classStudentsByKelompok.get(item.class_id)?.get(kelompokId);
+
+        if (enrolledStudents) {
+          classMeetingIds.forEach(meetingId => {
+            const attendance = attendanceByMeeting.get(meetingId);
+            if (attendance && attendance.logs) {
+              attendance.logs.forEach(log => {
+                // CRITICAL FIX: Only count if student is enrolled in THIS class+kelompok
+                if (enrolledStudents.has(log.student_id)) {
+                  combined.totalAttendance++;
+                  if (log.status === 'H') combined.totalPresent++;
+                }
+              });
+            }
+          });
+        }
+      });
+
+      // Convert to array
+      result = Array.from(combinedMap.entries()).map(([className, data]) => ({
+        class_id: data.classIds.join(','),
+        class_name: className,
+        kelompok_name: Array.from(data.kelompokNames).sort().join(', '),
+        desa_name: Array.from(data.desaNames).sort().join(', '),
+        daerah_name: Array.from(data.daerahNames).sort().join(', '),
+        has_meeting: data.hasMeeting,
+        meeting_count: data.meetingIds.size,
+        attendance_rate: data.totalStudents > 0 && data.totalAttendance > 0
+          ? Math.round((data.totalPresent / data.totalAttendance) * 100)
+          : 0,
+        student_count: data.totalStudents
+      }));
+
+      // Sort combined results by class name
+      result.sort((a, b) => a.class_name.localeCompare(b.class_name));
+    }
+
+    // Filter out classes with no students
+    result = result.filter(item => (item.student_count ?? 0) > 0);
 
     return result;
   } catch (error) {

@@ -1,19 +1,19 @@
 'use client';
 
 import { useMemo } from 'react';
-import useSWR from 'swr';
 import DataTable from '@/components/table/Table';
 import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
-import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
+import { getStatusBgColor, getStatusColor } from '@/lib/percentages';
 
 interface ClassMonitoringTableProps {
     data: ClassMonitoringData[];
     isLoading: boolean;
     period: PeriodType;
     customDateRange?: { start: string; end: string };
+    classViewMode: 'separated' | 'combined';
 }
 
 // Date formatting helper functions
@@ -46,7 +46,13 @@ function getMonthName(dateStr: string): string {
     return months[date.getMonth()];
 }
 
-export default function ClassMonitoringTable({ data, isLoading, period, customDateRange }: ClassMonitoringTableProps) {
+export default function ClassMonitoringTable({
+    data,
+    isLoading,
+    period,
+    customDateRange,
+    classViewMode
+}: ClassMonitoringTableProps) {
     const { profile } = useUserProfile();
 
     // Calculate date range display based on period
@@ -155,11 +161,17 @@ export default function ClassMonitoringTable({ data, isLoading, period, customDa
 
         // Handle attendance rate with color coding
         if (column.key === 'attendance_rate') {
+            // Show "Tidak ada siswa" for classes with no students
+            if (item.student_count === 0) {
+                return (
+                    <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+                        Tidak ada siswa
+                    </span>
+                );
+            }
+
             return (
-                <span className={`font-medium ${item.attendance_rate >= 75 ? 'text-brand-600' :
-                    item.attendance_rate >= 50 ? 'text-yellow-600' :
-                        'text-red-600'
-                    }`}>
+                <span className={`px-3 py-1 rounded-full font-medium ${getStatusColor(item.attendance_rate)} ${getStatusBgColor(item.attendance_rate)}`}>
                     {item.attendance_rate}%
                 </span>
             );
@@ -184,7 +196,7 @@ export default function ClassMonitoringTable({ data, isLoading, period, customDa
                 <div className="space-y-3">
                     {/* Table Header Skeleton - dynamic column count */}
                     <div className={`grid gap-4 pb-3 border-b border-gray-200 dark:border-gray-700`}
-                         style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                        style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
                         {Array.from({ length: columnCount }).map((_, i) => (
                             <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                         ))}
@@ -193,7 +205,7 @@ export default function ClassMonitoringTable({ data, isLoading, period, customDa
                     {/* Skeleton Rows - dynamic column count */}
                     {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className={`grid gap-4 py-3 border-b border-gray-100 dark:border-gray-800`}
-                             style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
+                            style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
                             {Array.from({ length: columnCount }).map((_, j) => (
                                 <div key={j} className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                             ))}
@@ -216,9 +228,9 @@ export default function ClassMonitoringTable({ data, isLoading, period, customDa
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Monitoring Kelas
                 </h3>
-                <div className="text-sm text-gray-500">
+                {/* <div className="text-sm text-gray-500 dark:text-gray-400">
                     {dateRangeDisplay}
-                </div>
+                </div> */}
             </div>
 
             <DataTable
@@ -229,13 +241,15 @@ export default function ClassMonitoringTable({ data, isLoading, period, customDa
                 pagination={true}
                 itemsPerPageOptions={[10, 25, 50, 100]}
                 defaultItemsPerPage={10}
+                defaultSortColumn="class_name"
+                defaultSortDirection="asc"
                 searchPlaceholder="Cari kelas..."
-                rowClassName={(item) => !item.has_meeting ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500' : ''}
+                rowClassName={(item) => (!item.has_meeting || item.attendance_rate === 0) ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500' : ''}
             />
 
             <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
                 <span className="inline-block w-3 h-3 bg-orange-50 border border-orange-200 rounded"></span>
-                <span>Kelas belum ada pertemuan di periode ini</span>
+                <span>Kelas belum ada pertemuan atau tingkat kehadiran 0% di periode ini</span>
             </div>
         </div>
     );

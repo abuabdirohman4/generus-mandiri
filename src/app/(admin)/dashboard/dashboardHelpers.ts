@@ -33,184 +33,176 @@ interface FilterConditions {
 // FILTER BUILDING FUNCTIONS
 // ============================================================================
 
+// Helper to normalize IDs (handle arrays and comma-separated strings)
+function normalizeIds(ids: string | string[] | undefined): string[] {
+    if (!ids) return [];
+    const idArray = Array.isArray(ids) ? ids : [ids];
+    return idArray.flatMap(id => id.split(',')).filter(Boolean);
+}
+
 /**
  * Get valid class IDs based on hierarchical filters
- * Prioritizes UI filters over RLS filters
+ * Uses intersection logic: results must match ALL active filters
  */
 export async function getValidClassIds(
     supabase: SupabaseClient,
     uiFilters?: DashboardFilters,
     rlsFilter?: RLSFilter | null
 ): Promise<string[]> {
-    // Direct class filter - highest priority
+    let validIds: Set<string> | null = null;
+
+    const intersect = (newIds: string[]) => {
+        if (validIds === null) {
+            validIds = new Set(newIds);
+        } else {
+            // Filter validIds to keep only those present in newIds
+            const newIdSet = new Set(newIds);
+            validIds = new Set([...validIds].filter(id => newIdSet.has(id)));
+        }
+    };
+
+    // 1. Class Filter
     if (uiFilters?.classId && uiFilters.classId.length > 0) {
-        const classIds = Array.isArray(uiFilters.classId) ? uiFilters.classId : [uiFilters.classId];
-        return classIds;
+        intersect(normalizeIds(uiFilters.classId));
     }
 
-    // Kelompok filter
+    // 2. Kelompok Filter
     if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
         const kelompokIds = Array.isArray(uiFilters.kelompokId) ? uiFilters.kelompokId : [uiFilters.kelompokId];
         const { data } = await supabase
             .from('classes')
             .select('id')
             .in('kelompok_id', kelompokIds);
-        return data?.map(c => c.id) || [];
+        intersect(data?.map(c => c.id) || []);
     }
 
-    // Desa filter
+    // 3. Desa Filter
     if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
         const desaIds = Array.isArray(uiFilters.desaId) ? uiFilters.desaId : [uiFilters.desaId];
-        const { data: kelompokIds } = await supabase
-            .from('kelompok')
-            .select('id')
-            .in('desa_id', desaIds);
-
-        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
-        if (kelompokIdList.length === 0) return [];
-
+        // Efficient query using inner joins
         const { data } = await supabase
             .from('classes')
-            .select('id')
-            .in('kelompok_id', kelompokIdList);
-        return data?.map(c => c.id) || [];
+            .select('id, kelompok!inner(desa_id)')
+            .in('kelompok.desa_id', desaIds);
+        intersect(data?.map(c => c.id) || []);
     }
 
-    // Daerah filter
+    // 4. Daerah Filter
     if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
         const daerahIds = Array.isArray(uiFilters.daerahId) ? uiFilters.daerahId : [uiFilters.daerahId];
-        const { data: desaIds } = await supabase
-            .from('desa')
-            .select('id')
-            .in('daerah_id', daerahIds);
-
-        const desaIdList = desaIds?.map(d => d.id) || [];
-        if (desaIdList.length === 0) return [];
-
-        const { data: kelompokIds } = await supabase
-            .from('kelompok')
-            .select('id')
-            .in('desa_id', desaIdList);
-
-        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
-        if (kelompokIdList.length === 0) return [];
-
+        // Efficient query using deep inner joins
         const { data } = await supabase
             .from('classes')
-            .select('id')
-            .in('kelompok_id', kelompokIdList);
-        return data?.map(c => c.id) || [];
+            .select('id, kelompok!inner(desa!inner(daerah_id))')
+            .in('kelompok.desa.daerah_id', daerahIds);
+        intersect(data?.map(c => c.id) || []);
     }
 
-    // Fall back to RLS filters
+    // 5. RLS Filters (Apply as intersection)
     if (rlsFilter?.kelompok_id) {
         const { data } = await supabase
             .from('classes')
             .select('id')
             .eq('kelompok_id', rlsFilter.kelompok_id);
-        return data?.map(c => c.id) || [];
+        intersect(data?.map(c => c.id) || []);
     }
 
     if (rlsFilter?.desa_id) {
-        const { data: kelompokIds } = await supabase
-            .from('kelompok')
-            .select('id')
-            .eq('desa_id', rlsFilter.desa_id);
-
-        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
-        if (kelompokIdList.length === 0) return [];
-
         const { data } = await supabase
             .from('classes')
-            .select('id')
-            .in('kelompok_id', kelompokIdList);
-        return data?.map(c => c.id) || [];
+            .select('id, kelompok!inner(desa_id)')
+            .eq('kelompok.desa_id', rlsFilter.desa_id);
+        intersect(data?.map(c => c.id) || []);
     }
 
     if (rlsFilter?.daerah_id) {
-        const { data: desaIds } = await supabase
-            .from('desa')
-            .select('id')
-            .eq('daerah_id', rlsFilter.daerah_id);
-
-        const desaIdList = desaIds?.map(d => d.id) || [];
-        if (desaIdList.length === 0) return [];
-
-        const { data: kelompokIds } = await supabase
-            .from('kelompok')
-            .select('id')
-            .in('desa_id', desaIdList);
-
-        const kelompokIdList = kelompokIds?.map(k => k.id) || [];
-        if (kelompokIdList.length === 0) return [];
-
         const { data } = await supabase
             .from('classes')
-            .select('id')
-            .in('kelompok_id', kelompokIdList);
-        return data?.map(c => c.id) || [];
+            .select('id, kelompok!inner(desa!inner(daerah_id))')
+            .eq('kelompok.desa.daerah_id', rlsFilter.daerah_id);
+        intersect(data?.map(c => c.id) || []);
     }
 
-    // No filters - return empty array to indicate "fetch all"
-    return [];
+    // If validIds is null, it means no filters were applied that affect class selection
+    // In this context, it implies "all classes" (or empty if we strictly require filters)
+    // However, buildFilterConditions checks hasFilters. If hasFilters is true, 
+    // at least one filter should have populated validIds.
+    // If validIds is still null here, it might mean only student filters were active?
+    // But getValidClassIds is called when hasFilters is true.
+    // We'll return [] if null to be safe, but usually it should be populated if relevant filters exist.
+    // Actually, if only student filters are active, class IDs might not be restricted?
+    // But buildFilterConditions calls both.
+
+    return validIds ? Array.from(validIds) : [];
 }
 
 /**
  * Get valid student IDs based on hierarchical filters
- * Prioritizes UI filters over RLS filters
+ * Uses intersection logic: results must match ALL active filters
  */
 export async function getValidStudentIds(
     supabase: SupabaseClient,
     uiFilters?: DashboardFilters,
     rlsFilter?: RLSFilter | null
 ): Promise<string[]> {
-    // Class filter - need to get students from student_classes
+    let validIds: Set<string> | null = null;
+
+    const intersect = (newIds: string[]) => {
+        if (validIds === null) {
+            validIds = new Set(newIds);
+        } else {
+            const newIdSet = new Set(newIds);
+            validIds = new Set([...validIds].filter(id => newIdSet.has(id)));
+        }
+    };
+
+    // 1. Class Filter
     if (uiFilters?.classId && uiFilters.classId.length > 0) {
-        const classIds = Array.isArray(uiFilters.classId) ? uiFilters.classId : [uiFilters.classId];
+        const classIds = normalizeIds(uiFilters.classId);
         const { data } = await supabase
             .from('student_classes')
             .select('student_id')
             .in('class_id', classIds);
-        return data?.map(sc => sc.student_id) || [];
+        intersect(data?.map(sc => sc.student_id) || []);
     }
 
-    // Kelompok filter
+    // 2. Kelompok Filter
     if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
         const kelompokIds = Array.isArray(uiFilters.kelompokId) ? uiFilters.kelompokId : [uiFilters.kelompokId];
         const { data } = await supabase
             .from('students')
             .select('id')
             .in('kelompok_id', kelompokIds);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
-    // Desa filter
+    // 3. Desa Filter
     if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
         const desaIds = Array.isArray(uiFilters.desaId) ? uiFilters.desaId : [uiFilters.desaId];
         const { data } = await supabase
             .from('students')
             .select('id')
             .in('desa_id', desaIds);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
-    // Daerah filter
+    // 4. Daerah Filter
     if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
         const daerahIds = Array.isArray(uiFilters.daerahId) ? uiFilters.daerahId : [uiFilters.daerahId];
         const { data } = await supabase
             .from('students')
             .select('id')
             .in('daerah_id', daerahIds);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
-    // Fall back to RLS filters
+    // 5. RLS Filters
     if (rlsFilter?.kelompok_id) {
         const { data } = await supabase
             .from('students')
             .select('id')
             .eq('kelompok_id', rlsFilter.kelompok_id);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
     if (rlsFilter?.desa_id) {
@@ -218,7 +210,7 @@ export async function getValidStudentIds(
             .from('students')
             .select('id')
             .eq('desa_id', rlsFilter.desa_id);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
     if (rlsFilter?.daerah_id) {
@@ -226,11 +218,10 @@ export async function getValidStudentIds(
             .from('students')
             .select('id')
             .eq('daerah_id', rlsFilter.daerah_id);
-        return data?.map(s => s.id) || [];
+        intersect(data?.map(s => s.id) || []);
     }
 
-    // No filters - return empty array to indicate "fetch all"
-    return [];
+    return validIds ? Array.from(validIds) : [];
 }
 
 /**

@@ -18,6 +18,15 @@ import { getClassMonitoring } from './actions';
 export default function AdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('today');
   const [customDateRange, setCustomDateRange] = useState<{ start: string; end: string }>();
+  const [classViewMode, setClassViewMode] = useState<'separated' | 'combined'>('separated');
+
+  // Dynamic date selector states
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedWeekOffset, setSelectedWeekOffset] = useState<number>(0);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  );
+
   const [filters, setFilters] = useState({
     daerah: [] as string[],
     desa: [] as string[],
@@ -42,7 +51,7 @@ export default function AdminDashboard() {
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters);
 
-  // Class Monitoring Data - affected by filters AND period
+  // Class Monitoring Data - affected by filters AND period AND viewMode AND dynamic dates
   const monitoringFetcher = async () => {
     return await getClassMonitoring({
       period: selectedPeriod,
@@ -51,12 +60,17 @@ export default function AdminDashboard() {
       daerahId: filters.daerah,
       desaId: filters.desa,
       kelompokId: filters.kelompok,
-      classId: filters.kelas
+      classId: filters.kelas,
+      classViewMode,
+      // Dynamic date parameters
+      specificDate: selectedDate,
+      weekOffset: selectedWeekOffset,
+      monthString: selectedMonth
     });
   };
 
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
-    ['class-monitoring', selectedPeriod, customDateRange, filters],
+    ['class-monitoring', selectedPeriod, customDateRange, filters, classViewMode, selectedDate, selectedWeekOffset, selectedMonth],
     monitoringFetcher,
     {
       revalidateOnFocus: false,
@@ -131,6 +145,8 @@ export default function AdminDashboard() {
             showMeetingType={false}
             showGender={false}
             cascadeFilters={false}
+            classViewMode={classViewMode}
+            onClassViewModeChange={setClassViewMode}
           />
         </div>
 
@@ -163,6 +179,12 @@ export default function AdminDashboard() {
           onChange={setSelectedPeriod}
           customDateRange={customDateRange}
           onCustomDateChange={handleCustomDateChange}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          selectedWeekOffset={selectedWeekOffset}
+          onWeekOffsetChange={setSelectedWeekOffset}
+          selectedMonth={selectedMonth}
+          onMonthChange={setSelectedMonth}
         />
 
         {/* Class Monitoring Table */}
@@ -172,6 +194,7 @@ export default function AdminDashboard() {
             isLoading={monitoringLoading}
             period={selectedPeriod}
             customDateRange={customDateRange}
+            classViewMode={classViewMode}
           />
         </div>
       </div>

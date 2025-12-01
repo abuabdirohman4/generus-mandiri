@@ -1,10 +1,20 @@
 ## v1.10.0
-- [x] Add Tipe Pertemuan ASAD
 - [ ] Add Dashboard Admin
+    - [x] Untuk Per hari dibuat flexible hari apa
+    - [x] Untuk Minggu juga bisa flexible
+    - [x] Untuk Bulan bisa diatur bulan apa
 - [ ] Add Halaman Raport
 - [ ] Add Halaman Materi
     - [ ] Monitoring Materi
-- [ ] Independent Filter
+- [ ] Menu bisa di klik kanan
+
+## v1.9.2
+- [x] Add Tipe Pertemuan ASAD
+- [x] Independent Filter
+- [ ] Fix laporan
+    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+    [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
 
 ## v1.9.1
 - [x] Fix attendance log in absensi & laporan 

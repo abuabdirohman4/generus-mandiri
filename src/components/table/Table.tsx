@@ -30,6 +30,8 @@ interface DataTableProps {
   loadingColumnKey?: string | null
   spinnerSize?: number
   getRowId?: (item: any, index: number) => string | number
+  defaultSortColumn?: string
+  defaultSortDirection?: 'asc' | 'desc'
 }
 
 export default function DataTable({
@@ -48,14 +50,16 @@ export default function DataTable({
   loadingRowId,
   loadingColumnKey,
   spinnerSize = 16,
-  getRowId = (item, index) => item.id || item.student_id || index
+  getRowId = (item, index) => item.id || item.student_id || index,
+  defaultSortColumn,
+  defaultSortDirection = 'asc'
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortColumn, setSortColumn] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
+  const [sortColumn, setSortColumn] = useState<string | null>(defaultSortColumn || null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(defaultSortColumn ? defaultSortDirection : null)
   const [isMobile, setIsMobile] = useState(false)
 
   // Screen size detection

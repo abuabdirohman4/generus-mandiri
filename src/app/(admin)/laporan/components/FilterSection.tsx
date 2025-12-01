@@ -159,7 +159,7 @@ export default function FilterSection({
             showGender={true}
             showMeetingType={shouldShowMeetingTypeFilter}
             forceShowAllMeetingTypes={isAdmin(userProfile)}
-            cascadeFilters={false}
+            // cascadeFilters={false}
           />
 
           {/* Month and Year Filter */}
