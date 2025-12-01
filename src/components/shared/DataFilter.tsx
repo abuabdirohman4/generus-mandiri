@@ -752,7 +752,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {classViewMode !== undefined && onClassViewModeChange && (
+      {classViewMode !== undefined && !isAdminKelompok && onClassViewModeChange && (
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"

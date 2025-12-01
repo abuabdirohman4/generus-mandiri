@@ -16,14 +16,17 @@ import { useKelompok } from '@/hooks/useKelompok';
 import { useClasses } from '@/hooks/useClasses';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getClassMonitoring } from './actions';
+import { useDashboardStore } from './stores/dashboardStore';
 
 // Set locale global ke Indonesia
 dayjs.locale('id');
 
 export default function AdminDashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('today');
-  const [customDateRange, setCustomDateRange] = useState<{ start: string; end: string }>();
-  const [classViewMode, setClassViewMode] = useState<'separated' | 'combined'>('separated');
+  const { filters, setFilters, setFilter } = useDashboardStore();
+  // Derived values
+  const selectedPeriod = filters.period;
+  const customDateRange = filters.customDateRange;
+  const classViewMode = filters.classViewMode;
 
   // Dynamic date selector states
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -31,13 +34,6 @@ export default function AdminDashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>(
     `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
   );
-
-  const [filters, setFilters] = useState({
-    daerah: [] as string[],
-    desa: [] as string[],
-    kelompok: [] as string[],
-    kelas: [] as string[]
-  });
 
   // Fetch organizational data
   const { profile: userProfile } = useUserProfile();
@@ -52,7 +48,7 @@ export default function AdminDashboard() {
     desaId: filters.desa,
     kelompokId: filters.kelompok,
     classId: filters.kelas
-  }), [filters]);
+  }), [filters.daerah, filters.desa, filters.kelompok, filters.kelas]);
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters);
 
@@ -74,24 +70,50 @@ export default function AdminDashboard() {
     });
   };
 
+  // Build stable cache key
+  const monitoringCacheKey = useMemo(() => {
+    const key = {
+      period: filters.period,
+      dateRange: filters.customDateRange,
+      daerah: filters.daerah.sort().join(','),
+      desa: filters.desa.sort().join(','),
+      kelompok: filters.kelompok.sort().join(','),
+      kelas: filters.kelas.sort().join(','),
+      viewMode: filters.classViewMode,
+      // Dynamic date selectors
+      selectedDate,
+      selectedWeekOffset,
+      selectedMonth
+    };
+    return JSON.stringify(key);
+  }, [filters, selectedDate, selectedWeekOffset, selectedMonth]);
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
-    ['class-monitoring', selectedPeriod, customDateRange, filters, classViewMode, selectedDate, selectedWeekOffset, selectedMonth],
+    ['class-monitoring', monitoringCacheKey],
     monitoringFetcher,
     {
       revalidateOnFocus: false,
-      dedupingInterval: 60000
+      dedupingInterval: 60000,
+      // Keep data while revalidating
+      keepPreviousData: true
     }
   );
 
-  const handleCustomDateChange = (start: string, end: string) => {
-    setCustomDateRange({ start, end });
-  };
-
   const handleFilterChange = (newFilters: any) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters
-    }));
+    setFilters({
+      daerah: newFilters.daerah || [],
+      desa: newFilters.desa || [],
+      kelompok: newFilters.kelompok || [],
+      kelas: newFilters.kelas || []
+    });
+  };
+  const handlePeriodChange = (period: PeriodType) => {
+    setFilter('period', period);
+  };
+  const handleCustomDateChange = (start: string, end: string) => {
+    setFilter('customDateRange', { start, end });
+  };
+  const handleViewModeChange = (mode: 'separated' | 'combined') => {
+    setFilter('classViewMode', mode);
   };
 
   // Attendance Rate Calculation
@@ -101,14 +123,14 @@ export default function AdminDashboard() {
 
     // We calculate the Weighted Average (Weighted Average) from the displayed monitoring data
     // Formula: (Total Students Present in All Classes / Total Potential Attendance) * 100
-    
+
     let totalPresentWeighted = 0;
     let totalPotentialWeighted = 0;
 
     monitoringData.forEach(cls => {
       // Potential attendance = Number of Students x Number of Meetings
       const potential = (cls.student_count || 0) * cls.meeting_count;
-      
+
       // Estimated number present based on rate per class
       // (attendance_rate / 100) * potential
       const present = (cls.attendance_rate / 100) * potential;
@@ -127,7 +149,7 @@ export default function AdminDashboard() {
     if (selectedPeriod === 'today') {
       const isToday = dayjs(selectedDate).isSame(dayjs(), 'day');
       const isYesterday = dayjs(selectedDate).isSame(dayjs().subtract(1, 'day'), 'day');
-      
+
       if (isToday) return 'Kehadiran Hari Ini';
       if (isYesterday) return 'Kehadiran Kemarin';
       return `Kehadiran ${dayjs(selectedDate).format('D MMMM')}`;
@@ -136,7 +158,7 @@ export default function AdminDashboard() {
     if (selectedPeriod === 'week') {
       if (selectedWeekOffset === 0) return 'Kehadiran Minggu Ini';
       if (selectedWeekOffset === 1) return 'Kehadiran Minggu Lalu';
-      
+
       // Calculate date range for the label
       const startOfWeek = dayjs().subtract(selectedWeekOffset, 'week').startOf('week').add(1, 'day'); // Assuming Monday
       const endOfWeek = dayjs().subtract(selectedWeekOffset, 'week').endOf('week').add(1, 'day');
@@ -146,12 +168,12 @@ export default function AdminDashboard() {
     if (selectedPeriod === 'month') {
       const isCurrentMonth = dayjs(selectedMonth).isSame(dayjs(), 'month');
       if (isCurrentMonth) return 'Kehadiran Bulan Ini';
-      
+
       return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`;
     }
 
     if (selectedPeriod === 'custom' && customDateRange) {
-        return `Kehadiran (${dayjs(customDateRange.start).format('D MMM')} - ${dayjs(customDateRange.end).format('D MMM')})`;
+      return `Kehadiran (${dayjs(customDateRange.start).format('D MMM')} - ${dayjs(customDateRange.end).format('D MMM')})`;
     }
 
     return 'Kehadiran Periode Ini';
@@ -179,7 +201,12 @@ export default function AdminDashboard() {
         {/* Data Filter */}
         <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700">
           <DataFilter
-            filters={filters}
+            filters={{
+              daerah: filters.daerah,
+              desa: filters.desa,
+              kelompok: filters.kelompok,
+              kelas: filters.kelas
+            }}
             onFilterChange={handleFilterChange}
             userProfile={userProfile}
             daerahList={daerah || []}
@@ -190,8 +217,8 @@ export default function AdminDashboard() {
             showMeetingType={false}
             showGender={false}
             cascadeFilters={false}
-            classViewMode={classViewMode}
-            onClassViewModeChange={setClassViewMode}
+            classViewMode={filters.classViewMode}
+            onClassViewModeChange={handleViewModeChange}
           />
         </div>
 
@@ -227,7 +254,7 @@ export default function AdminDashboard() {
         {/* Period Tabs */}
         <PeriodTabs
           selected={selectedPeriod}
-          onChange={setSelectedPeriod}
+          onChange={handlePeriodChange}
           customDateRange={customDateRange}
           onCustomDateChange={handleCustomDateChange}
           selectedDate={selectedDate}
