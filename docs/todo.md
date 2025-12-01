@@ -1,8 +1,11 @@
+saya ingin untuk data disini @src/app/(admin)/dashboard/page.tsx:168-169  attendanceLabel dan attendanceRate nya dibuat dinamis mengikuti yang dipilih di periodTab, jadi kalau di tab Hari ini mennjukkan kemarin berarti tampilkan total persentase kemarin, kalau memilih tab "Bulan Ini" dan memilih "November" berarti menampilkan persentase bulan November
+
 ## v1.10.0
-- [ ] Add Dashboard Admin
+- [x] Add Dashboard Admin
     - [x] Untuk Per hari dibuat flexible hari apa
     - [x] Untuk Minggu juga bisa flexible
     - [x] Untuk Bulan bisa diatur bulan apa
+    - [x] Persentase global dibuat dinamis
 - [ ] Add Halaman Raport
 - [ ] Add Halaman Materi
     - [ ] Monitoring Materi

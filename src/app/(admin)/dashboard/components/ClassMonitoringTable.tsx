@@ -123,7 +123,7 @@ export default function ClassMonitoringTable({
                 key: 'class_name',
                 label: 'Kelas',
                 sortable: true,
-                width: '120px'
+                widthMobile: '120px'
             },
             {
                 key: 'meeting_count',

@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
+import dayjs from 'dayjs'; // Import Dayjs
+import 'dayjs/locale/id'; // Import Locale Indonesia
 import { useDashboard } from '@/hooks/useDashboard';
 import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton';
 import StatCard from './components/StatCard';
@@ -14,6 +16,9 @@ import { useKelompok } from '@/hooks/useKelompok';
 import { useClasses } from '@/hooks/useClasses';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getClassMonitoring } from './actions';
+
+// Set locale global ke Indonesia
+dayjs.locale('id');
 
 export default function AdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('today');
@@ -41,7 +46,7 @@ export default function AdminDashboard() {
   const { kelompok } = useKelompok();
   const { classes } = useClasses();
 
-  // Dashboard stats (Total Siswa, Total Kelas) - affected by filters
+  // Dashboard stats (Total Siswa, Total Kelas)
   const dashboardFilters = useMemo(() => ({
     daerahId: filters.daerah,
     desaId: filters.desa,
@@ -89,29 +94,69 @@ export default function AdminDashboard() {
     }));
   };
 
-  // Calculate dynamic attendance rate based on monitoring data
+  // Attendance Rate Calculation
   const attendanceRate = useMemo(() => {
+    // If monitoring data is not available or empty, return 0
     if (!monitoringData || monitoringData.length === 0) return 0;
 
-    // If period is 'today', use stats.kehadiranHariIni
-    // If period is 'week', use stats.kehadiranMingguan
-    // If period is 'month', use stats.kehadiranBulanan
+    // We calculate the Weighted Average (Weighted Average) from the displayed monitoring data
+    // Formula: (Total Students Present in All Classes / Total Potential Attendance) * 100
+    
+    let totalPresentWeighted = 0;
+    let totalPotentialWeighted = 0;
 
-    if (selectedPeriod === 'today') return stats?.kehadiranHariIni || 0;
-    if (selectedPeriod === 'week') return stats?.kehadiranMingguan || 0;
-    if (selectedPeriod === 'month') return stats?.kehadiranBulanan || 0;
+    monitoringData.forEach(cls => {
+      // Potential attendance = Number of Students x Number of Meetings
+      const potential = (cls.student_count || 0) * cls.meeting_count;
+      
+      // Estimated number present based on rate per class
+      // (attendance_rate / 100) * potential
+      const present = (cls.attendance_rate / 100) * potential;
 
-    // Fallback for custom period: average of class rates
-    const totalRate = monitoringData.reduce((acc, curr) => acc + curr.attendance_rate, 0);
-    return Math.round(totalRate / monitoringData.length);
-  }, [selectedPeriod, stats, monitoringData]);
+      totalPotentialWeighted += potential;
+      totalPresentWeighted += present;
+    });
 
+    if (totalPotentialWeighted === 0) return 0;
+
+    return Math.round((totalPresentWeighted / totalPotentialWeighted) * 100);
+  }, [monitoringData]); // Dependency is only monitoringData, as monitoringData changes according to the date
+
+  // Attendance Label Logic
   const attendanceLabel = useMemo(() => {
-    if (selectedPeriod === 'today') return 'Kehadiran Hari Ini';
-    if (selectedPeriod === 'week') return 'Kehadiran Minggu Ini';
-    if (selectedPeriod === 'month') return 'Kehadiran Bulan Ini';
+    if (selectedPeriod === 'today') {
+      const isToday = dayjs(selectedDate).isSame(dayjs(), 'day');
+      const isYesterday = dayjs(selectedDate).isSame(dayjs().subtract(1, 'day'), 'day');
+      
+      if (isToday) return 'Kehadiran Hari Ini';
+      if (isYesterday) return 'Kehadiran Kemarin';
+      return `Kehadiran ${dayjs(selectedDate).format('D MMMM')}`;
+    }
+
+    if (selectedPeriod === 'week') {
+      if (selectedWeekOffset === 0) return 'Kehadiran Minggu Ini';
+      if (selectedWeekOffset === 1) return 'Kehadiran Minggu Lalu';
+      
+      // Calculate date range for the label
+      const startOfWeek = dayjs().subtract(selectedWeekOffset, 'week').startOf('week').add(1, 'day'); // Assuming Monday
+      const endOfWeek = dayjs().subtract(selectedWeekOffset, 'week').endOf('week').add(1, 'day');
+      return `Minggu (${startOfWeek.format('D MMM')} - ${endOfWeek.format('D MMM')})`;
+    }
+
+    if (selectedPeriod === 'month') {
+      const isCurrentMonth = dayjs(selectedMonth).isSame(dayjs(), 'month');
+      if (isCurrentMonth) return 'Kehadiran Bulan Ini';
+      
+      return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`;
+    }
+
+    if (selectedPeriod === 'custom' && customDateRange) {
+        return `Kehadiran (${dayjs(customDateRange.start).format('D MMM')} - ${dayjs(customDateRange.end).format('D MMM')})`;
+    }
+
     return 'Kehadiran Periode Ini';
-  }, [selectedPeriod]);
+  }, [selectedPeriod, selectedDate, selectedWeekOffset, selectedMonth, customDateRange]);
+
 
   if (statsLoading && !stats) {
     return <DashboardSkeleton />;
@@ -166,7 +211,13 @@ export default function AdminDashboard() {
           />
           <StatCard
             title={attendanceLabel}
-            value={`${attendanceRate}%`}
+            value={
+              monitoringLoading ? (
+                <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              ) : (
+                `${attendanceRate}%`
+              )
+            }
             icon="✅"
             className="col-span-2 md:col-span-1"
             color="emerald"

@@ -283,12 +283,22 @@ function MenuItem({
     
     return (
       <li key={nav.name || index}>
-        <button
-          onClick={() => onNavigate(nav.path!)}
-          disabled={isRouteLoading}
+        <Link
+          href={nav.path}
+          onClick={(e) => {
+            // If the user presses CTRL/CMD + Click (for manual new tab), let the default browser handle it
+            if (e.metaKey || e.ctrlKey) return;
+
+            // For a regular left click, we prevent default so that your loading state continues to run
+            // and we call onNavigate manually
+            e.preventDefault();
+            if (!isRouteLoading) {
+              onNavigate(nav.path!);
+            }
+          }}
           className={`menu-item group ${
             isRouteActive ? "menu-item-active" : "menu-item-inactive"
-          } ${isRouteLoading ? "opacity-70 cursor-wait" : ""}`}
+          } ${isRouteLoading ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
         >
           <span
             className={`w-6 h-6 flex items-center justify-center ${isRouteActive ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
@@ -304,7 +314,7 @@ function MenuItem({
               {nav.name}
             </span>
           ) : null}
-        </button>
+        </Link>
       </li>
     );
   }

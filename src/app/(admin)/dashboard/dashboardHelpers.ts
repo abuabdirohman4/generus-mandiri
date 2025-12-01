@@ -15,6 +15,9 @@ export interface DashboardFilters {
     desaId?: string | string[];
     kelompokId?: string | string[];
     classId?: string | string[];
+    day?: string;
+    week?: string | string[];
+    month?: string
 }
 
 export interface RLSFilter {
