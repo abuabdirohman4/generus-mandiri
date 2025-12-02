@@ -5,6 +5,7 @@ export interface MateriFilters {
     viewMode: 'by_material' | 'by_class'
     selectedCategoryId: string | null
     selectedTypeId: string | null
+    selectedClassId: string | null
     searchQuery: string
     sidebarCollapsed: boolean
 }
@@ -20,6 +21,7 @@ const defaultFilters: MateriFilters = {
     viewMode: 'by_material',
     selectedCategoryId: null,
     selectedTypeId: null,
+    selectedClassId: null,
     searchQuery: '',
     sidebarCollapsed: false
 }
@@ -48,6 +50,7 @@ export const useMateriStore = create<MateriState>()(
                     // Don't persist selections (fresh on reload)
                     selectedCategoryId: null,
                     selectedTypeId: null,
+                    selectedClassId: null,
                     searchQuery: ''
                 }
             })

@@ -30,6 +30,44 @@ export default function MateriContentView({
     const isAdminUser = userProfile ? isAdmin(userProfile) : false;
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
 
+    // Filter items for "by_class" mode - show items based on class + type selection
+    const filteredItemsForClassMode = useMemo(() => {
+        if (filters.viewMode !== 'by_class') return [];
+
+        let result = items;
+
+        // Teacher: Only show items from their classes
+        if (isTeacherUser && userProfile.classes) {
+            const teacherClassIds = userProfile.classes.map((c: any) => c.id);
+            result = result.filter(item =>
+                item.classes?.some(c => teacherClassIds.includes(c.id))
+            );
+        }
+
+        // Filter by selected class
+        if (filters.selectedClassId) {
+            result = result.filter(item =>
+                item.classes?.some(c => c.id === filters.selectedClassId)
+            );
+        }
+
+        // Filter by selected type (from sidebar)
+        if (filters.selectedTypeId) {
+            result = result.filter(i => i.material_type_id === filters.selectedTypeId);
+        }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(item =>
+                item.name.toLowerCase().includes(query) ||
+                item.description?.toLowerCase().includes(query)
+            );
+        }
+
+        return result;
+    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, userProfile, isTeacherUser, searchQuery]);
+
     // Get current type/category info for header
     const selectedType = useMemo(() => {
         if (filters.selectedTypeId) {
@@ -91,19 +129,6 @@ export default function MateriContentView({
 
     return (
         <div className="space-y-6">
-            {/* Header Section */}
-            {/* Header Section */}
-            {/*
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {headerTitle}
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {headerDescription}
-                </p>
-            </div>
-            */}
-
             {/* Search Bar */}
             <div className="hidden md:block sticky top-0 z-10 bg-white dark:bg-gray-800">
                 <input
@@ -123,55 +148,115 @@ export default function MateriContentView({
                 </svg>
             </div>
 
-            {/* Desktop: Table */}
-            <div className="hidden md:block">
-                <MateriTable
-                    items={filteredItems}
-                    isAdmin={isAdminUser}
-                    onEdit={onEditItem}
-                    onDelete={onDeleteItem}
-                />
-            </div>
-
-            {/* Mobile: Cards */}
-            <div className="md:hidden space-y-3 mt-4 md:mt-0">
-                {filteredItems.map(item => (
-                    <MateriCardMobile
-                        key={item.id}
-                        item={item}
-                        types={types}
-                        isAdmin={isAdminUser}
-                        onEdit={onEditItem}
-                        onDelete={onDeleteItem}
-                    />
-                ))}
-            </div>
-
-            {/* Empty State */}
-            {filteredItems.length === 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
-                    <div className="text-center">
-                        <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                            Tidak ada materi
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {searchQuery ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada materi yang ditemukan untuk filter ini'}
-                        </p>
+            {/* Conditional Rendering Based on View Mode */}
+            {filters.viewMode === 'by_material' ? (
+                <>
+                    {/* View by Material Mode */}
+                    {/* Desktop: Table */}
+                    <div className="hidden md:block">
+                        <MateriTable
+                            items={filteredItems}
+                            isAdmin={isAdminUser}
+                            onEdit={onEditItem}
+                            onDelete={onDeleteItem}
+                        />
                     </div>
-                </div>
+
+                    {/* Mobile: Cards */}
+                    <div className="md:hidden space-y-3 mt-4 md:mt-0">
+                        {filteredItems.map(item => (
+                            <MateriCardMobile
+                                key={item.id}
+                                item={item}
+                                types={types}
+                                isAdmin={isAdminUser}
+                                onEdit={onEditItem}
+                                onDelete={onDeleteItem}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Empty State for Material View */}
+                    {filteredItems.length === 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
+                            <div className="text-center">
+                                <svg
+                                    className="mx-auto h-12 w-12 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                </svg>
+                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                                    Tidak ada materi
+                                </h3>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    {searchQuery ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada materi yang ditemukan untuk filter ini'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <>
+                    {/* View by Class Mode - Show items in table/card format */}
+                    {/* Desktop: Table */}
+                    <div className="hidden md:block">
+                        <MateriTable
+                            items={filteredItemsForClassMode}
+                            isAdmin={isAdminUser}
+                            onEdit={onEditItem}
+                            onDelete={onDeleteItem}
+                        />
+                    </div>
+
+                    {/* Mobile: Cards */}
+                    <div className="md:hidden space-y-3 mt-4 md:mt-0">
+                        {filteredItemsForClassMode.map(item => (
+                            <MateriCardMobile
+                                key={item.id}
+                                item={item}
+                                types={types}
+                                isAdmin={isAdminUser}
+                                onEdit={onEditItem}
+                                onDelete={onDeleteItem}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Empty State for Class View */}
+                    {filteredItemsForClassMode.length === 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
+                            <div className="text-center">
+                                <svg
+                                    className="mx-auto h-12 w-12 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
+                                </svg>
+                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                                    Tidak ada materi
+                                </h3>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    {searchQuery ? 'Tidak ada hasil untuk pencarian ini' : filters.selectedClassId && filters.selectedTypeId ? 'Pilih kategori materi dari sidebar' : 'Pilih kelas dan kategori dari sidebar'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
