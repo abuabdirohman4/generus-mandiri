@@ -182,11 +182,11 @@ export default function MateriSidebar({
                                         <div key={category.id} className="mb-2">
                                             {/* Category */}
                                             <div
+                                                onClick={() => toggleCategory(category.id)}
                                                 className={`flex items-center gap-2  px-3 py-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
                                             >
                                                 {/* Expand/Collapse Icon */}
                                                 <button
-                                                    onClick={() => toggleCategory(category.id)}
                                                     className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
                                                 >
                                                     {categoryTypes.length > 0 && (
@@ -273,14 +273,12 @@ export default function MateriSidebar({
                                 return (
                                     <div key={classMaster.id} className="mb-2">
                                         {/* Class Header */}
-                                        <div
+                                        <div 
+                                            onClick={() => toggleClassExpand(classMaster.id)}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isExpanded ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
                                         >
                                             {/* Expand/Collapse Icon */}
-                                            <button
-                                                onClick={() => toggleClassExpand(classMaster.id)}
-                                                className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
-                                            >
+                                            <button className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
                                                 {classTypes.length > 0 && (
                                                     <svg
                                                         className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}

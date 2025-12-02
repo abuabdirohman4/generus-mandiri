@@ -15,7 +15,7 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
     const columns = [
         {
             key: 'name',
-            label: 'NAMA ITEM',
+            label: 'NAMA MATERI',
             sortable: true,
             align: 'left' as const,
             width: '30rem',

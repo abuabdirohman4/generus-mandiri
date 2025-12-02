@@ -31,6 +31,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   const [items, setItems] = useState<MaterialItem[]>([]);
   const [classes, setClasses] = useState<ClassMaster[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Modal states
   const [itemModalOpen, setItemModalOpen] = useState(false);
@@ -52,6 +54,10 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
 
   // Materi store
   const { filters } = useMateriStore();
+
+  const selectedCategory = categories.find(c => c.id === filters.selectedCategoryId);
+  const selectedType = types.find(t => t.id === filters.selectedTypeId);
+  const selectedClass = classes.find(c => c.id === filters.selectedClassId);
 
   // Load data for sidebar
   useEffect(() => {
@@ -206,20 +212,68 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
             {/* Main Content */}
             <div className="flex-1 overflow-auto">
               {/* Mobile Header with Hamburger */}
-              <div className="lg:hidden sticky top-0 z-20 bg-white dark:bg-gray-800 rounded-lg border shadow-sm border-gray-200 dark:border-gray-700 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </button>
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {isAdminUser ? 'Daftar Materi' : 'Materi Pembelajaran'}
-                  </h1>
-                </div>
+              <div className="lg:hidden sticky top-0 z-20 bg-white dark:bg-gray-800 rounded-lg border shadow-sm border-gray-200 dark:border-gray-700 px-2 py-3">
+                {isSearchOpen ? (
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari materi..."
+                        autoFocus
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      />
+                      <svg
+                        className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsSearchOpen(false);
+                        setSearchQuery('');
+                      }}
+                      className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </button>
+                      <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">
+                        {selectedType
+                          ? selectedType.name
+                          : (filters.viewMode === 'by_class' && selectedClass
+                            ? selectedClass.name
+                            : (selectedCategory ? selectedCategory.name : 'Daftar Materi')
+                          )
+                        }
+                      </h1>
+                    </div>
+                    <button
+                      onClick={() => setIsSearchOpen(true)}
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Role-Based Content */}
@@ -234,6 +288,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                     userProfile={userProfile}
                     onEditItem={handleEditItem}
                     onDeleteItem={handleDeleteItem}
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
                   />
                 )}
               </div>

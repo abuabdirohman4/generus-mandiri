@@ -14,6 +14,8 @@ interface MateriContentViewProps {
     userProfile: any;
     onEditItem?: (item: MaterialItem) => void;
     onDeleteItem?: (item: MaterialItem) => void;
+    searchQuery: string;
+    onSearchChange: (query: string) => void;
 }
 
 export default function MateriContentView({
@@ -22,10 +24,11 @@ export default function MateriContentView({
     items,
     userProfile,
     onEditItem,
-    onDeleteItem
+    onDeleteItem,
+    searchQuery,
+    onSearchChange
 }: MateriContentViewProps) {
     const { filters } = useMateriStore();
-    const [searchQuery, setSearchQuery] = useState('');
 
     const isAdminUser = userProfile ? isAdmin(userProfile) : false;
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
@@ -134,7 +137,7 @@ export default function MateriContentView({
                 <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => onSearchChange(e.target.value)}
                     placeholder="Cari materi disini..."
                     className="w-full px-4 py-3 pl-11 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
