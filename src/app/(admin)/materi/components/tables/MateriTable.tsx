@@ -17,7 +17,9 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
             key: 'name',
             label: 'NAMA ITEM',
             sortable: true,
-            align: 'left' as const
+            align: 'left' as const,
+            width: '30rem',
+            widthMobile: '16rem',
         },
         {
             key: 'actions',
@@ -78,16 +80,16 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5">
-            <DataTable
-                columns={columns}
-                data={tableData}
-                renderCell={renderCell}
-                pagination={false}
-                searchable={false}
-                defaultItemsPerPage={25}
-                itemsPerPageOptions={[10, 25, 50, 100]}
-            />
-        </div>
+        // <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5">
+        <DataTable
+            columns={columns}
+            data={tableData}
+            renderCell={renderCell}
+            pagination={false}
+            searchable={false}
+            defaultItemsPerPage={25}
+            itemsPerPageOptions={[10, 25, 50, 100]}
+        />
+        // </div>
     );
 }

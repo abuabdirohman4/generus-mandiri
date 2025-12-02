@@ -309,14 +309,14 @@ export default function DataTable({
                       style={(() => {
                         const baseStyle: React.CSSProperties = {};
                         
-                        if (column.width) {
+                      if (column.widthMobile && isMobile) {
+                        baseStyle.width = column.widthMobile;
+                        baseStyle.minWidth = column.widthMobile;
+                        baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                      } else if (column.width) {
                           baseStyle.width = column.width;
                           baseStyle.minWidth = column.width;
                           baseStyle.maxWidth = column.maxWidth || column.width;
-                        } else if (column.widthMobile && isMobile) {
-                          baseStyle.width = column.widthMobile;
-                          baseStyle.minWidth = column.widthMobile;
-                          baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
                         } else if (column.maxWidth) {
                           baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
                         }
@@ -371,14 +371,14 @@ export default function DataTable({
                             style={(() => {
                               const baseStyle: React.CSSProperties = {};
                               
-                              if (column.width) {
+                            if (column.widthMobile && isMobile) {
+                              baseStyle.width = column.widthMobile;
+                              baseStyle.minWidth = column.widthMobile;
+                              baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                            } else if (column.width) {
                                 baseStyle.width = column.width;
                                 baseStyle.minWidth = column.width;
                                 baseStyle.maxWidth = column.maxWidth || column.width;
-                              } else if (column.widthMobile && isMobile) {
-                                baseStyle.width = column.widthMobile;
-                                baseStyle.minWidth = column.widthMobile;
-                                baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
                               } else if (column.maxWidth) {
                                 baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
                               }

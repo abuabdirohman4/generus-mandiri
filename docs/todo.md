@@ -9,10 +9,13 @@
     - [ ] Monitoring Materi
 - [ ] Menu bisa di klik kanan
 - [ ] Add Halaman Materi
-    - Master Data (Show all materi)
-    - Per Kelas
+    - [x] Master Data (Show all materi)
+    - [x] Per Kelas
         Per Materi (Category for info)
         Per Sub Materi
+    - [ ] Mobile
+        - [ ] Saat pilih kategori sidebar langsung tertutup
+        - [ ] 
     - Per Hari
         Per Materi
 

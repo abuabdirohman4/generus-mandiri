@@ -7,6 +7,7 @@ import MaterialsLayout from '../daily/MaterialsLayout';
 import MasterDataView from '../views/MasterDataView';
 import MateriContentView from '../views/MateriContentView';
 import MateriSidebar from './MateriSidebar';
+import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
 import { useMateriStore } from '../../stores/materiStore';
 import { isAdmin, isTeacher } from '@/lib/accessControl';
 import ItemModal from '../modals/ItemModal';
@@ -192,16 +193,15 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
           // Master Data with Sidebar Layout
           <div className="flex h-[calc(100vh-8rem)] relative">
             {/* Sidebar */}
-            {!dataLoading && (
-              <MateriSidebar
-                categories={categories}
-                types={types}
-                items={items}
-                classes={classes}
-                isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
-              />
-            )}
+            <MateriSidebar
+              categories={categories}
+              types={types}
+              items={items}
+              classes={classes}
+              isOpen={sidebarOpen}
+              onToggle={() => setSidebarOpen(!sidebarOpen)}
+              isLoading={dataLoading}
+            />
 
             {/* Main Content */}
             <div className="flex-1 overflow-auto">
@@ -224,14 +224,18 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
 
               {/* Role-Based Content */}
               <div className="pb-12 py-0 md:pb-0 md:px-6">
-                <MateriContentView
-                  categories={categories}
-                  types={types}
-                  items={items}
-                  userProfile={userProfile}
-                  onEditItem={handleEditItem}
-                  onDeleteItem={handleDeleteItem}
-                />
+                {dataLoading ? (
+                  <MateriContentSkeleton />
+                ) : (
+                  <MateriContentView
+                    categories={categories}
+                    types={types}
+                    items={items}
+                    userProfile={userProfile}
+                    onEditItem={handleEditItem}
+                    onDeleteItem={handleDeleteItem}
+                  />
+                )}
               </div>
             </div>
           </div>

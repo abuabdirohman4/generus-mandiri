@@ -5,7 +5,7 @@ import { MaterialItem, MaterialType, MaterialCategory } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
-import MateriCardMobile from '../tables/MateriCardMobile';
+// import MateriCardMobile from '../tables/MateriCardMobile';
 
 interface MateriContentViewProps {
     categories: MaterialCategory[];
@@ -153,7 +153,10 @@ export default function MateriContentView({
                 <>
                     {/* View by Material Mode */}
                     {/* Desktop: Table */}
-                    <div className="hidden md:block">
+                    {/* <div className="hidden md:block"> */}
+
+                    {/* Table View (All Screens) */}
+                    <div className="mt-5 md:mt-0">
                         <MateriTable
                             items={filteredItems}
                             isAdmin={isAdminUser}
@@ -163,7 +166,7 @@ export default function MateriContentView({
                     </div>
 
                     {/* Mobile: Cards */}
-                    <div className="md:hidden space-y-3 mt-4 md:mt-0">
+                    {/* <div className="md:hidden space-y-3 mt-4 md:mt-0">
                         {filteredItems.map(item => (
                             <MateriCardMobile
                                 key={item.id}
@@ -174,10 +177,10 @@ export default function MateriContentView({
                                 onDelete={onDeleteItem}
                             />
                         ))}
-                    </div>
+                    </div> */}
 
                     {/* Empty State for Material View */}
-                    {filteredItems.length === 0 && (
+                    {/* {filteredItems.length === 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
                             <div className="text-center">
                                 <svg
@@ -201,13 +204,16 @@ export default function MateriContentView({
                                 </p>
                             </div>
                         </div>
-                    )}
+                    )} */}
                 </>
             ) : (
                 <>
                     {/* View by Class Mode - Show items in table/card format */}
                     {/* Desktop: Table */}
-                    <div className="hidden md:block">
+                    {/* <div className="hidden md:block"> */}
+
+                    {/* Table View (All Screens) */}
+                    <div className="mt-5 md:mt-0">
                         <MateriTable
                             items={filteredItemsForClassMode}
                             isAdmin={isAdminUser}
@@ -217,7 +223,7 @@ export default function MateriContentView({
                     </div>
 
                     {/* Mobile: Cards */}
-                    <div className="md:hidden space-y-3 mt-4 md:mt-0">
+                    {/* <div className="md:hidden space-y-3 mt-4 md:mt-0">
                         {filteredItemsForClassMode.map(item => (
                             <MateriCardMobile
                                 key={item.id}
@@ -228,10 +234,10 @@ export default function MateriContentView({
                                 onDelete={onDeleteItem}
                             />
                         ))}
-                    </div>
+                    </div> */}
 
                     {/* Empty State for Class View */}
-                    {filteredItemsForClassMode.length === 0 && (
+                    {/* {filteredItemsForClassMode.length === 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
                             <div className="text-center">
                                 <svg
@@ -255,7 +261,7 @@ export default function MateriContentView({
                                 </p>
                             </div>
                         </div>
-                    )}
+                    )} */}
                 </>
             )}
         </div>

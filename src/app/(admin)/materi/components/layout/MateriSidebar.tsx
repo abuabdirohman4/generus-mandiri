@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { MaterialCategory, MaterialType, MaterialItem, ClassMaster } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
+import Skeleton from '@/components/ui/skeleton/Skeleton';
+import { isMobile } from '@/lib/utils';
 
 interface MateriSidebarProps {
     categories: MaterialCategory[];
@@ -11,6 +13,7 @@ interface MateriSidebarProps {
     classes: ClassMaster[];
     isOpen: boolean;
     onToggle: () => void;
+    isLoading?: boolean;
 }
 
 export default function MateriSidebar({
@@ -19,7 +22,8 @@ export default function MateriSidebar({
     items,
     classes,
     isOpen,
-    onToggle
+    onToggle,
+    isLoading = false
 }: MateriSidebarProps) {
     const { filters, setFilter } = useMateriStore();
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -37,11 +41,17 @@ export default function MateriSidebar({
     const handleCategoryClick = (categoryId: string) => {
         setFilter('selectedCategoryId', categoryId);
         setFilter('selectedTypeId', null);
+        if (isMobile()) {
+            onToggle();
+        }
     };
 
     const handleTypeClick = (typeId: string) => {
         setFilter('selectedTypeId', typeId);
         setFilter('selectedCategoryId', null);
+        if (isMobile()) {
+            onToggle();
+        }
     };
 
     const getTypesForCategory = (categoryId: string) => {
@@ -80,6 +90,9 @@ export default function MateriSidebar({
         setFilter('selectedClassId', classId);
         setFilter('selectedTypeId', typeId);
         setFilter('selectedCategoryId', null);
+        if (isMobile()) {
+            onToggle();
+        }
     };
 
     const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
@@ -105,12 +118,13 @@ export default function MateriSidebar({
             )}
 
             {/* Sidebar */}
-            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 md:z-0 w-80 bg-white rounded-lg border border-gray-200 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} flex flex-col `}>
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-99 md:z-0 w-80 bg-white rounded-lg border border-gray-200 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} flex flex-col `}>
                 {/* Header */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {filters.viewMode === 'by_material' ? 'Kategori Materi' : 'Daftar Kelas'}
+                            {/* {filters.viewMode === 'by_material' ? 'Kategori Materi' : 'Daftar Kelas'} */}
+                            Daftar Materi
                         </h2>
                         <button
                             onClick={onToggle}
@@ -128,20 +142,32 @@ export default function MateriSidebar({
                             onClick={() => setFilter('viewMode', 'by_material')}
                             className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${filters.viewMode === 'by_material' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                         >
-                            By Material
+                            Kategori
                         </button>
                         <button
                             onClick={() => setFilter('viewMode', 'by_class')}
                             className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${filters.viewMode === 'by_class' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                         >
-                            By Class
+                            Kelas
                         </button>
                     </div>
                 </div>
 
                 {/* Content - Conditional based on view mode */}
                 <div className="flex-1 overflow-y-auto p-4">
-                    {filters.viewMode === 'by_material' ? (
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className="space-y-2">
+                                    <div className="flex items-center gap-2 px-3 py-2">
+                                        <Skeleton className="w-5 h-5 rounded" />
+                                        <Skeleton className="h-5 w-3/4" />
+                                        <Skeleton className="h-4 w-8 ml-auto" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filters.viewMode === 'by_material' ? (
                         // Category Tree for Material View
                         <>
                             {categories
@@ -209,7 +235,7 @@ export default function MateriSidebar({
                                                                 <div
                                                                     key={type.id}
                                                                     onClick={() => handleTypeClick(type.id)}
-                                                                    className={`flex items-center gap-2 px-3 py-2 ml-5 rounded-lg cursor-pointer transition-colors ${isTypeSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
+                                                                    className={`flex items-center gap-2 px-3 py-2 ml-3 rounded-lg cursor-pointer transition-colors ${isTypeSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
                                                                 >
                                                                     {/* List Icon */}
                                                                     <div className="flex-shrink-0">
@@ -268,16 +294,16 @@ export default function MateriSidebar({
                                             </button>
 
                                             {/* Class Icon */}
-                                            {/* <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                                            <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
                                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                                                 </svg>
-                                            </div> */}
-                                            <div className="flex-shrink-0 text-yellow-500">
+                                            </div>
+                                            {/* <div className="flex-shrink-0 text-yellow-500">
                                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                                                 </svg>
-                                            </div>
+                                            </div> */}
 
                                             {/* Class Name */}
                                             <div className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -303,7 +329,7 @@ export default function MateriSidebar({
                                                             <div
                                                                 key={type.id}
                                                                 onClick={() => handleClassTypeClick(classMaster.id, type.id)}
-                                                                className={`flex items-center gap-2 px-3 py-2 ml-5 rounded-lg cursor-pointer transition-colors ${isTypeSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
+                                                                className={`flex items-center gap-2 px-3 py-2 ml-3 rounded-lg cursor-pointer transition-colors ${isTypeSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
                                                             >
                                                                 {/* List Icon */}
                                                                 <div className="flex-shrink-0">
