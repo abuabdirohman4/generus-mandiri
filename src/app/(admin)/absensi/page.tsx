@@ -39,11 +39,12 @@ export default function AbsensiPage() {
     showCreateModal,
     setShowCreateModal,
     editingMeeting,
-    setEditingMeeting
+    setEditingMeeting,
+    currentPage,
+    setCurrentPage
   } = useAbsensiUIStore()
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1)
+  // Pagination constants
   const ITEMS_PER_PAGE = 10
   
   // Calculate valid class IDs based on organisasi filters

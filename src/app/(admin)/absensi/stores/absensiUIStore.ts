@@ -63,10 +63,11 @@ export const useAbsensiUIStore = create<AbsensiUIStore>()(
     }),
     {
       name: 'absensi-ui-store',
-      // Persist user preferences, not transient UI state
-      partialize: (state) => ({ 
+      // Persist user preferences and pagination state
+      partialize: (state) => ({
         viewMode: state.viewMode,
-        selectedClassFilter: state.selectedClassFilter
+        selectedClassFilter: state.selectedClassFilter,
+        currentPage: state.currentPage // Persist pagination state
       }),
     }
   )
