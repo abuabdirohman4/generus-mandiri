@@ -13,6 +13,7 @@ interface Column {
   align?: 'left' | 'center' | 'right'
   className?: string
   sortable?: boolean
+  leftMargin?: string
 }
 
 interface DataTableProps {
@@ -305,7 +306,7 @@ export default function DataTable({
                     <th
                       key={column.key}
                       onClick={() => isSortable(column) && handleSort(column.key)}
-                      className={`px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
+                      className={`${column.leftMargin || ''} px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
                       style={(() => {
                         const baseStyle: React.CSSProperties = {};
                         
@@ -367,7 +368,7 @@ export default function DataTable({
                         return (
                           <td
                             key={column.key}
-                            className={`px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
+                            className={`${column.leftMargin || ''} px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
                             style={(() => {
                               const baseStyle: React.CSSProperties = {};
                               

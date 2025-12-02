@@ -20,6 +20,7 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
             align: 'left' as const,
             width: '30rem',
             widthMobile: '16rem',
+            leftMargin: 'pl-4'
         },
         {
             key: 'actions',
