@@ -1,3 +1,12 @@
+## v1.10.1
+
+- [ ] Fix laporan
+    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+    [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
+- [ ] Fix Absensi persentase & meeting detail
+- [ ] Clear cachae when login/logout for dashboard
+
 ## v1.10.0
 - [x] Add Dashboard Admin
     - [x] Untuk Per hari dibuat flexible hari apa
@@ -22,10 +31,6 @@
 ## v1.9.2
 - [x] Add Tipe Pertemuan ASAD
 - [x] Independent Filter
-- [ ] Fix laporan
-    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
-    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
-    [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
 
 ## v1.9.1
 - [x] Fix attendance log in absensi & laporan 

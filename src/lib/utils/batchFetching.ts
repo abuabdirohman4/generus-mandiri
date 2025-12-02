@@ -18,7 +18,7 @@ export async function fetchAttendanceLogsInBatches(
     }
 
     // Split into chunks of 50 to stay well under query limits
-    const chunkSize = 50
+    const chunkSize = 10
     const chunks: string[][] = []
     for (let i = 0; i < meetingIds.length; i += chunkSize) {
         chunks.push(meetingIds.slice(i, i + chunkSize))
