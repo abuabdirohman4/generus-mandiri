@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { MaterialCategory, MaterialType, MaterialItem, ClassMaster } from '../types';
-import { 
-  getMaterialCategories, 
-  getMaterialTypes, 
+import { MaterialCategory, MaterialType, MaterialItem, ClassMaster } from '../../types';
+import {
+  getMaterialCategories,
+  getMaterialTypes,
   getAllMaterialItems,
   getClassesWithMaterialItems,
   getMaterialItemsByClass,
@@ -12,13 +12,13 @@ import {
   deleteMaterialCategory,
   deleteMaterialType,
   deleteMaterialItem
-} from '../actions';
+} from '../../actions';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
-import CategoryModal from './CategoryModal';
-import TypeModal from './TypeModal';
-import ItemModal from './ItemModal';
+import CategoryModal from '../modals/CategoryModal';
+import TypeModal from '../modals/TypeModal';
+import ItemModal from '../modals/ItemModal';
 import DataTable from '@/components/table/Table';
 import { toast } from 'sonner';
 
@@ -66,7 +66,7 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
 
   // Sort items by name for consistent display
   const sortedItems = [...items].sort((a, b) => a.name.localeCompare(b.name));
-  
+
   const tableData = sortedItems.map((item) => ({
     id: item.id,
     name: item.name,
@@ -75,7 +75,7 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
 
   const renderCell = (column: any, item: any, index: number) => {
     const materialItem = itemsMap.get(item.itemId);
-    
+
     if (column.key === 'no') {
       // Use index from DataTable (already adjusted for pagination/sorting)
       return (
@@ -84,7 +84,7 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
         </div>
       );
     }
-    
+
     if (column.key === 'name') {
       return (
         <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -92,10 +92,10 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
         </div>
       );
     }
-    
+
     if (column.key === 'actions') {
       if (!materialItem) return null;
-      
+
       return (
         <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
@@ -115,7 +115,7 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
         </div>
       );
     }
-    
+
     return item[column.key] || '-';
   };
 
@@ -207,7 +207,7 @@ export default function MasterDataView() {
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Modal states
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
@@ -217,7 +217,7 @@ export default function MasterDataView() {
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | undefined>();
   const [defaultTypeId, setDefaultTypeId] = useState<string | undefined>();
-  
+
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
@@ -299,17 +299,17 @@ export default function MasterDataView() {
   // Group items by class for "View by Class" mode
   const itemsByClass = useMemo(() => {
     if (viewMode !== 'class') return {};
-    
+
     const grouped: Record<string, {
       class: ClassMaster;
       itemsByType: Record<string, MaterialItem[]>;
     }> = {};
 
     classes.forEach(classMaster => {
-      const classItems = items.filter(item => 
+      const classItems = items.filter(item =>
         item.classes?.some(c => c.id === classMaster.id)
       );
-      
+
       if (classItems.length > 0) {
         const itemsByTypeForClass: Record<string, MaterialItem[]> = {};
         classItems.forEach(item => {
@@ -318,7 +318,7 @@ export default function MasterDataView() {
           }
           itemsByTypeForClass[item.material_type_id].push(item);
         });
-        
+
         grouped[classMaster.id] = {
           class: classMaster,
           itemsByType: itemsByTypeForClass
@@ -344,7 +344,7 @@ export default function MasterDataView() {
         const type = types.find(t => t.id === typeId);
         if (!type) return false;
         return type.name.toLowerCase().includes(query) ||
-               (type.description?.toLowerCase().includes(query) || false);
+          (type.description?.toLowerCase().includes(query) || false);
       });
 
       const itemMatches = Object.values(classData.itemsByType).some(typeItems => {
@@ -367,10 +367,10 @@ export default function MasterDataView() {
     const query = searchQuery.toLowerCase();
     return categories.filter(cat => {
       const categoryMatches = cat.name.toLowerCase().includes(query) ||
-                              (cat.description?.toLowerCase().includes(query) || false);
-      
+        (cat.description?.toLowerCase().includes(query) || false);
+
       const categoryTypes = typesByCategory[cat.id] || [];
-      const typeMatches = categoryTypes.some(type => 
+      const typeMatches = categoryTypes.some(type =>
         type.name.toLowerCase().includes(query) ||
         (type.description?.toLowerCase().includes(query) || false)
       );
@@ -493,7 +493,7 @@ export default function MasterDataView() {
         await deleteMaterialItem((deleteConfirm.item as MaterialItem).id);
         toast.success('Item materi berhasil dihapus');
       }
-      
+
       await loadMasterData();
       setDeleteConfirm({ isOpen: false, item: null, type: 'category' });
     } catch (error: any) {
@@ -504,9 +504,9 @@ export default function MasterDataView() {
 
   const getDeleteMessage = (): string => {
     if (!deleteConfirm.item) return '';
-    
+
     const itemName = 'name' in deleteConfirm.item ? deleteConfirm.item.name : '';
-    
+
     if (deleteConfirm.type === 'category') {
       return `Apakah Anda yakin ingin menghapus kategori <br> "${itemName}"?`;
     } else if (deleteConfirm.type === 'type') {
@@ -537,7 +537,7 @@ export default function MasterDataView() {
               Kelola kategori, jenis materi, dan item materi
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Add Category Button */}
             {/* {viewMode === 'material' && (
@@ -549,32 +549,30 @@ export default function MasterDataView() {
                 + Tambah Kategori
               </Button>
             )} */}
-            
+
             {/* View Mode Switcher */}
             <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('material')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'material'
-                  ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              View by Material
-            </button>
-            <button
-              onClick={() => setViewMode('class')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'class'
-                  ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              View by Class
+              <button
+                onClick={() => setViewMode('material')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'material'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+              >
+                View by Material
+              </button>
+              <button
+                onClick={() => setViewMode('class')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'class'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+              >
+                View by Class
               </button>
             </div>
           </div>
-          </div>
+        </div>
 
         {/* Search Bar */}
         <div className="relative">
@@ -611,20 +609,20 @@ export default function MasterDataView() {
                 const categoryTypes = !searchQuery.trim()
                   ? allCategoryTypes
                   : allCategoryTypes.filter(type => {
-                      const query = searchQuery.toLowerCase();
-                      const typeMatches = type.name.toLowerCase().includes(query) ||
-                                        (type.description?.toLowerCase().includes(query) || false);
-                      const typeItems = itemsByType[type.id] || [];
-                      const itemMatches = typeItems.some(item =>
-                        item.name.toLowerCase().includes(query) ||
-                        (item.description?.toLowerCase().includes(query) || false) ||
-                        (item.content?.toLowerCase().includes(query) || false)
-                      );
-                      return typeMatches || itemMatches;
-                    });
-                    
-                  const isExpanded = expandedCategories.has(category.id);
-                  const totalItems = allCategoryTypes.reduce((sum, type) => {
+                    const query = searchQuery.toLowerCase();
+                    const typeMatches = type.name.toLowerCase().includes(query) ||
+                      (type.description?.toLowerCase().includes(query) || false);
+                    const typeItems = itemsByType[type.id] || [];
+                    const itemMatches = typeItems.some(item =>
+                      item.name.toLowerCase().includes(query) ||
+                      (item.description?.toLowerCase().includes(query) || false) ||
+                      (item.content?.toLowerCase().includes(query) || false)
+                    );
+                    return typeMatches || itemMatches;
+                  });
+
+                const isExpanded = expandedCategories.has(category.id);
+                const totalItems = allCategoryTypes.reduce((sum, type) => {
                   return sum + (itemsByType[type.id]?.length || 0);
                 }, 0);
 
@@ -664,7 +662,7 @@ export default function MasterDataView() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      
+
                       {/* Edit/Delete Buttons */}
                       <div className="flex items-center gap-2 px-4" onClick={(e) => e.stopPropagation()}>
                         <button
@@ -707,7 +705,7 @@ export default function MasterDataView() {
                                 if (!searchQuery.trim()) return true;
                                 const query = searchQuery.toLowerCase();
                                 const typeMatches = type.name.toLowerCase().includes(query) ||
-                                                  (type.description?.toLowerCase().includes(query) || false);
+                                  (type.description?.toLowerCase().includes(query) || false);
                                 const typeItems = itemsByType[type.id] || [];
                                 const itemMatches = typeItems.some(item =>
                                   item.name.toLowerCase().includes(query) ||
@@ -718,38 +716,38 @@ export default function MasterDataView() {
                               })
                               .map((type) => {
                                 const allTypeItems = itemsByType[type.id] || [];
-                                const filteredTypeItems = !searchQuery.trim() 
-                                  ? allTypeItems 
+                                const filteredTypeItems = !searchQuery.trim()
+                                  ? allTypeItems
                                   : allTypeItems.filter(item => {
-                                      const query = searchQuery.toLowerCase();
-                                      return item.name.toLowerCase().includes(query) ||
-                                            (item.description?.toLowerCase().includes(query) || false) ||
-                                            (item.content?.toLowerCase().includes(query) || false);
-                                    });
+                                    const query = searchQuery.toLowerCase();
+                                    return item.name.toLowerCase().includes(query) ||
+                                      (item.description?.toLowerCase().includes(query) || false) ||
+                                      (item.content?.toLowerCase().includes(query) || false);
+                                  });
 
-                              return (
-                                <div
-                                  key={type.id}
-                                  className="bg-white dark:bg-gray-800 rounded-lg"
-                                >
-                                  {/* Type Content - Items Table (Always Visible) */}
-                                  <div className="bg-gray-50 dark:bg-gray-900/30">
-                                    <MaterialItemsTable
-                                      items={filteredTypeItems}
-                                      onEdit={handleEditItem}
-                                      onDelete={handleDeleteItem}
-                                      typeName={type.name}
-                                      typeDescription={type.description}
-                                      typeId={type.id}
-                                      onCreateItem={handleCreateItem}
-                                      onEditType={handleEditType}
-                                      onDeleteType={handleDeleteType}
-                                      type={type}
-                                    />
+                                return (
+                                  <div
+                                    key={type.id}
+                                    className="bg-white dark:bg-gray-800 rounded-lg"
+                                  >
+                                    {/* Type Content - Items Table (Always Visible) */}
+                                    <div className="bg-gray-50 dark:bg-gray-900/30">
+                                      <MaterialItemsTable
+                                        items={filteredTypeItems}
+                                        onEdit={handleEditItem}
+                                        onDelete={handleDeleteItem}
+                                        typeName={type.name}
+                                        typeDescription={type.description}
+                                        typeId={type.id}
+                                        onCreateItem={handleCreateItem}
+                                        onEditType={handleEditType}
+                                        onDeleteType={handleDeleteType}
+                                        type={type}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
                           </div>
                         )}
                       </div>
@@ -784,17 +782,17 @@ export default function MasterDataView() {
                 const filteredClassTypes = !searchQuery.trim()
                   ? classTypes
                   : classTypes.filter(type => {
-                      const query = searchQuery.toLowerCase();
-                      const typeMatches = type.name.toLowerCase().includes(query) ||
-                                         (type.description?.toLowerCase().includes(query) || false);
-                      const typeItems = classData.itemsByType[type.id] || [];
-                      const itemMatches = typeItems.some(item =>
-                        item.name.toLowerCase().includes(query) ||
-                        (item.description?.toLowerCase().includes(query) || false) ||
-                        (item.content?.toLowerCase().includes(query) || false)
-                      );
-                      return typeMatches || itemMatches;
-                    });
+                    const query = searchQuery.toLowerCase();
+                    const typeMatches = type.name.toLowerCase().includes(query) ||
+                      (type.description?.toLowerCase().includes(query) || false);
+                    const typeItems = classData.itemsByType[type.id] || [];
+                    const itemMatches = typeItems.some(item =>
+                      item.name.toLowerCase().includes(query) ||
+                      (item.description?.toLowerCase().includes(query) || false) ||
+                      (item.content?.toLowerCase().includes(query) || false)
+                    );
+                    return typeMatches || itemMatches;
+                  });
 
                 const totalItems = classTypes.reduce((sum, type) => {
                   return sum + (classData.itemsByType[type.id]?.length || 0);
@@ -861,11 +859,11 @@ export default function MasterDataView() {
                                 const filteredTypeItems = !searchQuery.trim()
                                   ? typeItems
                                   : typeItems.filter(item => {
-                                      const query = searchQuery.toLowerCase();
-                                      return item.name.toLowerCase().includes(query) ||
-                                             (item.description?.toLowerCase().includes(query) || false) ||
-                                             (item.content?.toLowerCase().includes(query) || false);
-                                    });
+                                    const query = searchQuery.toLowerCase();
+                                    return item.name.toLowerCase().includes(query) ||
+                                      (item.description?.toLowerCase().includes(query) || false) ||
+                                      (item.content?.toLowerCase().includes(query) || false);
+                                  });
                                 const categoryIcon = type.category ? getCategoryIcon(type.category.name) : '📝';
 
                                 return (
@@ -970,11 +968,11 @@ export default function MasterDataView() {
         onClose={() => setDeleteConfirm({ isOpen: false, item: null, type: 'category' })}
         onConfirm={handleDeleteConfirm}
         title={
-          deleteConfirm.type === 'category' 
+          deleteConfirm.type === 'category'
             ? 'Hapus Kategori'
             : deleteConfirm.type === 'type'
-            ? 'Hapus Jenis Materi'
-            : 'Hapus Item Materi'
+              ? 'Hapus Jenis Materi'
+              : 'Hapus Item Materi'
         }
         message={getDeleteMessage()}
         confirmText="Hapus"

@@ -1,6 +1,6 @@
 'use client'
 
-import { Month, Semester, getSemesterMonths, getMonthName } from '../types'
+import { Month, Semester, getSemesterMonths, getMonthName } from '../../types'
 
 interface MonthTabsProps {
   semester: Semester

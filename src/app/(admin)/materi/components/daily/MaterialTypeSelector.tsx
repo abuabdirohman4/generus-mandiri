@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MaterialType, MaterialCategory } from '../types';
-import { getMaterialTypes, getMaterialCategories } from '../actions';
+import { MaterialType, MaterialCategory } from '../../types';
+import { getMaterialTypes, getMaterialCategories } from '../../actions';
 
 interface MaterialTypeSelectorProps {
   selectedTypeId?: string;

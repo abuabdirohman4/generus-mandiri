@@ -3,16 +3,16 @@
 Baca-Tulis
     - Baca Huruf Al Quran
     - Tulis Huruf Arab
-quran - Baca Al-Qur'an
-pegon - Nulis Pegon
-tajwid - Tajwid
-makna - Makna Al-Qur'an
+Quran - Baca Al-Qur'an
+Pegon - Nulis Pegon
+Tajwid - Tajwid
+Makna - Makna Al-Qur'an
 
 Hafalan
     - Hafalan surat pendek
     - Hafalan Doa Harian
-hafalan - Hafalan (Surat/Dalil/Do'a)
-asma - Asma'ul Husna
+Hafalan - Hafalan (Surat/Dalil/Do'a)
+Asma - Asma'ul Husna
 
 Keilmuan
     - Materi Dasar Keagamaan
@@ -24,10 +24,10 @@ praktek - Praktek Ibadah
 
 Akhlakul Karimah
     - Adab
-adab - Adab/Tatakrama
-akhlaq - Akhlaqul Karimah
+Adab - Adab/Tatakrama
+Akhlaq - Akhlaqul Karimah
 
-hadits - Hadits
+Hadits - Hadits
 
 
-ekstrakurikuler - Ekstrakurikuler
+Ekstrakurikuler - Ekstrakurikuler

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Button from '@/components/ui/button/Button';
-import { getMonthName, Month, MaterialType, DayMaterialAssignment } from '../types';
+import { getMonthName, Month, MaterialType, DayMaterialAssignment } from '../../types';
 import Modal from '@/components/ui/modal';
 import MaterialTypeSelector from './MaterialTypeSelector';
 import MaterialItemSelector from './MaterialItemSelector';
@@ -11,7 +11,7 @@ import {
   saveDayMaterialAssignment, 
   getDayMaterialAssignments,
   deleteDayMaterialAssignment 
-} from '../actions';
+} from '../../actions';
 
 interface MaterialInputModalProps {
   isOpen: boolean;

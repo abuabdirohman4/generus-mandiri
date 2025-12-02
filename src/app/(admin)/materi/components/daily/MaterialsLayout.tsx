@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ClassMaster, Semester, Month, Week, DayOfWeek } from '../types'
+import { ClassMaster, Semester, Month, Week, DayOfWeek } from '../../types'
 import SemesterTabs from './SemesterTabs'
 import MonthTabs from './MonthTabs'
 import WeekTabs from './WeekTabs'

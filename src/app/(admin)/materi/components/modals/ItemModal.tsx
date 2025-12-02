@@ -5,49 +5,69 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import InputField from '@/components/form/input/InputField';
-import { MaterialCategory } from '../types';
-import { createMaterialCategory, updateMaterialCategory } from '../actions';
+import InputFilter from '@/components/form/input/InputFilter';
+import { MaterialItem, MaterialType } from '../../types';
+import { createMaterialItem, updateMaterialItem, getMaterialTypes } from '../../actions';
 import { toast } from 'sonner';
 
-interface CategoryModalProps {
+interface ItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  category: MaterialCategory | null;
+  item: MaterialItem | null;
+  defaultTypeId?: string; // Optional: pre-select type when creating from type context
   onSuccess: () => void;
 }
 
-export default function CategoryModal({ isOpen, onClose, category, onSuccess }: CategoryModalProps) {
+export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSuccess }: ItemModalProps) {
   const [formData, setFormData] = useState({
+    material_type_id: '',
     name: '',
     description: '',
-    display_order: 0,
+    content: '',
   });
+  const [types, setTypes] = useState<MaterialType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingTypes, setLoadingTypes] = useState(false);
   const [generalError, setGeneralError] = useState<string>('');
   const [errors, setErrors] = useState<{
+    material_type_id?: string;
     name?: string;
-    display_order?: string;
   }>({});
 
   useEffect(() => {
     if (isOpen) {
-      if (category) {
+      loadTypes();
+      if (item) {
         setFormData({
-          name: category.name,
-          description: category.description || '',
-          display_order: category.display_order,
+          material_type_id: item.material_type_id,
+          name: item.name,
+          description: item.description || '',
+          content: item.content || '',
         });
       } else {
         setFormData({
+          material_type_id: defaultTypeId || '',
           name: '',
           description: '',
-          display_order: 0,
+          content: '',
         });
       }
       setGeneralError('');
       setErrors({});
     }
-  }, [isOpen, category]);
+  }, [isOpen, item, defaultTypeId]);
+
+  const loadTypes = async () => {
+    try {
+      setLoadingTypes(true);
+      const data = await getMaterialTypes();
+      setTypes(data);
+    } catch (error) {
+      console.error('Error loading types:', error);
+    } finally {
+      setLoadingTypes(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +76,11 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
 
     // Validation
     const newErrors: typeof errors = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'Nama kategori wajib diisi';
+    if (!formData.material_type_id) {
+      newErrors.material_type_id = 'Jenis materi wajib dipilih';
     }
-    if (formData.display_order < 0) {
-      newErrors.display_order = 'Display order harus >= 0';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nama item materi wajib diisi';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -71,37 +91,44 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
     setIsLoading(true);
 
     try {
-      if (category) {
-        await updateMaterialCategory(category.id, {
+      if (item) {
+        await updateMaterialItem(item.id, {
+          material_type_id: formData.material_type_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          display_order: formData.display_order,
+          content: formData.content.trim() || undefined,
         });
-        toast.success('Kategori berhasil diperbarui');
+        toast.success('Item materi berhasil diperbarui');
       } else {
-        await createMaterialCategory({
+        await createMaterialItem({
+          material_type_id: formData.material_type_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          display_order: formData.display_order,
+          content: formData.content.trim() || undefined,
         });
-        toast.success('Kategori berhasil ditambahkan');
+        toast.success('Item materi berhasil ditambahkan');
       }
       
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Error saving category:', error);
-      setGeneralError(error.message || 'Gagal menyimpan kategori');
+      console.error('Error saving item:', error);
+      setGeneralError(error.message || 'Gagal menyimpan item materi');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const typeOptions = types.map(type => ({
+    value: type.id,
+    label: type.name + (type.category ? ` (${type.category.name})` : ''),
+  }));
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md m-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg m-4">
       <div className="p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          {category ? 'Edit Kategori' : 'Tambah Kategori'}
+          {item ? 'Edit Item Materi' : 'Tambah Item Materi'}
         </h3>
 
         {generalError && (
@@ -129,15 +156,30 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <InputFilter
+              id="material_type_id"
+              label="Jenis Materi"
+              value={formData.material_type_id}
+              onChange={(value) => setFormData({ ...formData, material_type_id: value })}
+              options={typeOptions}
+              placeholder="Pilih jenis materi"
+              required
+              error={!!errors.material_type_id}
+              hint={errors.material_type_id}
+              variant="modal"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="name">
-              Nama Kategori <span className="text-red-500">*</span>
+              Nama Item Materi <span className="text-red-500">*</span>
             </Label>
             <InputField
               id="name"
               name="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Masukkan nama kategori"
+              placeholder="Masukkan nama item materi"
               required
               error={!!errors.name}
               hint={errors.name}
@@ -156,19 +198,15 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
           </div>
 
           <div>
-            <Label htmlFor="display_order">
-              Display Order <span className="text-red-500">*</span>
-            </Label>
-            <InputField
-              id="display_order"
-              name="display_order"
-              type="number"
-              value={formData.display_order}
-              onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-              placeholder="0"
-              required
-              error={!!errors.display_order}
-              hint={errors.display_order}
+            <Label htmlFor="content">Konten</Label>
+            <textarea
+              id="content"
+              name="content"
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              placeholder="Masukkan konten (opsional)"
+              rows={4}
+              className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:placeholder:text-white/30 dark:focus:border-brand-800 text-gray-800 border-gray-300 focus:ring-brand-500/10 focus:border-brand-500 dark:text-gray-200 dark:border-gray-600"
             />
           </div>
 
@@ -183,12 +221,12 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
             </Button>
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || loadingTypes}
               loading={isLoading}
               loadingText="Menyimpan..."
               variant="primary"
             >
-              {category ? 'Perbarui' : 'Simpan'}
+              {item ? 'Perbarui' : 'Simpan'}
             </Button>
           </div>
         </form>

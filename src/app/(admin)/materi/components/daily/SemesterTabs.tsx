@@ -1,6 +1,6 @@
 'use client'
 
-import { Semester } from '../types'
+import { Semester } from '../../types'
 
 interface SemesterTabsProps {
   selected: Semester

@@ -1,6 +1,7 @@
 'use client'
 
-import { DayOfWeek, getDayName } from '../types'
+import { DayOfWeek, getDayName } from "../../types"
+
 
 interface DayTabsProps {
   selected: DayOfWeek

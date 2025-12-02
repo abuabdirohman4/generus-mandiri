@@ -6,66 +6,67 @@ import Button from '@/components/ui/button/Button';
 import Label from '@/components/form/Label';
 import InputField from '@/components/form/input/InputField';
 import InputFilter from '@/components/form/input/InputFilter';
-import { MaterialItem, MaterialType } from '../types';
-import { createMaterialItem, updateMaterialItem, getMaterialTypes } from '../actions';
+import { MaterialType, MaterialCategory } from '../../types';
+import { createMaterialType, updateMaterialType, getMaterialCategories } from '../../actions';
 import { toast } from 'sonner';
 
-interface ItemModalProps {
+interface TypeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: MaterialItem | null;
-  defaultTypeId?: string; // Optional: pre-select type when creating from type context
+  type: MaterialType | null;
+  defaultCategoryId?: string; // Optional: pre-select category when creating from category context
   onSuccess: () => void;
 }
 
-export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSuccess }: ItemModalProps) {
+export default function TypeModal({ isOpen, onClose, type, defaultCategoryId, onSuccess }: TypeModalProps) {
   const [formData, setFormData] = useState({
-    material_type_id: '',
+    category_id: '',
     name: '',
     description: '',
-    content: '',
+    display_order: 0,
   });
-  const [types, setTypes] = useState<MaterialType[]>([]);
+  const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingTypes, setLoadingTypes] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [generalError, setGeneralError] = useState<string>('');
   const [errors, setErrors] = useState<{
-    material_type_id?: string;
+    category_id?: string;
     name?: string;
+    display_order?: string;
   }>({});
 
   useEffect(() => {
     if (isOpen) {
-      loadTypes();
-      if (item) {
+      loadCategories();
+      if (type) {
         setFormData({
-          material_type_id: item.material_type_id,
-          name: item.name,
-          description: item.description || '',
-          content: item.content || '',
+          category_id: type.category_id,
+          name: type.name,
+          description: type.description || '',
+          display_order: type.display_order,
         });
       } else {
         setFormData({
-          material_type_id: defaultTypeId || '',
+          category_id: defaultCategoryId || '',
           name: '',
           description: '',
-          content: '',
+          display_order: 0,
         });
       }
       setGeneralError('');
       setErrors({});
     }
-  }, [isOpen, item, defaultTypeId]);
+  }, [isOpen, type, defaultCategoryId]);
 
-  const loadTypes = async () => {
+  const loadCategories = async () => {
     try {
-      setLoadingTypes(true);
-      const data = await getMaterialTypes();
-      setTypes(data);
+      setLoadingCategories(true);
+      const data = await getMaterialCategories();
+      setCategories(data);
     } catch (error) {
-      console.error('Error loading types:', error);
+      console.error('Error loading categories:', error);
     } finally {
-      setLoadingTypes(false);
+      setLoadingCategories(false);
     }
   };
 
@@ -76,11 +77,14 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
     // Validation
     const newErrors: typeof errors = {};
-    if (!formData.material_type_id) {
-      newErrors.material_type_id = 'Jenis materi wajib dipilih';
+    if (!formData.category_id) {
+      newErrors.category_id = 'Kategori wajib dipilih';
     }
     if (!formData.name.trim()) {
-      newErrors.name = 'Nama item materi wajib diisi';
+      newErrors.name = 'Nama jenis materi wajib diisi';
+    }
+    if (formData.display_order < 0) {
+      newErrors.display_order = 'Display order harus >= 0';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -91,44 +95,44 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
     setIsLoading(true);
 
     try {
-      if (item) {
-        await updateMaterialItem(item.id, {
-          material_type_id: formData.material_type_id,
+      if (type) {
+        await updateMaterialType(type.id, {
+          category_id: formData.category_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          content: formData.content.trim() || undefined,
+          display_order: formData.display_order,
         });
-        toast.success('Item materi berhasil diperbarui');
+        toast.success('Jenis materi berhasil diperbarui');
       } else {
-        await createMaterialItem({
-          material_type_id: formData.material_type_id,
+        await createMaterialType({
+          category_id: formData.category_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          content: formData.content.trim() || undefined,
+          display_order: formData.display_order,
         });
-        toast.success('Item materi berhasil ditambahkan');
+        toast.success('Jenis materi berhasil ditambahkan');
       }
       
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Error saving item:', error);
-      setGeneralError(error.message || 'Gagal menyimpan item materi');
+      console.error('Error saving type:', error);
+      setGeneralError(error.message || 'Gagal menyimpan jenis materi');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const typeOptions = types.map(type => ({
-    value: type.id,
-    label: type.name + (type.category ? ` (${type.category.name})` : ''),
+  const categoryOptions = categories.map(cat => ({
+    value: cat.id,
+    label: cat.name,
   }));
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg m-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md m-4">
       <div className="p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          {item ? 'Edit Item Materi' : 'Tambah Item Materi'}
+          {type ? 'Edit Jenis Materi' : 'Tambah Jenis Materi'}
         </h3>
 
         {generalError && (
@@ -157,29 +161,29 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <InputFilter
-              id="material_type_id"
-              label="Jenis Materi"
-              value={formData.material_type_id}
-              onChange={(value) => setFormData({ ...formData, material_type_id: value })}
-              options={typeOptions}
-              placeholder="Pilih jenis materi"
+              id="category_id"
+              label="Kategori"
+              value={formData.category_id}
+              onChange={(value) => setFormData({ ...formData, category_id: value })}
+              options={categoryOptions}
+              placeholder="Pilih kategori"
               required
-              error={!!errors.material_type_id}
-              hint={errors.material_type_id}
+              error={!!errors.category_id}
+              hint={errors.category_id}
               variant="modal"
             />
           </div>
 
           <div>
             <Label htmlFor="name">
-              Nama Item Materi <span className="text-red-500">*</span>
+              Nama Jenis Materi <span className="text-red-500">*</span>
             </Label>
             <InputField
               id="name"
               name="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Masukkan nama item materi"
+              placeholder="Masukkan nama jenis materi"
               required
               error={!!errors.name}
               hint={errors.name}
@@ -198,15 +202,19 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           </div>
 
           <div>
-            <Label htmlFor="content">Konten</Label>
-            <textarea
-              id="content"
-              name="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Masukkan konten (opsional)"
-              rows={4}
-              className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 text-gray-800 border-gray-300 focus:ring-brand-500/10 focus:border-brand-500 dark:text-gray-200 dark:border-gray-600"
+            <Label htmlFor="display_order">
+              Display Order <span className="text-red-500">*</span>
+            </Label>
+            <InputField
+              id="display_order"
+              name="display_order"
+              type="number"
+              value={formData.display_order}
+              onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+              placeholder="0"
+              required
+              error={!!errors.display_order}
+              hint={errors.display_order}
             />
           </div>
 
@@ -221,12 +229,12 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || loadingTypes}
+              disabled={isLoading || loadingCategories}
               loading={isLoading}
               loadingText="Menyimpan..."
               variant="primary"
             >
-              {item ? 'Perbarui' : 'Simpan'}
+              {type ? 'Perbarui' : 'Simpan'}
             </Button>
           </div>
         </form>

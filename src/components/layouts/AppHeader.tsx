@@ -62,6 +62,7 @@ function PageTitle() {
           path === '/users/guru' || 
           path === '/users/admin' || 
           path === '/organisasi' ||
+          path === '/materi' ||
           path === '/dashboard';
   };
 

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getDayName, DayMaterialAssignment } from '../types'
+import { getDayName, DayMaterialAssignment } from '../../types'
 import { MaterialInputModal } from './MaterialInputModal'
-import { getDayMaterialAssignments } from '../actions'
+import { getDayMaterialAssignments } from '../../actions'
 
 interface MaterialContentProps {
   selectedDate: {

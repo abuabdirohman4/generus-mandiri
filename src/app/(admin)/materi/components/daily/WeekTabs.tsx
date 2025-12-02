@@ -1,6 +1,6 @@
 'use client'
 
-import { Week, romanNumeral } from '../types'
+import { Week, romanNumeral } from '../../types'
 
 interface WeekTabsProps {
   selected: Week
