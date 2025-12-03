@@ -428,14 +428,22 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
 }
 
 /**
- * Get all classes for mapping selection
+ * Get all classes for mapping selection (filtered to CABERAWIT category only)
  */
 export async function getAllClasses(): Promise<ClassMaster[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from('class_masters')
-    .select('id, name')
+    .select(`
+      id,
+      name,
+      category:category_id (
+        id,
+        code,
+        name
+      )
+    `)
     .order('sort_order', { ascending: true });
 
   if (error) {
@@ -443,7 +451,17 @@ export async function getAllClasses(): Promise<ClassMaster[]> {
     return [];
   }
 
-  return data || [];
+  // Filter for CABERAWIT and PAUD categories only
+  return (data || []).filter((cls: any) => {
+    // Handle both array and object formats from Supabase
+    const category = Array.isArray(cls.category) ? cls.category[0] : cls.category;
+    const categoryCode = category?.code?.toUpperCase();
+    return categoryCode === 'CABERAWIT' || categoryCode === 'PAUD';
+  }).map((cls: any) => ({
+    id: cls.id,
+    name: cls.name,
+    category: Array.isArray(cls.category) ? cls.category[0] : cls.category
+  }));
 }
 
 /**

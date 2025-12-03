@@ -2,6 +2,11 @@
 export interface ClassMaster {
   id: string;
   name: string;
+  category?: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 // New flexible material structure types

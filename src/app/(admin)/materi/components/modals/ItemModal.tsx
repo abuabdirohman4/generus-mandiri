@@ -39,7 +39,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
   });
   const [types, setTypes] = useState<MaterialType[]>([]);
   const [classes, setClasses] = useState<ClassMaster[]>([]);
-  const [mappings, setMappings] = useState<Record<string, { semester1: boolean; semester2: boolean }>>({});
+  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
+  const [selectedSemesters, setSelectedSemesters] = useState<Set<1 | 2>>(new Set());
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -66,8 +67,9 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           description: '',
           content: '',
         });
-        // Reset mappings for new item
-        setMappings({});
+        // Reset selections for new item
+        setSelectedClasses(new Set());
+        setSelectedSemesters(new Set());
       }
       setGeneralError('');
       setErrors({});
@@ -91,30 +93,25 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
       if (item) {
         const mappingsData = await getMaterialItemClassMappings(item.id);
 
-        // Transform mappings to state format
-        const mappingsState: Record<string, { semester1: boolean; semester2: boolean }> = {};
+        // Extract unique class IDs and semesters from mappings
+        const classIds = new Set<string>();
+        const semesters = new Set<1 | 2>();
 
-        // Initialize all classes with false
-        classesData.forEach(cls => {
-          mappingsState[cls.id] = { semester1: false, semester2: false };
-        });
-
-        // Update based on fetched mappings
         mappingsData.forEach((m: any) => {
-          if (mappingsState[m.class_master_id]) {
-            if (m.semester === 1) mappingsState[m.class_master_id].semester1 = true;
-            if (m.semester === 2) mappingsState[m.class_master_id].semester2 = true;
+          if (m.class_master_id) {
+            classIds.add(m.class_master_id);
+          }
+          if (m.semester === 1 || m.semester === 2) {
+            semesters.add(m.semester as 1 | 2);
           }
         });
 
-        setMappings(mappingsState);
+        setSelectedClasses(classIds);
+        setSelectedSemesters(semesters);
       } else {
-        // Initialize empty mappings for new item
-        const initialMappings: Record<string, { semester1: boolean; semester2: boolean }> = {};
-        classesData.forEach(cls => {
-          initialMappings[cls.id] = { semester1: false, semester2: false };
-        });
-        setMappings(initialMappings);
+        // Initialize empty selections for new item
+        setSelectedClasses(new Set());
+        setSelectedSemesters(new Set());
       }
 
     } catch (error) {
@@ -125,14 +122,28 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
     }
   };
 
-  const handleMappingChange = (classId: string, semester: 'semester1' | 'semester2', checked: boolean) => {
-    setMappings(prev => ({
-      ...prev,
-      [classId]: {
-        ...prev[classId],
-        [semester]: checked
+  const handleClassToggle = (classId: string) => {
+    setSelectedClasses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(classId)) {
+        newSet.delete(classId);
+      } else {
+        newSet.add(classId);
       }
-    }));
+      return newSet;
+    });
+  };
+
+  const handleSemesterToggle = (semester: 1 | 2) => {
+    setSelectedSemesters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(semester)) {
+        newSet.delete(semester);
+      } else {
+        newSet.add(semester);
+      }
+      return newSet;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,17 +189,15 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         toast.success('Item materi berhasil ditambahkan');
       }
 
-      // Save mappings
+      // Save mappings - generate from selected classes and semesters
       if (itemId) {
         const mappingsToSave: Array<{ class_master_id: string; semester: number | null }> = [];
 
-        Object.entries(mappings).forEach(([classId, semesters]) => {
-          if (semesters.semester1) {
-            mappingsToSave.push({ class_master_id: classId, semester: 1 });
-          }
-          if (semesters.semester2) {
-            mappingsToSave.push({ class_master_id: classId, semester: 2 });
-          }
+        // Combine selected classes and semesters
+        selectedClasses.forEach(classId => {
+          selectedSemesters.forEach(semester => {
+            mappingsToSave.push({ class_master_id: classId, semester });
+          });
         });
 
         await updateMaterialItemClassMappings(itemId, mappingsToSave);
@@ -301,35 +310,101 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           {loadingData ? (
             <div className="text-sm text-gray-500 dark:text-gray-400">Memuat data kelas...</div>
           ) : (
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              {classes.map((cls) => (
-                <div key={cls.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{cls.name}</span>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mappings[cls.id]?.semester1 || false}
-                        onChange={(e) => handleMappingChange(cls.id, 'semester1', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Sem 1</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={mappings[cls.id]?.semester2 || false}
-                        onChange={(e) => handleMappingChange(cls.id, 'semester2', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Sem 2</span>
-                    </label>
-                  </div>
+            <div className="space-y-5">
+              {/* Semester Selection - Moved to top */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Pilih Semester</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label
+                    className={`relative flex items-center justify-center gap-3 cursor-pointer px-4 py-3 rounded-lg border-2 transition-all ${selectedSemesters.has(1)
+                        ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
+                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
+                      }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSemesters.has(1)}
+                      onChange={() => handleSemesterToggle(1)}
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
+                    />
+                    <span className={`text-sm font-medium ${selectedSemesters.has(1)
+                        ? 'text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                      }`}>
+                      Semester 1
+                    </span>
+                    {/* {selectedSemesters.has(1) && (
+                      <svg className="absolute top-2 right-2 w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )} */}
+                  </label>
+                  <label
+                    className={`relative flex items-center justify-center gap-3 cursor-pointer px-4 py-3 rounded-lg border-2 transition-all ${selectedSemesters.has(2)
+                        ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
+                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
+                      }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSemesters.has(2)}
+                      onChange={() => handleSemesterToggle(2)}
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
+                    />
+                    <span className={`text-sm font-medium ${selectedSemesters.has(2)
+                        ? 'text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                      }`}>
+                      Semester 2
+                    </span>
+                    {/* {selectedSemesters.has(2) && (
+                      <svg className="absolute top-2 right-2 w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )} */}
+                  </label>
                 </div>
-              ))}
-              {classes.length === 0 && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 italic">Belum ada data kelas</div>
-              )}
+              </div>
+
+              {/* Class Selection - Grid 2 columns */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Pilih Kelas</label>
+                {classes.length === 0 ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400 italic py-4 text-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                    Belum ada data kelas
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+                    {classes.map((cls) => (
+                      <label
+                        key={cls.id}
+                        className={`relative flex items-center gap-2.5 cursor-pointer px-3 py-2.5 rounded-lg border transition-all ${selectedClasses.has(cls.id)
+                            ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20 dark:border-blue-600 shadow-sm'
+                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-750'
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedClasses.has(cls.id)}
+                          onChange={() => handleClassToggle(cls.id)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
+                        />
+                        <span className={`text-sm flex-1 ${selectedClasses.has(cls.id)
+                            ? 'text-blue-700 font-medium dark:text-blue-300'
+                            : 'text-gray-700 dark:text-gray-300'
+                          }`}>
+                          {cls.name}
+                        </span>
+                        {/* {selectedClasses.has(cls.id) && (
+                          <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )} */}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
