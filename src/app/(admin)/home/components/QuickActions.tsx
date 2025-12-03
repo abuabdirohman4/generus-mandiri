@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
-import { isAdminKelompok } from '@/lib/userUtils';
+import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
 
 interface Profile {
   id: string;
@@ -134,7 +134,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-orange-100 dark:bg-orange-900',
       iconColor: 'text-orange-600 dark:text-orange-400',
       adminOnly: true,
-      disabled: false
+      disabled: isTeacher(profile) ? true : false
     },
     {
       id: 'admin-users',

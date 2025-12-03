@@ -22,9 +22,8 @@
     - [x] Per Kelas
         Per Materi (Category for info)
         Per Sub Materi
-    - [ ] Mobile
-        - [ ] Saat pilih kategori sidebar langsung tertutup
-        - [ ] 
+    - [x] Mobile
+        - [x] Saat pilih kategori sidebar langsung tertutup
     - Per Hari
         Per Materi
 
