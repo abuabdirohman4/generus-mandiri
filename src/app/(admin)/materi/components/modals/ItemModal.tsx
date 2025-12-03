@@ -213,11 +213,13 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
     }
   };
 
-  const typeOptions = types.map(type => ({
-    value: type.id,
-    // label: type.name + (type.category ? ` (${type.category.name})` : ''),
-    label: type.name
-  }));
+  const typeOptions = types
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(type => ({
+      value: type.id,
+      label: type.name
+      // label: type.name + (type.category ? ` (${type.category.name})` : ''),
+    }));
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg m-4">
@@ -304,9 +306,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           />
         </div>
 
-        <div className="border-t pt-4 mt-4 dark:border-gray-700">
-          <Label className="mb-3 block">Mapping Kelas & Semester</Label>
-
+        <div>
           {loadingData ? (
             <div className="text-sm text-gray-500 dark:text-gray-400">Memuat data kelas...</div>
           ) : (
