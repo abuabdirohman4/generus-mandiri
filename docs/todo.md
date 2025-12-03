@@ -16,7 +16,7 @@
 - [ ] Add Halaman Raport
 - [ ] Add Halaman Materi
     - [ ] Monitoring Materi
-- [ ] Menu bisa di klik kanan
+- [x] Menu bisa di klik kanan
 - [ ] Add Halaman Materi
     - [x] Master Data (Show all materi)
     - [x] Per Kelas
@@ -26,6 +26,12 @@
         - [x] Saat pilih kategori sidebar langsung tertutup
     - Per Hari
         Per Materi
+    - [ ] CRUD Kategori
+    - [ ] CRUD Materi Type
+    - [ ] CRUD Materi
+        - [ ] Di Klik langsung munculin materi
+        - [ ] Guru hanya bisa lihat, admin bisa CRUD
+        - [ ] Bisa nentuin di ajar di kelas mana, semester berapa
 
 ## v1.9.2
 - [x] Add Tipe Pertemuan ASAD

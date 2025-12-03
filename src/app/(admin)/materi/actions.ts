@@ -6,7 +6,7 @@ import { MaterialCategory, MaterialType, MaterialItem, DayMaterialAssignment, Da
 
 export async function getAvailableClassMasters() {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('class_masters')
     .select('*')
@@ -27,7 +27,7 @@ export async function getAvailableClassMasters() {
  */
 export async function getMaterialCategories(): Promise<MaterialCategory[]> {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('material_categories')
     .select('*')
@@ -46,7 +46,7 @@ export async function getMaterialCategories(): Promise<MaterialCategory[]> {
  */
 export async function getMaterialTypes(categoryId?: string): Promise<MaterialType[]> {
   const supabase = await createClient();
-  
+
   let query = supabase
     .from('material_types')
     .select(`
@@ -74,7 +74,7 @@ export async function getMaterialTypes(categoryId?: string): Promise<MaterialTyp
  */
 export async function getMaterialItems(materialTypeId: string): Promise<MaterialItem[]> {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('material_items')
     .select(`
@@ -97,7 +97,7 @@ export async function getMaterialItems(materialTypeId: string): Promise<Material
  */
 export async function getAllMaterialItems(): Promise<MaterialItem[]> {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('material_items')
     .select(`
@@ -135,7 +135,7 @@ export async function saveDayMaterialAssignment(data: {
   }>;
 }) {
   const supabase = await createClient();
-  
+
   try {
     // Insert or update assignment
     const { data: assignment, error: assignmentError } = await supabase
@@ -204,7 +204,7 @@ export async function getDayMaterialAssignments(params: {
   day_of_week: number;
 }): Promise<DayMaterialAssignment[]> {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('day_material_assignments')
     .select(`
@@ -247,7 +247,7 @@ export async function getDayMaterialAssignments(params: {
  */
 export async function deleteDayMaterialAssignment(assignmentId: string) {
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from('day_material_assignments')
     .delete()
@@ -267,7 +267,7 @@ export async function deleteDayMaterialAssignment(assignmentId: string) {
  */
 export async function getMaterialItemsByClass(classMasterId: string): Promise<MaterialItem[]> {
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from('material_item_classes')
     .select(`
@@ -323,7 +323,7 @@ export async function getMaterialItemsByClassAndType(
   materialTypeId: string
 ): Promise<MaterialItem[]> {
   const supabase = await createClient();
-  
+
   // Query material_items with join to material_item_classes to filter by class
   const { data, error } = await supabase
     .from('material_items')
@@ -360,31 +360,68 @@ export async function getMaterialItemsByClassAndType(
  */
 export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[]> {
   const supabase = await createClient();
-  
-  const { data, error } = await supabase
+
+  // 1. Fetch all material items with types
+  const { data: itemsData, error: itemsError } = await supabase
     .from('material_items')
     .select(`
       *,
       material_type:material_types(
         *,
         category:material_categories(*)
-      ),
-      classes:material_item_classes(
-        class_master:class_masters(*)
       )
     `)
+    .range(0, 9999)
     .order('name');
 
-  if (error) {
-    console.error('Error getting material items with class mappings:', error);
-    throw new Error('Gagal memuat item materi dengan mapping kelas');
+  if (itemsError) {
+    console.error('Error getting material items:', itemsError);
+    throw new Error('Gagal memuat item materi');
   }
 
-  // Transform data to extract class_master from classes
-  const items = (data || []).map((item: any) => ({
-    ...item,
-    classes: item.classes?.map((mic: any) => mic.class_master).filter((cm: any) => cm) || []
-  }));
+  // 2. Fetch all class mappings (with batch fetching to bypass 1000-row limit)
+  let allMappingsData: any[] = [];
+  let offset = 0;
+  const batchSize = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data: batchData, error: batchError } = await supabase
+      .from('material_item_classes')
+      .select(`
+        material_item_id,
+        class_master:class_masters(*)
+      `)
+      .range(offset, offset + batchSize - 1);
+
+    if (batchError) {
+      console.error('Error getting class mappings batch:', batchError);
+      throw new Error('Gagal memuat mapping kelas');
+    }
+
+    if (batchData && batchData.length > 0) {
+      allMappingsData = [...allMappingsData, ...batchData];
+      offset += batchSize;
+      hasMore = batchData.length === batchSize; // Continue if we got a full batch
+    } else {
+      hasMore = false;
+    }
+  }
+
+  const mappingsData = allMappingsData;
+
+  // 3. Map classes to items
+  const items = (itemsData || []).map((item: any) => {
+    const itemMappings = mappingsData?.filter((m: any) => m.material_item_id === item.id) || [];
+    const classes = itemMappings
+      .map((m: any) => m.class_master)
+      .filter((cm: any) => cm); // Filter out nulls
+
+    return {
+      ...item,
+      classes
+    };
+  });
 
   return items;
 }
@@ -394,28 +431,27 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
  */
 export async function getClassesWithMaterialItems(): Promise<ClassMaster[]> {
   const supabase = await createClient();
-  
+
+  // Use inner join to get only classes that have material items
+  // We select id from material_item_classes just to satisfy the join and filter
   const { data, error } = await supabase
-    .from('material_item_classes')
+    .from('class_masters')
     .select(`
-      class_master:class_masters(*)
+      *,
+      material_item_classes!inner(id)
     `)
-    .order('class_master(name)');
+    .order('name');
 
   if (error) {
     console.error('Error getting classes with material items:', error);
     throw new Error('Gagal memuat kelas dengan item materi');
   }
 
-  // Extract unique class masters
-  const classMap = new Map<string, ClassMaster>();
-  (data || []).forEach((mic: any) => {
-    if (mic.class_master && !classMap.has(mic.class_master.id)) {
-      classMap.set(mic.class_master.id, mic.class_master);
-    }
+  // Remove the material_item_classes property from the result to return clean ClassMaster objects
+  return (data || []).map((item: any) => {
+    const { material_item_classes, ...classMaster } = item;
+    return classMaster;
   });
-
-  return Array.from(classMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // ==========================================
@@ -431,7 +467,7 @@ export async function createMaterialCategory(data: {
   display_order: number;
 }): Promise<MaterialCategory> {
   const supabase = await createClient();
-  
+
   const { data: category, error } = await supabase
     .from('material_categories')
     .insert({
@@ -467,7 +503,7 @@ export async function updateMaterialCategory(
   }
 ): Promise<MaterialCategory> {
   const supabase = await createClient();
-  
+
   const { data: category, error } = await supabase
     .from('material_categories')
     .update({
@@ -498,7 +534,7 @@ export async function updateMaterialCategory(
  */
 export async function deleteMaterialCategory(id: string): Promise<{ success: boolean }> {
   const supabase = await createClient();
-  
+
   // Check if there are any material types using this category
   const { data: types, error: checkError } = await supabase
     .from('material_types')
@@ -543,7 +579,7 @@ export async function createMaterialType(data: {
   display_order: number;
 }): Promise<MaterialType> {
   const supabase = await createClient();
-  
+
   const { data: type, error } = await supabase
     .from('material_types')
     .insert({
@@ -584,7 +620,7 @@ export async function updateMaterialType(
   }
 ): Promise<MaterialType> {
   const supabase = await createClient();
-  
+
   const { data: type, error } = await supabase
     .from('material_types')
     .update({
@@ -619,7 +655,7 @@ export async function updateMaterialType(
  */
 export async function deleteMaterialType(id: string): Promise<{ success: boolean }> {
   const supabase = await createClient();
-  
+
   // Check if there are any material items using this type
   const { data: items, error: checkError } = await supabase
     .from('material_items')
@@ -680,7 +716,7 @@ export async function createMaterialItem(data: {
   content?: string;
 }): Promise<MaterialItem> {
   const supabase = await createClient();
-  
+
   const { data: item, error } = await supabase
     .from('material_items')
     .insert({
@@ -724,7 +760,7 @@ export async function updateMaterialItem(
   }
 ): Promise<MaterialItem> {
   const supabase = await createClient();
-  
+
   // Update first without select
   const { error: updateError } = await supabase
     .from('material_items')
@@ -782,7 +818,7 @@ export async function updateMaterialItem(
  */
 export async function deleteMaterialItem(id: string): Promise<{ success: boolean }> {
   const supabase = await createClient();
-  
+
   // Check if there are any day material items using this item
   const { data: dayItems, error: checkError } = await supabase
     .from('day_material_items')

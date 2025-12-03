@@ -51,6 +51,7 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   // Determine user role
   const isAdminUser = userProfile ? isAdmin(userProfile) : false;
   const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
+  const isKelas6Warlob = isTeacher(userProfile) && userProfile.id === '88888888-8888-8888-8888-888888888888'
 
   // Materi store
   const { filters } = useMateriStore();
@@ -286,8 +287,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                     types={types}
                     items={items}
                     userProfile={userProfile}
-                    onEditItem={handleEditItem}
-                    onDeleteItem={handleDeleteItem}
+                    onEditItem={isAdminUser || isKelas6Warlob ? handleEditItem : undefined}
+                    onDeleteItem={isAdminUser || isKelas6Warlob ? handleDeleteItem : undefined}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
                   />

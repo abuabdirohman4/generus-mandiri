@@ -162,7 +162,6 @@ export default function MateriContentView({
                     <div className="mt-5 md:mt-0">
                         <MateriTable
                             items={filteredItems}
-                            isAdmin={isAdminUser}
                             onEdit={onEditItem}
                             onDelete={onDeleteItem}
                         />
@@ -219,7 +218,6 @@ export default function MateriContentView({
                     <div className="mt-5 md:mt-0">
                         <MateriTable
                             items={filteredItemsForClassMode}
-                            isAdmin={isAdminUser}
                             onEdit={onEditItem}
                             onDelete={onDeleteItem}
                         />

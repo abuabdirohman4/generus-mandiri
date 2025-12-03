@@ -6,12 +6,11 @@ import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 
 interface MateriTableProps {
     items: MaterialItem[];
-    isAdmin?: boolean;
     onEdit?: (item: MaterialItem) => void;
     onDelete?: (item: MaterialItem) => void;
 }
 
-export default function MateriTable({ items, isAdmin, onEdit, onDelete }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete }: MateriTableProps) {
     const columns = [
         {
             key: 'name',
@@ -22,13 +21,17 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
             widthMobile: '16rem',
             leftMargin: 'pl-4'
         },
-        {
-            key: 'actions',
-            label: 'AKSI',
-            sortable: false,
-            align: 'center' as const,
-            width: '100px'
-        }
+        ...(onEdit || onDelete
+            ? [
+                  {
+                      key: 'actions',
+                      label: 'AKSI',
+                      sortable: false,
+                      align: 'center' as const,
+                      width: '100px'
+                  }
+              ]
+            : [])
     ];
 
     const tableData = items.map(item => ({
@@ -55,7 +58,7 @@ export default function MateriTable({ items, isAdmin, onEdit, onDelete }: Materi
         }
 
         if (column.key === 'actions') {
-            if (!isAdmin) return null;
+            if (!onEdit && !onDelete) return null;
 
             return (
                 <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
