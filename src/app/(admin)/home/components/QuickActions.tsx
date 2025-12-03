@@ -44,6 +44,9 @@ interface QuickActionItem {
 export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
+  console.log('isTeacher', isTeacher(profile))
+  console.log('!isKelas6Warlob', !isKelas6Warlob)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -121,7 +124,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       icon: <BookOpenIcon className="w-6 h-6" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
-      disabled: false
+      disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
     },
     {
       id: 'guru',
