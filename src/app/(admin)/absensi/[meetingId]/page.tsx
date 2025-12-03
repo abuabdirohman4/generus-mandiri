@@ -626,7 +626,7 @@ export default function MeetingAttendancePage() {
         />
 
         {/* Attendance Table */}
-        <div className="mb-8">
+        <div className="pb-28">
           <AttendanceTable
             students={visibleStudents}
             attendance={localAttendance}
