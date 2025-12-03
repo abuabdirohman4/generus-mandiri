@@ -63,11 +63,12 @@ export const useAbsensiUIStore = create<AbsensiUIStore>()(
     }),
     {
       name: 'absensi-ui-store',
-      // Persist user preferences and pagination state
+      // Persist user preferences only (not transient state like pagination)
       partialize: (state) => ({
         viewMode: state.viewMode,
-        selectedClassFilter: state.selectedClassFilter,
-        currentPage: state.currentPage // Persist pagination state
+        selectedClassFilter: state.selectedClassFilter
+        // NOTE: currentPage is NOT persisted to avoid hydration mismatch
+        // Pagination resets to page 1 on page load (expected behavior)
       }),
     }
   )
