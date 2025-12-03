@@ -115,11 +115,9 @@ export default function AbsensiPage() {
 
   // Reset page when filters change
   useEffect(() => {
-    // Only reset if not already on page 1 to prevent infinite loop
-    if (currentPage !== 1) {
-      setCurrentPage(1)
-    }
-  }, [dataFilters, validClassIds, currentPage, setCurrentPage])
+    setCurrentPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataFilters, validClassIds])
 
   // Filter meetings based on valid class IDs when "Semua Kelas" is selected
   const filteredMeetings = useMemo(() => {
