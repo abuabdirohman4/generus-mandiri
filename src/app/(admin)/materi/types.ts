@@ -41,6 +41,7 @@ export interface MaterialItemClass {
   id: string;
   material_item_id: string;
   class_master_id: string;
+  semester: number | null; // 1 = Ganjil, 2 = Genap
   created_at: string;
   updated_at: string;
   material_item?: MaterialItem;
@@ -82,7 +83,7 @@ export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6;
 export function getDayName(day: DayOfWeek): string {
   const days = {
     1: 'Senin',
-    2: 'Selasa', 
+    2: 'Selasa',
     3: 'Rabu',
     4: 'Kamis',
     5: 'Jumat',
@@ -94,7 +95,7 @@ export function getDayName(day: DayOfWeek): string {
 export function romanNumeral(week: Week): string {
   const numerals = {
     1: 'I',
-    2: 'II', 
+    2: 'II',
     3: 'III',
     4: 'IV'
   };

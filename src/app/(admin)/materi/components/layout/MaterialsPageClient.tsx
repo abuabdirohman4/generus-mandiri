@@ -8,9 +8,10 @@ import MasterDataView from '../views/MasterDataView';
 import MateriContentView from '../views/MateriContentView';
 import MateriSidebar from './MateriSidebar';
 import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
+import ItemModal from '../modals/ItemModal';
+import ContentViewModal from '../modals/ContentViewModal';
 import { useMateriStore } from '../../stores/materiStore';
 import { isAdmin, isTeacher } from '@/lib/accessControl';
-import ItemModal from '../modals/ItemModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { toast } from 'sonner';
 
@@ -36,6 +37,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
 
   // Modal states
   const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [contentModalOpen, setContentModalOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<MaterialItem | null>(null);
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [defaultTypeId, setDefaultTypeId] = useState<string | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -108,6 +111,17 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
     setEditingItem(item);
     setDefaultTypeId(undefined);
     setItemModalOpen(true);
+  };
+
+  const handleCreateItem = () => {
+    setEditingItem(null);
+    setDefaultTypeId(undefined);
+    setItemModalOpen(true);
+  };
+
+  const handleViewContent = (item: MaterialItem) => {
+    setViewingItem(item);
+    setContentModalOpen(true);
   };
 
   const handleDeleteItem = (item: MaterialItem) => {
@@ -289,6 +303,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                     userProfile={userProfile}
                     onEditItem={isAdminUser || isKelas6Warlob ? handleEditItem : undefined}
                     onDeleteItem={isAdminUser || isKelas6Warlob ? handleDeleteItem : undefined}
+                    onCreateItem={isAdminUser || isKelas6Warlob ? handleCreateItem : undefined}
+                    onViewItem={handleViewContent}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
                   />
@@ -309,6 +325,15 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
           item={editingItem}
           defaultTypeId={defaultTypeId}
           onSuccess={handleItemSuccess}
+        />
+
+        <ContentViewModal
+          isOpen={contentModalOpen}
+          onClose={() => {
+            setContentModalOpen(false);
+            setViewingItem(null);
+          }}
+          item={viewingItem}
         />
 
         <ConfirmModal

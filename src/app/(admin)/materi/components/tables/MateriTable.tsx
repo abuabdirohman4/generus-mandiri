@@ -8,9 +8,10 @@ interface MateriTableProps {
     items: MaterialItem[];
     onEdit?: (item: MaterialItem) => void;
     onDelete?: (item: MaterialItem) => void;
+    onView?: (item: MaterialItem) => void;
 }
 
-export default function MateriTable({ items, onEdit, onDelete }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView }: MateriTableProps) {
     const columns = [
         {
             key: 'name',
@@ -23,14 +24,14 @@ export default function MateriTable({ items, onEdit, onDelete }: MateriTableProp
         },
         ...(onEdit || onDelete
             ? [
-                  {
-                      key: 'actions',
-                      label: 'AKSI',
-                      sortable: false,
-                      align: 'center' as const,
-                      width: '100px'
-                  }
-              ]
+                {
+                    key: 'actions',
+                    label: 'AKSI',
+                    sortable: false,
+                    align: 'center' as const,
+                    width: '100px'
+                }
+            ]
             : [])
     ];
 
@@ -93,6 +94,8 @@ export default function MateriTable({ items, onEdit, onDelete }: MateriTableProp
             searchable={false}
             defaultItemsPerPage={25}
             itemsPerPageOptions={[10, 25, 50, 100]}
+            onRowClick={onView ? (item) => onView(item.itemData) : undefined}
+            rowClassName="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
         />
         // </div>
     );

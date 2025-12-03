@@ -390,6 +390,7 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
       .from('material_item_classes')
       .select(`
         material_item_id,
+        semester,
         class_master:class_masters(*)
       `)
       .range(offset, offset + batchSize - 1);
@@ -427,7 +428,26 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
 }
 
 /**
- * Get all classes that have material items mapped
+ * Get all classes for mapping selection
+ */
+export async function getAllClasses(): Promise<ClassMaster[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('class_masters')
+    .select('id, name')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching classes:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get all classes that have material items (for sidebar)
  */
 export async function getClassesWithMaterialItems(): Promise<ClassMaster[]> {
   const supabase = await createClient();
@@ -843,6 +863,72 @@ export async function deleteMaterialItem(id: string): Promise<{ success: boolean
   if (error) {
     console.error('Error deleting material item:', error);
     throw new Error('Gagal menghapus item materi');
+  }
+
+  revalidatePath('/materi');
+  return { success: true };
+}// Append to end of actions.ts
+
+/**
+ * Get material item class mappings for a specific item
+ */
+export async function getMaterialItemClassMappings(materialItemId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('material_item_classes')
+    .select(`
+      id,
+      class_master_id,
+      semester,
+      class_master:class_masters(*)
+    `)
+    .eq('material_item_id', materialItemId);
+
+  if (error) {
+    console.error('Error fetching class mappings:', error);
+    throw new Error('Gagal memuat mapping kelas');
+  }
+
+  return data || [];
+}
+
+/**
+ * Update material item class mappings (replaces all mappings for an item)
+ */
+export async function updateMaterialItemClassMappings(
+  materialItemId: string,
+  mappings: Array<{ class_master_id: string; semester: number | null }>
+) {
+  const supabase = await createClient();
+
+  // Delete existing mappings
+  const { error: deleteError } = await supabase
+    .from('material_item_classes')
+    .delete()
+    .eq('material_item_id', materialItemId);
+
+  if (deleteError) {
+    console.error('Error deleting old mappings:', deleteError);
+    throw new Error('Gagal menghapus mapping lama');
+  }
+
+  // Insert new mappings if any
+  if (mappings.length > 0) {
+    const { error: insertError } = await supabase
+      .from('material_item_classes')
+      .insert(
+        mappings.map(m => ({
+          material_item_id: materialItemId,
+          class_master_id: m.class_master_id,
+          semester: m.semester
+        }))
+      );
+
+    if (insertError) {
+      console.error('Error inserting new mappings:', insertError);
+      throw new Error('Gagal menyimpan mapping baru');
+    }
   }
 
   revalidatePath('/materi');

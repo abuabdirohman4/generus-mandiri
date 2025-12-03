@@ -14,6 +14,8 @@ interface MateriContentViewProps {
     userProfile: any;
     onEditItem?: (item: MaterialItem) => void;
     onDeleteItem?: (item: MaterialItem) => void;
+    onCreateItem?: () => void;
+    onViewItem?: (item: MaterialItem) => void;
     searchQuery: string;
     onSearchChange: (query: string) => void;
 }
@@ -25,6 +27,8 @@ export default function MateriContentView({
     userProfile,
     onEditItem,
     onDeleteItem,
+    onCreateItem,
+    onViewItem,
     searchQuery,
     onSearchChange
 }: MateriContentViewProps) {
@@ -132,23 +136,36 @@ export default function MateriContentView({
 
     return (
         <div className="space-y-6">
-            {/* Search Bar */}
-            <div className="hidden md:block sticky top-0 z-10 bg-white dark:bg-gray-800">
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Cari materi disini..."
-                    className="w-full px-4 py-3 pl-11 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                />
-                <svg
-                    className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            {/* Header with Search and Create Button */}
+            <div className="flex items-center gap-3">
+                <div className="flex-1 relative hidden md:block">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        placeholder="Cari materi disini..."
+                        className="w-full px-4 py-3 pl-11 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    />
+                    <svg
+                        className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                {onCreateItem && (
+                    <button
+                        onClick={onCreateItem}
+                        className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Materi
+                    </button>
+                )}
             </div>
 
             {/* Conditional Rendering Based on View Mode */}
@@ -164,6 +181,7 @@ export default function MateriContentView({
                             items={filteredItems}
                             onEdit={onEditItem}
                             onDelete={onDeleteItem}
+                            onView={onViewItem}
                         />
                     </div>
 
@@ -220,6 +238,7 @@ export default function MateriContentView({
                             items={filteredItemsForClassMode}
                             onEdit={onEditItem}
                             onDelete={onDeleteItem}
+                            onView={onViewItem}
                         />
                     </div>
 
