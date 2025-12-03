@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useMeetings } from './hooks/useMeetings'
 import { useClasses } from '@/hooks/useClasses'
 import { useDaerah } from '@/hooks/useDaerah'
@@ -19,6 +20,8 @@ import Pagination from '@/components/ui/pagination/Pagination'
 import { useMeetingFormSettings } from './hooks/useMeetingFormSettings'
 
 export default function AbsensiPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { profile: userProfile } = useUserProfile()
   const { classes, isLoading: classesLoading } = useClasses()
   const { daerah } = useDaerah()
@@ -28,7 +31,7 @@ export default function AbsensiPage() {
   // Prefetch meeting form settings for optimal modal performance
   useMeetingFormSettings(userProfile?.id)
 
-  // Get UI state from Zustand store
+  // Get UI state from Zustand store (excluding currentPage - now from URL)
   const {
     viewMode,
     setViewMode,
@@ -39,12 +42,11 @@ export default function AbsensiPage() {
     showCreateModal,
     setShowCreateModal,
     editingMeeting,
-    setEditingMeeting,
-    currentPage,
-    setCurrentPage
+    setEditingMeeting
   } = useAbsensiUIStore()
 
-  // Pagination constants
+  // Pagination from URL query params
+  const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const ITEMS_PER_PAGE = 10
   
   // Calculate valid class IDs based on organisasi filters
@@ -113,9 +115,17 @@ export default function AbsensiPage() {
     mutate 
   } = useMeetings(classId)
 
+  // Handle pagination change
+  const handlePageChange = (page: number) => {
+    router.push(`/absensi?page=${page}`, { scroll: false })
+  }
+
   // Reset page when filters change
   useEffect(() => {
-    setCurrentPage(1)
+    // Only reset if not already on page 1
+    if (currentPage !== 1) {
+      router.replace('/absensi?page=1')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataFilters, validClassIds])
 
@@ -390,7 +400,7 @@ export default function AbsensiPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                   className="mt-6"
                 />
               )}
@@ -409,7 +419,7 @@ export default function AbsensiPage() {
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                   className="mt-6"
                 />
               )}
