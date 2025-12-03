@@ -172,6 +172,7 @@ export default function MateriSidebar({
                         <>
                             {categories
                                 .sort((a, b) => a.display_order - b.display_order)
+                                // .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(category => {
                                     const categoryTypes = getTypesForCategory(category.id);
                                     const itemCount = getItemCountForCategory(category.id);
@@ -318,7 +319,8 @@ export default function MateriSidebar({
                                         {isExpanded && classTypes.length > 0 && (
                                             <div className="ml-7 mt-1 space-y-1">
                                                 {classTypes
-                                                    .sort((a, b) => a.display_order - b.display_order)
+                                                    // .sort((a, b) => a.display_order - b.display_order)
+                                                    .sort((a, b) => a.name.localeCompare(b.name))
                                                     .map(type => {
                                                         const typeItemCount = getItemCountForTypeInClass(classMaster.id, type.id);
                                                         const isTypeSelected = filters.selectedClassId === classMaster.id && filters.selectedTypeId === type.id;
