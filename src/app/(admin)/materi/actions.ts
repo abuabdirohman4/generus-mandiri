@@ -1005,3 +1005,59 @@ export async function getMaterialItem(id: string): Promise<MaterialItem | null> 
     classes
   };
 }
+
+export async function bulkUpdateMaterialMapping(
+  itemIds: string[],
+  mappings: { class_master_id: string; semester: number | null }[],
+  mode: 'replace' | 'add'
+) {
+  const supabase = await createClient();
+
+  try {
+    // 1. If mode is replace, delete existing mappings for these items
+    if (mode === 'replace') {
+      const { error: deleteError } = await supabase
+        .from('material_item_classes')
+        .delete()
+        .in('material_item_id', itemIds);
+
+      if (deleteError) {
+        console.error('Error deleting existing mappings:', deleteError);
+        throw new Error('Gagal menghapus mapping lama');
+      }
+    }
+
+    // 2. Prepare new mappings
+    const newMappings = itemIds.flatMap(itemId =>
+      mappings.map(m => ({
+        material_item_id: itemId,
+        class_master_id: m.class_master_id,
+        semester: m.semester
+      }))
+    );
+
+    if (newMappings.length === 0) {
+      revalidatePath('/materi');
+      return { success: true };
+    }
+
+    // 3. Insert new mappings
+    // If mode is 'add', we want to ignore duplicates.
+    // Supabase upsert with ignoreDuplicates: true handles this.
+    // If mode is 'replace', we already deleted, so just insert.
+    const { error: insertError } = await supabase
+      .from('material_item_classes')
+      .upsert(newMappings, { onConflict: 'material_item_id, class_master_id, semester', ignoreDuplicates: true });
+
+    if (insertError) {
+      console.error('Error inserting bulk mappings:', insertError);
+      throw new Error('Gagal menyimpan mapping baru');
+    }
+
+    revalidatePath('/materi');
+    return { success: true };
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    throw error;
+  }
+}

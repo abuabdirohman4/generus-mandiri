@@ -9,18 +9,44 @@ interface MateriTableProps {
     onEdit?: (item: MaterialItem) => void;
     onDelete?: (item: MaterialItem) => void;
     onView?: (item: MaterialItem) => void;
+    selectedIds?: Set<string>;
+    onToggleSelection?: (id: string) => void;
+    onToggleAll?: (selected: boolean) => void;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll }: MateriTableProps) {
+    const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
+    const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
+
     const columns = [
+        ...(onEdit && onDelete && selectedIds && onToggleSelection ? [{
+            key: 'selection',
+            label: (
+                <div className="flex items-center justify-center">
+                    <input
+                        type="checkbox"
+                        checked={allSelected}
+                        // ref={input => {
+                        //     if (input) input.indeterminate = !!someSelected;
+                        // }}
+                        onChange={(e) => onToggleAll?.(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                </div>
+            ),
+            sortable: false,
+            align: 'center' as const,
+            width: '50px',
+            widthMobile: '50px'
+        }] : []),
         {
             key: 'name',
             label: 'NAMA MATERI',
             sortable: true,
             align: 'left' as const,
             width: '30rem',
-            widthMobile: '16rem',
-            leftMargin: 'pl-4'
+            widthMobile: onEdit && onDelete ? '11rem' : '16rem',
+            leftMargin: onEdit && onDelete ? 'pl-1' : 'pl-4'
         },
         ...(onEdit || onDelete
             ? [
@@ -29,7 +55,7 @@ export default function MateriTable({ items, onEdit, onDelete, onView }: MateriT
                     label: 'AKSI',
                     sortable: false,
                     align: 'center' as const,
-                    width: '100px'
+                    width: onEdit && onDelete ? '50px' : '100px',
                 }
             ]
             : [])
@@ -43,6 +69,18 @@ export default function MateriTable({ items, onEdit, onDelete, onView }: MateriT
     }));
 
     const renderCell = (column: any, item: any) => {
+        if (column.key === 'selection') {
+            return (
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                        type="checkbox"
+                        checked={selectedIds?.has(item.id)}
+                        onChange={() => onToggleSelection?.(item.id)}
+                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                </div>
+            );
+        }
         if (column.key === 'name') {
             return (
                 <div className="py-1">
@@ -50,7 +88,7 @@ export default function MateriTable({ items, onEdit, onDelete, onView }: MateriT
                         {item.name}
                     </div>
                     {item.description && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
                             {item.description}
                         </div>
                     )}
@@ -85,18 +123,16 @@ export default function MateriTable({ items, onEdit, onDelete, onView }: MateriT
     };
 
     return (
-        // <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-5">
         <DataTable
             columns={columns}
             data={tableData}
             renderCell={renderCell}
-            pagination={false}
             searchable={false}
+            pagination={true}
             defaultItemsPerPage={25}
             itemsPerPageOptions={[10, 25, 50, 100]}
-            onRowClick={onView ? (item) => onView(item.itemData) : undefined}
+            onRowClick={(item) => onView?.(item.itemData)}
             rowClassName="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
         />
-        // </div>
     );
 }

@@ -10,6 +10,7 @@ import MateriSidebar from './MateriSidebar';
 import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
 import ItemModal from '../modals/ItemModal';
 import ContentViewModal from '../modals/ContentViewModal';
+import BulkMappingUpdateModal from '../modals/BulkMappingUpdateModal';
 import { useMateriStore } from '../../stores/materiStore';
 import { isAdmin, isTeacher } from '@/lib/accessControl';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
@@ -38,6 +39,7 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   // Modal states
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [contentModalOpen, setContentModalOpen] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<MaterialItem | null>(null);
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [defaultTypeId, setDefaultTypeId] = useState<string | undefined>();
@@ -50,6 +52,9 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
     item: null,
     type: 'item'
   });
+
+  // Selection state
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
   // Determine user role
   const isAdminUser = userProfile ? isAdmin(userProfile) : false;
@@ -130,6 +135,34 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
       item: item,
       type: 'item'
     });
+  };
+
+  // Selection Handlers
+  const handleToggleSelection = (id: string) => {
+    setSelectedItemIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const handleToggleAll = (selected: boolean, itemIds: string[]) => {
+    if (selected) {
+      setSelectedItemIds(new Set(itemIds));
+    } else {
+      setSelectedItemIds(new Set());
+    }
+  };
+
+  const handleBulkEdit = () => {
+    if (selectedItemIds.size === 0) return;
+    setBulkModalOpen(true);
+  };
+
+  const handleBulkSuccess = async () => {
+    setSelectedItemIds(new Set());
+    await loadSidebarData();
   };
 
   // Delete confirmation handler
@@ -331,6 +364,10 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                     onViewItem={handleViewContent}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
+                    selectedIds={selectedItemIds}
+                    onToggleSelection={handleToggleSelection}
+                    onToggleAll={handleToggleAll}
+                    onBulkEdit={handleBulkEdit}
                   />
                 )}
               </div>
@@ -360,12 +397,19 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
           item={viewingItem}
         />
 
+        <BulkMappingUpdateModal
+          isOpen={bulkModalOpen}
+          onClose={() => setBulkModalOpen(false)}
+          selectedItems={items.filter(i => selectedItemIds.has(i.id))}
+          onSuccess={handleBulkSuccess}
+        />
+
         <ConfirmModal
           isOpen={deleteConfirm.isOpen}
-          onClose={() => setDeleteConfirm({ isOpen: false, item: null, type: 'item' })}
+          onClose={() => setDeleteConfirm({ ...deleteConfirm, isOpen: false })}
           onConfirm={handleConfirmDelete}
           title="Hapus Item Materi?"
-          message={`Apakah Anda yakin ingin menghapus item materi "${deleteConfirm.item?.name}"?`}
+          message={`Apakah Anda yakin ingin menghapus item "${deleteConfirm.item?.name}"? Tindakan ini tidak dapat dibatalkan.`}
           confirmText="Hapus"
           cancelText="Batal"
           isDestructive={true}

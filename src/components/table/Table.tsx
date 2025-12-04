@@ -2,10 +2,11 @@
 
 import { ReactNode, useState, useMemo, useEffect } from 'react'
 import Spinner from '../ui/spinner/Spinner'
+import { ChevronLeftIcon, ChevronRightIcon } from '@/lib/icons'
 
 interface Column {
   key: string
-  label: string
+  label: ReactNode
   width?: string
   widthMobile?: string
   maxWidth?: string
@@ -309,19 +310,19 @@ export default function DataTable({
                       className={`${column.leftMargin || ''} px-2 sm:px-6 py-4 ${getAlignmentClass(column.align)} text-sm font-semibold text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''} ${isSortable(column) ? 'cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600' : ''}`}
                       style={(() => {
                         const baseStyle: React.CSSProperties = {};
-                        
-                      if (column.widthMobile && isMobile) {
-                        baseStyle.width = column.widthMobile;
-                        baseStyle.minWidth = column.widthMobile;
-                        baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
-                      } else if (column.width) {
+
+                        if (column.widthMobile && isMobile) {
+                          baseStyle.width = column.widthMobile;
+                          baseStyle.minWidth = column.widthMobile;
+                          baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                        } else if (column.width) {
                           baseStyle.width = column.width;
                           baseStyle.minWidth = column.width;
                           baseStyle.maxWidth = column.maxWidth || column.width;
                         } else if (column.maxWidth) {
                           baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
                         }
-                        
+
                         return baseStyle;
                       })()}
                     >
@@ -371,19 +372,19 @@ export default function DataTable({
                             className={`${column.leftMargin || ''} px-2 sm:px-6 py-3 sm:py-4 ${getAlignmentClass(column.align)} text-sm text-gray-900 dark:text-white ${column.width || column.widthMobile ? '' : 'whitespace-nowrap'} ${column.className || ''}`}
                             style={(() => {
                               const baseStyle: React.CSSProperties = {};
-                              
-                            if (column.widthMobile && isMobile) {
-                              baseStyle.width = column.widthMobile;
-                              baseStyle.minWidth = column.widthMobile;
-                              baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
-                            } else if (column.width) {
+
+                              if (column.widthMobile && isMobile) {
+                                baseStyle.width = column.widthMobile;
+                                baseStyle.minWidth = column.widthMobile;
+                                baseStyle.maxWidth = column.maxWidthMobile || column.widthMobile;
+                              } else if (column.width) {
                                 baseStyle.width = column.width;
                                 baseStyle.minWidth = column.width;
                                 baseStyle.maxWidth = column.maxWidth || column.width;
                               } else if (column.maxWidth) {
                                 baseStyle.maxWidth = isMobile && column.maxWidthMobile ? column.maxWidthMobile : column.maxWidth;
                               }
-                              
+
                               return baseStyle;
                             })()}
                           >
@@ -429,21 +430,23 @@ export default function DataTable({
           <div className="flex items-center gap-1">
             {/* First Page */}
             <button
-              onClick={goToFirstPage}
+              // onClick={goToFirstPage}
+              onClick={goToPreviousPage}
               disabled={currentPage === 1}
               className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-l-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
             >
-              First
+              <ChevronLeftIcon className="w-5 h-5" />
+              {/* First */}
             </button>
 
             {/* Previous Page */}
-            <button
+            {/* <button
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
               className="px-2 py-1 text-sm border-t border-b border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
             >
               Previous
-            </button>
+            </button> */}
 
             {/* Page Numbers */}
             {getPageNumbers().map(pageNum => (
@@ -460,21 +463,23 @@ export default function DataTable({
             ))}
 
             {/* Next Page */}
-            <button
+            {/* <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
               className="px-2 py-1 text-sm border-t border-b border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
             >
               Next
-            </button>
+            </button> */}
 
             {/* Last Page */}
             <button
-              onClick={goToLastPage}
+              onClick={goToNextPage}
+              // onClick={goToLastPage}
               disabled={currentPage === totalPages}
               className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-r-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
             >
-              Last
+              <ChevronRightIcon className="w-5 h-5" />
+              {/* Last */}
             </button>
           </div>
         </div>
