@@ -40,7 +40,7 @@ export async function createAcademicYear(input: AcademicYearInput): Promise<Acad
 
     if (error) throw new Error(error.message);
 
-    revalidatePath('/academic-years');
+    revalidatePath('/tahun-ajaran');
     return data;
 }
 
@@ -54,7 +54,7 @@ export async function updateAcademicYear(id: string, input: Partial<AcademicYear
 
     if (error) throw new Error(error.message);
 
-    revalidatePath('/academic-years');
+    revalidatePath('/tahun-ajaran');
 }
 
 export async function setActiveAcademicYear(id: string): Promise<void> {
@@ -74,7 +74,7 @@ export async function setActiveAcademicYear(id: string): Promise<void> {
 
     if (error) throw new Error(error.message);
 
-    revalidatePath('/academic-years');
+    revalidatePath('/tahun-ajaran');
 }
 
 export async function deleteAcademicYear(id: string): Promise<void> {
@@ -98,5 +98,5 @@ export async function deleteAcademicYear(id: string): Promise<void> {
 
     if (error) throw new Error(error.message);
 
-    revalidatePath('/academic-years');
+    revalidatePath('/tahun-ajaran');
 }
