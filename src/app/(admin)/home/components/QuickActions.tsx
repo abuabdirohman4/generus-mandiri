@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
 import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
+import { isCaberawitClass } from '@/lib/utils/classHelpers';
 
 interface Profile {
   id: string;
@@ -38,15 +39,17 @@ interface QuickActionItem {
   iconColor: string;
   adminOnly?: boolean;
   excludeAdminKelompok?: boolean;
-  disabled?: boolean;
+  disabled?: boolean; 
 }
 
 export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
   const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
-  console.log('isTeacher', isTeacher(profile))
-  console.log('!isKelas6Warlob', !isKelas6Warlob)
+  const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
+  // console.log('isTeacher', isTeacher(profile))
+  // console.log('!isKelas6Warlob', !isKelas6Warlob)
+  console.log('teacherCaberawit', teacherCaberawit)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -124,6 +127,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       icon: <BookOpenIcon className="w-6 h-6" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
+      adminOnly: teacherCaberawit ? false : true,
       disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
     },
     {
@@ -153,6 +157,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
       iconColor: 'text-emerald-600 dark:text-emerald-400',
+      adminOnly: teacherCaberawit ? false : true,
       disabled: true // Coming soon - Phase 2
     },
     {
@@ -167,6 +172,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-rose-100 dark:bg-rose-900',
       iconColor: 'text-rose-600 dark:text-rose-400',
+      adminOnly: teacherCaberawit ? false : true,
       disabled: true // Coming soon - Phase 3
     },
     {
@@ -183,7 +189,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: isTeacher(profile) ? true : false
     },
     {
-      id: 'admin-users',
+      id: 'admin',
       name: 'Admin',
       description: 'Kelola data admin',
       href: '/users/admin',

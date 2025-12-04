@@ -30,7 +30,6 @@ export interface ClassData {
  * Returns true if the class has a class_master with category code 'CABERAWIT' or 'PAUD' (case-insensitive)
  */
 export function isCaberawitClass(classData: ClassData): boolean {
-  console.log("function isCaberawitClass classData", classData)
   if (!classData.class_master_mappings || classData.class_master_mappings.length === 0) {
     return false
   }
