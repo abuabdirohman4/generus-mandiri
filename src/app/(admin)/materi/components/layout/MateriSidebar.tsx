@@ -5,6 +5,7 @@ import { MaterialCategory, MaterialType, MaterialItem, ClassMaster } from '../..
 import { useMateriStore } from '../../stores/materiStore';
 import Skeleton from '@/components/ui/skeleton/Skeleton';
 import { isMobile } from '@/lib/utils';
+import { SemesterSection } from './SemesterSection';
 
 interface MateriSidebarProps {
     categories: MaterialCategory[];
@@ -105,6 +106,82 @@ export default function MateriSidebar({
             newExpanded.add(classId);
         }
         setExpandedClasses(newExpanded);
+    };
+
+    // Semester expansion state
+    const [expandedSemesters, setExpandedSemesters] = useState<
+        Record<string, Set<1 | 2 | 'uncategorized'>>
+    >({});
+
+    const toggleSemesterExpand = (classId: string, semester: 1 | 2 | 'uncategorized') => {
+        setExpandedSemesters(prev => {
+            const classExpanded = prev[classId] || new Set();
+            const newSet = new Set(classExpanded);
+
+            if (newSet.has(semester)) {
+                newSet.delete(semester);
+            } else {
+                newSet.add(semester);
+            }
+
+            return { ...prev, [classId]: newSet };
+        });
+    };
+
+    const isSemesterExpanded = (classId: string, semester: 1 | 2 | 'uncategorized') => {
+        return expandedSemesters[classId]?.has(semester) || false;
+    };
+
+    // Helper functions for semester-based filtering
+    const getItemsBySemesterForClass = (classId: string) => {
+        const classItems = items.filter(i => i.classes?.some(c => c.id === classId));
+
+        return {
+            semester1: classItems.filter(i =>
+                i.classes?.some(c => c.id === classId && c.semester === 1)
+            ),
+            semester2: classItems.filter(i =>
+                i.classes?.some(c => c.id === classId && c.semester === 2)
+            ),
+            uncategorized: classItems.filter(i =>
+                i.classes?.some(c => c.id === classId && !c.semester)
+            )
+        };
+    };
+
+    const getTypesForSemesterInClass = (classId: string, semester: 1 | 2 | null) => {
+        const semesterItems = semester === null
+            ? getItemsBySemesterForClass(classId).uncategorized
+            : semester === 1
+                ? getItemsBySemesterForClass(classId).semester1
+                : getItemsBySemesterForClass(classId).semester2;
+
+        const typeIds = new Set(semesterItems.map(i => i.material_type_id));
+        return types.filter(t => typeIds.has(t.id));
+    };
+
+    const getItemCountForTypeInSemester = (
+        classId: string,
+        typeId: string,
+        semester: 1 | 2 | null
+    ) => {
+        return items.filter(i =>
+            i.material_type_id === typeId &&
+            i.classes?.some(c =>
+                c.id === classId &&
+                (semester === null ? !c.semester : c.semester === semester)
+            )
+        ).length;
+    };
+
+    const handleSemesterTypeClick = (classId: string, typeId: string, semester: 1 | 2 | null) => {
+        setFilter('selectedClassId', classId);
+        setFilter('selectedTypeId', typeId);
+        setFilter('selectedSemester', semester);
+        setFilter('selectedCategoryId', null);
+        if (isMobile()) {
+            onToggle();
+        }
     };
 
     return (
@@ -264,33 +341,34 @@ export default function MateriSidebar({
                                 })}
                         </>
                     ) : (
-                        // Class List for Class View - Expandable with Types nested
+                        // Class List for Class View - Nested Semesters
                         <>
                             {classes.map(classMaster => {
-                                const itemCount = getItemCountForClass(classMaster.id);
-                                const classTypes = getTypesForClass(classMaster.id);
+                                const itemsBySemester = getItemsBySemesterForClass(classMaster.id);
+                                const totalCount = itemsBySemester.semester1.length +
+                                    itemsBySemester.semester2.length +
+                                    itemsBySemester.uncategorized.length;
                                 const isExpanded = expandedClasses.has(classMaster.id);
 
                                 return (
                                     <div key={classMaster.id} className="mb-2">
                                         {/* Class Header */}
-                                        <div 
+                                        <div
                                             onClick={() => toggleClassExpand(classMaster.id)}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isExpanded ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isExpanded
+                                                    ? 'bg-gray-100 dark:bg-gray-700'
+                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                }`}
                                         >
                                             {/* Expand/Collapse Icon */}
-                                            <button className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                                                {classTypes.length > 0 && (
-                                                    <svg
-                                                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                )}
-                                            </button>
+                                            <svg
+                                                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
 
                                             {/* Class Icon */}
                                             <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
@@ -298,58 +376,65 @@ export default function MateriSidebar({
                                                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                                                 </svg>
                                             </div>
-                                            {/* <div className="flex-shrink-0 text-yellow-500">
-                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                                                </svg>
-                                            </div> */}
 
                                             {/* Class Name */}
                                             <div className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                                                 {classMaster.name}
                                             </div>
 
-                                            {/* Item Count */}
+                                            {/* Total Count */}
                                             <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
-                                                {itemCount}
+                                                {totalCount}
                                             </div>
                                         </div>
 
-                                        {/* Types (nested) */}
-                                        {isExpanded && classTypes.length > 0 && (
-                                            <div className="ml-7 mt-1 space-y-1">
-                                                {classTypes
-                                                    // .sort((a, b) => a.display_order - b.display_order)
-                                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                                    .map(type => {
-                                                        const typeItemCount = getItemCountForTypeInClass(classMaster.id, type.id);
-                                                        const isTypeSelected = filters.selectedClassId === classMaster.id && filters.selectedTypeId === type.id;
+                                        {/* Nested Semesters */}
+                                        {isExpanded && (
+                                            <div className="ml-6 mt-1 space-y-1">
+                                                {/* Semester 1 */}
+                                                <SemesterSection
+                                                    classId={classMaster.id}
+                                                    semester={1}
+                                                    items={itemsBySemester.semester1}
+                                                    isExpanded={isSemesterExpanded(classMaster.id, 1)}
+                                                    onToggle={() => toggleSemesterExpand(classMaster.id, 1)}
+                                                    getTypesForSemester={getTypesForSemesterInClass}
+                                                    getItemCountForType={getItemCountForTypeInSemester}
+                                                    onTypeClick={handleSemesterTypeClick}
+                                                    selectedTypeId={filters.selectedTypeId}
+                                                    selectedSemester={filters.selectedSemester}
+                                                />
 
-                                                        return (
-                                                            <div
-                                                                key={type.id}
-                                                                onClick={() => handleClassTypeClick(classMaster.id, type.id)}
-                                                                className={`flex items-center gap-2 px-3 py-2 ml-3 rounded-lg cursor-pointer transition-colors ${isTypeSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'}`}
-                                                            >
-                                                                {/* List Icon */}
-                                                                <div className="flex-shrink-0">
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                                                    </svg>
-                                                                </div>
+                                                {/* Semester 2 */}
+                                                <SemesterSection
+                                                    classId={classMaster.id}
+                                                    semester={2}
+                                                    items={itemsBySemester.semester2}
+                                                    isExpanded={isSemesterExpanded(classMaster.id, 2)}
+                                                    onToggle={() => toggleSemesterExpand(classMaster.id, 2)}
+                                                    getTypesForSemester={getTypesForSemesterInClass}
+                                                    getItemCountForType={getItemCountForTypeInSemester}
+                                                    onTypeClick={handleSemesterTypeClick}
+                                                    selectedTypeId={filters.selectedTypeId}
+                                                    selectedSemester={filters.selectedSemester}
+                                                />
 
-                                                                {/* Type Name */}
-                                                                <div className="flex-1 text-sm">
-                                                                    {type.name}
-                                                                </div>
-
-                                                                {/* Item Count */}
-                                                                <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
-                                                                    {typeItemCount}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                {/* Uncategorized */}
+                                                {itemsBySemester.uncategorized.length > 0 && (
+                                                    <SemesterSection
+                                                        classId={classMaster.id}
+                                                        semester={null}
+                                                        items={itemsBySemester.uncategorized}
+                                                        isExpanded={isSemesterExpanded(classMaster.id, 'uncategorized')}
+                                                        onToggle={() => toggleSemesterExpand(classMaster.id, 'uncategorized')}
+                                                        getTypesForSemester={getTypesForSemesterInClass}
+                                                        getItemCountForType={getItemCountForTypeInSemester}
+                                                        onTypeClick={handleSemesterTypeClick}
+                                                        selectedTypeId={filters.selectedTypeId}
+                                                        selectedSemester={filters.selectedSemester}
+                                                        isUncategorized
+                                                    />
+                                                )}
                                             </div>
                                         )}
                                     </div>

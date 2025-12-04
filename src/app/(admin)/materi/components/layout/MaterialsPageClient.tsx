@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../../types';
-import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem } from '../../actions';
+import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
 import MaterialsLayout from '../daily/MaterialsLayout';
 import MasterDataView from '../views/MasterDataView';
 import MateriContentView from '../views/MateriContentView';
@@ -148,8 +148,32 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   };
 
   // Success handler after create/update
-  const handleItemSuccess = async () => {
-    await loadSidebarData();
+  const handleItemSuccess = async (itemId?: string) => {
+    if (itemId) {
+      // Optimistic update: fetch only the updated item
+      try {
+        const updatedItem = await getMaterialItem(itemId);
+        if (updatedItem) {
+          setItems(prevItems => {
+            const index = prevItems.findIndex(i => i.id === itemId);
+            if (index >= 0) {
+              // Update existing
+              const newItems = [...prevItems];
+              newItems[index] = updatedItem;
+              return newItems;
+            } else {
+              // Add new
+              return [...prevItems, updatedItem];
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error updating item locally:', error);
+        await loadSidebarData(); // Fallback
+      }
+    } else {
+      await loadSidebarData();
+    }
   };
 
   return (

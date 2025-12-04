@@ -2,6 +2,7 @@
 export interface ClassMaster {
   id: string;
   name: string;
+  semester?: number | null; // Semester info from material_item_classes mapping
   category?: {
     id: string;
     code: string;

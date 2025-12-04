@@ -411,11 +411,14 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
 
   const mappingsData = allMappingsData;
 
-  // 3. Map classes to items
+  // 3. Map classes to items with semester info
   const items = (itemsData || []).map((item: any) => {
     const itemMappings = mappingsData?.filter((m: any) => m.material_item_id === item.id) || [];
     const classes = itemMappings
-      .map((m: any) => m.class_master)
+      .map((m: any) => ({
+        ...m.class_master,
+        semester: m.semester // Include semester from mapping
+      }))
       .filter((cm: any) => cm); // Filter out nulls
 
     return {
@@ -951,4 +954,54 @@ export async function updateMaterialItemClassMappings(
 
   revalidatePath('/materi');
   return { success: true };
+}
+
+export async function getMaterialItem(id: string): Promise<MaterialItem | null> {
+  const supabase = await createClient();
+
+  // 1. Fetch item with type
+  const { data: itemData, error: itemError } = await supabase
+    .from('material_items')
+    .select(`
+      *,
+      material_type:material_types(
+        *,
+        category:material_categories(*)
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (itemError) {
+    console.error('Error getting material item:', itemError);
+    return null;
+  }
+
+  // 2. Fetch class mappings
+  const { data: mappingsData, error: mappingsError } = await supabase
+    .from('material_item_classes')
+    .select(`
+      material_item_id,
+      semester,
+      class_master:class_masters(*)
+    `)
+    .eq('material_item_id', id);
+
+  if (mappingsError) {
+    console.error('Error getting class mappings:', mappingsError);
+    // Continue without mappings if error
+  }
+
+  // 3. Map classes
+  const classes = (mappingsData || [])
+    .map((m: any) => ({
+      ...m.class_master,
+      semester: m.semester
+    }))
+    .filter((cm: any) => cm);
+
+  return {
+    ...itemData,
+    classes
+  };
 }

@@ -6,6 +6,7 @@ export interface MateriFilters {
     selectedCategoryId: string | null
     selectedTypeId: string | null
     selectedClassId: string | null
+    selectedSemester: 1 | 2 | null
     searchQuery: string
     sidebarCollapsed: boolean
 }
@@ -22,6 +23,7 @@ const defaultFilters: MateriFilters = {
     selectedCategoryId: null,
     selectedTypeId: null,
     selectedClassId: null,
+    selectedSemester: null,
     searchQuery: '',
     sidebarCollapsed: false
 }

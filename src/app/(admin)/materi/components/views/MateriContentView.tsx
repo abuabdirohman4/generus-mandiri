@@ -63,6 +63,30 @@ export default function MateriContentView({
             result = result.filter(i => i.material_type_id === filters.selectedTypeId);
         }
 
+        // Filter by selected semester (from sidebar)
+        // Note: selectedSemester can be 1, 2, or null (for uncategorized)
+        // But here we need to handle the logic carefully because null in store might mean "no semester selected" or "uncategorized"
+        // In our case, if selectedTypeId is set, selectedSemester should also be respected if it was set by the sidebar click
+        if (filters.selectedClassId && filters.selectedTypeId) {
+            // If we are filtering by class AND type, we should also check semester
+            // The sidebar sets selectedSemester when clicking a type under a semester section
+
+            if (filters.selectedSemester !== undefined) {
+                result = result.filter(item => {
+                    const classMapping = item.classes?.find(c => c.id === filters.selectedClassId);
+                    if (!classMapping) return false;
+
+                    if (filters.selectedSemester === null) {
+                        // Uncategorized: semester is null or undefined
+                        return !classMapping.semester;
+                    } else {
+                        // Specific semester
+                        return classMapping.semester === filters.selectedSemester;
+                    }
+                });
+            }
+        }
+
         // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -73,7 +97,7 @@ export default function MateriContentView({
         }
 
         return result;
-    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, userProfile, isTeacherUser, searchQuery]);
+    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, filters.selectedSemester, userProfile, isTeacherUser, searchQuery]);
 
     // Get current type/category info for header
     const selectedType = useMemo(() => {
@@ -157,26 +181,26 @@ export default function MateriContentView({
                 </div>
                 {onCreateItem && (
                     <>
-                    <button
-                        onClick={onCreateItem}
-                        className="hidden  md:flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm ml-auto md:ml-0"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span className="md:inline">Tambah Materi</span>
-                        {/* <span className="md:hidden">Tambah</span> */}
-                    </button>
-
-                     <button
-                        onClick={onCreateItem}
-                        className="fixed md:hidden bottom-[70px] md:bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
-                        title="Buat Pertemuan Baru"
+                        <button
+                            onClick={onCreateItem}
+                            className="hidden  md:flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm ml-auto md:ml-0"
                         >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                    </button>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="md:inline">Tambah Materi</span>
+                            {/* <span className="md:hidden">Tambah</span> */}
+                        </button>
+
+                        <button
+                            onClick={onCreateItem}
+                            className="fixed md:hidden bottom-[70px] md:bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
+                            title="Buat Pertemuan Baru"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </button>
                     </>
                 )}
             </div>

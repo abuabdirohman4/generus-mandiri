@@ -22,7 +22,7 @@ interface ItemModalProps {
   onClose: () => void;
   item: MaterialItem | null;
   defaultTypeId?: string;
-  onSuccess: () => void;
+  onSuccess: (itemId?: string) => void;
 }
 
 interface ClassMappingState {
@@ -203,7 +203,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         await updateMaterialItemClassMappings(itemId, mappingsToSave);
       }
 
-      onSuccess();
+      onSuccess(itemId);
       onClose();
     } catch (error: any) {
       console.error('Error saving item:', error);
@@ -317,8 +317,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                 <div className="grid grid-cols-2 gap-3">
                   <label
                     className={`relative flex items-center justify-center gap-3 cursor-pointer px-4 py-3 rounded-lg border-2 transition-all ${selectedSemesters.has(1)
-                        ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
-                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
+                      ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
+                      : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
                       }`}
                   >
                     <input
@@ -328,8 +328,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                       className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
                     />
                     <span className={`text-sm font-medium ${selectedSemesters.has(1)
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300'
+                      ? 'text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300'
                       }`}>
                       Semester 1
                     </span>
@@ -341,8 +341,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                   </label>
                   <label
                     className={`relative flex items-center justify-center gap-3 cursor-pointer px-4 py-3 rounded-lg border-2 transition-all ${selectedSemesters.has(2)
-                        ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
-                        : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
+                      ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-500 shadow-sm'
+                      : 'bg-white border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500'
                       }`}
                   >
                     <input
@@ -352,8 +352,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                       className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
                     />
                     <span className={`text-sm font-medium ${selectedSemesters.has(2)
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300'
+                      ? 'text-blue-700 dark:text-blue-300'
+                      : 'text-gray-700 dark:text-gray-300'
                       }`}>
                       Semester 2
                     </span>
@@ -379,8 +379,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                       <label
                         key={cls.id}
                         className={`relative flex items-center gap-2.5 cursor-pointer px-3 py-2.5 rounded-lg border transition-all ${selectedClasses.has(cls.id)
-                            ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20 dark:border-blue-600 shadow-sm'
-                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-750'
+                          ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20 dark:border-blue-600 shadow-sm'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-750'
                           }`}
                       >
                         <input
@@ -390,8 +390,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
                           className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-500"
                         />
                         <span className={`text-sm flex-1 ${selectedClasses.has(cls.id)
-                            ? 'text-blue-700 font-medium dark:text-blue-300'
-                            : 'text-gray-700 dark:text-gray-300'
+                          ? 'text-blue-700 font-medium dark:text-blue-300'
+                          : 'text-gray-700 dark:text-gray-300'
                           }`}>
                           {cls.name}
                         </span>
