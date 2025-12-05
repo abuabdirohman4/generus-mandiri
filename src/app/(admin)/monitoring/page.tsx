@@ -280,18 +280,6 @@ export default function MonitoringPage() {
         }
     };
 
-    // Navigate to previous/next student
-    const navigateStudent = (direction: 'prev' | 'next') => {
-        const currentIndex = students.findIndex(s => s.id === selectedStudentId);
-        if (currentIndex === -1) return;
-
-        if (direction === 'prev' && currentIndex > 0) {
-            setSelectedStudentId(students[currentIndex - 1].id);
-        } else if (direction === 'next' && currentIndex < students.length - 1) {
-            setSelectedStudentId(students[currentIndex + 1].id);
-        }
-    };
-
     // Calculate student completion percentage (average nilai)
     const getStudentCompletion = (studentId: string): number => {
         if (filteredMaterials.length === 0) return 0;
@@ -365,7 +353,11 @@ export default function MonitoringPage() {
         return options;
     }, [classes, kelompok, userProfile?.role]);
 
-    const currentStudent = students.find(s => s.id === selectedStudentId);
+    const currentStudent = selectedStudentId
+        ? students.find(s => s.id === selectedStudentId)
+        : students.length > 0
+            ? students.sort((a, b) => a.name.localeCompare(b.name))[0]
+            : undefined;
     const currentStudentIndex = students.findIndex(s => s.id === selectedStudentId);
 
     // Get selected class name for display

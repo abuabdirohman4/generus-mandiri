@@ -164,69 +164,72 @@ export default function StudentSidebar({
                         </div>
                     ) : (
                         <div className="p-2 space-y-1">
-                            {filteredStudents.map(student => {
-                                const completion = getStudentCompletion(student.id);
-                                const progressColor = getProgressColor(completion);
-                                const isSelected = student.id === selectedStudentId;
-                                const initial = student.name.charAt(0).toUpperCase();
+                            {filteredStudents
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map(student => {
+                                    const completion = getStudentCompletion(student.id);
+                                    const progressColor = getProgressColor(completion);
+                                    const isSelected = student.id === selectedStudentId;
+                                    const initial = student.name.charAt(0).toUpperCase();
 
-                                return (
-                                    <button
-                                        key={student.id}
-                                        onClick={() => {
-                                            onStudentSelect(student.id);
-                                            // Close sidebar on mobile after selection
-                                            if (window.innerWidth < 768) {
-                                                onToggle();
-                                            }
-                                        }}
-                                        className={`
-                                            w-full text-left p-3 rounded-lg transition-colors
-                                            ${isSelected
-                                                ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
-                                                : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-transparent'
-                                            }
-                                        `}
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className={`
-                                                w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold
-                                                ${isSelected ? 'bg-blue-600' : 'bg-gray-400'}
-                                            `}>
-                                                {initial}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-medium text-gray-900 dark:text-white truncate">
-                                                    {student.name}
+                                    return (
+                                        <button
+                                            key={student.id}
+                                            onClick={() => {
+                                                onStudentSelect(student.id);
+                                                // Close sidebar on mobile after selection
+                                                if (window.innerWidth < 768) {
+                                                    onToggle();
+                                                }
+                                            }}
+                                            className={`
+                                                w-full text-left p-3 rounded-lg transition-colors
+                                                ${isSelected
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-transparent'
+                                                }
+                                            `}
+                                        >
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <div className={`
+                                                    w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold
+                                                    ${isSelected ? 'bg-blue-600' : 'bg-gray-400'}
+                                                `}>
+                                                    {initial}
                                                 </div>
-                                                {/* Commented until NIS ready 
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                    NIS: {student.nis || '-'}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-gray-900 dark:text-white truncate">
+                                                        {student.name}
+                                                    </div>
+                                                    {/* Commented until NIS ready 
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        NIS: {student.nis || '-'}
+                                                    </div>
+                                                    */}
                                                 </div>
-                                                */}
                                             </div>
-                                        </div>
 
-                                        {/* Progress Bar */}
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="text-gray-600 dark:text-gray-400">
-                                                    Progress
-                                                </span>
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {completion}%
-                                                </span>
+                                            {/* Progress Bar */}
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-gray-600 dark:text-gray-400">
+                                                        Progress
+                                                    </span>
+                                                    <span className="font-medium text-gray-900 dark:text-white">
+                                                        {completion}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full ${progressColor} transition-all duration-300`}
+                                                        style={{ width: `${completion}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full ${progressColor} transition-all duration-300`}
-                                                    style={{ width: `${completion}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                                        </button>
+                                    );
+                                }
+                            )}
                         </div>
                     )}
                 </div>

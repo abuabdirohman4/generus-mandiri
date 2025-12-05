@@ -15,11 +15,11 @@
     - [x] Untuk Bulan bisa diatur bulan apa
     - [x] Persentase global dibuat dinamis
 - [ ] Halaman Raport
-- [ ] Monitoring Materi
+- [x] Monitoring Materi
     - [x] Collapsed Filter
     - [x] Skeleton Loading
-    - [ ] Pilihan "Pilih Semua Kelas"
-    - [ ] Default langsung munculin semua kelas
+    - [x] Pilihan "Pilih Semua Kelas"
+    - [-] Default langsung munculin semua kelas
 - [x] Menu bisa di klik kanan
 - [ ] Halaman Materi
     - [ ] Handle materi kelas sebelumnya
