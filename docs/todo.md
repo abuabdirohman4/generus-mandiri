@@ -4,34 +4,40 @@
     [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
     [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
     [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
-- [ ] Fix Absensi persentase & meeting detail
-- [ ] Clear cachae when login/logout for dashboard
+- [x] Fix Absensi persentase & meeting detail
+- [x] Clear cachae when login/logout for dashboard
+- [ ] Fix styling academic years in mobile 
 
 ## v1.10.0
-- [x] Add Dashboard Admin
+- [x] Dashboard Admin
     - [x] Untuk Per hari dibuat flexible hari apa
     - [x] Untuk Minggu juga bisa flexible
     - [x] Untuk Bulan bisa diatur bulan apa
     - [x] Persentase global dibuat dinamis
-- [ ] Add Halaman Raport
-- [ ] Add Halaman Materi
-    - [ ] Monitoring Materi
+- [ ] Halaman Raport
+- [ ] Monitoring Materi
+    - [x] Collapsed Filter
+    - [x] Skeleton Loading
+    - [ ] Pilihan "Pilih Semua Kelas"
+    - [ ] Default langsung munculin semua kelas
 - [x] Menu bisa di klik kanan
-- [ ] Add Halaman Materi
+- [ ] Halaman Materi
+    - [ ] Handle materi kelas sebelumnya
+    - [ ] Bug di bulk action
     - [x] Master Data (Show all materi)
     - [x] Per Kelas
         Per Materi (Category for info)
         Per Sub Materi
     - [x] Mobile
         - [x] Saat pilih kategori sidebar langsung tertutup
-    - Per Hari
-        Per Materi
     - [ ] CRUD Kategori
     - [ ] CRUD Materi Type
-    - [ ] CRUD Materi
-        - [ ] Di Klik langsung munculin materi
-        - [ ] Guru hanya bisa lihat, admin bisa CRUD
-        - [ ] Bisa nentuin di ajar di kelas mana, semester berapa
+    - [x] CRUD Materi
+        - [x] Di Klik langsung munculin materi
+        - [x] Guru hanya bisa lihat, admin bisa CRUD
+        - [x] Bisa nentuin di ajar di kelas mana, semester berapa
+    - Per Hari
+        Per Materi
 
 ## v1.9.2
 - [x] Add Tipe Pertemuan ASAD

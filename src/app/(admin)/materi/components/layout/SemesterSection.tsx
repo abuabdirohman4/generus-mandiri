@@ -78,7 +78,8 @@ export const SemesterSection = ({
             {isExpanded && types.length > 0 && (
                 <div className="ml-5 mt-1 space-y-1">
                     {types
-                        .sort((a, b) => a.display_order - b.display_order)
+                        // .sort((a, b) => a.display_order - b.display_order)
+                        .sort((a, b) => a.name.localeCompare(b.name))
                         .map(type => {
                             const count = getItemCountForType(classId, type.id, semester);
                             const isSelected = selectedTypeId === type.id && selectedSemester === semester;

@@ -14,16 +14,19 @@ import { ProgressInput } from './types';
 import { getGrade } from '@/lib/percentages';
 import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
+import { isMobile } from '@/lib/utils';
 
 interface Student {
     id: string;
     name: string;
+    class_name?: string; // For displaying class when "Pilih Semua" is selected
 }
 
 interface Material {
     id: string;
     name: string;
     material_type?: {
+        name?: string;
         material_category?: {
             id: string;
             name: string;
@@ -61,13 +64,22 @@ export default function MonitoringPage() {
     const [materials, setMaterials] = useState<Material[]>([]);
     const [progressMap, setProgressMap] = useState<Map<string, Progress>>(new Map());
     const [loading, setLoading] = useState(false);
+    const [filterLoading, setFilterLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
     // Load initial data
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    // Auto-collapse filter on mobile when student is selected
+    useEffect(() => {
+        if (selectedStudentId && isMobile()) {
+            setIsFilterCollapsed(true);
+        }
+    }, [selectedStudentId]);
 
     // Load class data when filters change
     useEffect(() => {
@@ -88,6 +100,8 @@ export default function MonitoringPage() {
 
     const loadInitialData = async () => {
         try {
+            setFilterLoading(true);
+
             const activeYear = await getActiveAcademicYear();
             if (activeYear) {
                 setSelectedYearId(activeYear.id);
@@ -96,6 +110,10 @@ export default function MonitoringPage() {
             // Load kelompok data for label formatting
             const kelompokData = await getAllKelompok();
             setKelompok(kelompokData);
+
+            // Load hafalan categories
+            const categoriesData = await getHafalanCategories();
+            setHafalanCategories(categoriesData);
 
             // Get all Caberawit/PAUD classes
             const classesData = await getClasses();
@@ -110,16 +128,15 @@ export default function MonitoringPage() {
 
             setClasses(filteredClasses);
 
-            // Load hafalan categories from database
-            const categories = await getHafalanCategories();
-            setHafalanCategories(categories);
-
             // Auto-select first category
-            if (categories.length > 0 && !selectedCategoryId) {
-                setSelectedCategoryId(categories[0].id);
+            if (categoriesData.length > 0 && !selectedCategoryId) {
+                setSelectedCategoryId(categoriesData[0].id);
             }
         } catch (error: any) {
             toast.error(error.message || 'Gagal memuat data awal');
+            console.error('Failed to load initial data:', error);
+        } finally {
+            setFilterLoading(false);
         }
     };
 
@@ -127,30 +144,89 @@ export default function MonitoringPage() {
         try {
             setLoading(true);
 
-            // Load students and progress
-            const classData = await getClassProgress(
-                selectedClassId,
-                selectedYearId,
-                selectedSemester
-            );
+            // Handle "Pilih Semua" case - load all students from all classes
+            if (selectedClassId === 'ALL') {
+                const allStudentsMap = new Map<string, Student>();
+                const allProgressMap = new Map<string, Progress>();
+                let allMaterials: Material[] = [];
 
-            if (classData) {
-                setStudents(classData.students || []);
+                // Load data for each class
+                for (const classData of classes) {
+                    try {
+                        const classProgress = await getClassProgress(
+                            classData.id,
+                            selectedYearId,
+                            selectedSemester
+                        );
 
-                const map = new Map<string, Progress>();
-                classData.progress?.forEach((p: any) => {
-                    const key = `${p.student_id}-${p.material_item_id}`;
-                    map.set(key, p);
-                });
-                setProgressMap(map);
+                        if (classProgress) {
+                            // Add students with class info
+                            classProgress.students?.forEach((student: Student) => {
+                                if (!allStudentsMap.has(student.id)) {
+                                    allStudentsMap.set(student.id, {
+                                        ...student,
+                                        class_name: classData.name // Add class name for display
+                                    });
+                                }
+                            });
+
+                            // Merge progress
+                            classProgress.progress?.forEach((p: any) => {
+                                const key = `${p.student_id}-${p.material_item_id}`;
+                                allProgressMap.set(key, p);
+                            });
+                        }
+
+                        // Load materials for this class
+                        const classMaterials = await getMaterialsByClassAndSemester(
+                            classData.id,
+                            selectedSemester
+                        );
+
+                        // Merge materials (avoid duplicates)
+                        if (classMaterials) {
+                            classMaterials.forEach((m: Material) => {
+                                if (!allMaterials.find(existing => existing.id === m.id)) {
+                                    allMaterials.push(m);
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error loading data for class ${classData.name}:`, error);
+                    }
+                }
+
+                setStudents(Array.from(allStudentsMap.values()));
+                setProgressMap(allProgressMap);
+                setMaterials(allMaterials);
+            } else {
+                // Single class selection - original logic
+                // Load students and progress
+                const classData = await getClassProgress(
+                    selectedClassId,
+                    selectedYearId,
+                    selectedSemester
+                );
+
+                if (classData) {
+                    setStudents(classData.students || []);
+
+                    const map = new Map<string, Progress>();
+                    classData.progress?.forEach((p: any) => {
+                        const key = `${p.student_id}-${p.material_item_id}`;
+                        map.set(key, p);
+                    });
+                    setProgressMap(map);
+                }
+
+                // Load materials
+                const materialsData = await getMaterialsByClassAndSemester(
+                    selectedClassId,
+                    selectedSemester
+                );
+                setMaterials(materialsData || []);
             }
 
-            // Load materials
-            const materialsData = await getMaterialsByClassAndSemester(
-                selectedClassId,
-                selectedSemester
-            );
-            setMaterials(materialsData || []);
 
         } catch (error: any) {
             toast.error(error.message || 'Gagal memuat data kelas');
@@ -242,6 +318,8 @@ export default function MonitoringPage() {
     const classOptions = useMemo(() => {
         if (!classes.length) return [];
 
+        let options: { value: string; label: string }[] = [];
+
         // For teacher with multiple classes, check for duplicate names
         if (userProfile?.role === 'teacher' && classes.length > 1 && kelompok.length > 0) {
             // Create mapping kelompok_id -> kelompok name
@@ -256,7 +334,7 @@ export default function MonitoringPage() {
             }, {} as Record<string, number>);
 
             // Format labels
-            return classes.map((cls: any) => {
+            options = classes.map((cls: any) => {
                 const hasDuplicate = nameCounts[cls.name] > 1;
                 const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null;
                 const label = hasDuplicate && kelompokName
@@ -268,13 +346,23 @@ export default function MonitoringPage() {
                     label
                 };
             });
+        } else {
+            // For non-teacher or single class, just use simple mapping
+            options = classes.map((c: any) => ({
+                value: c.id,
+                label: c.name
+            }));
         }
 
-        // For non-teacher or single class, just use simple mapping
-        return classes.map((c: any) => ({
-            value: c.id,
-            label: c.name
-        }));
+        // Add "Pilih Semua" option at the beginning if there are multiple classes
+        if (classes.length > 1) {
+            options.unshift({
+                value: 'ALL',
+                label: 'Semua Kelas'
+            });
+        }
+
+        return options;
     }, [classes, kelompok, userProfile?.role]);
 
     const currentStudent = students.find(s => s.id === selectedStudentId);
@@ -282,13 +370,15 @@ export default function MonitoringPage() {
 
     // Get selected class name for display
     const selectedClass = classes.find(c => c.id === selectedClassId);
-    const selectedClassName = classOptions.find(opt => opt.value === selectedClassId)?.label || selectedClass?.name || '';
+    const selectedClassName = selectedClassId === 'ALL'
+        ? 'Semua Kelas'
+        : (classOptions.find(opt => opt.value === selectedClassId)?.label || selectedClass?.name || '');
 
     // Get current student completion
     const currentStudentCompletion = currentStudent ? getStudentCompletion(currentStudent.id) : 0;
 
     return (
-        <div className="flex h-[calc(100vh-3.5rem)] relative overflow-hidden">
+        <div className="flex h-[calc(100vh-8rem)] relative">
             {/* Student Sidebar */}
             {selectedClassId && (
                 <StudentSidebar
@@ -307,7 +397,7 @@ export default function MonitoringPage() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header with Hamburger */}
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4">
+                <div className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 ${isMobile() && !selectedClassId ? 'hidden' : ''}`}>
                     <div className="flex items-center gap-3">
                         {/* Hamburger Menu (mobile only, visible when class selected) */}
                         {selectedClassId && (
@@ -323,13 +413,18 @@ export default function MonitoringPage() {
 
                         {/* Title */}
                         <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className={`${isMobile() && selectedClassId ? '' : 'flex items-center gap-2'}`}>
+                                <svg className="hidden md:block w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                                    Monitoring
+                                    {isMobile() && currentStudent?.name ? currentStudent?.name : 'Monitoring'}
                                 </h1>
+                                {isMobile() && currentStudent?.name && (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {selectedClassName}
+                                    </p>
+                                )}
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 hidden md:block">
                                 Tracking progress siswa per tahun ajaran dan semester
@@ -341,45 +436,91 @@ export default function MonitoringPage() {
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="max-w-full md:px-6 pt-6 pb-24 md:pb-6">
-                        {/* Filters */}
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                {/* Academic Year & Semester */}
-                                <div className="md:col-span-2">
-                                    <AcademicYearSelector
-                                        selectedYearId={selectedYearId}
-                                        selectedSemester={selectedSemester}
-                                        onYearChange={setSelectedYearId}
-                                        onSemesterChange={setSelectedSemester}
-                                        showSemester={true}
-                                    />
-                                </div>
+                        {/* Filters - Collapsible */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                            {/* Header with Collapse Button */}
+                            <div
+                                className="flex items-center justify-between p-4 cursor-pointer md:cursor-default"
+                                onClick={() => isMobile() && setIsFilterCollapsed(!isFilterCollapsed)}
+                            >
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    Filter
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsFilterCollapsed(!isFilterCollapsed);
+                                    }}
+                                    className="md:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                >
+                                    <svg
+                                        className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${isFilterCollapsed ? '' : 'rotate-180'}`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
 
-                                {/* Kategori */}
-                                <div>
-                                    <InputFilter
-                                        id="category-filter"
-                                        label="Kategori"
-                                        value={selectedCategoryId}
-                                        onChange={setSelectedCategoryId}
-                                        options={hafalanCategories.map(c => ({ value: c.id, label: c.name }))}
-                                        variant="modal"
-                                        compact
-                                    />
-                                </div>
+                            {/* Collapsible Content */}
+                            <div className={`overflow-hidden transition-all duration-300 ${isFilterCollapsed ? 'max-h-0 md:max-h-none' : 'max-h-96'}`}>
+                                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        {/* Academic Year & Semester */}
+                                        <div className="md:col-span-2">
+                                            <AcademicYearSelector
+                                                selectedYearId={selectedYearId}
+                                                selectedSemester={selectedSemester}
+                                                onYearChange={setSelectedYearId}
+                                                onSemesterChange={setSelectedSemester}
+                                                showSemester={true}
+                                            />
+                                        </div>
 
-                                {/* Kelas */}
-                                <div>
-                                    <InputFilter
-                                        id="class-filter"
-                                        label="Kelas"
-                                        value={selectedClassId}
-                                        onChange={setSelectedClassId}
-                                        options={classOptions}
-                                        placeholder="Pilih Kelas"
-                                        variant="modal"
-                                        compact
-                                    />
+                                        {/* Kategori with Skeleton */}
+                                        <div>
+                                            {filterLoading ? (
+                                                <div className="animate-pulse">
+                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                                                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                </div>
+                                            ) : (
+                                                <InputFilter
+                                                    id="category-filter"
+                                                    label="Kategori"
+                                                    value={selectedCategoryId}
+                                                    onChange={setSelectedCategoryId}
+                                                    options={hafalanCategories.map(c => ({ value: c.id, label: c.name }))}
+                                                    variant="modal"
+                                                    compact
+                                                />
+                                            )}
+                                        </div>
+
+                                        {/* Kelas with Skeleton */}
+                                        <div>
+                                            {filterLoading ? (
+                                                <div className="animate-pulse">
+                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                </div>
+                                            ) : (
+                                                <InputFilter
+                                                    id="class-filter"
+                                                    label="Kelas"
+                                                    value={selectedClassId}
+                                                    onChange={setSelectedClassId}
+                                                    options={classOptions}
+                                                    placeholder="Pilih Kelas"
+                                                    variant="modal"
+                                                    compact
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -407,23 +548,23 @@ export default function MonitoringPage() {
                         ) : (
                             <>
                                 {/* Enhanced Student Info Card */}
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5 mb-6">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-6">
                                     {/* Mobile Layout */}
                                     <div className="md:hidden">
                                         {/* Top: Avatar + Name */}
-                                        <div className="flex items-center gap-4 mb-4">
+                                        <div className="flex items-center gap-4">
                                             {/* <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
                                                 {currentStudent.name.charAt(0).toUpperCase()}
                                             </div> */}
                                             <div className="flex-1">
-                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                <h3 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white">
                                                     {currentStudent.name}
                                                 </h3>
                                                 {/* NIS - Commented until DB ready */}
                                                 {/* <p className="text-xs text-gray-600 dark:text-gray-400">
                                                     NIS: {currentStudent.nis || '-'} • {selectedClassName}
                                                 </p> */}
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                <p className="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
                                                     {selectedClassName}
                                                 </p>
                                             </div>
@@ -564,7 +705,7 @@ export default function MonitoringPage() {
                                 </div>
 
 
-                                {/* Progress Display - Responsive */}
+                                {/* Progress Display - Split by Category */}
                                 {filteredMaterials.length === 0 ? (
                                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -573,138 +714,77 @@ export default function MonitoringPage() {
                                     </div>
                                 ) : (
                                     <>
-                                        {/* Mobile: Card Layout */}
-                                        <div className="md:hidden space-y-4">
-                                            {filteredMaterials.map((material, index) => {
-                                                const key = `${selectedStudentId}-${material.id}`;
-                                                const progress = progressMap.get(key);
-                                                const gradeInfo = getGrade(progress?.nilai);
+                                        {/* Group materials by hafalan type (Doa/Surat) */}
+                                        {(() => {
+                                            const grouped = filteredMaterials.reduce((acc, material) => {
+                                                const typeName = material.material_type?.name || 'Lainnya';
+                                                if (!acc[typeName]) acc[typeName] = [];
+                                                acc[typeName].push(material);
+                                                return acc;
+                                            }, {} as Record<string, typeof filteredMaterials>);
 
-                                                return (
-                                                    <div
-                                                        key={material.id}
-                                                        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
-                                                    >
-                                                        {/* Header: Number + Material Name */}
-                                                        <div className="flex items-start gap-3 mb-4">
-                                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                                                <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                                                                    {index + 1}
-                                                                </span>
-                                                            </div>
-                                                            <h3 className="flex-1 text-base font-semibold text-gray-900 dark:text-white leading-tight pt-1">
-                                                                {material.name}
-                                                            </h3>
-                                                        </div>
+                                            return Object.entries(grouped).map(([typeName, materials]) => (
+                                                <div key={typeName} className="mb-6 last:mb-0">
+                                                    {/* Category Header */}
+                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 px-4 md:px-0">
+                                                        {typeName}
+                                                    </h3>
 
-                                                        {/* Nilai Section */}
-                                                        <div className="mb-2">
-                                                            {/* <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                                                                Nilai
-                                                            </label> */}
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    max="100"
-                                                                    value={progress?.nilai || ''}
-                                                                    onChange={(e) => handleProgressChange(material.id, 'nilai', parseInt(e.target.value) || 0)}
-                                                                    placeholder="0-100"
-                                                                    className="flex-1 px-4 py-2.5 text-lg text-center border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white font-semibold"
-                                                                />
-                                                                <div className={`flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold ${gradeInfo.color}`}>
-                                                                    {gradeInfo.grade}
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                    {/* Responsive Table (Mobile & Desktop) */}
+                                                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                                            <thead className="bg-gray-50 dark:bg-gray-700">
+                                                                <tr>
+                                                                    <th className="px-3 md:px-4 py-2 md:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                                        Materi
+                                                                    </th>
+                                                                    <th className="px-3 md:px-4 py-2 md:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20 md:w-32">
+                                                                        Nilai
+                                                                    </th>
+                                                                    <th className="px-3 md:px-4 py-2 md:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16 md:w-32">
+                                                                        Grade
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                {materials.map((material) => {
+                                                                    const key = `${selectedStudentId}-${material.id}`;
+                                                                    const progress = progressMap.get(key);
+                                                                    const gradeInfo = getGrade(progress?.nilai);
 
-                                                        {/* Catatan Section */}
-                                                        <div>
-                                                            {/* <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                                                                Catatan
-                                                            </label> */}
-                                                            <input
-                                                                type="text"
-                                                                value={progress?.notes || ''}
-                                                                onChange={(e) => handleProgressChange(material.id, 'notes', e.target.value)}
-                                                                placeholder="Keterangan..."
-                                                                className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                                            />
-                                                        </div>
+                                                                    return (
+                                                                        <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                                                                            <td className="px-3 md:px-4 py-2 md:py-3 text-sm text-gray-900 dark:text-white">
+                                                                                {material.name}
+                                                                            </td>
+                                                                            <td className="px-3 md:px-4 py-2 md:py-3 text-center">
+                                                                                <input
+                                                                                    type="number"
+                                                                                    min="0"
+                                                                                    max="100"
+                                                                                    value={progress?.nilai || ''}
+                                                                                    onChange={(e) => handleProgressChange(material.id, 'nilai', parseInt(e.target.value) || 0)}
+                                                                                    placeholder="0"
+                                                                                    className="w-16 md:w-24 px-2 md:px-3 py-1 md:py-2 text-sm text-center border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                                                                />
+                                                                            </td>
+                                                                            <td className="px-3 md:px-4 py-2 md:py-3 text-center">
+                                                                                <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded md:rounded-full text-xs md:text-sm font-bold md:font-medium ${gradeInfo.color}`}>
+                                                                                    {gradeInfo.grade}
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        {/* Desktop: Table Layout */}
-                                        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                <thead className="bg-gray-50 dark:bg-gray-700">
-                                                    <tr>
-                                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16">
-                                                            No
-                                                        </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                            Materi
-                                                        </th>
-                                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
-                                                            Nilai
-                                                        </th>
-                                                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">
-                                                            Predikat
-                                                        </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                            Keterangan
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {filteredMaterials.map((material, index) => {
-                                                        const key = `${selectedStudentId}-${material.id}`;
-                                                        const progress = progressMap.get(key);
-                                                        const gradeInfo = getGrade(progress?.nilai);
-
-                                                        return (
-                                                            <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
-                                                                <td className="px-4 py-3 text-center text-sm text-gray-900 dark:text-white">
-                                                                    {index + 1}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {material.name}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    <input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        max="100"
-                                                                        value={progress?.nilai || ''}
-                                                                        onChange={(e) => handleProgressChange(material.id, 'nilai', parseInt(e.target.value) || 0)}
-                                                                        placeholder="0-100"
-                                                                        className="w-20 px-2 py-1 text-sm text-center border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                                                    />
-                                                                </td>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${gradeInfo.color}`}>
-                                                                        {gradeInfo.grade}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-4 py-3">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={progress?.notes || ''}
-                                                                        onChange={(e) => handleProgressChange(material.id, 'notes', e.target.value)}
-                                                                        placeholder="Keterangan..."
-                                                                        className="w-full px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                                                    />
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                </div>
+                                            ));
+                                        })()}
                                     </>
                                 )}
+
 
                                 {/* Grading Legend */}
                                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
