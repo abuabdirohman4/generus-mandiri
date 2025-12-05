@@ -82,7 +82,7 @@ const settingsCategories = [
 export default function SettingsPage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
           {/* Header */}
           <div className="mb-8">
@@ -132,35 +132,32 @@ export default function SettingsPage() {
                     <Link
                       key={itemIndex}
                       href={item.available ? item.href : '#'}
-                      className={`group block p-4 rounded-lg border transition-all duration-200 ${
-                        item.available
+                      className={`group block p-4 rounded-lg border transition-all duration-200 ${item.available
                           ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md cursor-pointer'
                           : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 cursor-not-allowed opacity-60'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className={`font-medium mb-1 ${
-                            item.available 
-                              ? 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400' 
+                          <h3 className={`font-medium mb-1 ${item.available
+                              ? 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
                               : 'text-gray-500 dark:text-gray-400'
-                          }`}>
+                            }`}>
                             {item.name}
                           </h3>
-                          <p className={`text-sm ${
-                            item.available 
-                              ? 'text-gray-600 dark:text-gray-400' 
+                          <p className={`text-sm ${item.available
+                              ? 'text-gray-600 dark:text-gray-400'
                               : 'text-gray-400 dark:text-gray-500'
-                          }`}>
+                            }`}>
                             {item.description}
                           </p>
                         </div>
                         <div className="ml-3">
                           {item.available ? (
-                            <svg 
-                              className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" 
-                              fill="none" 
-                              stroke="currentColor" 
+                            <svg
+                              className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors"
+                              fill="none"
+                              stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

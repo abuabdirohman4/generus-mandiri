@@ -48,50 +48,50 @@ export default function AbsensiPage() {
   // Pagination from URL query params
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
   const ITEMS_PER_PAGE = 10
-  
+
   // Calculate valid class IDs based on organisasi filters
   const validClassIds = useMemo(() => {
     if (userProfile?.role === 'teacher') {
       return userProfile.classes?.map(c => c.id) || []
     }
-    
+
     let filtered = classes || []
-    
+
     // Filter by organisasi hierarchy
     if (dataFilters.daerah.length > 0) {
       // Get desa IDs in selected daerah
       const desaInDaerah = (desa || []).filter(d => dataFilters.daerah.includes(d.daerah_id))
       const desaIds = desaInDaerah.map(d => d.id)
-      
+
       // Get kelompok IDs in those desas
       const kelompokInDesa = (kelompok || []).filter(k => desaIds.includes(k.desa_id))
       const kelompokIds = kelompokInDesa.map(k => k.id)
-      
+
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
     }
-    
+
     if (dataFilters.desa.length > 0) {
       // Get kelompok IDs in selected desa
       const kelompokInDesa = (kelompok || []).filter(k => dataFilters.desa.includes(k.desa_id))
       const kelompokIds = kelompokInDesa.map(k => k.id)
-      
+
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
     }
-    
+
     if (dataFilters.kelompok.length > 0) {
       // Filter classes by selected kelompok
       filtered = filtered.filter(c => c.kelompok_id && dataFilters.kelompok.includes(c.kelompok_id))
     }
-    
+
     if (dataFilters.kelas.length > 0) {
       // Filter by specific classes
       // Support comma-separated class IDs from DataFilter (for classes with same name)
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
       filtered = filtered.filter(c => selectedClassIds.includes(c.id))
     }
-    
+
     return filtered.map(c => c.id)
   }, [classes, desa, kelompok, dataFilters, userProfile])
 
@@ -101,18 +101,18 @@ export default function AbsensiPage() {
     if (dataFilters.kelas.length > 0) {
       return dataFilters.kelas.join(',') // Use all selected classes for API call
     }
-    
+
     // FALLBACK: For both teacher and admin, return undefined to fetch all meetings
     // Backend will handle filtering for teachers (getMeetingsWithStats already filters by teacherClassIds)
     // For admin, undefined means fetch all meetings
     return undefined
   }, [userProfile, dataFilters.kelas])
 
-  const { 
-    meetings: allMeetings, 
-    isLoading, 
-    error, 
-    mutate 
+  const {
+    meetings: allMeetings,
+    isLoading,
+    error,
+    mutate
   } = useMeetings(classId)
 
   // Handle pagination change
@@ -132,14 +132,14 @@ export default function AbsensiPage() {
   // Filter meetings based on valid class IDs when "Semua Kelas" is selected
   const filteredMeetings = useMemo(() => {
     let filtered = allMeetings || []
-    
+
     // PRIORITY: If specific class is selected, verify meetings match selected classes (for multi-class meetings)
     // This applies to BOTH teacher and admin
     // NOTE: Backend already filters by classId, but we do client-side verification for multi-class meetings
     if (dataFilters.kelas.length > 0) {
       // Support comma-separated class IDs from filter
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
-      
+
       // For teacher: backend already filtered, but verify client-side for multi-class meetings
       if (userProfile?.role === 'teacher') {
         // Verify meetings match selected classes (handle multi-class meetings)
@@ -149,69 +149,69 @@ export default function AbsensiPage() {
           if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
             return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
           }
-          
+
           // Check classes.id
           if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
             return true
           }
-          
+
           // Check class_id
           if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
             return true
           }
-          
+
           return false
         })
-        
+
         // Apply meeting type filter if needed
         if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
-          filtered = filtered.filter(m => 
+          filtered = filtered.filter(m =>
             dataFilters.meetingType?.includes(m.meeting_type_code || '')
           )
         }
         return filtered
       }
-      
+
       // For admin: verify meetings match selected classes (handle multi-class meetings)
       filtered = filtered.filter((meeting: any) => {
         // Check class_ids array first (for multi-class meetings)
         if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
           return meeting.class_ids.some((id: string) => selectedClassIds.includes(id))
         }
-        
+
         // Check classes.id
         if (meeting.classes?.id && selectedClassIds.includes(meeting.classes.id)) {
           return true
         }
-        
+
         // Check class_id
         if (meeting.class_id && selectedClassIds.includes(meeting.class_id)) {
           return true
         }
-        
+
         return false
       })
-      
+
       // Apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
-        filtered = filtered.filter(m => 
+        filtered = filtered.filter(m =>
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
         )
       }
       return filtered
     }
-    
+
     // FALLBACK: For teachers WITHOUT specific class filter, apply meeting type filter only
     if (userProfile?.role === 'teacher') {
       // For teachers, apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
-        filtered = filtered.filter(m => 
+        filtered = filtered.filter(m =>
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
         )
       }
       return filtered
     }
-    
+
     // If "Semua Kelas" is selected, filter by valid class IDs
     if (validClassIds.length > 0) {
       filtered = (allMeetings || []).filter(meeting => {
@@ -220,7 +220,7 @@ export default function AbsensiPage() {
         if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
           return meeting.class_ids.some((id: string) => validClassIds.includes(id))
         }
-        
+
         // Handle the actual database structure: meeting.classes is a single object
         if (meeting.classes && typeof meeting.classes === 'object') {
           // If classes is a single object with id
@@ -228,25 +228,25 @@ export default function AbsensiPage() {
             return validClassIds.includes(meeting.classes.id)
           }
         }
-        
+
         // Fallback: check class_id directly
         if (meeting.class_id && validClassIds.includes(meeting.class_id)) {
           return true
         }
-        
+
         return false
       })
-      
+
       // Apply meeting type filter if selected
       if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
-        filtered = filtered.filter(m => 
+        filtered = filtered.filter(m =>
           dataFilters.meetingType?.includes(m.meeting_type_code || '')
         )
       }
-      
+
       return filtered
     }
-    
+
     // If no valid classes found, return empty array
     return []
   }, [allMeetings, validClassIds, dataFilters.kelas, dataFilters.meetingType, userProfile])
@@ -296,7 +296,7 @@ export default function AbsensiPage() {
   if (error) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+        <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +323,7 @@ export default function AbsensiPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Dummy Data Indicator */}
         {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">

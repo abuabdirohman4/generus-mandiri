@@ -3,14 +3,14 @@
 export default function LaporanSkeleton() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Filter Section Skeleton */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
-          
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-2">
@@ -67,7 +67,7 @@ export default function LaporanSkeleton() {
               ))}
             </div>
           </div>
-          
+
           {/* Chart Skeleton */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4"></div>

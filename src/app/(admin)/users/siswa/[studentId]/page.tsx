@@ -38,24 +38,24 @@ export default function StudentDetailPage() {
   // Use SWR hook for data fetching
   const { student, attendanceLogs, stats, isLoading, error } = useStudentDetail(studentId, currentDate)
   const { profile: userProfile } = useUserProfile()
-  
+
   // Filter classes based on user role
   const displayedClasses = useMemo(() => {
     if (!student?.classes || student.classes.length === 0) {
       return null
     }
-    
+
     // If admin, show all classes
     if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
       return student.classes
     }
-    
+
     // If teacher, filter to only classes they teach
     if (userProfile?.role === 'teacher' && userProfile.classes) {
       const teacherClassIds = userProfile.classes.map(c => c.id)
       return student.classes.filter(c => teacherClassIds.includes(c.id))
     }
-    
+
     // Default: return first class for backward compatibility
     return student.classes[0] ? [student.classes[0]] : null
   }, [student?.classes, userProfile])
@@ -144,7 +144,7 @@ export default function StudentDetailPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -154,8 +154,8 @@ export default function StudentDetailPage() {
             {displayedClasses && displayedClasses.length > 0 ? (
               <div className="flex flex-wrap justify-center gap-2">
                 {displayedClasses.map((cls, index) => (
-                  <span 
-                    key={cls.id} 
+                  <span
+                    key={cls.id}
                     className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded-full text-sm"
                   >
                     {cls.name}

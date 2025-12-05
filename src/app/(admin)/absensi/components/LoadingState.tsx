@@ -3,7 +3,7 @@
 export default function LoadingState() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Header Skeleton */}
         <div className="mb-8">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-64 mb-2 animate-pulse"></div>
@@ -16,7 +16,7 @@ export default function LoadingState() {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
           </div>
-          
+
           {/* Mobile Header Skeleton */}
           <div className="sm:hidden px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <div className="flex items-center justify-between">
@@ -28,7 +28,7 @@ export default function LoadingState() {
               </div>
             </div>
           </div>
-          
+
           {/* Desktop Header Skeleton */}
           <div className="hidden sm:block px-6 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <div className="flex items-center">
@@ -44,7 +44,7 @@ export default function LoadingState() {
               </div>
             </div>
           </div>
-          
+
           {/* Student Rows Skeleton */}
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -63,7 +63,7 @@ export default function LoadingState() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Desktop Row Skeleton */}
                 <div className="hidden sm:flex items-center">
                   <div className="flex-1">

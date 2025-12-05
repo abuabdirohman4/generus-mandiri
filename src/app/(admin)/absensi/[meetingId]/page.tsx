@@ -393,9 +393,9 @@ export default function MeetingAttendancePage() {
       if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
         classDetails = classDetails.filter(cls => {
           const classData = classesData.find(c => c.id === cls.id) ||
-                           (meeting.allClasses && Array.isArray(meeting.allClasses)
-                             ? meeting.allClasses.find((c: any) => c.id === cls.id)
-                             : null)
+            (meeting.allClasses && Array.isArray(meeting.allClasses)
+              ? meeting.allClasses.find((c: any) => c.id === cls.id)
+              : null)
           return classData && isSambungDesaEligible(classData)
         })
       }
@@ -445,9 +445,9 @@ export default function MeetingAttendancePage() {
     if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
       classDetails = classDetails.filter(cls => {
         const classData = classesData.find(c => c.id === cls.id) ||
-                         (meeting.allClasses && Array.isArray(meeting.allClasses)
-                           ? meeting.allClasses.find((c: any) => c.id === cls.id)
-                           : null)
+          (meeting.allClasses && Array.isArray(meeting.allClasses)
+            ? meeting.allClasses.find((c: any) => c.id === cls.id)
+            : null)
         return classData && isSambungDesaEligible(classData)
       })
     }
@@ -508,7 +508,7 @@ export default function MeetingAttendancePage() {
 
   // Determine if kelompok filter should show
   const showKelompokFilter = kelompokListForFilter.length > 1 &&
-                            userProfile ? shouldShowKelompokFilter(userProfile) : false
+    userProfile ? shouldShowKelompokFilter(userProfile) : false
 
   const goBack = () => {
     router.push('/absensi')
@@ -521,7 +521,7 @@ export default function MeetingAttendancePage() {
   if (error || !meeting) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+        <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,7 +551,7 @@ export default function MeetingAttendancePage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4">
           {/* <div className="flex items-center gap-4 mb-4">
