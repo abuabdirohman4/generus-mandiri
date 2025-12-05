@@ -19,3 +19,11 @@ export const getGrade = (nilai?: number): { grade: string; label: string; color:
     if (nilai >= 70) return { grade: 'C', label: 'Cukup Memenuhi', color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20' };
     return { grade: 'D', label: 'Tidak Memenuhi', color: 'text-red-600 bg-red-50 dark:bg-red-900/20' };
 };
+
+// Get progress bar color based on completion % (nilai average)
+export const getProgressColor = (completion: number): string => {
+    if (completion >= 90) return 'bg-green-500';
+    if (completion >= 80) return 'bg-blue-500';
+    if (completion >= 70) return 'bg-yellow-500';
+    return 'bg-red-500';
+};

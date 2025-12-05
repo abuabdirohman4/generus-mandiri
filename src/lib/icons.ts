@@ -66,6 +66,7 @@ import KeyIcon from "../../public/icons/key.svg";
 import BookOpenIcon from "../../public/icons/docs.svg";
 import UsersIcon from "../../public/icons/group.svg";
 import EyeOffIcon from "../../public/icons/eye-close.svg";
+import FloppyDiskIcon from "../../public/icons/floppy-disk.svg";
 
 export {
   DownloadIcon,
@@ -136,4 +137,5 @@ export {
   BookOpenIcon,
   UsersIcon,
   EyeOffIcon,
+  FloppyDiskIcon
 };
