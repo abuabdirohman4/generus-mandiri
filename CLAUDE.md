@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Generus Mandiri** is a Next.js 15 school management system for managing students, teachers, classes, attendance, and reports with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
 
+**Organizational Structure**: The system follows a 3-level hierarchy:
+- **Daerah** (Region) - Top level organizational unit
+- **Desa** (Village) - Mid level under Daerah
+- **Kelompok** (Group) - Bottom level under Desa
+
+Each admin level (admin_daerah, admin_desa, admin_kelompok) has access restricted to their organizational scope and below.
+
 ## Development Commands
 
 ```bash
@@ -40,12 +47,14 @@ Protected routes are under `src/app/(admin)/`. Each feature has its own director
 
 ### Database & Supabase
 
-**Database**: `warlob-app` on Supabase
+**Database**: `generus-mandiri-v2` on Supabase
 
 **Key Tables**:
 - `profiles` - User accounts with role-based access (superadmin, admin, teacher, student)
 - `students` - Student records
-- `classes` - Class definitions
+- `classes` - Class definitions (linked to kelompok level)
+- `class_masters` - Master class types (Pra Nikah, Remaja, Orang Tua, etc.) with categories
+- `class_master_mappings` - Junction table linking classes to master classes (many-to-many)
 - `meetings` - Class meetings/sessions with support for multiple classes (`class_ids` array)
 - `attendance_logs` - Daily attendance (H/I/S/A status) with composite key (student_id, date)
 - `student_classes` - Junction table for student-class many-to-many
@@ -389,3 +398,16 @@ Always use `@/` imports for consistency:
 import { createClient } from '@/lib/supabase/server'
 import { isSuperAdmin } from '@/lib/userUtils'
 ```
+
+## Key Technologies
+
+- **Next.js 15** with App Router (React Server Components)
+- **React 19** with TypeScript 5
+- **Tailwind CSS 4** with PostCSS
+- **Supabase** (PostgreSQL + Auth + RLS)
+- **SWR** for data fetching with persistent cache
+- **Zustand** for client state management (persisted to localStorage)
+- **Recharts** for data visualization
+- **PWA** support for offline functionality
+- **TipTap** for rich text editing
+- **dnd-kit** for drag-and-drop interfaces
