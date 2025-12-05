@@ -29,6 +29,12 @@ function PageTitle() {
         return 'Laporan';
       case '/users/siswa':
         return 'Siswa';
+      case '/materi':
+        return 'Materi';
+      case '/monitoring':
+        return 'Monitoring';
+      case '/rapot':
+        return 'Rapot';
       case '/users/guru':
         return 'Guru';
       case '/users/admin':
@@ -63,6 +69,8 @@ function PageTitle() {
           path === '/users/admin' || 
           path === '/organisasi' ||
           path === '/materi' ||
+          path === '/monitoring' ||
+          path === '/rapot' ||
           path === '/dashboard';
   };
 

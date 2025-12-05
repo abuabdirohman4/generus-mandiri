@@ -186,3 +186,4 @@ next-env.d.ts
 
 # MCP configuration with secrets
 .mcp.json
+.mcp_config.json

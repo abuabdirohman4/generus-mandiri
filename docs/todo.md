@@ -220,3 +220,13 @@ Meeting
     - Peserta
         - Kelas (Remaja, Orang Tua dll)
         - Desa (Soreang, Baleendah dll)
+
+Refactoring
+- [ ] Buat satu file khusus untuk berbagai macam action
+ - [ ] Get Classes
+ - [ ] Get Teachers
+ - [ ] Get Students
+ - [ ] Get Meetings
+ - [ ] Get Attendance
+ - [ ] Get Attendance Log
+ - [ ] Get Attendance Log Detail
