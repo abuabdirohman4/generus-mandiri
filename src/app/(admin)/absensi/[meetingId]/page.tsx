@@ -626,7 +626,7 @@ export default function MeetingAttendancePage() {
         />
 
         {/* Attendance Table */}
-        <div className="pb-28 lg:pb-8">
+        <div className="pb-28 md:pb-8">
           <AttendanceTable
             students={visibleStudents}
             attendance={localAttendance}
@@ -636,12 +636,12 @@ export default function MeetingAttendancePage() {
         </div>
 
         {/* Save Button - Mobile: floating, Desktop: static */}
-        <div className="fixed lg:static bottom-16 left-4 right-4 lg:flex lg:justify-end z-50 shadow-lg lg:shadow-none">
+        <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
           <Button
             onClick={handleSave}
             disabled={saving}
             variant="primary"
-            className="w-full lg:w-auto"
+            className="w-full md:w-auto"
             loading={saving}
             loadingText="Menyimpan..."
           >
