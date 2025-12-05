@@ -296,7 +296,7 @@ export default function AbsensiPage() {
   if (error) {
     return (
       <div className="bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto px-0 sm:px-6 lg:px-8">
+        <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <div className="text-red-500 mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +323,7 @@ export default function AbsensiPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
         {/* Dummy Data Indicator */}
         {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">

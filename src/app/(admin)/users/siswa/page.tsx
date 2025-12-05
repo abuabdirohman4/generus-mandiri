@@ -44,7 +44,7 @@ export default function SiswaPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center">

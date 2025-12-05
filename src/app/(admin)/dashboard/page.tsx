@@ -197,7 +197,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
-      <div className="mx-auto px-0 sm:px-6 lg:px-8">
+      <div className="mx-auto px-0 pb-28 sm:pb-0 sm:px-6 lg:px-8">
         {/* Data Filter */}
         <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700">
           <DataFilter
