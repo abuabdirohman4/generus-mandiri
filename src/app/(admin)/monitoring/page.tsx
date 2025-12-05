@@ -540,7 +540,7 @@ export default function MonitoringPage() {
                         ) : (
                             <>
                                 {/* Enhanced Student Info Card */}
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-6">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-0 md:p-5 mb-6">
                                     {/* Mobile Layout */}
                                     <div className="md:hidden">
                                         {/* Top: Avatar + Name */}
@@ -549,14 +549,14 @@ export default function MonitoringPage() {
                                                 {currentStudent.name.charAt(0).toUpperCase()}
                                             </div> */}
                                             <div className="flex-1">
-                                                <h3 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white">
+                                                <h3 className="hidden md:block text-lg font-semibold text-gray-900 dark:text-white">
                                                     {currentStudent.name}
                                                 </h3>
                                                 {/* NIS - Commented until DB ready */}
                                                 {/* <p className="text-xs text-gray-600 dark:text-gray-400">
                                                     NIS: {currentStudent.nis || '-'} • {selectedClassName}
                                                 </p> */}
-                                                <p className="hidden sm:block text-sm text-gray-600 dark:text-gray-400">
+                                                <p className="hidden md:block text-sm text-gray-600 dark:text-gray-400">
                                                     {selectedClassName}
                                                 </p>
                                             </div>
@@ -619,6 +619,7 @@ export default function MonitoringPage() {
                                     </div>
 
                                     {/* Desktop Layout */}
+                                    {/* <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6"></div> */}
                                     <div className="hidden md:flex items-center justify-between gap-4">
                                         {/* Left: Avatar + Info */}
                                         <div className="flex items-center gap-4">
