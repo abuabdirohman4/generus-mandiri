@@ -23,7 +23,7 @@
 - [x] Menu bisa di klik kanan
 - [ ] Halaman Materi
     - [ ] Handle materi kelas sebelumnya
-    - [ ] Bug di bulk action
+    - [x] Bug di bulk action
     - [x] Master Data (Show all materi)
     - [x] Per Kelas
         Per Materi (Category for info)

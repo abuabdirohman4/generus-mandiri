@@ -1047,7 +1047,7 @@ export async function bulkUpdateMaterialMapping(
     // If mode is 'replace', we already deleted, so just insert.
     const { error: insertError } = await supabase
       .from('material_item_classes')
-      .upsert(newMappings, { onConflict: 'material_item_id, class_master_id, semester', ignoreDuplicates: true });
+      .upsert(newMappings, { onConflict: 'material_item_id,class_master_id', ignoreDuplicates: true });
 
     if (insertError) {
       console.error('Error inserting bulk mappings:', insertError);
