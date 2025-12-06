@@ -35,6 +35,8 @@ function PageTitle() {
         return 'Monitoring';
       case '/rapot':
         return 'Rapot';
+      case '/tahun-ajaran':
+        return 'Tahun Ajaran';
       case '/users/guru':
         return 'Guru';
       case '/users/admin':
@@ -51,6 +53,8 @@ function PageTitle() {
         return 'Profil';
       case '/settings/pwa':
         return 'PWA Settings';
+      case '/settings/cache':
+        return 'Cache Settings';
       default:
         if (path.startsWith('/absensi')) { // meeting detail pages
           return 'Absensi';
@@ -67,6 +71,10 @@ function PageTitle() {
           path.startsWith('/users/siswa/') ||
           path === '/users/guru' || 
           path === '/users/admin' || 
+          path === '/settings' ||
+          path === '/settings/profile' ||
+          path === '/settings/cache' ||
+          path === '/settings/pwa' ||
           path === '/organisasi' ||
           path === '/materi' ||
           path === '/monitoring' ||
