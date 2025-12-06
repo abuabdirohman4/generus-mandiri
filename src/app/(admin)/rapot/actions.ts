@@ -340,7 +340,7 @@ export async function getStudentReport(studentId: string, academicYearId: string
         .from('student_reports')
         .select(`
             *,
-            student:students(id, name),
+            student:students(*),
             class:classes(id, name),
             academic_year:academic_years(id, name)
         `)

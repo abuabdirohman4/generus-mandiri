@@ -14,6 +14,10 @@ export interface ReportSubject {
     material_type?: {
         id: string;
         name: string;
+        category?: {
+            id: string;
+            name: string;
+        };
     };
 }
 
@@ -107,6 +111,17 @@ export interface StudentReport {
         id: string;
         name: string;
         nis?: string;
+        nisn?: string;
+        gender?: 'L' | 'P';
+        birth_place?: string;
+        birth_date?: string;
+        address?: string;
+        father_name?: string;
+        mother_name?: string;
+        guardian_name?: string;
+        parent_phone?: string;
+        entry_year?: string;
+        class_name?: string; // Optional if we sort by class
     };
     class?: {
         id: string;
