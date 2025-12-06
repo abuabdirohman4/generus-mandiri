@@ -173,7 +173,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-rose-100 dark:bg-rose-900',
       iconColor: 'text-rose-600 dark:text-rose-400',
       adminOnly: teacherCaberawit ? false : true,
-      disabled: true // Coming soon - Phase 3
+      disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
     },
     {
       id: 'guru',

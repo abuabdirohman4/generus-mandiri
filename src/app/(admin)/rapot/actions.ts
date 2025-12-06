@@ -1,5 +1,6 @@
 'use server'
 
+import { getClassEnrollments } from '@/app/(admin)/tahun-ajaran/actions/enrollments';
 import { createAdminClient } from '@/lib/supabase/server';
 import {
     ReportSubject,
@@ -37,12 +38,20 @@ export async function getStudentGrades(studentId: string, academicYearId: string
         .from('student_grades')
         .select(`
             *,
-            subject:report_subjects(*)
+            subject:report_subjects(
+                material_type:material_types(
+                    name,
+                    category:material_categories(
+                        id,
+                        name
+                    )
+                )
+            )
         `)
         .eq('student_id', studentId)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
-        .order('subject(display_order)');
+        .order('display_order', { foreignTable: 'subject' });
 
     if (error) {
         console.error('Error fetching student grades:', error);
@@ -165,7 +174,7 @@ export async function updateCharacterAssessment(data: CharacterAssessmentInput):
 // REPORT TEMPLATES
 // ==========================================
 
-export async function getReportTemplates(classId?: string, academicYearId?: string): Promise<ReportTemplate[]> {
+export async function getReportTemplates(classId?: string, academicYearId?: string, includeAll: boolean = false): Promise<ReportTemplate[]> {
     const supabase = await createAdminClient();
 
     let query = supabase
@@ -181,17 +190,22 @@ export async function getReportTemplates(classId?: string, academicYearId?: stri
         `)
         .eq('is_active', true);
 
-    if (classId) {
-        query = query.or(`class_id.eq.${classId},class_id.is.null`);
-    } else {
-        query = query.is('class_id', null); // Default global only if no class specified
-    }
+    if (!includeAll) {
+        // Normal filtering mode (for consumption)
+        if (classId) {
+            query = query.or(`class_id.eq.${classId},class_id.is.null`);
+        } else {
+            query = query.is('class_id', null); // Default global only if no class specified
+        }
 
-    if (academicYearId) {
-        query = query.or(`academic_year_id.eq.${academicYearId},academic_year_id.is.null`);
+        if (academicYearId) {
+            query = query.or(`academic_year_id.eq.${academicYearId},academic_year_id.is.null`);
+        }
     }
+    // If includeAll is true, we skip the filters and return everything (Admin Mode)
 
     const { data, error } = await query;
+    console.log('getReportTemplates result:', { dataLength: data?.length, error, classId, academicYearId });
 
     if (error) {
         console.error('Error fetching report templates:', error);
@@ -326,11 +340,9 @@ export async function getStudentReport(studentId: string, academicYearId: string
         .from('student_reports')
         .select(`
             *,
-            student:students(id, name, nis),
+            student:students(id, name),
             class:classes(id, name),
-            academic_year:academic_years(id, name),
-            grades:student_grades(*),
-            character_assessments:student_character_assessments(*)
+            academic_year:academic_years(id, name)
         `)
         .eq('student_id', studentId)
         .eq('academic_year_id', academicYearId)
@@ -412,3 +424,44 @@ export async function publishReport(reportId: string): Promise<void> {
         throw new Error('Gagal publish rapot');
     }
 }
+
+export async function getClassReportsSummary(classId: string, academicYearId: string, semester: number) {
+    const supabase = await createAdminClient();
+
+    // Get enrollments first to know who SHOULD have reports
+    console.log('getClassReportsSummary Params:', { classId, academicYearId, semester });
+
+    const enrollments = await getClassEnrollments(classId, academicYearId, semester);
+
+
+
+    console.log('Enrollments found:', enrollments?.length);
+
+    if (!enrollments) return [];
+
+    // Get existing reports
+    const studentIds = enrollments.map(e => (e.student as any).id);
+    const { data: reports } = await supabase
+        .from('student_reports')
+        .select('id, student_id, is_published, generated_at, average_score')
+        .in('student_id', studentIds)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester);
+
+    // Merge data
+    const reportMap = new Map(reports?.map(r => [r.student_id, r]));
+
+    return enrollments.map(enrollment => {
+        const student = enrollment.student as any;
+        const report = reportMap.get(student.id);
+        return {
+            student: student,
+            reportId: report?.id,
+            isGenerated: !!report,
+            isPublished: report?.is_published || false,
+            generatedAt: report?.generated_at,
+            averageScore: report?.average_score
+        };
+    });
+}
+
