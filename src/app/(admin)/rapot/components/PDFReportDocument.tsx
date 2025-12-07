@@ -6,6 +6,7 @@ import type { PageSize } from '@react-pdf/types';
 
 // Register fonts if needed (optional - uses default sans-serif)
 // Font.register({ family: 'Roboto', src: '/fonts/Roboto-Regular.ttf' });
+Font.register({ family: 'calibri', src: '/fonts/calibri-regular.ttf' });
 
 // Props type
 interface PDFReportProps {
@@ -21,7 +22,7 @@ interface PDFReportProps {
 // School profile config
 const SCHOOL_PROFILE = {
     name: "MADRASAH DINIYAH TAKWILIYAH",
-    subName: "MAMBAUL HUDA",
+    subName: "Mambaul Huda",
     institution: "LEMBAGA DAKWAH ISLAM INDONESIA",
     address: "Kabupaten Bandung",
     nsm: "..............................",
@@ -30,14 +31,20 @@ const SCHOOL_PROFILE = {
 // Styles
 const styles = StyleSheet.create({
     page: {
-        padding: 40,
+        paddingTop: 40,
+        paddingBottom: 40,
+        paddingLeft: 80,
+        paddingRight: 80,
         fontSize: 11,
-        fontFamily: 'Helvetica',
+        fontFamily: 'calibri',
         lineHeight: 1.4,
     },
     // Cover Page
     coverPage: {
-        padding: 40,
+        paddingTop: 40,
+        paddingBottom: 40,
+        paddingLeft: 80,
+        paddingRight: 80,
         alignItems: 'center',
         justifyContent: 'space-between',
         height: '100%',
@@ -261,9 +268,9 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
             {/* PAGE 2: STUDENT BIO */}
             <Page size={pageSize} style={styles.page}>
                 <Text style={styles.sectionTitle}>{SCHOOL_PROFILE.address}</Text>
-                <Text style={[styles.sectionTitle, { marginTop: -10 }]}>KETERANGAN TENTANG PESERTA DIDIK</Text>
+                <Text style={[styles.sectionTitle, { marginTop: -10, fontWeight: 'bold' }]}>KETERANGAN TENTANG PESERTA DIDIK</Text>
 
-                <View style={{ marginTop: 20 }}>
+                <View style={{ marginTop: 10 }}>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>1.</Text><Text style={styles.bioLabel}>Nama Peserta Didik (Lengkap)</Text><Text style={styles.bioColon}>:</Text><Text style={[styles.bioValue, { fontWeight: 'bold', textTransform: 'uppercase' }]}>{student?.student?.name || '-'}</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>2.</Text><Text style={styles.bioLabel}>Nomor Induk</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.nis || '-'}</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>3.</Text><Text style={styles.bioLabel}>Tempat Tanggal Lahir</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.birth_place || '-'}, {formatDate(student?.student?.birth_date)}</Text></View>
@@ -272,14 +279,14 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>6.</Text><Text style={styles.bioLabel}>Alamat Peserta Didik</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.address || '-'}</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>7.</Text><Text style={styles.bioLabel}>Nomor Telepon Rumah</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.parent_phone || '-'}</Text></View>
 
-                    <View style={[styles.bioRow, { marginTop: 10 }]}><Text style={{ fontWeight: 'bold' }}>8. Nama Orang Tua</Text></View>
+                    <View style={styles.bioRow}><Text style={styles.bioNumber}>8.</Text><Text style={styles.bioLabel}>Nama Orang Tua</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}></Text><Text style={styles.bioLabel}>    a) Ayah</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.father_name || '-'}</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}></Text><Text style={styles.bioLabel}>    b) Ibu</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.mother_name || '-'}</Text></View>
 
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>9.</Text><Text style={styles.bioLabel}>Alamat Orang Tua</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.address || '-'}</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}>10.</Text><Text style={styles.bioLabel}>Nomor Telepon Rumah</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>{student?.student?.parent_phone || '-'}</Text></View>
 
-                    <View style={[styles.bioRow, { marginTop: 10 }]}><Text style={{ fontWeight: 'bold' }}>11. Pekerjaan Orang Tua</Text></View>
+                    <View style={styles.bioRow}><Text style={styles.bioNumber}>11.</Text><Text style={styles.bioLabel}>Pekerjaan Orang Tua</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}></Text><Text style={styles.bioLabel}>    a) Ayah</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>-</Text></View>
                     <View style={styles.bioRow}><Text style={styles.bioNumber}></Text><Text style={styles.bioLabel}>    b) Ibu</Text><Text style={styles.bioColon}>:</Text><Text style={styles.bioValue}>-</Text></View>
 
@@ -292,10 +299,10 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                     <View style={{ width: 100, height: 120, border: '1pt solid #000', alignItems: 'center', justifyContent: 'center' }}>
                         <Text style={{ color: '#999', fontSize: 10 }}>Pas Foto</Text>
                     </View>
-                    <View style={styles.signatureBox}>
-                        <Text>Bandung, {formatDate(new Date().toISOString())}</Text>
-                        <Text style={styles.signatureLine}>Kepala Madrasah,</Text>
-                        <Text style={{ marginTop: 4 }}>.......................................</Text>
+                    <View style={{ alignItems: 'flex-start' }}>
+                        <Text style={{ marginBottom: 8 }}>Bandung, {formatDate(new Date().toISOString())}</Text>
+                        <Text style={{ marginBottom: 60 }}>Kepala Madrasah,</Text>
+                        <Text style={{ borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: '#000', paddingBottom: 20, width: 150 }}></Text>
                     </View>
                 </View>
             </Page>
@@ -304,13 +311,13 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
             <Page size={pageSize} style={styles.page}>
                 {/* Header info */}
                 <View style={[styles.row, { marginBottom: 20 }]}>
-                    <View style={styles.halfWidth}>
+                    <View style={{ width: '65%' }}>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Nama Madrasah</Text><Text>: {SCHOOL_PROFILE.subName}</Text></View>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Alamat</Text><Text>: {SCHOOL_PROFILE.address}</Text></View>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Nama</Text><Text>: {student?.student?.name}</Text></View>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>No. Induk/NIS</Text><Text>: {student?.student?.nis || '-'}</Text></View>
                     </View>
-                    <View style={styles.halfWidth}>
+                    <View style={{ width: '35%' }}>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Kelas</Text><Text>: {student?.class?.name}</Text></View>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Semester</Text><Text>: {semester} ({semester === '1' ? 'SATU' : 'DUA'})</Text></View>
                         <View style={styles.bioRow}><Text style={{ width: 100, fontWeight: 'bold' }}>Tahun Pelajaran</Text><Text>: {activeYear}</Text></View>
@@ -344,7 +351,8 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                 {/* Legend */}
                 <View style={[styles.legendBox, { width: '70%' }]}>
                     <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Keterangan Predikat dan Deskripsi:</Text>
-                    <Text>A (90-100) = Terlampaui, B (80-89) = Memenuhi, C (70-79) = Cukup Memenuhi, D (&lt;70) = Tidak Memenuhi</Text>
+                    <Text>A (90-100) = Terlampaui, B (80-89) = Memenuhi,</Text>
+                    <Text>C (70-79) = Cukup Memenuhi, D (&lt;70) = Tidak Memenuhi</Text>
                 </View>
             </Page>
 
@@ -377,9 +385,10 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                 </View>
 
                 {/* Legend */}
-                <View style={styles.legendBox}>
+                <View style={[styles.legendBox, { width: '70%' }]}>
                     <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Keterangan Predikat dan Deskripsi:</Text>
-                    <Text>A = Sudah Terampil dan Terbiasa, B = Sudah Terbiasa, C = Belum Terbiasa</Text>
+                    <Text>A = Sudah Terampil dan Terbiasa, B = Sudah Terbiasa,</Text>
+                    <Text>C = Belum Terbiasa</Text>
                 </View>
 
                 {/* Attendance & Personality */}
@@ -463,18 +472,25 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                     <Text>{student?.teacher_notes || ''}</Text>
                 </View>
 
+                {/* Diberikan di dan Tanggal */}
+                <View style={{ border: '1pt solid #000', height: 50, padding: 10, width: '40%', marginTop: 15 }}>
+                    <Text style={{ marginBottom: 2 }}>Diberikan di   : .............................</Text>
+                    <Text>Tanggal           : .............................</Text>
+                </View>
+
+                <View style={{ marginTop: 50 }}>
+                    <Text>Mengetahui,</Text>
+                </View>
+
                 {/* Signatures */}
-                <View style={styles.signatureSection}>
-                    <View style={styles.signatureBox}>
-                        <Text>Mengetahui</Text>
-                        <Text>Orang Tua/Wali,</Text>
-                        <Text style={styles.signatureLine}>( ......................... )</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+                    <View style={{ alignItems: 'flex-start' }}>
+                        <Text style={{ marginBottom: 64 }}>Orang Tua/Wali</Text>
+                        <Text style={{ borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: '#000', paddingBottom: 4, width: 80 }}></Text>
                     </View>
-                    <View style={styles.signatureBox}>
-                        <Text>Diberikan di: ........................</Text>
-                        <Text>Tanggal : ........................</Text>
-                        <Text style={{ marginTop: 8 }}>Pengajar MDT</Text>
-                        <Text style={[styles.signatureLine, { fontWeight: 'bold' }]}>{student?.class?.teacher_name || '.........................'}</Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ marginBottom: 64, marginRight: 10 }}>Pengajar MDT</Text>
+                        <Text style={{ borderBottomWidth: 1, borderBottomStyle: 'dotted', borderBottomColor: '#000', paddingBottom: 4, width: 80, textAlign: 'center' }}></Text>
                     </View>
                 </View>
             </Page>
