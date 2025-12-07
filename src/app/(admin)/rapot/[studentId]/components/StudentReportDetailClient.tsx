@@ -29,6 +29,7 @@ import PrintableReport from '../../components/PrintableReport';
 import { createClient } from '@/lib/supabase/client';
 import { isMobile } from '@/lib/utils';
 import { FloppyDiskIcon } from '@/lib/icons';
+import { downloadStudentPDF } from '../../components/pdfUtils';
 
 interface Props {
     studentId: string;
@@ -234,49 +235,38 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
 
     // ... existing loadData and handleSaveAll ...
 
-    // Handle Download logic
+    // Handle Download logic - using @react-pdf/renderer
     const handleDownloadPDF = async (options: any) => {
-        // We set print options to render the PrintableReport
-        setPrintOptions(options);
+        try {
+            // Show loading state
+            setPrintOptions(options);
 
-        // Wait for render - increased timeout for overlay to fully render
-        setTimeout(async () => {
-            const element = document.getElementById('printable-report-content');
-            if (!element) {
-                toast.error('Gagal membuat PDF: Element tidak ditemukan');
-                setPrintOptions(null);
-                return;
-            }
+            // Prepare student data for PDF generation
+            const studentData = {
+                student: studentInfo,
+                class: { name: className },
+                grades: Object.values(grades),
+                character_assessments: Object.values(assessments),
+                sick_days: attendance.sick,
+                permission_days: attendance.permission,
+                absent_days: attendance.absent,
+                teacher_notes: teacherNotes
+            };
 
-            // Target the actual printable report inside the overlay
-            const reportElement = element.querySelector('.printable-report') as HTMLElement;
-            if (!reportElement) {
-                toast.error('Gagal membuat PDF: Konten rapot tidak ditemukan');
-                setPrintOptions(null);
-                return;
-            }
+            await downloadStudentPDF({
+                student: studentData,
+                activeYear: academicYear?.name || '',
+                semester: String(semester),
+                fileName: `Rapor_${studentInfo.name.replace(/\s+/g, '_')}_Semester${semester}.pdf`
+            });
 
-            try {
-                // @ts-ignore
-                const html2pdf = (await import('html2pdf.js')).default;
-
-                const opt = {
-                    margin: 0,
-                    filename: `Rapor_${studentInfo.name.replace(/\s+/g, '_')}_${semester}.pdf`,
-                    image: { type: 'jpeg' as const, quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm' as const, format: (options.pageSize === 'Letter' ? 'letter' : 'a4') as any, orientation: options.orientation as any }
-                };
-
-                await html2pdf().set(opt).from(reportElement).save();
-                toast.success('PDF berhasil didownload');
-            } catch (err: any) {
-                console.error('PDF Generation Error:', err);
-                toast.error(`Gagal mendownload PDF: ${err?.message || 'Unknown error'}`);
-            } finally {
-                setPrintOptions(null);
-            }
-        }, 1500); // Increased to 1500ms for overlay rendering
+            toast.success('PDF berhasil didownload');
+        } catch (err: any) {
+            console.error('PDF Generation Error:', err);
+            toast.error(`Gagal mendownload PDF: ${err?.message || 'Unknown error'}`);
+        } finally {
+            setPrintOptions(null);
+        }
     };
 
     if (loading) return <div className="p-8 text-center print:hidden">Loading...</div>;

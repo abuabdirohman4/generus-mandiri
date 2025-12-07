@@ -2,7 +2,7 @@ import React from 'react';
 import { StudentReport, StudentGrade, StudentCharacterAssessment, ReportSubject } from '../types';
 
 interface PrintableReportProps {
-    student: any; // We use simplified any here because the full structure is complex joined data
+    student: any;
     activeYear: string;
     semester: string;
     options: {
@@ -15,66 +15,62 @@ interface PrintableReportProps {
     className?: string;
 }
 
-// Configurable School Profile (bisa diganti dari props atau settings nantinya)
 const SCHOOL_PROFILE = {
     name: "MADRASAH DINIYAH TAKWILIYAH",
     subName: "MAMBAUL HUDA",
     institution: "LEMBAGA DAKWAH ISLAM INDONESIA",
-    address: "Kabupaten Bandung", // Placeholder based on image
-    logoUrl: "/logo-placeholder.png", // User needs to provide this
-    nsm: "..............................", // No Statistik Madrasah
+    address: "Kabupaten Bandung",
+    logoUrl: "/logo-placeholder.png",
+    nsm: "..............................",
     npsn: ".............................."
 };
 
+// Reusable cell styles for html2canvas compatibility
+const cellStyle: React.CSSProperties = {
+    verticalAlign: 'middle',
+    padding: '6px 8px',
+    border: '1px solid black'
+};
+
+const cellStyleCenter: React.CSSProperties = {
+    ...cellStyle,
+    textAlign: 'center'
+};
+
+const headerCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    backgroundColor: '#f3f4f6',
+    fontWeight: 'bold'
+};
+
 const PrintableReport: React.FC<PrintableReportProps> = ({ student, activeYear, semester, options, className }) => {
-    // 1. Group Grades by Category
     const groupedGrades = React.useMemo(() => {
         const groups: { [key: string]: typeof student.grades } = {};
-
         student.grades?.forEach((g: any) => {
-            // Access category name safely through the nested joins
-            // structure: grade -> subject -> material_type -> category -> name
             const categoryName = g.subject?.material_type?.category?.name || 'Lainnya';
-
-            if (!groups[categoryName]) {
-                groups[categoryName] = [];
-            }
+            if (!groups[categoryName]) groups[categoryName] = [];
             groups[categoryName].push(g);
         });
-
-        // Sort grades within groups by display_order
         Object.keys(groups).forEach(key => {
-            groups[key].sort((a: any, b: any) =>
-                (a.subject?.display_order || 0) - (b.subject?.display_order || 0)
-            );
+            groups[key].sort((a: any, b: any) => (a.subject?.display_order || 0) - (b.subject?.display_order || 0));
         });
-
         return groups;
     }, [student.grades]);
 
-    // 2. Helper for date formatting
     const formatDate = (dateString?: string) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
-        });
+        return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     };
-
-    // 3. Helper for Character/Attendance (Mapping data to fixed format if needed)
-    // For now we just use the data array.
 
     return (
         <>
-            <style jsx global>{`
+            <style>{`
                 @media print {
                     @page {
                         size: ${options.pageSize === 'Letter' ? 'letter' : 'A4'} ${options.orientation};
-                        margin: 0; /* Control margin via padding in container */
+                        margin: 0;
                     }
-                    body {
-                        visibility: hidden;
-                        background: white;
-                    }
+                    body { visibility: hidden; background: white; }
                     .printable-report {
                         visibility: visible;
                         position: absolute;
@@ -82,304 +78,248 @@ const PrintableReport: React.FC<PrintableReportProps> = ({ student, activeYear, 
                         top: 0;
                         width: 100%;
                     }
-                    /* Ensure background colors print */
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
-                    .break-after-page {
-                        page-break-after: always;
-                    }
+                    .break-after-page { page-break-after: always; }
                 }
             `}</style>
 
-            {/* Default to hidden print:block unless className is passed to override */}
-            <div 
-                className={`printable-report bg-white text-black font-serif leading-tight ${className || 'hidden print:block'}`}
-                style={{ backgroundColor: '#ffffff', color: '#000000' }}
+            <div
+                className={`printable-report ${className || 'hidden print:block'}`}
+                style={{ backgroundColor: '#ffffff', color: '#000000', fontFamily: 'serif', lineHeight: 1.4 }}
             >
-
-                {/* ================= PAGE 1: COVER RAPOR ================= */}
-                <div className="w-full flex flex-col items-center justify-between break-after-page border-b-2 border-transparent pb-10">
-                    <div className="text-center space-y-2 mt-10">
-                        <h1 className="text-3xl font-bold tracking-wider">RAPOR</h1>
-                        <h2 className="text-xl font-bold">{SCHOOL_PROFILE.name}</h2>
-                        <h2 className="text-2xl font-bold mt-2">{SCHOOL_PROFILE.subName}</h2>
+                {/* PAGE 1: COVER */}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '40px', pageBreakAfter: 'always' }}>
+                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                        <h1 style={{ fontSize: '28px', fontWeight: 'bold', letterSpacing: '2px' }}>RAPOR</h1>
+                        <h2 style={{ fontSize: '20px', fontWeight: 'bold' }}>{SCHOOL_PROFILE.name}</h2>
+                        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '8px' }}>{SCHOOL_PROFILE.subName}</h2>
                     </div>
 
-                    <div className="flex flex-col items-center gap-8 my-10">
-                        {/* LOGO PLACEHOLDER */}
-                        <div className="w-48 h-48 border-4 border-double border-gray-800 flex items-center justify-center rounded-full p-4">
-                            <div className="text-center text-xs">
-                                [LOGO TPQ] <br /> {SCHOOL_PROFILE.subName}
-                            </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', margin: '40px 0' }}>
+                        <div style={{ width: '192px', height: '192px', border: '4px double #1f2937', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', padding: '16px' }}>
+                            <div style={{ textAlign: 'center', fontSize: '12px' }}>[LOGO TPQ]<br />{SCHOOL_PROFILE.subName}</div>
                         </div>
 
-                        <div className="w-full max-w-lg border-4 border-double border-gray-800 p-4 text-center mt-8">
-                            <h3 className="font-bold mb-2">Nama Peserta Didik</h3>
-                            <div className="border-b border-black py-2 px-4 text-xl font-bold uppercase min-w-[200px]">
+                        <div style={{ width: '100%', maxWidth: '400px', border: '4px double #1f2937', padding: '16px', textAlign: 'center', marginTop: '32px' }}>
+                            <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Nama Peserta Didik</h3>
+                            <div style={{ borderBottom: '1px solid black', padding: '8px 16px', fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase' }}>
                                 {student?.student?.name}
                             </div>
                         </div>
 
-                        <div className="w-full max-w-sm border-4 border-double border-gray-800 p-4 text-center mt-4">
-                            <h3 className="font-bold mb-2">No Statistik</h3>
-                            <div className="border-b border-black py-2 px-4 text-lg min-w-[150px]">
-                                {SCHOOL_PROFILE.nsm}
-                            </div>
+                        <div style={{ width: '100%', maxWidth: '300px', border: '4px double #1f2937', padding: '16px', textAlign: 'center', marginTop: '16px' }}>
+                            <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>No Statistik</h3>
+                            <div style={{ borderBottom: '1px solid black', padding: '8px 16px', fontSize: '18px' }}>{SCHOOL_PROFILE.nsm}</div>
                         </div>
                     </div>
 
-                    <div className="text-center font-bold text-lg mb-10 uppercase">
+                    <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '18px', marginBottom: '40px', textTransform: 'uppercase' }}>
                         {SCHOOL_PROFILE.institution}
                     </div>
                 </div>
 
-
-                {/* ================= PAGE 2: STUDENT BIO ================= */}
-                <div className="w-full min-h-screen p-12 break-after-page">
-                    <div className="text-center font-bold mb-8 uppercase">
-                        <div className="text-lg">{SCHOOL_PROFILE.address}</div>
-                        <div className="text-xl mt-2">KETERANGAN TENTANG PESERTA DIDIK</div>
+                {/* PAGE 2: STUDENT BIO */}
+                <div style={{ width: '100%', minHeight: '100vh', padding: '48px', pageBreakAfter: 'always' }}>
+                    <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: '32px', textTransform: 'uppercase' }}>
+                        <div style={{ fontSize: '18px' }}>{SCHOOL_PROFILE.address}</div>
+                        <div style={{ fontSize: '20px', marginTop: '8px' }}>KETERANGAN TENTANG PESERTA DIDIK</div>
                     </div>
 
-                    <table className="w-full text-base">
+                    <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
                         <tbody>
-                            <tr className="h-8"><td className="w-10">1.</td><td className="w-64">Nama Peserta Didik (Lengkap)</td><td className="w-4">:</td><td className="font-bold uppercase">{student?.student?.name}</td></tr>
-                            <tr className="h-8"><td>2.</td><td>Nomor Induk</td><td>:</td><td>{student?.student?.nis || '-'}</td></tr>
-                            <tr className="h-8"><td>3.</td><td>Tempat Tanggal Lahir</td><td>:</td><td>{student?.student?.birth_place || '-'}, {formatDate(student?.student?.birth_date)}</td></tr>
-                            <tr className="h-8"><td>4.</td><td>Jenis kelamin</td><td>:</td><td>{student?.student?.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</td></tr>
-                            <tr className="h-8"><td>5.</td><td>Anak ke</td><td>:</td><td>-</td></tr>
-                            <tr className="h-8"><td>6.</td><td>Alamat Peserta Didik</td><td>:</td><td>{student?.student?.address || '-'}</td></tr>
-                            <tr className="h-8"><td>7.</td><td>Nomor Telepon Rumah</td><td>:</td><td>{student?.student?.parent_phone || '-'}</td></tr>
-
-                            <tr className="h-10"><td colSpan={4} className="font-bold pt-4">8. Nama Orang Tua</td></tr>
-                            <tr className="h-8"><td></td><td className="pl-4">a) Ayah</td><td>:</td><td>{student?.student?.father_name || '-'}</td></tr>
-                            <tr className="h-8"><td></td><td className="pl-4">b) Ibu</td><td>:</td><td>{student?.student?.mother_name || '-'}</td></tr>
-
-                            <tr className="h-8"><td className="pt-2">9.</td><td className="pt-2">Alamat Orang Tua</td><td className="pt-2">:</td><td className="pt-2">{student?.student?.address || '-'}</td></tr>
-                            <tr className="h-8"><td>10.</td><td>Nomor Telepon Rumah</td><td>:</td><td>{student?.student?.parent_phone || '-'}</td></tr>
-
-                            <tr className="h-10"><td colSpan={4} className="font-bold pt-4">11. Pekerjaan Orang Tua</td></tr>
-                            <tr className="h-8"><td></td><td className="pl-4">a) Ayah</td><td>:</td><td>-</td></tr>
-                            <tr className="h-8"><td></td><td className="pl-4">b) Ibu</td><td>:</td><td>-</td></tr>
-
-                            <tr className="h-8"><td className="pt-4">12.</td><td className="pt-4">Nama Wali Peserta Didik</td><td className="pt-4">:</td><td className="pt-4">{student?.student?.guardian_name || '-'}</td></tr>
-                            <tr className="h-8"><td>13.</td><td>Alamat Wali Peserta Didik</td><td>:</td><td>{student?.student?.guardian_address || '-'}</td></tr>
-                            <tr className="h-8"><td>14.</td><td>Pekerjaan Wali Peserta Didik</td><td>:</td><td>-</td></tr>
+                            <tr><td style={{ width: '30px', padding: '4px 0', verticalAlign: 'middle' }}>1.</td><td style={{ width: '220px', verticalAlign: 'middle' }}>Nama Peserta Didik (Lengkap)</td><td style={{ width: '15px', verticalAlign: 'middle' }}>:</td><td style={{ fontWeight: 'bold', textTransform: 'uppercase', verticalAlign: 'middle' }}>{student?.student?.name}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>2.</td><td style={{ verticalAlign: 'middle' }}>Nomor Induk</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.nis || '-'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>3.</td><td style={{ verticalAlign: 'middle' }}>Tempat Tanggal Lahir</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.birth_place || '-'}, {formatDate(student?.student?.birth_date)}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>4.</td><td style={{ verticalAlign: 'middle' }}>Jenis kelamin</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>5.</td><td style={{ verticalAlign: 'middle' }}>Anak ke</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>-</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>6.</td><td style={{ verticalAlign: 'middle' }}>Alamat Peserta Didik</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.address || '-'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>7.</td><td style={{ verticalAlign: 'middle' }}>Nomor Telepon Rumah</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.parent_phone || '-'}</td></tr>
+                            <tr><td colSpan={4} style={{ fontWeight: 'bold', paddingTop: '16px', verticalAlign: 'middle' }}>8. Nama Orang Tua</td></tr>
+                            <tr><td></td><td style={{ paddingLeft: '16px', verticalAlign: 'middle' }}>a) Ayah</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.father_name || '-'}</td></tr>
+                            <tr><td></td><td style={{ paddingLeft: '16px', verticalAlign: 'middle' }}>b) Ibu</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.mother_name || '-'}</td></tr>
+                            <tr><td style={{ paddingTop: '8px', verticalAlign: 'middle' }}>9.</td><td style={{ paddingTop: '8px', verticalAlign: 'middle' }}>Alamat Orang Tua</td><td style={{ paddingTop: '8px', verticalAlign: 'middle' }}>:</td><td style={{ paddingTop: '8px', verticalAlign: 'middle' }}>{student?.student?.address || '-'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>10.</td><td style={{ verticalAlign: 'middle' }}>Nomor Telepon Rumah</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.parent_phone || '-'}</td></tr>
+                            <tr><td colSpan={4} style={{ fontWeight: 'bold', paddingTop: '16px', verticalAlign: 'middle' }}>11. Pekerjaan Orang Tua</td></tr>
+                            <tr><td></td><td style={{ paddingLeft: '16px', verticalAlign: 'middle' }}>a) Ayah</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>-</td></tr>
+                            <tr><td></td><td style={{ paddingLeft: '16px', verticalAlign: 'middle' }}>b) Ibu</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>-</td></tr>
+                            <tr><td style={{ paddingTop: '16px', verticalAlign: 'middle' }}>12.</td><td style={{ paddingTop: '16px', verticalAlign: 'middle' }}>Nama Wali Peserta Didik</td><td style={{ paddingTop: '16px', verticalAlign: 'middle' }}>:</td><td style={{ paddingTop: '16px', verticalAlign: 'middle' }}>{student?.student?.guardian_name || '-'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>13.</td><td style={{ verticalAlign: 'middle' }}>Alamat Wali Peserta Didik</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>{student?.student?.guardian_address || '-'}</td></tr>
+                            <tr><td style={{ padding: '4px 0', verticalAlign: 'middle' }}>14.</td><td style={{ verticalAlign: 'middle' }}>Pekerjaan Wali Peserta Didik</td><td style={{ verticalAlign: 'middle' }}>:</td><td style={{ verticalAlign: 'middle' }}>-</td></tr>
                         </tbody>
                     </table>
 
-                    <div className="flex justify-between mt-20 px-8">
-                        <div className="border border-black w-32 h-40 flex items-center justify-center text-sm text-gray-400">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '80px', padding: '0 32px' }}>
+                        <div style={{ border: '1px solid black', width: '128px', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#9ca3af' }}>
                             Pas Foto
                         </div>
-                        <div className="text-center mr-8">
-                            <p className="mb-20">Bandung, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                            <p className="font-bold border-b border-black pb-1 mb-1">Kepala Madrasah,</p>
+                        <div style={{ textAlign: 'center', marginRight: '32px' }}>
+                            <p style={{ marginBottom: '80px' }}>Bandung, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <p style={{ fontWeight: 'bold', borderBottom: '1px solid black', paddingBottom: '4px', marginBottom: '4px' }}>Kepala Madrasah,</p>
                             <p>.......................................</p>
                         </div>
                     </div>
                 </div>
 
-                {/* ================= PAGE 3: GRADES ================= */}
-                <div className="w-full min-h-screen p-12 break-after-page">
-                    {/* Header Data */}
-                    <div className="flex justify-between mb-6 text-sm">
-                        <table className="w-1/2">
+                {/* PAGE 3: GRADES */}
+                <div style={{ width: '100%', minHeight: '100vh', padding: '48px', pageBreakAfter: 'always' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', fontSize: '14px' }}>
+                        <table style={{ width: '50%' }}>
                             <tbody>
-                                <tr><td className="w-32 font-bold">Nama Madrasah</td><td>: {SCHOOL_PROFILE.subName}</td></tr>
-                                <tr><td className="font-bold">Alamat</td><td>: {SCHOOL_PROFILE.address}</td></tr>
-                                <tr><td className="font-bold">Nama</td><td>: {student?.student?.name}</td></tr>
-                                <tr><td className="font-bold">No. Induk/NIS</td><td>: {student?.student?.nis || '-'}</td></tr>
+                                <tr><td style={{ width: '120px', fontWeight: 'bold', verticalAlign: 'middle' }}>Nama Madrasah</td><td style={{ verticalAlign: 'middle' }}>: {SCHOOL_PROFILE.subName}</td></tr>
+                                <tr><td style={{ fontWeight: 'bold', verticalAlign: 'middle' }}>Alamat</td><td style={{ verticalAlign: 'middle' }}>: {SCHOOL_PROFILE.address}</td></tr>
+                                <tr><td style={{ fontWeight: 'bold', verticalAlign: 'middle' }}>Nama</td><td style={{ verticalAlign: 'middle' }}>: {student?.student?.name}</td></tr>
+                                <tr><td style={{ fontWeight: 'bold', verticalAlign: 'middle' }}>No. Induk/NIS</td><td style={{ verticalAlign: 'middle' }}>: {student?.student?.nis || '-'}</td></tr>
                             </tbody>
                         </table>
-                        <table className="w-1/3">
+                        <table style={{ width: '33%' }}>
                             <tbody>
-                                <tr><td className="w-32 font-bold">Kelas</td><td>: {student?.class?.name}</td></tr>
-                                <tr><td className="font-bold">Semester</td><td>: {semester} ({semester === '1' ? 'SATU' : 'DUA'})</td></tr>
-                                <tr><td className="font-bold">Tahun Pelajaran</td><td>: {activeYear}</td></tr>
+                                <tr><td style={{ width: '120px', fontWeight: 'bold', verticalAlign: 'middle' }}>Kelas</td><td style={{ verticalAlign: 'middle' }}>: {student?.class?.name}</td></tr>
+                                <tr><td style={{ fontWeight: 'bold', verticalAlign: 'middle' }}>Semester</td><td style={{ verticalAlign: 'middle' }}>: {semester} ({semester === '1' ? 'SATU' : 'DUA'})</td></tr>
+                                <tr><td style={{ fontWeight: 'bold', verticalAlign: 'middle' }}>Tahun Pelajaran</td><td style={{ verticalAlign: 'middle' }}>: {activeYear}</td></tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <h3 className="font-bold mb-2">Nilai Akademik</h3>
-                    <table className="w-full border-collapse border border-black text-sm mb-6">
+                    <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Nilai Akademik</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '24px' }}>
                         <thead>
-                            <tr className="bg-gray-100">
-                                <th className="border border-black px-2 py-1 w-10 text-center">No</th>
-                                <th className="border border-black px-2 py-1 text-left">Mata Pelajaran</th>
-                                <th className="border border-black px-2 py-1 text-center w-16">Nilai</th>
-                                <th className="border border-black px-2 py-1 text-center w-20">Predikat</th>
-                                <th className="border border-black px-2 py-1 text-center">Deskripsi</th>
+                            <tr>
+                                <th style={{ ...headerCellStyle, width: '40px', textAlign: 'center' }}>No</th>
+                                <th style={{ ...headerCellStyle, textAlign: 'left' }}>Mata Pelajaran</th>
+                                <th style={{ ...headerCellStyle, width: '60px', textAlign: 'center' }}>Nilai</th>
+                                <th style={{ ...headerCellStyle, width: '80px', textAlign: 'center' }}>Predikat</th>
+                                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Deskripsi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.entries(groupedGrades).map(([category, grades]: [string, any[]], catIndex) => (
+                            {Object.entries(groupedGrades).map(([category, grades]: [string, any[]]) => (
                                 <React.Fragment key={category}>
-                                    {/* Handle categories that act as headers for sub-items logic here if needed. 
-                                        For now we just list them. If category is 'General', maybe don't show header?
-                                        Actually, prompt implies categories ARE the main subjects sometimes. 
-                                        Let's assume flat list for now but grouped.
-                                    */}
-                                    {/* Optional Category Header row can be added here if desired */}
-                                    {/* <tr className="bg-gray-50"><td colSpan={5} className="border border-black px-2 py-1 font-bold">{category}</td></tr> */}
-
                                     {grades.map((grade: any, index: number) => (
-                                        <tr key={grade.id} className="h-8">
-                                            <td className="border border-black px-2 py-1 text-center font-mono">
-                                                {/* Global numbering or per category? Let's use simple global counter approach if possible, or just index + 1 per group */}
-                                                {index + 1}
-                                            </td>
-                                            <td className="border border-black px-2 py-1">
-                                                {grade.subject.display_name}
-                                                {/* If we had sub-items logic, we'd render them here */}
-                                            </td>
-                                            <td className="border border-black px-2 py-1 text-center">
-                                                {grade.score ?? '-'}
-                                            </td>
-                                            <td className="border border-black px-2 py-1 text-center font-bold">
-                                                {grade.grade || '-'}
-                                            </td>
-                                            <td className="border border-black px-2 py-1 text-xs">
-                                                {grade.description || '-'}
-                                            </td>
+                                        <tr key={grade.id}>
+                                            <td style={cellStyleCenter}>{index + 1}</td>
+                                            <td style={cellStyle}>{grade.subject?.display_name || '-'}</td>
+                                            <td style={cellStyleCenter}>{grade.score ?? '-'}</td>
+                                            <td style={{ ...cellStyleCenter, fontWeight: 'bold' }}>{grade.grade || '-'}</td>
+                                            <td style={{ ...cellStyle, fontSize: '12px' }}>{grade.description || '-'}</td>
                                         </tr>
                                     ))}
                                 </React.Fragment>
                             ))}
-                            {/* Fill empty rows if needed to look full? */}
                         </tbody>
                     </table>
 
-                    {/* Predicate Legend */}
-                    <div className="border border-black rounded-xl p-3 text-sm w-2/3 mb-8">
-                        <p className="font-bold mb-1">Keterangan Predikat dan Deskripsi:</p>
+                    <div style={{ border: '1px solid black', borderRadius: '12px', padding: '12px', fontSize: '14px', width: '66%', marginBottom: '32px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '4px' }}>Keterangan Predikat dan Deskripsi:</p>
                         <p>A (90-100) = Terlampaui, B (80-89) = Memenuhi, C (70-79) = Cukup Memenuhi, D (&lt;70) = Tidak Memenuhi</p>
                     </div>
-
                 </div>
 
-                {/* ================= PAGE 4: CHARACTER & ATTENDANCE ================= */}
-                <div className="w-full break-after-page p-12">
-                    <h3 className="font-bold mb-2">Nilai-Nilai Luhur & Kepribadian</h3>
+                {/* PAGE 4: CHARACTER & ATTENDANCE */}
+                <div style={{ width: '100%', padding: '48px', pageBreakAfter: 'always' }}>
+                    <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Nilai-Nilai Luhur & Kepribadian</h3>
 
-                    <table className="w-full border-collapse border border-black text-sm mb-6">
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', marginBottom: '24px' }}>
                         <thead>
-                            <tr className="bg-gray-100">
-                                <th className="border border-black px-2 py-1 w-10 text-center">No</th>
-                                <th className="border border-black px-2 py-1 text-left">Catatan Nilai-nilai Luhur</th>
-                                <th className="border border-black px-2 py-1 text-center">Deskripsi</th>
+                            <tr>
+                                <th style={{ ...headerCellStyle, width: '40px', textAlign: 'center' }}>No</th>
+                                <th style={{ ...headerCellStyle, textAlign: 'left' }}>Catatan Nilai-nilai Luhur</th>
+                                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Deskripsi</th>
                             </tr>
                         </thead>
                         <tbody>
                             {student?.character_assessments?.map((char: any, idx: number) => (
-                                <tr key={char.id} className="h-8">
-                                    <td className="border border-black px-2 py-1 text-center">{idx + 1}</td>
-                                    <td className="border border-black px-2 py-1">{char.character_aspect}</td>
-                                    <td className="border border-black px-2 py-1">{char.description || '-'}</td>
+                                <tr key={char.id}>
+                                    <td style={cellStyleCenter}>{idx + 1}</td>
+                                    <td style={cellStyle}>{char.character_aspect}</td>
+                                    <td style={cellStyle}>{char.description || '-'}</td>
                                 </tr>
                             ))}
                             {(!student?.character_assessments || student.character_assessments.length === 0) && (
-                                <tr><td colSpan={3} className="border border-black px-2 py-6 text-center italic">Belum ada penilaian karakter</td></tr>
+                                <tr><td colSpan={3} style={{ ...cellStyle, textAlign: 'center', fontStyle: 'italic', padding: '24px' }}>Belum ada penilaian karakter</td></tr>
                             )}
                         </tbody>
                     </table>
 
-                    {/* Character Predicate Legend */}
-                    <div className="border border-black rounded-xl p-3 text-sm w-full mb-6">
-                        <p className="font-bold mb-1">Keterangan Predikat dan Deskripsi:</p>
+                    <div style={{ border: '1px solid black', borderRadius: '12px', padding: '12px', fontSize: '14px', width: '100%', marginBottom: '24px' }}>
+                        <p style={{ fontWeight: 'bold', marginBottom: '4px' }}>Keterangan Predikat dan Deskripsi:</p>
                         <p>A = Sudah Terampil dan Terbiasa, B = Sudah Terbiasa, C = Belum Terbiasa</p>
                     </div>
 
-                    {/* Attendance & Personality Side by Side */}
-                    <div className="flex gap-4">
-                        <div className="w-1/2">
-                            <table className="w-full border-collapse border border-black text-sm">
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{ width: '50%' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                 <thead>
-                                    <tr className="bg-gray-100"><th colSpan={3} className="border border-black px-2 py-1 text-center">Ketidakhadiran</th></tr>
+                                    <tr><th colSpan={3} style={{ ...headerCellStyle, textAlign: 'center' }}>Ketidakhadiran</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td className="border border-black px-2 py-1 w-8">1.</td>
-                                        <td className="border border-black px-2 py-1">Sakit</td>
-                                        <td className="border border-black px-2 py-1 w-16 text-center">{student?.sick_days || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border border-black px-2 py-1">2.</td>
-                                        <td className="border border-black px-2 py-1">Izin</td>
-                                        <td className="border border-black px-2 py-1 text-center">{student?.permission_days || '-'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border border-black px-2 py-1">3.</td>
-                                        <td className="border border-black px-2 py-1">Tanpa Keterangan</td>
-                                        <td className="border border-black px-2 py-1 text-center">{student?.absent_days || '-'}</td>
-                                    </tr>
+                                    <tr><td style={{ ...cellStyle, width: '30px' }}>1.</td><td style={cellStyle}>Sakit</td><td style={{ ...cellStyleCenter, width: '60px' }}>{student?.sick_days || '-'}</td></tr>
+                                    <tr><td style={cellStyle}>2.</td><td style={cellStyle}>Izin</td><td style={cellStyleCenter}>{student?.permission_days || '-'}</td></tr>
+                                    <tr><td style={cellStyle}>3.</td><td style={cellStyle}>Tanpa Keterangan</td><td style={cellStyleCenter}>{student?.absent_days || '-'}</td></tr>
                                 </tbody>
                             </table>
                         </div>
-                        <div className="w-1/2">
-                            {/* Mock Personality Table - Data not in store yet */}
-                            <table className="w-full border-collapse border border-black text-sm">
+                        <div style={{ width: '50%' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                                 <thead>
-                                    <tr className="bg-gray-100"><th colSpan={3} className="border border-black px-2 py-1 text-center">Kepribadian</th></tr>
+                                    <tr><th colSpan={3} style={{ ...headerCellStyle, textAlign: 'center' }}>Kepribadian</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td className="border border-black px-2 py-1 w-8">1.</td><td className="border border-black px-2 py-1">Kelakuan</td><td className="border border-black px-2 py-1 w-16 text-center">-</td></tr>
-                                    <tr><td className="border border-black px-2 py-1">2.</td><td className="border border-black px-2 py-1">Kerajinan</td><td className="border border-black px-2 py-1 text-center">-</td></tr>
-                                    <tr><td className="border border-black px-2 py-1">3.</td><td className="border border-black px-2 py-1">Kerapihan</td><td className="border border-black px-2 py-1 text-center">-</td></tr>
+                                    <tr><td style={{ ...cellStyle, width: '30px' }}>1.</td><td style={cellStyle}>Kelakuan</td><td style={{ ...cellStyleCenter, width: '60px' }}>-</td></tr>
+                                    <tr><td style={cellStyle}>2.</td><td style={cellStyle}>Kerajinan</td><td style={cellStyleCenter}>-</td></tr>
+                                    <tr><td style={cellStyle}>3.</td><td style={cellStyle}>Kerapihan</td><td style={cellStyleCenter}>-</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                {/* ================= PAGE 5: EXTRAS, NOTES & SIGNATURES ================= */}
-                <div className="w-full p-12">
-                    <h3 className="font-bold mb-2">PENGEMBANGAN DIRI</h3>
+                {/* PAGE 5: EXTRAS, NOTES & SIGNATURES */}
+                <div style={{ width: '100%', padding: '48px' }}>
+                    <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>PENGEMBANGAN DIRI</h3>
 
-                    <div className="mb-4">
-                        <h4 className="font-bold text-sm ml-4 mb-1">A. EKSTRA KULIKULER</h4>
-                        <table className="w-full border-collapse border border-black text-sm">
+                    <div style={{ marginBottom: '16px' }}>
+                        <h4 style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '16px', marginBottom: '4px' }}>A. EKSTRA KULIKULER</h4>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                             <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="border border-black px-2 py-1 w-10 text-center">NO</th>
-                                    <th className="border border-black px-2 py-1 text-left">Jenis Kegiatan</th>
-                                    <th className="border border-black px-2 py-1 text-center w-24">Predikat</th>
-                                    <th className="border border-black px-2 py-1 text-center">Keterangan</th>
+                                <tr>
+                                    <th style={{ ...headerCellStyle, width: '40px', textAlign: 'center' }}>NO</th>
+                                    <th style={{ ...headerCellStyle, textAlign: 'left' }}>Jenis Kegiatan</th>
+                                    <th style={{ ...headerCellStyle, width: '100px', textAlign: 'center' }}>Predikat</th>
+                                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>Keterangan</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {/* Static Empty Rows for now as requested/mocked */}
                                 {[1, 2, 3].map(num => (
-                                    <tr key={num} className="h-8">
-                                        <td className="border border-black px-2 py-1 text-center">{num}</td>
-                                        <td className="border border-black px-2 py-1"></td>
-                                        <td className="border border-black px-2 py-1 text-center">A / B / C / D</td>
-                                        <td className="border border-black px-2 py-1"></td>
+                                    <tr key={num}>
+                                        <td style={cellStyleCenter}>{num}</td>
+                                        <td style={cellStyle}></td>
+                                        <td style={cellStyleCenter}>A / B / C / D</td>
+                                        <td style={cellStyle}></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
 
-                    <div className="mb-8">
-                        <h4 className="font-bold text-sm ml-4 mb-1">B. CATATAN MENGENAI SANTRI</h4>
-                        <div className="border border-black h-24 p-2 text-sm">
+                    <div style={{ marginBottom: '32px' }}>
+                        <h4 style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '16px', marginBottom: '4px' }}>B. CATATAN MENGENAI SANTRI</h4>
+                        <div style={{ border: '1px solid black', height: '96px', padding: '8px', fontSize: '14px' }}>
                             {student?.teacher_notes || ''}
                         </div>
                     </div>
 
-                    {/* Signatures */}
-                    <div className="flex justify-between items-end mt-12 text-sm">
-                        <div className="text-center w-1/3">
-                            <p className="mb-20">Mengetahui<br />Orang Tua/Wali,</p>
-                            <p className="border-t border-black pt-1 w-40 mx-auto">( ......................... )</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '48px', fontSize: '14px' }}>
+                        <div style={{ textAlign: 'center', width: '33%' }}>
+                            <p style={{ marginBottom: '80px' }}>Mengetahui<br />Orang Tua/Wali,</p>
+                            <p style={{ borderTop: '1px solid black', paddingTop: '4px', width: '160px', margin: '0 auto' }}>( ......................... )</p>
                         </div>
-                        <div className="text-center w-1/3">
-                            <p className="mb-2">Diberikan di: ........................<br />Tanggal : ........................</p>
-                            <p className="mb-20">Pengajar MDT</p>
-                            <p className="border-t border-black pt-1 w-40 mx-auto font-bold">{student?.class?.teacher_name || '.........................'}</p>
+                        <div style={{ textAlign: 'center', width: '33%' }}>
+                            <p style={{ marginBottom: '8px' }}>Diberikan di: ........................<br />Tanggal : ........................</p>
+                            <p style={{ marginBottom: '80px' }}>Pengajar MDT</p>
+                            <p style={{ borderTop: '1px solid black', paddingTop: '4px', width: '160px', margin: '0 auto', fontWeight: 'bold' }}>{student?.class?.teacher_name || '.........................'}</p>
                         </div>
                     </div>
                 </div>

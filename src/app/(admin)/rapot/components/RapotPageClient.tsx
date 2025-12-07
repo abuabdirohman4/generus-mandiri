@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getClasses } from '@/app/actions/shared';
 import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
-import PrintableReport from './PrintableReport';
 import { getClassReportsBulk, getClassReportsSummary } from '../actions';
 import PDFExportModal from './PDFExportModal';
 import { toast } from 'sonner';
+import { downloadBulkPDFs } from './pdfUtils';
 import RapotStudentSidebar from './RapotStudentSidebar';
 import DataFilter from '@/components/shared/DataFilter';
 import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
@@ -41,7 +41,6 @@ export default function RapotPageClient() {
 
     // Bulk Export State
     const [isDownloading, setIsDownloading] = useState(false);
-    const [bulkStudents, setBulkStudents] = useState<any[]>([]);
     const [showBulkPDFModal, setShowBulkPDFModal] = useState(false);
 
     // Initial Load
@@ -138,66 +137,37 @@ export default function RapotPageClient() {
         }
 
         const classId = filters.kelas[0].split(',')[0];
+        const className = classes.find(c => c.id === classId)?.name || 'Kelas';
         setIsDownloading(true);
-        toast.info('Menyiapkan data rapot kelas...');
+        toast.info('Menyiapkan dan mendownload PDF rapot kelas...');
 
         try {
             // 1. Fetch Data
             const data = await getClassReportsBulk(classId, academicYear.id, filters.semester);
-            setBulkStudents(data);
 
-            // 2. Wait for Render - increased for multiple reports
-            setTimeout(async () => {
-                const element = document.getElementById('bulk-printable-area');
-                if (!element) {
-                    toast.error('Gagal generate PDF: Area tidak ditemukan');
-                    setIsDownloading(false);
-                    setBulkStudents([]);
-                    return;
+            if (data.length === 0) {
+                toast.error('Tidak ada data siswa untuk kelas ini');
+                setIsDownloading(false);
+                return;
+            }
+
+            // 2. Download PDFs using react-pdf
+            await downloadBulkPDFs(
+                data,
+                academicYear.name || '',
+                String(filters.semester),
+                className,
+                (current, total) => {
+                    // Optional: Update progress
+                    console.log(`Downloading ${current}/${total}`);
                 }
+            );
 
-                // Target the white container with all reports by ID
-                const reportsContainer = document.getElementById('bulk-reports-container');
-                if (!reportsContainer) {
-                    toast.error('Gagal generate PDF: Konten tidak ditemukan');
-                    setIsDownloading(false);
-                    setBulkStudents([]);
-                    return;
-                }
-
-                try {
-                    // @ts-ignore
-                    const html2pdf = (await import('html2pdf.js')).default;
-
-                    const className = classes.find(c => c.id === classId)?.name || 'Kelas';
-                    const fileName = `Rapor_${className.replace(/\s+/g, '_')}_${academicYear.name.replace(/\//g, '-')}.pdf`;
-
-                    const opt = {
-                        margin: 0,
-                        filename: fileName,
-                        image: { type: 'jpeg' as const, quality: 0.95 },
-                        html2canvas: { scale: 2, useCORS: true, logging: false },
-                        jsPDF: {
-                            unit: 'mm' as const,
-                            format: (options.pageSize === 'Letter' ? 'letter' : 'a4') as any,
-                            orientation: options.orientation as any
-                        }
-                    };
-
-                    await html2pdf().set(opt).from(reportsContainer).save();
-                    toast.success('Rapot sekelas berhasil didownload');
-                } catch (err: any) {
-                    console.error('Bulk PDF Error:', err);
-                    toast.error(`Gagal download PDF kelas: ${err?.message || 'Unknown error'}`);
-                } finally {
-                    setIsDownloading(false);
-                    setBulkStudents([]); // Clear data to unmount hidden reports
-                }
-            }, 2000); // 2s for multiple reports to render
-
-        } catch (error) {
-            console.error('Error bulk fetch:', error);
-            toast.error('Gagal mengambil data kelas');
+            toast.success(`${data.length} rapot berhasil didownload`);
+        } catch (error: any) {
+            console.error('Error bulk download:', error);
+            toast.error(`Gagal download PDF kelas: ${error?.message || 'Unknown error'}`);
+        } finally {
             setIsDownloading(false);
         }
     };
@@ -322,40 +292,13 @@ export default function RapotPageClient() {
                 </div>
             </div>
 
-            {/* Hidden Bulk Print Area - Now Visible Overlay during generation */}
-            {bulkStudents.length > 0 && (
-                <div id="bulk-printable-area" className="fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center pt-20 overflow-y-auto">
+            {/* Downloading Overlay */}
+            {isDownloading && (
+                <div className="fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center justify-center">
                     <div className="text-white mb-6 font-bold text-xl animate-pulse">
-                        Sedang Menggabungkan {bulkStudents.length} Rapot...
+                        Menyiapkan dan Mendownload PDF Rapot...
                     </div>
-                    {/* Render all reports in a container that looks like a document column */}
-                    <div
-                        id="bulk-reports-container"
-                        className="w-[210mm] bg-white shadow-2xl mb-20"
-                        style={{ backgroundColor: '#ffffff', color: '#000000' }}
-                    >
-                        {bulkStudents.map((studentData, index) => (
-                            <div
-                                key={studentData.student.id}
-                                className="break-after-page border-b-4 border-gray-200 last:border-0"
-                                style={{ backgroundColor: '#ffffff', color: '#000000' }}
-                            >
-                                <PrintableReport
-                                    student={studentData}
-                                    activeYear={academicYear?.name || ''}
-                                    semester={filters.semester.toString()}
-                                    options={{
-                                        pageSize: 'A4',
-                                        orientation: 'portrait',
-                                        includePageNumbers: true,
-                                        includeWatermark: false,
-                                        margin: { top: 0, right: 0, bottom: 0, left: 0 }
-                                    }}
-                                    className="block bg-white text-black min-h-[297mm] min-w-[210mm]"
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
             )}
 
