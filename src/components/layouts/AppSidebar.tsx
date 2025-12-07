@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 import { useSidebar } from "@/stores/sidebarStore";
 import {
@@ -55,11 +55,11 @@ const allNavItems: NavItem[] = [
     name: "Laporan",
     path: "/laporan",
   },
-  // {
-  //   icon: <BookOpenIcon className="w-6 h-6" />,
-  //   name: "Materi",
-  //   path: "/materi",
-  // },
+  {
+    icon: <BookOpenIcon className="w-6 h-6" />,
+    name: "Materi",
+    path: "/materi",
+  },
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
@@ -106,22 +106,20 @@ function SubmenuBadges({ subItem, isActive }: { subItem: SubNavItem; isActive: b
     <span className="flex items-center gap-1 ml-auto">
       {subItem.new === true && (
         <span
-          className={`ml-auto ${
-            isActive
+          className={`ml-auto ${isActive
               ? "menu-dropdown-badge-active"
               : "menu-dropdown-badge-inactive"
-          } menu-dropdown-badge`}
+            } menu-dropdown-badge`}
         >
           new
         </span>
       )}
       {subItem.pro === true && (
         <span
-          className={`ml-auto ${
-            isActive
+          className={`ml-auto ${isActive
               ? "menu-dropdown-badge-active"
               : "menu-dropdown-badge-inactive"
-          } menu-dropdown-badge`}
+            } menu-dropdown-badge`}
         >
           pro
         </span>
@@ -131,24 +129,23 @@ function SubmenuBadges({ subItem, isActive }: { subItem: SubNavItem; isActive: b
 }
 
 // Submenu Item Component
-function SubmenuItem({ 
-  subItem, 
-  index, 
-  isActive 
-}: { 
-  subItem: SubNavItem; 
-  index: number; 
+function SubmenuItem({
+  subItem,
+  index,
+  isActive
+}: {
+  subItem: SubNavItem;
+  index: number;
   isActive: (path: string) => boolean;
 }) {
   return (
     <li key={subItem.name || index}>
       <Link
         href={subItem.path || ''}
-        className={`menu-dropdown-item ${
-          isActive(subItem.path || '')
+        className={`menu-dropdown-item ${isActive(subItem.path || '')
             ? "menu-dropdown-item-active"
             : "menu-dropdown-item-inactive"
-        }`}
+          }`}
       >
         {subItem.name || ''}
         <SubmenuBadges subItem={subItem} isActive={isActive(subItem.path || '')} />
@@ -158,20 +155,20 @@ function SubmenuItem({
 }
 
 // Submenu Component
-function Submenu({ 
-  nav, 
-  index, 
-  menuType, 
-  isExpanded, 
-  isHovered, 
-  isMobileOpen, 
-  openSubmenu, 
-  subMenuHeight, 
+function Submenu({
+  nav,
+  index,
+  menuType,
+  isExpanded,
+  isHovered,
+  isMobileOpen,
+  openSubmenu,
+  subMenuHeight,
   subMenuRefs,
   isActive
-}: { 
-  nav: NavItem; 
-  index: number; 
+}: {
+  nav: NavItem;
+  index: number;
   menuType: "main" | "others";
   isExpanded: boolean;
   isHovered: boolean;
@@ -197,10 +194,10 @@ function Submenu({
     >
       <ul className="mt-2 space-y-1 ml-9">
         {nav.subItems.map((subItem, subIndex) => (
-          <SubmenuItem 
+          <SubmenuItem
             key={subItem.path}
-            subItem={subItem} 
-            index={subIndex} 
+            subItem={subItem}
+            index={subIndex}
             isActive={isActive}
           />
         ))}
@@ -210,23 +207,23 @@ function Submenu({
 }
 
 // Menu Item Component
-function MenuItem({ 
-  nav, 
-  index, 
-  menuType, 
-  isExpanded, 
-  isHovered, 
-  isMobileOpen, 
-  openSubmenu, 
-  subMenuHeight, 
-  subMenuRefs, 
-  handleSubmenuToggle, 
+function MenuItem({
+  nav,
+  index,
+  menuType,
+  isExpanded,
+  isHovered,
+  isMobileOpen,
+  openSubmenu,
+  subMenuHeight,
+  subMenuRefs,
+  handleSubmenuToggle,
   isActive,
   isLoading,
   onNavigate
-}: { 
-  nav: NavItem; 
-  index: number; 
+}: {
+  nav: NavItem;
+  index: number;
   menuType: "main" | "others";
   isExpanded: boolean;
   isHovered: boolean;
@@ -247,11 +244,9 @@ function MenuItem({
       <li key={nav.name || index}>
         <button
           onClick={() => handleSubmenuToggle(index, menuType)}
-          className={`menu-item group ${
-            isSubmenuOpen ? "menu-item-active" : "menu-item-inactive"
-          } cursor-pointer ${
-            !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
-          }`}
+          className={`menu-item group ${isSubmenuOpen ? "menu-item-active" : "menu-item-inactive"
+            } cursor-pointer ${!isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
+            }`}
         >
           <span
             className={`w-6 h-6 flex items-center justify-center ${isSubmenuOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
@@ -261,15 +256,14 @@ function MenuItem({
           {showText && nav.name ? <span className="menu-item-text">{nav.name}</span> : null}
           {showText ? (
             <ChevronDownIcon
-              className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                isSubmenuOpen ? "rotate-180 text-brand-500" : ""
-              }`}
+              className={`ml-auto w-5 h-5 transition-transform duration-200 ${isSubmenuOpen ? "rotate-180 text-brand-500" : ""
+                }`}
             />
           ) : null}
         </button>
-        <Submenu 
-          nav={nav} 
-          index={index} 
+        <Submenu
+          nav={nav}
+          index={index}
           menuType={menuType}
           isExpanded={isExpanded}
           isHovered={isHovered}
@@ -286,7 +280,7 @@ function MenuItem({
   if (nav.path) {
     const isRouteLoading = isLoading(nav.path);
     const isRouteActive = isActive(nav.path);
-    
+
     return (
       <li key={nav.name || index}>
         <Link
@@ -302,9 +296,8 @@ function MenuItem({
               onNavigate(nav.path!);
             }
           }}
-          className={`menu-item group ${
-            isRouteActive ? "menu-item-active" : "menu-item-inactive"
-          } ${isRouteLoading ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
+          className={`menu-item group ${isRouteActive ? "menu-item-active" : "menu-item-inactive"
+            } ${isRouteLoading ? "opacity-70 cursor-wait pointer-events-none" : ""}`}
         >
           <span
             className={`w-6 h-6 flex items-center justify-center ${isRouteActive ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
@@ -329,21 +322,21 @@ function MenuItem({
 }
 
 // Menu Items Component
-function MenuItems({ 
-  navItems, 
-  menuType, 
-  isExpanded, 
-  isHovered, 
-  isMobileOpen, 
-  openSubmenu, 
-  subMenuHeight, 
-  subMenuRefs, 
-  handleSubmenuToggle, 
+function MenuItems({
+  navItems,
+  menuType,
+  isExpanded,
+  isHovered,
+  isMobileOpen,
+  openSubmenu,
+  subMenuHeight,
+  subMenuRefs,
+  handleSubmenuToggle,
   isActive,
   isLoading,
   onNavigate
-}: { 
-  navItems: NavItem[]; 
+}: {
+  navItems: NavItem[];
   menuType: "main" | "others";
   isExpanded: boolean;
   isHovered: boolean;
@@ -359,10 +352,10 @@ function MenuItems({
   return (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
-        <MenuItem 
+        <MenuItem
           key={nav.path || nav.name}
-          nav={nav} 
-          index={index} 
+          nav={nav}
+          index={index}
           menuType={menuType}
           isExpanded={isExpanded}
           isHovered={isHovered}
@@ -408,29 +401,28 @@ function SidebarContent({
   const { profile } = useUserProfile();
   const isSuperAdminUser = profile ? isSuperAdmin(profile) : false;
   const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
-  
+
   // Filter navigation items based on admin status and role-specific exclusions
   const visibleNavItems = allNavItems.filter(item => {
     // Filter out admin-only items for non-admins
     if (item.adminOnly && !isAdminUser) {
       return false
     }
-    
+
     // Filter out items that exclude Admin Kelompok
     if (item.excludeAdminKelompok && profile && isAdminKelompok(profile)) {
       return false
     }
-    
+
     return true
   });
-  
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 transform
-        ${
-          isExpanded || isMobileOpen
-            ? "w-[290px]"
-            : isHovered
+        ${isExpanded || isMobileOpen
+          ? "w-[290px]"
+          : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
@@ -442,7 +434,7 @@ function SidebarContent({
       <div className={`${isExpanded || isHovered ? 'ml-2' : 'ml-2'} py-8 flex justify-start`}>
         <Link href="/" className="relative block">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Image
                 src="/images/logo/logo-icon.svg"
                 alt="Logo"
@@ -451,13 +443,12 @@ function SidebarContent({
                 priority
               />
             </div>
-            
+
             <div
-              className={`transition-all duration-300 ease-in-out transform ${
-                isExpanded || isHovered || isMobileOpen
+              className={`transition-all duration-300 ease-in-out transform ${isExpanded || isHovered || isMobileOpen
                   ? "opacity-100 translate-x-0 ml-3 w-auto"
                   : "opacity-0 -translate-x-4 absolute pointer-events-none ml-0 w-0 overflow-hidden"
-              }`}
+                }`}
             >
               <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Generus Mandiri
@@ -468,8 +459,8 @@ function SidebarContent({
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="flex flex-col gap-6">
-          <MenuItems 
-            navItems={visibleNavItems} 
+          <MenuItems
+            navItems={visibleNavItems}
             menuType="main"
             isExpanded={isExpanded}
             isHovered={isHovered}
@@ -508,9 +499,9 @@ const AppSidebar: React.FC = () => {
   // Handle navigation with loading state
   const handleNavigation = useCallback((path: string) => {
     if (path === pathname) return; // Don't navigate if already on the page
-    
+
     setLoadingRoutes(prev => new Set(prev).add(path));
-    
+
     router.push(path);
   }, [pathname, router]);
 
@@ -531,7 +522,7 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Since we don't have submenus anymore, always close any open submenu
     setOpenSubmenu(null);
-  }, [pathname,isActive]);
+  }, [pathname, isActive]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened

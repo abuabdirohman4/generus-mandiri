@@ -12,6 +12,7 @@ interface PrintableReportProps {
         includeWatermark: boolean;
         margin: { top: number; right: number; bottom: number; left: number };
     };
+    className?: string;
 }
 
 // Configurable School Profile (bisa diganti dari props atau settings nantinya)
@@ -25,7 +26,7 @@ const SCHOOL_PROFILE = {
     npsn: ".............................."
 };
 
-const PrintableReport: React.FC<PrintableReportProps> = ({ student, activeYear, semester, options }) => {
+const PrintableReport: React.FC<PrintableReportProps> = ({ student, activeYear, semester, options, className }) => {
     // 1. Group Grades by Category
     const groupedGrades = React.useMemo(() => {
         const groups: { [key: string]: typeof student.grades } = {};
@@ -92,7 +93,11 @@ const PrintableReport: React.FC<PrintableReportProps> = ({ student, activeYear, 
                 }
             `}</style>
 
-            <div className="printable-report hidden print:block bg-white text-black font-serif leading-tight">
+            {/* Default to hidden print:block unless className is passed to override */}
+            <div 
+                className={`printable-report bg-white text-black font-serif leading-tight ${className || 'hidden print:block'}`}
+                style={{ backgroundColor: '#ffffff', color: '#000000' }}
+            >
 
                 {/* ================= PAGE 1: COVER RAPOR ================= */}
                 <div className="w-full flex flex-col items-center justify-between break-after-page border-b-2 border-transparent pb-10">

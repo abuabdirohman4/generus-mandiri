@@ -232,13 +232,49 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
 
     // ... existing loadData and handleSaveAll ...
 
-    // Handle Export logic
-    const handleExportPDF = (options: any) => {
+    // Handle Download logic
+    const handleDownloadPDF = async (options: any) => {
+        // We set print options to render the PrintableReport
         setPrintOptions(options);
-        // Delay print to allow React to render the PrintableReport component
-        setTimeout(() => {
-            window.print();
-        }, 100);
+
+        // Wait for render - increased timeout for overlay to fully render
+        setTimeout(async () => {
+            const element = document.getElementById('printable-report-content');
+            if (!element) {
+                toast.error('Gagal membuat PDF: Element tidak ditemukan');
+                setPrintOptions(null);
+                return;
+            }
+
+            // Target the actual printable report inside the overlay
+            const reportElement = element.querySelector('.printable-report') as HTMLElement;
+            if (!reportElement) {
+                toast.error('Gagal membuat PDF: Konten rapot tidak ditemukan');
+                setPrintOptions(null);
+                return;
+            }
+
+            try {
+                // @ts-ignore
+                const html2pdf = (await import('html2pdf.js')).default;
+
+                const opt = {
+                    margin: 0,
+                    filename: `Rapor_${studentInfo.name.replace(/\s+/g, '_')}_${semester}.pdf`,
+                    image: { type: 'jpeg' as const, quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                    jsPDF: { unit: 'mm' as const, format: (options.pageSize === 'Letter' ? 'letter' : 'a4') as any, orientation: options.orientation as any }
+                };
+
+                await html2pdf().set(opt).from(reportElement).save();
+                toast.success('PDF berhasil didownload');
+            } catch (err: any) {
+                console.error('PDF Generation Error:', err);
+                toast.error(`Gagal mendownload PDF: ${err?.message || 'Unknown error'}`);
+            } finally {
+                setPrintOptions(null);
+            }
+        }, 1500); // Increased to 1500ms for overlay rendering
     };
 
     if (loading) return <div className="p-8 text-center print:hidden">Loading...</div>;
@@ -276,7 +312,7 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                 </svg>
-                                Cetak PDF
+                                Cetak / Download PDF
                             </button>
                         </div>
                     </div>
@@ -536,27 +572,32 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
                 <PDFExportModal
                     isOpen={showPDFModal}
                     onClose={() => setShowPDFModal(false)}
-                    onExport={handleExportPDF}
+                    onExport={handleDownloadPDF}
                 />
             </div>
 
-            {/* Printable Component - Only Visible when Printing */}
             {printOptions && (
-                <PrintableReport
-                    options={printOptions}
-                    activeYear={academicYear?.name || ''}
-                    semester={String(semester)}
-                    student={{
-                        student: studentInfo,
-                        class: { name: className }, // Add teacher name if available in future
-                        grades: Object.values(grades), // Grades from getStudentGrades have subject info attached
-                        character_assessments: Object.values(assessments),
-                        sick_days: attendance.sick,
-                        permission_days: attendance.permission,
-                        absent_days: attendance.absent,
-                        teacher_notes: teacherNotes
-                    }}
-                />
+                <div id="printable-report-content" className="fixed inset-0 z-50 bg-gray-900/90 flex flex-col items-center justify-center pt-10">
+                    <div className="text-white mb-4 font-bold text-lg animate-pulse">Menyiapkan PDF...</div>
+                    <div className="bg-white p-0 shadow-2xl overflow-y-auto max-h-[80vh] w-fit">
+                        <PrintableReport
+                            options={printOptions}
+                            activeYear={academicYear?.name || ''}
+                            semester={String(semester)}
+                            student={{
+                                student: studentInfo,
+                                class: { name: className },
+                                grades: Object.values(grades),
+                                character_assessments: Object.values(assessments),
+                                sick_days: attendance.sick,
+                                permission_days: attendance.permission,
+                                absent_days: attendance.absent,
+                                teacher_notes: teacherNotes
+                            }}
+                            className="block bg-white text-black min-h-[297mm] min-w-[210mm]"
+                        />
+                    </div>
+                </div>
             )}
         </>
     );

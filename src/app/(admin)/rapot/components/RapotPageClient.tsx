@@ -4,12 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getClasses } from '@/app/actions/shared';
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
-import { getClassReportsSummary } from '../actions';
-import DataFilter from '@/components/shared/DataFilter';
-import RapotStudentSidebar from './RapotStudentSidebar';
-import StudentReportDetailClient from '../[studentId]/components/StudentReportDetailClient';
+import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import PrintableReport from './PrintableReport';
+import { getClassReportsBulk, getClassReportsSummary } from '../actions';
+import PDFExportModal from './PDFExportModal';
 import { toast } from 'sonner';
+import RapotStudentSidebar from './RapotStudentSidebar';
+import DataFilter from '@/components/shared/DataFilter';
+import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
+import StudentReportDetailClient from '../[studentId]/components/StudentReportDetailClient';
 
 export default function RapotPageClient() {
     const router = useRouter();
@@ -35,6 +38,11 @@ export default function RapotPageClient() {
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [loading, setLoading] = useState(false);
+
+    // Bulk Export State
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [bulkStudents, setBulkStudents] = useState<any[]>([]);
+    const [showBulkPDFModal, setShowBulkPDFModal] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -123,6 +131,77 @@ export default function RapotPageClient() {
         }
     };
 
+    const handleBulkDownload = async (options: any) => {
+        if (!academicYear || filters.kelas.length === 0) {
+            toast.error('Pilih kelas terlebih dahulu');
+            return;
+        }
+
+        const classId = filters.kelas[0].split(',')[0];
+        setIsDownloading(true);
+        toast.info('Menyiapkan data rapot kelas...');
+
+        try {
+            // 1. Fetch Data
+            const data = await getClassReportsBulk(classId, academicYear.id, filters.semester);
+            setBulkStudents(data);
+
+            // 2. Wait for Render - increased for multiple reports
+            setTimeout(async () => {
+                const element = document.getElementById('bulk-printable-area');
+                if (!element) {
+                    toast.error('Gagal generate PDF: Area tidak ditemukan');
+                    setIsDownloading(false);
+                    setBulkStudents([]);
+                    return;
+                }
+
+                // Target the white container with all reports by ID
+                const reportsContainer = document.getElementById('bulk-reports-container');
+                if (!reportsContainer) {
+                    toast.error('Gagal generate PDF: Konten tidak ditemukan');
+                    setIsDownloading(false);
+                    setBulkStudents([]);
+                    return;
+                }
+
+                try {
+                    // @ts-ignore
+                    const html2pdf = (await import('html2pdf.js')).default;
+
+                    const className = classes.find(c => c.id === classId)?.name || 'Kelas';
+                    const fileName = `Rapor_${className.replace(/\s+/g, '_')}_${academicYear.name.replace(/\//g, '-')}.pdf`;
+
+                    const opt = {
+                        margin: 0,
+                        filename: fileName,
+                        image: { type: 'jpeg' as const, quality: 0.95 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: {
+                            unit: 'mm' as const,
+                            format: (options.pageSize === 'Letter' ? 'letter' : 'a4') as any,
+                            orientation: options.orientation as any
+                        }
+                    };
+
+                    await html2pdf().set(opt).from(reportsContainer).save();
+                    toast.success('Rapot sekelas berhasil didownload');
+                } catch (err: any) {
+                    console.error('Bulk PDF Error:', err);
+                    toast.error(`Gagal download PDF kelas: ${err?.message || 'Unknown error'}`);
+                } finally {
+                    setIsDownloading(false);
+                    setBulkStudents([]); // Clear data to unmount hidden reports
+                }
+            }, 2000); // 2s for multiple reports to render
+
+        } catch (error) {
+            console.error('Error bulk fetch:', error);
+            toast.error('Gagal mengambil data kelas');
+            setIsDownloading(false);
+        }
+    };
+
     return (
         <div className="flex h-[calc(100vh-8rem)] relative">
             {/* Sidebar */}
@@ -144,21 +223,43 @@ export default function RapotPageClient() {
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header with Hamburger */}
                 <div className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 ${window.innerWidth < 768 && filters.kelas.length === 0 ? 'hidden' : ''}`}>
-                    <div className="flex items-center gap-3">
-                        {/* Hamburger */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {/* Hamburger */}
+                            {filters.kelas.length > 0 && (
+                                <button
+                                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                                    className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
+                            )}
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+                                Rapot
+                            </h1>
+                        </div>
+
                         {filters.kelas.length > 0 && (
                             <button
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => setShowBulkPDFModal(true)}
+                                disabled={isDownloading || students.length === 0}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
+                                {isDownloading ? (
+                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                ) : (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                )}
+                                Download Rapot Kelas ({students.length})
                             </button>
                         )}
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                            E-Rapor
-                        </h1>
                     </div>
                 </div>
 
@@ -169,65 +270,49 @@ export default function RapotPageClient() {
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6 p-4">
                             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Filter</h3>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                {/* Academic Year Selector (Using explicit Select for now as the component is used elsewhere) */}
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tahun Ajaran</label>
-                                    <select
-                                        className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        value={academicYear?.id || ''}
-                                        onChange={(e) => {
-                                            // Handle year change logic if we have full list. 
-                                            // For now just displaying active year or if user wants to change, we need to fetch all years.
-                                            // Assuming current implementation fetches only ACTIVE year. 
-                                            // If user wants selector, we might need to fetch ALL years. 
-                                            // I will implement a basic display for now or fetch list if needed.
+                                {/* Academic Year & Semester Selector */}
+                                <div className="md:col-span-2">
+                                    <AcademicYearSelector
+                                        selectedYearId={academicYear?.id || ''}
+                                        selectedSemester={filters.semester as 1 | 2}
+                                        onYearChange={(yearId) => {
+                                            // Fetch the year details when changed
+                                            getAcademicYears().then(years => {
+                                                const selected = years.find(y => y.id === yearId);
+                                                if (selected) {
+                                                    setAcademicYear({ id: selected.id, name: selected.name });
+                                                }
+                                            });
                                         }}
-                                        disabled
-                                    >
-                                        <option value={academicYear?.id || ''}>{academicYear?.name || 'Loading...'}</option>
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Semester</label>
-                                    <select
-                                        className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        value={filters.semester}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, semester: parseInt(e.target.value) }))}
-                                    >
-                                        <option value={1}>Semester 1</option>
-                                        <option value={2}>Semester 2</option>
-                                    </select>
+                                        onSemesterChange={(semester) => setFilters(prev => ({ ...prev, semester }))}
+                                    />
                                 </div>
 
                                 {/* DataFilter for Classes & Org */}
-                                <div className="md:col-span-2">
-                                    <DataFilter
-                                        filters={filters}
-                                        onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters }))}
-                                        userProfile={userProfile}
-                                        daerahList={[]}
-                                        desaList={[]}
-                                        kelompokList={kelompokList}
-                                        classList={displayClasses}
-                                        showKelas={true}
-                                        showMeetingType={false}
-                                        className="!grid-cols-1 !gap-4" // Override grid to fit in column
-                                        compact={true} // IF DataFilter supports compact mode
-                                    />
-                                </div>
+                                <DataFilter
+                                    filters={filters}
+                                    onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters }))}
+                                    userProfile={userProfile}
+                                    daerahList={[]}
+                                    desaList={[]}
+                                    kelompokList={kelompokList}
+                                    classList={displayClasses}
+                                    showKelas={true}
+                                    showMeetingType={false}
+                                    className="grid-cols-1! gap-4!" // Override grid to fit in column
+                                    compact={true} // IF DataFilter supports compact mode
+                                    variant="modal"
+                                />
                             </div>
                         </div>
 
                         {/* Detail View */}
                         {selectedStudentId && academicYear && filters.kelas.length > 0 ? (
-                            <div className="max-w-4xl mx-auto">
-                                <StudentReportDetailClient
-                                    studentId={selectedStudentId}
-                                    semester={filters.semester}
-                                    key={`${selectedStudentId}-${filters.semester}`}
-                                />
-                            </div>
+                            <StudentReportDetailClient
+                                studentId={selectedStudentId}
+                                semester={filters.semester}
+                                key={`${selectedStudentId}-${filters.semester}`}
+                            />
                         ) : (
                             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                 <p className="text-lg text-gray-500 dark:text-gray-400">Pilih kelas dan siswa untuk melihat rapot</p>
@@ -236,6 +321,51 @@ export default function RapotPageClient() {
                     </div>
                 </div>
             </div>
+
+            {/* Hidden Bulk Print Area - Now Visible Overlay during generation */}
+            {bulkStudents.length > 0 && (
+                <div id="bulk-printable-area" className="fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center pt-20 overflow-y-auto">
+                    <div className="text-white mb-6 font-bold text-xl animate-pulse">
+                        Sedang Menggabungkan {bulkStudents.length} Rapot...
+                    </div>
+                    {/* Render all reports in a container that looks like a document column */}
+                    <div
+                        id="bulk-reports-container"
+                        className="w-[210mm] bg-white shadow-2xl mb-20"
+                        style={{ backgroundColor: '#ffffff', color: '#000000' }}
+                    >
+                        {bulkStudents.map((studentData, index) => (
+                            <div
+                                key={studentData.student.id}
+                                className="break-after-page border-b-4 border-gray-200 last:border-0"
+                                style={{ backgroundColor: '#ffffff', color: '#000000' }}
+                            >
+                                <PrintableReport
+                                    student={studentData}
+                                    activeYear={academicYear?.name || ''}
+                                    semester={filters.semester.toString()}
+                                    options={{
+                                        pageSize: 'A4',
+                                        orientation: 'portrait',
+                                        includePageNumbers: true,
+                                        includeWatermark: false,
+                                        margin: { top: 0, right: 0, bottom: 0, left: 0 }
+                                    }}
+                                    className="block bg-white text-black min-h-[297mm] min-w-[210mm]"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <PDFExportModal
+                isOpen={showBulkPDFModal}
+                onClose={() => setShowBulkPDFModal(false)}
+                onExport={handleBulkDownload}
+                title="Download Rapot Satu Kelas"
+                isBulk={true}
+            />
         </div>
     );
 }

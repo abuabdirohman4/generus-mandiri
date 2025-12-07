@@ -39,6 +39,9 @@ export async function getStudentGrades(studentId: string, academicYearId: string
         .select(`
             *,
             subject:report_subjects(
+                id,
+                display_name,
+                display_order,
                 material_type:material_types(
                     name,
                     category:material_categories(
@@ -461,6 +464,87 @@ export async function getClassReportsSummary(classId: string, academicYearId: st
             isPublished: report?.is_published || false,
             generatedAt: report?.generated_at,
             averageScore: report?.average_score
+        };
+    });
+}
+
+
+export async function getClassReportsBulk(classId: string, academicYearId: string, semester: number) {
+    const supabase = await createAdminClient();
+
+    // 1. Get Enrollments (Students)
+    const enrollments = await getClassEnrollments(classId, academicYearId, semester);
+    if (!enrollments || enrollments.length === 0) return [];
+
+    const studentIds = enrollments.map(e => (e.student as any).id);
+
+    // 2. Fetch All Data in Parallel
+    const [gradesData, assessmentsData, reportsData] = await Promise.all([
+        supabase
+            .from('student_grades')
+            .select(`
+                *,
+                subject:report_subjects(
+                    id,
+                    display_name,
+                    display_order,
+                    material_type:material_types(
+                        name,
+                        category:material_categories(
+                            id,
+                            name
+                        )
+                    )
+                )
+            `)
+            .in('student_id', studentIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester),
+
+        supabase
+            .from('student_character_assessments')
+            .select('*')
+            .in('student_id', studentIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester),
+
+        supabase
+            .from('student_reports')
+            .select('*')
+            .in('student_id', studentIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester)
+    ]);
+
+    // 3. Map Data by Student ID
+    const gradesMap: Record<string, StudentGrade[]> = {};
+    gradesData.data?.forEach((g: any) => {
+        if (!gradesMap[g.student_id]) gradesMap[g.student_id] = [];
+        gradesMap[g.student_id].push(g);
+    });
+
+    const assessmentsMap: Record<string, StudentCharacterAssessment[]> = {};
+    assessmentsData.data?.forEach(a => {
+        if (!assessmentsMap[a.student_id]) assessmentsMap[a.student_id] = [];
+        assessmentsMap[a.student_id].push(a);
+    });
+
+    const reportsMap = new Map(reportsData.data?.map(r => [r.student_id, r]));
+
+    // 4. Transform to Full Object
+    return enrollments.map(enrollment => {
+        const student = enrollment.student as any;
+        const report = reportsMap.get(student.id);
+
+        return {
+            student: student,
+            class: enrollment.class,
+            grades: gradesMap[student.id] || [],
+            character_assessments: assessmentsMap[student.id] || [],
+            sick_days: report?.sick_days || 0,
+            permission_days: report?.permission_days || 0,
+            absent_days: report?.absent_days || 0,
+            teacher_notes: report?.teacher_notes || ''
         };
     });
 }
