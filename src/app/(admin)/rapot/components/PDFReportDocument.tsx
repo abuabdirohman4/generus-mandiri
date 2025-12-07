@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import type { PageSize } from '@react-pdf/types';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 
 // Register fonts if needed (optional - uses default sans-serif)
 // Font.register({ family: 'Roboto', src: '/fonts/Roboto-Regular.ttf' });
@@ -50,23 +49,20 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     coverTitle: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
         letterSpacing: 2,
-        marginBottom: 8,
+        marginBottom: 4,
     },
     coverSubtitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 16,
+        // fontWeight: 'bold',
     },
     coverLogo: {
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        border: '3pt double #333',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginVertical: 30,
+        width: 250,
+        height: 250,
+        marginVertical: 20,
+        marginTop: -50,
     },
     coverNameBox: {
         border: '3pt double #333',
@@ -171,6 +167,9 @@ const styles = StyleSheet.create({
     gap: {
         width: 16,
     },
+    fontold: {
+        fontWeight: 'bold',
+    },
 });
 
 // Helper for date formatting
@@ -238,28 +237,27 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
         <>
             {/* PAGE 1: COVER */}
             <Page size={pageSize} style={styles.coverPage}>
-                <View style={{ alignItems: 'center', marginTop: 40 }}>
+                <View style={{ alignItems: 'center', marginTop: 20 }}>
                     <Text style={styles.coverTitle}>RAPOR</Text>
                     <Text style={styles.coverSubtitle}>{SCHOOL_PROFILE.name}</Text>
-                    <Text style={[styles.coverSubtitle, { fontSize: 24, marginTop: 8 }]}>{SCHOOL_PROFILE.subName}</Text>
+                    <Text style={[styles.coverSubtitle, { fontSize: 18, marginTop: 20, textTransform: 'uppercase' }]}>MAMBAUL HUDA</Text>
                 </View>
 
-                <View style={styles.coverLogo}>
-                    <Text style={{ fontSize: 10, textAlign: 'center' }}>[LOGO TPQ]{'\n'}{SCHOOL_PROFILE.subName}</Text>
-                </View>
+                <Image
+                    style={styles.coverLogo}
+                    src="/images/pdf/logo-tpq.jpg"
+                />
 
-                <View style={styles.coverNameBox}>
-                    <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Nama Peserta Didik</Text>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', textTransform: 'uppercase', borderBottomWidth: 1, borderBottomColor: '#000', paddingBottom: 4, paddingHorizontal: 20 }}>
-                        {student?.student?.name || '-'}
-                    </Text>
-                </View>
+                <View style={{ alignItems: 'center', width: '100%' }}>
+                    <Text style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 14 }}>Nama Peserta Didik</Text>
+                    <View style={{ width: '80%', borderWidth: 1, borderColor: '#000', borderRadius: 4, padding: 8, height: 32, marginBottom: 16 }}>
+                        <Text style={{ fontSize: 12, textAlign: 'center' }}>{student?.student?.name || ''}</Text>
+                    </View>
 
-                <View style={[styles.coverNameBox, { width: '50%' }]}>
-                    <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>No Statistik</Text>
-                    <Text style={{ fontSize: 14, borderBottomWidth: 1, borderBottomColor: '#000', paddingBottom: 4, paddingHorizontal: 20 }}>
-                        {SCHOOL_PROFILE.nsm}
-                    </Text>
+                    <Text style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 14 }}>No Statistik</Text>
+                    <View style={{ width: '60%', borderWidth: 1, borderColor: '#000', borderRadius: 4, padding: 8, height: 32 }}>
+                        <Text style={{ fontSize: 12, textAlign: 'center' }}>{SCHOOL_PROFILE.nsm}</Text>
+                    </View>
                 </View>
 
                 <Text style={styles.coverInstitution}>{SCHOOL_PROFILE.institution}</Text>
