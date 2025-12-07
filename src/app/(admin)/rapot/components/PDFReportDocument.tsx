@@ -5,7 +5,15 @@ import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/
 
 // Register fonts if needed (optional - uses default sans-serif)
 // Font.register({ family: 'Roboto', src: '/fonts/Roboto-Regular.ttf' });
-Font.register({ family: 'calibri', src: '/fonts/calibri-regular.ttf' });
+Font.register({
+    family: 'calibri',
+    fonts: [
+        { src: '/fonts/calibri-regular.ttf' },
+        { src: '/fonts/calibri-bold.ttf', fontWeight: 'bold' },
+        { src: '/fonts/calibri-italic.ttf', fontStyle: 'italic' },
+        { src: '/fonts/calibri-bold-italic.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+    ]
+});
 
 // Props type
 interface PDFReportProps {
