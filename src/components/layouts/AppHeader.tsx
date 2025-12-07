@@ -52,9 +52,9 @@ function PageTitle() {
       case '/settings/profile':
         return 'Profil';
       case '/settings/pwa':
-        return 'PWA Settings';
+        return 'PWA';
       case '/settings/cache':
-        return 'Cache Settings';
+        return 'Reset';
       default:
         if (path.startsWith('/absensi')) { // meeting detail pages
           return 'Absensi';
