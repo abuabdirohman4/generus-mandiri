@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { pdf } from '@react-pdf/renderer';
-import PDFReportDocument from './PDFReportDocument';
+import PDFReportDocument, { PDFBulkReportDocument } from './PDFReportDocument';
 
 interface DownloadPDFOptions {
     student: any;
@@ -52,8 +52,25 @@ export async function downloadStudentPDF(options: DownloadPDFOptions): Promise<v
 }
 
 /**
- * Download PDFs for multiple students as separate files (one by one)
- * For bulk download, consider using JSZip to create a zip file
+ * Generate merged bulk PDF blob for multiple students
+ */
+export async function generateBulkPDFBlob(
+    students: any[],
+    activeYear: string,
+    semester: string
+): Promise<Blob> {
+    const doc = React.createElement(PDFBulkReportDocument, {
+        students,
+        activeYear,
+        semester,
+    });
+
+    const blob = await pdf(doc as any).toBlob();
+    return blob;
+}
+
+/**
+ * Download merged PDF for all students in one file
  */
 export async function downloadBulkPDFs(
     students: any[],
@@ -62,25 +79,22 @@ export async function downloadBulkPDFs(
     className: string,
     onProgress?: (current: number, total: number) => void
 ): Promise<void> {
-    // Option 1: Download one by one (simple but many files)
-    // Option 2: Use JSZip to bundle (need to install jszip)
+    // Generate merged PDF with all students
+    onProgress?.(0, students.length);
 
-    // For now, we'll generate a single merged PDF isn't straightforward with react-pdf
-    // So let's download them one by one with a delay
-    for (let i = 0; i < students.length; i++) {
-        const student = students[i];
-        onProgress?.(i + 1, students.length);
+    const blob = await generateBulkPDFBlob(students, activeYear, semester);
 
-        await downloadStudentPDF({
-            student,
-            activeYear,
-            semester,
-            fileName: `Rapor_${className}_${student.student?.name?.replace(/\s+/g, '_')}_Semester${semester}.pdf`
-        });
+    // Create download link
+    const fileName = `Rapor_${className.replace(/\s+/g, '_')}_${activeYear.replace(/\//g, '-')}_Semester${semester}.pdf`;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-        // Small delay between downloads
-        if (i < students.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-    }
+    onProgress?.(students.length, students.length);
 }
+

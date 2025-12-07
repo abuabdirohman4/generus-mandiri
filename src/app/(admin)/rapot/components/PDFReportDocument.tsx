@@ -202,10 +202,16 @@ const TableCell = ({ children, width, center, first, bold, small }: {
     );
 };
 
-// Main PDF Document Component
-const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, semester, options }) => {
+// Student Report Pages Component - renders all pages for a single student
+// Returns array of Page elements that can be used in a Document
+const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: {
+    student: any;
+    activeYear: string;
+    semester: string;
+    pageSize?: 'A4' | 'LETTER';
+}) => {
     // Group grades by category
-    const groupedGrades = React.useMemo(() => {
+    const groupedGrades = (() => {
         const groups: { [key: string]: any[] } = {};
         student.grades?.forEach((g: any) => {
             const categoryName = g.subject?.material_type?.category?.name || 'Lainnya';
@@ -216,15 +222,15 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
             groups[key].sort((a: any, b: any) => (a.subject?.display_order || 0) - (b.subject?.display_order || 0));
         });
         return groups;
-    }, [student.grades]);
+    })();
 
     // Flatten grades for numbering
     const allGrades = Object.values(groupedGrades).flat();
 
     return (
-        <Document>
+        <>
             {/* PAGE 1: COVER */}
-            <Page size={options?.pageSize || 'A4'} style={styles.coverPage}>
+            <Page size={pageSize} style={styles.coverPage}>
                 <View style={{ alignItems: 'center', marginTop: 40 }}>
                     <Text style={styles.coverTitle}>RAPOR</Text>
                     <Text style={styles.coverSubtitle}>{SCHOOL_PROFILE.name}</Text>
@@ -253,7 +259,7 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
             </Page>
 
             {/* PAGE 2: STUDENT BIO */}
-            <Page size={options?.pageSize || 'A4'} style={styles.page}>
+            <Page size={pageSize} style={styles.page}>
                 <Text style={styles.sectionTitle}>{SCHOOL_PROFILE.address}</Text>
                 <Text style={[styles.sectionTitle, { marginTop: -10 }]}>KETERANGAN TENTANG PESERTA DIDIK</Text>
 
@@ -295,7 +301,7 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
             </Page>
 
             {/* PAGE 3: GRADES */}
-            <Page size={options?.pageSize || 'A4'} style={styles.page}>
+            <Page size={pageSize} style={styles.page}>
                 {/* Header info */}
                 <View style={[styles.row, { marginBottom: 20 }]}>
                     <View style={styles.halfWidth}>
@@ -343,7 +349,7 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
             </Page>
 
             {/* PAGE 4: CHARACTER & ATTENDANCE */}
-            <Page size={options?.pageSize || 'A4'} style={styles.page}>
+            <Page size={pageSize} style={styles.page}>
                 <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Nilai-Nilai Luhur & Kepribadian</Text>
 
                 {/* Character Table */}
@@ -431,7 +437,7 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
             </Page>
 
             {/* PAGE 5: EXTRAS & SIGNATURES */}
-            <Page size={options?.pageSize || 'A4'} style={styles.page}>
+            <Page size={pageSize} style={styles.page}>
                 <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>PENGEMBANGAN DIRI</Text>
 
                 <Text style={{ fontWeight: 'bold', fontSize: 10, marginLeft: 16, marginBottom: 4 }}>A. EKSTRA KULIKULER</Text>
@@ -472,8 +478,49 @@ const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, seme
                     </View>
                 </View>
             </Page>
+        </>
+    );
+};
+
+// Main PDF Document Component for single student
+const PDFReportDocument: React.FC<PDFReportProps> = ({ student, activeYear, semester, options }) => {
+    return (
+        <Document>
+            <StudentReportPages
+                student={student}
+                activeYear={activeYear}
+                semester={semester}
+                pageSize={options?.pageSize || 'A4'}
+            />
+        </Document>
+    );
+};
+
+// Bulk PDF Report Document - all students in one merged PDF
+interface PDFBulkReportProps {
+    students: any[];
+    activeYear: string;
+    semester: string;
+    options?: {
+        pageSize?: 'A4' | 'LETTER';
+    };
+}
+
+export const PDFBulkReportDocument: React.FC<PDFBulkReportProps> = ({ students, activeYear, semester, options }) => {
+    return (
+        <Document>
+            {students.map((student, index) => (
+                <StudentReportPages
+                    key={student?.student?.id || index}
+                    student={student}
+                    activeYear={activeYear}
+                    semester={semester}
+                    pageSize={options?.pageSize || 'A4'}
+                />
+            ))}
         </Document>
     );
 };
 
 export default PDFReportDocument;
+
