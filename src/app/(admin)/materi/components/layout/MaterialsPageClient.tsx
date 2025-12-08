@@ -11,10 +11,14 @@ import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
 import ItemModal from '../modals/ItemModal';
 import ContentViewModal from '../modals/ContentViewModal';
 import BulkMappingUpdateModal from '../modals/BulkMappingUpdateModal';
+import CategoryModal from '../modals/CategoryModal';
+import TypeModal from '../modals/TypeModal';
 import { useMateriStore } from '../../stores/materiStore';
 import { isAdmin, isTeacher, canManageMaterials } from '@/lib/accessControl';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { toast } from 'sonner';
+import FloatingActionButton, { type FABAction } from '@/components/ui/button/FloatingActionButton';
+import { PlusIcon, FolderIcon } from '@/lib/icons';
 
 interface MaterialsPageClientProps {
   classMasters: ClassMaster[];
@@ -40,8 +44,12 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [contentModalOpen, setContentModalOpen] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<MaterialItem | null>(null);
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<MaterialCategory | null>(null);
+  const [editingType, setEditingType] = useState<MaterialType | null>(null);
   const [defaultTypeId, setDefaultTypeId] = useState<string | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
@@ -122,6 +130,18 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
     setEditingItem(null);
     setDefaultTypeId(undefined);
     setItemModalOpen(true);
+  };
+
+  // CRUD Handlers for Categories
+  const handleCreateCategory = () => {
+    setEditingCategory(null);
+    setCategoryModalOpen(true);
+  };
+
+  // CRUD Handlers for Types
+  const handleCreateType = () => {
+    setEditingType(null);
+    setTypeModalOpen(true);
   };
 
   const handleViewContent = (item: MaterialItem) => {
@@ -208,6 +228,35 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
       await loadSidebarData();
     }
   };
+
+  // FAB Actions for Materi page
+  const fabActions: FABAction[] = [
+    {
+      id: 'create-category',
+      label: 'Kategori',
+      icon: <FolderIcon className="w-5 h-5" />,
+      onClick: handleCreateCategory,
+      color: 'primary', // Blue
+    },
+    {
+      id: 'create-type',
+      label: 'Tipe',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>,
+      onClick: handleCreateType,
+      color: 'secondary', // Gray
+    },
+    {
+      id: 'create-item',
+      label: 'Materi',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>,
+      onClick: handleCreateItem,
+      color: 'success', // Green
+    },
+  ];
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
@@ -373,6 +422,16 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                 )}
               </div>
             </div>
+
+            {/* Floating Action Button - visible on all devices */}
+            {canManage && (
+              <FloatingActionButton
+                actions={fabActions}
+                position="bottom-right"
+                mainIcon={<PlusIcon className="w-6 h-6" />}
+                mainLabel="Tambah"
+              />
+            )}
           </div>
         )}
 
@@ -403,6 +462,35 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
           onClose={() => setBulkModalOpen(false)}
           selectedItems={items.filter(i => selectedItemIds.has(i.id))}
           onSuccess={handleBulkSuccess}
+        />
+
+        <CategoryModal
+          isOpen={categoryModalOpen}
+          onClose={() => {
+            setCategoryModalOpen(false);
+            setEditingCategory(null);
+          }}
+          category={editingCategory}
+          onSuccess={async () => {
+            await loadSidebarData();
+            setCategoryModalOpen(false);
+            setEditingCategory(null);
+          }}
+        />
+
+        <TypeModal
+          isOpen={typeModalOpen}
+          onClose={() => {
+            setTypeModalOpen(false);
+            setEditingType(null);
+          }}
+          type={editingType}
+          defaultCategoryId={filters.selectedCategoryId || undefined}
+          onSuccess={async () => {
+            await loadSidebarData();
+            setTypeModalOpen(false);
+            setEditingType(null);
+          }}
         />
 
         <ConfirmModal

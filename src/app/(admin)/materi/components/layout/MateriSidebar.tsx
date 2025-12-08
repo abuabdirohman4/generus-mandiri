@@ -274,7 +274,7 @@ export default function MateriSidebar({
             {/* Overlay for mobile */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 bg-opacity-50 lg:hidden z-30"
+                    className="fixed inset-0 lg:hidden z-30"
                     onClick={onToggle}
                 />
             )}
@@ -289,8 +289,8 @@ export default function MateriSidebar({
                             Daftar Materi
                         </h2>
                         <div className="flex items-center gap-2">
-                            {/* Create Menu Dropdown */}
-                            <div className="relative create-menu-container">
+                            {/* Create Menu Dropdown - Hidden as fallback (replaced by FAB) */}
+                            <div className="relative create-menu-container hidden">
                                 <button
                                     onClick={() => setShowCreateMenu(!showCreateMenu)}
                                     className="flex justify-center items-center p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -430,14 +430,14 @@ export default function MateriSidebar({
                                                         className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                                                         title="Edit Kategori"
                                                     >
-                                                        <PencilIcon className="w-4 h-4" />
+                                                        <PencilIcon className="w-5 h-5" />
                                                     </button>
                                                     <button
                                                         onClick={(e) => handleDeleteCategory(e, category)}
                                                         className="p-1.5 text-gray-500 hover:text-red-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                                                         title="Hapus Kategori"
                                                     >
-                                                        <TrashBinIcon className="w-4 h-4" />
+                                                        <TrashBinIcon className="w-5 h-5" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -482,14 +482,14 @@ export default function MateriSidebar({
                                                                             className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                                                                             title="Edit Tipe"
                                                                         >
-                                                                            <PencilIcon className="w-4 h-4" />
+                                                                            <PencilIcon className="w-5 h-5" />
                                                                         </button>
                                                                         <button
                                                                             onClick={(e) => handleDeleteType(e, type)}
                                                                             className="p-1.5 text-gray-500 hover:text-red-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                                                                             title="Hapus Tipe"
                                                                         >
-                                                                            <TrashBinIcon className="w-4 h-4" />
+                                                                            <TrashBinIcon className="w-5 h-5" />
                                                                         </button>
                                                                     </div>
                                                                 </div>
