@@ -35,6 +35,8 @@ function PageTitle() {
         return 'Monitoring';
       case '/rapot':
         return 'Rapot';
+      case '/rapot/settings':
+        return 'Pengaturan';
       case '/tahun-ajaran':
         return 'Tahun Ajaran';
       case '/users/guru':
@@ -79,6 +81,7 @@ function PageTitle() {
           path === '/materi' ||
           path === '/monitoring' ||
           path === '/rapot' ||
+          path === '/rapot/settings' ||
           path === '/dashboard';
   };
 

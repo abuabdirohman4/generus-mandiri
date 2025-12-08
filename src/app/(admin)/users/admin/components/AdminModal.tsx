@@ -46,6 +46,7 @@ interface Admin {
   daerah_id?: string;
   desa_id?: string;
   kelompok_id?: string;
+  can_manage_materials?: boolean;
   created_at: string;
 }
 
@@ -88,7 +89,8 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     password: '',
     role: 'admin',
     daerah_id: '',
-    kelompok_id: ''
+    kelompok_id: '',
+    can_manage_materials: false
   });
   const [dataFilters, setDataFilters] = useState({
     daerah: [] as string[],
@@ -191,7 +193,8 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         password: '', // Empty for edit mode
         role: admin.role || 'admin',
         daerah_id: admin.daerah_id || '',
-        kelompok_id: admin.kelompok_id || ''
+        kelompok_id: admin.kelompok_id || '',
+        can_manage_materials: admin.can_manage_materials || false
       });
       setDataFilters({
         daerah: admin.daerah_id ? [admin.daerah_id] : [],
@@ -220,7 +223,8 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         password: '',
         role: 'admin',
         daerah_id: autoFilledDaerah,
-        kelompok_id: autoFilledKelompok
+        kelompok_id: autoFilledKelompok,
+        can_manage_materials: false
       });
       setDataFilters({
         daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
@@ -480,8 +484,28 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
               disabled={isLoading}
             />
           </div>
-          
-          
+
+          {/* Material Management Permission */}
+          <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <input
+              type="checkbox"
+              id="can_manage_materials"
+              checked={formData.can_manage_materials}
+              onChange={(e) => setFormData(prev => ({ ...prev, can_manage_materials: e.target.checked }))}
+              disabled={isLoading}
+              className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <div className="flex-1">
+              <Label htmlFor="can_manage_materials" className="cursor-pointer mb-1">
+                Dapat Mengelola Materi
+              </Label>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Memberikan akses untuk membuat, mengedit, dan menghapus materi pembelajaran
+              </p>
+            </div>
+          </div>
+
+
           <DataFilter
             filters={dataFilters}
             onFilterChange={handleDataFilterChange}

@@ -25,7 +25,6 @@ import {
 } from '../../types';
 import GradeInput from '../../components/GradeInput';
 import PDFExportModal from '../../components/PDFExportModal';
-import PrintableReport from '../../components/PrintableReport';
 import { createClient } from '@/lib/supabase/client';
 import { isMobile } from '@/lib/utils';
 import { FloppyDiskIcon } from '@/lib/icons';
@@ -312,50 +311,6 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
         <>
             {/* Standard Web View - Hidden when printing */}
             <div className={`space-y-6 print:hidden relative`}>
-                {/* Header Card */}
-                {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl font-bold text-gray-500">
-                                {studentInfo?.name?.charAt(0) || 'S'}
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {studentInfo?.name}
-                                </h1>
-                                <div className="text-gray-500 dark:text-gray-400">
-                                    {studentInfo?.nis || '-'} • Kelas {className}
-                                </div>
-                                <div className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${report?.is_published ? 'bg-green-100 text-green-800' : 'bg-green-100 text-green-800'
-                                    }`}>
-                                    Aktif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Rata-rata</div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {report?.average_score?.toFixed(1) || '-'}
-                            </div>
-                        </div>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                            <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">Peringkat</div>
-                            <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                                #{report?.class_rank || '-'}
-                            </div>
-                        </div>
-                        <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Kehadiran</div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {report?.attendance_percentage || '-'}<span className="text-sm font-normal text-gray-500">%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div> */}
-
                 {/* Subject Groups */}
                 {Object.entries(groupedSubjects).map(([category, categorySubjects]) => (
                     <div key={category} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -579,30 +534,6 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
                     onExport={handleDownloadPDF}
                 />
             </div>
-
-            {printOptions && (
-                <div id="printable-report-content" className="fixed inset-0 z-50 bg-gray-900/90 flex flex-col items-center justify-center pt-10">
-                    <div className="text-white mb-4 font-bold text-lg animate-pulse">Menyiapkan PDF...</div>
-                    <div className="bg-white p-0 shadow-2xl overflow-y-auto max-h-[80vh] w-fit">
-                        <PrintableReport
-                            options={printOptions}
-                            activeYear={academicYear?.name || ''}
-                            semester={String(semester)}
-                            student={{
-                                student: studentInfo,
-                                class: { name: className },
-                                grades: Object.values(grades),
-                                character_assessments: Object.values(assessments),
-                                sick_days: attendance.sick,
-                                permission_days: attendance.permission,
-                                absent_days: attendance.absent,
-                                teacher_notes: teacherNotes
-                            }}
-                            className="block bg-white text-black min-h-[297mm] min-w-[210mm]"
-                        />
-                    </div>
-                </div>
-            )}
         </>
     );
 });

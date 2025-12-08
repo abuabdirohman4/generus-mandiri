@@ -13,6 +13,7 @@ export interface AdminData {
   daerah_id: string;
   desa_id?: string | null;
   kelompok_id?: string | null;
+  can_manage_materials?: boolean;
 }
 
 export async function createAdmin(data: AdminData) {
@@ -80,7 +81,8 @@ export async function createAdmin(data: AdminData) {
         role: 'admin',
         daerah_id: data.daerah_id,
         desa_id: data.desa_id || null,
-        kelompok_id: data.kelompok_id || null
+        kelompok_id: data.kelompok_id || null,
+        can_manage_materials: data.can_manage_materials || false
       }]);
 
     if (profileError) {
@@ -126,6 +128,7 @@ export async function updateAdmin(id: string, data: AdminData) {
         daerah_id: data.daerah_id,
         desa_id: data.desa_id || null,
         kelompok_id: data.kelompok_id || null,
+        can_manage_materials: data.can_manage_materials || false,
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
