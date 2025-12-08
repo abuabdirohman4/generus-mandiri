@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import RapotPageClient from './components/RapotPageClient';
 
 export const metadata: Metadata = {
-    title: 'E-Rapor | School Management',
+    title: 'Rapot | Generus Mandiri',
     description: 'Kelola rapot siswa',
 };
 

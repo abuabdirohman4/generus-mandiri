@@ -436,14 +436,28 @@ export async function getClassReportsSummary(classId: string, academicYearId: st
 
     const enrollments = await getClassEnrollments(classId, academicYearId, semester);
 
-
-
     console.log('Enrollments found:', enrollments?.length);
 
-    if (!enrollments) return [];
+    if (!enrollments || enrollments.length === 0) return [];
 
-    // Get existing reports
-    const studentIds = enrollments.map(e => (e.student as any).id);
+    // Filter out enrollments with null students (data integrity issue)
+    const validEnrollments = enrollments.filter(e => e.student !== null && e.student !== undefined);
+
+    if (validEnrollments.length === 0) {
+        console.warn('No valid enrollments found - all students are null');
+        return [];
+    }
+
+    // Get existing reports - with defensive mapping
+    const studentIds = validEnrollments
+        .map(e => (e.student as any)?.id)
+        .filter(id => id !== null && id !== undefined);
+
+    if (studentIds.length === 0) {
+        console.warn('No valid student IDs extracted from enrollments');
+        return [];
+    }
+
     const { data: reports } = await supabase
         .from('student_reports')
         .select('id, student_id, is_published, generated_at, average_score')
@@ -454,7 +468,7 @@ export async function getClassReportsSummary(classId: string, academicYearId: st
     // Merge data
     const reportMap = new Map(reports?.map(r => [r.student_id, r]));
 
-    return enrollments.map(enrollment => {
+    return validEnrollments.map(enrollment => {
         const student = enrollment.student as any;
         const report = reportMap.get(student.id);
         return {
@@ -476,7 +490,13 @@ export async function getClassReportsBulk(classId: string, academicYearId: strin
     const enrollments = await getClassEnrollments(classId, academicYearId, semester);
     if (!enrollments || enrollments.length === 0) return [];
 
-    const studentIds = enrollments.map(e => (e.student as any).id);
+    // Filter valid enrollments and extract student IDs
+    const validEnrollments = enrollments.filter(e => e.student !== null && e.student !== undefined);
+    if (validEnrollments.length === 0) return [];
+
+    const studentIds = validEnrollments
+        .map(e => (e.student as any)?.id)
+        .filter(id => id !== null && id !== undefined);
 
     // 2. Fetch All Data in Parallel
     const [gradesData, assessmentsData, reportsData] = await Promise.all([
@@ -531,10 +551,10 @@ export async function getClassReportsBulk(classId: string, academicYearId: strin
 
     const reportsMap = new Map(reportsData.data?.map(r => [r.student_id, r]));
 
-    // 4. Transform to Full Object
-    return enrollments.map(enrollment => {
+    // 4. Transform to Full Object - use validEnrollments
+    return validEnrollments.map(enrollment => {
         const student = enrollment.student as any;
-        const report = reportsMap.get(student.id);
+        const report = reportsMap.get(student?.id);
 
         return {
             student: student,

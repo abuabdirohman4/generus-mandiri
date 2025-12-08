@@ -269,16 +269,39 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
         }
     };
 
-    if (loading) return <div className="p-8 text-center print:hidden">Loading...</div>;
+    if (loading) return (
+        <div className="space-y-4">
+            {/* Student Info Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div className="space-y-2">
+                        <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    ))}
+                </div>
+            </div>
+            {/* Report Content Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 animate-pulse space-y-4">
+                <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+        </div>
+    )
 
     return (
         <>
             {/* Standard Web View - Hidden when printing */}
-            <div className={`space-y-6 pb-20 print:hidden`}>
+            <div className={`space-y-6 print:hidden`}>
                 {/* Header Card */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4">
+                        {/* <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl font-bold text-gray-500">
                                 {studentInfo?.name?.charAt(0) || 'S'}
                             </div>
@@ -287,15 +310,14 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
                                     {studentInfo?.name}
                                 </h1>
                                 <div className="text-gray-500 dark:text-gray-400">
-                                    {/* {studentInfo?.nis || '-'} • */} Kelas {className}
+                                    {studentInfo?.nis || '-'} • Kelas {className}
                                 </div>
                                 <div className={`mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${report?.is_published ? 'bg-green-100 text-green-800' : 'bg-green-100 text-green-800'
                                     }`}>
-                                    {/** Assuming active for now, user screenshot shows "Aktif" badge separate from status */}
                                     Aktif
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setShowPDFModal(true)}
@@ -518,7 +540,7 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
                 </div>
 
                 {/* Signature Area */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8">
                     <div className="flex justify-between items-end">
                         <div className="text-center w-64">
                             <div className="mb-20 text-gray-500">Orang Tua / Wali</div>
@@ -526,14 +548,14 @@ export default function StudentReportDetailClient({ studentId, semester: propSem
                         </div>
                         <div className="text-center w-64">
                             <div className="mb-20 text-gray-900 dark:text-white">
-                                Jakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                Bandung, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </div>
                             <div className="border-b border-gray-300 pb-1 font-bold text-gray-900 dark:text-white">
                                 Teacher Name S.Pd
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Floating Save Button */}
                 <button

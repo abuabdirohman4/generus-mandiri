@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { StudentEnrollment, EnrollmentInput } from '../types';
 
@@ -41,18 +41,19 @@ export async function getClassEnrollments(
     academicYearId: string,
     semester: number
 ): Promise<StudentEnrollment[]> {
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
 
     const { data, error } = await supabase
         .from('student_enrollments')
         .select(`
       *,
-      student:students(*)
+      student:students!inner(*)
     `)
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .is('students.deleted_at', null);
 
     if (error) throw new Error(error.message);
     return data || [];
