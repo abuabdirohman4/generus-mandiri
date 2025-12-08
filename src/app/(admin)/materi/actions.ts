@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer';
 import { MaterialCategory, MaterialType, MaterialItem, DayMaterialAssignment, DayMaterialItem, MaterialItemClass, ClassMaster } from './types';
 
 export async function getAvailableClassMasters() {
@@ -756,6 +757,17 @@ export async function createMaterialItem(data: {
   description?: string;
   content?: string;
 }): Promise<MaterialItem> {
+  // Validate user has material management permissions
+  const profile = await getCurrentUserProfile();
+
+  if (!profile) {
+    throw new Error('Not authenticated');
+  }
+
+  if (!canManageMaterials(profile)) {
+    throw new Error('Unauthorized: Material management access required');
+  }
+
   const supabase = await createClient();
 
   const { data: item, error } = await supabase
@@ -800,6 +812,17 @@ export async function updateMaterialItem(
     content?: string;
   }
 ): Promise<MaterialItem> {
+  // Validate user has material management permissions
+  const profile = await getCurrentUserProfile();
+
+  if (!profile) {
+    throw new Error('Not authenticated');
+  }
+
+  if (!canManageMaterials(profile)) {
+    throw new Error('Unauthorized: Material management access required');
+  }
+
   const supabase = await createClient();
 
   // Update first without select
@@ -858,6 +881,17 @@ export async function updateMaterialItem(
  * Delete a material item
  */
 export async function deleteMaterialItem(id: string): Promise<{ success: boolean }> {
+  // Validate user has material management permissions
+  const profile = await getCurrentUserProfile();
+
+  if (!profile) {
+    throw new Error('Not authenticated');
+  }
+
+  if (!canManageMaterials(profile)) {
+    throw new Error('Unauthorized: Material management access required');
+  }
+
   const supabase = await createClient();
 
   // Check if there are any day material items using this item

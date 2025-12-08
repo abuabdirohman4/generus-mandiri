@@ -12,7 +12,7 @@ import ItemModal from '../modals/ItemModal';
 import ContentViewModal from '../modals/ContentViewModal';
 import BulkMappingUpdateModal from '../modals/BulkMappingUpdateModal';
 import { useMateriStore } from '../../stores/materiStore';
-import { isAdmin, isTeacher } from '@/lib/accessControl';
+import { isAdmin, isTeacher, canManageMaterials } from '@/lib/accessControl';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { toast } from 'sonner';
 
@@ -56,10 +56,10 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
   // Selection state
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  // Determine user role
+  // Determine user role and permissions
   const isAdminUser = userProfile ? isAdmin(userProfile) : false;
   const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
-  const isKelas6Warlob = isTeacher(userProfile) && userProfile.id === '88888888-8888-8888-8888-888888888888'
+  const canManage = userProfile ? canManageMaterials(userProfile) : false;
 
   // Materi store
   const { filters } = useMateriStore();
@@ -358,9 +358,9 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                     types={types}
                     items={items}
                     userProfile={userProfile}
-                    onEditItem={isAdminUser || isKelas6Warlob ? handleEditItem : undefined}
-                    onDeleteItem={isAdminUser || isKelas6Warlob ? handleDeleteItem : undefined}
-                    onCreateItem={isAdminUser || isKelas6Warlob ? handleCreateItem : undefined}
+                    onEditItem={canManage ? handleEditItem : undefined}
+                    onDeleteItem={canManage ? handleDeleteItem : undefined}
+                    onCreateItem={canManage ? handleCreateItem : undefined}
                     onViewItem={handleViewContent}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}

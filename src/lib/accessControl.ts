@@ -33,6 +33,25 @@ export function isAdmin(profile: UserProfile): boolean {
   return profile.role === 'admin' || profile.role === 'superadmin'
 }
 
+export function isMaterialCoordinator(profile: UserProfile | null): boolean {
+  return profile?.role === 'material_coordinator'
+}
+
+export function canManageMaterials(profile: UserProfile | null): boolean {
+  if (!profile) return false
+
+  const allowedRoles = [
+    'superadmin',
+    'admin',
+    'admin_daerah',
+    'admin_desa',
+    'admin_kelompok',
+    'material_coordinator',
+  ]
+
+  return allowedRoles.includes(profile.role)
+}
+
 // Filter visibility utilities (for modal forms)
 export function shouldShowDaerahFilter(profile: UserProfile): boolean {
   return isSuperAdmin(profile)

@@ -50,3 +50,23 @@ export async function getCurrentUserProfile() {
 
 // Alias for consistency with server actions
 export const getUserProfile = getCurrentUserProfile;
+
+// Material management permission check (server-side version)
+export function canManageMaterials(profile: UserProfile | null): boolean {
+  if (!profile) return false
+
+  const allowedRoles = [
+    'superadmin',
+    'admin',
+    'admin_daerah',
+    'admin_desa',
+    'admin_kelompok',
+    'material_coordinator',
+  ]
+
+  return allowedRoles.includes(profile.role)
+}
+
+export function isMaterialCoordinator(profile: UserProfile | null): boolean {
+  return profile?.role === 'material_coordinator'
+}

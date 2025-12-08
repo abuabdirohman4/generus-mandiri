@@ -18,13 +18,15 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 // Re-export from accessControl.ts for backward compatibility
-export { 
+export {
   isSuperAdmin,
   isAdminDaerah,
   isAdminDesa,
   isAdminKelompok,
   isTeacher,
   isAdmin,
+  isMaterialCoordinator,
+  canManageMaterials,
   shouldShowDaerahFilter,
   shouldShowDesaFilter,
   shouldShowKelompokFilter,
