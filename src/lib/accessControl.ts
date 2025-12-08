@@ -6,6 +6,7 @@ export interface UserProfile {
   kelompok_id?: string | null;
   desa_id?: string | null;
   daerah_id?: string | null;
+  can_manage_materials?: boolean;
 }
 
 // Role detection utilities
@@ -38,18 +39,7 @@ export function isMaterialCoordinator(profile: UserProfile | null): boolean {
 }
 
 export function canManageMaterials(profile: UserProfile | null): boolean {
-  if (!profile) return false
-
-  const allowedRoles = [
-    'superadmin',
-    'admin',
-    'admin_daerah',
-    'admin_desa',
-    'admin_kelompok',
-    'material_coordinator',
-  ]
-
-  return allowedRoles.includes(profile.role)
+  return profile?.can_manage_materials === true
 }
 
 // Filter visibility utilities (for modal forms)

@@ -6,6 +6,7 @@ interface UserProfile {
   kelompok_id?: string | null;
   desa_id?: string | null;
   daerah_id?: string | null;
+  can_manage_materials?: boolean;
 }
 
 export function canAccessFeature(profile: UserProfile, feature: string): boolean {
@@ -41,7 +42,7 @@ export async function getCurrentUserProfile() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id')
+    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, can_manage_materials')
     .eq('id', user.id)
     .single();
     
@@ -53,18 +54,7 @@ export const getUserProfile = getCurrentUserProfile;
 
 // Material management permission check (server-side version)
 export function canManageMaterials(profile: UserProfile | null): boolean {
-  if (!profile) return false
-
-  const allowedRoles = [
-    'superadmin',
-    'admin',
-    'admin_daerah',
-    'admin_desa',
-    'admin_kelompok',
-    'material_coordinator',
-  ]
-
-  return allowedRoles.includes(profile.role)
+  return profile?.can_manage_materials === true
 }
 
 export function isMaterialCoordinator(profile: UserProfile | null): boolean {

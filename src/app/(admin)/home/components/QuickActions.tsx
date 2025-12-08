@@ -47,9 +47,10 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const router = useRouter();
   const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
   const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
-  // console.log('isTeacher', isTeacher(profile))
-  // console.log('!isKelas6Warlob', !isKelas6Warlob)
-  // console.log('teacherCaberawit', teacherCaberawit)
+  console.log('profile', profile)
+  console.log('isTeacher', isTeacher(profile))
+  console.log('!isKelas6Warlob', !isKelas6Warlob)
+  console.log('teacherCaberawit', teacherCaberawit)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -156,7 +157,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
         </svg>
       ),
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
-      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      iconColor: 'text-emerald-600 dark:text-econst canManage = userProfile ? canManageMaterials(userProfile) : false;merald-400',
       adminOnly: teacherCaberawit ? false : true,
       disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
     },

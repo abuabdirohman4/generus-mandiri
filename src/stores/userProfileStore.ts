@@ -10,6 +10,7 @@ interface UserProfile {
   kelompok_id?: string | null;
   desa_id?: string | null;
   daerah_id?: string | null;
+  can_manage_materials?: boolean;
   kelompok?: { id: string; name: string } | null;
   desa?: { id: string; name: string } | null;
   daerah?: { id: string; name: string } | null;
