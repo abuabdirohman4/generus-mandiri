@@ -313,9 +313,9 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
             {/* Standard Web View - Hidden when printing */}
             <div className={`space-y-6 print:hidden relative`}>
                 {/* Header Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    {/* <div className="flex justify-between items-start mb-6"> */}
-                    {/* <div className="flex items-center gap-4">
+                {/* <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl font-bold text-gray-500">
                                 {studentInfo?.name?.charAt(0) || 'S'}
                             </div>
@@ -331,12 +331,8 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
                                     Aktif
                                 </div>
                             </div>
-                        </div> */}
-                    {/* Download Button moved to parent header */}
-                    <div className="flex justify-end mb-6 md:hidden">
-                        {/* Mobile only download button if really needed, but ideally header controls it */}
+                        </div>
                     </div>
-                    {/* </div> */}
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -358,7 +354,7 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Subject Groups */}
                 {Object.entries(groupedSubjects).map(([category, categorySubjects]) => (
