@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
@@ -12,7 +12,7 @@ import RapotStudentSidebar from './RapotStudentSidebar';
 import DataFilter from '@/components/shared/DataFilter';
 import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
 import InputFilter from '@/components/form/input/InputFilter';
-import StudentReportDetailClient from '../[studentId]/components/StudentReportDetailClient';
+import StudentReportDetailClient, { StudentReportDetailRef } from '../[studentId]/components/StudentReportDetailClient';
 import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
@@ -21,6 +21,7 @@ import { isMobile } from '@/lib/utils';
 
 export default function RapotPageClient() {
     const router = useRouter();
+    const studentReportRef = useRef<StudentReportDetailRef>(null);
     const searchParams = useSearchParams();
     const { profile: userProfile } = useUserProfile();
 
@@ -307,26 +308,45 @@ export default function RapotPageClient() {
                             </p>
                         </div>
 
-                        {/* Bulk Export Button (Desktop only here, maybe sidebar for mobile?) */}
-                        {/* {filters.kelas.length > 0 && !isMobile() && (
-                            <button
-                                onClick={() => setShowBulkPDFModal(true)}
-                                disabled={isDownloading || students.length === 0}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isDownloading ? (
-                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                ) : (
+                        {/* Buttons Area */}
+                        <div className="hidden md:flex">
+                            {/* Bulk Export Button (Desktop only here, maybe sidebar for mobile?) */}
+                            {filters.kelas.length > 0 && (
+                                <button
+                                    onClick={() => handleBulkDownload({})}
+                                    disabled={isDownloading || students.length === 0}
+                                    className="ml-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isDownloading ? (
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    )}
+                                    {/* {isMobile() ? 'Rapot Kelas' : `Rapot Kelas (${students.length})`} */}
+                                    Rapot Kelas ({students.length})
+                                </button>
+                            )}
+
+                            {/* Single Download Button (Visible when student selected) */}
+                            {selectedStudentId && (
+                                <button
+                                    onClick={() => studentReportRef.current?.downloadPDF()}
+                                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
+                                >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>
-                                )}
-                                Rapot Kelas ({students.length})
-                            </button>
-                        )} */}
+                                    {/* {isMobile() ? 'Rapot Siswa' : 'Rapot Siswa'} */}
+                                    Rapot Siswa
+                                </button>
+                            )}
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -341,7 +361,7 @@ export default function RapotPageClient() {
                                 onClick={() => isMobile() && setIsFilterCollapsed(!isFilterCollapsed)}
                             >
                                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                    Filter
+                                    Filter {isMobile() && "& Download"}
                                 </h3>
                                 <button
                                     type="button"
@@ -420,25 +440,49 @@ export default function RapotPageClient() {
                                             )}
                                         </div>
 
-                                        {/* {filters.kelas.length > 0 && (
-                                            <button
-                                                onClick={() => setShowBulkPDFModal(true)}
-                                                disabled={isDownloading || students.length === 0}
-                                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isDownloading ? (
-                                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                    </svg>
+                                        {/* Buttons Area */}
+                                        <div className={`${!selectedStudentId ? 'hidden' : ''} md:hidden`}>
+                                            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+                                                Download
+                                            </h3>
+                                            <div className='flex justify-evenly gap-4'>
+                                                {/* Bulk Export Button (Desktop only here, maybe sidebar for mobile?) */}
+                                                {filters.kelas.length > 0 && (
+                                                    <button
+                                                        onClick={() => handleBulkDownload({})}
+                                                        disabled={isDownloading || students.length === 0}
+                                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isDownloading ? (
+                                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                            </svg>
+                                                        )}
+                                                        {/* {isMobile() ? 'Rapot Kelas' : `Rapot Kelas (${students.length})`} */}
+                                                        Rapot Kelas ({students.length})
+                                                    </button>
                                                 )}
-                                                Rapot Kelas ({students.length})
-                                            </button>
-                                        )} */}
+
+                                                {/* Single Download Button (Visible when student selected) */}
+                                                {selectedStudentId && (
+                                                    <button
+                                                        onClick={() => studentReportRef.current?.downloadPDF()}
+                                                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        {/* {isMobile() ? 'Rapot Siswa' : 'Rapot Siswa'} */}
+                                                        Rapot Siswa
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -479,11 +523,15 @@ export default function RapotPageClient() {
                                 </div>
                             </div>
                         ) : selectedStudentId ? (
-                            <StudentReportDetailClient
-                                studentId={selectedStudentId}
-                                semester={filters.semester}
-                                key={`${selectedStudentId}-${filters.semester}`}
-                            />
+                            <>
+
+                                <StudentReportDetailClient
+                                    ref={studentReportRef}
+                                    studentId={selectedStudentId}
+                                    semester={filters.semester}
+                                    key={`${selectedStudentId}-${filters.semester}`}
+                                />
+                            </>
                         ) : (
                             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                 <p className="text-lg text-gray-500 dark:text-gray-400">Data siswa tidak ditemukan atau pilih siswa lain</p>
