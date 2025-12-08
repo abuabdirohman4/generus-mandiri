@@ -257,7 +257,7 @@ const AppHeader: React.FC = () => {
           {/* Application Menu */}
           <button
             onClick={toggleApplicationMenu}
-            className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-50 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 hidden md:flex lg:hidden"
+            className="hidden md:flex lg:hidden items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-50 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             <svg
               width="24"

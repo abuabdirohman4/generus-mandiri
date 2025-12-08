@@ -279,6 +279,7 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
               isOpen={sidebarOpen}
               onToggle={() => setSidebarOpen(!sidebarOpen)}
               isLoading={dataLoading}
+              onDataChange={loadSidebarData}
             />
 
             {/* Main Content */}
