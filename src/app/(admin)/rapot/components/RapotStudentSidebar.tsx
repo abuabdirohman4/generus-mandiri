@@ -81,7 +81,7 @@ export default function RapotStudentSidebar({
                     w-80 bg-white dark:bg-gray-800 
                     border-r border-gray-200 dark:border-gray-700
                     transform transition-transform duration-300 ease-in-out
-                    z-[60] md:z-0
+                    z-99 md:z-0
                     flex flex-col h-[calc(100vh-4rem)] md:h-full
                     ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
                 `}

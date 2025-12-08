@@ -218,7 +218,7 @@ export default function RapotPageClient() {
         const classId = filters.kelas[0];
         const className = classes.find(c => c.id === classId)?.name || 'Kelas';
         setIsDownloading(true);
-        toast.info('Menyiapkan dan mendownload PDF rapot kelas...');
+        toast.info('Mendownload PDF rapot kelas...');
 
         try {
             // 1. Fetch Data
@@ -315,7 +315,7 @@ export default function RapotPageClient() {
                                 <button
                                     onClick={() => handleBulkDownload({})}
                                     disabled={isDownloading || students.length === 0}
-                                    className="ml-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="ml-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isDownloading ? (
                                         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -361,7 +361,7 @@ export default function RapotPageClient() {
                                 onClick={() => isMobile() && setIsFilterCollapsed(!isFilterCollapsed)}
                             >
                                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                    Filter {isMobile() && "& Download"}
+                                    Filter {isMobile() && selectedStudentId && "& Download"}
                                 </h3>
                                 <button
                                     type="button"
@@ -451,7 +451,7 @@ export default function RapotPageClient() {
                                                     <button
                                                         onClick={() => handleBulkDownload({})}
                                                         disabled={isDownloading || students.length === 0}
-                                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        className="w-full justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         {isDownloading ? (
                                                             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -472,7 +472,7 @@ export default function RapotPageClient() {
                                                 {selectedStudentId && (
                                                     <button
                                                         onClick={() => studentReportRef.current?.downloadPDF()}
-                                                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
+                                                        className="w-full justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -545,7 +545,7 @@ export default function RapotPageClient() {
             {isDownloading && (
                 <div className="fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center justify-center">
                     <div className="text-white mb-6 font-bold text-xl animate-pulse">
-                        Menyiapkan dan Mendownload PDF Rapot...
+                        Mendownload PDF Rapot...
                     </div>
                     <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
