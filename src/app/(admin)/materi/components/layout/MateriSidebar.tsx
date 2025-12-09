@@ -477,23 +477,23 @@ export default function MateriSidebar({
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* Action buttons - show on hover (desktop) or always (mobile) */}
-                                                                    <div className="flex md:hidden md:group-hover:flex items-center gap-1 pr-2">
-                                                                        <button
-                                                                            onClick={(e) => handleEditType(e, type)}
-                                                                            className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                                            title="Edit Tipe"
-                                                                        >
-                                                                            <PencilIcon className="w-5 h-5" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => handleDeleteType(e, type)}
-                                                                            className="p-1.5 text-gray-500 hover:text-red-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                                            title="Hapus Tipe"
-                                                                        >
-                                                                            <TrashBinIcon className="w-5 h-5" />
-                                                                        </button>
-                                                                    </div>
+                                                                    <DropdownMenu
+                                                                        className="py-1"
+                                                                        triggerClassName="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                                        items={[
+                                                                            {
+                                                                                label: 'Edit',
+                                                                                onClick: (e) => handleEditType(e, type),
+                                                                                icon: <PencilIcon className="w-4 h-4" />
+                                                                            },
+                                                                            {
+                                                                                label: 'Hapus', 
+                                                                                variant: 'danger',
+                                                                                onClick: (e) => handleDeleteType(e, type),
+                                                                                icon: <TrashBinIcon className="w-4 h-4" />
+                                                                            }
+                                                                        ]}
+                                                                    />
                                                                 </div>
                                                             );
                                                         })}
