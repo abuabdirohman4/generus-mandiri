@@ -627,7 +627,7 @@ export default function CreateMeetingModal({
                     ]}
                     disabled={isSubmitting}
                     widthClassName="!max-w-full"
-                    className='!mb-0'
+                    className='mb-0!'
                   />
                 </div>
               )}
@@ -646,7 +646,7 @@ export default function CreateMeetingModal({
                     }))}
                     disabled={isSubmitting || typesLoading || Object.keys(finalAvailableTypes).length === 0}
                     widthClassName="!max-w-full"
-                    className='!mb-0'
+                    className='mb-0!'
                   />
                 </div>
               )}
@@ -794,7 +794,7 @@ export default function CreateMeetingModal({
         </div>
 
         {/* Buttons - Sticky at bottom */}
-        <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mt-auto">
+        <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 mt-auto">
           <Button
             type="button"
             onClick={handleClose}

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 
 interface DropdownMenuItem {
   label: string
-  onClick: () => void
+  onClick: (e: React.MouseEvent) => void
   variant?: 'default' | 'danger'
   icon?: React.ReactNode
 }
@@ -12,9 +12,11 @@ interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[]
   triggerIcon?: React.ReactNode
+  className?: string
+  triggerClassName?: string
 }
 
-export default function DropdownMenu({ items, triggerIcon }: DropdownMenuProps) {
+export default function DropdownMenu({ items, triggerIcon, className, triggerClassName }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -36,21 +38,21 @@ export default function DropdownMenu({ items, triggerIcon }: DropdownMenuProps) 
   }, [isOpen])
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className || ''}`} ref={dropdownRef}>
       <button
         onClick={(e) => {
           e.stopPropagation()
           e.preventDefault()
           setIsOpen(!isOpen)
         }}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+        className={triggerClassName || `p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors`}
         aria-label="Options"
       >
         {triggerIcon || <ThreeDotsIcon />}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
           <div className="py-1">
             {items.map((item, index) => (
               <button
@@ -58,14 +60,13 @@ export default function DropdownMenu({ items, triggerIcon }: DropdownMenuProps) 
                 onClick={(e) => {
                   e.stopPropagation()
                   e.preventDefault()
-                  item.onClick()
+                  item.onClick(e)
                   setIsOpen(false)
                 }}
-                className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
-                  item.variant === 'danger'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-700 dark:text-gray-300'
-                }`}
+                className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${item.variant === 'danger'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-gray-700 dark:text-gray-300'
+                  }`}
               >
                 {item.icon}
                 {item.label}

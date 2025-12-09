@@ -12,6 +12,7 @@ import TypeModal from '../modals/TypeModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { deleteMaterialCategory, deleteMaterialType } from '../../actions';
 import { toast } from 'sonner';
+import DropdownMenu from '@/components/ui/dropdown/DropdownMenu';
 
 interface MateriSidebarProps {
     categories: MaterialCategory[];
@@ -384,7 +385,7 @@ export default function MateriSidebar({
                                             <div className="group flex items-center justify-between">
                                                 <div
                                                     onClick={() => toggleCategory(category.id)}
-                                                    className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                                                    className={`flex-1 flex items-center gap-2 px-1 py-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
                                                 >
                                                     {/* Expand/Collapse Icon */}
                                                     <button
@@ -423,23 +424,24 @@ export default function MateriSidebar({
                                                     </div>
                                                 </div>
 
-                                                {/* Action buttons - show on hover (desktop) or always (mobile) */}
-                                                <div className="flex md:hidden md:group-hover:flex items-center gap-1 pr-2">
-                                                    <button
-                                                        onClick={(e) => handleEditCategory(e, category)}
-                                                        className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                        title="Edit Kategori"
-                                                    >
-                                                        <PencilIcon className="w-5 h-5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDeleteCategory(e, category)}
-                                                        className="p-1.5 text-gray-500 hover:text-red-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                        title="Hapus Kategori"
-                                                    >
-                                                        <TrashBinIcon className="w-5 h-5" />
-                                                    </button>
-                                                </div>
+                                                {/* Action buttons */}
+                                                <DropdownMenu
+                                                    className="py-1"
+                                                    triggerClassName="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                    items={[
+                                                        {
+                                                            label: 'Edit',
+                                                            onClick: (e) => handleEditCategory(e, category),
+                                                            icon: <PencilIcon className="w-4 h-4" />
+                                                        },
+                                                        {
+                                                            label: 'Hapus',
+                                                            variant: 'danger',
+                                                            onClick: (e) => handleDeleteCategory(e, category),
+                                                            icon: <TrashBinIcon className="w-4 h-4" />
+                                                        }
+                                                    ]}
+                                                />
                                             </div>
 
                                             {/* Types (nested) */}
@@ -517,8 +519,8 @@ export default function MateriSidebar({
                                         <div
                                             onClick={() => toggleClassExpand(classMaster.id)}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isExpanded
-                                                    ? 'bg-gray-100 dark:bg-gray-700'
-                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-gray-100 dark:bg-gray-700'
+                                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}
                                         >
                                             {/* Expand/Collapse Icon */}
