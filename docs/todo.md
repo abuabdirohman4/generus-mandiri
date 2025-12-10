@@ -231,10 +231,17 @@ Meeting
 
 Refactoring
 - [ ] Buat satu file khusus untuk berbagai macam action
- - [ ] Get Classes
- - [ ] Get Teachers
- - [ ] Get Students
- - [ ] Get Meetings
- - [ ] Get Attendance
- - [ ] Get Attendance Log
- - [ ] Get Attendance Log Detail
+    - [ ] Get Classes
+    - [ ] Get Teachers
+    - [ ] Get Students
+    - [ ] Get Meetings
+    - [ ] Get Attendance
+    - [ ] Get Attendance Log
+    - [ ] Get Attendance Log Detail
+
+Sidebar
+- [ ] Buat component sidebar content
+    - [ ] Implement untuk Siswa Detail
+    - [ ] Implement untuk Siswa Biodata
+    - [ ] Implement untuk Monitoring
+    - [ ] Implement untuk Rapot
