@@ -36,6 +36,7 @@ export function useLaporanPage() {
       // Detailed mode filters
       period: filters.period,
       classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
+      kelompokId: filters.organisasi?.kelompok?.length ? filters.organisasi.kelompok.join(',') : undefined,
       gender: filters.gender || undefined,
       meetingType: filters.meetingType?.length ? filters.meetingType.join(',') : undefined,
       
@@ -196,6 +197,25 @@ export function useLaporanPage() {
   const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }) => {
     // Extract gender and meetingType from organisasiFilters and update separately
     const { gender, meetingType, ...organisasi } = organisasiFilters
+
+    // CRITICAL FIX: Auto-extract kelompok from selected classes
+    // When user selects a class, automatically set its kelompok to ensure proper filtering
+    if (organisasi.kelas && organisasi.kelas.length > 0 && classes) {
+      const selectedClassIds = organisasi.kelas
+      const kelompokIds = new Set<string>()
+
+      selectedClassIds.forEach(classId => {
+        const selectedClass = classes.find(cls => cls.id === classId)
+        if (selectedClass?.kelompok_id) {
+          kelompokIds.add(selectedClass.kelompok_id)
+        }
+      })
+
+      // Only override kelompok if user selected classes
+      // This ensures kelompok filter is synced with selected classes
+      organisasi.kelompok = Array.from(kelompokIds)
+    }
+
     setFilter('organisasi', organisasi)
     if (gender !== undefined) {
       setFilter('gender', gender || '')
@@ -203,7 +223,7 @@ export function useLaporanPage() {
     if (meetingType !== undefined) {
       setFilter('meetingType', meetingType)
     }
-  }, [setFilter])
+  }, [setFilter, classes])
 
   // Loading states
   const loading = isLoading || isLoadingClasses

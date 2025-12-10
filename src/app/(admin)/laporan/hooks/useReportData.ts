@@ -11,10 +11,11 @@ interface UseReportDataOptions {
     month?: number
     year?: number
     viewMode?: 'general' | 'detailed'
-    
+
     // Detailed mode filters - Period-specific
     period: 'daily' | 'weekly' | 'monthly' | 'yearly'
     classId?: string
+    kelompokId?: string
     gender?: string
     meetingType?: string
     
@@ -53,10 +54,11 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     month: filters.month,
     year: filters.year,
     viewMode: filters.viewMode,
-    
+
     // Detailed mode filters
     period: filters.period,
     classId: filters.classId || undefined,
+    kelompokId: filters.kelompokId || undefined,
     gender: filters.gender || undefined,
     meetingType: filters.meetingType || undefined,
     startDate: filters.startDate || undefined,
