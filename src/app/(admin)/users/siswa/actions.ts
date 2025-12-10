@@ -636,9 +636,9 @@ export async function createStudent(formData: FormData) {
       throw new Error('Class not found')
     }
 
-    // Create student with RLS handling auth + class validation
-    // RLS policies will handle user authentication and class access
-    const { data: newStudent, error } = await supabase
+    // Create student with admin client (bypass RLS)
+    // We do manual permission validation above, so safe to use admin client
+    const { data: newStudent, error } = await adminClient
       .from('students')
       .insert({
         name,
@@ -648,31 +648,11 @@ export async function createStudent(formData: FormData) {
         desa_id: finalDesaId,
         daerah_id: finalDaerahId
       })
-      .select(`
-        id,
-        name,
-        gender,
-        class_id,
-        kelompok_id,
-        desa_id,
-        daerah_id,
-        created_at,
-        updated_at,
-        classes!inner(
-          id,
-          name
-        )
-      `)
+      .select()
       .single()
 
     if (error) {
-      // Handle specific RLS errors
-      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
-        throw new Error('Tidak memiliki izin untuk membuat siswa di kelas ini')
-      }
-      if (error.code === '23503') {
-        throw new Error('Kelas tidak ditemukan')
-      }
+      console.error('Create student error:', error)
       throw error
     }
 
@@ -1245,6 +1225,8 @@ export async function createStudentsBatch(
 ) {
   try {
     const supabase = await createClient()
+    const adminClient = await createAdminClient() // Add adminClient for batch insert
+
 
     // Get user profile for hierarchy fields
     const profile = await getUserProfile()
@@ -1277,35 +1259,16 @@ export async function createStudentsBatch(
       daerah_id: profile.daerah_id
     }))
 
-    // Bulk insert with RLS handling
-    const { data: insertedStudents, error } = await supabase
+    // Insert students in batch using admin client (bypass RLS)
+    // We do manual permission validation above, so safe to use admin client
+    const { data: insertedStudents, error: insertError } = await adminClient
       .from('students')
       .insert(studentsToInsert)
-      .select(`
-        id,
-        name,
-        gender,
-        class_id,
-        kelompok_id,
-        desa_id,
-        daerah_id,
-        created_at,
-        updated_at,
-        classes!inner(
-          id,
-          name
-        )
-      `)
+      .select()
 
-    if (error) {
-      // Handle specific RLS errors
-      if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
-        throw new Error('Tidak memiliki izin untuk membuat siswa di kelas ini')
-      }
-      if (error.code === '23503') {
-        throw new Error('Kelas tidak ditemukan')
-      }
-      throw error
+    if (insertError) {
+      console.error('Batch insert error:', insertError)
+      throw insertError
     }
 
     // Also insert ke junction table untuk support multiple classes
@@ -1315,7 +1278,7 @@ export async function createStudentsBatch(
         class_id: classId
       }))
 
-      const { error: junctionError } = await supabase
+      const { error: junctionError } = await adminClient
         .from('student_classes')
         .insert(junctionInserts)
 
@@ -1327,6 +1290,7 @@ export async function createStudentsBatch(
     }
 
     revalidatePath('/users/siswa')
+
     return {
       success: true,
       imported: insertedStudents?.length || 0,
