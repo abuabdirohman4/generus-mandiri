@@ -33,7 +33,7 @@ export interface Student {
 export async function getUserProfile() {
   try {
     const supabase = await createClient()
-    
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       throw new Error('User not authenticated')
@@ -82,7 +82,7 @@ export async function getUserProfile() {
 export async function getAllStudents(classId?: string): Promise<Student[]> {
   try {
     const supabase = await createClient()
-    
+
     // Get current user profile to check role
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -99,48 +99,48 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
     // Query dengan junction table student_classes untuk support multiple classes
     if (profile?.role === 'teacher' && profile.teacher_classes && profile.teacher_classes.length > 0) {
       const teacherClassIds = profile.teacher_classes.map((tc: any) => tc.class_id)
-      
+
       // Use admin client to bypass RLS
       const adminClient = await createAdminClient()
-      
+
       // Get student IDs from both sources:
       // 1. student_classes junction table (for students with multiple classes)
       // 2. students.class_id directly (for students with single class - backward compatibility)
       const studentIdsFromJunction = new Set<string>()
       const studentIdsFromClassId = new Set<string>()
-      
+
       // Query from junction table
       const { data: studentClassData } = await adminClient
         .from('student_classes')
         .select('student_id')
         .in('class_id', teacherClassIds)
-      
+
       if (studentClassData && studentClassData.length > 0) {
         studentClassData.forEach((sc: any) => {
           studentIdsFromJunction.add(sc.student_id)
         })
       }
-      
+
       // Query from students.class_id directly (backward compatibility)
       const { data: studentsFromClassId } = await adminClient
         .from('students')
         .select('id')
         .is('deleted_at', null)
         .in('class_id', teacherClassIds)
-      
+
       if (studentsFromClassId && studentsFromClassId.length > 0) {
         studentsFromClassId.forEach((s: any) => {
           studentIdsFromClassId.add(s.id)
         })
       }
-      
+
       // Combine both sources
       const studentIds = [...new Set([...studentIdsFromJunction, ...studentIdsFromClassId])]
-      
+
       if (studentIds.length === 0) {
         return []
       }
-      
+
       // Apply additional classId filter if provided
       if (classId) {
         const classIds = classId.split(',')
@@ -148,42 +148,42 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         if (filteredClassIds.length === 0) {
           return []
         }
-        
+
         // Get students for specific classes
         const filteredStudentIdsFromJunction = new Set<string>()
         const filteredStudentIdsFromClassId = new Set<string>()
-        
+
         const { data: filteredStudentClassData } = await adminClient
           .from('student_classes')
           .select('student_id')
           .in('class_id', filteredClassIds)
-        
+
         if (filteredStudentClassData && filteredStudentClassData.length > 0) {
           filteredStudentClassData.forEach((sc: any) => {
             filteredStudentIdsFromJunction.add(sc.student_id)
           })
         }
-        
+
         const { data: filteredStudentsFromClassId } = await adminClient
           .from('students')
           .select('id')
           .is('deleted_at', null)
           .in('class_id', filteredClassIds)
-        
+
         if (filteredStudentsFromClassId && filteredStudentsFromClassId.length > 0) {
           filteredStudentsFromClassId.forEach((s: any) => {
             filteredStudentIdsFromClassId.add(s.id)
           })
         }
-        
+
         const filteredStudentIds = [...new Set([...filteredStudentIdsFromJunction, ...filteredStudentIdsFromClassId])]
         // Intersect with teacher's students
         const finalStudentIds = studentIds.filter(id => filteredStudentIds.includes(id))
-        
+
         if (finalStudentIds.length === 0) {
           return []
         }
-        
+
         // Query students with final filtered IDs using admin client
         const { data: students, error } = await adminClient
           .from('students')
@@ -207,18 +207,18 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
           .is('deleted_at', null)
           .in('id', finalStudentIds)
           .order('name')
-        
+
         if (error) {
           throw error
         }
-        
+
         return await transformStudentsData(students || [], adminClient)
       }
-      
-       // Query students for all teacher's classes using admin client
-       const { data: students, error: studentsError } = await adminClient
-         .from('students')
-         .select(`
+
+      // Query students for all teacher's classes using admin client
+      const { data: students, error: studentsError } = await adminClient
+        .from('students')
+        .select(`
            id,
            name,
            gender,
@@ -235,17 +235,17 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
            desa:desa_id(name),
            kelompok:kelompok_id(name)
          `)
-         .is('deleted_at', null)
-         .in('id', studentIds)
-         .order('name')
-      
+        .is('deleted_at', null)
+        .in('id', studentIds)
+        .order('name')
+
       if (studentsError) {
         throw studentsError
       }
-      
+
       return await transformStudentsData(students || [], adminClient)
     }
-    
+
     // For non-teacher roles, use existing logic with junction table
     let query = supabase
       .from('students')
@@ -278,7 +278,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         .from('student_classes')
         .select('student_id')
         .in('class_id', classIds)
-      
+
       if (studentClassData && studentClassData.length > 0) {
         const studentIds = studentClassData.map(sc => sc.student_id)
         query = query.in('id', studentIds)
@@ -316,7 +316,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
 
           // Get primary class (first class) untuk backward compatibility
           const primaryClass = classesArray[0] || null
-          
+
           // Safely extract daerah, desa, kelompok names
           const getDaerahName = () => {
             if (!student.daerah) return ''
@@ -331,7 +331,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             }
             return ''
           }
-          
+
           const getDesaName = () => {
             if (!student.desa) return ''
             if (Array.isArray(student.desa)) {
@@ -345,7 +345,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             }
             return ''
           }
-          
+
           const getKelompokName = () => {
             if (!student.kelompok) return ''
             if (Array.isArray(student.kelompok)) {
@@ -359,9 +359,9 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             }
             return ''
           }
-          
-      return {
-        ...student,
+
+          return {
+            ...student,
             classes: Array.isArray(classesArray) ? classesArray : [],
             class_id: primaryClass?.id || student.class_id || null,
             class_name: primaryClass?.name || '',
@@ -388,8 +388,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             desa_name: '',
             kelompok_name: ''
           }
-      }
-    })
+        }
+      })
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
     throw error
@@ -401,7 +401,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
   if (!Array.isArray(students)) {
     return []
   }
-  
+
   // Get class names for students that don't have junction table entries
   const classIdsToQuery = new Set<string>()
   students.forEach(student => {
@@ -411,7 +411,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
       classIdsToQuery.add(String(student.class_id))
     }
   })
-  
+
   // Query class names if needed
   let classNameMap = new Map<string, string>()
   if (classIdsToQuery.size > 0 && adminClient) {
@@ -420,7 +420,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
         .from('classes')
         .select('id, name')
         .in('id', Array.from(classIdsToQuery))
-      
+
       if (Array.isArray(classesData)) {
         classesData.forEach((c: any) => {
           if (c && c.id) {
@@ -433,7 +433,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
       // Continue without class names
     }
   }
-  
+
   return students
     .filter(student => student && typeof student === 'object')
     .map(student => {
@@ -448,7 +448,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
             id: String(cls.id || ''),
             name: String(cls.name || '')
           }))
-        
+
         // If no classes from junction table, use class_id directly (backward compatibility)
         if (classesArray.length === 0 && student.class_id) {
           const className = classNameMap.get(String(student.class_id)) || student.class_name || 'Unknown Class'
@@ -457,15 +457,15 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
             name: String(className)
           })
         }
-        
+
         // Get primary class (first class) for backward compatibility
         const primaryClass = classesArray[0] || null
-        
+
         // Safely extract student properties without classes
         const studentWithoutClasses: any = { ...student }
         delete studentWithoutClasses.classes
         delete studentWithoutClasses.student_classes
-        
+
         // Safely extract daerah, desa, kelompok names
         const getDaerahName = () => {
           if (!student.daerah) return ''
@@ -480,7 +480,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
           }
           return ''
         }
-        
+
         const getDesaName = () => {
           if (!student.desa) return ''
           if (Array.isArray(student.desa)) {
@@ -494,7 +494,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
           }
           return ''
         }
-        
+
         const getKelompokName = () => {
           if (!student.kelompok) return ''
           if (Array.isArray(student.kelompok)) {
@@ -508,7 +508,7 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
           }
           return ''
         }
-        
+
         return {
           ...studentWithoutClasses,
           classes: Array.isArray(classesArray) ? classesArray : [], // Array of all classes
@@ -717,7 +717,7 @@ export async function createStudent(formData: FormData) {
 export async function updateStudent(studentId: string, formData: FormData) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user profile to check role
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -733,12 +733,12 @@ export async function updateStudent(studentId: string, formData: FormData) {
     if (!profile) {
       throw new Error('User profile not found')
     }
-    
+
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
     const kelompokId = formData.get('kelompok_id')?.toString()
-    
+
     // Support both classIds (multiple) and classId (single) for backward compatibility
     const classIdsStr = formData.get('classIds')?.toString() || formData.get('classId')?.toString()
     const classIds = classIdsStr ? classIdsStr.split(',').filter(Boolean) : []
@@ -810,16 +810,16 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
     // Use admin client for teacher and admin to bypass RLS issues
     // Admin juga perlu adminClient karena query dengan junction table dan RLS bisa gagal
-    const client = (profile.role === 'teacher' || profile.role === 'admin' || profile.role === 'superadmin') 
-      ? await createAdminClient() 
+    const client = (profile.role === 'teacher' || profile.role === 'admin' || profile.role === 'superadmin')
+      ? await createAdminClient()
       : supabase
 
     // Prepare update data
     const updateData: any = {
-        name,
-        gender,
+      name,
+      gender,
       class_id: primaryClassId,
-        updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString()
     }
 
     // Add kelompok_id, desa_id, daerah_id if kelompok_id is provided
@@ -932,7 +932,7 @@ export async function checkStudentHasAttendance(studentId: string): Promise<bool
       .eq('student_id', studentId)
       .limit(1)
       .maybeSingle()
-    
+
     return !!data
   } catch (error) {
     console.error('Error checking student attendance:', error)
@@ -947,12 +947,12 @@ export async function checkStudentHasAttendance(studentId: string): Promise<bool
  * Returns { success: boolean, error?: string } to ensure error messages are properly displayed in production
  */
 export async function deleteStudent(
-  studentId: string, 
+  studentId: string,
   permanent: boolean = false
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -1075,19 +1075,19 @@ export async function deleteStudent(
       const { error: junctionDeleteError } = await adminClient
         .from('student_classes')
         .delete()
-      .eq('student_id', studentId)
+        .eq('student_id', studentId)
 
       if (junctionDeleteError && junctionDeleteError.code !== 'PGRST301') {
         console.error('Error deleting from junction table:', junctionDeleteError)
         // Continue anyway, will try to delete student
-    }
+      }
 
       // Delete student using admin client to bypass RLS
       // Cascade will automatically delete attendance_logs
       const { error: deleteError } = await adminClient
-      .from('students')
-      .delete()
-      .eq('id', studentId)
+        .from('students')
+        .delete()
+        .eq('id', studentId)
 
       if (deleteError) {
         // Handle specific RLS errors
@@ -1125,11 +1125,11 @@ export async function deleteStudent(
   } catch (error) {
     // Extract error message for unknown errors
     let errorMessage = 'Gagal menghapus siswa'
-    
+
     if (error instanceof Error) {
       errorMessage = error.message
     }
-    
+
     handleApiError(error, 'menghapus data', errorMessage)
     return { success: false, error: errorMessage }
   }
@@ -1141,7 +1141,7 @@ export async function deleteStudent(
 export async function getStudentClasses(studentId: string): Promise<Array<{ id: string; name: string }>> {
   try {
     const supabase = await createClient()
-    
+
     const { data: studentClasses, error } = await supabase
       .from('student_classes')
       .select(`
@@ -1176,10 +1176,10 @@ export async function assignStudentsToClass(
 ): Promise<{ success: boolean; assigned: number; skipped: string[] }> {
   try {
     const supabase = await createClient()
-    
+
     // Get user profile untuk validasi
     const profile = await getUserProfile()
-    
+
     // Validasi kelas tujuan exists
     const { data: classData, error: classError } = await supabase
       .from('classes')
@@ -1190,11 +1190,11 @@ export async function assignStudentsToClass(
     if (classError || !classData) {
       throw new Error('Kelas tidak ditemukan')
     }
-    
+
     if (!studentIds || studentIds.length === 0) {
       throw new Error('Pilih minimal satu siswa')
     }
-    
+
     // Check siswa yang sudah ada di kelas tersebut
     const { data: existingAssignments } = await supabase
       .from('student_classes')
@@ -1204,7 +1204,7 @@ export async function assignStudentsToClass(
 
     const existingStudentIds = new Set(existingAssignments?.map(a => a.student_id) || [])
     const newStudentIds = studentIds.filter(id => !existingStudentIds.has(id))
-    
+
     // Batch insert ke junction table untuk siswa yang belum ada
     if (newStudentIds.length > 0) {
       const assignmentsToInsert = newStudentIds.map(studentId => ({
@@ -1225,8 +1225,8 @@ export async function assignStudentsToClass(
     }
 
     revalidatePath('/users/siswa')
-    return { 
-      success: true, 
+    return {
+      success: true,
       assigned: newStudentIds.length,
       skipped: Array.from(existingStudentIds)
     }
@@ -1245,10 +1245,10 @@ export async function createStudentsBatch(
 ) {
   try {
     const supabase = await createClient()
-    
+
     // Get user profile for hierarchy fields
     const profile = await getUserProfile()
-    
+
     // Get class info for category determination
     const { data: classData, error: classError } = await supabase
       .from('classes')
@@ -1259,14 +1259,14 @@ export async function createStudentsBatch(
     if (classError || !classData) {
       throw new Error('Kelas tidak ditemukan')
     }
-    
+
     // Filter out empty students (name === '')
     const validStudents = students.filter(s => s.name.trim() !== '')
-    
+
     if (validStudents.length === 0) {
       throw new Error('Tidak ada siswa yang valid untuk ditambah')
     }
-    
+
     // Prepare students with hierarchy fields
     const studentsToInsert = validStudents.map(s => ({
       name: s.name.trim(),
@@ -1276,7 +1276,7 @@ export async function createStudentsBatch(
       desa_id: profile.desa_id,
       daerah_id: profile.daerah_id
     }))
-    
+
     // Bulk insert with RLS handling
     const { data: insertedStudents, error } = await supabase
       .from('students')
@@ -1327,8 +1327,8 @@ export async function createStudentsBatch(
     }
 
     revalidatePath('/users/siswa')
-    return { 
-      success: true, 
+    return {
+      success: true,
       imported: insertedStudents?.length || 0,
       total: validStudents.length,
       errors: []
@@ -1345,7 +1345,7 @@ export async function createStudentsBatch(
 export async function getCurrentUserRole(): Promise<string | null> {
   try {
     const supabase = await createClient()
-    
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return null
@@ -1420,7 +1420,7 @@ export interface AttendanceHistoryResponse {
 export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
   try {
     const supabase = await createClient()
-    
+
     // Get current user profile for access control
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -1437,7 +1437,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
       throw new Error('User profile not found')
     }
 
-     // Query student with junction table for multiple classes support
+    // Query student with junction table for multiple classes support
     const { data: student, error } = await supabase
       .from('students')
       .select(`
@@ -1449,7 +1449,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
             classes:class_id(id, name)
           )
       `)
-        .is('deleted_at', null)
+      .is('deleted_at', null)
       .eq('id', studentId)
       .single()
 
@@ -1499,7 +1499,7 @@ export async function getStudentAttendanceHistory(
 ): Promise<AttendanceHistoryResponse> {
   try {
     const supabase = await createClient()
-    
+
     // Get current user profile for access control
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -1521,7 +1521,7 @@ export async function getStudentAttendanceHistory(
     // Get the last day of the month properly
     const lastDayOfMonth = new Date(year, month, 0).getDate()
     const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDayOfMonth.toString().padStart(2, '0')}`
-    
+
     // Query attendance_logs for specific student and month
     // RLS policies will handle access control
     const { data: attendanceLogs, error } = await supabase
@@ -1572,9 +1572,9 @@ export async function getStudentAttendanceHistory(
       absen: attendanceLogs?.filter(log => log.status === 'A').length || 0
     }
 
-    return { 
-      attendanceLogs: (attendanceLogs || []) as unknown as AttendanceLog[], 
-      stats: stats as MonthlyStats 
+    return {
+      attendanceLogs: (attendanceLogs || []) as unknown as AttendanceLog[],
+      stats: stats as MonthlyStats
     }
   } catch (error) {
     const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat riwayat kehadiran siswa')
