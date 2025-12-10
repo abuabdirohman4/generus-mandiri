@@ -1581,3 +1581,113 @@ export async function getStudentAttendanceHistory(
     throw new Error(errorInfo.message)
   }
 }
+
+/**
+ * Get student with complete biodata
+ */
+export async function getStudentBiodata(
+  studentId: string
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('students')
+      .select(
+        `
+        id,
+        name,
+        nomor_induk,
+        gender,
+        tempat_lahir,
+        tanggal_lahir,
+        anak_ke,
+        alamat,
+        nomor_telepon,
+        nama_ayah,
+        nama_ibu,
+        alamat_orangtua,
+        telepon_orangtua,
+        pekerjaan_ayah,
+        pekerjaan_ibu,
+        nama_wali,
+        alamat_wali,
+        pekerjaan_wali,
+        kelompok_id,
+        kelompok:kelompok_id(id, name),
+        desa_id,
+        desa:desa_id(id, name),
+        daerah_id,
+        daerah:daerah_id(id, name),
+        created_at,
+        updated_at
+      `
+      )
+      .eq('id', studentId)
+      .is('deleted_at', null)
+      .single()
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error fetching student biodata:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch student biodata',
+    }
+  }
+}
+
+/**
+ * Update student biodata
+ */
+export async function updateStudentBiodata(
+  studentId: string,
+  biodata: any
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    // Extract only the fields that exist in the database
+    const updateData: any = {}
+
+    if (biodata.name !== undefined) updateData.name = biodata.name
+    if (biodata.nomor_induk !== undefined) updateData.nomor_induk = biodata.nomor_induk
+    if (biodata.gender !== undefined) updateData.gender = biodata.gender
+    if (biodata.tempat_lahir !== undefined) updateData.tempat_lahir = biodata.tempat_lahir
+    if (biodata.tanggal_lahir !== undefined) updateData.tanggal_lahir = biodata.tanggal_lahir
+    if (biodata.anak_ke !== undefined) updateData.anak_ke = biodata.anak_ke
+    if (biodata.alamat !== undefined) updateData.alamat = biodata.alamat
+    if (biodata.nomor_telepon !== undefined) updateData.nomor_telepon = biodata.nomor_telepon
+    if (biodata.nama_ayah !== undefined) updateData.nama_ayah = biodata.nama_ayah
+    if (biodata.nama_ibu !== undefined) updateData.nama_ibu = biodata.nama_ibu
+    if (biodata.alamat_orangtua !== undefined)
+      updateData.alamat_orangtua = biodata.alamat_orangtua
+    if (biodata.telepon_orangtua !== undefined)
+      updateData.telepon_orangtua = biodata.telepon_orangtua
+    if (biodata.pekerjaan_ayah !== undefined) updateData.pekerjaan_ayah = biodata.pekerjaan_ayah
+    if (biodata.pekerjaan_ibu !== undefined) updateData.pekerjaan_ibu = biodata.pekerjaan_ibu
+    if (biodata.nama_wali !== undefined) updateData.nama_wali = biodata.nama_wali
+    if (biodata.alamat_wali !== undefined) updateData.alamat_wali = biodata.alamat_wali
+    if (biodata.pekerjaan_wali !== undefined) updateData.pekerjaan_wali = biodata.pekerjaan_wali
+
+    updateData.updated_at = new Date().toISOString()
+
+    const { error } = await supabase.from('students').update(updateData).eq('id', studentId)
+
+    if (error) throw error
+
+    revalidatePath('/users/siswa')
+    revalidatePath(`/users/siswa/${studentId}`)
+    revalidatePath('/rapot')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating student biodata:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update student biodata',
+    }
+  }
+}

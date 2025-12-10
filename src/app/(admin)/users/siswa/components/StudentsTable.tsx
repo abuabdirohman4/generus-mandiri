@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import DeleteStudentModal from './DeleteStudentModal'
-import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon } from '@/lib/icons'
+import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon, UserCircleIcon } from '@/lib/icons'
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 import { checkStudentHasAttendance } from '../actions'
@@ -271,16 +271,26 @@ export default function StudentsTable({
       
       return (
         <div className="flex gap-4 justify-center items-center">
-          {/* View Action - Link to student detail */}
-          <Link 
+          {/* View Attendance - Link to student detail */}
+          <Link
             href={`/users/siswa/${student.id}`}
             className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 transition-colors"
-            title="Lihat Detail"
+            title="Lihat Absensi"
             onClick={() => handleStudentClick(student.id, 'actions')}
           >
             <ReportIcon className="w-6 h-6" />
           </Link>
-          
+
+          {/* View Biodata */}
+          <Link
+            href={`/users/siswa/${student.id}/biodata`}
+            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+            title="Lihat Biodata"
+            onClick={() => handleStudentClick(student.id, 'actions')}
+          >
+            <UserCircleIcon className="w-6 h-6" />
+          </Link>
+
           {/* Edit Action */}
           <button
             onClick={() => onEdit(student)}
@@ -289,7 +299,7 @@ export default function StudentsTable({
           >
             <PencilIcon className="w-5 h-5" />
           </button>
-          
+
           {/* Delete Action - only for admin */}
           {(userRole === 'admin' || userRole === 'superadmin') && (
             <button
