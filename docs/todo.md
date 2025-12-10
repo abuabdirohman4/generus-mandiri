@@ -1,4 +1,5 @@
 ## v1.10.1
+- [z] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
 - [x] Kelas 2 ada 11, tapi tertulis 12
 - [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
 - [x] Fix laporan

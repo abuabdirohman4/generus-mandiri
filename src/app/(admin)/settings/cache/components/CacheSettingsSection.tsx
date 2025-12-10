@@ -14,12 +14,16 @@ export default function CacheSettingsSection() {
 
   const handleReset = async () => {
     setIsResetting(true);
-    
+
     try {
+      // Clear server-side session and logout FIRST (before clearing cookies)
+      // This ensures the auth cookies are still available for the signOut request
+      await resetCacheAndLogout();
+
       // Clear client-side storage
       localStorage.clear();
       sessionStorage.clear();
-      
+
       // Clear cookies
       document.cookie.split(";").forEach((c) => {
         const eqPos = c.indexOf("=");
@@ -37,13 +41,10 @@ export default function CacheSettingsSection() {
         );
       }
 
-      // Clear server-side session and logout
-      await resetCacheAndLogout();
-
       // Close modal and redirect to login
       closeModal();
       router.push('/signin');
-      
+
     } catch (error) {
       console.error('Error during cache reset:', error);
       // You might want to show a toast notification here
@@ -60,7 +61,7 @@ export default function CacheSettingsSection() {
       icon: "💾"
     },
     {
-      name: "Session Storage", 
+      name: "Session Storage",
       description: "Data sementara yang tersimpan selama sesi browser",
       icon: "🔄"
     },
@@ -102,7 +103,7 @@ export default function CacheSettingsSection() {
               Peringatan Penting
             </h4>
             <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              Tindakan ini akan menghapus semua data tersimpan dan Anda akan otomatis logout. 
+              Tindakan ini akan menghapus semua data tersimpan dan Anda akan otomatis logout.
               Pastikan Anda telah menyimpan data penting sebelum melanjutkan.
             </p>
           </div>
@@ -151,13 +152,13 @@ export default function CacheSettingsSection() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            
+
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Konfirmasi Reset
             </h3>
-            
+
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Apakah Anda yakin ingin menghapus semua cookies, cache, dan data tersimpan? 
+              Apakah Anda yakin ingin menghapus semua cookies, cache, dan data tersimpan?
               Anda akan otomatis logout dan perlu login ulang.
             </p>
 
