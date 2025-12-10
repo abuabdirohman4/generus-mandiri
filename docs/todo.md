@@ -1,12 +1,13 @@
 ## v1.10.1
-
-- [ ] Fix laporan
-    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
-    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
-    [ ] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
+- [x] Kelas 2 ada 11, tapi tertulis 12
+- [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
+- [x] Fix laporan
+    [-] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [-] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+    [x] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
 - [x] Fix Absensi persentase & meeting detail
 - [x] Clear cachae when login/logout for dashboard
-- [ ] Fix styling academic years in mobile 
+- [x] Fix styling academic years in mobile 
 
 ## v1.10.0
 - [x] Dashboard Admin
@@ -21,7 +22,7 @@
     - [x] Pilihan "Pilih Semua Kelas"
     - [-] Default langsung munculin semua kelas
 - [x] Menu bisa di klik kanan
-- [ ] Halaman Materi
+- [ ] Halaman Materi1
     - [ ] Handle materi kelas sebelumnya
     - [x] Bug di bulk action
     - [x] Master Data (Show all materi)
@@ -30,8 +31,8 @@
         Per Sub Materi
     - [x] Mobile
         - [x] Saat pilih kategori sidebar langsung tertutup
-    - [ ] CRUD Kategori
-    - [ ] CRUD Materi Type
+    - [x] CRUD Kategori
+    - [x] CRUD Materi Type
     - [x] CRUD Materi
         - [x] Di Klik langsung munculin materi
         - [x] Guru hanya bisa lihat, admin bisa CRUD

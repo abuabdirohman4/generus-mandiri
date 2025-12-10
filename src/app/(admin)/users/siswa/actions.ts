@@ -547,7 +547,8 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
 export async function createStudent(formData: FormData) {
   try {
     const supabase = await createClient()
-    
+    const adminClient = await createAdminClient() // Need admin client for junction table
+
     // Extract form data
     const name = formData.get('name')?.toString()
     const gender = formData.get('gender')?.toString()
@@ -677,7 +678,8 @@ export async function createStudent(formData: FormData) {
 
     // Also insert ke junction table untuk support multiple classes
     if (newStudent?.id) {
-      const { error: junctionError } = await supabase
+      // Use admin client to bypass RLS for junction table insert
+      const { error: junctionError } = await adminClient
         .from('student_classes')
         .insert({
           student_id: newStudent.id,
@@ -685,14 +687,23 @@ export async function createStudent(formData: FormData) {
         })
         .select()
 
-      // Ignore duplicate error (UNIQUE constraint)
-      if (junctionError && junctionError.code !== '23505') {
-        console.error('Error inserting to junction table:', junctionError)
-        // Don't throw, karena student sudah dibuat dan ini hanya untuk multiple classes support
+      // Don't ignore errors - throw if it's not a duplicate
+      if (junctionError) {
+        if (junctionError.code === '23505') {
+          // Duplicate entry is OK (student already in this class)
+          console.log('Student already assigned to this class')
+        } else {
+          // Other errors should fail the operation
+          console.error('Junction table insert failed:', junctionError)
+          // Rollback by deleting the student (use admin client for delete too)
+          await adminClient.from('students').delete().eq('id', newStudent.id)
+          throw new Error(`Failed to assign student to class: ${junctionError.message}`)
+        }
       }
     }
 
     revalidatePath('/users/siswa')
+    revalidatePath('/absensi') // Also invalidate meeting/attendance pages
     return { success: true, student: newStudent }
   } catch (error) {
     handleApiError(error, 'menyimpan data', 'Gagal membuat siswa')

@@ -170,7 +170,7 @@ export default function CreateMeetingModal({
   // Force revalidate students when modal opens to get fresh data
   useEffect(() => {
     if (isOpen) {
-      mutateStudents()
+      mutateStudents(undefined, { revalidate: true }) // Force hard refresh
     }
   }, [isOpen, mutateStudents])
 

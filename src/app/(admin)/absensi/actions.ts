@@ -193,6 +193,7 @@ export async function createMeeting(data: CreateMeetingData) {
     if (data.studentIds && data.studentIds.length > 0) {
       // Use provided student IDs (from user selection)
       // Verify all provided student IDs are valid and in selected classes
+      // Get student IDs from junction table
       const { data: studentClassData, error: studentClassError } = await adminClient
         .from('student_classes')
         .select('student_id')
@@ -209,6 +210,25 @@ export async function createMeeting(data: CreateMeetingData) {
 
       // Get unique valid student IDs (filter to only include those in selected classes)
       const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+
+      // const junctionStudentIds = studentClassData?.map(sc => sc.student_id) || []
+
+      // // ALSO get students via direct class_id (backward compatibility)
+      // const { data: directClassStudents, error: directError } = await adminClient
+      //   .from('students')
+      //   .select('id')
+      //   .is('deleted_at', null)
+      //   .in('class_id', data.classIds)
+      //   .in('id', data.studentIds)
+
+      // if (directError) {
+      //   return { success: false, error: directError.message }
+      // }
+
+      // const directStudentIds = directClassStudents?.map(s => s.id) || []
+
+      // // Combine both sources
+      // const validStudentIds = [...new Set([...junctionStudentIds, ...directStudentIds])]
       studentIdsForSnapshot = data.studentIds.filter(id => validStudentIds.includes(id))
 
       if (studentIdsForSnapshot.length === 0) {
