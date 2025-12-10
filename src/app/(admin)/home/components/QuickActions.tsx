@@ -47,10 +47,10 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const router = useRouter();
   const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
   const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
-  console.log('profile', profile)
-  console.log('isTeacher', isTeacher(profile))
-  console.log('!isKelas6Warlob', !isKelas6Warlob)
-  console.log('teacherCaberawit', teacherCaberawit)
+  // console.log('profile', profile)
+  // console.log('isTeacher', isTeacher(profile))
+  // console.log('!isKelas6Warlob', !isKelas6Warlob)
+  // console.log('teacherCaberawit', teacherCaberawit)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;

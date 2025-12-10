@@ -23,7 +23,7 @@ export default function HomePage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       {/* Header Section - Livin By Mandiri Style */}
-      <div className="fixed top-0 left-1/2 md:hidden transform -translate-x-1/2 z-40 overflow-hidden bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-800 px-6 pt-5 pb-4 w-full">
+      <div className="fixed top-0 left-1/2 md:hidden transform -translate-x-1/2 z-40 overflow-hidden bg-linear-to-r from-brand-600 via-brand-700 to-indigo-800 px-6 pt-5 pb-4 w-full">
         {/* Asymmetrical Wave Shape at Bottom */}
         <div className="absolute bottom-0 left-0 w-full h-8">
           <svg
@@ -44,7 +44,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-4 gap-3">
             {/* User Profile */}
             <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 flex-shrink-0">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 shrink-0">
                 <span className="text-white font-bold">
                   {(() => {
                     const words = profile?.full_name?.split(' ').filter(Boolean) || [];
@@ -67,12 +67,13 @@ export default function HomePage() {
                   {profile?.full_name || 'User'}
                 </h2>
                 <div className="text-blue-200 text-sm">
-                  <span className="break-words line-clamp-2">
+                  <span className="wrap-break-word line-clamp-2">
                     {(() => {
                       // For teachers with multiple classes
                       if (profile?.role === 'teacher' && profile.classes && profile.classes.length > 1) {
                         const classNames = profile.classes.map(c => c.name).join(', ');
-                        return `${profile.classes.length} Kelas: ${classNames}`;
+                        // return `${profile.classes.length} Kelas: ${classNames}`;
+                        return `${profile.classes.length} Kelas`;
                       }
                       // For teachers with single class
                       if (profile?.role === 'teacher' && profile.classes?.[0]?.name) {
@@ -90,7 +91,7 @@ export default function HomePage() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               title="Logout"
             >
               {isLoggingOut ? (
