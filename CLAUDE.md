@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Generus Mandiri** is a Next.js 15 school management system for managing students, teachers, classes, attendance, and reports with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
+**Generus Mandiri** is a Next.js 15 school management system for LDII (Lembaga Dakwah Islam Indonesia) religious education programs. It manages students (generus), teachers, classes, attendance tracking, academic reports, report cards (rapot), and educational materials (materi) with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
 
 **Organizational Structure**: The system follows a 3-level hierarchy:
 - **Daerah** (Region) - Top level organizational unit
@@ -36,7 +36,16 @@ npm run fix:all          # Format and type-check in sequence
 The app uses Next.js 15 App Router with two main layout groups:
 
 1. **`(full-width-pages)`** - Unauthenticated pages (signin, signup, errors)
-2. **`(admin)`** - Authenticated pages (home, dashboard, absensi, laporan, users, kelas, organisasi)
+2. **`(admin)`** - Authenticated pages:
+   - `/home` - Dashboard with quick actions
+   - `/absensi` - Attendance management with meeting types
+   - `/laporan` - Reports and analytics
+   - `/users/siswa`, `/users/guru`, `/users/admin` - User management
+   - `/kelas` - Class and class master management
+   - `/organisasi` - Organization hierarchy management
+   - `/rapot` - Report card generation and templates
+   - `/materi` - Educational materials management
+   - `/settings` - PWA settings, cache management, profile
 
 Protected routes are under `src/app/(admin)/`. Each feature has its own directory with co-located:
 - `page.tsx` - Route component
@@ -51,7 +60,7 @@ Protected routes are under `src/app/(admin)/`. Each feature has its own director
 
 **Key Tables**:
 - `profiles` - User accounts with role-based access (superadmin, admin, teacher, student)
-- `students` - Student records
+- `students` - Student records with biodata
 - `classes` - Class definitions (linked to kelompok level)
 - `class_masters` - Master class types (Pra Nikah, Remaja, Orang Tua, etc.) with categories
 - `class_master_mappings` - Junction table linking classes to master classes (many-to-many)
@@ -60,6 +69,9 @@ Protected routes are under `src/app/(admin)/`. Each feature has its own director
 - `student_classes` - Junction table for student-class many-to-many
 - `teacher_classes` - Junction table for teacher-class many-to-many
 - `daerah`, `desa`, `kelompok` - Organizational hierarchy (Region > Village > Group)
+- `rapot_templates` - Report card templates with customizable sections
+- `rapot_data` - Generated report cards for students
+- `materials` - Educational materials (materi) with TipTap rich text content
 
 **Supabase Client Usage**:
 - `createClient()` from `@/lib/supabase/client` - Browser client for client components
@@ -217,11 +229,12 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - `clearSWRCache()` - Soft cache clear (no reload, for login flow)
 
 **Batch Fetching** (`@/lib/utils/batchFetching.ts`):
-- `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 50 to avoid database query limits
+- `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 10 to avoid database query limits
 - **CRITICAL**: Use this for large datasets (e.g., reports, attendance with many meetings) to prevent data loss from query limits
 - Already implemented in:
   - `src/app/(admin)/absensi/actions.ts` - For attendance page
   - `src/app/(admin)/laporan/actions.ts` - For reports page
+  - `src/app/(admin)/materi/actions.ts` - For materials page
 - Pattern:
   ```typescript
   // 1. Fetch meetings first to get meeting IDs
@@ -407,7 +420,11 @@ import { isSuperAdmin } from '@/lib/userUtils'
 - **Supabase** (PostgreSQL + Auth + RLS)
 - **SWR** for data fetching with persistent cache
 - **Zustand** for client state management (persisted to localStorage)
+- **Ant Design (antd)** for some UI components
 - **Recharts** for data visualization
-- **PWA** support for offline functionality
-- **TipTap** for rich text editing
+- **@react-pdf/renderer** for PDF generation (report cards)
+- **PWA** support with manifest and service workers
+- **TipTap** for rich text editing (educational materials)
 - **dnd-kit** for drag-and-drop interfaces
+- **Sonner** for toast notifications
+- **Flatpickr** for date/time pickers

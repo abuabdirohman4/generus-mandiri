@@ -1,3 +1,6 @@
+## v1.10.2
+- [ ] Filter halaman organisasi tidak berjalan
+
 ## v1.10.1
 - [ ] Error saat delete tipe materi
 - [ ] dropdown action materi tidak bisa di klik selain desktop
