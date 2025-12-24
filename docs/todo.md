@@ -1,10 +1,13 @@
 ## v1.10.1
-- [z] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
+- [ ] Error saat delete tipe materi
+- [ ] dropdown action materi tidak bisa di klik selain desktop
+- [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
 - [x] Kelas 2 ada 11, tapi tertulis 12
 - [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
-- [x] Fix laporan
-    [-] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
-    [-] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+- [ ] Fix laporan
+    [ ] Untuk kelas pra nikah, remaja, pra remaja untuk per kelasnya belum bener
+    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
     [x] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
 - [x] Fix Absensi persentase & meeting detail
 - [x] Clear cachae when login/logout for dashboard

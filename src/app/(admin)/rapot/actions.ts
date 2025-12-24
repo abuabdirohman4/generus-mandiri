@@ -64,6 +64,56 @@ export async function getStudentGrades(studentId: string, academicYearId: string
     return data || [];
 }
 
+export async function bulkUpsertSectionGrades(data: {
+    student_id: string
+    template_id: string
+    academic_year_id: string
+    semester: 1 | 2
+    grades: Array<{
+        section_id: string
+        section_item_id: string
+        material_item_id: string
+        score?: number
+        grade?: string
+        is_memorized?: boolean
+        description?: string
+    }>
+}) {
+    const adminClient = await createAdminClient()
+
+    // Upsert all grades
+    const { error } = await adminClient
+        .from('student_section_grades')
+        .upsert(
+            data.grades.map(g => ({
+                student_id: data.student_id,
+                template_id: data.template_id,
+                section_id: g.section_id,
+                section_item_id: g.section_item_id,
+                material_item_id: g.material_item_id,
+                academic_year_id: data.academic_year_id,
+                semester: data.semester,
+                score: g.score,
+                grade: g.grade,
+                is_memorized: g.is_memorized,
+                description: g.description,
+            })),
+            {
+                onConflict: 'student_id,section_item_id,material_item_id,academic_year_id,semester',
+            }
+        )
+
+    if (error) throw error
+
+    // revalidatePath(`/rapot/${data.student_id}`) // Assuming revalidatePath is available and needed
+    return { success: true }
+}
+
+// This function seems incomplete in the provided instruction, adding it as is.
+export async function getStudentReportStats() {
+    // const supabase = await createClient(); // Assuming createClient is available
+}
+
 export async function updateGrade(data: GradeInput): Promise<void> {
     const supabase = await createAdminClient();
 

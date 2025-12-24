@@ -270,10 +270,10 @@ export default function RapotPageClient() {
                     selectedClassName={selectedClassName}
                 />
             )}
-        
+
             <div className="absolute right-0 -top-[60px] z-99 md:hidden">
                 <Link
-                    href="/rapot/settings"
+                    href="/rapot/templates"
                     className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                     title="Pengaturan Rapot"
                 >
@@ -331,7 +331,7 @@ export default function RapotPageClient() {
                         <div className="hidden md:flex items-center gap-2">
                             {/* Settings Button */}
                             <Link
-                                href="/rapot/settings"
+                                href="/rapot/templates"
                                 className={`${selectedStudentId ? 'hidden' : ''} px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors`}
                                 title="Pengaturan Rapot"
                             >
@@ -376,7 +376,7 @@ export default function RapotPageClient() {
                                 </button>
                             )}
                         </div>
-                        
+
                     </div>
                 </div>
 

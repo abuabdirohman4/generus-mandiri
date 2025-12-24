@@ -27,7 +27,13 @@ export async function getStudentEnrollments(studentId: string): Promise<StudentE
         .select(`
       *,
       academic_year:academic_years(*),
-      class:classes(*)
+      class:classes(
+        *,
+        class_master_mappings(
+            class_master_id,
+            class_master:class_masters(*)
+        )
+      )
     `)
         .eq('student_id', studentId)
         .order('created_at', { ascending: false });

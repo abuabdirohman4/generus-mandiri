@@ -1,5 +1,5 @@
 "use client";
-import React, { useState ,useEffect, Suspense} from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 
 // import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
@@ -12,11 +12,11 @@ import { isMobile } from "@/lib/utils";
 function PageTitle() {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   const getPageTitle = (path: string) => {
     switch (path) {
       case '/home':
@@ -35,7 +35,7 @@ function PageTitle() {
         return 'Monitoring';
       case '/rapot':
         return 'Rapot';
-      case '/rapot/settings':
+      case '/rapot/templates':
         return 'Pengaturan';
       case '/tahun-ajaran':
         return 'Tahun Ajaran';
@@ -70,19 +70,19 @@ function PageTitle() {
   // If page needs back button
   const needsBackButton = (path: string) => {
     return path.startsWith('/absensi/') || // Include all absensi sub-pages including meeting IDs
-          path.startsWith('/users/siswa/') ||
-          path === '/users/guru' || 
-          path === '/users/admin' || 
-          path === '/settings' ||
-          path === '/settings/profile' ||
-          path === '/settings/cache' ||
-          path === '/settings/pwa' ||
-          path === '/organisasi' ||
-          path === '/materi' ||
-          path === '/monitoring' ||
-          path === '/rapot' ||
-          path === '/rapot/settings' ||
-          path === '/dashboard';
+      path.startsWith('/users/siswa/') ||
+      path === '/users/guru' ||
+      path === '/users/admin' ||
+      path === '/settings' ||
+      path === '/settings/profile' ||
+      path === '/settings/cache' ||
+      path === '/settings/pwa' ||
+      path === '/organisasi' ||
+      path === '/materi' ||
+      path === '/monitoring' ||
+      path === '/rapot' ||
+      path === '/rapot/templates' ||
+      path === '/dashboard';
   };
 
   if (!mounted) {
@@ -117,7 +117,7 @@ function PageTitle() {
           </svg>
         </button>
       )}
-      
+
       {/* Page Title */}
       <h1 className={`text-xl font-semibold text-gray-900 dark:text-white text-center md:text-left ${showBackButton && !isMobile() ? "ml-10" : ""} flex-1`}>
         {pageTitle}
@@ -166,12 +166,12 @@ function PageTitle() {
 // }
 
 // Application Menu Component
-function ApplicationMenu({ 
-  isOpen, 
-  isClient, 
-  currentDateTime 
-}: { 
-  isOpen: boolean; 
+function ApplicationMenu({
+  isOpen,
+  isClient,
+  currentDateTime
+}: {
+  isOpen: boolean;
   isClient: boolean;
   currentDateTime: Date | null;
 }) {
@@ -248,7 +248,7 @@ const AppHeader: React.FC = () => {
               />
             </svg>
           </button>
-          
+
           {/* Page Title */}
           <div className="flex-1">
             <PageTitle />
@@ -275,8 +275,8 @@ const AppHeader: React.FC = () => {
             </svg>
           </button>
         </div>
-        <ApplicationMenu 
-          isOpen={isApplicationMenuOpen} 
+        <ApplicationMenu
+          isOpen={isApplicationMenuOpen}
           isClient={isClient}
           currentDateTime={currentDateTime}
         />
