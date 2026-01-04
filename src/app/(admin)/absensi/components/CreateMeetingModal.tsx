@@ -778,6 +778,8 @@ export default function CreateMeetingModal({
                         maxHeight="15rem"
                         hint="Pilih siswa yang akan ikut dalam pertemuan ini. Default: semua siswa terpilih."
                         disabled={isSubmitting}
+                        showSearch={combinedStudents.length > 15}
+                        searchPlaceholder="Cari nama siswa..."
                       />
                     </div>
                   )}

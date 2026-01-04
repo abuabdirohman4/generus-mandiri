@@ -12,7 +12,7 @@ import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
 import { isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 type TabType = 'daerah' | 'desa' | 'kelompok';
 
@@ -83,6 +83,42 @@ export default function OrganisasiManagementPage() {
       }
     }
   }, [userProfile, tabs, activeTab, setActiveTab])
+
+  // Filter desa based on daerahFilter
+  const filteredDesa = useMemo(() => {
+    if (!desa) return []
+
+    // If daerah filter is active, filter desa by daerah_id
+    if (daerahFilter) {
+      return desa.filter(d => d.daerah_id === daerahFilter)
+    }
+
+    // Otherwise, return all desa
+    return desa
+  }, [desa, daerahFilter])
+
+  // Filter kelompok based on daerahFilter and desaFilter
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok) return []
+
+    let filtered = kelompok
+
+    // Filter by desa first (more specific)
+    if (desaFilter) {
+      filtered = filtered.filter(k => k.desa_id === desaFilter)
+    }
+    // Then filter by daerah (if desa not selected)
+    else if (daerahFilter) {
+      // Get desa IDs in selected daerah
+      const desaInDaerah = (desa || []).filter(d => d.daerah_id === daerahFilter)
+      const desaIds = desaInDaerah.map(d => d.id)
+
+      // Filter kelompok by those desa IDs
+      filtered = filtered.filter(k => desaIds.includes(k.desa_id))
+    }
+
+    return filtered
+  }, [kelompok, desa, daerahFilter, desaFilter])
 
   if (isLoading) {
     return <SuperadminTableSkeleton />;
@@ -207,7 +243,7 @@ export default function OrganisasiManagementPage() {
 
         {activeTab === 'desa' && (
           <DesaTable
-            data={desa || []}
+            data={filteredDesa}
             onEdit={openEditModal}
             onDelete={(item) => openDeleteConfirm(item, 'desa')}
           />
@@ -215,7 +251,7 @@ export default function OrganisasiManagementPage() {
 
         {activeTab === 'kelompok' && (
           <KelompokTable
-            data={kelompok || []}
+            data={filteredKelompok}
             onEdit={openEditModal}
             onDelete={(item) => openDeleteConfirm(item, 'kelompok')}
           />

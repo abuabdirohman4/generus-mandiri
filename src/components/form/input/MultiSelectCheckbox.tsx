@@ -13,6 +13,8 @@ interface MultiSelectCheckboxProps {
   className?: string
   isLoading?: boolean
   error?: boolean
+  showSearch?: boolean
+  searchPlaceholder?: string
 }
 
 export default function MultiSelectCheckbox({
@@ -25,11 +27,19 @@ export default function MultiSelectCheckbox({
   hint,
   className = '',
   isLoading = false,
-  error = false
+  error = false,
+  showSearch = false,
+  searchPlaceholder = 'Cari...'
 }: MultiSelectCheckboxProps) {
   const [isAllSelected, setIsAllSelected] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Update select all state when selectedIds changes
+  // Filtered items based on search query
+  const filteredItems = items.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  // Update select all state when selectedIds or items change
   useEffect(() => {
     if (items.length === 0) {
       setIsAllSelected(false)
@@ -65,16 +75,44 @@ export default function MultiSelectCheckbox({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {label}
-      </label>
-      
-      <div 
-        className={`space-y-2 border rounded-lg p-3 overflow-y-auto ${
-          error 
-            ? 'border-red-500 dark:border-red-500' 
-            : 'border-gray-200 dark:border-gray-600'
-        }`}
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+        {selectedIds.length > 0 && !isLoading && (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {selectedIds.length} terpilih
+          </span>
+        )}
+      </div>
+
+      {showSearch && !isLoading && (
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+            disabled={disabled}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
+      <div
+        className={`space-y-2 border rounded-lg p-3 overflow-y-auto ${error
+          ? 'border-red-500 dark:border-red-500'
+          : 'border-gray-200 dark:border-gray-600'
+          }`}
         style={{ maxHeight }}
       >
         {isLoading ? (
@@ -99,25 +137,35 @@ export default function MultiSelectCheckbox({
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Pilih Semua
+                Pilih Semua ({items.length})
               </span>
             </label>
 
             {/* Individual Items */}
-            {items.map((item) => (
-              <label key={item.id} className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(item.id)}
-                  onChange={() => handleItemToggle(item.id)}
-                  disabled={disabled}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  {item.label}
-                </span>
-              </label>
-            ))}
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => (
+                <label key={item.id} className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item.id)}
+                    onChange={() => handleItemToggle(item.id)}
+                    disabled={disabled}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    {item.label}
+                  </span>
+                </label>
+              ))
+            ) : searchQuery ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-2 text-center">
+                Tidak ada hasil ditemukan
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-2 text-center">
+                Tidak ada data
+              </p>
+            )}
           </>
         )}
       </div>
