@@ -47,8 +47,9 @@ export default function AdminDashboard() {
     daerahId: filters.daerah,
     desaId: filters.desa,
     kelompokId: filters.kelompok,
-    classId: filters.kelas
-  }), [filters.daerah, filters.desa, filters.kelompok, filters.kelas]);
+    classId: filters.kelas,
+    gender: filters.gender
+  }), [filters.daerah, filters.desa, filters.kelompok, filters.kelas, filters.gender]);
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters);
 
@@ -62,6 +63,7 @@ export default function AdminDashboard() {
       desaId: filters.desa,
       kelompokId: filters.kelompok,
       classId: filters.kelas,
+      gender: filters.gender,
       classViewMode,
       // Dynamic date parameters
       specificDate: selectedDate,
@@ -79,6 +81,7 @@ export default function AdminDashboard() {
       desa: filters.desa.sort().join(','),
       kelompok: filters.kelompok.sort().join(','),
       kelas: filters.kelas.sort().join(','),
+      gender: filters.gender || '',
       viewMode: filters.classViewMode,
       // Dynamic date selectors
       selectedDate,
@@ -103,7 +106,8 @@ export default function AdminDashboard() {
       daerah: newFilters.daerah || [],
       desa: newFilters.desa || [],
       kelompok: newFilters.kelompok || [],
-      kelas: newFilters.kelas || []
+      kelas: newFilters.kelas || [],
+      gender: newFilters.gender
     });
   };
   const handlePeriodChange = (period: PeriodType) => {
@@ -205,7 +209,8 @@ export default function AdminDashboard() {
               daerah: filters.daerah,
               desa: filters.desa,
               kelompok: filters.kelompok,
-              kelas: filters.kelas
+              kelas: filters.kelas,
+              gender: filters.gender
             }}
             onFilterChange={handleFilterChange}
             userProfile={userProfile}
@@ -215,7 +220,7 @@ export default function AdminDashboard() {
             classList={classes || []}
             showKelas={true}
             showMeetingType={false}
-            showGender={false}
+            showGender={true}
             cascadeFilters={false}
             classViewMode={filters.classViewMode}
             onClassViewModeChange={handleViewModeChange}

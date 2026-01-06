@@ -15,6 +15,7 @@ export interface DashboardFilters {
     desaId?: string | string[];
     kelompokId?: string | string[];
     classId?: string | string[];
+    gender?: string;
     day?: string;
     week?: string | string[];
     month?: string
@@ -199,7 +200,16 @@ export async function getValidStudentIds(
         intersect(data?.map(s => s.id) || []);
     }
 
-    // 5. RLS Filters
+    // 5. Gender Filter
+    if (uiFilters?.gender) {
+        const { data } = await supabase
+            .from('students')
+            .select('id')
+            .eq('gender', uiFilters.gender);
+        intersect(data?.map(s => s.id) || []);
+    }
+
+    // 6. RLS Filters
     if (rlsFilter?.kelompok_id) {
         const { data } = await supabase
             .from('students')
@@ -241,6 +251,7 @@ export async function buildFilterConditions(
         uiFilters?.kelompokId ||
         uiFilters?.desaId ||
         uiFilters?.daerahId ||
+        uiFilters?.gender ||
         rlsFilter?.kelompok_id ||
         rlsFilter?.desa_id ||
         rlsFilter?.daerah_id

@@ -4,13 +4,16 @@ export interface DashboardFilters {
   // Period selection
   period: 'today' | 'week' | 'month' | 'custom'
   customDateRange?: { start: string; end: string }
-  
+
   // Organization filters (from DataFilter)
   daerah: string[]
   desa: string[]
   kelompok: string[]
   kelas: string[]
-  
+
+  // Student filters
+  gender?: string
+
   // View mode for class monitoring
   classViewMode: 'separated' | 'combined'
 }
@@ -54,6 +57,7 @@ export const useDashboardStore = create<DashboardState>()(
           desa: state.filters.desa,
           kelompok: state.filters.kelompok,
           kelas: state.filters.kelas,
+          gender: state.filters.gender,
           classViewMode: state.filters.classViewMode,
           // Don't persist custom date range (should be fresh)
           customDateRange: undefined

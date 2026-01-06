@@ -310,7 +310,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
 
     // Build filter conditions using helper (RLS-aware)
     const filterConditions = await buildFilterConditions(supabase, filters, rlsFilter);
-    const { classIds, hasFilters } = filterConditions;
+    const { classIds, studentIds, hasFilters } = filterConditions;
 
     // Get all classes with organizational info (RLS filtered)
     let classesQuery = supabase
@@ -349,10 +349,20 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
 
     // Query student enrollments per class (via student_classes junction table)
     // This ensures we only count attendance for students actually enrolled
-    const { data: studentClasses } = await supabase
+    let studentClassesQuery = supabase
       .from('student_classes')
       .select('class_id, student_id, students!inner(kelompok_id)')
       .in('class_id', allClassIds);
+
+    // Apply student filter if gender or other student-level filters are active
+    if (hasFilters && studentIds.length > 0) {
+      studentClassesQuery = studentClassesQuery.in('student_id', studentIds);
+    } else if (hasFilters && studentIds.length === 0) {
+      // No students match the filter - return empty result
+      return [];
+    }
+
+    const { data: studentClasses } = await studentClassesQuery;
 
     // Build class -> students mapping for strict enrollment checking
     const classStudentsByKelompok = new Map<string, Map<string, Set<string>>>();

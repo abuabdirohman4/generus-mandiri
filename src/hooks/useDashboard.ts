@@ -9,7 +9,7 @@ export function useDashboard(filters?: DashboardFilters) {
   };
 
   // Generate dynamic SWR key based on filters to invalidate cache when filters change
-  const swrKey = filters && (filters.daerahId || filters.desaId || filters.kelompokId || filters.classId)
+  const swrKey = filters && (filters.daerahId || filters.desaId || filters.kelompokId || filters.classId || filters.gender)
     ? `dashboard-stats-${JSON.stringify(filters)}`
     : 'dashboard-stats';
 
