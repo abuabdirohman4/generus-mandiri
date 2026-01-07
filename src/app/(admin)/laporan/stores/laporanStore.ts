@@ -157,13 +157,16 @@ export const useLaporanStore = create<LaporanState>()(
           month: state.filters.month,
           year: state.filters.year,
           viewMode: state.filters.viewMode,
-          
+
           // Persist detailed mode settings
           period: state.filters.period,
           classId: state.filters.classId,
           gender: state.filters.gender,
           meetingType: state.filters.meetingType,
-          
+
+          // Persist organisasi filter (CRITICAL: needed for class filter to work on reload)
+          organisasi: state.filters.organisasi,
+
           // Persist period-specific settings but reset date-based ones
           weekYear: state.filters.weekYear,
           weekMonth: state.filters.weekMonth,
@@ -174,7 +177,7 @@ export const useLaporanStore = create<LaporanState>()(
           endMonth: state.filters.endMonth,
           startYear: state.filters.startYear,
           endYear: state.filters.endYear,
-          
+
           // Don't persist dates as they should be fresh on each visit
           startDate: null,
           endDate: null

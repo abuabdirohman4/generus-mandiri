@@ -7,10 +7,10 @@
 - [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
 - [x] Kelas 2 ada 11, tapi tertulis 12
 - [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
-- [ ] Fix laporan
-    [ ] Untuk kelas pra nikah, remaja, pra remaja untuk per kelasnya belum bener
-    [ ] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
-    [ ] Untuk yang punya lebih dari satu kelas, tampilkan kelas
+- [x] Fix laporan
+    [x] Untuk kelas pra nikah, remaja, pra remaja untuk per kelasnya belum bener
+    [-] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
+    [-] Untuk yang punya lebih dari satu kelas, tampilkan kelas
     [x] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
 - [x] Fix Absensi persentase & meeting detail
 - [x] Clear cachae when login/logout for dashboard
@@ -29,7 +29,7 @@
     - [x] Pilihan "Pilih Semua Kelas"
     - [-] Default langsung munculin semua kelas
 - [x] Menu bisa di klik kanan
-- [ ] Halaman Materi1
+- [ ] Halaman Materi
     - [ ] Handle materi kelas sebelumnya
     - [x] Bug di bulk action
     - [x] Master Data (Show all materi)

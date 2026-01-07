@@ -9,6 +9,13 @@ import {
   fetchByIds,
   type DashboardFilters
 } from './dashboardHelpers';
+import {
+  filterAttendanceForClass,
+  calculateAttendanceRate,
+  type AttendanceLog,
+  type Meeting
+} from '@/lib/utils/attendanceCalculation';
+import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching';
 
 // Re-export for external use
 export type { DashboardFilters } from './dashboardHelpers';
@@ -347,46 +354,12 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     // Get all class IDs for subsequent queries
     const allClassIds = classes.map(c => c.id);
 
-    // Query student enrollments per class (via student_classes junction table)
-    // This ensures we only count attendance for students actually enrolled
-    let studentClassesQuery = supabase
-      .from('student_classes')
-      .select('class_id, student_id, students!inner(kelompok_id)')
-      .in('class_id', allClassIds);
-
-    // Apply student filter if gender or other student-level filters are active
-    if (hasFilters && studentIds.length > 0) {
-      studentClassesQuery = studentClassesQuery.in('student_id', studentIds);
-    } else if (hasFilters && studentIds.length === 0) {
-      // No students match the filter - return empty result
-      return [];
-    }
-
-    const { data: studentClasses } = await studentClassesQuery;
-
-    // Build class -> students mapping for strict enrollment checking
-    const classStudentsByKelompok = new Map<string, Map<string, Set<string>>>();
-
-    studentClasses?.forEach((sc: any) => {
-      const kelompokId = sc.students?.kelompok_id;
-
-      // Students grouped by kelompok within each class
-      if (!classStudentsByKelompok.has(sc.class_id)) {
-        classStudentsByKelompok.set(sc.class_id, new Map());
-      }
-      const kelompokMap = classStudentsByKelompok.get(sc.class_id)!;
-      if (!kelompokMap.has(kelompokId)) {
-        kelompokMap.set(kelompokId, new Set());
-      }
-      kelompokMap.get(kelompokId)!.add(sc.student_id);
-    });
-
     // Get all meetings in the date range
     // Fetch ALL meetings first, then filter to include those involving our classes
     // This handles both primary class_id AND classes in class_ids array
     const { data: allMeetings } = await supabase
       .from('meetings')
-      .select('id, class_id, class_ids')
+      .select('id, class_id, class_ids, date')
       .gte('date', startDate)
       .lte('date', endDate);
 
@@ -403,9 +376,15 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       return false;
     }) || [];
 
+    // console.log('[DASHBOARD DEBUG] Meetings:', {
+    //   totalMeetings: meetings.length,
+    //   dateRange: { startDate, endDate }
+    // });
+
     // Group meetings by class (support multi-class meetings)
     // A meeting counts for ALL classes involved (both primary class_id and classes in class_ids array)
-    const meetingsByClass = new Map<string, string[]>();
+    // Use Set to prevent duplicate meeting IDs for the same class
+    const meetingsByClass = new Map<string, Set<string>>();
 
     meetings.forEach(meeting => {
       // Collect all classes involved in this meeting
@@ -422,11 +401,13 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       }
 
       // Count this meeting for ALL involved classes that are in our filter
+      // CRITICAL: Use Set to prevent duplicate meeting IDs (e.g., if class appears in both class_id and class_ids)
       involvedClassIds.forEach(classId => {
         if (allClassIds.includes(classId)) {
-          const existing = meetingsByClass.get(classId) || [];
-          existing.push(meeting.id);
-          meetingsByClass.set(classId, existing);
+          if (!meetingsByClass.has(classId)) {
+            meetingsByClass.set(classId, new Set());
+          }
+          meetingsByClass.get(classId)!.add(meeting.id);
         }
       });
     });
@@ -436,16 +417,26 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     let attendanceLogs: any[] = [];
 
     if (allMeetingIds.length > 0) {
-      // Use fetchByIds for batch fetching (handles >1000 IDs)
-      // Fetch student_id to enable per-kelompok filtering
-      attendanceLogs = await fetchByIds(
+      // CRITICAL FIX: Use fetchAttendanceLogsInBatches to handle >1000 logs
+      // fetchByIds was limiting results to first 1000 logs, causing data loss
+      const { data: logsData, error: logsError } = await fetchAttendanceLogsInBatches(
         supabase,
-        'attendance_logs',
-        'meeting_id',
-        allMeetingIds,
-        'meeting_id, student_id, status'
+        allMeetingIds
       );
+
+      if (logsError) {
+        console.error('[DASHBOARD DEBUG] Error fetching attendance logs:', logsError);
+        throw logsError;
+      }
+
+      attendanceLogs = logsData || [];
     }
+
+    // console.log('[DASHBOARD DEBUG] Attendance Logs:', {
+    //   totalLogs: attendanceLogs.length,
+    //   meetingIds: allMeetingIds.length,
+    //   logsPerMeeting: attendanceLogs.length / (allMeetingIds.length || 1)
+    // });
 
     // Fetch student data to map student_id -> kelompok_id
     const uniqueStudentIds = [...new Set(attendanceLogs.map(log => log.student_id).filter(Boolean))];
@@ -469,37 +460,47 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       });
     }
 
-    // Group attendance by meeting with full log details
-    const attendanceByMeeting = new Map<string, {
-      total: number;
-      present: number;
-      logs: Array<{ student_id: string; status: string }>;
-    }>();
-
-    (attendanceLogs as any[]).forEach(log => {
-      const existing = attendanceByMeeting.get(log.meeting_id) || {
-        total: 0,
-        present: 0,
-        logs: []
-      };
-      existing.total += 1;
-      if (log.status === 'H') existing.present += 1;
-      existing.logs.push({ student_id: log.student_id, status: log.status });
-      attendanceByMeeting.set(log.meeting_id, existing);
+    // Create meeting map for shared utility function
+    const meetingMap = new Map<string, Meeting>();
+    meetings.forEach(meeting => {
+      meetingMap.set(meeting.id, meeting);
     });
 
-    // Build result array
-    let result: ClassMonitoringData[] = classes.map((cls: any) => {
+    // Build result array with meeting-based filtering (no pre-filtering by student enrollment)
+    let result: ClassMonitoringData[] = await Promise.all(classes.map(async (cls: any) => {
       const kelompokData = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
       const desaData = kelompokData?.desa ? (Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa) : null;
       const daerahData = desaData?.daerah ? (Array.isArray(desaData.daerah) ? desaData.daerah[0] : desaData.daerah) : null;
 
-      const classMeetingIds = meetingsByClass.get(cls.id) || [];
+      const classMeetingIdsSet = meetingsByClass.get(cls.id) || new Set<string>();
+      const classMeetingIds = Array.from(classMeetingIdsSet);
 
-      // Get enrolled students for this class+kelompok for strict checking
-      const kelompokId = kelompokData?.id;
-      const enrolledStudents = classStudentsByKelompok.get(cls.id)?.get(kelompokId);
-      const studentCount = enrolledStudents?.size || 0;
+      // console.log(`[DASHBOARD DEBUG] Processing class: ${cls.name} (${cls.id})`);
+      // console.log(`[DASHBOARD DEBUG] - Meetings for this class: ${classMeetingIds.length}`);
+
+      // CRITICAL FIX: Query enrollment for THIS SPECIFIC CLASS only
+      // This prevents cross-class contamination from other selected classes
+      let studentClassesQuery = supabase
+        .from('student_classes')
+        .select('student_id, students!inner(kelompok_id)')
+        .eq('class_id', cls.id);
+
+      // Apply gender/student filters if active
+      if (hasFilters && studentIds.length > 0) {
+        studentClassesQuery = studentClassesQuery.in('student_id', studentIds);
+      }
+
+      const { data: classStudentEnrollments } = await studentClassesQuery;
+
+      // Build enrolled students set for this class
+      const enrolledStudents = new Set<string>();
+      classStudentEnrollments?.forEach((sc: any) => {
+        enrolledStudents.add(sc.student_id);
+      });
+
+      const studentCount = enrolledStudents.size;
+
+      // console.log(`[DASHBOARD DEBUG] - Enrolled students in ${cls.name}: ${studentCount}`);
 
       if (classMeetingIds.length === 0) {
         return {
@@ -515,30 +516,23 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         };
       }
 
-      // Calculate attendance with STRICT enrollment check
-      let totalAttendance = 0;
-      let totalPresent = 0;
+      // Use shared utility to filter attendance logs by meeting class + enrollment
+      const filteredLogs = filterAttendanceForClass(
+        attendanceLogs as AttendanceLog[],
+        meetingMap,
+        cls.id,
+        enrolledStudents
+      );
 
-      // Only calculate if there are enrolled students
-      if (studentCount > 0 && enrolledStudents) {
-        classMeetingIds.forEach(meetingId => {
-          const attendance = attendanceByMeeting.get(meetingId);
-          if (attendance && attendance.logs) {
-            attendance.logs.forEach(log => {
-              // CRITICAL FIX: Only count if student is ENROLLED in THIS class+kelompok
-              // This prevents cross-kelompok contamination and multi-class meeting leaks
-              if (enrolledStudents.has(log.student_id)) {
-                totalAttendance++;
-                if (log.status === 'H') totalPresent++;
-              }
-            });
-          }
-        });
-      }
+      // console.log(`[DASHBOARD DEBUG] - Total attendance logs: ${attendanceLogs.length}`);
+      // console.log(`[DASHBOARD DEBUG] - Filtered logs for ${cls.name}: ${filteredLogs.length}`);
+      // console.log(`[DASHBOARD DEBUG] - Present count: ${filteredLogs.filter(l => l.status === 'H').length}`);
 
-      const attendanceRate = studentCount > 0 && totalAttendance > 0
-        ? Math.round((totalPresent / totalAttendance) * 100)
-        : 0;
+      // Calculate attendance rate using shared utility
+      const attendanceRate = calculateAttendanceRate(filteredLogs);
+
+      // console.log(`[DASHBOARD DEBUG] - Attendance rate for ${cls.name}: ${attendanceRate}%`);
+      // console.log(`[DASHBOARD DEBUG] --------------------------------`);
 
       return {
         class_id: cls.id,
@@ -551,7 +545,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         attendance_rate: attendanceRate,
         student_count: studentCount
       };
-    });
+    }));
 
     // Add secondary sorting: class_name ASC, then kelompok_name ASC
     result.sort((a, b) => {
@@ -561,6 +555,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     });
 
     // If combined mode, group by class name
+    // Now that individual calculations are correct, combined mode just aggregates them
     if (filters.classViewMode === 'combined') {
       const combinedMap = new Map<string, {
         classIds: string[];
@@ -568,10 +563,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         desaNames: Set<string>;
         daerahNames: Set<string>;
         meetingIds: Set<string>;
-        totalAttendance: number;
-        totalPresent: number;
         totalStudents: number;
         hasMeeting: boolean;
+        allLogs: AttendanceLog[];
+        allEnrolledStudents: Set<string>;
       }>();
 
       result.forEach(item => {
@@ -582,10 +577,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             desaNames: new Set(),
             daerahNames: new Set(),
             meetingIds: new Set(),
-            totalAttendance: 0,
-            totalPresent: 0,
             totalStudents: 0,
-            hasMeeting: false
+            hasMeeting: false,
+            allLogs: [],
+            allEnrolledStudents: new Set<string>()
           });
         }
 
@@ -598,48 +593,67 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         // Aggregate student count from all kelompok
         combined.totalStudents += (item.student_count || 0);
 
-        // For meetings, we need to aggregate from the original data
-        const classMeetingIds = meetingsByClass.get(item.class_id) || [];
-        classMeetingIds.forEach(id => combined.meetingIds.add(id));
+        // Aggregate meetings
+        const classMeetingIdsSet = meetingsByClass.get(item.class_id) || new Set<string>();
+        classMeetingIdsSet.forEach(id => combined.meetingIds.add(id));
 
         if (item.has_meeting) combined.hasMeeting = true;
-
-        // Aggregate attendance with STRICT enrollment check (combined from all kelompok)
-        const kelompokData = classes.find((c: any) => c.id === item.class_id)?.kelompok;
-        const kelompokDataResolved = Array.isArray(kelompokData) ? kelompokData[0] : kelompokData;
-        const kelompokId = kelompokDataResolved?.id;
-        const enrolledStudents = classStudentsByKelompok.get(item.class_id)?.get(kelompokId);
-
-        if (enrolledStudents) {
-          classMeetingIds.forEach(meetingId => {
-            const attendance = attendanceByMeeting.get(meetingId);
-            if (attendance && attendance.logs) {
-              attendance.logs.forEach(log => {
-                // CRITICAL FIX: Only count if student is enrolled in THIS class+kelompok
-                if (enrolledStudents.has(log.student_id)) {
-                  combined.totalAttendance++;
-                  if (log.status === 'H') combined.totalPresent++;
-                }
-              });
-            }
-          });
-        }
       });
 
-      // Convert to array
-      result = Array.from(combinedMap.entries()).map(([className, data]) => ({
-        class_id: data.classIds.join(','),
-        class_name: className,
-        kelompok_name: Array.from(data.kelompokNames).sort().join(', '),
-        desa_name: Array.from(data.desaNames).sort().join(', '),
-        daerah_name: Array.from(data.daerahNames).sort().join(', '),
-        has_meeting: data.hasMeeting,
-        meeting_count: data.meetingIds.size,
-        attendance_rate: data.totalStudents > 0 && data.totalAttendance > 0
-          ? Math.round((data.totalPresent / data.totalAttendance) * 100)
-          : 0,
-        student_count: data.totalStudents
-      }));
+      // For each combined class, re-filter attendance logs with ALL class IDs combined
+      result = await Promise.all(
+        Array.from(combinedMap.entries()).map(async ([className, data]) => {
+          // Get enrollment for ALL class IDs in this combined group
+          const allEnrolledStudents = new Set<string>();
+
+          for (const classId of data.classIds) {
+            const { data: classEnrollments } = await supabase
+              .from('student_classes')
+              .select('student_id')
+              .eq('class_id', classId);
+
+            classEnrollments?.forEach((sc: any) => {
+              allEnrolledStudents.add(sc.student_id);
+            });
+          }
+
+          // Filter attendance logs for ALL meetings of this combined class with deduplication
+          const processedLogs = new Set<string>();
+          const filteredLogs: AttendanceLog[] = [];
+
+          for (const classId of data.classIds) {
+            const classLogs = filterAttendanceForClass(
+              attendanceLogs as AttendanceLog[],
+              meetingMap,
+              classId,
+              allEnrolledStudents
+            );
+
+            // Deduplicate: only add logs we haven't processed yet
+            classLogs.forEach(log => {
+              const logKey = `${log.meeting_id}-${log.student_id}`;
+              if (!processedLogs.has(logKey)) {
+                processedLogs.add(logKey);
+                filteredLogs.push(log);
+              }
+            });
+          }
+
+          const attendanceRate = calculateAttendanceRate(filteredLogs);
+
+          return {
+            class_id: data.classIds.join(','),
+            class_name: className,
+            kelompok_name: Array.from(data.kelompokNames).sort().join(', '),
+            desa_name: Array.from(data.desaNames).sort().join(', '),
+            daerah_name: Array.from(data.daerahNames).sort().join(', '),
+            has_meeting: data.hasMeeting,
+            meeting_count: data.meetingIds.size,
+            attendance_rate: attendanceRate,
+            student_count: data.totalStudents
+          };
+        })
+      );
 
       // Sort combined results by class name
       result.sort((a, b) => a.class_name.localeCompare(b.class_name));

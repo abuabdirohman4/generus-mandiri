@@ -3,6 +3,11 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
+import {
+  calculateAttendanceStats,
+  type AttendanceLog,
+  type Meeting
+} from '@/lib/utils/attendanceCalculation'
 
 /**
  * Helper function to get week start date
@@ -477,6 +482,71 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     //   hasWarlob2Class: filters.classId ? classKelompokMap.has(filters.classId.split(',')[0]) : false
     // })
 
+    // CRITICAL: Build strict enrollment mapping (class+kelompok → enrolled students)
+    // Query student_classes junction table DIRECTLY like Dashboard
+    // This ensures we get ALL enrollments, not just students with attendance logs
+
+    // Get all unique class IDs from meetings
+    const allClassIdsSet = new Set<string>()
+    if (meetings) {
+      meetings.forEach((meeting: any) => {
+        if (meeting.class_id) allClassIdsSet.add(meeting.class_id)
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          meeting.class_ids.forEach((id: string) => allClassIdsSet.add(id))
+        }
+      })
+    }
+    const allClassIds = Array.from(allClassIdsSet)
+
+    // Query student_classes junction table directly (same as Dashboard)
+    // CRITICAL: Use LEFT JOIN (not INNER) to include students without kelompok_id
+    const { data: studentClassesData } = await adminClient
+      .from('student_classes')
+      .select('class_id, student_id, students(id, kelompok_id)')
+      .in('class_id', allClassIds)
+
+    // Build enrollment mapping from junction table data
+    const classStudentsByKelompok = new Map<string, Map<string, Set<string>>>()
+
+    if (studentClassesData) {
+      studentClassesData.forEach((sc: any) => {
+        const classId = sc.class_id
+        const studentId = sc.student_id
+        // CRITICAL: Handle null kelompok_id by using 'null' string as key
+        const kelompokId = sc.students?.kelompok_id || 'null'
+
+        if (classId && studentId) {
+          // Initialize maps if needed
+          if (!classStudentsByKelompok.has(classId)) {
+            classStudentsByKelompok.set(classId, new Map())
+          }
+          const kelompokMap = classStudentsByKelompok.get(classId)!
+          if (!kelompokMap.has(kelompokId)) {
+            kelompokMap.set(kelompokId, new Set())
+          }
+          // Add student to this class+kelompok combination
+          kelompokMap.get(kelompokId)!.add(studentId)
+        }
+      })
+    }
+
+    // DEBUG: Log enrollment counts to verify data
+    console.log('[ENROLLMENT DEBUG] Student Enrollments by Class:', {
+      totalClasses: classStudentsByKelompok.size,
+      allClassIds: allClassIds.length,
+      enrollmentsByClass: Array.from(classStudentsByKelompok.entries()).map(([classId, kelompokMap]) => {
+        const totalStudents = Array.from(kelompokMap.values()).reduce((sum, students) => sum + students.size, 0)
+        return {
+          classId,
+          totalStudents,
+          byKelompok: Array.from(kelompokMap.entries()).map(([kelompokId, students]) => ({
+            kelompokId,
+            studentCount: students.size
+          }))
+        }
+      })
+    })
+
     // For teacher, filter meetings by their classes first
     // Use meetingsForFilter if available, otherwise use full meetings
     const meetingsToFilterForTeacher = meetingsForFilter || meetings || []
@@ -514,6 +584,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     // Filter attendance_logs to only include logs from teacher's meetings (if teacher)
     let filteredLogs = attendanceLogs || []
+    // console.log('[FILTER DEBUG] Initial attendance logs:', filteredLogs.length)
+
     if (profile.role === 'teacher') {
       if (teacherMeetings.length > 0) {
         const teacherMeetingIds = new Set(teacherMeetings.map((m: any) => m.id))
@@ -524,6 +596,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // If teacher but no meetings match, set filteredLogs to empty array
         filteredLogs = []
       }
+      // console.log('[FILTER DEBUG] After teacher filter:', filteredLogs.length)
     }
 
     // DEBUG Step 5: Attendance Logs Teacher Filter
@@ -537,39 +610,58 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // }
 
     // Apply class filter - check MEETING's class, not student's class
-    // This ensures we only show attendance from meetings for the selected class
+    // CRITICAL: Also validate strict enrollment (student must be enrolled in this class)
     if (filters.classId) {
+      // console.log('[FILTER DEBUG] Before class filter:', filteredLogs.length, 'classIds:', filters.classId)
       const classIds = filters.classId.split(',')
       filteredLogs = filteredLogs.filter((log: any) => {
+        const student = log.students
         const meeting = meetingMap.get(log.meeting_id)
-        if (!meeting) return false
+        if (!meeting || !student) return false
 
-        // Check if meeting is for the selected class
+        // Step 1: Check if meeting is for the selected class
+        let meetingClassId: string | null = null
+
         // Check primary class_id
-        if (classIds.includes(meeting.class_id)) return true
-
-        // Check class_ids array for multi-class meetings
-        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
-          return meeting.class_ids.some((id: string) => classIds.includes(id))
+        if (classIds.includes(meeting.class_id)) {
+          meetingClassId = meeting.class_id
         }
 
-        return false
-      })
+        // Check class_ids array for multi-class meetings
+        if (!meetingClassId && meeting.class_ids && Array.isArray(meeting.class_ids)) {
+          for (const id of meeting.class_ids) {
+            if (classIds.includes(id)) {
+              meetingClassId = id
+              break
+            }
+          }
+        }
 
-      // DEBUG Step 6: Class Filter
-      // console.log('[LAPORAN DEBUG] Class Filter:', {
-      //   classIds: classIds,
-      //   afterFilter: filteredLogs.length,
-      //   sampleLogs: filteredLogs.slice(0, 3).map((l: any) => ({
-      //     meeting_id: l.meeting_id,
-      //     student_id: l.student_id,
-      //     meeting_class: meetingMap.get(l.meeting_id)?.class_id
-      //   }))
-      // })
+        // If meeting is not for selected class, exclude
+        if (!meetingClassId) return false
+
+        // Step 2: STRICT enrollment check
+        // Only count attendance if student is enrolled in this specific class
+        const kelompokMapForClass = classStudentsByKelompok.get(meetingClassId)
+        if (!kelompokMapForClass) return false
+
+        // Check if student is enrolled in this class (in any kelompok)
+        for (const [kelompokId, enrolledStudents] of kelompokMapForClass.entries()) {
+          if (enrolledStudents.has(student.id)) {
+            return true // Student is enrolled in this class
+          }
+        }
+
+        return false // Student not enrolled in this class
+      })
+      // console.log('[FILTER DEBUG] After class filter:', filteredLogs.length)
     }
 
-    // Apply kelompok filter - validate students AND meetings belong to selected kelompok
+    // Apply kelompok filter - validate meetings belong to selected kelompok
+    // Note: We only check meeting location, not student enrollment kelompok
+    // This allows students from any kelompok to be counted if they attended meetings in the selected kelompok
     if (filters.kelompokId) {
+      // console.log('[FILTER DEBUG] Before kelompok filter:', filteredLogs.length, 'kelompokIds:', filters.kelompokId)
       const kelompokIds = filters.kelompokId.split(',')
 
       filteredLogs = filteredLogs.filter((log: any) => {
@@ -580,80 +672,49 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // Validation 1: Check if meeting belongs to selected kelompok
         // For multi-class meetings, check if ANY class in the meeting belongs to selected kelompok
         let meetingBelongsToKelompok = false
+        let meetingClassId: string | null = null
 
         // Check primary class_id
         const primaryClassKelompok = classKelompokMap.get(meeting.class_id)
         if (primaryClassKelompok && kelompokIds.includes(primaryClassKelompok)) {
           meetingBelongsToKelompok = true
+          meetingClassId = meeting.class_id
         }
 
         // Also check class_ids array for multi-class meetings
         if (!meetingBelongsToKelompok && meeting.class_ids && Array.isArray(meeting.class_ids)) {
-          meetingBelongsToKelompok = meeting.class_ids.some((classId: string) => {
+          for (const classId of meeting.class_ids) {
             const kelompok = classKelompokMap.get(classId)
-            return kelompok && kelompokIds.includes(kelompok)
-          })
+            if (kelompok && kelompokIds.includes(kelompok)) {
+              meetingBelongsToKelompok = true
+              meetingClassId = classId
+              break
+            }
+          }
         }
 
-        // If meeting doesn't belong to selected kelompok at all, exclude it
-        if (!meetingBelongsToKelompok) {
-          return false
-        }
-
-        // Validation 2: Check if student belongs to selected kelompok
-        // Check student's primary kelompok_id
-        if (student.kelompok_id && kelompokIds.includes(student.kelompok_id)) {
-          return true
-        }
-
-        // For multi-kelompok students, check via student_classes
-        if (student.student_classes && Array.isArray(student.student_classes)) {
-          return student.student_classes.some((sc: any) => {
-            const cls = sc.classes
-            return cls && cls.kelompok_id && kelompokIds.includes(cls.kelompok_id)
-          })
-        }
-
-        return false
+        // If meeting belongs to selected kelompok, include ALL its attendance
+        // Don't check student enrollment kelompok - students can be enrolled in different kelompok
+        // but still attend meetings in the filtered kelompok
+        return meetingBelongsToKelompok
       })
-
-      // DEBUG Step 7: Kelompok Filter
-      // console.log('[LAPORAN DEBUG] Kelompok Filter:', {
-      //   kelompokIds,
-      //   afterFilter: filteredLogs.length,
-      //   classKelompokMapSize: classKelompokMap.size,
-      //   sampleValidation: filteredLogs.slice(0, 3).map((l: any) => {
-      //     const meeting = meetingMap.get(l.meeting_id)
-      //     const student = l.students
-      //     return {
-      //       meeting_class: meeting?.class_id,
-      //       meeting_class_ids: meeting?.class_ids,
-      //       meeting_kelompok: classKelompokMap.get(meeting?.class_id),
-      //       meeting_has_selected_kelompok: meeting?.class_ids?.some((cid: string) =>
-      //         kelompokIds.includes(classKelompokMap.get(cid) || '')
-      //       ),
-      //       student_kelompok: student?.kelompok_id,
-      //       passed: true
-      //     }
-      //   })
-      // })
+      // console.log('[FILTER DEBUG] After kelompok filter:', filteredLogs.length)
     }
 
     // Apply gender filter client-side
     if (filters.gender) {
+      // console.log('[FILTER DEBUG] Before gender filter:', filteredLogs.length, 'gender:', filters.gender)
       filteredLogs = filteredLogs.filter((log: any) =>
         log.students.gender === filters.gender
       )
+      // console.log('[FILTER DEBUG] After gender filter:', filteredLogs.length)
     }
 
-    // Process data for summary (after all filtering, including teacher meetings filter)
-    const summary = {
-      total: filteredLogs.length,
-      hadir: filteredLogs.filter((log: any) => log.status === 'H').length,
-      izin: filteredLogs.filter((log: any) => log.status === 'I').length,
-      sakit: filteredLogs.filter((log: any) => log.status === 'S').length,
-      alpha: filteredLogs.filter((log: any) => log.status === 'A').length,
-    }
+    // console.log('[FILTER DEBUG] FINAL filteredLogs count:', filteredLogs.length)
+
+    // Process data for summary using shared utility function
+    // This ensures consistency with Dashboard calculations
+    const summary = calculateAttendanceStats(filteredLogs as AttendanceLog[])
 
     // Prepare chart data
     const chartData = [
