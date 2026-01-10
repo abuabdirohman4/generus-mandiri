@@ -187,3 +187,6 @@ next-env.d.ts
 # MCP configuration with secrets
 .mcp.json
 .mcp_config.json
+
+# Beads issue tracker
+.beads/beads.db
