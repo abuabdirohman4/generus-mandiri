@@ -1,9 +1,12 @@
 ## v1.10.2
 - [ ] Filter halaman organisasi tidak berjalan
-
-## v1.10.1
+- [ ] Halaman Materi
+    - [ ] Handle materi kelas sebelumnya
+- [ ] Halaman Raport
 - [ ] Error saat delete tipe materi
 - [ ] dropdown action materi tidak bisa di klik selain desktop
+
+## v1.10.1
 - [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
 - [x] Kelas 2 ada 11, tapi tertulis 12
 - [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
@@ -22,15 +25,13 @@
     - [x] Untuk Minggu juga bisa flexible
     - [x] Untuk Bulan bisa diatur bulan apa
     - [x] Persentase global dibuat dinamis
-- [ ] Halaman Raport
 - [x] Monitoring Materi
     - [x] Collapsed Filter
     - [x] Skeleton Loading
     - [x] Pilihan "Pilih Semua Kelas"
     - [-] Default langsung munculin semua kelas
 - [x] Menu bisa di klik kanan
-- [ ] Halaman Materi
-    - [ ] Handle materi kelas sebelumnya
+- [x] Halaman Materi
     - [x] Bug di bulk action
     - [x] Master Data (Show all materi)
     - [x] Per Kelas
