@@ -894,7 +894,7 @@ export async function resolveSectionItems(
       } else {
         // Expand type to all items available for this class/semester
         if (sectionItem.material_type_id) {
-          console.log(`[Resolve] Type Level: ${sectionItem.material_type_id}, Class: ${classMasterId}, Sem: ${semester}`)
+          // console.log(`[Resolve] Type Level: ${sectionItem.material_type_id}, Class: ${classMasterId}, Sem: ${semester}`)
           const { data, error } = await supabase
             .from('material_items')
             .select(`
@@ -910,8 +910,8 @@ export async function resolveSectionItems(
             .eq('material_item_classes.class_master_id', classMasterId)
             .order('name')
 
-          if (error) console.error('[Resolve] DB Error:', error)
-          console.log(`[Resolve] Raw Data Count: ${data?.length || 0}`)
+          // if (error) console.error('[Resolve] DB Error:', error)
+          // console.log(`[Resolve] Raw Data Count: ${data?.length || 0}`)
 
           data?.forEach((item: any) => {
             // Filter in memory for semester match or null
@@ -936,7 +936,7 @@ export async function resolveSectionItems(
               })
             }
           })
-          console.log(`[Resolve] Filtered Results: ${results.length}`)
+          // console.log(`[Resolve] Filtered Results: ${results.length}`)
         }
       }
     } else if (sectionItem.material_level === 'category') {
@@ -957,7 +957,7 @@ export async function resolveSectionItems(
       } else {
         // Expand category to all items
         if (sectionItem.material_category_id) {
-          console.log(`[Resolve] Category Level: ${sectionItem.material_category_id}, Class: ${classMasterId}, Sem: ${semester}`)
+          // console.log(`[Resolve] Category Level: ${sectionItem.material_category_id}, Class: ${classMasterId}, Sem: ${semester}`)
           const { data, error } = await supabase
             .from('material_items')
             .select(`
@@ -973,8 +973,8 @@ export async function resolveSectionItems(
             .eq('material_item_classes.class_master_id', classMasterId)
             .order('name')
 
-          if (error) console.error('[Resolve] DB Error:', error)
-          console.log(`[Resolve] Category Raw Data: ${data?.length || 0}`)
+          // if (error) console.error('[Resolve] DB Error:', error)
+          // console.log(`[Resolve] Category Raw Data: ${data?.length || 0}`)
 
           data?.forEach((item: any) => {
             // Filter in memory for semester match or null
@@ -999,7 +999,7 @@ export async function resolveSectionItems(
               })
             }
           })
-          console.log(`[Resolve] Category Filtered Results: ${results.length}`)
+          // console.log(`[Resolve] Category Filtered Results: ${results.length}`)
         }
       }
     }

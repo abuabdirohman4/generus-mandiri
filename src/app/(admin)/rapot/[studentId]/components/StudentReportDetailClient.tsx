@@ -22,6 +22,7 @@ import PDFExportModal from '../../components/PDFExportModal';
 import { createClient } from '@/lib/supabase/client';
 import { FloppyDiskIcon } from '@/lib/icons';
 import { downloadStudentPDF } from '../../components/pdfUtils';
+import FloatingActionButton from '@/components/ui/button/FloatingActionButton';
 
 interface Props {
     studentId: string;
@@ -497,7 +498,7 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
                 </div>
 
                 {/* Floating Save Button */}
-                <div className="fixed bottom-6 right-6 flex gap-2">
+                <div className="fixed z-50 bottom-[80px] md:bottom-6 right-6">
                     <button
                         onClick={handleSaveAll}
                         disabled={saving}
