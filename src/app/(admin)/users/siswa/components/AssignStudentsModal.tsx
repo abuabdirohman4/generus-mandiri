@@ -11,6 +11,8 @@ import { useAssignStudentsStore } from '../stores/assignStudentsStore'
 import { useClasses } from '@/hooks/useClasses'
 import { useStudents } from '@/hooks/useStudents'
 import { assignStudentsToClass } from '../actions'
+import { useUserProfile } from '@/stores/userProfileStore'
+import { isAdminDesa } from '@/lib/userUtils'
 
 interface AssignStudentsModalProps {
   isOpen: boolean
@@ -41,6 +43,8 @@ export default function AssignStudentsModal({
   const { students, isLoading: studentsLoading } = useStudents({ enabled: isOpen })
   const [isAssigning, setIsAssigning] = useState(false)
   const [studentsWithClasses, setStudentsWithClasses] = useState<Map<string, string[]>>(new Map())
+  const { profile } = useUserProfile()
+  const showKelompokInLabel = profile ? isAdminDesa(profile) : false
 
   // Load students' classes when class is selected - use existing classes from student data
   useEffect(() => {
@@ -162,7 +166,9 @@ export default function AssignStudentsModal({
             onChange={setSelectedClassId}
             options={classes.map((cls) => ({
               value: cls.id,
-              label: cls.name,
+              label: showKelompokInLabel && cls.kelompok?.name
+                ? `${cls.kelompok.name} - ${cls.name}`
+                : cls.name,
             }))}
             allOptionLabel="Pilih kelas"
             widthClassName="!max-w-full"

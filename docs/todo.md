@@ -4,7 +4,14 @@
     - [ ] Handle materi kelas sebelumnya
 - [ ] Halaman Raport
 - [ ] Error saat delete tipe materi
-- [ ] dropdown action materi tidak bisa di klik selain desktop
+- [ ] Dropdown action materi tidak bisa di klik selain desktop
+- [x] Label ketika assign siswa di desa belum muncul nama kelompok
+- [ ] Fitur archive siswa
+- [ ] Fitur pindah siswa
+- [ ] Tambah NIS untuk Warlob
+- Rapot
+    - [ ] Flexible struktur materi
+    - [ ] Download Rapot per individu
 
 ## v1.10.1
 - [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
