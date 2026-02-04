@@ -7,16 +7,14 @@ import Label from '@/components/form/Label'
 import InputFilter from '@/components/form/input/InputFilter'
 import { useBatchImportStore } from '../../stores/batchImportStore'
 import { hasDraft, loadDraft } from '../../utils/draftStorage'
-
-interface Class {
-  id: string
-  name: string
-}
+import { useUserProfile } from '@/stores/userProfileStore'
+import { isAdminDesa } from '@/lib/userUtils'
+import { Class } from '@/app/(admin)/users/siswa/actions/classes'
 
 interface Step1ConfigProps {
   userProfile: { 
     role: string; 
-    classes?: Array<{ id: string; name: string }> 
+    classes?: Class[];
   } | null | undefined
   classes: Class[]
   onNext: () => void
@@ -32,7 +30,9 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
     resetToStep1
   } = useBatchImportStore()
 
+  const { profile } = useUserProfile()
   const [hasExistingDraft, setHasExistingDraft] = useState(false)
+  const showKelompokInLabel = profile ? isAdminDesa(profile) : false
 
   // Check for existing draft when classId changes
   useEffect(() => {
@@ -131,7 +131,9 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
           onChange={(value) => setSelectedClassId(value)}
           options={availableClasses.map((cls) => ({
             value: cls.id,
-            label: cls.name,
+            label: showKelompokInLabel && cls.kelompok?.name
+                ? `${cls.kelompok.name} - ${cls.name}`
+                : cls.name,
           }))}
           allOptionLabel="Pilih kelas"
           widthClassName="!max-w-full"

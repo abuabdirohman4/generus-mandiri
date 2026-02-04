@@ -166,9 +166,7 @@ export default function AssignStudentsModal({
             onChange={setSelectedClassId}
             options={classes.map((cls) => ({
               value: cls.id,
-              label: showKelompokInLabel && cls.kelompok?.name
-                ? `${cls.kelompok.name} - ${cls.name}`
-                : cls.name,
+              label: `${cls.name} - ${cls.kelompok?.name}`,
             }))}
             allOptionLabel="Pilih kelas"
             widthClassName="!max-w-full"
