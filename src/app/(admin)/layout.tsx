@@ -56,7 +56,7 @@ export default function AdminLayout({
           {/* {!isHome ? (
             <AppHeader />
           ) : null} */}
-          <div className={`px-4 pt-4 mx-auto max-w-[var(--breakpoint-2xl)] md:p-6 md:pb-6`}>
+          <div className={`px-4 pt-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 md:pb-6`}>
             {children}
           </div>
         </div>

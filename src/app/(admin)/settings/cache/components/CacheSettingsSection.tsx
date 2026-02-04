@@ -83,7 +83,7 @@ export default function CacheSettingsSection() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-12">
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
