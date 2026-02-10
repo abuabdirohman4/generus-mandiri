@@ -563,25 +563,38 @@ describe('attendanceStore', () => {
 ### Gradual Adoption Roadmap
 
 **Phase 1: Foundation** (sm-qrt, sm-37l) - **✅ COMPLETED**
-1. ✅ Install Vitest + testing utilities
-2. ✅ Create `vitest.config.ts` + test setup
-3. ✅ Update `package.json` scripts
-4. ✅ Create test utilities and mocks
-5. ✅ Document strategy in CLAUDE.md
-6. ✅ Create example tests (classHelpers, batchFetching)
-7. ✅ Verify setup works
+1. ✅ Install Vitest + testing utilities (`vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`, `@vitest/coverage-v8`)
+2. ✅ Create `vitest.config.ts` + `src/test/setup.ts`
+3. ✅ Update `package.json` scripts (`test`, `test:run`, `test:ui`, `test:coverage`)
+4. ✅ Create test utilities and mocks (`src/test/mocks/supabase.ts`)
+5. ✅ Configure TypeScript types in `tsconfig.json`
+6. ✅ Document strategy in CLAUDE.md
+7. ✅ Create example tests:
+   - `src/lib/utils/__tests__/classHelpers.test.ts` (15 tests, 100% coverage)
+   - `src/lib/utils/__tests__/batchFetching.test.ts` (6 tests, 100% coverage)
+8. ✅ Verify setup: All tests passing (21/21 ✓)
+
+**Test Files Created in Phase 1**:
+- ✅ `classHelpers.ts` - 100% statements, 90% branches, 100% functions
+- ✅ `batchFetching.ts` - 100% coverage across all metrics
 
 **Phase 2: Quick Wins** (sm-6gn) - **Ready to start**
-1. ✅ Test `classHelpers.ts` (~20 test cases)
-   - `isCaberawitClass()` with various inputs
-   - `isTeacherClass()` edge cases
-   - `isSambungDesaEligible()` combinations
-2. ✅ Test `accessControlServer.ts` (~15 test cases)
+1. ⏳ Test `accessControlServer.ts` (~15 test cases) - **HIGH PRIORITY**
    - `canAccessFeature()` for each role
    - `getDataFilter()` organizational filters
    - `canManageMaterials()` permission checks
-3. ✅ Run coverage: `npm run test:coverage`
-4. 🎉 **Celebrate!** You now have ~60-80% coverage on critical utilities
+2. ⏳ Test `attendanceCalculation.ts` (~10 test cases)
+   - Stats calculation logic
+   - Percentage calculations
+   - Empty data handling
+3. ⏳ Test `userUtils.ts` (~8 test cases)
+   - Role checking functions
+   - `getCurrentUserId()` edge cases
+4. ⏳ Test `utils.ts` (~5 test cases)
+   - `cn()` class name merging
+   - Device detection helpers
+5. ✅ Run coverage: `npm run test:coverage`
+6. 🎉 **Celebrate!** Target: ~70-80% coverage on all Priority 1 utilities
 
 **Phase 3: Expand Coverage** (Future) - **Ongoing**
 - Test attendance calculation logic
@@ -643,13 +656,27 @@ jobs:
           files: ./coverage/coverage-final.json
 ```
 
+### Test Files Reference
+
+**Existing Test Files** (Phase 1 - Completed):
+- `src/lib/utils/__tests__/classHelpers.test.ts` - 15 tests, 100% coverage ✅
+- `src/lib/utils/__tests__/batchFetching.test.ts` - 6 tests, 100% coverage ✅
+- `src/test/mocks/supabase.ts` - Reusable Supabase client mock
+- `src/test/setup.ts` - Global test setup (cleanup, mocks)
+
+**To Be Created** (Phase 2 - sm-6gn):
+- `src/lib/__tests__/accessControlServer.test.ts` - Permission & access control tests
+- `src/lib/utils/__tests__/attendanceCalculation.test.ts` - Stats calculation tests
+- `src/lib/__tests__/userUtils.test.ts` - Role checking tests
+- `src/lib/__tests__/utils.test.ts` - Common utilities tests
+
 ### Related Beads
 
-- **sm-qrt**: Setup unit testing infrastructure with Vitest
-- **sm-37l**: Document unit testing strategy in CLAUDE.md (this document)
-- **sm-6gn**: Write tests for utility functions (Priority 1)
+- **sm-qrt** ✅ CLOSED: Setup unit testing infrastructure with Vitest
+- **sm-37l** ✅ CLOSED: Document unit testing strategy in CLAUDE.md (this document)
+- **sm-6gn** ⏳ OPEN: Write tests for utility functions (Priority 1)
 
-**Dependencies**: sm-37l and sm-6gn depend on sm-qrt (setup must be done first)
+**Dependencies**: sm-37l and sm-6gn depend on sm-qrt (setup completed)
 
 ## Architecture Overview
 
