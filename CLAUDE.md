@@ -28,16 +28,16 @@ npm run format           # Format code with Prettier
 npm run format:check     # Check formatting without writing
 npm run fix:all          # Format and type-check in sequence
 
-# Testing (to be implemented)
-npm run test             # Run all tests
-npm run test:watch       # Run tests in watch mode
-npm run test:ui          # Run tests with Vitest UI
-npm run test:coverage    # Run tests with coverage report
+# Testing
+npm run test             # Run tests in watch mode
+npm run test:run         # Run tests once (for CI/CD)
+npm run test:ui          # Open Vitest UI (interactive test viewer)
+npm run test:coverage    # Generate coverage report
 ```
 
 ## Unit Testing Strategy
 
-**Status**: Testing infrastructure not yet implemented. This section describes the recommended approach.
+**Status**: ✅ Testing infrastructure implemented with Vitest. See [Testing Guidelines](docs/testing-guidelines.md) for usage.
 
 ### Testing Stack
 
@@ -562,15 +562,16 @@ describe('attendanceStore', () => {
 
 ### Gradual Adoption Roadmap
 
-**Phase 1: Foundation** (sm-qrt, sm-37l) - **Est. 2-3 hours**
+**Phase 1: Foundation** (sm-qrt, sm-37l) - **✅ COMPLETED**
 1. ✅ Install Vitest + testing utilities
-2. ✅ Create `vitest.config.ts` + `vitest.setup.ts`
+2. ✅ Create `vitest.config.ts` + test setup
 3. ✅ Update `package.json` scripts
-4. ✅ Update `tsconfig.json` types
+4. ✅ Create test utilities and mocks
 5. ✅ Document strategy in CLAUDE.md
-6. ✅ Verify setup: `npm run test` (should work with 0 tests)
+6. ✅ Create example tests (classHelpers, batchFetching)
+7. ✅ Verify setup works
 
-**Phase 2: Quick Wins** (sm-6gn) - **Est. 3-4 hours**
+**Phase 2: Quick Wins** (sm-6gn) - **Ready to start**
 1. ✅ Test `classHelpers.ts` (~20 test cases)
    - `isCaberawitClass()` with various inputs
    - `isTeacherClass()` edge cases
