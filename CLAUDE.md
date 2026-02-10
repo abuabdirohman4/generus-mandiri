@@ -578,23 +578,32 @@ describe('attendanceStore', () => {
 - ✅ `classHelpers.ts` - 100% statements, 90% branches, 100% functions
 - ✅ `batchFetching.ts` - 100% coverage across all metrics
 
-**Phase 2: Quick Wins** (sm-6gn) - **Ready to start**
-1. ⏳ Test `accessControlServer.ts` (~15 test cases) - **HIGH PRIORITY**
+**Phase 2: Quick Wins** (sm-6gn) - **✅ COMPLETED**
+1. ✅ Test `accessControlServer.ts` (14 test cases) - **HIGH PRIORITY**
    - `canAccessFeature()` for each role
    - `getDataFilter()` organizational filters
    - `canManageMaterials()` permission checks
-2. ⏳ Test `attendanceCalculation.ts` (~10 test cases)
-   - Stats calculation logic
-   - Percentage calculations
-   - Empty data handling
-3. ⏳ Test `userUtils.ts` (~8 test cases)
-   - Role checking functions
-   - `getCurrentUserId()` edge cases
-4. ⏳ Test `utils.ts` (~5 test cases)
+   - `isMaterialCoordinator()` role checks
+2. ✅ Test `attendanceCalculation.ts` (12 test cases)
+   - `findMatchingClass()` multi-class meeting logic
+   - `isStudentEnrolled()` enrollment validation
+   - `filterAttendanceByMeetingClass()` strict enrollment check
+   - `calculateAttendanceRate()` and `calculateAttendanceStats()` accuracy
+3. ✅ Test `userUtils.ts` (5 test cases)
+   - `getCurrentUserId()` with mocked Supabase
+   - `isAdminLegacy()` role checking
+   - `clearUserCache()` and `clearSWRCache()` cache management
+4. ✅ Test `utils.ts` (8 test cases)
    - `cn()` class name merging
-   - Device detection helpers
+   - Device detection helpers (isMac, isDesktop, isMobile, isIOS, isTouchDevice, shouldUseMobileUI)
 5. ✅ Run coverage: `npm run test:coverage`
-6. 🎉 **Celebrate!** Target: ~70-80% coverage on all Priority 1 utilities
+6. 🎉 **Achieved!** Total: 60 tests passing, ~90-100% coverage on Priority 1 utilities
+
+**Test Files Created in Phase 2**:
+- ✅ `accessControlServer.ts` - 14 tests (role-based access, org filters, permissions)
+- ✅ `attendanceCalculation.ts` - 12 tests (multi-class logic, stats accuracy)
+- ✅ `userUtils.ts` - 5 tests (auth, cache management)
+- ✅ `utils.ts` - 8 tests (Tailwind merge, device detection)
 
 **Phase 3: Expand Coverage** (Future) - **Ongoing**
 - Test attendance calculation logic
