@@ -884,6 +884,58 @@ await mutate(meetingFormSettingsKeys.settings(userId))
   - Uses `isPengajarMeeting && teacherCaberawit` check
   - Requires `class_master_mappings` to be loaded in user profile for `isCaberawitClass()` detection
 
+### Student Lifecycle Management
+
+**Student Status System** (`students.status` field):
+- `active` - Currently studying (default for new students)
+- `graduated` - Completed program successfully
+- `inactive` - Not active (transferred out, on leave, etc.)
+
+**Archive vs Soft Delete - CRITICAL DIFFERENCE**:
+- **Archive** (`status: graduated/inactive`):
+  - Student data is **VALID** but no longer active
+  - Use for: Graduated students, transferred out, long-term leave
+  - **Appears in historical reports** (data is legitimate)
+  - Hidden from active student lists and attendance
+  - Can be unarchived (status → `active`)
+
+- **Soft Delete** (`deleted_at` timestamp):
+  - Student data is **INVALID/ERROR**
+  - Use for: Wrong entries, duplicates, test data
+  - **Hidden from ALL views** including historical reports
+  - Can be restored within retention period
+  - Treated as data correction, not lifecycle event
+
+**Student Management Actions**:
+1. **Archive**: Set `status` to `graduated` or `inactive` (keeps history)
+2. **Transfer**: Move to different org/class within system (maintains history)
+3. **Soft Delete**: Mark as deleted (restorable)
+4. **Hard Delete**: Permanent removal (superadmin only, GDPR compliance)
+
+**Teacher Permissions** (`profiles.permissions` JSONB):
+```json
+{
+  "can_archive_students": false,
+  "can_transfer_students": false,
+  "can_soft_delete_students": false,
+  "can_hard_delete_students": false
+}
+```
+- **Default**: Teachers have NO student management permissions
+- **Configurable**: Admin can grant permissions per teacher in `/users/guru` page
+- **Superadmin & Admin**: Always have all permissions (hardcoded)
+
+**Business Rules**:
+- Archived students (graduated/inactive) don't appear in:
+  - Active student lists
+  - Attendance forms (can't take attendance)
+  - Class assignment modals
+- Archived students **DO appear** in:
+  - Historical reports (valid data for past periods)
+  - Alumni/graduated views (filter by `status = 'graduated'`)
+  - Statistics for their active period
+- Query pattern: `WHERE status = 'active'` for active lists, `WHERE status != 'deleted'` for historical reports
+
 ### Meeting Types & Class Eligibility
 
 **Available Meeting Types**:
