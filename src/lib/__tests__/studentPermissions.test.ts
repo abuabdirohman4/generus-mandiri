@@ -7,8 +7,13 @@ import {
   getTransferableDaerahIds,
   getTransferableDesaIds,
   getTransferableKelompokIds,
+  canRequestTransfer,
+  canReviewTransferRequest,
+  needsApproval,
+  isOrganizationInUserHierarchy,
   type UserProfile,
   type Student,
+  type TransferRequest,
 } from '../studentPermissions'
 
 describe('studentPermissions', () => {
@@ -287,6 +292,281 @@ describe('studentPermissions', () => {
     it('should return empty array for teacher', () => {
       const allKelompokIds = ['kelompok-1', 'kelompok-2']
       expect(getTransferableKelompokIds(teacherWithPermissions, 'desa-1', allKelompokIds)).toEqual([])
+    })
+  })
+
+  // ========================================
+  // APPROVAL-BASED TRANSFER WORKFLOW TESTS
+  // ========================================
+
+  describe('canRequestTransfer (Approval-Based)', () => {
+    it('should allow superadmin to request transfer', () => {
+      expect(canRequestTransfer(superadmin, studentInDaerah1)).toBe(true)
+    })
+
+    it('should allow admin to request transfer for students in their hierarchy', () => {
+      expect(canRequestTransfer(adminDaerah, studentInDaerah1)).toBe(true)
+      expect(canRequestTransfer(adminDaerah, studentInDifferentDaerah)).toBe(false)
+    })
+
+    it('should allow admin desa to request transfer', () => {
+      expect(canRequestTransfer(adminDesa, studentInDaerah1)).toBe(true)
+    })
+
+    it('should allow admin kelompok to request transfer', () => {
+      expect(canRequestTransfer(adminKelompok, studentInDaerah1)).toBe(true)
+    })
+
+    it('should allow teacher WITH permission to request transfer', () => {
+      expect(canRequestTransfer(teacherWithPermissions, studentInDaerah1)).toBe(true)
+    })
+
+    it('should deny teacher WITHOUT permission', () => {
+      expect(canRequestTransfer(teacherNoPermissions, studentInDaerah1)).toBe(false)
+    })
+
+    it('should deny student role', () => {
+      expect(canRequestTransfer(student, studentInDaerah1)).toBe(false)
+    })
+
+    it('should handle null user', () => {
+      expect(canRequestTransfer(null, studentInDaerah1)).toBe(false)
+    })
+  })
+
+  describe('canReviewTransferRequest', () => {
+    const requestToDaerah1: TransferRequest = {
+      id: 'req-1',
+      student_ids: ['student-a'],
+      from_daerah_id: 'daerah-2',
+      from_desa_id: 'desa-2',
+      from_kelompok_id: 'kelompok-2',
+      to_daerah_id: 'daerah-1',
+      to_desa_id: 'desa-1',
+      to_kelompok_id: 'kelompok-1',
+      status: 'pending',
+      requested_by: 'admin-2',
+      requested_at: '2025-01-01',
+    }
+
+    const requestToDifferentDaerah: TransferRequest = {
+      ...requestToDaerah1,
+      to_daerah_id: 'daerah-2',
+      to_desa_id: 'desa-2',
+      to_kelompok_id: 'kelompok-2',
+    }
+
+    it('should allow superadmin to review any request', () => {
+      expect(canReviewTransferRequest(superadmin, requestToDaerah1)).toBe(true)
+      expect(canReviewTransferRequest(superadmin, requestToDifferentDaerah)).toBe(true)
+    })
+
+    it('should allow admin daerah to review requests targeting their daerah', () => {
+      expect(canReviewTransferRequest(adminDaerah, requestToDaerah1)).toBe(true)
+      expect(canReviewTransferRequest(adminDaerah, requestToDifferentDaerah)).toBe(false)
+    })
+
+    it('should allow admin desa to review requests targeting their desa', () => {
+      expect(canReviewTransferRequest(adminDesa, requestToDaerah1)).toBe(true)
+    })
+
+    it('should allow admin kelompok to review requests targeting their kelompok', () => {
+      expect(canReviewTransferRequest(adminKelompok, requestToDaerah1)).toBe(true)
+    })
+
+    it('should deny teacher from reviewing (admin-only)', () => {
+      expect(canReviewTransferRequest(teacherWithPermissions, requestToDaerah1)).toBe(false)
+    })
+
+    it('should deny student from reviewing', () => {
+      expect(canReviewTransferRequest(student, requestToDaerah1)).toBe(false)
+    })
+
+    it('should handle null user', () => {
+      expect(canReviewTransferRequest(null, requestToDaerah1)).toBe(false)
+    })
+  })
+
+  describe('needsApproval', () => {
+    it('should NOT need approval for superadmin transfers', () => {
+      const request: TransferRequest = {
+        id: 'req-1',
+        student_ids: ['student-a'],
+        from_daerah_id: 'daerah-1',
+        from_desa_id: 'desa-1',
+        from_kelompok_id: 'kelompok-1',
+        to_daerah_id: 'daerah-2',
+        to_desa_id: 'desa-2',
+        to_kelompok_id: 'kelompok-2',
+        status: 'pending',
+        requested_by: 'superadmin-1',
+        requested_at: '2025-01-01',
+      }
+      expect(needsApproval(superadmin, request)).toBe(false)
+    })
+
+    it('should need approval when crossing daerah boundary', () => {
+      const request: TransferRequest = {
+        id: 'req-1',
+        student_ids: ['student-a'],
+        from_daerah_id: 'daerah-1',
+        from_desa_id: 'desa-1',
+        from_kelompok_id: 'kelompok-1',
+        to_daerah_id: 'daerah-2', // Different daerah
+        to_desa_id: 'desa-2',
+        to_kelompok_id: 'kelompok-2',
+        status: 'pending',
+        requested_by: 'admin-daerah-1',
+        requested_at: '2025-01-01',
+      }
+      expect(needsApproval(adminDaerah, request)).toBe(true)
+    })
+
+    it('should need approval when crossing desa boundary', () => {
+      const request: TransferRequest = {
+        id: 'req-1',
+        student_ids: ['student-a'],
+        from_daerah_id: 'daerah-1',
+        from_desa_id: 'desa-1',
+        from_kelompok_id: 'kelompok-1',
+        to_daerah_id: 'daerah-1', // Same daerah
+        to_desa_id: 'desa-2', // Different desa
+        to_kelompok_id: 'kelompok-2',
+        status: 'pending',
+        requested_by: 'admin-desa-1',
+        requested_at: '2025-01-01',
+      }
+      expect(needsApproval(adminDesa, request)).toBe(true)
+    })
+
+    it('should need approval when crossing kelompok boundary', () => {
+      const request: TransferRequest = {
+        id: 'req-1',
+        student_ids: ['student-a'],
+        from_daerah_id: 'daerah-1',
+        from_desa_id: 'desa-1',
+        from_kelompok_id: 'kelompok-1',
+        to_daerah_id: 'daerah-1',
+        to_desa_id: 'desa-1',
+        to_kelompok_id: 'kelompok-2', // Different kelompok
+        status: 'pending',
+        requested_by: 'admin-kelompok-1',
+        requested_at: '2025-01-01',
+      }
+      expect(needsApproval(adminKelompok, request)).toBe(true)
+    })
+
+    it('should NOT need approval for transfer within same organization', () => {
+      const request: TransferRequest = {
+        id: 'req-1',
+        student_ids: ['student-a'],
+        from_daerah_id: 'daerah-1',
+        from_desa_id: 'desa-1',
+        from_kelompok_id: 'kelompok-1',
+        to_daerah_id: 'daerah-1', // Same daerah
+        to_desa_id: 'desa-1', // Same desa
+        to_kelompok_id: 'kelompok-1', // Same kelompok (class change only)
+        status: 'pending',
+        requested_by: 'admin-kelompok-1',
+        requested_at: '2025-01-01',
+      }
+      expect(needsApproval(adminKelompok, request)).toBe(false)
+    })
+  })
+
+  describe('isOrganizationInUserHierarchy', () => {
+    it('should return true for superadmin (any org)', () => {
+      expect(
+        isOrganizationInUserHierarchy(superadmin, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-1',
+        })
+      ).toBe(true)
+      expect(
+        isOrganizationInUserHierarchy(superadmin, {
+          daerah_id: 'daerah-2',
+          desa_id: 'desa-2',
+          kelompok_id: 'kelompok-2',
+        })
+      ).toBe(true)
+    })
+
+    it('should return true for admin daerah if org in their daerah', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminDaerah, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-1',
+        })
+      ).toBe(true)
+      expect(
+        isOrganizationInUserHierarchy(adminDaerah, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-2', // Different desa, but same daerah
+          kelompok_id: 'kelompok-2',
+        })
+      ).toBe(true)
+    })
+
+    it('should return false for admin daerah if org in different daerah', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminDaerah, {
+          daerah_id: 'daerah-2',
+          desa_id: 'desa-2',
+          kelompok_id: 'kelompok-2',
+        })
+      ).toBe(false)
+    })
+
+    it('should return true for admin desa if org in their desa', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminDesa, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-1',
+        })
+      ).toBe(true)
+    })
+
+    it('should return false for admin desa if org in different desa', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminDesa, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-2', // Different desa
+          kelompok_id: 'kelompok-2',
+        })
+      ).toBe(false)
+    })
+
+    it('should return true for admin kelompok if org is their kelompok', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminKelompok, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-1',
+        })
+      ).toBe(true)
+    })
+
+    it('should return false for admin kelompok if org is different kelompok', () => {
+      expect(
+        isOrganizationInUserHierarchy(adminKelompok, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-2', // Different kelompok
+        })
+      ).toBe(false)
+    })
+
+    it('should return false for teacher (no org hierarchy)', () => {
+      expect(
+        isOrganizationInUserHierarchy(teacherWithPermissions, {
+          daerah_id: 'daerah-1',
+          desa_id: 'desa-1',
+          kelompok_id: 'kelompok-1',
+        })
+      ).toBe(false)
     })
   })
 })

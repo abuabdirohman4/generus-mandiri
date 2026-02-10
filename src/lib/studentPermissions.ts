@@ -33,6 +33,32 @@ export interface Student {
   deleted_at?: string | null
 }
 
+export interface TransferRequest {
+  id: string
+  student_ids: string[]
+  from_daerah_id: string
+  from_desa_id: string
+  from_kelompok_id: string
+  to_daerah_id: string
+  to_desa_id: string
+  to_kelompok_id: string
+  to_class_ids?: string[]
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  requested_by: string
+  requested_at: string
+  reviewed_by?: string
+  reviewed_at?: string
+  review_notes?: string
+  executed_at?: string
+  executed_by?: string
+}
+
+export interface Organization {
+  daerah_id: string
+  desa_id: string | null
+  kelompok_id: string | null
+}
+
 /**
  * Check if user can archive a student (mark as graduated/inactive)
  */
@@ -224,6 +250,131 @@ function isStudentInUserHierarchy(user: UserProfile, student: Student): boolean 
 
   // Check kelompok level (if user has kelompok_id)
   if (user.kelompok_id && user.kelompok_id !== student.kelompok_id) {
+    return false
+  }
+
+  return true
+}
+
+// ========================================
+// APPROVAL-BASED TRANSFER WORKFLOW
+// ========================================
+
+/**
+ * Check if user can CREATE a transfer request
+ * More permissive - allows requests across boundaries (approval required)
+ */
+export function canRequestTransfer(
+  user: UserProfile | null,
+  student: Student
+): boolean {
+  if (!user) return false
+
+  // Superadmin can request (though they bypass approval)
+  if (user.role === 'superadmin') return true
+
+  // Admin can request transfer for students in their hierarchy
+  if (user.role === 'admin') {
+    return isStudentInUserHierarchy(user, student)
+  }
+
+  // Teacher needs explicit permission
+  if (user.role === 'teacher') {
+    return user.permissions?.can_transfer_students === true
+  }
+
+  return false
+}
+
+/**
+ * Check if user can APPROVE/REJECT a transfer request
+ * User must have authority over DESTINATION organization
+ */
+export function canReviewTransferRequest(
+  user: UserProfile | null,
+  request: TransferRequest
+): boolean {
+  if (!user) return false
+
+  // Superadmin can review any request
+  if (user.role === 'superadmin') return true
+
+  // Only admins can review (teachers cannot)
+  if (user.role !== 'admin') return false
+
+  // Admin can review if request targets their organization
+  return isOrganizationInUserHierarchy(user, {
+    daerah_id: request.to_daerah_id,
+    desa_id: request.to_desa_id,
+    kelompok_id: request.to_kelompok_id,
+  })
+}
+
+/**
+ * Check if transfer request NEEDS approval
+ * - Superadmin transfers: auto-approved
+ * - Same org transfers: auto-approved
+ * - Cross-boundary transfers: needs approval
+ */
+export function needsApproval(
+  requester: UserProfile,
+  request: TransferRequest
+): boolean {
+  // Superadmin transfers are auto-approved
+  if (requester.role === 'superadmin') return false
+
+  // Check if transfer crosses organizational boundary
+  const fromOrg = {
+    daerah_id: request.from_daerah_id,
+    desa_id: request.from_desa_id,
+    kelompok_id: request.from_kelompok_id,
+  }
+
+  const toOrg = {
+    daerah_id: request.to_daerah_id,
+    desa_id: request.to_desa_id,
+    kelompok_id: request.to_kelompok_id,
+  }
+
+  // If crossing daerah boundary → NEEDS approval
+  if (fromOrg.daerah_id !== toOrg.daerah_id) return true
+
+  // If crossing desa boundary → NEEDS approval
+  if (fromOrg.desa_id !== toOrg.desa_id) return true
+
+  // If crossing kelompok boundary → NEEDS approval
+  if (fromOrg.kelompok_id !== toOrg.kelompok_id) return true
+
+  // Transfer within same org (class change only) → Auto-approved
+  return false
+}
+
+/**
+ * Check if organization is within user's hierarchy
+ * Used to determine if user can review transfer request
+ */
+export function isOrganizationInUserHierarchy(
+  user: UserProfile,
+  org: Organization
+): boolean {
+  // Superadmin has access to all organizations
+  if (user.role === 'superadmin') return true
+
+  // Non-admin roles have no organizational hierarchy
+  if (user.role !== 'admin') return false
+
+  // Check daerah level
+  if (user.daerah_id && user.daerah_id !== org.daerah_id) {
+    return false
+  }
+
+  // Check desa level (if user has desa_id)
+  if (user.desa_id && user.desa_id !== org.desa_id) {
+    return false
+  }
+
+  // Check kelompok level (if user has kelompok_id)
+  if (user.kelompok_id && user.kelompok_id !== org.kelompok_id) {
     return false
   }
 
