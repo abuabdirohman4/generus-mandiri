@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import Button from '@/components/ui/button/Button'
 import Label from '@/components/form/Label'
+import InputFilter from '@/components/form/input/InputFilter'
 
 interface ArchiveStudentModalProps {
   isOpen: boolean
@@ -78,24 +79,24 @@ export default function ArchiveStudentModal({
           {/* Status Selection */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="status">
-                Status Arsip <span className="text-red-500">*</span>
-              </Label>
-              <select
+              <InputFilter
                 id="status"
+                label="Status Arsip"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as 'inactive' | 'graduated')}
+                onChange={(val) => setStatus(val as 'inactive' | 'graduated')}
+                options={[
+                  { value: 'inactive', label: 'Tidak Aktif (Inactive)' },
+                  // { value: 'graduated', label: 'Lulus (Graduated)' }
+                ]}
                 disabled={isLoading}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
-              >
-                <option value="inactive">Tidak Aktif (Inactive)</option>
-                {/* <option value="graduated">Lulus (Graduated)</option> */}
-              </select>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {status === 'graduated'
-                  ? 'Gunakan untuk siswa yang telah menyelesaikan program'
-                  : 'Gunakan untuk siswa yang pindah/cuti/tidak aktif'}
-              </p>
+                required
+                variant="modal"
+                hint={
+                  status === 'graduated'
+                    ? 'Gunakan untuk siswa yang telah menyelesaikan program'
+                    : 'Gunakan untuk siswa yang pindah/cuti/tidak aktif'
+                }
+              />
             </div>
 
             <div>
