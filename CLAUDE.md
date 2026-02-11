@@ -1055,6 +1055,44 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 - `components/form/input/` - Form inputs
 - `components/layouts/` - App header, sidebar, bottom navigation
 - `components/charts/` - Recharts-based visualizations
+- `components/shared/DataFilter.tsx` - Centralized filter component (see Filter Guidelines below)
+
+**Filter Guidelines - DataFilter Component**:
+- **IMPORTANT**: When adding new filter types, consider adding them to `DataFilter.tsx` if they will be reused across multiple pages
+- **Current filters in DataFilter**: Daerah, Desa, Kelompok, Class, Gender, Meeting Type, Month/Year
+- **When to add to DataFilter**:
+  - ✅ Filter will be used in 2+ pages (e.g., Status filter used in Siswa, Guru, Laporan)
+  - ✅ Filter follows standard dropdown/select pattern
+  - ✅ Filter needs organizational hierarchy (daerah → desa → kelompok)
+- **When NOT to add to DataFilter**:
+  - ❌ Page-specific filter (only used once)
+  - ❌ Complex custom UI (date range picker, multi-step)
+  - ❌ Tightly coupled to page state
+- **Props pattern**:
+  ```typescript
+  <DataFilter
+    filters={filters}
+    onFilterChange={handleFilterChange}
+    userProfile={userProfile}
+    // Data lists
+    daerahList={daerah}
+    desaList={desa}
+    kelompokList={kelompok}
+    classList={classes}
+    // Feature flags
+    showKelas={true}
+    showGender={true}
+    showStatus={true}  // NEW: For student/teacher status
+    cascadeFilters={false}  // Disable cascade for multi-select
+  />
+  ```
+- **Adding new filter type**:
+  1. Add prop: `showXxx?: boolean`
+  2. Add data prop: `xxxList?: Array<{id, name}>`
+  3. Add to filters interface: `xxx?: string`
+  4. Add dropdown in DataFilter component
+  5. Update all pages using DataFilter (optional prop, backward compatible)
+  6. Document in CLAUDE.md
 
 **Mobile UI Patterns**:
 - **Floating Action Buttons**: For primary actions on pages with long scrollable content
