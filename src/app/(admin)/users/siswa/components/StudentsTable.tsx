@@ -14,18 +14,22 @@ interface StudentsTableProps {
   userRole: string | null
   onEdit: (student: Student) => void
   onDelete: (studentId: string, permanent: boolean) => void
-  userProfile: { 
-    role: string; 
-    classes?: Array<{ id: string; name: string }> 
+  onArchive?: (student: Student) => void
+  onTransfer?: (students: Student[]) => void
+  userProfile: {
+    role: string;
+    classes?: Array<{ id: string; name: string }>
   } | null | undefined
   classes?: Array<{ id: string; name: string; kelompok_id?: string | null }>
 }
 
-export default function StudentsTable({ 
-  students, 
-  userRole, 
-  onEdit, 
-  onDelete, 
+export default function StudentsTable({
+  students,
+  userRole,
+  onEdit,
+  onDelete,
+  onArchive,
+  onTransfer,
   userProfile,
   classes: classesData
 }: StudentsTableProps) {
@@ -299,6 +303,52 @@ export default function StudentsTable({
           >
             <PencilIcon className="w-5 h-5" />
           </button>
+
+          {/* Archive Action - only for admin */}
+          {(userRole === 'admin' || userRole === 'superadmin') && onArchive && (
+            <button
+              onClick={() => onArchive(student)}
+              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              title="Arsipkan"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                />
+              </svg>
+            </button>
+          )}
+
+          {/* Transfer Action - only for admin */}
+          {(userRole === 'admin' || userRole === 'superadmin') && onTransfer && (
+            <button
+              onClick={() => onTransfer([student])}
+              className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+              title="Transfer"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                />
+              </svg>
+            </button>
+          )}
 
           {/* Delete Action - only for admin */}
           {(userRole === 'admin' || userRole === 'superadmin') && (
