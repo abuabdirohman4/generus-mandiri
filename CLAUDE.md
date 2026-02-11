@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: MCP Connection Check
+
+**BEFORE running ANY Supabase operations** (migrations, queries, etc.), you MUST:
+
+1. **Check MCP Connection Status** using `mcp__generus-mandiri-v2__list_tables` or `mcp__better-planner__list_tables`
+2. **If connection fails**:
+   - ❌ **DO NOT** ask user to restart Claude Code
+   - ✅ **INFORM** user: "MCP Supabase belum terkoneksi. Silakan aktifkan MCP di settings Claude Code."
+   - ✅ Continue with other tasks that don't require database access
+3. **If connection succeeds**: Proceed with database operations normally
+
+**Why This Matters**:
+- MCP can be activated/deactivated without restart
+- Avoids confusion about "connection errors"
+- User knows exactly what to do (enable MCP in settings)
+
+**Example Check**:
+```typescript
+// Try to list tables to verify connection
+const result = await mcp__generus-mandiri-v2__list_tables({ schemas: ["public"] })
+// If successful, MCP is connected ✅
+// If error, inform user to enable MCP ❌
+```
+
+---
+
 ## Project Overview
 
 **Generus Mandiri** is a Next.js 15 school management system for LDII (Lembaga Dakwah Islam Indonesia) religious education programs. It manages students (generus), teachers, classes, attendance tracking, academic reports, report cards (rapot), and educational materials (materi) with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
@@ -1040,8 +1066,11 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 
 **Implementation Status**:
 - ✅ Permission logic implemented and tested (66 tests, 100% coverage)
-- ⏳ Database migration (transfer_requests table) - TODO
-- ⏳ Server actions (createTransferRequest, approveTransferRequest) - TODO
+- ✅ Database migration applied (transfer_requests table + triggers)
+- ✅ Server actions implemented (src/app/(admin)/users/siswa/actions/management.ts)
+  - createTransferRequest, approveTransferRequest, rejectTransferRequest
+  - cancelTransferRequest, getPendingTransferRequests, getMyTransferRequests
+  - archiveStudent, unarchiveStudent, restoreStudent
 - ⏳ UI components (TransferRequestModal, PendingRequestsSection) - TODO
 
 **Teacher Permissions** (`profiles.permissions` JSONB):
