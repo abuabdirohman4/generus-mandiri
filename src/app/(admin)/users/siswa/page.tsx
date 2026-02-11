@@ -57,7 +57,11 @@ export default function SiswaPage() {
 
   const { showModal: showAssignModal, openModal: openAssignModal, closeModal: closeAssignModal } = useAssignStudentsStore()
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+
+  // Permission checks for student management actions
+  const canArchive = isAdmin || userProfile?.permissions?.can_archive_students === true
   const canTransfer = isAdmin || userProfile?.permissions?.can_transfer_students === true
+  const canSoftDelete = isAdmin || userProfile?.permissions?.can_soft_delete_students === true
 
   // State for new modals
   const [showArchiveModal, setShowArchiveModal] = useState(false)
@@ -411,9 +415,9 @@ export default function SiswaPage() {
               userRole={userProfile?.role || null}
               onEdit={handleEditStudent}
               onDelete={handleDeleteStudent}
-              onArchive={isAdmin ? handleArchiveClick : undefined}
+              onArchive={canArchive ? handleArchiveClick : undefined}
               onTransfer={canTransfer ? handleTransferClick : undefined}
-              onUnarchive={isAdmin ? handleUnarchive : undefined}
+              onUnarchive={canArchive ? handleUnarchive : undefined}
               userProfile={userProfile}
               classes={classes}
               studentsWithPendingTransfer={studentsWithPendingTransfer}

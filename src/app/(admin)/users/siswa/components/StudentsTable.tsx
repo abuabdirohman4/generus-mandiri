@@ -8,7 +8,12 @@ import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon, UserCircleIcon } from '@
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 import { checkStudentHasAttendance } from '../actions'
-import { canRequestTransfer } from '@/lib/studentPermissions'
+import {
+  canArchiveStudent,
+  canTransferStudent,
+  canSoftDeleteStudent,
+  canHardDeleteStudent
+} from '@/lib/studentPermissions'
 
 interface StudentsTableProps {
   students: Student[]
@@ -57,12 +62,14 @@ export default function StudentsTable({
     studentName: string
     hasAttendance: boolean
     isLoading: boolean
+    deletedAt: string | null
   }>({
     isOpen: false,
     studentId: '',
     studentName: '',
     hasAttendance: false,
-    isLoading: false
+    isLoading: false,
+    deletedAt: null
   })
   
   const handleStudentClick = (studentId: string, column: 'name' | 'actions') => {
@@ -71,13 +78,17 @@ export default function StudentsTable({
   }
 
   const handleDeleteClick = async (studentId: string, studentName: string) => {
+    // Find student to get deleted_at
+    const student = students.find(s => s.id === studentId)
+
     // Check attendance before opening modal
     setDeleteModal({
       isOpen: true,
       studentId,
       studentName,
       hasAttendance: false,
-      isLoading: true
+      isLoading: true,
+      deletedAt: student?.deleted_at || null
     })
 
     try {
@@ -104,7 +115,8 @@ export default function StudentsTable({
       studentId: '',
       studentName: '',
       hasAttendance: false,
-      isLoading: false
+      isLoading: false,
+      deletedAt: null
     })
   }
 
@@ -115,7 +127,8 @@ export default function StudentsTable({
       studentId: '',
       studentName: '',
       hasAttendance: false,
-      isLoading: false
+      isLoading: false,
+      deletedAt: null
     })
   }
 
@@ -125,7 +138,8 @@ export default function StudentsTable({
       studentId: '',
       studentName: '',
       hasAttendance: false,
-      isLoading: false
+      isLoading: false,
+      deletedAt: null
     })
   }
   // Build columns based on user role
@@ -320,8 +334,8 @@ export default function StudentsTable({
             <PencilIcon className="w-5 h-5" />
           </button>
 
-          {/* Archive Action - only for admin and active students */}
-          {(userRole === 'admin' || userRole === 'superadmin') && onArchive && student.status === 'active' && (
+          {/* Archive Action - only for users with permission and active students */}
+          {canArchiveStudent(userProfile as any || null, student) && onArchive && student.status === 'active' && (
             <button
               onClick={() => onArchive(student)}
               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
@@ -343,8 +357,8 @@ export default function StudentsTable({
             </button>
           )}
 
-          {/* Unarchive Action - only for admin and archived students */}
-          {(userRole === 'admin' || userRole === 'superadmin') && onUnarchive && (student.status === 'graduated' || student.status === 'inactive') && (
+          {/* Unarchive Action - only for users with permission and archived students */}
+          {canArchiveStudent(userProfile as any || null, student) && onUnarchive && (student.status === 'graduated' || student.status === 'inactive') && (
             <button
               onClick={() => onUnarchive(student)}
               className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 transition-colors"
@@ -366,8 +380,8 @@ export default function StudentsTable({
             </button>
           )}
 
-          {/* Transfer Action - for users with permission, disabled if has pending transfer */}
-          {canRequestTransfer(userProfile as any || null, student) && onTransfer && (() => {
+          {/* Transfer Action - for users with transfer permission, disabled if has pending transfer */}
+          {canTransferStudent(userProfile as any || null, student) && onTransfer && (() => {
             const hasPendingTransfer = studentsWithPendingTransfer?.has(student.id)
             return (
               <button
@@ -397,14 +411,33 @@ export default function StudentsTable({
             )
           })()}
 
-          {/* Delete Action - only for admin */}
-          {(userRole === 'admin' || userRole === 'superadmin') && (
+          {/* Soft Delete Action - for users with permission, only if not already soft deleted */}
+          {canSoftDeleteStudent(userProfile as any || null, student) && !student.deleted_at && (
             <button
               onClick={() => handleDeleteClick(item.actions, student?.name || '')}
               className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-              title="Hapus"
+              title="Hapus (Soft Delete)"
             >
               <TrashBinIcon className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Hard Delete Action - ONLY for superadmin and ONLY if already soft deleted */}
+          {canHardDeleteStudent(userProfile as any || null, student) && student.deleted_at && (
+            <button
+              onClick={() => handleDeleteClick(item.actions, student?.name || '')}
+              className="text-red-700 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400 transition-colors"
+              title="Hapus Permanen (Hard Delete) ⚠️"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"
+                />
+              </svg>
             </button>
           )}
         </div>
@@ -466,6 +499,8 @@ export default function StudentsTable({
         studentName={deleteModal.studentName}
         hasAttendance={deleteModal.hasAttendance}
         isLoading={deleteModal.isLoading}
+        userProfile={userProfile}
+        studentDeletedAt={deleteModal.deletedAt}
       />
     </>
   )
