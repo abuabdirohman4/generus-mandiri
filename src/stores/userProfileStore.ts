@@ -20,6 +20,9 @@ interface UserProfile {
     kelompok_id?: string | null;
     kelompok?: { id: string; name: string } | null;
   }>;
+  notification_badge?: {
+    pending_transfer_requests?: number;
+  };
 }
 
 interface UserProfileState {

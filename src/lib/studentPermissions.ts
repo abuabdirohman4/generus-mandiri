@@ -8,6 +8,8 @@
  * - Hard Delete (permanent, superadmin only)
  */
 
+import type { StudentWithOrg } from '@/types/student'
+
 export interface UserProfile {
   id: string
   full_name: string
@@ -23,15 +25,8 @@ export interface UserProfile {
   }
 }
 
-export interface Student {
-  id: string
-  full_name: string
-  daerah_id: string
-  desa_id: string
-  kelompok_id: string
-  status: 'active' | 'graduated' | 'inactive'
-  deleted_at?: string | null
-}
+// Use centralized type for consistency
+export type Student = StudentWithOrg
 
 export interface TransferRequest {
   id: string

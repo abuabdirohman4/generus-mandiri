@@ -15,6 +15,10 @@ import {
   type TransferRequest,
 } from '@/lib/studentPermissions'
 
+// Re-export centralized types for convenience
+export type { Student, TransferRequest }
+// Note: Student type now comes from @/types/student via studentPermissions
+
 // ============================================
 // ARCHIVE STUDENT
 // ============================================
@@ -62,7 +66,7 @@ export async function archiveStudent(
     // Get student data
     const { data: student } = await adminClient
       .from('students')
-      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
+      .select('id, name, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .eq('id', input.studentId)
       .single()
 
@@ -113,9 +117,11 @@ export async function archiveStudent(
 }
 
 /**
- * Unarchive student (restore to active status)
+ * Unarchive a student (restore to active status)
  */
-export async function unarchiveStudent(studentId: string): Promise<ArchiveStudentResponse> {
+export async function unarchiveStudent(
+  studentId: string
+): Promise<ArchiveStudentResponse> {
   try {
     const supabase = await createClient()
     const adminClient = await createAdminClient()
@@ -141,7 +147,7 @@ export async function unarchiveStudent(studentId: string): Promise<ArchiveStuden
     // Get student data
     const { data: student } = await adminClient
       .from('students')
-      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
+      .select('id, name, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .eq('id', studentId)
       .single()
 
@@ -153,11 +159,16 @@ export async function unarchiveStudent(studentId: string): Promise<ArchiveStuden
     if (!canArchiveStudent(profile as UserProfile, student as Student)) {
       return {
         success: false,
-        error: 'Tidak memiliki izin untuk mengembalikan status siswa ini',
+        error: 'Tidak memiliki izin untuk mengembalikan siswa ini',
       }
     }
 
-    // Update student status to active
+    // Student must be archived
+    if (student.status === 'active') {
+      return { success: false, error: 'Siswa sudah dalam status aktif' }
+    }
+
+    // Restore to active status
     const { error: updateError } = await adminClient
       .from('students')
       .update({
@@ -171,7 +182,7 @@ export async function unarchiveStudent(studentId: string): Promise<ArchiveStuden
 
     if (updateError) {
       console.error('Unarchive student error:', updateError)
-      return { success: false, error: 'Gagal mengembalikan status siswa' }
+      return { success: false, error: 'Gagal mengembalikan siswa' }
     }
 
     revalidatePath('/users/siswa')
@@ -181,7 +192,7 @@ export async function unarchiveStudent(studentId: string): Promise<ArchiveStuden
     console.error('Unarchive student error:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Gagal mengembalikan status siswa',
+      error: error instanceof Error ? error.message : 'Gagal mengembalikan siswa',
     }
   }
 }
@@ -248,7 +259,7 @@ export async function createTransferRequest(
     // Get all students
     const { data: students } = await adminClient
       .from('students')
-      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
+      .select('id, name, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .in('id', input.studentIds)
 
     if (!students || students.length === 0) {
@@ -260,7 +271,7 @@ export async function createTransferRequest(
       if (!canRequestTransfer(profile as UserProfile, student as Student)) {
         return {
           success: false,
-          error: `Tidak memiliki izin untuk transfer siswa: ${student.full_name}`,
+          error: `Tidak memiliki izin untuk transfer siswa: ${student.name}`,
         }
       }
     }
@@ -805,7 +816,7 @@ export async function getPendingTransferRequests(): Promise<{
       (requests || []).map(async (request) => {
         const { data: students } = await adminClient
           .from('students')
-          .select('id, full_name')
+          .select('id, name')
           .in('id', request.student_ids)
 
         return {
@@ -866,7 +877,7 @@ export async function getMyTransferRequests(): Promise<{
       (requests || []).map(async (request) => {
         const { data: students } = await adminClient
           .from('students')
-          .select('id, full_name')
+          .select('id, name')
           .in('id', request.student_ids)
 
         return {
@@ -919,7 +930,7 @@ export async function restoreStudent(studentId: string): Promise<ArchiveStudentR
     // Get student data (including soft deleted)
     const { data: student } = await adminClient
       .from('students')
-      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
+      .select('id, name, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .eq('id', studentId)
       .single()
 

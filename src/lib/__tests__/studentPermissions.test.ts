@@ -89,7 +89,8 @@ describe('studentPermissions', () => {
   // Mock students
   const studentInDaerah1: Student = {
     id: 'student-a',
-    full_name: 'Student A',
+    name: 'Student A',
+    gender: 'Laki-laki',
     daerah_id: 'daerah-1',
     desa_id: 'desa-1',
     kelompok_id: 'kelompok-1',
@@ -98,7 +99,8 @@ describe('studentPermissions', () => {
 
   const studentInDifferentDaerah: Student = {
     id: 'student-b',
-    full_name: 'Student B',
+    name: 'Student B',
+    gender: 'Perempuan',
     daerah_id: 'daerah-2',
     desa_id: 'desa-2',
     kelompok_id: 'kelompok-2',

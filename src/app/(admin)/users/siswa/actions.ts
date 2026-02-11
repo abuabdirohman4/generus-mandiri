@@ -10,28 +10,10 @@ import {
   type UserProfile,
   type Student as StudentPermission,
 } from '@/lib/studentPermissions'
+import type { StudentWithClasses } from '@/types/student'
 
-export interface Student {
-  id: string
-  name: string
-  gender: string | null
-  class_id?: string | null // Optional untuk backward compatibility
-  created_at: string
-  updated_at: string
-  category?: string | null
-  kelompok_id?: string | null
-  desa_id?: string | null
-  daerah_id?: string | null
-  classes: Array<{
-    id: string
-    name: string
-  }> // Changed from single object to array for multiple classes support
-  daerah_name?: string
-  desa_name?: string
-  kelompok_name?: string
-  class_name?: string // Primary class name (first class) untuk backward compatibility
-}
-
+// Use centralized type for consistency
+export type Student = StudentWithClasses
 
 /**
  * Mendapatkan profile user saat ini
@@ -132,6 +114,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         .from('students')
         .select('id')
         .is('deleted_at', null)
+        
         .in('class_id', teacherClassIds)
 
       if (studentsFromClassId && studentsFromClassId.length > 0) {
@@ -174,6 +157,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
           .from('students')
           .select('id')
           .is('deleted_at', null)
+          
           .in('class_id', filteredClassIds)
 
         if (filteredStudentsFromClassId && filteredStudentsFromClassId.length > 0) {
@@ -211,6 +195,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             kelompok:kelompok_id(name)
           `)
           .is('deleted_at', null)
+          
           .in('id', finalStudentIds)
           .order('name')
 
@@ -242,6 +227,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
            kelompok:kelompok_id(name)
          `)
         .is('deleted_at', null)
+        
         .in('id', studentIds)
         .order('name')
 
@@ -263,6 +249,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         kelompok_id,
         desa_id,
         daerah_id,
+        status,
         created_at,
         updated_at,
         student_classes(
@@ -273,6 +260,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
         kelompok:kelompok_id(name)
       `)
       .is('deleted_at', null)
+       // Only show active students
       .order('name')
 
     // Filter by class if classId provided
@@ -373,7 +361,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             class_name: primaryClass?.name || '',
             daerah_name: getDaerahName(),
             desa_name: getDesaName(),
-            kelompok_name: getKelompokName()
+            kelompok_name: getKelompokName(),
+            status: student.status || 'active' // Default to active if not set
           }
         } catch (error) {
           console.error('Error transforming student data:', error, student)
@@ -392,7 +381,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             class_name: '',
             daerah_name: '',
             desa_name: '',
-            kelompok_name: ''
+            kelompok_name: '',
+            status: student.status || 'active'
           }
         }
       })
@@ -961,7 +951,7 @@ export async function deleteStudent(
     // Get student data (including soft deleted for hard delete scenario)
     const { data: student, error: studentError } = await adminClient
       .from('students')
-      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
+      .select('id, name, gender, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .eq('id', studentId)
       .single()
 
