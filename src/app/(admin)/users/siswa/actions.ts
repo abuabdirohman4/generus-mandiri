@@ -185,6 +185,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             kelompok_id,
             desa_id,
             daerah_id,
+            status,
             created_at,
             updated_at,
             student_classes(
@@ -195,7 +196,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             kelompok:kelompok_id(name)
           `)
           .is('deleted_at', null)
-          
+
           .in('id', finalStudentIds)
           .order('name')
 
@@ -217,6 +218,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
            kelompok_id,
            desa_id,
            daerah_id,
+           status,
            created_at,
            updated_at,
            student_classes(
@@ -227,7 +229,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
            kelompok:kelompok_id(name)
          `)
         .is('deleted_at', null)
-        
+
         .in('id', studentIds)
         .order('name')
 
@@ -511,7 +513,8 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
           class_name: primaryClass?.name || '',
           daerah_name: getDaerahName(),
           desa_name: getDesaName(),
-          kelompok_name: getKelompokName()
+          kelompok_name: getKelompokName(),
+          status: student.status || 'active' // Default to active if not set
         }
       } catch (error) {
         console.error('Error transforming student data:', error, student)
@@ -530,7 +533,8 @@ async function transformStudentsData(students: any[], adminClient?: any): Promis
           class_name: '',
           daerah_name: '',
           desa_name: '',
-          kelompok_name: ''
+          kelompok_name: '',
+          status: student.status || 'active' // Default to active
         }
       }
     })

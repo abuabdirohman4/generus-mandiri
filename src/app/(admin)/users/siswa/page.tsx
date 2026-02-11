@@ -397,14 +397,16 @@ export default function SiswaPage() {
             {/* Stats Cards */}
             <StatsCards students={students.filter(s => {
               const status = dataFilters.status || 'active'
-              return status === 'all' || s.status === status
+              const studentStatus = s.status || 'active' // Fallback to 'active' if undefined
+              return status === 'all' || studentStatus === status
             })} userProfile={userProfile} />
 
             {/* Students Table */}
             <StudentsTable
               students={students.filter(s => {
                 const status = dataFilters.status || 'active'
-                return status === 'all' || s.status === status
+                const studentStatus = s.status || 'active' // Fallback to 'active' if undefined
+                return status === 'all' || studentStatus === status
               })}
               userRole={userProfile?.role || null}
               onEdit={handleEditStudent}
