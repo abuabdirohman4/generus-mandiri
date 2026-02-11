@@ -12,6 +12,7 @@
 - Rapot
     - [ ] Flexible struktur materi
     - [ ] Download Rapot per individu
+- "Absensi" -> "Presensi"
 
 ## v1.10.1
 - [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
