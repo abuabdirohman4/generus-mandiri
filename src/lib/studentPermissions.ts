@@ -46,6 +46,8 @@ export interface TransferRequest {
   status: 'pending' | 'approved' | 'rejected' | 'cancelled'
   requested_by: string
   requested_at: string
+  reason?: string
+  notes?: string
   reviewed_by?: string
   reviewed_at?: string
   review_notes?: string

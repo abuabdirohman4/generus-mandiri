@@ -4,6 +4,12 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature } from '@/lib/accessControlServer'
+import {
+  canSoftDeleteStudent,
+  canHardDeleteStudent,
+  type UserProfile,
+  type Student as StudentPermission,
+} from '@/lib/studentPermissions'
 
 export interface Student {
   id: string
@@ -921,7 +927,7 @@ export async function checkStudentHasAttendance(studentId: string): Promise<bool
 }
 
 /**
- * Menghapus siswa (admin only)
+ * Menghapus siswa dengan permission check yang baru
  * @param studentId - ID siswa yang akan dihapus
  * @param permanent - Jika true, hard delete (permanent). Jika false, soft delete (default)
  * Returns { success: boolean, error?: string } to ensure error messages are properly displayed in production
@@ -932,32 +938,30 @@ export async function deleteStudent(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
+    const adminClient = await createAdminClient()
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    // Get current user profile
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
 
-    // Check if user is admin
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id')
+      .select('id, full_name, role, daerah_id, desa_id, kelompok_id, permissions')
       .eq('id', user.id)
       .single()
 
-    if (!profile || !canAccessFeature(profile, 'users')) {
-      return { success: false, error: 'Unauthorized: Hanya admin yang dapat menghapus siswa' }
+    if (!profile) {
+      return { success: false, error: 'User profile not found' }
     }
 
-    // Use admin client to bypass RLS issues for admin
-    // RLS policies can be too restrictive for delete operations
-    const adminClient = await createAdminClient()
-
-    // Check if student exists
-    const { data: existingStudent, error: studentError } = await adminClient
+    // Get student data (including soft deleted for hard delete scenario)
+    const { data: student, error: studentError } = await adminClient
       .from('students')
-      .select('id, name, class_id, kelompok_id, desa_id, daerah_id')
+      .select('id, full_name, daerah_id, desa_id, kelompok_id, status, deleted_at')
       .eq('id', studentId)
       .single()
 
@@ -969,89 +973,33 @@ export async function deleteStudent(
       return { success: false, error: 'Gagal menghapus siswa' }
     }
 
-    if (!existingStudent) {
+    if (!student) {
       return { success: false, error: 'Siswa tidak ditemukan' }
     }
 
-    // For Admin Kelompok: verify student belongs to their kelompok
-    if (profile.kelompok_id) {
-      // Check if student's kelompok_id matches admin's kelompok_id
-      if (existingStudent.kelompok_id !== profile.kelompok_id) {
-        // If student doesn't have kelompok_id, check via class
-        if (!existingStudent.kelompok_id && existingStudent.class_id) {
-          const { data: classData } = await adminClient
-            .from('classes')
-            .select('kelompok_id')
-            .eq('id', existingStudent.class_id)
-            .single()
-
-          if (!classData) {
-            return { success: false, error: 'Tidak dapat menghapus siswa: kelas siswa tidak ditemukan' }
-          }
-
-          if (classData.kelompok_id !== profile.kelompok_id) {
-            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari kelompok lain' }
-          }
-        } else {
-          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari kelompok lain' }
-        }
-      }
-    }
-
-    // For Admin Desa: verify student belongs to their desa
-    if (profile.desa_id && !profile.kelompok_id) {
-      if (existingStudent.desa_id !== profile.desa_id) {
-        // If student doesn't have desa_id, check via class -> kelompok -> desa
-        if (!existingStudent.desa_id && existingStudent.class_id) {
-          const { data: classData } = await adminClient
-            .from('classes')
-            .select('kelompok_id, kelompok:kelompok_id(desa_id)')
-            .eq('id', existingStudent.class_id)
-            .single()
-
-          if (!classData || !classData.kelompok) {
-            return { success: false, error: 'Tidak dapat menghapus siswa: data kelas siswa tidak valid' }
-          }
-
-          const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
-          if (kelompok?.desa_id !== profile.desa_id) {
-            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari desa lain' }
-          }
-        } else {
-          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari desa lain' }
-        }
-      }
-    }
-
-    // For Admin Daerah: verify student belongs to their daerah
-    if (profile.daerah_id && !profile.desa_id && !profile.kelompok_id) {
-      if (existingStudent.daerah_id !== profile.daerah_id) {
-        // If student doesn't have daerah_id, check via class -> kelompok -> desa -> daerah
-        if (!existingStudent.daerah_id && existingStudent.class_id) {
-          const { data: classData } = await adminClient
-            .from('classes')
-            .select('kelompok_id, kelompok:kelompok_id(desa_id, desa:desa_id(daerah_id))')
-            .eq('id', existingStudent.class_id)
-            .single()
-
-          if (!classData || !classData.kelompok) {
-            return { success: false, error: 'Tidak dapat menghapus siswa: data kelas siswa tidak valid' }
-          }
-
-          const kelompok = Array.isArray(classData.kelompok) ? classData.kelompok[0] : classData.kelompok
-          const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
-          if (desa?.daerah_id !== profile.daerah_id) {
-            return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari daerah lain' }
-          }
-        } else {
-          return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa dari daerah lain' }
-        }
-      }
-    }
-
+    // Check permission using new permission logic
     if (permanent) {
-      // HARD DELETE: Permanent deletion
-      // Delete student from junction table first (if exists)
+      // HARD DELETE: Only superadmin + student must be soft deleted first
+      if (!canHardDeleteStudent(profile as UserProfile, student as StudentPermission)) {
+        if (profile.role !== 'superadmin') {
+          return {
+            success: false,
+            error: 'Hanya superadmin yang dapat menghapus siswa secara permanen',
+          }
+        }
+        if (!student.deleted_at) {
+          return {
+            success: false,
+            error: 'Siswa harus di-soft delete terlebih dahulu sebelum hard delete',
+          }
+        }
+        return {
+          success: false,
+          error: 'Tidak memiliki izin untuk menghapus siswa ini',
+        }
+      }
+
+      // Delete student from junction table first
       const { error: junctionDeleteError } = await adminClient
         .from('student_classes')
         .delete()
@@ -1062,37 +1010,51 @@ export async function deleteStudent(
         // Continue anyway, will try to delete student
       }
 
-      // Delete student using admin client to bypass RLS
-      // Cascade will automatically delete attendance_logs
+      // Delete student permanently (cascade deletes attendance_logs)
       const { error: deleteError } = await adminClient
         .from('students')
         .delete()
         .eq('id', studentId)
 
       if (deleteError) {
-        // Handle specific RLS errors
-        if (deleteError.code === 'PGRST301' || deleteError.message.includes('permission denied') || deleteError.message.includes('new row violates row-level security')) {
+        if (
+          deleteError.code === 'PGRST301' ||
+          deleteError.message.includes('permission denied')
+        ) {
           return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
         }
         if (deleteError.code === '23503') {
-          return { success: false, error: 'Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan' }
+          return {
+            success: false,
+            error: 'Tidak dapat menghapus siswa: terdapat data terkait yang masih digunakan',
+          }
         }
         handleApiError(deleteError, 'menghapus data', 'Gagal menghapus siswa')
         return { success: false, error: 'Gagal menghapus siswa' }
       }
     } else {
-      // SOFT DELETE: Mark as deleted
+      // SOFT DELETE: Check permission
+      if (!canSoftDeleteStudent(profile as UserProfile, student as StudentPermission)) {
+        return {
+          success: false,
+          error: 'Tidak memiliki izin untuk menghapus siswa ini',
+        }
+      }
+
+      // Mark as deleted
       const { error: updateError } = await adminClient
         .from('students')
         .update({
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id
+          deleted_by: user.id,
         })
         .eq('id', studentId)
 
       if (updateError) {
-        // Handle specific RLS errors
-        if (updateError.code === 'PGRST301' || updateError.message.includes('permission denied') || updateError.message.includes('new row violates row-level security')) {
+        if (
+          updateError.code === 'PGRST301' ||
+          updateError.message.includes('permission denied')
+        ) {
           return { success: false, error: 'Tidak memiliki izin untuk menghapus siswa ini' }
         }
         handleApiError(updateError, 'menghapus data', 'Gagal menghapus siswa')
@@ -1101,14 +1063,11 @@ export async function deleteStudent(
     }
 
     revalidatePath('/users/siswa')
+    revalidatePath('/absensi')
     return { success: true }
   } catch (error) {
-    // Extract error message for unknown errors
-    let errorMessage = 'Gagal menghapus siswa'
-
-    if (error instanceof Error) {
-      errorMessage = error.message
-    }
+    const errorMessage =
+      error instanceof Error ? error.message : 'Gagal menghapus siswa'
 
     handleApiError(error, 'menghapus data', errorMessage)
     return { success: false, error: errorMessage }
