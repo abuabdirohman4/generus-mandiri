@@ -16,6 +16,7 @@ interface StudentsTableProps {
   onDelete: (studentId: string, permanent: boolean) => void
   onArchive?: (student: Student) => void
   onTransfer?: (students: Student[]) => void
+  onUnarchive?: (student: Student) => void
   userProfile: {
     role: string;
     classes?: Array<{ id: string; name: string }>
@@ -30,6 +31,7 @@ export default function StudentsTable({
   onDelete,
   onArchive,
   onTransfer,
+  onUnarchive,
   userProfile,
   classes: classesData
 }: StudentsTableProps) {
@@ -304,8 +306,8 @@ export default function StudentsTable({
             <PencilIcon className="w-5 h-5" />
           </button>
 
-          {/* Archive Action - only for admin */}
-          {(userRole === 'admin' || userRole === 'superadmin') && onArchive && (
+          {/* Archive Action - only for admin and active students */}
+          {(userRole === 'admin' || userRole === 'superadmin') && onArchive && student.status === 'active' && (
             <button
               onClick={() => onArchive(student)}
               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
@@ -322,6 +324,29 @@ export default function StudentsTable({
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                />
+              </svg>
+            </button>
+          )}
+
+          {/* Unarchive Action - only for admin and archived students */}
+          {(userRole === 'admin' || userRole === 'superadmin') && onUnarchive && (student.status === 'graduated' || student.status === 'inactive') && (
+            <button
+              onClick={() => onUnarchive(student)}
+              className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+              title="Kembalikan ke Aktif"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
             </button>

@@ -8,7 +8,7 @@ import Label from '@/components/form/Label'
 interface ArchiveStudentModalProps {
   isOpen: boolean
   onClose: () => void
-  onArchive: (status: 'graduated' | 'inactive', notes?: string) => Promise<void>
+  onArchive: (status: 'inactive' | 'graduated', notes?: string) => Promise<void>
   studentName: string
   isLoading?: boolean
 }
@@ -20,19 +20,19 @@ export default function ArchiveStudentModal({
   studentName,
   isLoading = false,
 }: ArchiveStudentModalProps) {
-  const [status, setStatus] = useState<'graduated' | 'inactive'>('graduated')
+  const [status, setStatus] = useState<'inactive' | 'graduated'>('inactive')
   const [notes, setNotes] = useState('')
 
   const handleSubmit = async () => {
     await onArchive(status, notes || undefined)
     // Reset form
-    setStatus('graduated')
+    setStatus('inactive')
     setNotes('')
   }
 
   const handleClose = () => {
     if (!isLoading) {
-      setStatus('graduated')
+      setStatus('inactive')
       setNotes('')
       onClose()
     }
@@ -78,18 +78,18 @@ export default function ArchiveStudentModal({
           {/* Status Selection */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="status" required>
-                Status Arsip
+              <Label htmlFor="status">
+                Status Arsip <span className="text-red-500">*</span>
               </Label>
               <select
                 id="status"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as 'graduated' | 'inactive')}
+                onChange={(e) => setStatus(e.target.value as 'inactive' | 'graduated')}
                 disabled={isLoading}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
               >
-                <option value="graduated">Lulus (Graduated)</option>
                 <option value="inactive">Tidak Aktif (Inactive)</option>
+                {/* <option value="graduated">Lulus (Graduated)</option> */}
               </select>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {status === 'graduated'

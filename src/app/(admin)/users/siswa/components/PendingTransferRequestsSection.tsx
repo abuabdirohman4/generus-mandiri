@@ -3,8 +3,21 @@
 import { useState } from 'react'
 import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
-import { formatDistanceToNow } from 'date-fns'
-import { id as localeId } from 'date-fns/locale'
+
+// Helper function to format relative time
+function formatRelativeTime(date: string): string {
+  const now = new Date()
+  const past = new Date(date)
+  const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000)
+
+  if (diffInSeconds < 60) return 'baru saja'
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit yang lalu`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam yang lalu`
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} hari yang lalu`
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} minggu yang lalu`
+
+  return `${Math.floor(diffInSeconds / 2592000)} bulan yang lalu`
+}
 
 interface TransferRequest {
   id: string
@@ -151,10 +164,7 @@ export default function PendingTransferRequestsSection({
                     Pending
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatDistanceToNow(new Date(request.requested_at), {
-                      addSuffix: true,
-                      locale: localeId,
-                    })}
+                    {formatRelativeTime(request.requested_at)}
                   </span>
                 </div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">

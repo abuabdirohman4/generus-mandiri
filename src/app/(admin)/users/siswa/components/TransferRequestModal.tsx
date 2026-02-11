@@ -215,10 +215,11 @@ export default function TransferRequestModal({
         <div className="space-y-4 mb-6">
           {/* Destination Organization */}
           <div>
-            <Label htmlFor="daerah" required>
-              Daerah Tujuan
+            <Label htmlFor="daerah">
+              Daerah Tujuan <span className="text-red-500">*</span>
             </Label>
             <InputFilter
+              label=""
               id="daerah"
               options={daerah.map((d) => ({ value: d.id, label: d.name }))}
               value={selectedDaerah}
@@ -229,10 +230,11 @@ export default function TransferRequestModal({
           </div>
 
           <div>
-            <Label htmlFor="desa" required>
-              Desa Tujuan
+            <Label htmlFor="desa">
+              Desa Tujuan <span className="text-red-500">*</span>
             </Label>
             <InputFilter
+              label=""
               id="desa"
               options={filteredDesa.map((d) => ({ value: d.id, label: d.name }))}
               value={selectedDesa}
@@ -243,10 +245,11 @@ export default function TransferRequestModal({
           </div>
 
           <div>
-            <Label htmlFor="kelompok" required>
-              Kelompok Tujuan
+            <Label htmlFor="kelompok">
+              Kelompok Tujuan <span className="text-red-500">*</span>
             </Label>
             <InputFilter
+              label=""
               id="kelompok"
               options={filteredKelompok.map((k) => ({ value: k.id, label: k.name }))}
               value={selectedKelompok}
@@ -261,11 +264,10 @@ export default function TransferRequestModal({
             <div>
               <Label htmlFor="classes">Kelas Tujuan (Opsional)</Label>
               <MultiSelectCheckbox
-                id="classes"
-                options={filteredClasses.map((c) => ({ value: c.id, label: c.name }))}
-                selectedValues={selectedClassIds}
+                label=""
+                items={filteredClasses.map((c) => ({ id: c.id, label: c.name }))}
+                selectedIds={selectedClassIds}
                 onChange={setSelectedClassIds}
-                placeholder="Pilih kelas (kosongkan jika belum ditentukan)"
                 disabled={isLoading}
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -276,8 +278,8 @@ export default function TransferRequestModal({
 
           {/* Reason (required for cross-boundary) */}
           <div>
-            <Label htmlFor="reason" required={reasonRequired}>
-              Alasan Transfer
+            <Label htmlFor="reason">
+              Alasan Transfer {reasonRequired && <span className="text-red-500">*</span>}
             </Label>
             <textarea
               id="reason"

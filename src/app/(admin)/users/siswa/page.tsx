@@ -17,9 +17,9 @@ import {
   createTransferRequest,
   approveTransferRequest,
   rejectTransferRequest,
-  getPendingTransferRequests,
-  type Student
+  getPendingTransferRequests
 } from './actions/management'
+import type { Student } from './actions'
 import { toast } from 'sonner'
 
 export default function SiswaPage() {
@@ -65,6 +65,7 @@ export default function SiswaPage() {
   const [transferLoading, setTransferLoading] = useState(false)
   const [pendingRequests, setPendingRequests] = useState<any[]>([])
   const [pendingRequestsLoading, setPendingRequestsLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<'active' | 'graduated' | 'inactive' | 'all'>('active')
 
   // Fetch pending transfer requests
   const fetchPendingRequests = useCallback(async () => {
@@ -171,6 +172,25 @@ export default function SiswaPage() {
         return { success: false, error: 'Unexpected error' }
       } finally {
         setTransferLoading(false)
+      }
+    },
+    [handleBatchImportSuccess]
+  )
+
+  const handleUnarchive = useCallback(
+    async (student: Student) => {
+      try {
+        const result = await unarchiveStudent(student.id)
+
+        if (result.success) {
+          toast.success('Siswa berhasil dikembalikan ke status aktif')
+          handleBatchImportSuccess() // Refresh students
+        } else {
+          toast.error(result.error || 'Gagal mengembalikan siswa')
+        }
+      } catch (error) {
+        toast.error('Terjadi kesalahan saat mengembalikan siswa')
+        console.error('Unarchive error:', error)
       }
     },
     [handleBatchImportSuccess]
@@ -324,17 +344,35 @@ export default function SiswaPage() {
               cascadeFilters={false}
             />
 
+            {/* Status Filter */}
+            <div className="mb-4 flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Status:
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="active">Aktif</option>
+                {/* <option value="graduated">Lulus</option> */}
+                <option value="inactive">Tidak Aktif</option>
+                <option value="all">Semua</option>
+              </select>
+            </div>
+
             {/* Stats Cards */}
-            <StatsCards students={students} userProfile={userProfile} />
+            <StatsCards students={students.filter(s => statusFilter === 'all' || s.status === statusFilter)} userProfile={userProfile} />
 
             {/* Students Table */}
             <StudentsTable
-              students={students}
+              students={students.filter(s => statusFilter === 'all' || s.status === statusFilter)}
               userRole={userProfile?.role || null}
               onEdit={handleEditStudent}
               onDelete={handleDeleteStudent}
               onArchive={isAdmin ? handleArchiveClick : undefined}
               onTransfer={isAdmin ? handleTransferClick : undefined}
+              onUnarchive={isAdmin ? handleUnarchive : undefined}
               userProfile={userProfile}
               classes={classes}
             />
@@ -386,7 +424,7 @@ export default function SiswaPage() {
           isOpen={showArchiveModal}
           onClose={() => setShowArchiveModal(false)}
           onArchive={handleArchiveSubmit}
-          studentName={selectedStudentsForAction[0]?.full_name || ''}
+          studentName={selectedStudentsForAction[0]?.name || ''}
           isLoading={archiveLoading}
         />
 
@@ -397,23 +435,26 @@ export default function SiswaPage() {
           onSubmit={handleTransferSubmit}
           selectedStudents={selectedStudentsForAction.map((s) => ({
             id: s.id,
-            name: s.full_name,
-            daerah_id: s.daerah_id,
-            desa_id: s.desa_id,
-            kelompok_id: s.kelompok_id,
-            daerah_name: s.daerah?.name,
-            desa_name: s.desa?.name,
-            kelompok_name: s.kelompok?.name
+            name: s.name,
+            daerah_id: s.daerah_id || undefined,
+            desa_id: s.desa_id || undefined,
+            kelompok_id: s.kelompok_id || undefined,
+            daerah_name: s.daerah_name,
+            desa_name: s.desa_name,
+            kelompok_name: s.kelompok_name
           }))}
           daerah={daerah || []}
           desa={desa || []}
           kelompok={kelompok || []}
-          classes={classes || []}
+          classes={(classes || []).map((c) => ({
+            ...c,
+            kelompok_id: c.kelompok_id || undefined
+          }))}
           userProfile={{
             role: userProfile?.role || '',
-            daerah_id: userProfile?.daerah_id,
-            desa_id: userProfile?.desa_id,
-            kelompok_id: userProfile?.kelompok_id
+            daerah_id: userProfile?.daerah_id || undefined,
+            desa_id: userProfile?.desa_id || undefined,
+            kelompok_id: userProfile?.kelompok_id || undefined
           }}
           isLoading={transferLoading}
         />
