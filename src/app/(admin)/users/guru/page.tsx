@@ -4,7 +4,7 @@ import { useGuruPage } from './hooks/useGuruPage';
 import GuruTable from './components/GuruTable';
 import GuruModal from './components/GuruModal';
 import ResetPasswordModal from './components/ResetPasswordModal';
-import MeetingFormSettingsModal from './components/MeetingFormSettingsModal';
+import SettingsModal from './components/SettingsModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
@@ -140,11 +140,12 @@ export default function GuruManagementPage() {
           isLoading={false}
         />
 
-        <MeetingFormSettingsModal
+        <SettingsModal
           isOpen={formSettingsModal.isOpen}
           onClose={closeFormSettingsModal}
           userId={formSettingsModal.guru?.id || ''}
           userName={formSettingsModal.guru?.full_name || ''}
+          currentPermissions={formSettingsModal.guru?.permissions}
           onSuccess={() => {
             mutate();
           }}

@@ -56,6 +56,7 @@ interface DataFilters {
   kelompok: string[]
   kelas: string[]
   gender?: string // NEW - single select for gender
+  status?: string // NEW - single select for status (active/graduated/inactive/all)
   meetingType?: string[] // NEW - multi select for meeting type
 }
 
@@ -69,6 +70,7 @@ interface DataFilterProps {
   classList: Class[]
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
   showGender?: boolean // NEW - for pages that need gender filter
+  showStatus?: boolean // NEW - for pages that need status filter (active/graduated/inactive/all)
   showMeetingType?: boolean // NEW - for pages that need meeting type filter
   forceShowAllMeetingTypes?: boolean // NEW - for reporting/filtering pages (bypass role restrictions)
   showDaerah?: boolean // Override role-based visibility
@@ -112,6 +114,7 @@ export default function DataFilter({
   classList,
   showKelas = false,
   showGender = false, // NEW
+  showStatus = false, // NEW
   showMeetingType = false, // NEW
   forceShowAllMeetingTypes = false, // NEW
   showDaerah,
@@ -167,7 +170,7 @@ export default function DataFilter({
   // }
 
   // If no filters to show, return null
-  if (!showGender && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter && !showMeetingType) {
+  if (!showGender && !showStatus && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter && !showMeetingType) {
     return null
   }
 
@@ -541,6 +544,13 @@ export default function DataFilter({
     })
   }, [filters, onFilterChange])
 
+  const handleStatusChange = useCallback((value: string) => {
+    onFilterChange({
+      ...filters,
+      status: value
+    })
+  }, [filters, onFilterChange])
+
   const handleMeetingTypeChange = useCallback((value: string[]) => {
     onFilterChange({
       ...filters,
@@ -557,6 +567,7 @@ export default function DataFilter({
   // Determine visible filters and their order
   const visibleFilters = [
     showGender && 'gender', // NEW - add gender first
+    showStatus && 'status', // NEW - add status after gender
     shouldShowDaerah && 'daerah',
     shouldShowDesa && 'desa',
     shouldShowKelompok && 'kelompok',
@@ -575,13 +586,14 @@ export default function DataFilter({
     variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
     variant === 'page' && filterCount >= 2 && filterCount <= 4 && "grid-cols-2 md:grid-cols-4",
     variant === 'page' && filterCount === 5 && "grid-cols-2 md:grid-cols-5",
-    variant === 'modal' && filterCount >= 1 && filterCount <= 5 && "grid-cols-1",
+    variant === 'page' && filterCount === 6 && "grid-cols-2 md:grid-cols-6",
+    variant === 'modal' && filterCount >= 1 && filterCount <= 6 && "grid-cols-1",
     className
   )
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    const filterOrder = ['gender', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
+    const filterOrder = ['gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -782,6 +794,25 @@ export default function DataFilter({
               { value: 'Perempuan', label: 'Perempuan' }
             ]}
             allOptionLabel="Semua"
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
+        </div>
+      )}
+
+      {showStatus && (
+        <div className={getFilterClass(getFilterIndex('status'))}>
+          <InputFilter
+            id="statusFilter"
+            label="Status"
+            value={filters?.status || 'active'}
+            onChange={handleStatusChange}
+            options={[
+              { value: 'active', label: 'Aktif' },
+              { value: 'inactive', label: 'Tidak Aktif' },
+              { value: 'all', label: 'Semua' }
+            ]}
             widthClassName="!max-w-full"
             variant={variant}
             compact={compact}

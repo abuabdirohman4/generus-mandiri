@@ -8,6 +8,7 @@ import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon, UserCircleIcon } from '@
 import { Student } from '@/hooks/useStudents'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 import { checkStudentHasAttendance } from '../actions'
+import { canRequestTransfer } from '@/lib/studentPermissions'
 
 interface StudentsTableProps {
   students: Student[]
@@ -18,10 +19,22 @@ interface StudentsTableProps {
   onTransfer?: (students: Student[]) => void
   onUnarchive?: (student: Student) => void
   userProfile: {
+    id: string;
+    full_name: string;
     role: string;
     classes?: Array<{ id: string; name: string }>
+    daerah_id?: string | null;
+    desa_id?: string | null;
+    kelompok_id?: string | null;
+    permissions?: {
+      can_archive_students?: boolean;
+      can_transfer_students?: boolean;
+      can_soft_delete_students?: boolean;
+      can_hard_delete_students?: boolean;
+    };
   } | null | undefined
   classes?: Array<{ id: string; name: string; kelompok_id?: string | null }>
+  studentsWithPendingTransfer?: Set<string>
 }
 
 export default function StudentsTable({
@@ -33,7 +46,8 @@ export default function StudentsTable({
   onTransfer,
   onUnarchive,
   userProfile,
-  classes: classesData
+  classes: classesData,
+  studentsWithPendingTransfer
 }: StudentsTableProps) {
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
@@ -352,28 +366,36 @@ export default function StudentsTable({
             </button>
           )}
 
-          {/* Transfer Action - only for admin */}
-          {(userRole === 'admin' || userRole === 'superadmin') && onTransfer && (
-            <button
-              onClick={() => onTransfer([student])}
-              className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
-              title="Transfer"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {/* Transfer Action - for users with permission, disabled if has pending transfer */}
+          {canRequestTransfer(userProfile as any || null, student) && onTransfer && (() => {
+            const hasPendingTransfer = studentsWithPendingTransfer?.has(student.id)
+            return (
+              <button
+                onClick={() => !hasPendingTransfer && onTransfer([student])}
+                disabled={hasPendingTransfer}
+                className={`transition-colors ${
+                  hasPendingTransfer
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300'
+                }`}
+                title={hasPendingTransfer ? 'Siswa memiliki permintaan transfer yang pending' : 'Transfer'}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                />
-              </svg>
-            </button>
-          )}
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+              </button>
+            )
+          })()}
 
           {/* Delete Action - only for admin */}
           {(userRole === 'admin' || userRole === 'superadmin') && (

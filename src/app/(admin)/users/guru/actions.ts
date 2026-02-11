@@ -13,6 +13,12 @@ export interface TeacherData {
   daerah_id: string;
   desa_id?: string | null;
   kelompok_id?: string;
+  permissions?: {
+    can_archive_students?: boolean;
+    can_transfer_students?: boolean;
+    can_soft_delete_students?: boolean;
+    can_hard_delete_students?: boolean;
+  };
 }
 
 export async function createTeacher(data: TeacherData) {
@@ -70,7 +76,13 @@ export async function createTeacher(data: TeacherData) {
         role: 'teacher',
         daerah_id: data.daerah_id,
         desa_id: data.desa_id || null,
-        kelompok_id: data.kelompok_id
+        kelompok_id: data.kelompok_id,
+        permissions: data.permissions || {
+          can_archive_students: false,
+          can_transfer_students: false,
+          can_soft_delete_students: false,
+          can_hard_delete_students: false
+        }
       }]);
 
     if (profileError) {
@@ -119,6 +131,12 @@ export async function updateTeacher(id: string, data: TeacherData) {
         daerah_id: data.daerah_id,
         desa_id: data.desa_id || null,
         kelompok_id: data.kelompok_id,
+        permissions: data.permissions || {
+          can_archive_students: false,
+          can_transfer_students: false,
+          can_soft_delete_students: false,
+          can_hard_delete_students: false
+        },
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
@@ -726,12 +744,12 @@ export async function getMeetingFormSettings(userId: string): Promise<{ success:
 }
 
 export async function updateMeetingFormSettings(
-  userId: string, 
+  userId: string,
   settings: MeetingFormSettings
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
-    
+
     const { error } = await supabase
       .from('profiles')
       .update({
@@ -749,9 +767,45 @@ export async function updateMeetingFormSettings(
     return { success: true }
   } catch (error) {
     console.error('Error updating meeting form settings:', error)
-    return { 
-      success: false, 
-      error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan pengaturan form').message 
+    return {
+      success: false,
+      error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan pengaturan form').message
+    }
+  }
+}
+
+export async function updateTeacherPermissions(
+  userId: string,
+  permissions: {
+    can_archive_students?: boolean;
+    can_transfer_students?: boolean;
+    can_soft_delete_students?: boolean;
+    can_hard_delete_students?: boolean;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        permissions: permissions,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+
+    if (error) {
+      throw error
+    }
+
+    revalidatePath('/users/guru')
+    revalidatePath('/users/siswa')
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating teacher permissions:', error)
+    return {
+      success: false,
+      error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses').message
     }
   }
 }

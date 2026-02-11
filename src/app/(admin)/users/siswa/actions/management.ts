@@ -276,6 +276,33 @@ export async function createTransferRequest(
       }
     }
 
+    // Check if any student already has a pending transfer request
+    const { data: existingRequests } = await adminClient
+      .from('transfer_requests')
+      .select('id, student_ids, status')
+      .eq('status', 'pending')
+
+    if (existingRequests && existingRequests.length > 0) {
+      const studentsWithPendingTransfer: string[] = []
+
+      for (const student of students) {
+        const hasPending = existingRequests.some(req =>
+          req.student_ids && req.student_ids.includes(student.id)
+        )
+
+        if (hasPending) {
+          studentsWithPendingTransfer.push(student.name)
+        }
+      }
+
+      if (studentsWithPendingTransfer.length > 0) {
+        return {
+          success: false,
+          error: `Siswa berikut masih memiliki permintaan transfer yang belum selesai: ${studentsWithPendingTransfer.join(', ')}. Mohon tunggu hingga request sebelumnya diproses.`,
+        }
+      }
+    }
+
     // All students must have same source organization
     const firstStudent = students[0]
     const allSameOrg = students.every(
@@ -785,26 +812,78 @@ export async function getPendingTransferRequests(): Promise<{
       .eq('status', 'pending')
       .order('requested_at', { ascending: false })
 
-    // Filter by target organization
+    // Build two queries:
+    // 1. Requests that need MY review (targeting my org)
+    // 2. Requests that I created
+
+    let reviewQuery = adminClient
+      .from('transfer_requests')
+      .select(
+        `
+        *,
+        requester:requested_by(full_name),
+        reviewer:reviewed_by(full_name)
+      `
+      )
+      .eq('status', 'pending')
+      .order('requested_at', { ascending: false })
+
+    let myRequestsQuery = adminClient
+      .from('transfer_requests')
+      .select(
+        `
+        *,
+        requester:requested_by(full_name),
+        reviewer:reviewed_by(full_name)
+      `
+      )
+      .eq('status', 'pending')
+      .eq('requested_by', profile.id)
+      .order('requested_at', { ascending: false })
+
+    // Filter review query by target organization based on admin level
     if (profile.role === 'superadmin') {
-      // Superadmin sees all
+      // Superadmin sees all pending requests (both as reviewer and requester)
     } else if (profile.role === 'admin') {
-      // Admin sees requests targeting their org
-      query = query.eq('to_daerah_id', profile.daerah_id)
-
-      if (profile.desa_id) {
-        query = query.eq('to_desa_id', profile.desa_id)
-      }
-
+      // Determine admin level
       if (profile.kelompok_id) {
-        query = query.eq('to_kelompok_id', profile.kelompok_id)
+        // Admin Kelompok: only requests targeting their kelompok
+        reviewQuery = reviewQuery.eq('to_kelompok_id', profile.kelompok_id)
+      } else if (profile.desa_id) {
+        // Admin Desa: requests targeting their desa (any kelompok in their desa)
+        reviewQuery = reviewQuery.eq('to_desa_id', profile.desa_id)
+      } else if (profile.daerah_id) {
+        // Admin Daerah: requests targeting their daerah (any desa/kelompok in their daerah)
+        reviewQuery = reviewQuery.eq('to_daerah_id', profile.daerah_id)
       }
     } else {
-      // Teachers/students can't review
-      return { success: true, requests: [] }
+      // Teachers/students can't review, but can see their own requests
+      reviewQuery = reviewQuery.eq('id', 'none') // Empty result
     }
 
-    const { data: requests, error } = await query
+    // Execute both queries
+    const [reviewResult, myRequestsResult] = await Promise.all([
+      reviewQuery,
+      myRequestsQuery
+    ])
+
+    if (reviewResult.error) {
+      console.error('Get pending requests error:', reviewResult.error)
+      return { success: false, error: 'Gagal memuat pending requests' }
+    }
+
+    if (myRequestsResult.error) {
+      console.error('Get my requests error:', myRequestsResult.error)
+      return { success: false, error: 'Gagal memuat my requests' }
+    }
+
+    // Combine results and deduplicate by id
+    const allRequests = [...(reviewResult.data || []), ...(myRequestsResult.data || [])]
+    const uniqueRequests = Array.from(
+      new Map(allRequests.map(r => [r.id, r])).values()
+    )
+
+    const { data: requests, error } = { data: uniqueRequests, error: null }
 
     if (error) {
       console.error('Get pending requests error:', error)
@@ -973,6 +1052,60 @@ export async function restoreStudent(studentId: string): Promise<ArchiveStudentR
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Gagal restore siswa',
+    }
+  }
+}
+
+// ============================================
+// GET ALL ORGANISATIONS (FOR TRANSFER MODAL)
+// ============================================
+
+/**
+ * Fetch ALL organisations without filtering by user hierarchy
+ * Used by Transfer Modal to allow cross-boundary transfers
+ */
+export async function getAllOrganisationsForTransfer() {
+  try {
+    const supabase = await createClient()
+
+    // Fetch all daerah
+    const { data: daerah, error: daerahError } = await supabase
+      .from('daerah')
+      .select('id, name')
+      .order('name')
+
+    if (daerahError) throw daerahError
+
+    // Fetch all desa
+    const { data: desa, error: desaError } = await supabase
+      .from('desa')
+      .select('id, name, daerah_id')
+      .order('name')
+
+    if (desaError) throw desaError
+
+    // Fetch all kelompok
+    const { data: kelompok, error: kelompokError } = await supabase
+      .from('kelompok')
+      .select('id, name, desa_id')
+      .order('name')
+
+    if (kelompokError) throw kelompokError
+
+    return {
+      success: true,
+      daerah: daerah || [],
+      desa: desa || [],
+      kelompok: kelompok || [],
+    }
+  } catch (error) {
+    console.error('Get all organisations error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Gagal mengambil data organisasi',
+      daerah: [],
+      desa: [],
+      kelompok: [],
     }
   }
 }

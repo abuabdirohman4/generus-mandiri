@@ -14,6 +14,12 @@ interface Guru {
   desa_name?: string;
   class_names?: string;
   created_at: string;
+  permissions?: {
+    can_archive_students?: boolean;
+    can_transfer_students?: boolean;
+    can_soft_delete_students?: boolean;
+    can_hard_delete_students?: boolean;
+  };
 }
 
 interface GuruTableProps {

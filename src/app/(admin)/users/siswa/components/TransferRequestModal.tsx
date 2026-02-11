@@ -225,6 +225,7 @@ export default function TransferRequestModal({
               value={selectedDaerah}
               onChange={setSelectedDaerah}
               placeholder="Pilih Daerah"
+              variant="modal"
               disabled={isLoading}
             />
           </div>
@@ -240,6 +241,7 @@ export default function TransferRequestModal({
               value={selectedDesa}
               onChange={setSelectedDesa}
               placeholder={selectedDaerah ? 'Pilih Desa' : 'Pilih Daerah terlebih dahulu'}
+              variant="modal"
               disabled={isLoading || !selectedDaerah}
             />
           </div>
@@ -255,6 +257,7 @@ export default function TransferRequestModal({
               value={selectedKelompok}
               onChange={setSelectedKelompok}
               placeholder={selectedDesa ? 'Pilih Kelompok' : 'Pilih Desa terlebih dahulu'}
+              variant="modal"
               disabled={isLoading || !selectedDesa}
             />
           </div>

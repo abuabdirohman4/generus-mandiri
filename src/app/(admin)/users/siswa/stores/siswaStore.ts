@@ -13,6 +13,7 @@ interface DataFilters {
   kelompok: string[]
   kelas: string[]
   gender?: string
+  status?: string
 }
 
 interface SiswaState {
@@ -60,7 +61,8 @@ export const useSiswaStore = create<SiswaState>()(
         desa: [],
         kelompok: [],
         kelas: [],
-        gender: ''
+        gender: '',
+        status: 'active'
       },
       submitting: false,
       

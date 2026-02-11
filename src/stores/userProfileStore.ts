@@ -23,6 +23,12 @@ interface UserProfile {
   notification_badge?: {
     pending_transfer_requests?: number;
   };
+  permissions?: {
+    can_archive_students?: boolean;
+    can_transfer_students?: boolean;
+    can_soft_delete_students?: boolean;
+    can_hard_delete_students?: boolean;
+  };
 }
 
 interface UserProfileState {

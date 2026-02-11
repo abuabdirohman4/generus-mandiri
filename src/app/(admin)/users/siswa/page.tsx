@@ -17,7 +17,8 @@ import {
   createTransferRequest,
   approveTransferRequest,
   rejectTransferRequest,
-  getPendingTransferRequests
+  getPendingTransferRequests,
+  getAllOrganisationsForTransfer
 } from './actions/management'
 import type { Student } from './actions'
 import { toast } from 'sonner'
@@ -56,6 +57,7 @@ export default function SiswaPage() {
 
   const { showModal: showAssignModal, openModal: openAssignModal, closeModal: closeAssignModal } = useAssignStudentsStore()
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+  const canTransfer = isAdmin || userProfile?.permissions?.can_transfer_students === true
 
   // State for new modals
   const [showArchiveModal, setShowArchiveModal] = useState(false)
@@ -65,7 +67,12 @@ export default function SiswaPage() {
   const [transferLoading, setTransferLoading] = useState(false)
   const [pendingRequests, setPendingRequests] = useState<any[]>([])
   const [pendingRequestsLoading, setPendingRequestsLoading] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<'active' | 'graduated' | 'inactive' | 'all'>('active')
+  const [allOrganisations, setAllOrganisations] = useState<{
+    daerah: any[]
+    desa: any[]
+    kelompok: any[]
+  }>({ daerah: [], desa: [], kelompok: [] })
+  const [studentsWithPendingTransfer, setStudentsWithPendingTransfer] = useState<Set<string>>(new Set())
 
   // Fetch pending transfer requests
   const fetchPendingRequests = useCallback(async () => {
@@ -75,6 +82,15 @@ export default function SiswaPage() {
       const result = await getPendingTransferRequests()
       if (result.success && result.requests) {
         setPendingRequests(result.requests)
+
+        // Extract student IDs with pending transfers
+        const studentIds = new Set<string>()
+        result.requests.forEach(req => {
+          if (req.student_ids && Array.isArray(req.student_ids)) {
+            req.student_ids.forEach((id: string) => studentIds.add(id))
+          }
+        })
+        setStudentsWithPendingTransfer(studentIds)
       }
     } catch (error) {
       console.error('Error fetching pending requests:', error)
@@ -83,12 +99,38 @@ export default function SiswaPage() {
     }
   }, [isAdmin])
 
-  // Fetch on mount and when tab changes to pending-transfers
+  // Fetch pending requests on mount (to show tab badge count)
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPendingRequests()
+    }
+  }, [isAdmin, fetchPendingRequests])
+
+  // Refresh when tab becomes active
   useEffect(() => {
     if (activeTab === 'pending-transfers' && isAdmin) {
       fetchPendingRequests()
     }
   }, [activeTab, isAdmin, fetchPendingRequests])
+
+  // Fetch ALL organisations for transfer modal (no user hierarchy filter)
+  useEffect(() => {
+    const fetchAllOrganisations = async () => {
+      const result = await getAllOrganisationsForTransfer()
+      if (result.success) {
+        setAllOrganisations({
+          daerah: result.daerah,
+          desa: result.desa,
+          kelompok: result.kelompok
+        })
+      }
+    }
+
+    // Only fetch when admin (since only admin can transfer)
+    if (isAdmin) {
+      fetchAllOrganisations()
+    }
+  }, [isAdmin])
 
   // Handlers for new actions
   const handleArchiveClick = useCallback((student: Student) => {
@@ -158,6 +200,8 @@ export default function SiswaPage() {
             toast.success('Transfer berhasil dilakukan (auto-approved)')
           } else {
             toast.success('Permintaan transfer berhasil dibuat')
+            // Refresh pending requests to show tab
+            await fetchPendingRequests()
           }
           setShowTransferModal(false)
           handleBatchImportSuccess() // Refresh students
@@ -174,7 +218,7 @@ export default function SiswaPage() {
         setTransferLoading(false)
       }
     },
-    [handleBatchImportSuccess]
+    [handleBatchImportSuccess, fetchPendingRequests]
   )
 
   const handleUnarchive = useCallback(
@@ -202,8 +246,10 @@ export default function SiswaPage() {
       if (!result.success) {
         throw new Error(result.error || 'Failed to approve')
       }
+      // Refresh pending requests after approve
+      await fetchPendingRequests()
     },
-    []
+    [fetchPendingRequests]
   )
 
   const handleRejectRequest = useCallback(
@@ -212,8 +258,10 @@ export default function SiswaPage() {
       if (!result.success) {
         throw new Error(result.error || 'Failed to reject')
       }
+      // Refresh pending requests after reject
+      await fetchPendingRequests()
     },
-    []
+    [fetchPendingRequests]
   )
 
   const handleTabChange = useCallback(
@@ -307,21 +355,22 @@ export default function SiswaPage() {
                 >
                   Siswa
                 </button>
-                <button
-                  onClick={() => handleTabChange('pending-transfers')}
-                  className={`${
-                    activeTab === 'pending-transfers'
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
-                >
-                  Permintaan Transfer
-                  {pendingRequests.length > 0 && (
+                {/* Show tab only when there are pending requests */}
+                {pendingRequests.length > 0 && (
+                  <button
+                    onClick={() => handleTabChange('pending-transfers')}
+                    className={`${
+                      activeTab === 'pending-transfers'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
+                  >
+                    Permintaan Transfer
                     <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                       {pendingRequests.length}
                     </span>
-                  )}
-                </button>
+                  </button>
+                )}
               </nav>
             </div>
           </div>
@@ -341,40 +390,31 @@ export default function SiswaPage() {
               classList={classes || []}
               showKelas={true}
               showGender={true}
+              showStatus={true}
               cascadeFilters={false}
             />
 
-            {/* Status Filter */}
-            <div className="mb-4 flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Status:
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              >
-                <option value="active">Aktif</option>
-                {/* <option value="graduated">Lulus</option> */}
-                <option value="inactive">Tidak Aktif</option>
-                <option value="all">Semua</option>
-              </select>
-            </div>
-
             {/* Stats Cards */}
-            <StatsCards students={students.filter(s => statusFilter === 'all' || s.status === statusFilter)} userProfile={userProfile} />
+            <StatsCards students={students.filter(s => {
+              const status = dataFilters.status || 'active'
+              return status === 'all' || s.status === status
+            })} userProfile={userProfile} />
 
             {/* Students Table */}
             <StudentsTable
-              students={students.filter(s => statusFilter === 'all' || s.status === statusFilter)}
+              students={students.filter(s => {
+                const status = dataFilters.status || 'active'
+                return status === 'all' || s.status === status
+              })}
               userRole={userProfile?.role || null}
               onEdit={handleEditStudent}
               onDelete={handleDeleteStudent}
               onArchive={isAdmin ? handleArchiveClick : undefined}
-              onTransfer={isAdmin ? handleTransferClick : undefined}
+              onTransfer={canTransfer ? handleTransferClick : undefined}
               onUnarchive={isAdmin ? handleUnarchive : undefined}
               userProfile={userProfile}
               classes={classes}
+              studentsWithPendingTransfer={studentsWithPendingTransfer}
             />
           </>
         )}
@@ -383,6 +423,7 @@ export default function SiswaPage() {
         {activeTab === 'pending-transfers' && isAdmin && (
           <PendingTransferRequestsSection
             requests={pendingRequests}
+            currentUserId={userProfile?.id || ''}
             onApprove={handleApproveRequest}
             onReject={handleRejectRequest}
             onRefresh={fetchPendingRequests}
@@ -443,9 +484,9 @@ export default function SiswaPage() {
             desa_name: s.desa_name,
             kelompok_name: s.kelompok_name
           }))}
-          daerah={daerah || []}
-          desa={desa || []}
-          kelompok={kelompok || []}
+          daerah={allOrganisations.daerah}
+          desa={allOrganisations.desa}
+          kelompok={allOrganisations.kelompok}
           classes={(classes || []).map((c) => ({
             ...c,
             kelompok_id: c.kelompok_id || undefined

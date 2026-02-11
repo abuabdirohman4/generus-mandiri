@@ -138,6 +138,17 @@ export default function CreateMeetingModal({
 
   // Filter students by selected classes and gender - support multiple classes per student
   const filteredStudents = students.filter(student => {
+    // Only show active students (exclude archived: graduated/inactive)
+    if (student.status !== 'active') {
+      return false
+    }
+
+    // Only show students with classes assigned
+    const hasClasses = (student.classes && student.classes.length > 0) || student.class_id
+    if (!hasClasses) {
+      return false
+    }
+
     // Filter by class
     let matchesClass = true
     if (selectedClassIds.length > 0) {
