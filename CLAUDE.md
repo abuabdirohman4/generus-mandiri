@@ -2,6 +2,214 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 MANDATORY: Test-Driven Development (TDD)
+
+**ALL new features, business logic, and permission systems MUST be developed using TDD.**
+
+### Why TDD is Mandatory in This Project
+
+- ✅ **Zero bugs on first implementation** - Tests catch issues before production
+- ✅ **Clear requirements** - Tests serve as executable specifications
+- ✅ **Safe refactoring** - Change code with confidence
+- ✅ **Better design** - TDD forces modular, testable code
+- ✅ **Documentation** - Tests show how code should be used
+- ✅ **Time savings** - Less debugging, fewer production bugs
+
+**Real Example**: `studentPermissions.ts` (sm-8yf)
+- 🔴 Wrote 66 tests first (~10 min)
+- 🟢 Implemented 10 functions (~15 min)
+- 🔵 Refactored (~5 min)
+- ✅ Result: 126/126 tests passing, 100% coverage, **0 bugs**, ~30 minutes total
+
+### When to Use TDD (ALWAYS for these cases)
+
+**✅ REQUIRED for:**
+1. **New business logic** - Calculations, validations, rules
+2. **Permission systems** - Any access control or authorization
+3. **Data transformations** - Filtering, mapping, aggregations
+4. **Complex algorithms** - Attendance stats, report generation
+5. **Integration points** - API interactions, database queries
+6. **Critical features** - Student management, class eligibility
+
+**❌ SKIP TDD for:**
+- Simple UI components with no logic (pure presentational)
+- Trivial getters/setters
+- Configuration files
+- Type definitions
+
+### TDD Workflow: RED → GREEN → REFACTOR
+
+**Step 1: 🔴 RED - Write Failing Tests First (~5-10 min)**
+
+```typescript
+// 1. Create test file: src/lib/myFeature.test.ts
+import { describe, it, expect } from 'vitest'
+import { myFunction } from './myFeature'
+
+describe('myFeature', () => {
+  it('should handle basic case', () => {
+    expect(myFunction(input)).toBe(expectedOutput)
+  })
+
+  it('should handle edge case: null', () => {
+    expect(myFunction(null)).toBe(defaultValue)
+  })
+
+  it('should throw error for invalid input', () => {
+    expect(() => myFunction(invalidInput)).toThrow('Invalid input')
+  })
+})
+```
+
+**Run tests** → All should FAIL (red) ✅ This is good!
+
+**Step 2: 🟢 GREEN - Implement Minimal Code (~10-15 min)**
+
+```typescript
+// 2. Create implementation: src/lib/myFeature.ts
+export function myFunction(input: InputType): OutputType {
+  // Write MINIMAL code to make tests pass
+  if (!input) return defaultValue
+  if (isInvalid(input)) throw new Error('Invalid input')
+  return processInput(input)
+}
+```
+
+**Run tests** → All should PASS (green) ✅
+
+**Step 3: 🔵 REFACTOR - Clean Up Code (~2-5 min)**
+
+```typescript
+// 3. Improve without breaking tests
+export function myFunction(input: InputType): OutputType {
+  validateInput(input) // Extract validation
+  return transformInput(input) // Extract transformation
+}
+
+function validateInput(input: InputType): void {
+  if (!input) throw new Error('Input required')
+  if (isInvalid(input)) throw new Error('Invalid input')
+}
+```
+
+**Run tests** → All should STILL PASS ✅
+
+### TDD Checklist for New Features
+
+Before starting ANY new feature, answer these questions:
+
+- [ ] Does this feature have business logic? → **Write tests first**
+- [ ] Does this involve permissions/access control? → **Write tests first**
+- [ ] Does this transform or validate data? → **Write tests first**
+- [ ] Can this feature break other parts of the system? → **Write tests first**
+- [ ] Will this be reused in multiple places? → **Write tests first**
+
+If you answered YES to any question → **Use TDD!**
+
+### TDD Commands
+
+```bash
+# Start TDD workflow
+npm run test:watch  # Auto-run tests on file save
+
+# Check coverage
+npm run test:coverage
+
+# Interactive UI
+npm run test:ui
+```
+
+### Example: Adding New Permission Feature
+
+**Scenario**: Add "can_edit_grades" permission for teachers
+
+**🔴 RED: Write tests first**
+```typescript
+// src/lib/gradePermissions.test.ts
+describe('canEditGrades', () => {
+  it('should allow admin to edit any grades', () => {
+    const admin = { role: 'admin' }
+    expect(canEditGrades(admin, anyStudent)).toBe(true)
+  })
+
+  it('should allow teacher with permission', () => {
+    const teacher = {
+      role: 'teacher',
+      permissions: { can_edit_grades: true }
+    }
+    expect(canEditGrades(teacher, student)).toBe(true)
+  })
+
+  it('should deny teacher without permission', () => {
+    const teacher = { role: 'teacher' }
+    expect(canEditGrades(teacher, student)).toBe(false)
+  })
+})
+```
+
+**🟢 GREEN: Implement function**
+```typescript
+// src/lib/gradePermissions.ts
+export function canEditGrades(user: User, student: Student): boolean {
+  if (user.role === 'admin') return true
+  if (user.role === 'teacher') {
+    return user.permissions?.can_edit_grades === true
+  }
+  return false
+}
+```
+
+**🔵 REFACTOR: Extract common logic**
+```typescript
+export function canEditGrades(user: User, student: Student): boolean {
+  return hasPermission(user, 'can_edit_grades')
+}
+
+function hasPermission(user: User, permission: string): boolean {
+  if (isAdmin(user)) return true
+  return user.permissions?.[permission] === true
+}
+```
+
+### Common TDD Mistakes to Avoid
+
+❌ **Writing implementation first** → You'll write code that's hard to test
+✅ **Write tests first** → Code will be naturally testable
+
+❌ **Testing implementation details** → Tests break on refactoring
+✅ **Test behavior/outcomes** → Tests stay valid during refactoring
+
+❌ **One giant test** → Hard to debug failures
+✅ **Many small tests** → Clear failure messages
+
+❌ **Skipping edge cases** → Bugs in production
+✅ **Test nulls, empties, boundaries** → Robust code
+
+❌ **Not running tests frequently** → Late feedback
+✅ **Run tests after every change** → Immediate feedback
+
+### TDD Resources in This Project
+
+- **Test examples**: `src/lib/__tests__/studentPermissions.test.ts` (66 tests, best practice)
+- **Test utilities**: `src/test/mocks/supabase.ts`
+- **Test setup**: `vitest.config.ts`, `src/test/setup.ts`
+- **Coverage reports**: Run `npm run test:coverage` to see coverage HTML
+
+### Enforcement
+
+**Before submitting ANY PR with new features:**
+1. ✅ Tests written BEFORE implementation
+2. ✅ All tests passing (`npm run test`)
+3. ✅ Coverage ≥90% for new code (`npm run test:coverage`)
+4. ✅ No TypeScript errors (`npm run type-check`)
+
+**Code review will reject PRs that:**
+- ❌ Add business logic without tests
+- ❌ Add permissions without tests
+- ❌ Have <70% coverage for new code
+
+---
+
 ## CRITICAL: MCP Connection Check
 
 **BEFORE running ANY Supabase operations** (migrations, queries, etc.), you MUST:
@@ -1239,8 +1447,118 @@ await mutate(meetingFormSettingsKeys.settings(userId))
 }
 ```
 - **Default**: Teachers have NO student management permissions
-- **Configurable**: Admin can grant permissions per teacher in `/users/guru` page
+- **Configurable**: Admin can grant permissions per teacher in `/users/guru` page (via SettingsModal)
 - **Superadmin & Admin**: Always have all permissions (hardcoded)
+
+**CRITICAL: Permission Implementation Checklist**
+
+When implementing permission-based features, follow these steps to avoid common pitfalls:
+
+1. **✅ Query `permissions` field from database**
+   ```typescript
+   // In AdminLayoutProvider.tsx (line 50)
+   .select(`
+     id,
+     full_name,
+     role,
+     permissions,  // ← MUST include this!
+     ...
+   `)
+   ```
+   **Common Bug**: Forgetting to select `permissions` field → permissions always `undefined` → buttons never appear
+
+2. **✅ Use correct permission check functions**
+   ```typescript
+   // Client-side: Use dedicated permission functions
+   import {
+     canArchiveStudent,
+     canTransferStudent,
+     canSoftDeleteStudent,
+     canHardDeleteStudent
+   } from '@/lib/studentPermissions'
+
+   // NOT just role checks like `isAdmin`
+   ```
+
+3. **✅ Check permissions in page-level logic**
+   ```typescript
+   // In page.tsx (e.g., src/app/(admin)/users/siswa/page.tsx)
+   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+
+   // Permission checks for each action
+   const canArchive = isAdmin || userProfile?.permissions?.can_archive_students === true
+   const canTransfer = isAdmin || userProfile?.permissions?.can_transfer_students === true
+   const canSoftDelete = isAdmin || userProfile?.permissions?.can_soft_delete_students === true
+
+   // Pass to components
+   <StudentsTable
+     onArchive={canArchive ? handleArchiveClick : undefined}
+     onTransfer={canTransfer ? handleTransferClick : undefined}
+     userProfile={userProfile}
+   />
+   ```
+
+4. **✅ Validate permissions in server actions** (defense in depth)
+   ```typescript
+   // In actions.ts
+   export async function archiveStudent(studentId: string) {
+     'use server'
+     const user = await getCurrentUserProfile()
+     const student = await getStudent(studentId)
+
+     if (!canArchiveStudent(user, student)) {
+       throw new Error('Permission denied')
+     }
+
+     // Perform action...
+   }
+   ```
+
+5. **✅ Conditional rendering in components**
+   ```typescript
+   // In StudentsTable.tsx
+   {canArchiveStudent(userProfile, student) && onArchive && student.status === 'active' && (
+     <button onClick={() => onArchive(student)}>
+       Archive
+     </button>
+   )}
+   ```
+
+6. **✅ Modal permission checks**
+   ```typescript
+   // In DeleteStudentModal.tsx
+   const canSoftDelete = isAdmin || userProfile?.permissions?.can_soft_delete_students === true
+   const canHardDelete = userProfile?.role === 'superadmin' // ONLY superadmin
+
+   {canSoftDelete && !studentDeletedAt && (
+     <Button onClick={onSoftDelete}>Hapus (Data Tersimpan)</Button>
+   )}
+
+   {canHardDelete && studentDeletedAt && (
+     <Button onClick={onHardDelete}>Hapus Permanen ⚠️</Button>
+   )}
+   ```
+
+**Common Bugs & Solutions**:
+
+| Bug | Symptom | Solution |
+|-----|---------|----------|
+| `permissions` field not queried | Buttons never appear for teachers with permissions | Add `permissions` to AdminLayoutProvider query (line 50) |
+| Using `isAdmin` instead of permission check | Teachers can't access features even with permissions | Use `canArchive`, `canTransfer` variables in page |
+| Not passing `onArchive` prop | `onArchive === false` in component | Check page-level condition and pass callback |
+| Hard Delete shown to non-superadmin | Teachers see "Hapus Permanen" button | Check `canHardDelete` (ONLY superadmin) |
+| Permission not validated in server action | Security vulnerability | Always check `canArchiveStudent()` etc. in actions |
+
+**Related Files**:
+- Permission logic: `src/lib/studentPermissions.ts` (66 tests, 100% coverage)
+- UI checks: `src/app/(admin)/users/siswa/components/StudentsTable.tsx` (lines 329-435)
+- Page logic: `src/app/(admin)/users/siswa/page.tsx` (lines 59-63, 414-416)
+- Server actions: `src/app/(admin)/users/siswa/actions/management.ts`
+- Settings UI: `src/app/(admin)/users/guru/components/SettingsModal.tsx` (lines 232-306)
+- Profile query: `src/components/layouts/AdminLayoutProvider.tsx` (line 50)
+- Delete modal: `src/app/(admin)/users/siswa/components/DeleteStudentModal.tsx` (lines 31-42)
+
+**Testing**: All permission functions have 100% test coverage. See `src/lib/__tests__/studentPermissions.test.ts` for examples.
 
 **Business Rules**:
 - Archived students (graduated/inactive) don't appear in:
