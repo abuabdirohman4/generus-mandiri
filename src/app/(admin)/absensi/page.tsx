@@ -287,6 +287,9 @@ export default function AbsensiPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [currentPage])
 
+  // Only show loading skeleton on initial load (when no data yet)
+  const initialLoading = (isLoading && paginatedMeetings.length === 0) || classesLoading
+
   // Add timeout for loading state (30 seconds) to prevent infinite skeleton
   useEffect(() => {
     if (initialLoading) {
@@ -307,9 +310,6 @@ export default function AbsensiPage() {
       setLoadingTimeout(false)
     }
   }, [initialLoading, classesLoading, isLoading, paginatedMeetings.length])
-
-  // Only show loading skeleton on initial load (when no data yet)
-  const initialLoading = (isLoading && paginatedMeetings.length === 0) || classesLoading
 
   // Show error UI if loading timeout
   if (loadingTimeout) {
