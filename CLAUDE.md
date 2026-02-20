@@ -210,6 +210,174 @@ function hasPermission(user: User, permission: string): boolean {
 
 ---
 
+## 📋 Beads Issue Progress Documentation Standard
+
+**MANDATORY for all multi-session work tracked in Beads.**
+
+### When to Create Progress Documentation
+
+Create a progress file in `.beads/progress/` for ANY issue that:
+- ✅ Spans multiple sessions (can't complete in one sitting)
+- ✅ Has complex implementation steps (refactoring, architecture changes)
+- ✅ Involves TDD workflow (track test/implementation progress)
+- ✅ Has dependencies or blockers
+- ✅ Needs context preservation across compaction
+
+**Skip for**:
+- ❌ Simple one-session tasks (quick fixes, single file changes)
+- ❌ Trivial updates (typo fixes, documentation tweaks)
+
+### File Naming Convention
+
+**Location**: `.beads/progress/`
+**Format**: `{issue-id}.md` (e.g., `sm-mln.md`, `sm-8yf.md`)
+
+### Required Sections
+
+```markdown
+# {Issue Title} - Progress Summary
+
+**Beads Issue**: {issue-id}
+**Status**: {⏳ In Progress | ✅ Complete | ❌ Blocked}
+**Total Tests**: {X passing ✅}
+
+## ✅ Completed - {Phase Name}
+
+### {Step Number}. {Component Name} ({file-path})
+**Purpose**: {What this does}
+
+**Functions/Features Implemented**:
+- ✅ `functionName()` - Description
+- ✅ `anotherFunction()` - Description
+
+**Tests**: {X tests, Y% coverage ✅}
+
+## ⏳ Current Phase - {Phase Name}
+
+### {Step Number}. {Component Name} - {Status}
+**Purpose**: {What this does}
+
+**Functions Implemented**:
+- ✅ `completedFunction()` - Description
+- ⏳ `inProgressFunction()` - WIP
+- ❌ `blockedFunction()` - Blocked by {reason}
+
+**Functions Not Yet Implemented**:
+- ⏳ `pendingFunction()` - TODO
+
+**Tests**: {X tests ✅ (more tests needed)}
+
+## 📊 Metrics
+
+- **Lines of Code Created**: ~{X} lines
+- **Test Coverage**: {Y}% overall
+- **Tests Passing**: {X}/{Y} ✅
+- **Files Created**: {N} ({breakdown})
+
+## 🎯 Next Steps
+
+1. ⏳ **Current Priority**: {What to do next}
+2. ⏳ **Phase {N}**: {Upcoming work}
+3. ⏳ **Phase {N+1}**: {Future work}
+
+## 📝 Notes
+
+- **{Key Decision}**: {Rationale}
+- **{Blocker}**: {Issue and resolution}
+- **{Learning}**: {Insight gained}
+
+## 🔗 Related Files
+
+- **Beads Issue**: `.beads/issues/{issue-id}.json`
+- **Plan**: {Link to plan file if exists}
+- **Implementation Files**: {List key files}
+- **Test Files**: {List test files}
+
+---
+
+**Last Updated**: {YYYY-MM-DD} ({Phase name})
+**Next Session**: {What to focus on}
+```
+
+### Update Workflow
+
+**When starting work on an issue**:
+1. Check if `.beads/progress/{issue-id}.md` exists
+2. If NOT, create it with initial structure
+3. Update **Status** section with current phase
+
+**During implementation**:
+1. ✅ Mark completed steps with checkmarks
+2. ⏳ Update "Current Phase" section
+3. 📊 Update metrics (tests passing, coverage, LOC)
+4. 📝 Add notes for decisions/blockers
+
+**At end of session**:
+1. Update **Last Updated** timestamp
+2. Update **Next Session** with clear next steps
+3. Commit progress file WITH code changes
+4. Run `bd sync` to persist
+
+**Before closing issue**:
+1. Change **Status** to ✅ Complete
+2. Verify all sections are ✅
+3. Add final metrics and summary
+4. Commit final progress update
+
+### Example: sm-mln (Refactoring Student Actions)
+
+See `.beads/progress/sm-mln.md` for complete example.
+
+**Key sections used**:
+- ✅ Phase 1: Repository, Transform, Validation layers (100% tests)
+- ⏳ Phase 2: Use Cases layer (partial, 75% done)
+- ⏳ Phase 3: Server Actions refactoring (TODO)
+- 📊 Metrics: 199 tests passing, 73 from refactoring
+- 🎯 Next Steps: Complete remaining use cases, then refactor actions
+
+### Benefits
+
+- 🔄 **Context Recovery**: Resume work immediately after compaction
+- 📈 **Progress Tracking**: Visual completion status per phase
+- 🧪 **TDD Tracking**: Test count shows quality/coverage
+- 🤝 **Collaboration**: Clear handoff between sessions/developers
+- 📚 **Documentation**: Automatic project history
+
+### Integration with Beads
+
+Progress files complement Beads issues:
+- **Beads issue** (`.beads/issues.jsonl`): Status, dependencies, metadata
+- **Progress file** (`.beads/progress/{id}.md`): Implementation details, test metrics, phase tracking
+
+**Workflow**:
+```bash
+# Start work
+bd show sm-xxx           # Read issue description
+cat .beads/progress/sm-xxx.md  # Read progress (if exists)
+
+# During work - update progress file alongside code
+
+# End session
+git add .beads/progress/sm-xxx.md src/...
+git commit -m "feat: Progress update"
+bd sync
+```
+
+### Enforcement
+
+**Before closing ANY multi-session issue**:
+- ✅ Progress file exists in `.beads/progress/{issue-id}.md`
+- ✅ All phases marked ✅ Complete
+- ✅ Metrics updated (final test count, coverage)
+- ✅ "Next Session" replaced with "Issue Complete"
+
+**Code review will check**:
+- Progress file committed with implementation
+- Test metrics match actual test output
+- No ⏳ or ❌ items in "Completed" sections
+
+---
+
 ## CRITICAL: MCP Connection Check
 
 **BEFORE running ANY Supabase operations** (migrations, queries, etc.), you MUST:

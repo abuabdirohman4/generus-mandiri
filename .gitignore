@@ -189,4 +189,5 @@ next-env.d.ts
 .mcp_config.json
 
 # Beads issue tracker
-.beads/beads.db
+.beads/beads.db         # SQLite cache (regenerated from JSONL)
+# .beads/progress/      # Progress files (COMMIT these for team collaboration)
