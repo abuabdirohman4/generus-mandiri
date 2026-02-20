@@ -170,7 +170,7 @@ export default function UserDropdown() {
             <Spinner size={20} />
           ) : (
             <div className="w-9 h-9 bg-brand-500 backdrop-blur-sm rounded-full flex items-center justify-center border border-brand-400">
-              <span className="text-white font-bold text-white">
+              <span className="text-white font-bold">
                 {(() => {
                   const words = profile?.full_name?.split(' ').filter(Boolean) || [];
                   if (words.length > 2) {
