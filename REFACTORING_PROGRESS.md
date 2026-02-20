@@ -1,8 +1,8 @@
 # Student Actions Refactoring - Progress Summary
 
 **Beads Issue**: sm-mln
-**Status**: ⏳ Phase 1 Complete (50% done)
-**Total Tests**: 68 passing ✅
+**Status**: ⏳ Phase 2 In Progress (75% done)
+**Total Tests**: 73 passing ✅
 
 ## ✅ Completed - Phase 1: Foundation Layer
 
@@ -70,22 +70,26 @@
 - **Original File Size**: 1,610 lines (actions.ts)
 - **Reduced to**: TBD (Phase 2 - server actions refactoring)
 
-## ⏳ Remaining Work - Phase 2
+## ⏳ Phase 2 In Progress
 
-### 4. Use Cases Layer (`src/lib/students/studentUseCases.ts`) - TODO
+### 4. Use Cases Layer (`src/lib/students/studentUseCases.ts`) - ✅ PARTIALLY COMPLETE
 **Purpose**: Business logic orchestration
 
-**Functions to Implement**:
-- `getAllStudents()` - Get students with role-based filtering
-- `createStudent()` - Create with validation + permission checks
-- `updateStudent()` - Update with multi-class support
-- `deleteStudent()` - Delete with permission checks
-- `getStudentInfo()` - Get student with classes
-- `getStudentAttendanceHistory()` - Get attendance for month
-- `assignStudentsToClass()` - Batch assignment
-- `createStudentsBatch()` - Batch creation
+**Functions Implemented**:
+- ✅ `getAllStudents()` - Get students with role-based filtering (5 tests)
+- ✅ `createStudent()` - Create with validation + permission checks
+- ✅ `updateStudent()` - Update with multi-class support
+- ✅ `deleteStudent()` - Delete with permission checks (soft/hard)
+- ✅ `getStudentInfo()` - Get student with classes
+- ✅ `getStudentBiodata()` - Get complete biodata
+- ✅ `updateStudentBiodata()` - Update biodata
 
-**Estimated Tests**: ~100-150 tests
+**Functions Not Yet Implemented**:
+- ⏳ `getStudentAttendanceHistory()` - Get attendance for month
+- ⏳ `assignStudentsToClass()` - Batch assignment
+- ⏳ `createStudentsBatch()` - Batch creation
+
+**Tests**: 5 tests for getAllStudents ✅ (more tests needed for other functions)
 
 ### 5. Server Actions Refactoring (`src/app/(admin)/users/siswa/actions.ts`) - TODO
 **Purpose**: Thin controllers (orchestration ONLY)
