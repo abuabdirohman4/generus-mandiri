@@ -111,12 +111,12 @@ export interface StudentRow {
   kelompok_id: string | null
   desa_id: string | null
   daerah_id: string | null
-  status: string | null
+  status: 'active' | 'graduated' | 'inactive' | null
   created_at: string
   updated_at: string
-  deleted_at: string | null
+  deleted_at?: string | null
   student_classes?: Array<{
-    classes?: { id: string; name: string }
+    classes?: { id: string; name: string } | Array<{ id: string; name: string }>
   }>
   daerah?: any
   desa?: any
@@ -342,6 +342,10 @@ export async function updateStudentData(
       name,
       gender,
       class_id,
+      kelompok_id,
+      desa_id,
+      daerah_id,
+      status,
       created_at,
       updated_at
     `

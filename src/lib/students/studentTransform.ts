@@ -146,7 +146,7 @@ export function transformStudentRow(row: StudentRow): StudentWithClasses {
     kelompok_id: row.kelompok_id,
     desa_id: row.desa_id,
     daerah_id: row.daerah_id,
-    status: row.status || 'active',
+    status: (row.status as 'active' | 'graduated' | 'inactive') || 'active',
     created_at: row.created_at,
     updated_at: row.updated_at,
     classes,
@@ -189,7 +189,7 @@ export function transformStudentRows(
           daerah_name: '',
           desa_name: '',
           kelompok_name: '',
-          status: row.status || 'active',
+          status: (row.status as 'active' | 'graduated' | 'inactive') || 'active',
         }
       }
     })

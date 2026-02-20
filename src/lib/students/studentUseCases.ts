@@ -195,7 +195,7 @@ export async function createStudent(
   const validData = validation.data
 
   // 2. Get organizational hierarchy (daerah/desa from kelompok)
-  let kelompokId = validData.kelompokId
+  let kelompokId: string | null = validData.kelompokId || null
   let desaId: string | null = null
   let daerahId: string | null = null
 
@@ -303,7 +303,15 @@ export async function updateStudent(
   }
 
   // 3. Get organizational hierarchy if kelompok_id provided
-  let updateData: any = {
+  let updateData: {
+    name: string
+    gender: string
+    class_id: string
+    kelompok_id?: string | null
+    desa_id?: string | null
+    daerah_id?: string | null
+    updated_at: string
+  } = {
     name: validData.name,
     gender: validData.gender,
     class_id: validData.classIds[0], // Primary class
