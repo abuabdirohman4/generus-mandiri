@@ -2,7 +2,7 @@
 
 **Beads Issue**: sm-mln
 **Status**: ⏳ Phase 2 In Progress (75% done)
-**Total Tests**: 73 passing ✅
+**Total Tests**: 199 passing ✅ (including 73 from refactoring)
 
 ## ✅ Completed - Phase 1: Foundation Layer
 
@@ -90,6 +90,12 @@
 - ⏳ `createStudentsBatch()` - Batch creation
 
 **Tests**: 5 tests for getAllStudents ✅ (more tests needed for other functions)
+
+**Type Safety**: All TypeScript type errors fixed ✅
+- StudentRow.status: Strict union type ('active' | 'graduated' | 'inactive')
+- StudentRow.deleted_at: Optional field
+- kelompok_id: Consistent null handling
+- All 199 tests passing ✅
 
 ### 5. Server Actions Refactoring (`src/app/(admin)/users/siswa/actions.ts`) - TODO
 **Purpose**: Thin controllers (orchestration ONLY)
