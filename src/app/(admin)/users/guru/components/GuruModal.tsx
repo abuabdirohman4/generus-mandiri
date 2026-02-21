@@ -105,8 +105,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       return {
         daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
         desaList: desaList.filter((d: any) => d.daerah_id === userProfile.daerah_id),
-        kelompokList: dataFilters.desa 
-          ? kelompokList.filter((k: any) => k.desa_id === dataFilters.desa)
+        kelompokList: dataFilters.desa.length > 0
+          ? kelompokList.filter((k: any) => dataFilters.desa.includes(k.desa_id))
           : kelompokList.filter((k: any) => {
               const desa = desaList.find((d: any) => d.id === k.desa_id);
               return desa?.daerah_id === userProfile.daerah_id;
@@ -237,13 +237,13 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                                     (userProfile && isAdminDesa(userProfile)) || 
                                     (userProfile && isAdminDaerah(userProfile));
     
-    // Default: no kelompok selected (empty array)
     if (canAssignCrossKelompok) {
-      setSelectedKelompokFilters([]);
+      // In edit mode, pre-select the guru's kelompok so classes are immediately visible
+      setSelectedKelompokFilters(guru?.kelompok_id ? [guru.kelompok_id] : []);
     } else {
       setSelectedKelompokFilters([]);
     }
-  }, [isOpen, userProfile, filteredLists.kelompokList]);
+  }, [isOpen, userProfile, filteredLists.kelompokList, guru?.kelompok_id]);
 
   // Get all classes in admin scope (before kelompok filter)
   const allClassesInScope = useMemo(() => {
