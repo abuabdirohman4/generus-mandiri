@@ -78,6 +78,7 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
                   class_master:class_master_id(
                     id,
                     name,
+                    sort_order,
                     category:category_id(
                       id,
                       code,

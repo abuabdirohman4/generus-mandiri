@@ -89,22 +89,40 @@ export default function CreateMeetingModal({
     return availableTypes
   }, [availableTypes, selectedClassIds, classes])
 
+  // Sort classes by minimum class_master sort_order
+  const sortClassesByMasterOrder = (classList: any[]) => {
+    return [...classList].sort((a, b) => {
+      const getSortOrder = (cls: any): number => {
+        if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) return 9999
+        const sortOrders = cls.class_master_mappings
+          .map((m: any) => m.class_master?.sort_order)
+          .filter((o: any) => typeof o === 'number')
+        return sortOrders.length === 0 ? 9999 : Math.min(...sortOrders)
+      }
+      const orderA = getSortOrder(a)
+      const orderB = getSortOrder(b)
+      if (orderA !== orderB) return orderA - orderB
+      return a.name.localeCompare(b.name)
+    })
+  }
+
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
-      // Enrich teacher classes with kelompok_id from classes
-      return userProfile.classes.map(cls => {
+      // Enrich teacher classes with kelompok_id from classes, then sort
+      const enriched = userProfile.classes.map(cls => {
         const fullClass = classes.find(c => c.id === cls.id)
         return {
           ...cls,
           kelompok_id: fullClass?.kelompok_id || null
         }
       })
+      return sortClassesByMasterOrder(enriched)
     } else if (userProfile?.role === 'teacher') {
-      return userProfile.classes || []
+      return sortClassesByMasterOrder(userProfile.classes || [])
     }
-    return classes || []
+    return sortClassesByMasterOrder(classes || [])
   }, [
     userProfile?.role,
     userProfile?.classes?.length,
@@ -112,7 +130,6 @@ export default function CreateMeetingModal({
     classes?.length,
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
   ])
-
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
     // Find first class from student.classes that exists in selectedClassIds
