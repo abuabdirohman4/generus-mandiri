@@ -102,7 +102,7 @@ export default function PWASettingsSection() {
           setInstallStatus('installed');
           setIsInstalling(false);
           localStorage.setItem('pwa-install-prompt', 'installed');
-        }, 2000); // 2 seconds is usually enough for the install to complete
+        }, 5000); // 5 seconds is usually enough for the install to complete
       } else {
         console.log('User dismissed the install prompt');
         localStorage.setItem('pwa-install-prompt', 'dismissed');
