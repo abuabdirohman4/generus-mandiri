@@ -24,6 +24,29 @@ export const metadata: Metadata = {
   title: "Generus Mandiri - Sistem Digital Generus LDII",
   description: "Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa",
   manifest: "/manifest.json",
+  metadataBase: new URL('https://generus.abuabdirohman.com'),
+  openGraph: {
+    type: 'website',
+    locale: 'id_ID',
+    url: 'https://generus.abuabdirohman.com',
+    siteName: 'Generus Mandiri',
+    title: 'Generus Mandiri - Sistem Digital Generus LDII',
+    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa',
+    images: [
+      {
+        url: '/images/logo/logo-icon.png',
+        width: 1200,
+        height: 1200,
+        alt: 'Generus Mandiri Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Generus Mandiri - Sistem Digital Generus LDII',
+    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa',
+    images: ['/images/logo/logo-icon.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -31,11 +54,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/png" },
-      { url: "/images/logo/logo-icon.svg", sizes: "512x512", type: "image/png" },
+      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/images/logo/logo-icon.svg", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/logo-icon.png", sizes: "192x192", type: "image/png" },
     ],
   },
   other: {
