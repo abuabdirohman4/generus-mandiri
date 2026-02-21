@@ -473,7 +473,11 @@ export default function CreateMeetingModal({
       // If multiple options and PEMBINAAN exists, default to PEMBINAAN
       else if (typeValues.length > 1) {
         const hasPembinaan = typeValues.some(t => t.code === 'PEMBINAAN')
-        if (hasPembinaan) {
+        const hasAsad = typeValues.some(t => t.code === 'ASAD')
+        const warlob = typeValues.length == 2 && hasAsad && hasPembinaan
+        if (warlob) {
+          setMeetingType('PEMBINAAN')
+        } else if (hasPembinaan) {
           setMeetingType('SAMBUNG_KELOMPOK')
         } else {
           // No PEMBINAAN means Sambung classes, default to SAMBUNG_KELOMPOK
