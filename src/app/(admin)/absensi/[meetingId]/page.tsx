@@ -377,7 +377,7 @@ export default function MeetingAttendancePage() {
         classDetails = teacherRelevantClassIds.map(id => {
           const classData = classesData.find(c => c.id === id)
           const kelompok = classData?.kelompok_id && kelompokData
-            ? kelompokData.find(k => k.id === classData.kelompok_id)
+            ? kelompokData.find((k: any) => k.id === classData.kelompok_id)
             : null
 
           return {
