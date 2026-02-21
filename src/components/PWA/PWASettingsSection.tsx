@@ -61,8 +61,17 @@ export default function PWASettingsSection() {
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
+      console.log('PWA successfully installed');
+
+      // Clear the fallback timeout if it exists
+      if ((window as any).__pwaInstallTimeout) {
+        clearTimeout((window as any).__pwaInstallTimeout);
+        (window as any).__pwaInstallTimeout = null;
+      }
+
       setIsInstalled(true);
       setInstallStatus('installed');
+      setIsInstalling(false); // Stop loading when actually installed
       localStorage.setItem('pwa-install-prompt', 'installed');
     };
 
@@ -77,6 +86,12 @@ export default function PWASettingsSection() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+
+      // Clear timeout if component unmounts
+      if ((window as any).__pwaInstallTimeout) {
+        clearTimeout((window as any).__pwaInstallTimeout);
+        (window as any).__pwaInstallTimeout = null;
+      }
     };
   }, []);
 
@@ -84,23 +99,42 @@ export default function PWASettingsSection() {
     if (!deferredPrompt) return;
 
     setIsInstalling(true);
-    
+
     try {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt');
+
+        // Set a timeout fallback in case 'appinstalled' event doesn't fire
+        // Some browsers may not trigger the event reliably
+        const fallbackTimeout = setTimeout(() => {
+          console.log('Install timeout reached, checking status...');
+
+          // Check if app is now in standalone mode
+          if (isInStandaloneMode()) {
+            setIsInstalled(true);
+            setInstallStatus('installed');
+            localStorage.setItem('pwa-install-prompt', 'installed');
+          }
+
+          // Stop loading regardless
+          setIsInstalling(false);
+        }, 10000); // 10 seconds timeout
+
+        // Store timeout ID so we can clear it if appinstalled fires first
+        (window as any).__pwaInstallTimeout = fallbackTimeout;
       } else {
         console.log('User dismissed the install prompt');
         localStorage.setItem('pwa-install-prompt', 'dismissed');
         setInstallStatus('dismissed');
+        setIsInstalling(false); // Only stop loading if user dismissed
       }
-      
+
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Error during PWA installation:', error);
-    } finally {
       setIsInstalling(false);
     }
   };
@@ -191,26 +225,24 @@ export default function PWASettingsSection() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              {installStatus === 'available' && (
+              {installStatus === 'available' && !isInstalling && (
                 <button
                   onClick={handleInstallClick}
                   disabled={isInstalling}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
                 >
-                  {isInstalling ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Installing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Install Aplikasi
-                    </>
-                  )}
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Install Aplikasi
                 </button>
+              )}
+
+              {isInstalling && (
+                <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Sedang menginstall aplikasi...
+                </div>
               )}
 
               {installStatus === 'dismissed' && (
@@ -246,33 +278,33 @@ export default function PWASettingsSection() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
+                {isInstalling ? (
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  Install Aplikasi
+                  {isInstalling ? 'Sedang Menginstall...' : 'Install Aplikasi'}
                 </h4>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Install aplikasi untuk akses lebih cepat
+                  {isInstalling
+                    ? 'Mohon tunggu, aplikasi sedang diinstall ke perangkat Anda'
+                    : 'Install aplikasi untuk akses lebih cepat'}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleInstallClick}
-              disabled={isInstalling}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center"
-            >
-              {isInstalling ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                  Installing...
-                </>
-              ) : (
-                'Install'
-              )}
-            </button>
+            {!isInstalling && (
+              <button
+                onClick={handleInstallClick}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center flex-shrink-0"
+              >
+                Install
+              </button>
+            )}
           </div>
         </div>
       )}
