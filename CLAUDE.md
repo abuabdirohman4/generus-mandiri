@@ -728,3 +728,4 @@ import { isSuperAdmin } from '@/lib/userUtils'
 
 - **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md) - Complete testing setup, examples, TDD workflow
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md) - Critical domain logic for Students, Attendance, Transfers, Meetings
+- **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md) - Bulk operations, user creation, migration patterns
