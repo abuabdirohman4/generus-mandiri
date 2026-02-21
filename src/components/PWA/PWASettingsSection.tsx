@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isIOS } from '@/lib/utils';
 import { isInStandaloneMode } from '@/lib/pwaUtils';
@@ -23,6 +23,7 @@ export default function PWASettingsSection() {
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [installStatus, setInstallStatus] = useState<'not-supported' | 'available' | 'installed' | 'dismissed' | 'ios-manual'>('not-supported');
   const { profile } = useUserProfile();
+  const installTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Detect iOS
@@ -62,9 +63,17 @@ export default function PWASettingsSection() {
     // Listen for appinstalled event
     const handleAppInstalled = () => {
       console.log('PWA successfully installed (via appinstalled event)');
+
+      // Clear the fallback timeout if it's still running
+      if (installTimeoutRef.current) {
+        clearTimeout(installTimeoutRef.current);
+        installTimeoutRef.current = null;
+      }
+
+      // Update state to show installation completed
       setIsInstalled(true);
       setInstallStatus('installed');
-      setIsInstalling(false); // Stop loading when actually installed
+      setIsInstalling(false); // Stop loading spinner
       localStorage.setItem('pwa-install-prompt', 'installed');
     };
 
@@ -79,6 +88,12 @@ export default function PWASettingsSection() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+
+      // Clear install timeout if component unmounts during installation
+      if (installTimeoutRef.current) {
+        clearTimeout(installTimeoutRef.current);
+        installTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -92,22 +107,33 @@ export default function PWASettingsSection() {
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+        console.log('User accepted the install prompt - waiting for appinstalled event');
 
-        // Wait for a short period to simulate installation process
-        // Then mark as installed (most reliable approach for mobile)
-        setTimeout(() => {
-          console.log('PWA installation completed');
+        // Set a fallback timeout in case appinstalled event doesn't fire
+        // Some browsers/devices may not reliably trigger the event
+        installTimeoutRef.current = setTimeout(() => {
+          console.log('PWA installation completed (via 15s fallback timeout)');
           setIsInstalled(true);
           setInstallStatus('installed');
           setIsInstalling(false);
           localStorage.setItem('pwa-install-prompt', 'installed');
-        }, 5000); // 5 seconds is usually enough for the install to complete
+          installTimeoutRef.current = null;
+        }, 15000); // 15 seconds fallback (generous for slow devices)
+
+        // Note: Primary completion will be handled by handleAppInstalled
+        // when the 'appinstalled' event fires (should happen before timeout)
       } else {
         console.log('User dismissed the install prompt');
+
+        // Clear timeout if it was started (defensive coding)
+        if (installTimeoutRef.current) {
+          clearTimeout(installTimeoutRef.current);
+          installTimeoutRef.current = null;
+        }
+
         localStorage.setItem('pwa-install-prompt', 'dismissed');
         setInstallStatus('dismissed');
-        setIsInstalling(false); // Only stop loading if user dismissed
+        setIsInstalling(false); // Stop loading immediately when dismissed
       }
 
       setDeferredPrompt(null);
