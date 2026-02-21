@@ -126,12 +126,12 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     // For Admin Daerah
     if (userProfile?.daerah_id && !userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.daerah_id === userProfile.daerah_id),
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.daerah_id === userProfile.daerah_id),
         kelompokList: dataFilters.desa 
-          ? kelompokList.filter(k => k.desa_id === dataFilters.desa)
-          : kelompokList.filter(k => {
-              const desa = desaList.find(d => d.id === k.desa_id);
+          ? kelompokList.filter((k: any) => k.desa_id === dataFilters.desa)
+          : kelompokList.filter((k: any) => {
+              const desa = desaList.find((d: any) => d.id === k.desa_id);
               return desa?.daerah_id === userProfile.daerah_id;
             })
       };
@@ -140,9 +140,9 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
     // For Admin Desa
     if (userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.id === userProfile.desa_id),
-        kelompokList: kelompokList.filter(k => k.desa_id === userProfile.desa_id)
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.id === userProfile.desa_id),
+        kelompokList: kelompokList.filter((k: any) => k.desa_id === userProfile.desa_id)
       };
     }
     

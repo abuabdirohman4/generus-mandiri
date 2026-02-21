@@ -103,12 +103,12 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     // For Admin Daerah
     if (userProfile?.daerah_id && !userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.daerah_id === userProfile.daerah_id),
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.daerah_id === userProfile.daerah_id),
         kelompokList: dataFilters.desa 
-          ? kelompokList.filter(k => k.desa_id === dataFilters.desa)
-          : kelompokList.filter(k => {
-              const desa = desaList.find(d => d.id === k.desa_id);
+          ? kelompokList.filter((k: any) => k.desa_id === dataFilters.desa)
+          : kelompokList.filter((k: any) => {
+              const desa = desaList.find((d: any) => d.id === k.desa_id);
               return desa?.daerah_id === userProfile.daerah_id;
             })
       };
@@ -117,21 +117,21 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     // For Admin Desa
     if (userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.id === userProfile.desa_id),
-        kelompokList: kelompokList.filter(k => k.desa_id === userProfile.desa_id)
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.id === userProfile.desa_id),
+        kelompokList: kelompokList.filter((k: any) => k.desa_id === userProfile.desa_id)
       };
     }
     
     // For Admin Kelompok
     if (userProfile?.kelompok_id) {
-      const kelompok = kelompokList.find(k => k.id === userProfile.kelompok_id);
-      const desa = desaList.find(d => d.id === kelompok?.desa_id);
+      const kelompok = kelompokList.find((k: any) => k.id === userProfile.kelompok_id);
+      const desa = desaList.find((d: any) => d.id === kelompok?.desa_id);
       
       return {
-        daerahList: daerahList.filter(d => d.id === desa?.daerah_id),
-        desaList: desaList.filter(d => d.id === kelompok?.desa_id),
-        kelompokList: kelompokList.filter(k => k.id === userProfile.kelompok_id)
+        daerahList: daerahList.filter((d: any) => d.id === desa?.daerah_id),
+        desaList: desaList.filter((d: any) => d.id === kelompok?.desa_id),
+        kelompokList: kelompokList.filter((k: any) => k.id === userProfile.kelompok_id)
       };
     }
     
@@ -540,7 +540,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                   <div className="mb-3">
                     <MultiSelectCheckbox
                       label=""
-                      items={filteredLists.kelompokList.map(k => ({ id: k.id, label: k.name }))}
+                      items={filteredLists.kelompokList.map((k: any) => ({ id: k.id, label: k.name }))}
                       selectedIds={selectedKelompokFilters}
                       onChange={setSelectedKelompokFilters}
                       disabled={isLoading}
