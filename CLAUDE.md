@@ -79,6 +79,58 @@ npm run test:ui  # Interactive UI
 
 ---
 
+## 📚 Documentation Strategy for AI Knowledge Management
+
+**CRITICAL**: Balance between inline knowledge vs external references for optimal token usage.
+
+### When to Add Knowledge INLINE in CLAUDE.md
+
+Use inline documentation when:
+- ✅ **High-frequency reference** - Used in >50% of tasks (e.g., TDD workflow, access control rules)
+- ✅ **Short & critical** - <50 lines AND mission-critical (e.g., MCP connection check)
+- ✅ **Quick lookup** - Needs instant recall without file read (e.g., development commands)
+- ✅ **Core conventions** - Fundamental patterns used across codebase (e.g., Supabase client usage)
+
+### When to Create EXTERNAL Reference Files
+
+Create separate files in `docs/claude/` when:
+- ✅ **Low-frequency reference** - Used in <20% of tasks (e.g., bulk database operations)
+- ✅ **Long & detailed** - >50 lines OR multiple examples (e.g., testing guidelines, database operations)
+- ✅ **Specialized knowledge** - Domain-specific or one-time setup (e.g., PWA configuration)
+- ✅ **Reference material** - Detailed examples, troubleshooting guides (e.g., business rules)
+
+### Current Documentation Structure
+
+```
+CLAUDE.md (inline)           docs/claude/ (external references)
+├─ TDD workflow              ├─ testing-guidelines.md (detailed TDD examples)
+├─ Access control rules      ├─ business-rules.md (domain logic)
+├─ Development commands      ├─ database-operations.md (bulk ops, migrations)
+├─ Architecture overview     └─ ... (future: pwa-setup.md, deployment.md)
+└─ MCP connection check
+```
+
+### Token Optimization Guidelines
+
+- **Inline limit**: Keep CLAUDE.md under 700 lines for optimal loading
+- **Reference pointers**: Use clear "READ [`file.md`]" syntax for external docs
+- **Avoid duplication**: Never duplicate between inline and external (use pointer)
+- **Update both**: When adding knowledge, decide inline vs external FIRST
+
+**Example of good pointer**:
+```markdown
+## Database Operations
+
+**For bulk user creation, migrations, and complex database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
+
+Key points:
+- NEVER manually INSERT into `auth.users` without auth.identities
+- Use empty string `''` for tokens, not NULL
+- Pre-hash passwords in bulk operations
+```
+
+---
+
 ## 📋 Beads Issue Progress Documentation Standard
 
 **MANDATORY for all multi-session work tracked in Beads.**
@@ -584,6 +636,42 @@ This document contains critical business logic including:
 - Call `mutate()` on SWR hooks after client-side updates
 - Both logout AND login use `clearUserCache()` to remove all persistent state and reload the page
 - For targeted cache invalidation (e.g., after saving settings), use `mutate(specificKey)` from SWR
+
+---
+
+## 🗄️ Database Operations & Migrations
+
+**For bulk user creation, complex migrations, and database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
+
+### 🚨 CRITICAL: Creating Supabase Auth Users
+
+**NEVER manually INSERT into `auth.users` without ALL required fields.**
+
+Common mistakes that cause "Database error querying schema":
+- ❌ Missing `auth.identities` record (CRITICAL!)
+- ❌ Empty `raw_user_meta_data` (no display name in UI)
+- ❌ Using `NULL` instead of `''` for token fields
+- ❌ Inconsistent email domains (check existing convention)
+
+**Required when creating users via SQL**:
+1. ✅ Insert into `auth.users` with ALL fields (see database-operations.md for template)
+2. ✅ Insert into `auth.identities` with provider info
+3. ✅ Insert into `profiles` with role and organization
+4. ✅ Use `''` (empty string) for tokens, NOT `NULL`
+5. ✅ Populate `raw_user_meta_data` with `{name, username, full_name}`
+
+**Debugging checklist**:
+```sql
+-- Check if identities exists
+SELECT u.email, i.id IS NOT NULL as has_identity
+FROM auth.users u
+LEFT JOIN auth.identities i ON i.user_id = u.id
+WHERE u.email = 'problematic@email.com';
+
+-- Check if display name is populated
+SELECT email, raw_user_meta_data->>'name' as display_name
+FROM auth.users WHERE email = 'problematic@email.com';
+```
 
 ---
 
