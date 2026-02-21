@@ -585,7 +585,7 @@ export default function CreateMeetingModal({
                       if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
                         // Create mapping kelompok_id -> kelompok name
                         const kelompokMap = new Map(
-                          kelompok.map(k => [k.id, k.name])
+                          kelompok.map((k: any) => [k.id, k.name])
                         )
 
                         // Check for duplicate class names

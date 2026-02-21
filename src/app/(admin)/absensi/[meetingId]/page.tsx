@@ -429,7 +429,7 @@ export default function MeetingAttendancePage() {
       classDetails = relevantClassIds.map(id => {
         const classData = classesData.find(c => c.id === id)
         const kelompok = classData?.kelompok_id && kelompokData
-          ? kelompokData.find(k => k.id === classData.kelompok_id)
+          ? kelompokData.find((k: any) => k.id === classData.kelompok_id)
           : null
 
         return {
@@ -488,7 +488,7 @@ export default function MeetingAttendancePage() {
       meeting.class_ids.forEach((classId: string) => {
         const classData = classesData.find(c => c.id === classId)
         if (classData?.kelompok_id) {
-          const kelompok = kelompokData?.find(k => k.id === classData.kelompok_id)
+          const kelompok = kelompokData?.find((k: any) => k.id === classData.kelompok_id)
           if (kelompok && kelompok.desa_id) {
             kelompokMap.set(kelompok.id, {
               id: kelompok.id,

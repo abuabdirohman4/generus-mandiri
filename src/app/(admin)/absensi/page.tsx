@@ -61,12 +61,12 @@ export default function AbsensiPage() {
     // Filter by organisasi hierarchy
     if (dataFilters.daerah.length > 0) {
       // Get desa IDs in selected daerah
-      const desaInDaerah = (desa || []).filter(d => dataFilters.daerah.includes(d.daerah_id))
-      const desaIds = desaInDaerah.map(d => d.id)
+      const desaInDaerah = (desa || []).filter((d: any) => dataFilters.daerah.includes(d.daerah_id))
+      const desaIds = desaInDaerah.map((d: any) => d.id)
 
       // Get kelompok IDs in those desas
-      const kelompokInDesa = (kelompok || []).filter(k => desaIds.includes(k.desa_id))
-      const kelompokIds = kelompokInDesa.map(k => k.id)
+      const kelompokInDesa = (kelompok || []).filter((k: any) => desaIds.includes(k.desa_id))
+      const kelompokIds = kelompokInDesa.map((k: any) => k.id)
 
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
@@ -74,8 +74,8 @@ export default function AbsensiPage() {
 
     if (dataFilters.desa.length > 0) {
       // Get kelompok IDs in selected desa
-      const kelompokInDesa = (kelompok || []).filter(k => dataFilters.desa.includes(k.desa_id))
-      const kelompokIds = kelompokInDesa.map(k => k.id)
+      const kelompokInDesa = (kelompok || []).filter((k: any) => dataFilters.desa.includes(k.desa_id))
+      const kelompokIds = kelompokInDesa.map((k: any) => k.id)
 
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
