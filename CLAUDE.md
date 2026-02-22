@@ -480,6 +480,93 @@ student (own data only)
 - `getDataFilter(profile)` - Get filter object based on user's organizational level
 - `shouldShowDaerahFilter(profile)`, `shouldShowDesaFilter(profile)`, etc. - UI visibility helpers
 
+### Hierarchical Teacher Pattern (Guru Desa/Daerah)
+
+**CRITICAL**: Teachers with organizational hierarchy (`desa_id`/`daerah_id`) behave differently from regular teachers.
+
+**Organizational Teachers** (Guru Desa/Daerah):
+- ✅ Have `role = 'teacher'` in profiles
+- ✅ Have `desa_id` (Guru Desa) OR `daerah_id` (Guru Daerah) populated
+- ❌ Do NOT have entries in `teacher_classes` junction table
+- ✅ Should see ALL data in their organizational scope (like admins)
+- ✅ Can ONLY create Sambung Desa/Sambung Daerah meetings
+
+**Detection Pattern**:
+```typescript
+// Client-side (components/hooks)
+const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+                               (!userProfile.classes || userProfile.classes.length === 0)
+
+// Server-side (actions)
+if (profile?.role === 'teacher') {
+  if (profile.teacher_classes && profile.teacher_classes.length > 0) {
+    // Regular teacher: has assigned classes
+  } else if (profile.kelompok_id || profile.desa_id || profile.daerah_id) {
+    // Hierarchical teacher: has organizational access
+  }
+}
+```
+
+**Implementation Requirements**:
+
+1. **Profile Queries**: MUST include organizational fields
+   ```typescript
+   const { data: profile } = await supabase
+     .from('profiles')
+     .select(`
+       role,
+       kelompok_id,
+       desa_id,
+       daerah_id,
+       teacher_classes!left(class_id, classes(id, name))
+     `)
+   ```
+   - Use `left` join for `teacher_classes` (handles both regular and hierarchical)
+
+2. **Data Filtering**: Apply hierarchical filters like admins
+   ```typescript
+   if (profile.kelompok_id) {
+     query = query.eq('kelompok_id', profile.kelompok_id)
+   } else if (profile.desa_id) {
+     query = query.eq('kelompok.desa_id', profile.desa_id)
+   } else if (profile.daerah_id) {
+     query = query.eq('kelompok.desa.daerah_id', profile.daerah_id)
+   }
+   ```
+
+3. **Admin Client Usage**: Bypass RLS for hierarchical access
+   ```typescript
+   const adminClient = await createAdminClient()
+   // Use adminClient for queries, apply organizational filters manually
+   ```
+
+4. **UI Display Logic**: Show all classes like admins
+   ```typescript
+   if (isHierarchicalTeacher) {
+     // Show ALL classes in student's records
+     displayClasses = student.classes.map(c => c.name).join(', ')
+   } else {
+     // Regular teacher: filter to only their assigned classes
+     displayClasses = student.classes.filter(c => teacherClassIds.includes(c.id))
+   }
+   ```
+
+**Files with Hierarchical Teacher Support** (sm-3ud):
+- `src/app/(admin)/users/siswa/actions/classes.ts` - getAllClasses()
+- `src/app/(admin)/users/siswa/actions.ts` - getAllStudents()
+- `src/app/(admin)/absensi/actions.ts` - getMeetingsWithStats()
+- `src/app/(admin)/laporan/actions.ts` - getAttendanceReport()
+- `src/app/(admin)/users/siswa/components/StudentsTable.tsx` - Class display
+- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping
+
+**Common Pitfalls**:
+- ❌ Checking only `teacher_classes` length (hierarchical teachers have 0)
+- ❌ Using regular user client instead of admin client
+- ❌ Forgetting to include organizational fields in profile query
+- ❌ Not handling both `class_id` and `class_ids` in meeting filtering
+
+**Reference Implementation**: See `.beads/progress/sm-3ud.md` for complete hierarchical teacher implementation.
+
 ### State Management
 
 **Zustand Stores** (persisted to localStorage):
