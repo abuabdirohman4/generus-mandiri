@@ -69,12 +69,22 @@ export function useMeetings(classId?: string) {
     setUseDummyData(isDummy)
   }, [isDummy])
 
-  // Get current user ID for cache key
+  // Get current user ID for cache key with error handling
   useEffect(() => {
-    getCurrentUserId().then((id) => {
-      setUserId(id)
-      setIsGettingUserId(false)
-    })
+    getCurrentUserId()
+      .then((id) => {
+        setUserId(id)
+        setIsGettingUserId(false)
+      })
+      .catch((error) => {
+        console.error('Failed to get user ID:', error)
+        console.error('User Agent:', navigator.userAgent)
+        console.error('Device:', /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop')
+        // CRITICAL: Set loading to false even on error to prevent infinite skeleton
+        setIsGettingUserId(false)
+        // Set null userId - SWR will not fetch, but at least UI won't stuck
+        setUserId(null)
+      })
   }, [])
 
 
@@ -102,39 +112,79 @@ export function useMeetings(classId?: string) {
       // If using dummy data, return processed dummy data
       if (useDummyData) {
         const processedDummy = processDummyData([])
-        
+
         return {
           allMeetings: processedDummy as MeetingWithStats[],
           total: processedDummy.length
         }
       }
 
-      // Fetch ALL meetings at once for better caching
-      const result = await getMeetingsWithStats(classId, 1000) // Large limit to get all data
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch meetings')
+      // Add timeout wrapper to prevent infinite loading
+      const fetchWithTimeout = (promise: Promise<any>, timeoutMs = 30000) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout - koneksi Anda mungkin lambat')), timeoutMs)
+          )
+        ])
       }
 
-      const allMeetings = result.data || []
+      try {
+        // Fetch ALL meetings at once for better caching with timeout
+        const result = await fetchWithTimeout(
+          getMeetingsWithStats(classId, 1000), // Large limit to get all data
+          30000 // 30 second timeout for mobile networks
+        ) as any
 
-      return {
-        allMeetings: allMeetings as MeetingWithStats[],
-        total: allMeetings.length
+        if (!result.success) {
+          console.error('getMeetingsWithStats failed:', result.error)
+          // Return empty data instead of throwing to prevent skeleton stuck
+          return {
+            allMeetings: [],
+            total: 0
+          }
+        }
+
+        const allMeetings = result.data || []
+
+        return {
+          allMeetings: allMeetings as MeetingWithStats[],
+          total: allMeetings.length
+        }
+      } catch (error: any) {
+        console.error('Fetch meetings error:', error)
+        console.error('Device info:', {
+          userAgent: navigator.userAgent,
+          mobile: /mobile/i.test(navigator.userAgent),
+          online: navigator.onLine,
+          connection: (navigator as any).connection?.effectiveType
+        })
+        // Return empty data instead of throwing
+        return {
+          allMeetings: [],
+          total: 0
+        }
       }
     },
     {
-      revalidateOnFocus: true,       // Fetch when window gains focus (changed from false)
+      revalidateOnFocus: true,
       revalidateOnReconnect: true,
       dedupingInterval: 2000, // 2 seconds
-      revalidateIfStale: true, // Allow revalidation when data is stale
-      revalidateOnMount: true, // Always fetch on page load
-      refreshInterval: 0, // No automatic refresh
+      revalidateIfStale: true,
+      revalidateOnMount: true,
+      refreshInterval: 0,
+      shouldRetryOnError: true, // Retry on error
+      errorRetryCount: 3, // Max 3 retries
+      errorRetryInterval: 5000, // 5 seconds between retries
       onError: (error) => {
-        console.error('Error fetching meetings:', error)
+        console.error('=== SWR Error Details ===')
+        console.error('Error:', error)
         console.error('SWR Key:', swrKey)
         console.error('ClassId:', classId)
         console.error('UserId:', userId)
+        console.error('Device:', /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop')
+        console.error('Online:', navigator.onLine)
+        console.error('========================')
       }
     }
   )

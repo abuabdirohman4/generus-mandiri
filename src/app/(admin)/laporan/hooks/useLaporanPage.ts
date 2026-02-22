@@ -74,39 +74,51 @@ export function useLaporanPage() {
       .map((record, index) => {
         // Filter classes based on user role
         let displayClassNames = record.class_name
-        
+
         // If we have all_classes data
         if (record.all_classes && record.all_classes.length > 0) {
           if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
             // Admin: show all classes
             displayClassNames = record.all_classes.map(c => c.name).join(', ')
-          } else if (userProfile?.role === 'teacher' && userProfile.classes) {
-            // Teacher: filter to only classes they teach
-            const teacherClassIds = userProfile.classes.map(c => c.id)
-            const studentTeacherClasses = record.all_classes.filter(c => teacherClassIds.includes(c.id))
-            
-            if (studentTeacherClasses.length > 0) {
-              // For teacher with only 1 class, just show the class name (no need to show all student classes)
-              if (userProfile.classes.length === 1) {
-                // Teacher only teaches 1 class, so just show that class name
-                displayClassNames = studentTeacherClasses[0].name
+          } else if (userProfile?.role === 'teacher') {
+            // Check if hierarchical teacher (Guru Desa/Daerah)
+            const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+                                           (!userProfile.classes || userProfile.classes.length === 0)
+
+            if (isHierarchicalTeacher) {
+              // Guru Desa/Daerah: show all classes (like admin)
+              displayClassNames = record.all_classes.map(c => c.name).join(', ')
+            } else if (userProfile.classes && userProfile.classes.length > 0) {
+              // Regular teacher: filter to only classes they teach
+              const teacherClassIds = userProfile.classes.map(c => c.id)
+              const studentTeacherClasses = record.all_classes.filter(c => teacherClassIds.includes(c.id))
+
+              if (studentTeacherClasses.length > 0) {
+                // For teacher with only 1 class, just show the class name
+                if (userProfile.classes.length === 1) {
+                  displayClassNames = studentTeacherClasses[0].name
+                } else {
+                  // Teacher teaches multiple classes, show all matching classes
+                  displayClassNames = studentTeacherClasses.map(c => c.name).join(', ')
+                }
               } else {
-                // Teacher teaches multiple classes, show all matching classes
-                displayClassNames = studentTeacherClasses.map(c => c.name).join(', ')
+                // Student tidak punya kelas yang diajarkan guru ini
+                displayClassNames = '-'
               }
-            } else {
-              // Student tidak punya kelas yang diajarkan guru ini
-              displayClassNames = '-'
             }
           }
           // Default: use primary class_name if no all_classes or not admin/teacher
         }
-        
+
         return {
           no: index + 1,
           student_id: record.student_id,
           student_name: record.student_name,
           class_name: displayClassNames,
+          // Add organizational fields for Guru Desa/Daerah
+          kelompok_name: record.kelompok_name || '-',
+          desa_name: record.desa_name || '-',
+          daerah_name: record.daerah_name || '-',
           total_days: record.total_days,
           hadir: record.hadir,
           izin: record.izin,

@@ -35,12 +35,12 @@ describe('accessControlServer', () => {
     })
 
     describe('getDataFilter', () => {
-        it('should return empty object for superadmin', () => {
+        it('should return null for superadmin (no filter needed)', () => {
             const profile = { id: '1', role: 'superadmin', full_name: 'Super' }
-            expect(getDataFilter(profile)).toEqual({})
+            expect(getDataFilter(profile)).toBeNull()
         })
 
-        it('should return organizational IDs for admin', () => {
+        it('should return lowest level organizational ID for admin kelompok', () => {
             const profile = {
                 id: '2',
                 role: 'admin',
@@ -50,9 +50,35 @@ describe('accessControlServer', () => {
                 kelompok_id: 'k1'
             }
             expect(getDataFilter(profile)).toEqual({
+                kelompok_id: 'k1'
+            })
+        })
+
+        it('should return desa filter for admin desa', () => {
+            const profile = {
+                id: '3',
+                role: 'admin',
+                full_name: 'Admin Desa',
                 daerah_id: 'd1',
                 desa_id: 'v1',
-                kelompok_id: 'k1'
+                kelompok_id: null
+            }
+            expect(getDataFilter(profile)).toEqual({
+                desa_id: 'v1'
+            })
+        })
+
+        it('should return daerah filter for admin daerah', () => {
+            const profile = {
+                id: '4',
+                role: 'admin',
+                full_name: 'Admin Daerah',
+                daerah_id: 'd1',
+                desa_id: null,
+                kelompok_id: null
+            }
+            expect(getDataFilter(profile)).toEqual({
+                daerah_id: 'd1'
             })
         })
 

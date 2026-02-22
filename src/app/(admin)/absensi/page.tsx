@@ -27,6 +27,7 @@ export default function AbsensiPage() {
   const { daerah } = useDaerah()
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
+  const [loadingTimeout, setLoadingTimeout] = useState(false)
 
   // Prefetch meeting form settings for optimal modal performance
   useMeetingFormSettings(userProfile?.id)
@@ -60,12 +61,12 @@ export default function AbsensiPage() {
     // Filter by organisasi hierarchy
     if (dataFilters.daerah.length > 0) {
       // Get desa IDs in selected daerah
-      const desaInDaerah = (desa || []).filter(d => dataFilters.daerah.includes(d.daerah_id))
-      const desaIds = desaInDaerah.map(d => d.id)
+      const desaInDaerah = (desa || []).filter((d: any) => dataFilters.daerah.includes(d.daerah_id))
+      const desaIds = desaInDaerah.map((d: any) => d.id)
 
       // Get kelompok IDs in those desas
-      const kelompokInDesa = (kelompok || []).filter(k => desaIds.includes(k.desa_id))
-      const kelompokIds = kelompokInDesa.map(k => k.id)
+      const kelompokInDesa = (kelompok || []).filter((k: any) => desaIds.includes(k.desa_id))
+      const kelompokIds = kelompokInDesa.map((k: any) => k.id)
 
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
@@ -73,8 +74,8 @@ export default function AbsensiPage() {
 
     if (dataFilters.desa.length > 0) {
       // Get kelompok IDs in selected desa
-      const kelompokInDesa = (kelompok || []).filter(k => dataFilters.desa.includes(k.desa_id))
-      const kelompokIds = kelompokInDesa.map(k => k.id)
+      const kelompokInDesa = (kelompok || []).filter((k: any) => dataFilters.desa.includes(k.desa_id))
+      const kelompokIds = kelompokInDesa.map((k: any) => k.id)
 
       // Filter classes by those kelompoks
       filtered = filtered.filter(c => c.kelompok_id && kelompokIds.includes(c.kelompok_id))
@@ -288,6 +289,68 @@ export default function AbsensiPage() {
 
   // Only show loading skeleton on initial load (when no data yet)
   const initialLoading = (isLoading && paginatedMeetings.length === 0) || classesLoading
+
+  // Add timeout for loading state (30 seconds) to prevent infinite skeleton
+  useEffect(() => {
+    if (initialLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true)
+        console.error('=== Loading Timeout Exceeded ===')
+        console.error('Device:', /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop')
+        console.error('Online:', navigator.onLine)
+        console.error('User Agent:', navigator.userAgent)
+        console.error('classesLoading:', classesLoading)
+        console.error('isLoading:', isLoading)
+        console.error('paginatedMeetings.length:', paginatedMeetings.length)
+        console.error('=================================')
+      }, 30000) // 30 seconds
+
+      return () => clearTimeout(timer)
+    } else {
+      setLoadingTimeout(false)
+    }
+  }, [initialLoading, classesLoading, isLoading, paginatedMeetings.length])
+
+  // Show error UI if loading timeout
+  if (loadingTimeout) {
+    return (
+      <div className="bg-gray-50 dark:bg-gray-900">
+        <div className="mx-auto px-4 pb-28 md:pb-0 md:px-6 lg:px-8 pt-6">
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Gagal Memuat Data
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Koneksi Anda mungkin lambat atau server tidak merespons.<br />
+              {!navigator.onLine && <span className="text-red-500 font-semibold">⚠️ Tidak ada koneksi internet</span>}
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setLoadingTimeout(false)
+                  window.location.reload()
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Muat Ulang Halaman
+              </button>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                Jika masalah berlanjut, coba:<br />
+                1. Clear cache browser Anda<br />
+                2. Logout dan login kembali<br />
+                3. Periksa koneksi internet Anda
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (initialLoading) {
     return <LoadingState />

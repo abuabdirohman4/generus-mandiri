@@ -29,7 +29,7 @@ export async function getAllClassMasters(): Promise<ClassMaster[]> {
       .from('class_masters')
       .select('*')
       .order('sort_order')
-    
+
     if (error) throw error
     return data || []
   } catch (error) {
@@ -43,13 +43,13 @@ export async function createClassMaster(data: ClassMasterData) {
   try {
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
-    
+
     if (!profile || !canAccessFeature(profile, 'manage_class_masters')) {
       throw new Error('Anda tidak memiliki akses untuk membuat master kelas')
     }
 
     const { name, description, sort_order } = data
-    
+
     if (!name) {
       throw new Error('Nama kelas harus diisi')
     }
@@ -80,18 +80,18 @@ export async function updateClassMaster(masterId: string, data: ClassMasterData)
   try {
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
-    
+
     if (!profile || !canAccessFeature(profile, 'manage_class_masters')) {
       throw new Error('Anda tidak memiliki akses untuk mengupdate master kelas')
     }
 
     const { name, description, sort_order } = data
-    
+
     if (!name) {
       throw new Error('Nama kelas harus diisi')
     }
 
-    const { data: result, error } = await supabase
+    const { data: results, error } = await supabase
       .from('class_masters')
       .update({
         name,
@@ -101,12 +101,15 @@ export async function updateClassMaster(masterId: string, data: ClassMasterData)
       })
       .eq('id', masterId)
       .select()
-      .single()
 
     if (error) throw error
 
+    if (!results || results.length === 0) {
+      throw new Error('Aksi ini memerlukan hak akses Superadmin. Silakan hubungi administrator untuk melakukan perubahan pada master kelas.')
+    }
+
     revalidatePath('/kelas')
-    return { success: true, master: result }
+    return { success: true, master: results[0] }
   } catch (error) {
     handleApiError(error, 'memperbarui data', 'Gagal memperbarui master kelas')
     throw error
@@ -118,7 +121,7 @@ export async function deleteClassMaster(masterId: string) {
   try {
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
-    
+
     if (!profile || !canAccessFeature(profile, 'manage_class_masters')) {
       throw new Error('Anda tidak memiliki akses untuk menghapus master kelas')
     }

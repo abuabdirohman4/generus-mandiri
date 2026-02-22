@@ -93,7 +93,7 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
       if (useDummyData) {
         return generateDummyReportData(apiFilters)
       }
-      
+
       // Otherwise fetch from server
       const reportData = await getAttendanceReport(apiFilters)
       return reportData
@@ -105,11 +105,29 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
       revalidateIfStale: true,
       revalidateOnMount: true,
       refreshInterval: 0,
-      onError: (error) => {
-        console.error('Error fetching report data:', error)
-        console.error('SWR Key:', swrKey)
-        console.error('Filters:', apiFilters)
-        console.error('Using dummy data:', useDummyData)
+      // SWR retry configuration: retry 3 times before giving up
+      errorRetryCount: 3,
+      errorRetryInterval: 1000, // 1 second between retries
+      shouldRetryOnError: true,
+      // Only log error after all retries failed
+      onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+        // Log for debugging
+        console.log(`[SWR Retry ${retryCount}/3] Retrying fetch...`)
+
+        // Don't retry more than 3 times
+        if (retryCount >= 3) {
+          console.error('[SWR] All retries failed:', error)
+          return
+        }
+
+        // Retry after delay
+        setTimeout(() => revalidate({ retryCount }), config.errorRetryInterval)
+      },
+      onError: (error, key) => {
+        // Only show error in console after all retries failed
+        console.error('[Laporan] Error fetching report data after retries:', error)
+        console.error('[Laporan] SWR Key:', key)
+        console.error('[Laporan] Filters:', apiFilters)
       }
     }
   )

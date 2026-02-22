@@ -55,11 +55,11 @@ const allNavItems: NavItem[] = [
     name: "Laporan",
     path: "/laporan",
   },
-  {
-    icon: <BookOpenIcon className="w-6 h-6" />,
-    name: "Materi",
-    path: "/materi",
-  },
+  // {
+  //   icon: <BookOpenIcon className="w-6 h-6" />,
+  //   name: "Materi",
+  //   path: "/materi",
+  // },
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
@@ -421,10 +421,10 @@ function SidebarContent({
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 transform
         ${isExpanded || isMobileOpen
-          ? "w-[290px]"
+          ? "w-72.5"
           : isHovered
-            ? "w-[290px]"
-            : "w-[90px]"
+            ? "w-72.5"
+            : "w-22.5"
         }
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}

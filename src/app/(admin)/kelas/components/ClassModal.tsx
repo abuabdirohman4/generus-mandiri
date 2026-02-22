@@ -89,11 +89,11 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
       
       if (userProfile.desa_id) {
         // Admin Desa: only show kelompok from their desa
-        availableKelompok = kelompokList.filter(k => k.desa_id === userProfile.desa_id);
+        availableKelompok = kelompokList.filter((k: any) => k.desa_id === userProfile.desa_id);
       } else if (userProfile.daerah_id) {
         // Admin Daerah: filter by selected desa (if any)
         if (filters.desa.length > 0) {
-          availableKelompok = kelompokList.filter(k => filters.desa.includes(k.desa_id));
+          availableKelompok = kelompokList.filter((k: any) => filters.desa.includes(k.desa_id));
         } else {
           // No desa selected yet, don't auto-select kelompok
           availableKelompok = [];
@@ -101,7 +101,7 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
       } else {
         // Superadmin: filter by selected desa (if any)
         if (filters.desa.length > 0) {
-          availableKelompok = kelompokList.filter(k => filters.desa.includes(k.desa_id));
+          availableKelompok = kelompokList.filter((k: any) => filters.desa.includes(k.desa_id));
         } else {
           // No desa selected yet, don't auto-select kelompok
           availableKelompok = [];

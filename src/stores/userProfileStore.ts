@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clearUserCache } from '@/lib/userUtils';
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   full_name: string;
   role: string;

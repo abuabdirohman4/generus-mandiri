@@ -74,9 +74,23 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
     onNext()
   }
 
-  const availableClasses = userProfile?.role === 'admin' 
-    ? classes 
+  const rawClasses = userProfile?.role === 'admin'
+    ? classes
     : userProfile?.classes || []
+
+  const availableClasses = [...rawClasses].sort((a, b) => {
+    const getSortOrder = (cls: Class): number => {
+      if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) return 9999
+      const sortOrders = cls.class_master_mappings
+        .map(m => m.class_master?.sort_order)
+        .filter((o): o is number => typeof o === 'number')
+      return sortOrders.length === 0 ? 9999 : Math.min(...sortOrders)
+    }
+    const orderA = getSortOrder(a)
+    const orderB = getSortOrder(b)
+    if (orderA !== orderB) return orderA - orderB
+    return a.name.localeCompare(b.name)
+  })
 
   return (
     <div className="space-y-6">

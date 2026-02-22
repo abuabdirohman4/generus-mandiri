@@ -34,6 +34,26 @@ export interface ClassWithMaster {
   }>
 }
 
+/**
+ * Sort classes by minimum class_master sort_order
+ * Classes with no mappings are sorted to the end
+ */
+function sortClassesByMasterOrder(classes: any[]): any[] {
+  return classes.sort((a, b) => {
+    const getSortOrder = (cls: any): number => {
+      if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) return 9999
+      const sortOrders = cls.class_master_mappings
+        .map((mapping: any) => mapping.class_master?.sort_order)
+        .filter((order: any) => typeof order === 'number')
+      return sortOrders.length === 0 ? 9999 : Math.min(...sortOrders)
+    }
+    const orderA = getSortOrder(a)
+    const orderB = getSortOrder(b)
+    if (orderA !== orderB) return orderA - orderB
+    return a.name.localeCompare(b.name)
+  })
+}
+
 // Get all classes by kelompok
 export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
   try {
@@ -56,7 +76,6 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
           )
         )
       `)
-      .order('name')
 
     // Apply filters based on user role
     if (profile?.kelompok_id) {
@@ -94,6 +113,7 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
             id,
             name,
             description,
+            sort_order,
             category:category_id (
               id,
               code,
@@ -132,8 +152,8 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
       kelompok: Array.isArray(item.kelompok) ? item.kelompok[0] : item.kelompok,
       class_master_mappings: mappingsByClass[item.id] || []
     }))
-    
-    return transformed
+
+    return sortClassesByMasterOrder(transformed)
   } catch (error) {
     handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
     throw error

@@ -12,6 +12,22 @@ interface AdminLayoutProviderProps {
 export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
   const { setProfile, setLoading, setError } = useUserProfileStore();
 
+  // Load Eruda console for mobile debugging in production
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined' &&
+  //       process.env.NODE_ENV === 'production' &&
+  //       /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+  //     const script = document.createElement('script')
+  //     script.src = 'https://cdn.jsdelivr.net/npm/eruda'
+  //     document.body.appendChild(script)
+  //     script.onload = () => {
+  //       // @ts-ignore
+  //       if (window.eruda) window.eruda.init()
+  //       console.log('Eruda console loaded for mobile debugging')
+  //     }
+  //   }
+  // }, [])
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -62,6 +78,7 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
                   class_master:class_master_id(
                     id,
                     name,
+                    sort_order,
                     category:category_id(
                       id,
                       code,

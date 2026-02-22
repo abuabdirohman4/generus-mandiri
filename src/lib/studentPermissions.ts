@@ -9,6 +9,9 @@
  */
 
 import type { StudentWithOrg } from '@/types/student'
+import { canTeacherAccessStudent } from './accessControl'
+
+export type { StudentWithOrg }
 
 export interface UserProfile {
   id: string
@@ -65,6 +68,9 @@ export function canArchiveStudent(
 ): boolean {
   if (!user) return false
 
+  // Check if user has the permission
+  if (!user.permissions?.can_archive_students) return false
+
   // Superadmin can archive any student
   if (user.role === 'superadmin') return true
 
@@ -73,9 +79,9 @@ export function canArchiveStudent(
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher needs explicit permission
+  // Teacher scope check
   if (user.role === 'teacher') {
-    return user.permissions?.can_archive_students === true
+    return canTeacherAccessStudent(user, student)
   }
 
   // Student role has no permissions
@@ -91,6 +97,9 @@ export function canTransferStudent(
 ): boolean {
   if (!user) return false
 
+  // Check if user has the permission
+  if (!user.permissions?.can_transfer_students) return false
+
   // Superadmin can transfer any student
   if (user.role === 'superadmin') return true
 
@@ -99,9 +108,9 @@ export function canTransferStudent(
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher needs explicit permission
+  // Teacher scope check
   if (user.role === 'teacher') {
-    return user.permissions?.can_transfer_students === true
+    return canTeacherAccessStudent(user, student)
   }
 
   return false
@@ -116,6 +125,9 @@ export function canSoftDeleteStudent(
 ): boolean {
   if (!user) return false
 
+  // Check if user has the permission
+  if (!user.permissions?.can_soft_delete_students) return false
+
   // Superadmin can soft delete any student
   if (user.role === 'superadmin') return true
 
@@ -124,9 +136,9 @@ export function canSoftDeleteStudent(
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher needs explicit permission
+  // Teacher scope check
   if (user.role === 'teacher') {
-    return user.permissions?.can_soft_delete_students === true
+    return canTeacherAccessStudent(user, student)
   }
 
   return false
@@ -141,6 +153,9 @@ export function canHardDeleteStudent(
   student: Student
 ): boolean {
   if (!user) return false
+
+  // Check if user has the permission
+  if (!user.permissions?.can_hard_delete_students) return false
 
   // ONLY superadmin can hard delete
   if (user.role !== 'superadmin') return false
@@ -275,9 +290,12 @@ export function canRequestTransfer(
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher needs explicit permission
+  // Teacher needs explicit permission and scope check
   if (user.role === 'teacher') {
-    return user.permissions?.can_transfer_students === true
+    return (
+      user.permissions?.can_transfer_students === true &&
+      canTeacherAccessStudent(user, student)
+    )
   }
 
   return false

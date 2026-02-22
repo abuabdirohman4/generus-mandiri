@@ -79,6 +79,58 @@ npm run test:ui  # Interactive UI
 
 ---
 
+## 📚 Documentation Strategy for AI Knowledge Management
+
+**CRITICAL**: Balance between inline knowledge vs external references for optimal token usage.
+
+### When to Add Knowledge INLINE in CLAUDE.md
+
+Use inline documentation when:
+- ✅ **High-frequency reference** - Used in >50% of tasks (e.g., TDD workflow, access control rules)
+- ✅ **Short & critical** - <50 lines AND mission-critical (e.g., MCP connection check)
+- ✅ **Quick lookup** - Needs instant recall without file read (e.g., development commands)
+- ✅ **Core conventions** - Fundamental patterns used across codebase (e.g., Supabase client usage)
+
+### When to Create EXTERNAL Reference Files
+
+Create separate files in `docs/claude/` when:
+- ✅ **Low-frequency reference** - Used in <20% of tasks (e.g., bulk database operations)
+- ✅ **Long & detailed** - >50 lines OR multiple examples (e.g., testing guidelines, database operations)
+- ✅ **Specialized knowledge** - Domain-specific or one-time setup (e.g., PWA configuration)
+- ✅ **Reference material** - Detailed examples, troubleshooting guides (e.g., business rules)
+
+### Current Documentation Structure
+
+```
+CLAUDE.md (inline)           docs/claude/ (external references)
+├─ TDD workflow              ├─ testing-guidelines.md (detailed TDD examples)
+├─ Access control rules      ├─ business-rules.md (domain logic)
+├─ Development commands      ├─ database-operations.md (bulk ops, migrations)
+├─ Architecture overview     └─ ... (future: pwa-setup.md, deployment.md)
+└─ MCP connection check
+```
+
+### Token Optimization Guidelines
+
+- **Inline limit**: Keep CLAUDE.md under 700 lines for optimal loading
+- **Reference pointers**: Use clear "READ [`file.md`]" syntax for external docs
+- **Avoid duplication**: Never duplicate between inline and external (use pointer)
+- **Update both**: When adding knowledge, decide inline vs external FIRST
+
+**Example of good pointer**:
+```markdown
+## Database Operations
+
+**For bulk user creation, migrations, and complex database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
+
+Key points:
+- NEVER manually INSERT into `auth.users` without auth.identities
+- Use empty string `''` for tokens, not NULL
+- Pre-hash passwords in bulk operations
+```
+
+---
+
 ## 📋 Beads Issue Progress Documentation Standard
 
 **MANDATORY for all multi-session work tracked in Beads.**
@@ -428,6 +480,98 @@ student (own data only)
 - `getDataFilter(profile)` - Get filter object based on user's organizational level
 - `shouldShowDaerahFilter(profile)`, `shouldShowDesaFilter(profile)`, etc. - UI visibility helpers
 
+### Hierarchical Teacher Pattern (Guru Desa/Daerah)
+
+**CRITICAL**: Teachers with organizational hierarchy (`desa_id`/`daerah_id`) behave differently from regular teachers.
+
+**Organizational Teachers** (Guru Desa/Daerah):
+- ✅ Have `role = 'teacher'` in profiles
+- ✅ Have `desa_id` (Guru Desa) OR `daerah_id` (Guru Daerah) populated
+- ❌ Do NOT have entries in `teacher_classes` junction table
+- ✅ Should see ALL data in their organizational scope (like admins)
+- ✅ Can ONLY create Sambung Desa/Sambung Daerah meetings
+
+**Detection Pattern**:
+```typescript
+// Client-side (components/hooks)
+const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+                               (!userProfile.classes || userProfile.classes.length === 0)
+
+// Server-side (actions)
+if (profile?.role === 'teacher') {
+  if (profile.teacher_classes && profile.teacher_classes.length > 0) {
+    // Regular teacher: has assigned classes
+  } else if (profile.kelompok_id || profile.desa_id || profile.daerah_id) {
+    // Hierarchical teacher: has organizational access
+  }
+}
+```
+
+**Implementation Requirements**:
+
+1. **Profile Queries**: MUST include organizational fields
+   ```typescript
+   const { data: profile } = await supabase
+     .from('profiles')
+     .select(`
+       role,
+       kelompok_id,
+       desa_id,
+       daerah_id,
+       teacher_classes!left(class_id, classes(id, name))
+     `)
+   ```
+   - Use `left` join for `teacher_classes` (handles both regular and hierarchical)
+
+2. **Data Filtering**: Apply hierarchical filters like admins
+   ```typescript
+   if (profile.kelompok_id) {
+     query = query.eq('kelompok_id', profile.kelompok_id)
+   } else if (profile.desa_id) {
+     query = query.eq('kelompok.desa_id', profile.desa_id)
+   } else if (profile.daerah_id) {
+     query = query.eq('kelompok.desa.daerah_id', profile.daerah_id)
+   }
+   ```
+
+3. **Admin Client Usage**: Bypass RLS for hierarchical access
+   ```typescript
+   const adminClient = await createAdminClient()
+   // Use adminClient for queries, apply organizational filters manually
+   ```
+
+4. **UI Display Logic**: Show all classes like admins
+   ```typescript
+   if (isHierarchicalTeacher) {
+     // Show ALL classes in student's records
+     displayClasses = student.classes.map(c => c.name).join(', ')
+   } else {
+     // Regular teacher: filter to only their assigned classes
+     displayClasses = student.classes.filter(c => teacherClassIds.includes(c.id))
+   }
+   ```
+
+5. **Meeting Types & Attendance Access**: 
+   - Hierarchical teachers with no classes can still access meeting types by relying on organizational level (`daerah_id`, `desa_id`, `kelompok_id`).
+   - Use `isHierarchicalTeacher` bypassing logic in `absensi/[meetingId]/page.tsx` class filters (`canUserEditMeetingAttendance` from `meetingHelpersClient`).
+   - Ensure the `UserProfile` interfaces correctly type the organizational fields as `string | null` to match Supabase's structure and avoid strict TS assigning issues.
+
+**Files with Hierarchical Teacher Support** (sm-3ud):
+- `src/app/(admin)/users/siswa/actions/classes.ts` - getAllClasses()
+- `src/app/(admin)/users/siswa/actions.ts` - getAllStudents()
+- `src/app/(admin)/absensi/actions.ts` - getMeetingsWithStats()
+- `src/app/(admin)/laporan/actions.ts` - getAttendanceReport()
+- `src/app/(admin)/users/siswa/components/StudentsTable.tsx` - Class display
+- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping
+
+**Common Pitfalls**:
+- ❌ Checking only `teacher_classes` length (hierarchical teachers have 0)
+- ❌ Using regular user client instead of admin client
+- ❌ Forgetting to include organizational fields in profile query
+- ❌ Not handling both `class_id` and `class_ids` in meeting filtering
+
+**Reference Implementation**: See `.beads/progress/sm-3ud.md` for complete hierarchical teacher implementation.
+
 ### State Management
 
 **Zustand Stores** (persisted to localStorage):
@@ -558,6 +702,18 @@ export function useMeetingFormSettings(userId?: string) {
 - `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 10 to avoid database query limits
 - **CRITICAL**: Use this for large datasets (e.g., reports, attendance with many meetings) to prevent data loss from query limits
 
+**Class Sort Order** - ALL class dropdowns/lists MUST be sorted by `class_master.sort_order`:
+- Server-side: `getAllClasses()` and `getAllClassesByKelompok()` already return pre-sorted data
+- Client-side: Apply sort in components using `class_master_mappings[].class_master.sort_order` (min value), classes without mapping go last (9999)
+- `AdminLayoutProvider.tsx` fetches teacher classes with `sort_order` included in the nested query
+- ⚠️ **NEVER** fetch `class_master_mappings` with `sort_order` via PostgREST nested join (`class_masters!inner(sort_order)`) — it **silently fails/returns null**. Use the **two-query pattern** instead:
+  ```typescript
+  // 1. Query class_master_mappings → get class_master_ids
+  // 2. Query class_masters by those IDs → get sort_order
+  // 3. Join in code
+  // See: users/siswa/actions/classes.ts fetchClassMasterMappings()
+  ```
+
 ---
 
 ## ⚠️ Important Business Rules
@@ -584,6 +740,42 @@ This document contains critical business logic including:
 - Call `mutate()` on SWR hooks after client-side updates
 - Both logout AND login use `clearUserCache()` to remove all persistent state and reload the page
 - For targeted cache invalidation (e.g., after saving settings), use `mutate(specificKey)` from SWR
+
+---
+
+## 🗄️ Database Operations & Migrations
+
+**For bulk user creation, complex migrations, and database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
+
+### 🚨 CRITICAL: Creating Supabase Auth Users
+
+**NEVER manually INSERT into `auth.users` without ALL required fields.**
+
+Common mistakes that cause "Database error querying schema":
+- ❌ Missing `auth.identities` record (CRITICAL!)
+- ❌ Empty `raw_user_meta_data` (no display name in UI)
+- ❌ Using `NULL` instead of `''` for token fields
+- ❌ Inconsistent email domains (check existing convention)
+
+**Required when creating users via SQL**:
+1. ✅ Insert into `auth.users` with ALL fields (see database-operations.md for template)
+2. ✅ Insert into `auth.identities` with provider info
+3. ✅ Insert into `profiles` with role and organization
+4. ✅ Use `''` (empty string) for tokens, NOT `NULL`
+5. ✅ Populate `raw_user_meta_data` with `{name, username, full_name}`
+
+**Debugging checklist**:
+```sql
+-- Check if identities exists
+SELECT u.email, i.id IS NOT NULL as has_identity
+FROM auth.users u
+LEFT JOIN auth.identities i ON i.user_id = u.id
+WHERE u.email = 'problematic@email.com';
+
+-- Check if display name is populated
+SELECT email, raw_user_meta_data->>'name' as display_name
+FROM auth.users WHERE email = 'problematic@email.com';
+```
 
 ---
 
@@ -640,3 +832,4 @@ import { isSuperAdmin } from '@/lib/userUtils'
 
 - **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md) - Complete testing setup, examples, TDD workflow
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md) - Critical domain logic for Students, Attendance, Transfers, Meetings
+- **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md) - Bulk operations, user creation, migration patterns

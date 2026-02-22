@@ -79,11 +79,17 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, teacher_classes(class_id)')
+      .select(`
+        role,
+        kelompok_id,
+        desa_id,
+        daerah_id,
+        teacher_classes(class_id)
+      `)
       .eq('id', user.id)
       .single()
 
-    // For teacher, use admin client to bypass RLS and filter by teacher's classes
+    // For teacher, use admin client to bypass RLS and filter by teacher's classes OR hierarchy
     // Query dengan junction table student_classes untuk support multiple classes
     if (profile?.role === 'teacher' && profile.teacher_classes && profile.teacher_classes.length > 0) {
       const teacherClassIds = profile.teacher_classes.map((tc: any) => tc.class_id)
@@ -235,6 +241,72 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
 
       if (studentsError) {
         throw studentsError
+      }
+
+      return await transformStudentsData(students || [], adminClient)
+    } else if (profile?.role === 'teacher' && (profile.kelompok_id || profile.desa_id || profile.daerah_id)) {
+      // Teacher with hierarchical access (Guru Desa/Daerah)
+      // Use admin client to bypass RLS
+      const adminClient = await createAdminClient()
+
+      let studentsQuery = adminClient
+        .from('students')
+        .select(`
+          id,
+          name,
+          gender,
+          class_id,
+          kelompok_id,
+          desa_id,
+          daerah_id,
+          status,
+          created_at,
+          updated_at,
+          student_classes(
+            classes:class_id(id, name)
+          ),
+          daerah:daerah_id(name),
+          desa:desa_id(name),
+          kelompok:kelompok_id(name)
+        `)
+        .is('deleted_at', null)
+        .order('name')
+
+      // Apply hierarchical filter
+      if (profile.kelompok_id) {
+        // Teacher Kelompok: filter by kelompok_id
+        studentsQuery = studentsQuery.eq('kelompok_id', profile.kelompok_id)
+      } else if (profile.desa_id) {
+        // Teacher Desa: filter by desa_id
+        studentsQuery = studentsQuery.eq('desa_id', profile.desa_id)
+      } else if (profile.daerah_id) {
+        // Teacher Daerah: filter by daerah_id
+        studentsQuery = studentsQuery.eq('daerah_id', profile.daerah_id)
+      }
+
+      // Apply class filter if provided
+      if (classId) {
+        const classIds = classId.split(',')
+
+        // Get students from junction table for these classes
+        const { data: studentClassData } = await adminClient
+          .from('student_classes')
+          .select('student_id')
+          .in('class_id', classIds)
+
+        if (studentClassData && studentClassData.length > 0) {
+          const studentIds = studentClassData.map(sc => sc.student_id)
+          studentsQuery = studentsQuery.in('id', studentIds)
+        } else {
+          // No students in these classes
+          return []
+        }
+      }
+
+      const { data: students, error } = await studentsQuery
+
+      if (error) {
+        throw error
       }
 
       return await transformStudentsData(students || [], adminClient)

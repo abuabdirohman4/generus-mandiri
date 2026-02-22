@@ -89,30 +89,59 @@ export default function CreateMeetingModal({
     return availableTypes
   }, [availableTypes, selectedClassIds, classes])
 
+  // Sort classes by minimum class_master sort_order
+  const sortClassesByMasterOrder = (classList: any[]) => {
+    return [...classList].sort((a, b) => {
+      const getSortOrder = (cls: any): number => {
+        if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) return 9999
+        const sortOrders = cls.class_master_mappings
+          .map((m: any) => m.class_master?.sort_order)
+          .filter((o: any) => typeof o === 'number')
+        return sortOrders.length === 0 ? 9999 : Math.min(...sortOrders)
+      }
+      const orderA = getSortOrder(a)
+      const orderB = getSortOrder(b)
+      if (orderA !== orderB) return orderA - orderB
+      return a.name.localeCompare(b.name)
+    })
+  }
+
+  // Check if teacher is hierarchical (Guru Desa/Daerah)
+  const isHierarchicalTeacher = useMemo(() => {
+    if (!userProfile) return false
+    return !!((userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+      (!userProfile.classes || userProfile.classes.length === 0))
+  }, [userProfile])
+
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
+    if (isHierarchicalTeacher) {
+      return sortClassesByMasterOrder(classes || [])
+    }
+
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
-      // Enrich teacher classes with kelompok_id from classes
-      return userProfile.classes.map(cls => {
+      // Enrich teacher classes with kelompok_id from classes, then sort
+      const enriched = userProfile.classes.map(cls => {
         const fullClass = classes.find(c => c.id === cls.id)
         return {
           ...cls,
           kelompok_id: fullClass?.kelompok_id || null
         }
       })
+      return sortClassesByMasterOrder(enriched)
     } else if (userProfile?.role === 'teacher') {
-      return userProfile.classes || []
+      return sortClassesByMasterOrder(userProfile.classes || [])
     }
-    return classes || []
+    return sortClassesByMasterOrder(classes || [])
   }, [
     userProfile?.role,
     userProfile?.classes?.length,
     userProfile?.classes?.map(c => c.id).join(','),
     classes?.length,
-    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
+    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(','),
+    isHierarchicalTeacher
   ])
-
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
     // Find first class from student.classes that exists in selectedClassIds
@@ -456,8 +485,12 @@ export default function CreateMeetingModal({
       // If multiple options and PEMBINAAN exists, default to PEMBINAAN
       else if (typeValues.length > 1) {
         const hasPembinaan = typeValues.some(t => t.code === 'PEMBINAAN')
-        if (hasPembinaan) {
+        const hasAsad = typeValues.some(t => t.code === 'ASAD')
+        const warlob = typeValues.length == 2 && hasAsad && hasPembinaan
+        if (warlob) {
           setMeetingType('PEMBINAAN')
+        } else if (hasPembinaan) {
+          setMeetingType('SAMBUNG_KELOMPOK')
         } else {
           // No PEMBINAAN means Sambung classes, default to SAMBUNG_KELOMPOK
           setMeetingType('SAMBUNG_KELOMPOK')
@@ -585,7 +618,7 @@ export default function CreateMeetingModal({
                       if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
                         // Create mapping kelompok_id -> kelompok name
                         const kelompokMap = new Map(
-                          kelompok.map(k => [k.id, k.name])
+                          kelompok.map((k: any) => [k.id, k.name])
                         )
 
                         // Check for duplicate class names

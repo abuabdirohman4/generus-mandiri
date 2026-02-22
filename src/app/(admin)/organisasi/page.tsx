@@ -90,7 +90,7 @@ export default function OrganisasiManagementPage() {
 
     // If daerah filter is active, filter desa by daerah_id
     if (daerahFilter) {
-      return desa.filter(d => d.daerah_id === daerahFilter)
+      return desa.filter((d: any) => d.daerah_id === daerahFilter)
     }
 
     // Otherwise, return all desa
@@ -105,16 +105,16 @@ export default function OrganisasiManagementPage() {
 
     // Filter by desa first (more specific)
     if (desaFilter) {
-      filtered = filtered.filter(k => k.desa_id === desaFilter)
+      filtered = filtered.filter((k: any) => k.desa_id === desaFilter)
     }
     // Then filter by daerah (if desa not selected)
     else if (daerahFilter) {
       // Get desa IDs in selected daerah
-      const desaInDaerah = (desa || []).filter(d => d.daerah_id === daerahFilter)
-      const desaIds = desaInDaerah.map(d => d.id)
+      const desaInDaerah = (desa || []).filter((d: any) => d.daerah_id === daerahFilter)
+      const desaIds = desaInDaerah.map((d: any) => d.id)
 
       // Filter kelompok by those desa IDs
-      filtered = filtered.filter(k => desaIds.includes(k.desa_id))
+      filtered = filtered.filter((k: any) => desaIds.includes(k.desa_id))
     }
 
     return filtered

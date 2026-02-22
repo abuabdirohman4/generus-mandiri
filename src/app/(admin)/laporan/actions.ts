@@ -119,6 +119,9 @@ export interface ReportData {
     student_gender: string
     class_name: string
     all_classes?: Array<{ id: string; name: string }> // All classes for multi-class support
+    kelompok_name?: string | null
+    desa_name?: string | null
+    daerah_name?: string | null
     total_days: number
     hadir: number
     izin: number
@@ -154,15 +157,18 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       throw new Error('User not authenticated')
     }
 
-    // Get user profile with teacher classes
+    // Get user profile with teacher classes and organizational IDs
     const { data: profile } = await supabase
       .from('profiles')
       .select(`
         id,
         role,
+        daerah_id,
+        desa_id,
+        kelompok_id,
         teacher_classes!teacher_classes_teacher_id_fkey(
           class_id,
-          classes:class_id(id, name)
+          classes:class_id(id, name, kelompok_id)
         )
       `)
       .eq('id', user.id)
@@ -321,20 +327,113 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     const { data: meetingsForFilter } = await meetingsForFilterQuery.order('date')
 
-    // For teachers, filter meetings to get relevant meeting IDs
+    // Build hierarchical maps for filtering (CRITICAL: must be built BEFORE filtering)
+    // Collect all class IDs from meetings
+    const allClassIdsFromMeetings = new Set<string>()
+    ;(meetingsForFilter || []).forEach((meeting: any) => {
+      if (meeting.class_id) allClassIdsFromMeetings.add(meeting.class_id)
+      if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+        meeting.class_ids.forEach((id: string) => allClassIdsFromMeetings.add(id))
+      }
+    })
+
+    // Fetch class details to build maps
+    const { data: classesForMapping } = await adminClient
+      .from('classes')
+      .select(`
+        id,
+        kelompok_id,
+        kelompok:kelompok_id (
+          id,
+          desa_id,
+          desa:desa_id (
+            id,
+            daerah_id
+          )
+        )
+      `)
+      .in('id', Array.from(allClassIdsFromMeetings))
+
+    // Build maps: class_id -> kelompok_id, desa_id, daerah_id
+    const classKelompokMap = new Map<string, string>()
+    const classToDesaMap = new Map<string, string>()
+    const classToDaerahMap = new Map<string, string>()
+
+    if (classesForMapping) {
+      classesForMapping.forEach((cls: any) => {
+        if (cls.kelompok_id) {
+          classKelompokMap.set(cls.id, cls.kelompok_id)
+        }
+
+        const kelompok = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok
+        if (kelompok?.desa_id) {
+          classToDesaMap.set(cls.id, kelompok.desa_id)
+
+          const desa = Array.isArray(kelompok.desa) ? kelompok.desa[0] : kelompok.desa
+          if (desa?.daerah_id) {
+            classToDaerahMap.set(cls.id, desa.daerah_id)
+          }
+        }
+      })
+    }
+
+    // Filter meetings based on user role and scope
     let meetingIdsForAttendance: string[] = []
 
-    if (profile.role === 'teacher' && teacherClassIds.length > 0 && meetingsForFilter) {
-      const teacherMeetingsForRange = meetingsForFilter.filter((meeting: any) => {
-        if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
-          return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+    if (profile.role === 'teacher') {
+      const teacherMeetingsForRange = (meetingsForFilter || []).filter((meeting: any) => {
+        // Get all class IDs for this meeting
+        const meetingClassIds = meeting.class_ids || [meeting.class_id]
+
+        // Check if teacher has access via assigned classes
+        if (teacherClassIds.length > 0 && meetingClassIds.some((id: string) => teacherClassIds.includes(id))) {
+          return true
         }
-        return meeting.class_id && teacherClassIds.includes(meeting.class_id)
+
+        // Check if teacher has hierarchical access (Guru Desa/Daerah)
+        if (profile.kelompok_id) {
+          // Teacher Kelompok: only their assigned classes (already checked above)
+          return false
+        } else if (profile.desa_id) {
+          // Teacher Desa: all classes in their desa
+          return meetingClassIds.some((classId: string) => classToDesaMap.get(classId) === profile.desa_id)
+        } else if (profile.daerah_id) {
+          // Teacher Daerah: all classes in their daerah
+          return meetingClassIds.some((classId: string) => classToDaerahMap.get(classId) === profile.daerah_id)
+        }
+
+        return false
       })
 
       meetingIdsForAttendance = teacherMeetingsForRange.map((m: any) => m.id)
+
+    } else if (profile.role === 'admin') {
+      let filteredMeetings = meetingsForFilter || []
+
+      if (profile.kelompok_id) {
+        // Admin Kelompok: filter by kelompok_id
+        filteredMeetings = filteredMeetings.filter((meeting: any) => {
+          const meetingClassIds = meeting.class_ids || [meeting.class_id]
+          return meetingClassIds.some((classId: string) => classKelompokMap.get(classId) === profile.kelompok_id)
+        })
+      } else if (profile.desa_id) {
+        // Admin Desa: filter by desa_id
+        filteredMeetings = filteredMeetings.filter((meeting: any) => {
+          const meetingClassIds = meeting.class_ids || [meeting.class_id]
+          return meetingClassIds.some((classId: string) => classToDesaMap.get(classId) === profile.desa_id)
+        })
+      } else if (profile.daerah_id) {
+        // Admin Daerah: filter by daerah_id
+        filteredMeetings = filteredMeetings.filter((meeting: any) => {
+          const meetingClassIds = meeting.class_ids || [meeting.class_id]
+          return meetingClassIds.some((classId: string) => classToDaerahMap.get(classId) === profile.daerah_id)
+        })
+      }
+      // else: Superadmin sees all meetings (no filtering)
+
+      meetingIdsForAttendance = filteredMeetings.map((m: any) => m.id)
     } else {
-      // For admin, use all meetings in date range
+      // For other roles (student, etc.), use all meetings
       meetingIdsForAttendance = (meetingsForFilter || []).map((m: any) => m.id)
     }
 
@@ -361,7 +460,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     // Get unique student IDs from attendance logs
     const studentIds = [...new Set((attendanceLogsData || []).map((log: any) => log.student_id))]
 
-    // Fetch student details with classes info
+    // Fetch student details with classes info and organizational hierarchy
     const { data: studentsData, error: studentsError } = await adminClient
       .from('students')
       .select(`
@@ -370,6 +469,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         gender,
         class_id,
         kelompok_id,
+        desa_id,
+        daerah_id,
         classes(
           id,
           name
@@ -385,6 +486,18 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
               name
             )
           )
+        ),
+        kelompok:kelompok_id (
+          id,
+          name
+        ),
+        desa:desa_id (
+          id,
+          name
+        ),
+        daerah:daerah_id (
+          id,
+          name
         )
       `)
       .in('id', studentIds)
@@ -453,9 +566,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     //   }))
     // })
 
-    // Build class-to-kelompok mapping for validation
-    // CRITICAL: Build from meetings first (to ensure all classes in date range are included)
-    const classKelompokMap = new Map<string, string>()
+    // Enrich maps from meetings with full details (to ensure all classes in date range are included)
     if (meetings) {
       meetings.forEach((meeting: any) => {
         if (meeting.class_id && meeting.classes?.kelompok_id) {
@@ -531,21 +642,21 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }
 
     // DEBUG: Log enrollment counts to verify data
-    console.log('[ENROLLMENT DEBUG] Student Enrollments by Class:', {
-      totalClasses: classStudentsByKelompok.size,
-      allClassIds: allClassIds.length,
-      enrollmentsByClass: Array.from(classStudentsByKelompok.entries()).map(([classId, kelompokMap]) => {
-        const totalStudents = Array.from(kelompokMap.values()).reduce((sum, students) => sum + students.size, 0)
-        return {
-          classId,
-          totalStudents,
-          byKelompok: Array.from(kelompokMap.entries()).map(([kelompokId, students]) => ({
-            kelompokId,
-            studentCount: students.size
-          }))
-        }
-      })
-    })
+    // console.log('[ENROLLMENT DEBUG] Student Enrollments by Class:', {
+    //   totalClasses: classStudentsByKelompok.size,
+    //   allClassIds: allClassIds.length,
+    //   enrollmentsByClass: Array.from(classStudentsByKelompok.entries()).map(([classId, kelompokMap]) => {
+    //     const totalStudents = Array.from(kelompokMap.values()).reduce((sum, students) => sum + students.size, 0)
+    //     return {
+    //       classId,
+    //       totalStudents,
+    //       byKelompok: Array.from(kelompokMap.entries()).map(([kelompokId, students]) => ({
+    //         kelompokId,
+    //         studentCount: students.size
+    //       }))
+    //     }
+    //   })
+    // })
 
     // For teacher, filter meetings by their classes first
     // Use meetingsForFilter if available, otherwise use full meetings
@@ -1006,6 +1117,10 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             id: cls.id,
             name: cls.name
           })),
+          // Add organizational fields for Guru Desa/Daerah
+          kelompok_name: log.students?.kelompok?.name || null,
+          desa_name: log.students?.desa?.name || null,
+          daerah_name: log.students?.daerah?.name || null,
           total_days: 0,
           hadir: 0,
           izin: 0,
@@ -1036,6 +1151,10 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       student_gender: student.student_gender,
       class_name: student.class_name,
       all_classes: student.all_classes || [], // Include all classes
+      // Organizational fields for Guru Desa/Daerah
+      kelompok_name: student.kelompok_name || null,
+      desa_name: student.desa_name || null,
+      daerah_name: student.daerah_name || null,
       total_days: student.total_days,
       hadir: student.hadir,
       izin: student.izin,
@@ -1070,7 +1189,15 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     }
 
   } catch (error) {
-    handleApiError(error, 'memuat data', 'Gagal memuat laporan kehadiran')
+    // Log error for debugging (server-side only)
+    console.error('[MEMUAT DATA] Error:', {
+      message: 'Gagal memuat laporan kehadiran',
+      originalError: error,
+      timestamp: new Date().toISOString()
+    })
+
+    // Re-throw error for SWR to handle
+    // SWR will manage retry logic and error display
     throw error
   }
 }

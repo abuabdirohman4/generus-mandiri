@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isIOS } from '@/lib/utils';
 import { isInStandaloneMode } from '@/lib/pwaUtils';
@@ -23,6 +23,7 @@ export default function PWASettingsSection() {
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [installStatus, setInstallStatus] = useState<'not-supported' | 'available' | 'installed' | 'dismissed' | 'ios-manual'>('not-supported');
   const { profile } = useUserProfile();
+  const installTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Detect iOS
@@ -61,8 +62,18 @@ export default function PWASettingsSection() {
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
+      console.log('PWA successfully installed (via appinstalled event)');
+
+      // Clear the fallback timeout if it's still running
+      if (installTimeoutRef.current) {
+        clearTimeout(installTimeoutRef.current);
+        installTimeoutRef.current = null;
+      }
+
+      // Update state to show installation completed
       setIsInstalled(true);
       setInstallStatus('installed');
+      setIsInstalling(false); // Stop loading spinner
       localStorage.setItem('pwa-install-prompt', 'installed');
     };
 
@@ -77,6 +88,12 @@ export default function PWASettingsSection() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+
+      // Clear install timeout if component unmounts during installation
+      if (installTimeoutRef.current) {
+        clearTimeout(installTimeoutRef.current);
+        installTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -84,23 +101,44 @@ export default function PWASettingsSection() {
     if (!deferredPrompt) return;
 
     setIsInstalling(true);
-    
+
     try {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+        console.log('User accepted the install prompt - waiting for appinstalled event');
+
+        // Set a fallback timeout in case appinstalled event doesn't fire
+        // Some browsers/devices may not reliably trigger the event
+        installTimeoutRef.current = setTimeout(() => {
+          console.log('PWA installation completed (via 15s fallback timeout)');
+          setIsInstalled(true);
+          setInstallStatus('installed');
+          setIsInstalling(false);
+          localStorage.setItem('pwa-install-prompt', 'installed');
+          installTimeoutRef.current = null;
+        }, 15000); // 15 seconds fallback (generous for slow devices)
+
+        // Note: Primary completion will be handled by handleAppInstalled
+        // when the 'appinstalled' event fires (should happen before timeout)
       } else {
         console.log('User dismissed the install prompt');
+
+        // Clear timeout if it was started (defensive coding)
+        if (installTimeoutRef.current) {
+          clearTimeout(installTimeoutRef.current);
+          installTimeoutRef.current = null;
+        }
+
         localStorage.setItem('pwa-install-prompt', 'dismissed');
         setInstallStatus('dismissed');
+        setIsInstalling(false); // Stop loading immediately when dismissed
       }
-      
+
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Error during PWA installation:', error);
-    } finally {
       setIsInstalling(false);
     }
   };
@@ -191,26 +229,24 @@ export default function PWASettingsSection() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              {installStatus === 'available' && (
+              {installStatus === 'available' && !isInstalling && (
                 <button
                   onClick={handleInstallClick}
                   disabled={isInstalling}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
                 >
-                  {isInstalling ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Installing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Install Aplikasi
-                    </>
-                  )}
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Install Aplikasi
                 </button>
+              )}
+
+              {isInstalling && (
+                <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Sedang menginstall aplikasi...
+                </div>
               )}
 
               {installStatus === 'dismissed' && (
@@ -240,43 +276,6 @@ export default function PWASettingsSection() {
         <IOSInstallInstructions />
       )}
 
-      {/* Android/Desktop Install Button */}
-      {!isIOSDevice && installStatus === 'available' && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  Install Aplikasi
-                </h4>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Install aplikasi untuk akses lebih cepat
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleInstallClick}
-              disabled={isInstalling}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-200 flex items-center"
-            >
-              {isInstalling ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></div>
-                  Installing...
-                </>
-              ) : (
-                'Install'
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Benefits Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
@@ -284,7 +283,7 @@ export default function PWASettingsSection() {
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -296,7 +295,7 @@ export default function PWASettingsSection() {
           </div>
 
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -308,7 +307,7 @@ export default function PWASettingsSection() {
           </div>
 
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-3 h-3 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -320,7 +319,7 @@ export default function PWASettingsSection() {
           </div>
 
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-3 h-3 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>

@@ -138,17 +138,107 @@ export default function DataFilter({
   const isAdminKelompok = userProfile?.role === 'admin' && userProfile?.kelompok_id
   const isTeacher = userProfile?.role === 'teacher'
 
+  // Teacher level detection (NEW - for Teacher Desa/Daerah roles)
+  const isTeacherDaerah = isTeacher && userProfile?.daerah_id && !userProfile?.desa_id && !userProfile?.kelompok_id
+  const isTeacherDesa = isTeacher && userProfile?.desa_id && !userProfile?.kelompok_id
+  const isTeacherKelompok = isTeacher && userProfile?.kelompok_id
+
   // Use filtered lists if provided, otherwise use full lists
   const activeDaerahList = filterLists?.daerahList || daerahList
   const activeDesaList = filterLists?.desaList || desaList
   const activeKelompokList = filterLists?.kelompokList || kelompokList
 
   // Determine which filters to show (use override props if provided, otherwise use role-based logic)
-  const shouldShowDaerah = showDaerah !== undefined ? showDaerah : isSuperAdmin
-  const shouldShowDesa = showDesa !== undefined ? showDesa : (isSuperAdmin || isAdminDaerah)
-  const shouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa)
+  const shouldShowDaerah = showDaerah !== undefined ? showDaerah : (isSuperAdmin || isTeacherDaerah)
+  const shouldShowDesa = showDesa !== undefined ? showDesa : (isSuperAdmin || isAdminDaerah || isTeacherDaerah || isTeacherDesa)
+  const shouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa || isTeacherKelompok)
   const teacherHasMultipleClasses = isTeacher && userProfile?.classes && userProfile.classes.length > 1
-  const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses)
+  const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses || isTeacherDaerah || isTeacherDesa)
+
+  // Filter options based on cascading logic (declare these before counting)
+  const filteredDesaList = useMemo(() => {
+    if (!shouldShowDesa) return []
+
+    // Independent Mode: Show all options (respecting role restrictions)
+    if (!cascadeFilters) {
+      if (isAdminDaerah || isTeacherDaerah) {
+        return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
+      }
+      // Superadmin sees all
+      return activeDesaList
+    }
+
+    if (isSuperAdmin) {
+      // Superadmin: filter by selected Daerah
+      if (filters?.daerah && filters.daerah.length > 0) {
+        return activeDesaList.filter(desa => filters.daerah.includes(desa.daerah_id))
+      }
+      return activeDesaList
+    } else if (isAdminDaerah || isTeacherDaerah) {
+      // Admin Daerah / Guru Daerah: filter by their daerah_id
+      return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
+    }
+
+    return activeDesaList
+  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, isTeacherDaerah, shouldShowDesa, cascadeFilters])
+
+  const filteredKelompokList = useMemo(() => {
+    if (!shouldShowKelompok) return []
+
+    // Independent Mode: Show all options (respecting role restrictions)
+    if (!cascadeFilters) {
+      if (isAdminDesa || isTeacherDesa) {
+        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
+      }
+      if (isAdminDaerah || isTeacherDaerah) {
+        // Admin daerah / Guru daerah sees all groups in their daerah
+        const validDesaIds = activeDesaList
+          .filter(desa => desa.daerah_id === userProfile?.daerah_id)
+          .map(desa => desa.id)
+        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
+      }
+      // Superadmin sees all
+      return activeKelompokList
+    }
+
+    if (isSuperAdmin) {
+      // Superadmin: filter by selected Daerah or Desa
+      if (filters?.desa && filters.desa.length > 0) {
+        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
+      }
+      if (filters?.daerah && filters.daerah.length > 0) {
+        const validDesaIds = activeDesaList
+          .filter(desa => filters.daerah.includes(desa.daerah_id))
+          .map(desa => desa.id)
+        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
+      }
+      return activeKelompokList
+    } else if (isAdminDesa || isTeacherDesa) {
+      // Admin Desa / Guru Desa: filter by their desa_id
+      return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
+    } else if (isAdminDaerah || isTeacherDaerah) {
+      // Admin Daerah / Guru Daerah: filter by selected Desa or their Daerah
+      if (filters?.desa && filters.desa.length > 0) {
+        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
+      }
+      const validDesaIds = activeDesaList
+        .filter(desa => desa.daerah_id === userProfile?.daerah_id)
+        .map(desa => desa.id)
+      return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
+    }
+
+    return activeKelompokList
+  }, [activeKelompokList, filters?.desa, filters?.daerah, userProfile?.desa_id, userProfile?.daerah_id, activeDesaList, isSuperAdmin, isAdminDesa, isAdminDaerah, isTeacherDesa, isTeacherDaerah, shouldShowKelompok, cascadeFilters])
+
+  // Count options to determine if filters should be hidden when only one option exists
+  const daerahListCount = useMemo(() => activeDaerahList.length, [activeDaerahList])
+  const desaListCount = useMemo(() => filteredDesaList.length, [filteredDesaList])
+  const kelompokListCount = useMemo(() => filteredKelompokList.length, [filteredKelompokList])
+
+  // Apply single-option hiding: hide filter if user only has access to 1 option
+  const effectiveShouldShowDaerah = shouldShowDaerah && daerahListCount > 1
+  const effectiveShouldShowDesa = shouldShowDesa && desaListCount > 1
+  const effectiveShouldShowKelompok = shouldShowKelompok && kelompokListCount > 1
 
   // Teacher special case - only show Kelas filter if they have multiple classes
   // if (isTeacher && teacherHasMultipleClasses && showKelas && !showGender) {
@@ -170,78 +260,9 @@ export default function DataFilter({
   // }
 
   // If no filters to show, return null
-  if (!showGender && !showStatus && !shouldShowDaerah && !shouldShowDesa && !shouldShowKelompok && !showKelasFilter && !showMeetingType) {
+  if (!showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType) {
     return null
   }
-
-  // Filter options based on cascading logic
-  const filteredDesaList = useMemo(() => {
-    if (!shouldShowDesa) return []
-
-    // Independent Mode: Show all options (respecting role restrictions)
-    if (!cascadeFilters) {
-      if (isAdminDaerah) {
-        return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
-      }
-      // Superadmin sees all
-      return activeDesaList
-    }
-
-    if (isSuperAdmin) {
-      // Superadmin: filter by selected Daerah
-      if (filters?.daerah && filters.daerah.length > 0) {
-        return activeDesaList.filter(desa => filters.daerah.includes(desa.daerah_id))
-      }
-      return activeDesaList
-    } else if (isAdminDaerah) {
-      // Admin Daerah: filter by their daerah_id
-      return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
-    }
-
-    return activeDesaList
-  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, shouldShowDesa, cascadeFilters])
-
-  const filteredKelompokList = useMemo(() => {
-    if (!shouldShowKelompok) return []
-
-    // Independent Mode: Show all options (respecting role restrictions)
-    if (!cascadeFilters) {
-      if (isAdminDesa) {
-        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
-      }
-      if (isAdminDaerah) {
-        // Admin daerah sees all groups (assuming data safe or client-side filtering if needed)
-        return activeKelompokList
-      }
-      // Superadmin sees all
-      return activeKelompokList
-    }
-
-    if (isSuperAdmin) {
-      // Superadmin: filter by selected Desa, but also consider Daerah filter
-      if (filters?.desa && filters.desa.length > 0) {
-        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
-      } else if (filters?.daerah && filters.daerah.length > 0) {
-        // If no Desa selected but Daerah is selected, filter by desas in that daerah
-        const validDesaIds = filteredDesaList.map(d => d.id)
-        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
-      }
-      return activeKelompokList
-    } else if (isAdminDaerah) {
-      // Admin Daerah: filter by selected Desa or their desa_id
-      if (filters?.desa && filters.desa.length > 0) {
-        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
-      } else if (userProfile?.desa_id) {
-        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile.desa_id)
-      }
-      return activeKelompokList
-    } else if (isAdminDesa) {
-      // Admin Desa: filter by their desa_id
-      return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
-    }
-
-    return activeKelompokList
-  }, [activeKelompokList, filters?.desa, filters?.daerah, filteredDesaList, userProfile?.desa_id, isSuperAdmin, isAdminDaerah, isAdminDesa, shouldShowKelompok, cascadeFilters])
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -256,6 +277,23 @@ export default function DataFilter({
     if (!cascadeFilters) {
       if (isAdminKelompok) {
         return classList.filter(cls => !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id)
+      }
+      if (isTeacherDesa) {
+        // Guru Desa: show classes from all kelompok in their desa
+        const validKelompokIds = activeKelompokList
+          .filter(k => k.desa_id === userProfile?.desa_id)
+          .map(k => k.id)
+        return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
+      }
+      if (isTeacherDaerah) {
+        // Guru Daerah: show classes from all kelompok in their daerah
+        const validDesaIds = activeDesaList
+          .filter(d => d.daerah_id === userProfile?.daerah_id)
+          .map(d => d.id)
+        const validKelompokIds = activeKelompokList
+          .filter(k => validDesaIds.includes(k.desa_id))
+          .map(k => k.id)
+        return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
       }
       if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
         const teacherClassIds = userProfile.classes.map(c => c.id)
@@ -286,7 +324,7 @@ export default function DataFilter({
       return classList
     }
 
-    if (isSuperAdmin || isAdminDaerah || isAdminDesa) {
+    if (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa) {
       // Get valid kelompok IDs from filteredKelompokList (kelompok yang tersedia)
       const validKelompokIds = filteredKelompokList.map(k => k.id)
 
@@ -313,14 +351,14 @@ export default function DataFilter({
 
     // For teacher or other roles, return all classes when kelompok filter is not active
     return classList
-  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes, cascadeFilters])
+  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, isTeacherDaerah, isTeacherDesa, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes, cascadeFilters, activeDesaList, activeKelompokList, userProfile?.desa_id, userProfile?.daerah_id])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {
     if (!filteredClassList.length) return []
 
-    // Special handling for teacher with multiple classes from different kelompok
-    if (isTeacher && teacherHasMultipleClasses) {
+    // Special handling for teacher with multiple classes from different kelompok OR Guru Desa/Daerah
+    if ((isTeacher && teacherHasMultipleClasses) || isTeacherDesa || isTeacherDaerah) {
       // Create mapping kelompok_id -> kelompok name
       const kelompokMap = new Map(
         activeKelompokList.map(k => [k.id, k.name])
@@ -568,9 +606,9 @@ export default function DataFilter({
   const visibleFilters = [
     showGender && 'gender', // NEW - add gender first
     showStatus && 'status', // NEW - add status after gender
-    shouldShowDaerah && 'daerah',
-    shouldShowDesa && 'desa',
-    shouldShowKelompok && 'kelompok',
+    effectiveShouldShowDaerah && 'daerah',
+    effectiveShouldShowDesa && 'desa',
+    effectiveShouldShowKelompok && 'kelompok',
     showKelasFilter && 'kelas',
     (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode', // NEW - for dashboard
     showMeetingType && 'meetingType' // NEW
@@ -611,7 +649,7 @@ export default function DataFilter({
 
   return (
     <div className={containerClass}>
-      {shouldShowDaerah && (
+      {effectiveShouldShowDaerah && (
         <div className={getFilterClass(getFilterIndex('daerah'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
@@ -646,7 +684,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {shouldShowDesa && (
+      {effectiveShouldShowDesa && (
         <div className={getFilterClass(getFilterIndex('desa'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
@@ -683,7 +721,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {shouldShowKelompok && (
+      {effectiveShouldShowKelompok && (
         <div className={getFilterClass(getFilterIndex('kelompok'))}>
           {variant === 'page' ? (
             <MultiSelectFilter

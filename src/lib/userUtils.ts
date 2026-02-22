@@ -35,6 +35,11 @@ export {
   getAutoFilledOrgValues,
   canAccessFeature,
   getDataFilter,
+  isTeacherKelompok,
+  isTeacherDesa,
+  isTeacherDaerah,
+  getTeacherScope,
+  canTeacherAccessStudent,
   type UserProfile
 } from './accessControl'
 

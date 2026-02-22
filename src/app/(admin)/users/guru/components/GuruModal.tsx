@@ -17,6 +17,27 @@ import { isAdminKelompok, isAdminDesa, isAdminDaerah } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox';
 
+const getAvailableTeacherLevels = (userProfile: any) => {
+  if (!userProfile) return [];
+
+  if (userProfile.role === 'superadmin') {
+    return ['daerah', 'desa', 'kelompok'];
+  }
+
+  // Check if user is Admin Daerah
+  if (userProfile.role === 'admin' && userProfile.daerah_id && !userProfile.desa_id && !userProfile.kelompok_id) {
+    return ['daerah', 'desa', 'kelompok'];
+  }
+
+  // Check if user is Admin Desa
+  if (userProfile.role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
+    return ['desa', 'kelompok'];
+  }
+
+  // Admin Kelompok - can only create Guru Kelompok (no choice, auto-select)
+  return ['kelompok'];
+};
+
 interface Guru {
   id: string;
   username: string;
@@ -77,6 +98,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     kelas: [] as string[]
   });
   const [selectedKelompokFilters, setSelectedKelompokFilters] = useState<string[]>([]);
+  const [teacherLevel, setTeacherLevel] = useState<'kelompok' | 'desa' | 'daerah'>('kelompok');
   const [generalError, setGeneralError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
@@ -103,12 +125,12 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     // For Admin Daerah
     if (userProfile?.daerah_id && !userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.daerah_id === userProfile.daerah_id),
-        kelompokList: dataFilters.desa 
-          ? kelompokList.filter(k => k.desa_id === dataFilters.desa)
-          : kelompokList.filter(k => {
-              const desa = desaList.find(d => d.id === k.desa_id);
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.daerah_id === userProfile.daerah_id),
+        kelompokList: dataFilters.desa.length > 0
+          ? kelompokList.filter((k: any) => dataFilters.desa.includes(k.desa_id))
+          : kelompokList.filter((k: any) => {
+              const desa = desaList.find((d: any) => d.id === k.desa_id);
               return desa?.daerah_id === userProfile.daerah_id;
             })
       };
@@ -117,21 +139,21 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     // For Admin Desa
     if (userProfile?.desa_id) {
       return {
-        daerahList: daerahList.filter(d => d.id === userProfile.daerah_id),
-        desaList: desaList.filter(d => d.id === userProfile.desa_id),
-        kelompokList: kelompokList.filter(k => k.desa_id === userProfile.desa_id)
+        daerahList: daerahList.filter((d: any) => d.id === userProfile.daerah_id),
+        desaList: desaList.filter((d: any) => d.id === userProfile.desa_id),
+        kelompokList: kelompokList.filter((k: any) => k.desa_id === userProfile.desa_id)
       };
     }
     
     // For Admin Kelompok
     if (userProfile?.kelompok_id) {
-      const kelompok = kelompokList.find(k => k.id === userProfile.kelompok_id);
-      const desa = desaList.find(d => d.id === kelompok?.desa_id);
+      const kelompok = kelompokList.find((k: any) => k.id === userProfile.kelompok_id);
+      const desa = desaList.find((d: any) => d.id === kelompok?.desa_id);
       
       return {
-        daerahList: daerahList.filter(d => d.id === desa?.daerah_id),
-        desaList: desaList.filter(d => d.id === kelompok?.desa_id),
-        kelompokList: kelompokList.filter(k => k.id === userProfile.kelompok_id)
+        daerahList: daerahList.filter((d: any) => d.id === desa?.daerah_id),
+        desaList: desaList.filter((d: any) => d.id === kelompok?.desa_id),
+        kelompokList: kelompokList.filter((k: any) => k.id === userProfile.kelompok_id)
       };
     }
     
@@ -164,14 +186,25 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
   useEffect(() => {
     if (!isOpen) return; // Don't run when modal is closed
-    
+
     const loadData = async () => {
       if (guru) {
+        // Detect teacher level from existing data
+        let detectedLevel: 'kelompok' | 'desa' | 'daerah' = 'kelompok';
+        if (guru.kelompok_id) {
+          detectedLevel = 'kelompok';
+        } else if (guru.desa_id) {
+          detectedLevel = 'desa';
+        } else if (guru.daerah_id) {
+          detectedLevel = 'daerah';
+        }
+        setTeacherLevel(detectedLevel);
+
         // Load teacher's assigned classes
         try {
           const teacherClasses = await getTeacherClasses(guru.id);
           const classIds = teacherClasses.map(tc => tc.class_id);
-          
+
           setFormData({
             username: guru.username || '',
             full_name: guru.full_name || '',
@@ -191,7 +224,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             classIds: []
           });
         }
-        
+
         setDataFilters({
           daerah: guru.daerah_id ? [guru.daerah_id] : [],
           desa: guru.desa_id ? [guru.desa_id] : [],
@@ -199,6 +232,22 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           kelas: []
         });
       } else {
+        // CREATE MODE: auto-select teacher level based on admin's available levels
+        const availableLevels = getAvailableTeacherLevels(userProfile);
+        if (availableLevels.length === 1) {
+          // Admin Kelompok: auto-select Guru Kelompok
+          setTeacherLevel('kelompok');
+        } else if (availableLevels.includes('kelompok')) {
+          // Default to Kelompok if available
+          setTeacherLevel('kelompok');
+        } else if (availableLevels.includes('desa')) {
+          // Otherwise default to Desa
+          setTeacherLevel('desa');
+        } else {
+          // Fallback to Daerah
+          setTeacherLevel('daerah');
+        }
+
         // Create mode - auto-fill organizational fields based on user role
         const isSuperadmin = userProfile?.role === 'superadmin';
         const autoFilledDaerah = !isSuperadmin ? userProfile?.daerah_id || '' : '';
@@ -206,7 +255,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         const autoFilledKelompok = !isSuperadmin && userProfile && isAdminKelompok(userProfile)
           ? userProfile.kelompok_id || ''
           : '';
-        
+
         setFormData({
           username: '',
           full_name: '',
@@ -225,7 +274,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       setErrors({});
       setGeneralError('');
     };
-    
+
     loadData();
   }, [guru, isOpen, userProfile]);
 
@@ -237,13 +286,13 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                                     (userProfile && isAdminDesa(userProfile)) || 
                                     (userProfile && isAdminDaerah(userProfile));
     
-    // Default: no kelompok selected (empty array)
     if (canAssignCrossKelompok) {
-      setSelectedKelompokFilters([]);
+      // In edit mode, pre-select the guru's kelompok so classes are immediately visible
+      setSelectedKelompokFilters(guru?.kelompok_id ? [guru.kelompok_id] : []);
     } else {
       setSelectedKelompokFilters([]);
     }
-  }, [isOpen, userProfile, filteredLists.kelompokList]);
+  }, [isOpen, userProfile, filteredLists.kelompokList, guru?.kelompok_id]);
 
   // Get all classes in admin scope (before kelompok filter)
   const allClassesInScope = useMemo(() => {
@@ -378,12 +427,29 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     setGeneralError('');
 
     try {
+      // Permission check: Prevent admins from creating teachers with wider scope than themselves
+      if (userProfile && isAdminKelompok(userProfile)) {
+        if (teacherLevel === 'desa' || teacherLevel === 'daerah') {
+          setGeneralError('Anda tidak dapat membuat Guru Desa atau Guru Daerah karena level Anda adalah Admin Kelompok');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (userProfile && isAdminDesa(userProfile)) {
+        if (teacherLevel === 'daerah') {
+          setGeneralError('Anda tidak dapat membuat Guru Daerah. Hanya Superadmin atau Admin Daerah yang bisa.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // Generate email from username
       const generatedEmail = `${formData.username}@generus.com`;
-      
+
       // Validate required fields
       const newErrors: typeof errors = {};
-      
+
       if (!formData.username.trim()) {
         newErrors.username = 'Username harus diisi';
       }
@@ -393,13 +459,19 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       if (!formData.password && !guru) { // Required for create, optional for edit
         newErrors.password = 'Password harus diisi';
       }
-      if (!dataFilters.daerah) {
+      if (!dataFilters.daerah || dataFilters.daerah.length === 0) {
         newErrors.daerah = 'Daerah harus dipilih';
       }
-      if (!dataFilters.kelompok) {
-        newErrors.kelompok = 'Kelompok harus dipilih';
+
+      // Conditional validation based on teacher level
+      if (teacherLevel !== 'daerah' && (!dataFilters.desa || dataFilters.desa.length === 0)) {
+        newErrors.desa = 'Desa harus dipilih';
       }
-      
+
+      if (teacherLevel === 'kelompok' && (!dataFilters.kelompok || dataFilters.kelompok.length === 0)) {
+        newErrors.kelompok = 'Kelompok harus dipilih untuk Guru Kelompok';
+      }
+
       // If errors exist, stop and show them
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -412,10 +484,10 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         username: formData.username,
         full_name: formData.full_name,
         email: generatedEmail,
-        password: formData.password || undefined, // Optional for edit
+        password: formData.password || undefined,
         daerah_id: dataFilters.daerah.length > 0 ? dataFilters.daerah[0] : '',
-        desa_id: dataFilters.desa.length > 0 ? dataFilters.desa[0] : null,
-        kelompok_id: dataFilters.kelompok.length > 0 ? dataFilters.kelompok[0] : ''
+        desa_id: teacherLevel !== 'daerah' && dataFilters.desa.length > 0 ? dataFilters.desa[0] : undefined,
+        kelompok_id: teacherLevel === 'kelompok' && dataFilters.kelompok.length > 0 ? dataFilters.kelompok[0] : undefined
       };
 
       if (guru) {
@@ -458,7 +530,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[600px] m-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-150 m-4">
       <div className="p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           {guru ? 'Edit Guru' : 'Tambah Guru'}
@@ -486,6 +558,62 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                   </svg>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Teacher Level Selection - only show if user can create multiple types */}
+          {getAvailableTeacherLevels(userProfile).length > 1 && (
+            <div className="mb-4">
+              <Label>Level Guru</Label>
+              <div className="flex gap-4 mt-2">
+                {getAvailableTeacherLevels(userProfile).includes('daerah') && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="teacherLevel"
+                      value="daerah"
+                      checked={teacherLevel === 'daerah'}
+                      onChange={(e) => setTeacherLevel('daerah')}
+                      disabled={isLoading}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Guru Daerah</span>
+                  </label>
+                )}
+                {getAvailableTeacherLevels(userProfile).includes('desa') && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="teacherLevel"
+                      value="desa"
+                      checked={teacherLevel === 'desa'}
+                      onChange={(e) => setTeacherLevel('desa')}
+                      disabled={isLoading}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Guru Desa</span>
+                  </label>
+                )}
+                {getAvailableTeacherLevels(userProfile).includes('kelompok') && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="teacherLevel"
+                      value="kelompok"
+                      checked={teacherLevel === 'kelompok'}
+                      onChange={(e) => setTeacherLevel('kelompok')}
+                      disabled={isLoading}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Guru Kelompok</span>
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {teacherLevel === 'kelompok' && 'Guru yang mengajar di kelompok tertentu'}
+                {teacherLevel === 'desa' && 'Guru koordinator yang bisa akses semua kelas di desa'}
+                {teacherLevel === 'daerah' && 'Guru koordinator yang bisa akses semua kelas di daerah'}
+              </p>
             </div>
           )}
 
@@ -520,14 +648,40 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               disabled={isLoading}
             />
           </div>
+          
+          <div className="md:col-span-3">
+            <DataFilter
+              filters={dataFilters}
+              onFilterChange={handleDataFilterChange}
+              userProfile={userProfile}
+              daerahList={filteredLists.daerahList}
+              desaList={filteredLists.desaList}
+              kelompokList={filteredLists.kelompokList}
+              classList={[]}
+              showKelas={false}
+              showDaerah={userProfile?.role === 'superadmin'}
+              showDesa={teacherLevel !== 'daerah' && (userProfile?.role === 'superadmin' || (!userProfile?.desa_id && !!userProfile?.daerah_id))}
+              showKelompok={teacherLevel === 'kelompok'}
+              variant="modal"
+              compact={true}
+              hideAllOption={true}
+              errors={errors}
+              requiredFields={{
+                daerah: true,
+                desa: teacherLevel !== 'daerah',
+                kelompok: teacherLevel === 'kelompok'
+              }}
+              filterLists={filteredLists}
+            />
+          </div>
 
-          {/* Class Selection - show for all admins */}
-          {(() => {
-            const canAssignCrossKelompok = userProfile?.role === 'superadmin' || 
-                            (userProfile && isAdminDesa(userProfile)) || 
+          {/* Class Selection - ONLY for Guru Kelompok (Guru Desa/Daerah access all classes in scope automatically) */}
+          {teacherLevel === 'kelompok' && (() => {
+            const canAssignCrossKelompok = userProfile?.role === 'superadmin' ||
+                            (userProfile && isAdminDesa(userProfile)) ||
                             (userProfile && isAdminDaerah(userProfile));
             const isAdminKelompokUser = userProfile && isAdminKelompok(userProfile);
-            
+
             // Always show section if there are classes or if user can assign
             if (availableClasses.length === 0 && !canAssignCrossKelompok && !isAdminKelompokUser) return null;
             
@@ -540,7 +694,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                   <div className="mb-3">
                     <MultiSelectCheckbox
                       label=""
-                      items={filteredLists.kelompokList.map(k => ({ id: k.id, label: k.name }))}
+                      items={filteredLists.kelompokList.map((k: any) => ({ id: k.id, label: k.name }))}
                       selectedIds={selectedKelompokFilters}
                       onChange={setSelectedKelompokFilters}
                       disabled={isLoading}
@@ -656,32 +810,6 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
               error={!!errors.password}
               hint={errors.password}
               disabled={isLoading}
-            />
-          </div>
-          
-          <div className="md:col-span-3">
-            <DataFilter
-              filters={dataFilters}
-              onFilterChange={handleDataFilterChange}
-              userProfile={userProfile}
-              daerahList={filteredLists.daerahList}
-              desaList={filteredLists.desaList}
-              kelompokList={filteredLists.kelompokList}
-              classList={[]}
-              showKelas={false}
-              showDaerah={userProfile?.role === 'superadmin'}
-              showDesa={userProfile?.role === 'superadmin' || (!userProfile?.desa_id && !!userProfile?.daerah_id)}
-              showKelompok={true}
-              variant="modal"
-              compact={true}
-              hideAllOption={true}
-              errors={errors} // Pass errors to DataFilter
-              requiredFields={{
-                daerah: true,
-                desa: true,
-                kelompok: true
-              }}
-              filterLists={filteredLists}
             />
           </div>
 

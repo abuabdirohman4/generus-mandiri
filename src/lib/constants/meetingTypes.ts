@@ -113,6 +113,19 @@ export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null):
 
   // Teacher: Check class capabilities
   if (role === 'teacher') {
+    // Hierarchical teachers (no classes)
+    if (!userProfile.classes || userProfile.classes.length === 0) {
+      if (userProfile.daerah_id && !userProfile.desa_id) {
+        return { SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH }
+      }
+      if (userProfile.desa_id && !userProfile.kelompok_id) {
+        return { SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA }
+      }
+      if (userProfile.kelompok_id) {
+        return { SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK }
+      }
+    }
+
     const hasExcludePembinaanClass = userProfile.classes?.some(cls => {
       const isPengajar = isTeacherClass({ name: cls.name })
       return !isPengajar && cls.master_class?.[0]?.category?.[0]?.exclude_pembinaan

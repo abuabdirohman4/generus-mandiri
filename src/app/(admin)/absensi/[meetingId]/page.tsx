@@ -191,13 +191,21 @@ export default function MeetingAttendancePage() {
     return userProfile.classes.some(c => isCaberawitClass(c))
   }, [userProfile?.classes])
 
+  // Check if teacher is hierarchical (Guru Desa/Daerah)
+  const isHierarchicalTeacher = useMemo(() => {
+    if (!userProfile) return false
+    return !!((userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+      (!userProfile.classes || userProfile.classes.length === 0))
+  }, [userProfile])
+
   // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
     let filtered = students
 
     // Role-based filtering (existing logic) - support multiple classes
     // Skip filtering for Pengajar meetings (students should be visible to Paud/Kelas 1-6 teachers)
-    if (userProfile?.role === 'teacher' && !isMeetingCreator && !isPengajarMeeting) {
+    // Skip filtering for Hierarchical teachers (they should see all classes in their scope)
+    if (userProfile?.role === 'teacher' && !isMeetingCreator && !isPengajarMeeting && !isHierarchicalTeacher) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
       // Note: For meeting attendance, we filter by class_id (primary class)
       // This is because students in meeting snapshot are already filtered by meeting's classes
@@ -206,10 +214,10 @@ export default function MeetingAttendancePage() {
 
     // Kelompok-based filtering (for Admin Kelompok and single-kelompok Teachers)
     if (!isMeetingCreator && (userProfile?.role === 'admin' || userProfile?.role === 'teacher')) {
-      // Get user's kelompok IDs from their classes (for teachers) or direct kelompok_id (for admin kelompok)
+      // Get user's kelompok IDs from their classes (for teachers) or direct kelompok_id (for admin kelompok/hierarchical teachers)
       let userKelompokIds: string[] = []
 
-      if (userProfile.role === 'teacher' && userProfile.classes) {
+      if (userProfile.role === 'teacher' && userProfile.classes && userProfile.classes.length > 0) {
         // For teachers: get kelompok IDs from all their classes
         userKelompokIds = userProfile.classes
           .map((c: any) => {
@@ -220,8 +228,8 @@ export default function MeetingAttendancePage() {
             return fullClass?.kelompok_id
           })
           .filter(Boolean) as string[]
-      } else if (userProfile.role === 'admin' && userProfile.kelompok_id) {
-        // For admin kelompok: use their kelompok_id
+      } else if (userProfile.kelompok_id) {
+        // For admin kelompok and single-kelompok hierarchical teachers: use their kelompok_id
         userKelompokIds = [userProfile.kelompok_id]
       }
 
@@ -308,7 +316,7 @@ export default function MeetingAttendancePage() {
     }
 
     return filtered
-  }, [students, userProfile, isMeetingCreator, isPengajarMeeting, filters, classesData])
+  }, [students, userProfile, isMeetingCreator, isPengajarMeeting, isHierarchicalTeacher, filters, classesData])
 
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
@@ -326,9 +334,10 @@ export default function MeetingAttendancePage() {
       userProfile.role,
       isMeetingCreator,
       student.class_id,
-      userProfile.classes?.map(c => c.id) || []
+      userProfile.classes?.map(c => c.id) || [],
+      isHierarchicalTeacher
     )
-  }, [userProfile, meeting, students, isMeetingCreator, isPengajarMeeting, teacherCaberawit])
+  }, [userProfile, meeting, students, isMeetingCreator, isPengajarMeeting, teacherCaberawit, isHierarchicalTeacher])
 
   // Prepare class list for filter - only for multi-class meetings
   const classListForFilter = useMemo(() => {
@@ -350,8 +359,8 @@ export default function MeetingAttendancePage() {
     const meetingClassIds = new Set(meeting.class_ids)
     const relevantClassIds = Array.from(classIds).filter(id => meetingClassIds.has(id))
 
-    // For teacher non-creator, only show their classes
-    if (userProfile?.role === 'teacher' && !isMeetingCreator) {
+    // For teacher non-creator, only show their classes (skip for hierarchical teachers)
+    if (userProfile?.role === 'teacher' && !isMeetingCreator && !isHierarchicalTeacher) {
       const myClassIds = userProfile.classes?.map(c => c.id) || []
       const teacherRelevantClassIds = relevantClassIds.filter(id => myClassIds.includes(id))
 
@@ -377,7 +386,7 @@ export default function MeetingAttendancePage() {
         classDetails = teacherRelevantClassIds.map(id => {
           const classData = classesData.find(c => c.id === id)
           const kelompok = classData?.kelompok_id && kelompokData
-            ? kelompokData.find(k => k.id === classData.kelompok_id)
+            ? kelompokData.find((k: any) => k.id === classData.kelompok_id)
             : null
 
           return {
@@ -429,7 +438,7 @@ export default function MeetingAttendancePage() {
       classDetails = relevantClassIds.map(id => {
         const classData = classesData.find(c => c.id === id)
         const kelompok = classData?.kelompok_id && kelompokData
-          ? kelompokData.find(k => k.id === classData.kelompok_id)
+          ? kelompokData.find((k: any) => k.id === classData.kelompok_id)
           : null
 
         return {
@@ -488,7 +497,7 @@ export default function MeetingAttendancePage() {
       meeting.class_ids.forEach((classId: string) => {
         const classData = classesData.find(c => c.id === classId)
         if (classData?.kelompok_id) {
-          const kelompok = kelompokData?.find(k => k.id === classData.kelompok_id)
+          const kelompok = kelompokData?.find((k: any) => k.id === classData.kelompok_id)
           if (kelompok && kelompok.desa_id) {
             kelompokMap.set(kelompok.id, {
               id: kelompok.id,
