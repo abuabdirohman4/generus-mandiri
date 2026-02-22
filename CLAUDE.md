@@ -167,6 +167,43 @@ Key points:
 
 ---
 
+## 📋 Beads Issue Management Standards
+
+### JSONL File Structure & Automatic Reordering
+
+**Field Order**: This project uses a **custom pre-commit hook** to automatically reorder fields in `.beads/issues.jsonl` and `.beads/closed.jsonl`.
+
+**Automatic Field Order** (applied on every commit):
+1. ✅ `"id"` - Always first
+2. ✅ `"status"` - Always second
+3. All other fields follow (title, description, priority, etc.)
+
+**How It Works**:
+- `.git/hooks/pre-commit` runs before every commit
+- Script uses `jq` to reorder: `{id, status} + del(.id, .status)`
+- Files are automatically staged with correct field order
+- No manual intervention needed
+
+**File Separation** (managed by Beads):
+- ✅ Open/In-Progress issues → `.beads/issues.jsonl`
+- ✅ Closed issues → `.beads/closed.jsonl`
+- Beads CLI automatically moves issues when closing
+
+**Best Practices**:
+- ✅ Use `bd` commands for all operations (create, update, close)
+- ✅ Run `bd sync` to commit and push changes
+- ❌ **AVOID manual editing** of `.beads/*.jsonl` files (beads hooks may override)
+- ✅ Field reordering happens automatically - don't worry about it
+
+**Pre-commit Hook Location**:
+`.git/hooks/pre-commit` - Contains automatic field reordering logic
+
+**Dependencies**:
+- `jq` command-line JSON processor (already installed)
+- If `jq` is not found, hook silently skips reordering
+
+---
+
 ## 📋 Beads Issue Progress Documentation Standard
 
 **MANDATORY for all multi-session work tracked in Beads.**
