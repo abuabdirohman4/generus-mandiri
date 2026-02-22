@@ -162,21 +162,47 @@ Guru Desa and Guru Daerah (hierarchical teachers) experienced complete data loss
 
 ---
 
-## ⏳ Phase 2 - Absensi Detail & Modal (NEW ISSUES - Next Session)
+## ✅ Completed - Phase 2: Absensi Detail & Modal
 
 ### 1. Meeting Detail Page - Empty Data
 **File**: `src/app/(admin)/absensi/[meetingId]/page.tsx`
 **Issue**: Guru Desa/Daerah see empty data when opening meeting detail
-**Status**: ❌ Not started (next session)
+**Status**: ✅ Fixed
+**Changes**:
+- Detected `isHierarchicalTeacher` (Guru Desa/Daerah/Kelompok with no classes).
+- Bypassed the strict `myClassIds.includes(s.class_id)` filter for hierarchical teachers.
+- Modified `canEditStudent` to allow hierarchical teachers to edit attendance.
+- Bypassed the `classListForFilter` strict check so they see all available classes.
 
 ### 2. CreateMeetingModal - Wrong Access/UI
 **File**: `src/app/(admin)/absensi/components/CreateMeetingModal.tsx`
 **Issue**: Guru Desa/Daerah don't have same access/UI as Admin Desa/Daerah
-**Status**: ❌ Not started (next session)
+**Status**: ✅ Fixed
+**Changes**:
+- Detected `isHierarchicalTeacher`.
+- Passed all retrieved `classes` into `availableClasses` instead of strictly checking `userProfile.classes`.
+- Ensured they can select students correctly.
 
-### 3. Same Issues for Guru Daerah
-**Scope**: Both issues above affect Guru Daerah too
-**Status**: ❌ Not started (next session)
+### 3. Meeting Types for Hierarchical Teachers
+**Files**: `src/app/(admin)/absensi/hooks/useMeetingTypes.ts`, `src/lib/constants/meetingTypes.ts`
+**Issue**: Hierarchical teachers only saw "Pembinaan" meeting type because they had no classes assigned.
+**Status**: ✅ Fixed
+**Changes**:
+- Updated `UserProfile` interface to include `daerah_id`, `desa_id`, `kelompok_id`.
+- Handled hierarchical teacher fallback in `useMeetingTypes` to query role-based access instead of returning default "Pembinaan".
+- Updated `getAvailableMeetingTypesByRole` to return `SAMBUNG_DAERAH`, `SAMBUNG_DESA`, and `SAMBUNG_KELOMPOK` accordingly for hierarchical teachers.
+
+### 4. Tests
+**Files**: `src/app/(admin)/absensi/utils/__tests__/meetingHelpersClient.test.ts`
+**Status**: ✅ Created & Passed
+**Changes**:
+- Wrote tests validating that `canUserEditMeetingAttendance` allows superadmin/admin, meeting creators, regular teachers (for their classes), and now hierarchical teachers (for all students in their scope).
+
+### 5. TypeScript Error Fix in `useMeetingTypes`
+**Files**: `src/app/(admin)/absensi/hooks/useMeetingTypes.ts`
+**Status**: ✅ Fixed
+**Changes**:
+- Updated the local `UserProfile` interface to allow `daerah_id?: string | null`, `desa_id?: string | null`, and `kelompok_id?: string | null`. This resolved an assignability error when passing `userProfile` from the global `userProfileStore`.
 
 ---
 
@@ -221,8 +247,6 @@ Guru Desa and Guru Daerah (hierarchical teachers) experienced complete data loss
 
 ---
 
-**Last Updated**: 2026-02-22 (Phase 1 Complete)
+**Last Updated**: 2026-02-22 (Phase 1 & 2 Complete)
 **Next Session**:
-1. Fix meeting detail page for hierarchical teachers
-2. Fix CreateMeetingModal access/UI for hierarchical teachers
-3. Verify both work for Guru Desa and Guru Daerah
+All issues addressed! Ready for review or next issue.

@@ -551,6 +551,11 @@ if (profile?.role === 'teacher') {
    }
    ```
 
+5. **Meeting Types & Attendance Access**: 
+   - Hierarchical teachers with no classes can still access meeting types by relying on organizational level (`daerah_id`, `desa_id`, `kelompok_id`).
+   - Use `isHierarchicalTeacher` bypassing logic in `absensi/[meetingId]/page.tsx` class filters (`canUserEditMeetingAttendance` from `meetingHelpersClient`).
+   - Ensure the `UserProfile` interfaces correctly type the organizational fields as `string | null` to match Supabase's structure and avoid strict TS assigning issues.
+
 **Files with Hierarchical Teacher Support** (sm-3ud):
 - `src/app/(admin)/users/siswa/actions/classes.ts` - getAllClasses()
 - `src/app/(admin)/users/siswa/actions.ts` - getAllStudents()

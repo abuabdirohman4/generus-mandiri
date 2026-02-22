@@ -106,9 +106,20 @@ export default function CreateMeetingModal({
     })
   }
 
+  // Check if teacher is hierarchical (Guru Desa/Daerah)
+  const isHierarchicalTeacher = useMemo(() => {
+    if (!userProfile) return false
+    return !!((userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+      (!userProfile.classes || userProfile.classes.length === 0))
+  }, [userProfile])
+
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
+    if (isHierarchicalTeacher) {
+      return sortClassesByMasterOrder(classes || [])
+    }
+
     if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
       // Enrich teacher classes with kelompok_id from classes, then sort
       const enriched = userProfile.classes.map(cls => {
@@ -128,7 +139,8 @@ export default function CreateMeetingModal({
     userProfile?.classes?.length,
     userProfile?.classes?.map(c => c.id).join(','),
     classes?.length,
-    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(',')
+    classes?.map(c => `${c.id}-${c.kelompok_id}`).join(','),
+    isHierarchicalTeacher
   ])
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
