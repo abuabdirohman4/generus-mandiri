@@ -131,6 +131,42 @@ Key points:
 
 ---
 
+## 📋 Beads Issue Management Standards
+
+### JSONL File Structure
+
+**CRITICAL**: Maintain consistent structure in `.beads/issues.jsonl` and `.beads/closed.jsonl`
+
+**Field Order Requirements**:
+1. ✅ **"status" MUST come immediately after "id"** - This is MANDATORY for readability and consistency
+2. ✅ All other fields follow in this order: `title`, `description`, `priority`, `issue_type`, `created_at`, `created_by`, `updated_at`, additional fields
+
+**Example Correct Format**:
+```jsonl
+{"id":"sm-abc","status":"open","title":"Feature X","description":"...","priority":2,"issue_type":"feature","created_at":"...","created_by":"...","updated_at":"..."}
+{"id":"sm-xyz","status":"in_progress","title":"Bug Y","description":"...","priority":1,"issue_type":"bug","created_at":"...","created_by":"...","updated_at":"..."}
+```
+
+**File Separation Rules**:
+- ✅ **Open/In-Progress issues** → `.beads/issues.jsonl`
+- ✅ **Closed issues** → `.beads/closed.jsonl`
+- ❌ **NEVER mix closed and open issues** in the same file
+
+**When Closing Issues**:
+1. Update issue with `"status":"closed"`, `"closed_at":"..."`, `"close_reason":"..."`
+2. **Move the entire issue** from `issues.jsonl` to `closed.jsonl`
+3. Keep field order consistent (id, status, title, ...)
+4. Run `bd sync` to commit changes
+
+**Validation Checklist**:
+- [ ] All issues have "status" as second field (after "id")
+- [ ] issues.jsonl contains ONLY open/in_progress issues
+- [ ] closed.jsonl contains ONLY closed issues
+- [ ] No duplicate IDs across both files
+- [ ] All JSON lines are valid (no trailing commas)
+
+---
+
 ## 📋 Beads Issue Progress Documentation Standard
 
 **MANDATORY for all multi-session work tracked in Beads.**
