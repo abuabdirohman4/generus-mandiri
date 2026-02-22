@@ -18,18 +18,51 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
   return false;
 }
 
-export function getDataFilter(profile: UserProfile) {
+export function getDataFilter(profile: UserProfile | null): {
+  daerah_id?: string
+  desa_id?: string
+  kelompok_id?: string
+} | null {
+  if (!profile) return null
+
+  // Superadmin has access to all data
   if (profile.role === 'superadmin') {
-    return {}; // No filter, access all data
+    return null
   }
+
+  // Admin filtering (existing logic)
   if (profile.role === 'admin') {
-    return {
-      daerah_id: profile.daerah_id,
-      desa_id: profile.desa_id,
-      kelompok_id: profile.kelompok_id
-    };
+    // Admin Kelompok
+    if (profile.kelompok_id) {
+      return { kelompok_id: profile.kelompok_id }
+    }
+    // Admin Desa
+    if (profile.desa_id) {
+      return { desa_id: profile.desa_id }
+    }
+    // Admin Daerah
+    if (profile.daerah_id) {
+      return { daerah_id: profile.daerah_id }
+    }
   }
-  return null; // No access
+
+  // Teacher filtering
+  if (profile.role === 'teacher') {
+    // Teacher Kelompok
+    if (profile.kelompok_id) {
+      return { kelompok_id: profile.kelompok_id }
+    }
+    // Teacher Desa
+    if (profile.desa_id && !profile.kelompok_id) {
+      return { desa_id: profile.desa_id }
+    }
+    // Teacher Daerah
+    if (profile.daerah_id && !profile.desa_id && !profile.kelompok_id) {
+      return { daerah_id: profile.daerah_id }
+    }
+  }
+
+  return null
 }
 
 export async function getCurrentUserProfile() {

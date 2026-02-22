@@ -185,28 +185,31 @@ export default function StudentsTable({
       }
     }
     
-    // Teacher with multiple classes: show class_name column
-    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
-      // Cek apakah classes yang diajarkan teacher memiliki kelompok_id yang berbeda
-      const teacherClassIds = userProfile.classes.map((c: { id: string; name: string }) => c.id)
-      const teacherClasses = classesData?.filter((c: { id: string; name: string; kelompok_id?: string | null }) => teacherClassIds.includes(c.id)) || []
-      const uniqueKelompokIds = new Set(
-        teacherClasses
-          .map((c: { id: string; name: string; kelompok_id?: string | null }) => c.kelompok_id)
-          .filter(Boolean)
-      )
-      
-      // Jika teacher mengajar classes dari different kelompok, tambahkan kolom kelompok
-      if (uniqueKelompokIds.size > 1) {
+    // Teacher organizational columns
+    if (userProfile?.role === 'teacher') {
+      const isTeacherDaerah = userProfile.daerah_id && !userProfile.desa_id && !userProfile.kelompok_id
+      const isTeacherDesa = userProfile.desa_id && !userProfile.kelompok_id
+      const isTeacherKelompok = userProfile.kelompok_id
+
+      if (isTeacherDaerah) {
+        // Guru Daerah: show Desa + Kelompok + Class
         orgColumns.push(
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        )
+      } else if (isTeacherDesa) {
+        // Guru Desa: show Kelompok + Class
+        orgColumns.push(
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+        )
+      } else if (isTeacherKelompok && userProfile.classes && userProfile.classes.length > 1) {
+        // Guru Kelompok with multiple classes: show Class only
+        orgColumns.push(
+          { key: 'class_name', label: 'Kelas', align: 'center' as const }
         )
       }
-      
-      // Selalu tampilkan class_name untuk teacher dengan multiple classes
-      orgColumns.push(
-        { key: 'class_name', label: 'Kelas', align: 'center' as const }
-      );
     }
     
     return [
@@ -236,22 +239,36 @@ export default function StudentsTable({
           .map(c => String(c.name))
           .join(', ') || '-'
       }
-      
-      // If teacher, filter to only classes they teach
-      if (userProfile?.role === 'teacher' && userProfile.classes && Array.isArray(userProfile.classes)) {
-        const teacherClassIds = userProfile.classes
-          .filter(c => c && c.id)
-          .map(c => String(c.id))
-        const studentTeacherClasses = student.classes.filter(c => 
-          c && c.id && teacherClassIds.includes(String(c.id))
-        )
-        if (studentTeacherClasses.length === 0) {
-          return '-' // Student tidak punya kelas yang diajarkan guru ini
+
+      // If teacher with hierarchical access (Guru Desa/Daerah), show all classes like admin
+      if (userProfile?.role === 'teacher') {
+        const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
+                                       (!userProfile.classes || userProfile.classes.length === 0)
+
+        if (isHierarchicalTeacher) {
+          // Show all student classes (like admin)
+          return student.classes
+            .filter(c => c && c.name)
+            .map(c => String(c.name))
+            .join(', ') || '-'
         }
-        return studentTeacherClasses
-          .filter(c => c && c.name)
-          .map(c => String(c.name))
-          .join(', ') || '-'
+
+        // Regular teacher: filter to only classes they teach
+        if (userProfile.classes && Array.isArray(userProfile.classes)) {
+          const teacherClassIds = userProfile.classes
+            .filter(c => c && c.id)
+            .map(c => String(c.id))
+          const studentTeacherClasses = student.classes.filter(c =>
+            c && c.id && teacherClassIds.includes(String(c.id))
+          )
+          if (studentTeacherClasses.length === 0) {
+            return '-' // Student tidak punya kelas yang diajarkan guru ini
+          }
+          return studentTeacherClasses
+            .filter(c => c && c.name)
+            .map(c => String(c.name))
+            .join(', ') || '-'
+        }
       }
       
       // Default: return first class

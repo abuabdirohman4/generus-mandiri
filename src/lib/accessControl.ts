@@ -30,6 +30,48 @@ export function isTeacher(profile: UserProfile): boolean {
   return profile.role === 'teacher'
 }
 
+// Teacher level detection utilities
+export function isTeacherKelompok(profile: UserProfile): boolean {
+  return profile.role === 'teacher' && !!profile.kelompok_id
+}
+
+export function isTeacherDesa(profile: UserProfile): boolean {
+  return profile.role === 'teacher' && !!profile.desa_id && !profile.kelompok_id
+}
+
+export function isTeacherDaerah(profile: UserProfile): boolean {
+  return profile.role === 'teacher' && !!profile.daerah_id && !profile.desa_id && !profile.kelompok_id
+}
+
+// Get teacher scope for filtering
+export function getTeacherScope(profile: UserProfile): 'kelompok' | 'desa' | 'daerah' | null {
+  if (!isTeacher(profile)) return null
+  if (isTeacherKelompok(profile)) return 'kelompok'
+  if (isTeacherDesa(profile)) return 'desa'
+  if (isTeacherDaerah(profile)) return 'daerah'
+  return null
+}
+
+// Check if teacher can access a student based on their scope
+export function canTeacherAccessStudent(
+  profile: UserProfile,
+  student: { daerah_id?: string | null; desa_id?: string | null; kelompok_id?: string | null }
+): boolean {
+  if (!isTeacher(profile)) return false
+
+  if (isTeacherDaerah(profile)) {
+    return student.daerah_id === profile.daerah_id
+  }
+  if (isTeacherDesa(profile)) {
+    return student.desa_id === profile.desa_id
+  }
+  if (isTeacherKelompok(profile)) {
+    return student.kelompok_id === profile.kelompok_id
+  }
+
+  return false
+}
+
 export function isAdmin(profile: UserProfile): boolean {
   return profile.role === 'admin' || profile.role === 'superadmin'
 }

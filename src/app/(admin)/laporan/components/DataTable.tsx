@@ -1,16 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import { useLaporan } from '../stores/laporanStore'
 import { ReportIcon } from '@/lib/icons'
+import type { UserProfile } from '@/stores/userProfileStore'
 
 interface TableData {
   no: number
   student_id: string
   student_name: string
   class_name: string
+  kelompok_name?: string
+  desa_name?: string
+  daerah_name?: string
   total_days: number
   hadir: number
   izin: number
@@ -21,66 +25,100 @@ interface TableData {
 
 interface DataTableProps {
   tableData: TableData[]
+  userProfile?: UserProfile | null
 }
 
-export default function DataTableComponent({ tableData }: DataTableProps) {
+export default function DataTableComponent({ tableData, userProfile }: DataTableProps) {
+  console.log('tableData', tableData);
   const { filters } = useLaporan()
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'actions' | 'student_name' | null>(null)
-  
+
   const handleStudentClick = (studentId: string, column: 'actions' | 'student_name') => {
     setLoadingStudentId(studentId)
     setClickedColumn(column)
   }
-  
-  const columns = [
-    {
-      key: 'actions',
-      label: 'Detail',
-      align: 'center' as const,
-      width: '24'
-    },
-    {
-      key: 'student_name',
-      label: 'Nama Siswa',
-      align: 'left' as const,
-    },
-    {
-      key: 'attendance_rate',
-      label: 'Tingkat Kehadiran',
-      align: 'center' as const,
-    },
-    {
-      key: 'total_days',
-      label: 'Total Hari',
-      align: 'center' as const,
-    },
-    {
-      key: 'hadir',
-      label: 'Hadir',
-      align: 'center' as const,
-    },
-    {
-      key: 'izin',
-      label: 'Izin',
-      align: 'center' as const,
-    },
-    {
-      key: 'sakit',
-      label: 'Sakit',
-      align: 'center' as const,
-    },
-    {
-      key: 'alpha',
-      label: 'Alpha',
-      align: 'center' as const,
-    },
-    {
-      key: 'class_name',
-      label: 'Kelas',
-      align: 'center' as const,
-    },
-  ]
+
+  // Build dynamic columns based on user role
+  const buildColumns = (userProfile: UserProfile | null) => {
+    const baseColumns = [
+      {
+        key: 'actions',
+        label: 'Detail',
+        align: 'center' as const,
+        width: '24'
+      },
+      {
+        key: 'student_name',
+        label: 'Nama Siswa',
+        align: 'left' as const,
+      },
+      {
+        key: 'attendance_rate',
+        label: 'Tingkat Kehadiran',
+        align: 'center' as const,
+      },
+      {
+        key: 'total_days',
+        label: 'Total Hari',
+        align: 'center' as const,
+      },
+      {
+        key: 'hadir',
+        label: 'Hadir',
+        align: 'center' as const,
+      },
+      {
+        key: 'izin',
+        label: 'Izin',
+        align: 'center' as const,
+      },
+      {
+        key: 'sakit',
+        label: 'Sakit',
+        align: 'center' as const,
+      },
+      {
+        key: 'alpha',
+        label: 'Alpha',
+        align: 'center' as const,
+      },
+    ]
+
+    // Add organizational columns based on role
+    const orgColumns = []
+
+    const isSuperAdmin = userProfile?.role === 'superadmin'
+    const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id
+    const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id
+
+    const isTeacherDaerah = userProfile?.role === 'teacher' && userProfile?.daerah_id && !userProfile?.desa_id && !userProfile?.kelompok_id
+    const isTeacherDesa = userProfile?.role === 'teacher' && userProfile?.desa_id && !userProfile?.kelompok_id
+
+    if (isSuperAdmin) {
+      orgColumns.push(
+        { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
+        { key: 'desa_name', label: 'Desa', align: 'center' as const },
+        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+      )
+    } else if (isAdminDaerah || isTeacherDaerah) {
+      orgColumns.push(
+        { key: 'desa_name', label: 'Desa', align: 'center' as const },
+        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+      )
+    } else if (isAdminDesa || isTeacherDesa) {
+      orgColumns.push(
+        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+      )
+    }
+
+    // Always add class column at the end
+    orgColumns.push({ key: 'class_name', label: 'Kelas', align: 'center' as const })
+
+    return [...baseColumns, ...orgColumns]
+  }
+
+  const columns = useMemo(() => buildColumns(userProfile ?? null), [userProfile])
 
   const renderCell = (column: any, item: any) => {
     if (column.key === 'student_name') {

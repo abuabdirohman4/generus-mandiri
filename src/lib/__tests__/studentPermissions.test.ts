@@ -22,6 +22,12 @@ describe('studentPermissions', () => {
     id: 'superadmin-1',
     full_name: 'Super Admin',
     role: 'superadmin',
+    permissions: {
+      can_archive_students: true,
+      can_transfer_students: true,
+      can_soft_delete_students: true,
+      can_hard_delete_students: true,
+    },
   }
 
   const adminDaerah: UserProfile = {
@@ -31,6 +37,12 @@ describe('studentPermissions', () => {
     daerah_id: 'daerah-1',
     desa_id: null,
     kelompok_id: null,
+    permissions: {
+      can_archive_students: true,
+      can_transfer_students: true,
+      can_soft_delete_students: true,
+      can_hard_delete_students: false,
+    },
   }
 
   const adminDesa: UserProfile = {
@@ -40,6 +52,12 @@ describe('studentPermissions', () => {
     daerah_id: 'daerah-1',
     desa_id: 'desa-1',
     kelompok_id: null,
+    permissions: {
+      can_archive_students: true,
+      can_transfer_students: true,
+      can_soft_delete_students: true,
+      can_hard_delete_students: false,
+    },
   }
 
   const adminKelompok: UserProfile = {
@@ -49,12 +67,21 @@ describe('studentPermissions', () => {
     daerah_id: 'daerah-1',
     desa_id: 'desa-1',
     kelompok_id: 'kelompok-1',
+    permissions: {
+      can_archive_students: true,
+      can_transfer_students: true,
+      can_soft_delete_students: true,
+      can_hard_delete_students: false,
+    },
   }
 
   const teacherWithPermissions: UserProfile = {
     id: 'teacher-1',
     full_name: 'Teacher With Permissions',
     role: 'teacher',
+    daerah_id: 'daerah-1',
+    desa_id: 'desa-1',
+    kelompok_id: 'kelompok-1',
     permissions: {
       can_archive_students: true,
       can_transfer_students: true,

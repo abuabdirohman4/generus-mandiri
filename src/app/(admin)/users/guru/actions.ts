@@ -39,8 +39,21 @@ export async function createTeacher(data: TeacherData) {
     if (!data.daerah_id) {
       throw new Error('Daerah harus dipilih');
     }
-    if (!data.kelompok_id) {
-      throw new Error('Kelompok harus dipilih');
+
+    // Conditional validation based on teacher level
+    // Teacher Kelompok: needs kelompok_id (and implicitly desa_id)
+    if (data.kelompok_id && !data.desa_id) {
+      throw new Error('Desa harus dipilih untuk guru dengan kelompok');
+    }
+
+    // Teacher Desa: needs desa_id (and implicitly daerah_id)
+    if (data.desa_id && !data.daerah_id) {
+      throw new Error('Daerah harus dipilih untuk guru dengan desa');
+    }
+
+    // At least daerah_id must be present
+    if (!data.daerah_id) {
+      throw new Error('Minimal daerah harus dipilih');
     }
 
     const supabase = await createClient();
@@ -114,8 +127,14 @@ export async function updateTeacher(id: string, data: TeacherData) {
     if (!data.daerah_id) {
       throw new Error('Daerah harus dipilih');
     }
-    if (!data.kelompok_id) {
-      throw new Error('Kelompok harus dipilih');
+
+    // Conditional validation
+    if (data.kelompok_id && !data.desa_id) {
+      throw new Error('Desa harus dipilih untuk guru dengan kelompok');
+    }
+
+    if (data.desa_id && !data.daerah_id) {
+      throw new Error('Daerah harus dipilih untuk guru dengan desa');
     }
 
     const supabase = await createClient();

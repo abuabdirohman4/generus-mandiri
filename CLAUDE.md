@@ -610,6 +610,18 @@ export function useMeetingFormSettings(userId?: string) {
 - `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 10 to avoid database query limits
 - **CRITICAL**: Use this for large datasets (e.g., reports, attendance with many meetings) to prevent data loss from query limits
 
+**Class Sort Order** - ALL class dropdowns/lists MUST be sorted by `class_master.sort_order`:
+- Server-side: `getAllClasses()` and `getAllClassesByKelompok()` already return pre-sorted data
+- Client-side: Apply sort in components using `class_master_mappings[].class_master.sort_order` (min value), classes without mapping go last (9999)
+- `AdminLayoutProvider.tsx` fetches teacher classes with `sort_order` included in the nested query
+- ⚠️ **NEVER** fetch `class_master_mappings` with `sort_order` via PostgREST nested join (`class_masters!inner(sort_order)`) — it **silently fails/returns null**. Use the **two-query pattern** instead:
+  ```typescript
+  // 1. Query class_master_mappings → get class_master_ids
+  // 2. Query class_masters by those IDs → get sort_order
+  // 3. Join in code
+  // See: users/siswa/actions/classes.ts fetchClassMasterMappings()
+  ```
+
 ---
 
 ## ⚠️ Important Business Rules

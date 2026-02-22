@@ -55,11 +55,11 @@ const allNavItems: NavItem[] = [
     name: "Laporan",
     path: "/laporan",
   },
-  {
-    icon: <BookOpenIcon className="w-6 h-6" />,
-    name: "Materi",
-    path: "/materi",
-  },
+  // {
+  //   icon: <BookOpenIcon className="w-6 h-6" />,
+  //   name: "Materi",
+  //   path: "/materi",
+  // },
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
