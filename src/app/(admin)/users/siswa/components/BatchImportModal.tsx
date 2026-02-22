@@ -143,7 +143,7 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
         </div>
 
         {/* Step Content */}
-        <div className="min-h-[400px]">
+        <div className="min-h-100">
           {currentStep === 1 && (
             <Step1Config
               userProfile={userProfile}

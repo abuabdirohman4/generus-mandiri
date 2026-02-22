@@ -530,7 +530,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[600px] m-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-150 m-4">
       <div className="p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           {guru ? 'Edit Guru' : 'Tambah Guru'}
