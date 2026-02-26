@@ -80,7 +80,12 @@ export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null):
 
       if (isAdminDesa(adminProfile)) {
         return {
+          ASAD: MEETING_TYPES.ASAD,
+          PEMBINAAN: MEETING_TYPES.PEMBINAAN,
+          SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
           SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
+          SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH,
+          SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
         }
       }
     }
