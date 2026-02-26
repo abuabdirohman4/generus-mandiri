@@ -221,7 +221,7 @@ export default function AdminDashboard() {
             showKelas={true}
             showMeetingType={false}
             showGender={true}
-            cascadeFilters={false}
+            cascadeFilters={true}
             classViewMode={filters.classViewMode}
             onClassViewModeChange={handleViewModeChange}
           />
