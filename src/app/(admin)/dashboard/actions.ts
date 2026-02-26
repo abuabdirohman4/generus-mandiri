@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
 import {
@@ -286,12 +286,19 @@ function getDateRangeForPeriod(
   if (period === 'month' && monthString) {
     // Use specific month if provided
     const [year, month] = monthString.split('-').map(Number);
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0); // Last day of the month
+
+    // CRITICAL FIX: Create ISO date strings directly to avoid timezone conversion issues
+    // Using new Date(year, month, day) causes timezone offset problems (Jakarta GMT+7)
+    // which shifts dates backward by 1 day when converted to ISO string
+    const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+
+    // Calculate last day of month (works correctly even with timezone)
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
     return {
-      startDate: monthStart.toISOString().split('T')[0],
-      endDate: monthEnd.toISOString().split('T')[0]
+      startDate: monthStart,
+      endDate: monthEnd
     };
   }
 
@@ -304,6 +311,7 @@ function getDateRangeForPeriod(
 export async function getClassMonitoring(filters: ClassMonitoringFilters): Promise<ClassMonitoringData[]> {
   try {
     const supabase = await createClient();
+    const adminClient = await createAdminClient();
     const profile = await getCurrentUserProfile();
     const rlsFilter = profile ? getDataFilter(profile) : null;
 
@@ -355,9 +363,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     const allClassIds = classes.map(c => c.id);
 
     // Get all meetings in the date range
-    // Fetch ALL meetings first, then filter to include those involving our classes
-    // This handles both primary class_id AND classes in class_ids array
-    const { data: allMeetings } = await supabase
+    // CRITICAL FIX: Use admin client to avoid RLS timeout on large date ranges
+    // RLS policies cause statement timeout when querying month-long ranges
+    // We apply organizational filters manually after fetching
+    const { data: allMeetings } = await adminClient
       .from('meetings')
       .select('id, class_id, class_ids, date')
       .gte('date', startDate)
@@ -425,7 +434,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       );
 
       if (logsError) {
-        console.error('[DASHBOARD DEBUG] Error fetching attendance logs:', logsError);
+        console.error('[DASHBOARD] Error fetching attendance logs:', logsError);
         throw logsError;
       }
 

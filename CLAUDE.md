@@ -131,6 +131,71 @@ Key points:
 
 ---
 
+## 📋 Beads Issue Management Standards
+
+### JSONL File Structure & Automatic Processing
+
+**Field Order & Status Sorting**: This project uses **custom git hooks** to automatically maintain consistent structure.
+
+**Automatic Field Order** (applied on every commit):
+1. ✅ `"id"` - Always first
+2. ✅ `"status"` - Always second
+3. All other fields follow (title, description, priority, etc.)
+
+**Automatic Status Sorting** (applied on every commit):
+Issues in `issues.jsonl` are automatically sorted by status:
+1. ✅ **Closed issues** first (status = "closed")
+2. ✅ **Open issues** second (status = "open")
+3. ✅ **In Progress issues** third (status = "in_progress")
+4. Within each status group, sorted by issue ID
+
+**Example Correct Format**:
+```jsonl
+{"id":"sm-abc","status":"closed","title":"Feature X","description":"...","priority":2,"issue_type":"feature","created_at":"...","created_by":"...","updated_at":"..."}
+{"id":"sm-xyz","status":"open","title":"Bug Y","description":"...","priority":1,"issue_type":"bug","created_at":"...","created_by":"...","updated_at":"..."}
+```
+
+**How Git Hooks Work**:
+
+**Pre-commit hook** (`.git/hooks/pre-commit`):
+1. Runs `bd sync --flush-only` to export pending changes
+2. Reorders fields: `{id, status} + del(.id, .status)` using `jq`
+3. Sorts issues by status (closed → open → in_progress)
+4. **Filters out tombstones** (beads internal soft-delete markers)
+5. Auto-stages modified JSONL files
+
+**Post-merge hook** (`.git/hooks/post-merge`):
+1. Imports `issues.jsonl` after git pull/merge
+2. Also imports `closed.jsonl` to keep database in sync
+3. Ensures database reflects latest git state
+
+**Best Practices**:
+- ✅ Use `bd close <id>` to close issues (NEVER `bd delete` for closed issues!)
+- ✅ Run `bd sync` to commit and push changes
+- ✅ Closed issues stay in beads database (not deleted)
+- ❌ **NEVER manually edit** `.beads/*.jsonl` files (hooks will override)
+- ❌ **NEVER use `bd delete`** on closed issues (creates tombstones)
+
+**Tombstone Prevention**:
+- **What are tombstones?** Beads' internal soft-delete markers (`status: "tombstone"`)
+- **Why avoid them?** They clutter issues.jsonl and cause confusion
+- **How we prevent them:**
+  1. Never delete closed issues from database (keep them with status="closed")
+  2. Pre-commit hook filters out any tombstones before git commit
+  3. Post-merge hook imports both issues.jsonl and closed.jsonl
+- **If tombstones appear:** Run `bd compact --prune --older-than 0` then re-import clean JSONL
+
+**File Separation (Multi-file support)**:
+- `.beads/issues.jsonl` - All issues (closed + open + in_progress)
+- `.beads/closed.jsonl` - Backup of closed issues (for reference)
+- **Important:** Beads stores ALL issues in `issues.jsonl` sorted by status
+
+**Dependencies**:
+- `jq` command-line JSON processor (already installed)
+- If `jq` is not found, hook silently skips processing
+
+---
+
 ## 📋 Beads Issue Progress Documentation Standard
 
 **MANDATORY for all multi-session work tracked in Beads.**
@@ -713,6 +778,16 @@ export function useMeetingFormSettings(userId?: string) {
   // 3. Join in code
   // See: users/siswa/actions/classes.ts fetchClassMasterMappings()
   ```
+
+**Class Filter Display Format** (sm-de3) - Unified format for multi-kelompok selection:
+- **All users** (Guru with 2+ kelompok, Admin Desa, Guru Desa, Guru Daerah, Admin Daerah) show **consistent format**
+- When 2+ kelompok selected: Show `"Class Name (X kelompok)"` format (deduplicated with count)
+- When single/no kelompok: Show `"Class Name"` only (no suffix)
+- Implementation: `DataFilter.tsx` uses unified Path 2 deduplication logic
+- ⚠️ **CRITICAL**: Class values may be comma-separated (`"id1,id2,id3"`) for multi-kelompok classes
+  - Always split comma-separated IDs before processing: `classId.includes(',') ? classId.split(',') : [classId]`
+  - See: `useLaporanPage.ts` auto-extract kelompok logic for reference implementation
+- **Related Issues**: sm-de3 (auto-clear bug fix), sm-hov (duplicate issue)
 
 ---
 

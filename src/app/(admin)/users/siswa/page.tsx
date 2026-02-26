@@ -395,7 +395,7 @@ export default function SiswaPage() {
               showKelas={true}
               showGender={true}
               showStatus={true}
-              cascadeFilters={false}
+              cascadeFilters={true}
             />
 
             {/* Stats Cards */}
