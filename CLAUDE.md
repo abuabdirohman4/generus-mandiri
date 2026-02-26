@@ -133,74 +133,66 @@ Key points:
 
 ## 📋 Beads Issue Management Standards
 
-### JSONL File Structure
+### JSONL File Structure & Automatic Processing
 
-**CRITICAL**: Maintain consistent structure in `.beads/issues.jsonl` and `.beads/closed.jsonl`
-
-**Field Order Requirements**:
-1. ✅ **"status" MUST come immediately after "id"** - This is MANDATORY for readability and consistency
-2. ✅ All other fields follow in this order: `title`, `description`, `priority`, `issue_type`, `created_at`, `created_by`, `updated_at`, additional fields
-
-**Example Correct Format**:
-```jsonl
-{"id":"sm-abc","status":"open","title":"Feature X","description":"...","priority":2,"issue_type":"feature","created_at":"...","created_by":"...","updated_at":"..."}
-{"id":"sm-xyz","status":"in_progress","title":"Bug Y","description":"...","priority":1,"issue_type":"bug","created_at":"...","created_by":"...","updated_at":"..."}
-```
-
-**File Separation Rules**:
-- ✅ **Open/In-Progress issues** → `.beads/issues.jsonl`
-- ✅ **Closed issues** → `.beads/closed.jsonl`
-- ❌ **NEVER mix closed and open issues** in the same file
-
-**When Closing Issues**:
-1. Update issue with `"status":"closed"`, `"closed_at":"..."`, `"close_reason":"..."`
-2. **Move the entire issue** from `issues.jsonl` to `closed.jsonl`
-3. Keep field order consistent (id, status, title, ...)
-4. Run `bd sync` to commit changes
-
-**Validation Checklist**:
-- [ ] All issues have "status" as second field (after "id")
-- [ ] issues.jsonl contains ONLY open/in_progress issues
-- [ ] closed.jsonl contains ONLY closed issues
-- [ ] No duplicate IDs across both files
-- [ ] All JSON lines are valid (no trailing commas)
-
----
-
-## 📋 Beads Issue Management Standards
-
-### JSONL File Structure & Automatic Reordering
-
-**Field Order**: This project uses a **custom pre-commit hook** to automatically reorder fields in `.beads/issues.jsonl` and `.beads/closed.jsonl`.
+**Field Order & Status Sorting**: This project uses **custom git hooks** to automatically maintain consistent structure.
 
 **Automatic Field Order** (applied on every commit):
 1. ✅ `"id"` - Always first
 2. ✅ `"status"` - Always second
 3. All other fields follow (title, description, priority, etc.)
 
-**How It Works**:
-- `.git/hooks/pre-commit` runs before every commit
-- Script uses `jq` to reorder: `{id, status} + del(.id, .status)`
-- Files are automatically staged with correct field order
-- No manual intervention needed
+**Automatic Status Sorting** (applied on every commit):
+Issues in `issues.jsonl` are automatically sorted by status:
+1. ✅ **Closed issues** first (status = "closed")
+2. ✅ **Open issues** second (status = "open")
+3. ✅ **In Progress issues** third (status = "in_progress")
+4. Within each status group, sorted by issue ID
 
-**File Separation** (managed by Beads):
-- ✅ Open/In-Progress issues → `.beads/issues.jsonl`
-- ✅ Closed issues → `.beads/closed.jsonl`
-- Beads CLI automatically moves issues when closing
+**Example Correct Format**:
+```jsonl
+{"id":"sm-abc","status":"closed","title":"Feature X","description":"...","priority":2,"issue_type":"feature","created_at":"...","created_by":"...","updated_at":"..."}
+{"id":"sm-xyz","status":"open","title":"Bug Y","description":"...","priority":1,"issue_type":"bug","created_at":"...","created_by":"...","updated_at":"..."}
+```
+
+**How Git Hooks Work**:
+
+**Pre-commit hook** (`.git/hooks/pre-commit`):
+1. Runs `bd sync --flush-only` to export pending changes
+2. Reorders fields: `{id, status} + del(.id, .status)` using `jq`
+3. Sorts issues by status (closed → open → in_progress)
+4. **Filters out tombstones** (beads internal soft-delete markers)
+5. Auto-stages modified JSONL files
+
+**Post-merge hook** (`.git/hooks/post-merge`):
+1. Imports `issues.jsonl` after git pull/merge
+2. Also imports `closed.jsonl` to keep database in sync
+3. Ensures database reflects latest git state
 
 **Best Practices**:
-- ✅ Use `bd` commands for all operations (create, update, close)
+- ✅ Use `bd close <id>` to close issues (NEVER `bd delete` for closed issues!)
 - ✅ Run `bd sync` to commit and push changes
-- ❌ **AVOID manual editing** of `.beads/*.jsonl` files (beads hooks may override)
-- ✅ Field reordering happens automatically - don't worry about it
+- ✅ Closed issues stay in beads database (not deleted)
+- ❌ **NEVER manually edit** `.beads/*.jsonl` files (hooks will override)
+- ❌ **NEVER use `bd delete`** on closed issues (creates tombstones)
 
-**Pre-commit Hook Location**:
-`.git/hooks/pre-commit` - Contains automatic field reordering logic
+**Tombstone Prevention**:
+- **What are tombstones?** Beads' internal soft-delete markers (`status: "tombstone"`)
+- **Why avoid them?** They clutter issues.jsonl and cause confusion
+- **How we prevent them:**
+  1. Never delete closed issues from database (keep them with status="closed")
+  2. Pre-commit hook filters out any tombstones before git commit
+  3. Post-merge hook imports both issues.jsonl and closed.jsonl
+- **If tombstones appear:** Run `bd compact --prune --older-than 0` then re-import clean JSONL
+
+**File Separation (Multi-file support)**:
+- `.beads/issues.jsonl` - All issues (closed + open + in_progress)
+- `.beads/closed.jsonl` - Backup of closed issues (for reference)
+- **Important:** Beads stores ALL issues in `issues.jsonl` sorted by status
 
 **Dependencies**:
 - `jq` command-line JSON processor (already installed)
-- If `jq` is not found, hook silently skips reordering
+- If `jq` is not found, hook silently skips processing
 
 ---
 
