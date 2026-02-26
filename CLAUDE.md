@@ -779,6 +779,16 @@ export function useMeetingFormSettings(userId?: string) {
   // See: users/siswa/actions/classes.ts fetchClassMasterMappings()
   ```
 
+**Class Filter Display Format** (sm-de3) - Unified format for multi-kelompok selection:
+- **All users** (Guru with 2+ kelompok, Admin Desa, Guru Desa, Guru Daerah, Admin Daerah) show **consistent format**
+- When 2+ kelompok selected: Show `"Class Name (X kelompok)"` format (deduplicated with count)
+- When single/no kelompok: Show `"Class Name"` only (no suffix)
+- Implementation: `DataFilter.tsx` uses unified Path 2 deduplication logic
+- ⚠️ **CRITICAL**: Class values may be comma-separated (`"id1,id2,id3"`) for multi-kelompok classes
+  - Always split comma-separated IDs before processing: `classId.includes(',') ? classId.split(',') : [classId]`
+  - See: `useLaporanPage.ts` auto-extract kelompok logic for reference implementation
+- **Related Issues**: sm-de3 (auto-clear bug fix), sm-hov (duplicate issue)
+
 ---
 
 ## ⚠️ Important Business Rules
