@@ -436,7 +436,7 @@ export default function AbsensiPage() {
           classList={classes || []}
           showKelas={true}
           showMeetingType={true}
-          cascadeFilters={false}
+          cascadeFilters={true}
         />
 
         {/* Revalidating Overlay */}

@@ -44,6 +44,8 @@ interface UserProfile {
   classes?: Array<{
     id: string
     name: string
+    kelompok_id?: string | null
+    kelompok?: { id: string; name: string } | null
   }>
   // Siswa page user profile structure
   class_id?: string | null
@@ -136,6 +138,7 @@ export default function DataFilter({
   const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id
   const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id
   const isAdminKelompok = userProfile?.role === 'admin' && userProfile?.kelompok_id
+  const isAdmin = isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok
   const isTeacher = userProfile?.role === 'teacher'
 
   // Teacher level detection (NEW - for Teacher Desa/Daerah roles)
@@ -148,11 +151,26 @@ export default function DataFilter({
   const activeDesaList = filterLists?.desaList || desaList
   const activeKelompokList = filterLists?.kelompokList || kelompokList
 
+  const teacherHasMultipleClasses = isTeacher && userProfile?.classes && userProfile.classes.length > 1
+  // Detect regular teachers whose classes span multiple kelompok
+  // Note: don't exclude by isTeacherKelompok — regular teachers with teacher_classes
+  // can also have kelompok_id set in their profile. We use classes data directly.
+  const teacherHasMultipleKelompok = useMemo(() => {
+    if (!isTeacher || !userProfile?.classes || userProfile.classes.length <= 1) return false
+    // Use kelompok_id from the classes themselves (available in userProfile.classes)
+    const kelompokIds = new Set<string>()
+    userProfile.classes.forEach(cls => {
+      if (cls.kelompok_id) {
+        kelompokIds.add(cls.kelompok_id)
+      }
+    })
+    return kelompokIds.size > 1
+  }, [isTeacher, userProfile?.classes])
+
   // Determine which filters to show (use override props if provided, otherwise use role-based logic)
   const shouldShowDaerah = showDaerah !== undefined ? showDaerah : (isSuperAdmin || isTeacherDaerah)
   const shouldShowDesa = showDesa !== undefined ? showDesa : (isSuperAdmin || isAdminDaerah || isTeacherDaerah || isTeacherDesa)
-  const shouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa || isTeacherKelompok)
-  const teacherHasMultipleClasses = isTeacher && userProfile?.classes && userProfile.classes.length > 1
+  const shouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa || isTeacherKelompok || teacherHasMultipleKelompok)
   const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses || isTeacherDaerah || isTeacherDesa)
 
   // Filter options based on cascading logic (declare these before counting)
@@ -197,6 +215,19 @@ export default function DataFilter({
           .map(desa => desa.id)
         return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
       }
+      if (isTeacher && teacherHasMultipleKelompok) {
+        // Regular teacher with classes in multiple kelompok: build list from their classes
+        // (activeKelompokList may only contain 1 kelompok due to profile-level filtering)
+        const seen = new Set<string>()
+        const result: typeof activeKelompokList = []
+        userProfile!.classes!.forEach(cls => {
+          if (cls.kelompok_id && cls.kelompok && !seen.has(cls.kelompok_id)) {
+            seen.add(cls.kelompok_id)
+            result.push({ id: cls.kelompok.id, name: cls.kelompok.name, desa_id: '' })
+          }
+        })
+        return result
+      }
       // Superadmin sees all
       return activeKelompokList
     }
@@ -225,10 +256,22 @@ export default function DataFilter({
         .filter(desa => desa.daerah_id === userProfile?.daerah_id)
         .map(desa => desa.id)
       return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
+    } else if (isTeacher && teacherHasMultipleKelompok) {
+      // Regular teacher with classes in multiple kelompok: build list from their classes
+      // (activeKelompokList may only contain 1 kelompok due to profile-level filtering)
+      const seen = new Set<string>()
+      const result: typeof activeKelompokList = []
+      userProfile!.classes!.forEach(cls => {
+        if (cls.kelompok_id && cls.kelompok && !seen.has(cls.kelompok_id)) {
+          seen.add(cls.kelompok_id)
+          result.push({ id: cls.kelompok.id, name: cls.kelompok.name, desa_id: '' })
+        }
+      })
+      return result
     }
 
     return activeKelompokList
-  }, [activeKelompokList, filters?.desa, filters?.daerah, userProfile?.desa_id, userProfile?.daerah_id, activeDesaList, isSuperAdmin, isAdminDesa, isAdminDaerah, isTeacherDesa, isTeacherDaerah, shouldShowKelompok, cascadeFilters])
+  }, [activeKelompokList, filters?.desa, filters?.daerah, userProfile?.desa_id, userProfile?.daerah_id, activeDesaList, isSuperAdmin, isAdminDesa, isAdminDaerah, isTeacherDesa, isTeacherDaerah, isTeacher, teacherHasMultipleKelompok, shouldShowKelompok, cascadeFilters])
 
   // Count options to determine if filters should be hidden when only one option exists
   const daerahListCount = useMemo(() => activeDaerahList.length, [activeDaerahList])
@@ -358,11 +401,39 @@ export default function DataFilter({
     if (!filteredClassList.length) return []
 
     // Special handling for teacher with multiple classes from different kelompok OR Guru Desa/Daerah
-    if ((isTeacher && teacherHasMultipleClasses) || isTeacherDesa || isTeacherDaerah) {
+    if ((isTeacher && teacherHasMultipleClasses) || isTeacherDesa || isTeacherDaerah || (isAdmin && !isAdminKelompok)) {
+      // When multiple kelompok are selected, group classes by name with "(N kelompok)" suffix
+      const selectedKelompokCount = filters?.kelompok?.length || 0
+      if (selectedKelompokCount > 1) {
+        const classGroups = filteredClassList.reduce((acc, cls) => {
+          if (!acc[cls.name]) {
+            acc[cls.name] = { name: cls.name, ids: [], kelompokIds: new Set<string>() }
+          }
+          acc[cls.name].ids.push(cls.id)
+          if (cls.kelompok_id) acc[cls.name].kelompokIds.add(cls.kelompok_id)
+          return acc
+        }, {} as Record<string, { name: string; ids: string[]; kelompokIds: Set<string> }>)
+
+        return Object.values(classGroups).map(group => ({
+          value: group.ids.join(','),
+          label: group.kelompokIds.size > 1 ? `${group.name} (${group.kelompokIds.size} kelompok)` : group.name,
+          name: group.name,
+          ids: group.ids
+        }))
+      }
+
       // Create mapping kelompok_id -> kelompok name
       const kelompokMap = new Map(
         activeKelompokList.map(k => [k.id, k.name])
       )
+      // Also include kelompok from teacher's classes (activeKelompokList may be incomplete)
+      if (userProfile?.classes) {
+        userProfile.classes.forEach(cls => {
+          if (cls.kelompok_id && cls.kelompok && !kelompokMap.has(cls.kelompok_id)) {
+            kelompokMap.set(cls.kelompok_id, cls.kelompok.name)
+          }
+        })
+      }
 
       // Group by name + kelompok_id to get unique combinations
       const classGroups = filteredClassList.reduce((acc, cls) => {
@@ -444,7 +515,7 @@ export default function DataFilter({
         ids: group.ids
       }
     })
-  }, [filteredClassList, isTeacher, teacherHasMultipleClasses, activeKelompokList, filters?.kelompok])
+  }, [filteredClassList, isTeacher, teacherHasMultipleClasses, teacherHasMultipleKelompok, activeKelompokList, filters?.kelompok, userProfile?.classes])
 
   // Get available meeting types based on user profile
   const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)
