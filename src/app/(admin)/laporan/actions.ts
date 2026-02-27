@@ -183,19 +183,6 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       ? profile.teacher_classes.map((tc: any) => tc.classes?.id || tc.class_id).filter(Boolean)
       : []
 
-    // DEBUG Step 1: Teacher Classes
-    // if (profile.role === 'teacher') {
-    //   console.log('[LAPORAN DEBUG] Teacher Classes:', {
-    //     teacherClassIds,
-    //     classCount: teacherClassIds.length,
-    //     teacher_classes: profile.teacher_classes?.map((tc: any) => ({
-    //       id: tc.classes?.id || tc.class_id,
-    //       name: tc.classes?.name,
-    //       kelompok_id: tc.classes?.kelompok_id
-    //     }))
-    //   })
-    // }
-
     // Build date range based on filter mode
     let dateFilter: {
       date?: {
@@ -553,19 +540,6 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
     const { data: meetings } = await meetingsQuery.order('date')
 
-    // DEBUG Step 2: Meetings Fetched
-    // console.log('[LAPORAN DEBUG] Meetings Fetched:', {
-    //   totalMeetings: meetings?.length || 0,
-    //   filters: { classId: filters.classId, kelompokId: filters.kelompokId },
-    //   sampleMeetings: meetings?.slice(0, 3).map((m: any) => ({
-    //     id: m.id,
-    //     title: m.title,
-    //     class_id: m.class_id,
-    //     class_ids: m.class_ids,
-    //     kelompok_id: m.classes?.kelompok_id
-    //   }))
-    // })
-
     // Enrich maps from meetings with full details (to ensure all classes in date range are included)
     if (meetings) {
       meetings.forEach((meeting: any) => {
@@ -585,13 +559,6 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         })
       })
     }
-
-    // DEBUG Step 3: ClassKelompokMap
-    // console.log('[LAPORAN DEBUG] ClassKelompokMap:', {
-    //   size: classKelompokMap.size,
-    //   entries: Array.from(classKelompokMap.entries()),
-    //   hasWarlob2Class: filters.classId ? classKelompokMap.has(filters.classId.split(',')[0]) : false
-    // })
 
     // CRITICAL: Build strict enrollment mapping (class+kelompok → enrolled students)
     // Query student_classes junction table DIRECTLY like Dashboard
@@ -641,23 +608,6 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       })
     }
 
-    // DEBUG: Log enrollment counts to verify data
-    // console.log('[ENROLLMENT DEBUG] Student Enrollments by Class:', {
-    //   totalClasses: classStudentsByKelompok.size,
-    //   allClassIds: allClassIds.length,
-    //   enrollmentsByClass: Array.from(classStudentsByKelompok.entries()).map(([classId, kelompokMap]) => {
-    //     const totalStudents = Array.from(kelompokMap.values()).reduce((sum, students) => sum + students.size, 0)
-    //     return {
-    //       classId,
-    //       totalStudents,
-    //       byKelompok: Array.from(kelompokMap.entries()).map(([kelompokId, students]) => ({
-    //         kelompokId,
-    //         studentCount: students.size
-    //       }))
-    //     }
-    //   })
-    // })
-
     // For teacher, filter meetings by their classes first
     // Use meetingsForFilter if available, otherwise use full meetings
     const meetingsToFilterForTeacher = meetingsForFilter || meetings || []
@@ -679,23 +629,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       }
     }
 
-    // DEBUG Step 4: Teacher Meetings Filter
-    // if (profile.role === 'teacher' && teacherClassIds.length > 0) {
-    //   console.log('[LAPORAN DEBUG] Teacher Meetings Filter:', {
-    //     beforeFilter: meetingsToFilterForTeacher.length,
-    //     afterFilter: teacherMeetings.length,
-    //     teacherClassIds,
-    //     sampleFilteredMeetings: teacherMeetings.slice(0, 3).map((m: any) => ({
-    //       id: m.id,
-    //       class_id: m.class_id,
-    //       class_ids: m.class_ids
-    //     }))
-    //   })
-    // }
-
     // Filter attendance_logs to only include logs from teacher's meetings (if teacher)
     let filteredLogs = attendanceLogs || []
-    // console.log('[FILTER DEBUG] Initial attendance logs:', filteredLogs.length)
 
     if (profile.role === 'teacher') {
       if (teacherMeetings.length > 0) {
@@ -707,23 +642,11 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // If teacher but no meetings match, set filteredLogs to empty array
         filteredLogs = []
       }
-      // console.log('[FILTER DEBUG] After teacher filter:', filteredLogs.length)
     }
-
-    // DEBUG Step 5: Attendance Logs Teacher Filter
-    // if (profile.role === 'teacher') {
-    //   console.log('[LAPORAN DEBUG] Attendance Logs Teacher Filter:', {
-    //     beforeFilter: attendanceLogs?.length || 0,
-    //     afterFilter: filteredLogs.length,
-    //     teacherMeetingIds: teacherMeetings.length,
-    //     hasMeetings: teacherMeetings.length > 0
-    //   })
-    // }
 
     // Apply class filter - check MEETING's class, not student's class
     // CRITICAL: Also validate strict enrollment (student must be enrolled in this class)
     if (filters.classId) {
-      // console.log('[FILTER DEBUG] Before class filter:', filteredLogs.length, 'classIds:', filters.classId)
       const classIds = filters.classId.split(',')
       filteredLogs = filteredLogs.filter((log: any) => {
         const student = log.students
@@ -765,14 +688,13 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
 
         return false // Student not enrolled in this class
       })
-      // console.log('[FILTER DEBUG] After class filter:', filteredLogs.length)
     }
 
     // Apply kelompok filter - validate meetings belong to selected kelompok
     // Note: We only check meeting location, not student enrollment kelompok
     // This allows students from any kelompok to be counted if they attended meetings in the selected kelompok
     if (filters.kelompokId) {
-      // console.log('[FILTER DEBUG] Before kelompok filter:', filteredLogs.length, 'kelompokIds:', filters.kelompokId)
+      // ('[FILTER DEBUG] Before kelompok filter:', filteredLogs.length, 'kelompokIds:', filters.kelompokId)
       const kelompokIds = filters.kelompokId.split(',')
 
       filteredLogs = filteredLogs.filter((log: any) => {
@@ -809,19 +731,14 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // but still attend meetings in the filtered kelompok
         return meetingBelongsToKelompok
       })
-      // console.log('[FILTER DEBUG] After kelompok filter:', filteredLogs.length)
     }
 
     // Apply gender filter client-side
     if (filters.gender) {
-      // console.log('[FILTER DEBUG] Before gender filter:', filteredLogs.length, 'gender:', filters.gender)
       filteredLogs = filteredLogs.filter((log: any) =>
         log.students.gender === filters.gender
       )
-      // console.log('[FILTER DEBUG] After gender filter:', filteredLogs.length)
     }
-
-    // console.log('[FILTER DEBUG] FINAL filteredLogs count:', filteredLogs.length)
 
     // Process data for summary using shared utility function
     // This ensures consistency with Dashboard calculations
@@ -1162,19 +1079,6 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
       alpha: student.alpha,
       attendance_rate: student.attendance_rate
     }))
-
-    // DEBUG Step 8: Final Output
-    // console.log('[LAPORAN DEBUG] Final Output:', {
-    //   filters: { classId: filters.classId, kelompokId: filters.kelompokId },
-    //   finalLogsCount: filteredLogs.length,
-    //   studentsCount: detailedRecords.length,
-    //   meetingsCount: Array.from(meetingMap.values()).length,
-    //   summary: {
-    //     total: summary.total,
-    //     hadir: summary.hadir,
-    //     attendanceRate: summary.total > 0 ? Math.round((summary.hadir / summary.total) * 100) : 0
-    //   }
-    // })
 
     return {
       summary,

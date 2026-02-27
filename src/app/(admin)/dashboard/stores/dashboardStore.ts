@@ -16,6 +16,10 @@ export interface DashboardFilters {
 
   // View mode for class monitoring
   classViewMode: 'separated' | 'combined'
+
+  // Comparison chart state
+  comparisonViewMode: 'table' | 'chart'
+  comparisonLevel: 'class' | 'kelompok' | 'desa' | 'daerah'
 }
 interface DashboardState {
   filters: DashboardFilters
@@ -30,7 +34,9 @@ const defaultFilters: DashboardFilters = {
   desa: [],
   kelompok: [],
   kelas: [],
-  classViewMode: 'separated'
+  classViewMode: 'separated',
+  comparisonViewMode: 'table',
+  comparisonLevel: 'kelompok'
 }
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -59,6 +65,8 @@ export const useDashboardStore = create<DashboardState>()(
           kelas: state.filters.kelas,
           gender: state.filters.gender,
           classViewMode: state.filters.classViewMode,
+          comparisonViewMode: state.filters.comparisonViewMode,
+          comparisonLevel: state.filters.comparisonLevel,
           // Don't persist custom date range (should be fresh)
           customDateRange: undefined
         }

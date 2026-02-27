@@ -83,6 +83,7 @@ export default function AdminDashboard() {
       kelas: filters.kelas.sort().join(','),
       gender: filters.gender || '',
       viewMode: filters.classViewMode,
+      comparisonLevel: filters.comparisonLevel, // ADDED: Include comparison level in cache key
       // Dynamic date selectors
       selectedDate,
       selectedWeekOffset,
@@ -96,10 +97,12 @@ export default function AdminDashboard() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
-      // Keep data while revalidating
-      keepPreviousData: true
+      // CRITICAL FIX: Don't keep previous data to avoid filter/data mismatch
+      // When filters change, we need fresh data to match the new filters
+      keepPreviousData: false
     }
   );
+  console.log('monitoringData', monitoringData)
 
   const handleFilterChange = (newFilters: any) => {
     setFilters({
@@ -118,6 +121,9 @@ export default function AdminDashboard() {
   };
   const handleViewModeChange = (mode: 'separated' | 'combined') => {
     setFilter('classViewMode', mode);
+  };
+  const handleComparisonLevelChange = (level: 'class' | 'kelompok' | 'desa' | 'daerah') => {
+    setFilter('comparisonLevel', level);
   };
 
   // Attendance Rate Calculation
@@ -224,6 +230,9 @@ export default function AdminDashboard() {
             cascadeFilters={true}
             classViewMode={filters.classViewMode}
             onClassViewModeChange={handleViewModeChange}
+            showComparisonLevel={true}
+            comparisonLevel={filters.comparisonLevel}
+            onComparisonLevelChange={handleComparisonLevelChange}
           />
         </div>
 

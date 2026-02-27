@@ -45,12 +45,12 @@ interface QuickActionItem {
 export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const isAdminUser = profile.role === 'superadmin' || profile.role === 'admin'
   const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
   const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
-  // console.log('profile', profile)
-  // console.log('isTeacher', isTeacher(profile))
-  // console.log('!isKelas6Warlob', !isKelas6Warlob)
-  // console.log('teacherCaberawit', teacherCaberawit)
+  const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
+  const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
+  const isPPG = isAdminUser || isTeacherDesa || isTeacherDaerah
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -81,7 +81,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       icon: <DashboardIcon className="w-6 h-6" />,
       bgColor: 'bg-indigo-100 dark:bg-indigo-900',
       iconColor: 'text-indigo-600 dark:text-indigo-400',
-      adminOnly: true,
+      adminOnly: isPPG ? false : true,
       disabled: false
     },
     {

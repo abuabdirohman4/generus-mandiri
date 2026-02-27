@@ -65,13 +65,16 @@ export async function getValidClassIds(
         }
     };
 
-    // 1. Class Filter
+    // Apply organizational filters hierarchically (most specific wins)
+    // Hierarchy: Class > Kelompok > Desa > Daerah
+    // Skip less specific filters if more specific one is active
+
+    // 1. Class Filter (most specific)
     if (uiFilters?.classId && uiFilters.classId.length > 0) {
         intersect(normalizeIds(uiFilters.classId));
     }
-
-    // 2. Kelompok Filter
-    if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
+    // 2. Kelompok Filter (skip desa/daerah if active)
+    else if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
         const kelompokIds = Array.isArray(uiFilters.kelompokId) ? uiFilters.kelompokId : [uiFilters.kelompokId];
         const { data } = await supabase
             .from('classes')
@@ -79,27 +82,100 @@ export async function getValidClassIds(
             .in('kelompok_id', kelompokIds);
         intersect(data?.map(c => c.id) || []);
     }
-
-    // 3. Desa Filter
-    if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
+    // 3. Desa Filter (only if no kelompok filter)
+    else if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
         const desaIds = Array.isArray(uiFilters.desaId) ? uiFilters.desaId : [uiFilters.desaId];
-        // Efficient query using inner joins
-        const { data } = await supabase
-            .from('classes')
-            .select('id, kelompok!inner(desa_id)')
-            .in('kelompok.desa_id', desaIds);
-        intersect(data?.map(c => c.id) || []);
-    }
 
-    // 4. Daerah Filter
-    if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
+        // CRITICAL FIX: Use chunked queries for both desa → kelompok and kelompok → classes
+        // Two-query pattern with chunking to avoid URL length limit
+        const allKelompok: any[] = [];
+
+        // Step 1: Chunk desa IDs (10 per chunk for kelompok query)
+        const DESA_CHUNK_SIZE = 10;
+        for (let i = 0; i < desaIds.length; i += DESA_CHUNK_SIZE) {
+            const chunk = desaIds.slice(i, i + DESA_CHUNK_SIZE);
+
+            const { data: kelompokData, error: kelompokError } = await supabase
+                .from('kelompok')
+                .select('id')
+                .in('desa_id', chunk);
+
+            if (kelompokError) {
+                console.error('[getValidClassIds] Kelompok query error:', kelompokError);
+            }
+
+            if (kelompokData) {
+                allKelompok.push(...kelompokData);
+            }
+        }
+
+        if (allKelompok.length > 0) {
+            const kelompokIds = allKelompok.map(k => k.id);
+
+            // Step 2: Chunk kelompok IDs for class query (50 per chunk)
+            const allClasses: any[] = [];
+            const KELOMPOK_CHUNK_SIZE = 50;
+
+            for (let i = 0; i < kelompokIds.length; i += KELOMPOK_CHUNK_SIZE) {
+                const chunk = kelompokIds.slice(i, i + KELOMPOK_CHUNK_SIZE);
+
+                const { data: classData, error: classError } = await supabase
+                    .from('classes')
+                    .select('id')
+                    .in('kelompok_id', chunk);
+
+                if (classError) {
+                    console.error('[getValidClassIds] Classes query error:', classError);
+                }
+
+                if (classData) {
+                    allClasses.push(...classData);
+                }
+            }
+
+            intersect(allClasses.map(c => c.id));
+        } else {
+            // No kelompok found for selected desa
+            console.log('[getValidClassIds] No kelompok found, returning empty');
+            intersect([]);
+        }
+    }
+    // 4. Daerah Filter (only if no desa filter)
+    else if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
         const daerahIds = Array.isArray(uiFilters.daerahId) ? uiFilters.daerahId : [uiFilters.daerahId];
-        // Efficient query using deep inner joins
-        const { data } = await supabase
-            .from('classes')
-            .select('id, kelompok!inner(desa!inner(daerah_id))')
-            .in('kelompok.desa.daerah_id', daerahIds);
-        intersect(data?.map(c => c.id) || []);
+
+        // Two-query pattern: PostgREST nested filter can fail silently
+        // Step 1: Get desa IDs for selected daerah
+        const { data: desaData } = await supabase
+            .from('desa')
+            .select('id')
+            .in('daerah_id', daerahIds);
+
+        if (desaData && desaData.length > 0) {
+            const desaIds = desaData.map(d => d.id);
+
+            // Step 2: Get kelompok IDs for those desa
+            const { data: kelompokData } = await supabase
+                .from('kelompok')
+                .select('id')
+                .in('desa_id', desaIds);
+
+            if (kelompokData && kelompokData.length > 0) {
+                const kelompokIds = kelompokData.map(k => k.id);
+
+                // Step 3: Get classes for those kelompok
+                const { data } = await supabase
+                    .from('classes')
+                    .select('id')
+                    .in('kelompok_id', kelompokIds);
+
+                intersect(data?.map(c => c.id) || []);
+            } else {
+                intersect([]);
+            }
+        } else {
+            intersect([]);
+        }
     }
 
     // 5. RLS Filters (Apply as intersection)
@@ -112,19 +188,51 @@ export async function getValidClassIds(
     }
 
     if (rlsFilter?.desa_id) {
-        const { data } = await supabase
-            .from('classes')
-            .select('id, kelompok!inner(desa_id)')
-            .eq('kelompok.desa_id', rlsFilter.desa_id);
-        intersect(data?.map(c => c.id) || []);
+        // Two-query pattern for RLS desa filter
+        const { data: kelompokData } = await supabase
+            .from('kelompok')
+            .select('id')
+            .eq('desa_id', rlsFilter.desa_id);
+
+        if (kelompokData && kelompokData.length > 0) {
+            const kelompokIds = kelompokData.map(k => k.id);
+            const { data } = await supabase
+                .from('classes')
+                .select('id')
+                .in('kelompok_id', kelompokIds);
+            intersect(data?.map(c => c.id) || []);
+        } else {
+            intersect([]);
+        }
     }
 
     if (rlsFilter?.daerah_id) {
-        const { data } = await supabase
-            .from('classes')
-            .select('id, kelompok!inner(desa!inner(daerah_id))')
-            .eq('kelompok.desa.daerah_id', rlsFilter.daerah_id);
-        intersect(data?.map(c => c.id) || []);
+        // Two-query pattern for RLS daerah filter
+        const { data: desaData } = await supabase
+            .from('desa')
+            .select('id')
+            .eq('daerah_id', rlsFilter.daerah_id);
+
+        if (desaData && desaData.length > 0) {
+            const desaIds = desaData.map(d => d.id);
+            const { data: kelompokData } = await supabase
+                .from('kelompok')
+                .select('id')
+                .in('desa_id', desaIds);
+
+            if (kelompokData && kelompokData.length > 0) {
+                const kelompokIds = kelompokData.map(k => k.id);
+                const { data } = await supabase
+                    .from('classes')
+                    .select('id')
+                    .in('kelompok_id', kelompokIds);
+                intersect(data?.map(c => c.id) || []);
+            } else {
+                intersect([]);
+            }
+        } else {
+            intersect([]);
+        }
     }
 
     // If validIds is null, it means no filters were applied that affect class selection
@@ -160,7 +268,11 @@ export async function getValidStudentIds(
         }
     };
 
-    // 1. Class Filter
+    // Apply organizational filters hierarchically (most specific wins)
+    // Hierarchy: Class > Kelompok > Desa > Daerah
+    // Skip less specific filters if more specific one is active
+
+    // 1. Class Filter (most specific - via student_classes junction)
     if (uiFilters?.classId && uiFilters.classId.length > 0) {
         const classIds = normalizeIds(uiFilters.classId);
         const { data } = await supabase
@@ -169,9 +281,8 @@ export async function getValidStudentIds(
             .in('class_id', classIds);
         intersect(data?.map(sc => sc.student_id) || []);
     }
-
-    // 2. Kelompok Filter
-    if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
+    // 2. Kelompok Filter (skip desa/daerah if active)
+    else if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
         const kelompokIds = Array.isArray(uiFilters.kelompokId) ? uiFilters.kelompokId : [uiFilters.kelompokId];
         const { data } = await supabase
             .from('students')
@@ -179,19 +290,38 @@ export async function getValidStudentIds(
             .in('kelompok_id', kelompokIds);
         intersect(data?.map(s => s.id) || []);
     }
-
-    // 3. Desa Filter
-    if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
+    // 3. Desa Filter (only if no kelompok filter)
+    else if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
         const desaIds = Array.isArray(uiFilters.desaId) ? uiFilters.desaId : [uiFilters.desaId];
-        const { data } = await supabase
-            .from('students')
-            .select('id')
-            .in('desa_id', desaIds);
-        intersect(data?.map(s => s.id) || []);
-    }
 
-    // 4. Daerah Filter
-    if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
+        // CRITICAL FIX: Use chunked queries to avoid HTTP URL length limit (~8000 chars)
+        // When filtering by many desa (5+), the .in() query URL can exceed server limits
+        // Chunk size = 50 UUIDs (~1800 chars) to stay well under limit
+        const allStudents: any[] = [];
+        const CHUNK_SIZE = 50; // Conservative limit for UUID arrays in URL
+
+        for (let i = 0; i < desaIds.length; i += CHUNK_SIZE) {
+            const chunk = desaIds.slice(i, i + CHUNK_SIZE);
+
+            const { data: studentData, error: studentError } = await supabase
+                .from('students')
+                .select('id')
+                .in('desa_id', chunk);
+
+            if (studentError) {
+                console.error('[getValidStudentIds] Chunked query error:', studentError);
+                throw studentError;
+            }
+
+            if (studentData && studentData.length > 0) {
+                allStudents.push(...studentData);
+            }
+        }
+
+        intersect(allStudents.map(s => s.id));
+    }
+    // 4. Daerah Filter (only if no desa filter)
+    else if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
         const daerahIds = Array.isArray(uiFilters.daerahId) ? uiFilters.daerahId : [uiFilters.daerahId];
         const { data } = await supabase
             .from('students')
@@ -200,7 +330,7 @@ export async function getValidStudentIds(
         intersect(data?.map(s => s.id) || []);
     }
 
-    // 5. Gender Filter
+    // 5. Gender Filter (applied independently)
     if (uiFilters?.gender) {
         const { data } = await supabase
             .from('students')
