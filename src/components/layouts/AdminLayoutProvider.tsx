@@ -151,11 +151,25 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
         if (event === 'SIGNED_OUT') {
           // Clear all user-related cache when signing out
           sessionStorage.removeItem('auth-initialized'); // Clear session marker
-          clearUserCache();
+
+          // LAYER 2: Set logout marker for next login to detect
+          // This handles session expired, admin revoke, and auto-logout scenarios
+          sessionStorage.setItem('logout-pending', 'true');
+
+          clearUserCache(); // This reloads the page
           setProfile(null);
           setLoading(false);
           setError(null);
         } else if (event === 'SIGNED_IN' && session?.user) {
+          // LAYER 3: Check if logout happened before this login
+          const logoutPending = sessionStorage.getItem('logout-pending') === 'true';
+
+          if (logoutPending) {
+            // Force clear cache before fetching new user data
+            sessionStorage.removeItem('logout-pending');
+            clearUserCache(false); // Clear WITHOUT reload
+          }
+
           // Check if this is a fresh login (not a page reload)
           // We use sessionStorage to track this - it persists during page reloads but clears on new tab/window
           const isPageReload = sessionStorage.getItem('auth-initialized') === 'true';
@@ -164,14 +178,14 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
           const lastUserId = sessionStorage.getItem('last-user-id');
           const isAccountSwitch = lastUserId && lastUserId !== session.user.id;
 
-          if (!isPageReload) {
-            // Fresh login (not a page reload)
+          if (!isPageReload || isAccountSwitch || logoutPending) {
+            // Fresh login OR account switch OR logout-pending
             sessionStorage.setItem('auth-initialized', 'true');
             sessionStorage.setItem('last-user-id', session.user.id);
 
-            if (isAccountSwitch) {
-              // Different account - clear cache and reload to prevent stale data
-              clearUserCache();
+            if (isAccountSwitch || logoutPending) {
+              // Different account OR recent logout - clear cache and reload to prevent stale data
+              clearUserCache(); // Full reload (shouldReload defaults to true)
             } else {
               // Same account or first login - just fetch data (no reload needed)
               fetchUserData();

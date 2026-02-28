@@ -45,6 +45,8 @@ describe('userUtils', () => {
     })
 
     describe('Cache Clearing', () => {
+        let sessionStorageMock: Record<string, ReturnType<typeof vi.fn>>
+
         beforeEach(() => {
             // Clear all previous mock calls
             vi.clearAllMocks()
@@ -58,16 +60,68 @@ describe('userUtils', () => {
             }
             vi.stubGlobal('localStorage', localStorageMock)
 
+            // Mock sessionStorage
+            sessionStorageMock = {
+                getItem: vi.fn(),
+                setItem: vi.fn(),
+                removeItem: vi.fn(),
+                clear: vi.fn()
+            }
+            vi.stubGlobal('sessionStorage', sessionStorageMock)
+
             // Mock window.location.reload
             vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
         })
 
-        it('clearUserCache should remove all known storages and reload', () => {
+        it('clearUserCache should remove all known storages and reload by default', () => {
             clearUserCache()
 
             expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
             expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
             expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
+            expect(window.location.reload).toHaveBeenCalled()
+        })
+
+        it('clearUserCache(true) should remove all storages and reload', () => {
+            clearUserCache(true)
+
+            expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
+            expect(window.location.reload).toHaveBeenCalled()
+        })
+
+        it('clearUserCache(false) should remove all storages WITHOUT reload', () => {
+            clearUserCache(false)
+
+            expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
+            expect(window.location.reload).not.toHaveBeenCalled()
+            // Should NOT set suppress flag when not reloading
+            expect(sessionStorageMock.setItem).not.toHaveBeenCalledWith('swr-cache-suppress-persist', 'true')
+        })
+
+        it('clearUserCache(true) should set suppress-persist flag before reload', () => {
+            clearUserCache(true)
+
+            // Should set suppress flag to prevent beforeunload from re-saving stale cache
+            expect(sessionStorageMock.setItem).toHaveBeenCalledWith('swr-cache-suppress-persist', 'true')
             expect(window.location.reload).toHaveBeenCalled()
         })
 

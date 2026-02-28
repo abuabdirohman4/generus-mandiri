@@ -4,6 +4,7 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import { useUserProfile } from '@/stores/userProfileStore';
+import { clearUserCache } from '@/lib/userUtils';
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
@@ -12,10 +13,15 @@ import Spinner from "@/components/ui/spinner/Spinner";
 // Dropdown Menu Items Component
 function DropdownMenuItems({ onClose, profile }: { onClose: () => void; profile: { full_name: string; email?: string } | null }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
+
   const handleSignOut = async () => {
     setIsLoggingOut(true);
     try {
+      // LAYER 1: Clear cache WITHOUT reload first (synchronous)
+      // This prevents race condition by clearing stale filters before redirect
+      clearUserCache(false);
+
+      // Then signOut (which redirects to /signin)
       await signOut();
     } catch (error) {
       console.error('Logout error:', error);

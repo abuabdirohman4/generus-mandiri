@@ -29,7 +29,6 @@ interface DataTableProps {
 }
 
 export default function DataTableComponent({ tableData, userProfile }: DataTableProps) {
-  console.log('tableData', tableData);
   const { filters } = useLaporan()
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'actions' | 'student_name' | null>(null)

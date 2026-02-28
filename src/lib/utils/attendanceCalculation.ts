@@ -128,12 +128,6 @@ export function filterAttendanceForClass(
     return isEnrolled;
   });
 
-  console.log(`[FILTER UTILITY] filterAttendanceForClass for classId ${classId}:`);
-  console.log(`[FILTER UTILITY] - Input logs: ${attendanceLogs.length}`);
-  console.log(`[FILTER UTILITY] - Logs from relevant meetings: ${relevantMeetingCount}`);
-  console.log(`[FILTER UTILITY] - After enrollment filter: ${enrollmentFilteredCount}`);
-  console.log(`[FILTER UTILITY] - Enrolled students count: ${enrolledStudents.size}`);
-
   return filtered;
 }
 

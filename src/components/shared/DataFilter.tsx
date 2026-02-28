@@ -104,6 +104,10 @@ interface DataFilterProps {
   cascadeFilters?: boolean              // NEW - control cascading behavior (default: true)
   classViewMode?: 'separated' | 'combined'  // NEW - for dashboard class monitoring
   onClassViewModeChange?: (mode: 'separated' | 'combined') => void // NEW
+  // Comparison feature props
+  showComparisonLevel?: boolean
+  comparisonLevel?: 'class' | 'kelompok' | 'desa' | 'daerah'
+  onComparisonLevelChange?: (level: 'class' | 'kelompok' | 'desa' | 'daerah') => void
 }
 
 export default function DataFilter({
@@ -131,7 +135,11 @@ export default function DataFilter({
   filterLists,
   cascadeFilters = true,
   classViewMode,
-  onClassViewModeChange
+  onClassViewModeChange,
+  // Comparison feature props
+  showComparisonLevel = false,
+  comparisonLevel = 'kelompok',
+  onComparisonLevelChange
 }: DataFilterProps) {
   // Role detection logic
   const isSuperAdmin = userProfile?.role === 'superadmin'
@@ -527,6 +535,22 @@ export default function DataFilter({
     ? MEETING_TYPES  // Show all types for reporting/filtering
     : availableTypes // Use role-restricted types for creation
 
+  // Comparison feature logic
+  const availableComparisonLevels = useMemo(() => {
+    const levels = [
+      { value: 'class', label: 'Per Kelas' },
+      { value: 'kelompok', label: 'Per Kelompok' }
+    ]
+    if (isSuperAdmin || isAdminDaerah || isTeacherDaerah) {
+      levels.push({ value: 'desa', label: 'Per Desa' })
+    }
+    // "Per Daerah" only for Superadmin
+    if (isSuperAdmin) {
+      levels.push({ value: 'daerah', label: 'Per Daerah' })
+    }
+    return levels
+  }, [isSuperAdmin, isAdminDaerah, isTeacherDaerah, isTeacherDesa])
+
   // Validation for Independent Mode
   const isDesaInvalid = useMemo(() => {
     if (cascadeFilters || !filters.daerah?.length || !filters.desa?.length) return false
@@ -675,6 +699,7 @@ export default function DataFilter({
 
   // Determine visible filters and their order
   const visibleFilters = [
+    showComparisonLevel && 'comparisonLevel', // NEW - comparison feature FIRST!
     showGender && 'gender', // NEW - add gender first
     showStatus && 'status', // NEW - add status after gender
     effectiveShouldShowDaerah && 'daerah',
@@ -702,7 +727,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    const filterOrder = ['gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
+    const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -720,6 +745,22 @@ export default function DataFilter({
 
   return (
     <div className={containerClass}>
+      {/* Comparison Level Filter - FIRST! */}
+      {showComparisonLevel && (
+        <div className={getFilterClass(getFilterIndex('comparisonLevel'))}>
+          <InputFilter
+            id="comparisonLevelFilter"
+            label="Bandingkan Berdasarkan"
+            value={comparisonLevel}
+            onChange={(value) => onComparisonLevelChange?.(value as 'class' | 'kelompok' | 'desa' | 'daerah')}
+            options={availableComparisonLevels}
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
+        </div>
+      )}
+
       {effectiveShouldShowDaerah && (
         <div className={getFilterClass(getFilterIndex('daerah'))}>
           {variant === 'page' ? (
@@ -975,6 +1016,7 @@ export default function DataFilter({
           )}
         </div>
       )}
+
     </div>
   )
 }

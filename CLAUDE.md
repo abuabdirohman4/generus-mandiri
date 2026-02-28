@@ -79,6 +79,77 @@ npm run test:ui  # Interactive UI
 
 ---
 
+## 🔧 Git Workflow & Commit Protocol
+
+**CRITICAL**: Claude Code MUST NOT execute git operations that modify repository state.
+
+### Allowed Git Commands (Read-Only) ✅
+
+```bash
+git status           # Check working tree status
+git diff <file>      # Show file changes
+git log              # View commit history
+git show <commit>    # Show commit details
+git branch           # List branches
+```
+
+### Forbidden Git Commands ❌
+
+**NEVER execute**:
+- `git add` - User stages files manually
+- `git commit` - User creates commits
+- `git push` - User pushes to remote
+- `git pull`, `git merge`, `git rebase` - User handles integration
+- Any command that modifies `.git/` or working tree
+
+### Correct Workflow After Code Changes
+
+When implementation is complete:
+
+1. ✅ **Show what changed**: `git status`, `git diff <file>`
+2. ✅ **Provide commit message** as formatted text (with Co-Authored-By tag)
+3. ✅ **Inform user to run manually**:
+   ```bash
+   git add <files>
+   git commit -m "<message>"
+   git push
+   ```
+4. ❌ **DO NOT** run `git add`, `git commit`, or `git push` yourself
+
+### Rationale
+
+- **User maintains control** over git history and commit timing
+- **User can review** all changes before committing
+- **User can modify** commit message if needed
+- **Prevents accidents** (wrong commits, premature pushes)
+- **Respects workflow** (user may have pre-commit hooks, signing, etc.)
+
+### Example Output
+
+```
+✅ Implementation complete! Files changed:
+- src/app/(admin)/dashboard/dashboardHelpers.ts
+
+📝 Suggested commit message:
+
+fix: Apply pagination to RLS filter queries to handle large datasets
+
+ROOT CAUSE: Dashboard showing 0 students when > 400 students
+SOLUTION: Use fetchAllRecords() helper with pagination
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
+👉 Please run these commands:
+
+git add src/app/\(admin\)/dashboard/dashboardHelpers.ts
+git commit -m "<message above>"
+git push
+```
+
+**Exception**: `bd sync` (beads issue tracker) is allowed as it's a dedicated sync command, not direct git manipulation.
+
+---
+
 ## 📚 Documentation Strategy for AI Knowledge Management
 
 **CRITICAL**: Balance between inline knowledge vs external references for optimal token usage.
@@ -627,13 +698,40 @@ if (profile?.role === 'teacher') {
 - `src/app/(admin)/absensi/actions.ts` - getMeetingsWithStats()
 - `src/app/(admin)/laporan/actions.ts` - getAttendanceReport()
 - `src/app/(admin)/users/siswa/components/StudentsTable.tsx` - Class display
-- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping
+- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping + **auto-set filter**
+
+**Auto-Set Filter Pattern for Single Kelompok/Class**:
+For better UX, pages with DataFilter should auto-select filters when user has only 1 option:
+```typescript
+// Auto-set class filter for teachers with exactly 1 class
+useEffect(() => {
+  if (userProfile?.role === 'teacher' && userProfile.classes?.length === 1) {
+    const teacherClassId = userProfile.classes[0].id
+    if (!filters.organisasi?.kelas?.includes(teacherClassId)) {
+      setFilter('organisasi', { daerah: [], desa: [], kelompok: [], kelas: [teacherClassId] })
+    }
+  }
+}, [userProfile?.role, userProfile?.classes, filters.organisasi?.kelas, setFilter])
+
+// Auto-set kelompok filter for teachers with exactly 1 kelompok (no classes)
+useEffect(() => {
+  if (userProfile?.role === 'teacher' && userProfile.kelompok_id && (!userProfile.classes || userProfile.classes.length === 0)) {
+    if (!filters.organisasi?.kelompok?.includes(userProfile.kelompok_id)) {
+      setFilter('organisasi', { daerah: [], desa: [], kelompok: [userProfile.kelompok_id], kelas: [] })
+    }
+  }
+}, [userProfile?.role, userProfile?.kelompok_id, userProfile?.classes, filters.organisasi?.kelompok, setFilter])
+```
+- **When to use**: Pages that require filters to show data (Laporan, Absensi list, Student list)
+- **Benefit**: Prevents "no data" state when user has only 1 valid option
+- **Reference**: `src/app/(admin)/laporan/hooks/useLaporanPage.ts` line 166-194
 
 **Common Pitfalls**:
 - ❌ Checking only `teacher_classes` length (hierarchical teachers have 0)
 - ❌ Using regular user client instead of admin client
 - ❌ Forgetting to include organizational fields in profile query
 - ❌ Not handling both `class_id` and `class_ids` in meeting filtering
+- ❌ Not auto-setting filters for single-option users (causes "no data" bugs)
 
 **Reference Implementation**: See `.beads/progress/sm-3ud.md` for complete hierarchical teacher implementation.
 
@@ -789,6 +887,42 @@ export function useMeetingFormSettings(userId?: string) {
   - See: `useLaporanPage.ts` auto-extract kelompok logic for reference implementation
 - **Related Issues**: sm-de3 (auto-clear bug fix), sm-hov (duplicate issue)
 
+**Dashboard Metrics Pattern** - Dual metrics for attendance calculation:
+- **Primary Metric (Simple Average)**: Displayed in main stat card
+  - Formula: `(Σ entity_attendance_rate) / entity_count`
+  - Use case: "Bagaimana performa rata-rata desa/kelompok/kelas?"
+  - Example: `(81% + 100% + 73% + 75% + 68% + 47%) / 6 = 74%`
+  - User-friendly, intuitif, consistent with table display
+- **Secondary Metric (Weighted Average)**: Displayed in tooltip
+  - Formula: `(Σ total_students_present) / (Σ total_potential_attendance) × 100`
+  - Use case: "Berapa persen siswa yang benar-benar hadir?"
+  - Example: `12,500 / 25,000 × 100 = 50%`
+  - Accurate for resource planning, reflects scale/impact
+- **Supporting Data**: Table shows "Pertemuan" and "Siswa" columns
+  - Helps user understand why simple ≠ weighted
+  - Enables manual verification and deeper analysis
+- **Implementation**: `src/app/(admin)/dashboard/page.tsx` - `attendanceMetrics` useMemo
+- **Documentation**: READ [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
+- **Related Issues**: sm-nol (dashboard comparison charts)
+
+**Meeting Count Deduplication** - CRITICAL for multi-class meetings aggregation:
+- **Problem**: Multi-class meetings (SAMBUNG_KELOMPOK, SAMBUNG_DESA, SAMBUNG_DAERAH) were counted multiple times when aggregating by kelompok/desa/daerah
+  - Example: 1 meeting for 7 classes in Kelompok "Nambo" → showed as **2 meetings** ❌
+  - Root cause: Aggregation summed `meeting_count` per class without deduplication
+- **Solution**: Use `meeting_ids` array + Set for deduplication
+  - `ClassMonitoringData` includes `meeting_ids?: string[]` field
+  - `aggregateMonitoringData()` uses `Set<string>()` to track unique meeting IDs
+  - Final `meeting_count` = `meetingIds.size` (deduplicated)
+- **Files**:
+  - `src/app/(admin)/dashboard/actions.ts` - Returns `meeting_ids` in monitoring data
+  - `src/app/(admin)/dashboard/utils/aggregateMonitoringData.ts` - Deduplication logic
+  - `src/app/(admin)/dashboard/page.tsx` - Tracks `meetingIds` in aggregation
+- **Impact**:
+  - ✅ Per Kelompok: Multi-class meetings counted once (was N times)
+  - ✅ Per Desa: Cross-kelompok meetings counted once (was N times)
+  - ✅ Per Daerah: Cross-desa meetings counted once (was N times)
+- **Verification**: Kelompok "Nambo" now shows **1 pertemuan** ✅ (was 2 ❌)
+
 ---
 
 ## ⚠️ Important Business Rules
@@ -908,3 +1042,4 @@ import { isSuperAdmin } from '@/lib/userUtils'
 - **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md) - Complete testing setup, examples, TDD workflow
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md) - Critical domain logic for Students, Attendance, Transfers, Meetings
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md) - Bulk operations, user creation, migration patterns
+- **Dashboard Attendance Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md) - Dual metrics (simple vs weighted average), UX comparison

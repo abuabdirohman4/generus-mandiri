@@ -50,8 +50,9 @@ export function isAdminLegacy(role: string | undefined): boolean {
 
 /**
  * Clear all SWR cache when user logs out
+ * @param shouldReload - Whether to reload page after clearing cache (default: true)
  */
-export function clearUserCache() {
+export function clearUserCache(shouldReload = true) {
   if (typeof window !== 'undefined') {
     // Clear SWR cache from localStorage
     localStorage.removeItem('swr-cache')
@@ -77,8 +78,12 @@ export function clearUserCache() {
     // Clear materi store (materi filters and view mode)
     localStorage.removeItem('materi-storage')
 
-    // Force reload to clear all in-memory caches
-    window.location.reload()
+    // Force reload to clear all in-memory caches (unless explicitly disabled)
+    if (shouldReload) {
+      // Prevent SWRProvider's beforeunload handler from re-saving stale cache
+      sessionStorage.setItem('swr-cache-suppress-persist', 'true');
+      window.location.reload()
+    }
   }
 }
 

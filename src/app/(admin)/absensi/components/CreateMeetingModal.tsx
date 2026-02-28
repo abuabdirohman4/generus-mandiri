@@ -8,7 +8,7 @@ import Button from '@/components/ui/button/Button'
 import { createMeeting, updateMeeting } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
-import { useClasses } from '@/hooks/useClasses'
+import { useClasses, type Class } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
@@ -113,15 +113,38 @@ export default function CreateMeetingModal({
       (!userProfile.classes || userProfile.classes.length === 0))
   }, [userProfile])
 
+  // Count active students per class for filtering empty classes
+  const classStudentCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    students.forEach(student => {
+      // Only count active students (exclude graduated/inactive)
+      if (student.status !== 'active') return
+
+      // Handle both many-to-many (student.classes) and legacy (student.class_id)
+      const studentClassIds = (student.classes || []).map(c => c.id)
+      const allClassIds = student.class_id
+        ? [...studentClassIds, student.class_id]
+        : studentClassIds
+
+      allClassIds.forEach(classId => {
+        counts.set(classId, (counts.get(classId) || 0) + 1)
+      })
+    })
+
+    return counts
+  }, [students])
+
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
-    if (isHierarchicalTeacher) {
-      return sortClassesByMasterOrder(classes || [])
-    }
+    let filtered: Class[] = []
 
-    if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
-      // Enrich teacher classes with kelompok_id from classes, then sort
+    // Role-based filtering (existing logic)
+    if (isHierarchicalTeacher) {
+      filtered = classes || []
+    } else if (userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length > 1) {
+      // Enrich teacher classes with kelompok_id from classes
       const enriched = userProfile.classes.map(cls => {
         const fullClass = classes.find(c => c.id === cls.id)
         return {
@@ -129,18 +152,44 @@ export default function CreateMeetingModal({
           kelompok_id: fullClass?.kelompok_id || null
         }
       })
-      return sortClassesByMasterOrder(enriched)
+      filtered = enriched as Class[]
     } else if (userProfile?.role === 'teacher') {
-      return sortClassesByMasterOrder(userProfile.classes || [])
+      // Enrich single-class teacher with kelompok_id (consistency with multi-class path)
+      const enriched = (userProfile.classes || []).map(cls => {
+        const fullClass = classes.find(c => c.id === cls.id)
+        return {
+          ...cls,
+          kelompok_id: fullClass?.kelompok_id || null
+        }
+      })
+      filtered = enriched as Class[]
+    } else {
+      filtered = classes || []
     }
-    return sortClassesByMasterOrder(classes || [])
+
+    // Sort by class_master.sort_order (existing logic)
+    const sorted = sortClassesByMasterOrder(filtered)
+
+    // NEW: Filter out classes with 0 active students
+    const withStudents = sorted.filter(cls => {
+      const count = classStudentCounts.get(cls.id) || 0
+      return count > 0
+    })
+
+    // Edge case: warn if all classes were filtered out
+    if (withStudents.length === 0) {
+      console.warn('No classes with active students found')
+    }
+
+    return withStudents
   }, [
     userProfile?.role,
     userProfile?.classes?.length,
     userProfile?.classes?.map(c => c.id).join(','),
     classes?.length,
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(','),
-    isHierarchicalTeacher
+    isHierarchicalTeacher,
+    classStudentCounts // NEW dependency
   ])
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {

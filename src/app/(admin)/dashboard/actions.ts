@@ -91,11 +91,36 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
       (async () => {
         if (hasFilters && studentIds.length === 0) return 0;
 
-        let query = supabase.from('students').select('*', { count: 'exact', head: true });
+        // CRITICAL FIX: Chunk large studentIds array to avoid HTTP headers overflow
+        // PostgREST has 16KB header limit; 478 UUIDs = ~18KB → "HeadersOverflowError"
+        // Each UUID ~36 chars, so max ~200 UUIDs per chunk to stay under 16KB limit
         if (hasFilters && studentIds.length > 0) {
-          query = query.in('id', studentIds);
+          const CHUNK_SIZE = 200; // Safe limit to avoid 16KB HTTP header overflow
+          let totalCount = 0;
+
+          for (let i = 0; i < studentIds.length; i += CHUNK_SIZE) {
+            const chunk = studentIds.slice(i, i + CHUNK_SIZE);
+
+            const { count, error } = await supabase
+              .from('students')
+              .select('*', { count: 'exact', head: true })
+              .in('id', chunk);
+
+            if (error) {
+              console.error('[Student count chunk error]', error);
+              throw error;
+            }
+
+            totalCount += count || 0;
+          }
+
+          return totalCount;
         }
-        const { count } = await query;
+
+        // No filters - count all (with RLS)
+        const { count } = await supabase
+          .from('students')
+          .select('*', { count: 'exact', head: true });
         return count || 0;
       })(),
 
@@ -103,11 +128,27 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
       (async () => {
         if (hasFilters && classIds.length === 0) return 0;
 
-        let query = supabase.from('classes').select('*', { count: 'exact', head: true });
+        // CRITICAL FIX: Chunk large classIds array to avoid URL length limit
         if (hasFilters && classIds.length > 0) {
-          query = query.in('id', classIds);
+          const CHUNK_SIZE = 100;
+          let totalCount = 0;
+
+          for (let i = 0; i < classIds.length; i += CHUNK_SIZE) {
+            const chunk = classIds.slice(i, i + CHUNK_SIZE);
+            const { count } = await supabase
+              .from('classes')
+              .select('*', { count: 'exact', head: true })
+              .in('id', chunk);
+            totalCount += count || 0;
+          }
+
+          return totalCount;
         }
-        const { count } = await query;
+
+        // No filters - count all (with RLS)
+        const { count } = await supabase
+          .from('classes')
+          .select('*', { count: 'exact', head: true });
         return count || 0;
       })()
     ]);
@@ -156,17 +197,10 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
     const meetingsMonthly = allMeetingsData?.filter(m => m.date >= monthAgoStr).length || 0;
 
     // Fetch all attendance logs for the month (with student filter if needed)
-    let attendanceQuery = supabase
-      .from('attendance_logs')
-      .select('date, status, student_id, meeting_id')
-      .gte('date', monthAgoStr);
+    let attendanceData: any[] = [];
 
-    if (hasFilters && studentIds.length > 0) {
-      attendanceQuery = attendanceQuery.in('student_id', studentIds);
-    } else if (hasFilters && studentIds.length === 0) {
+    if (hasFilters && studentIds.length === 0) {
       // No valid students - empty attendance
-      const attendanceData: any[] = [];
-
       return {
         siswa: siswaCount,
         kelas: kelasCount,
@@ -177,9 +211,49 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         kehadiranMingguan: 0,
         kehadiranBulanan: 0
       };
-    }
+    } else if (hasFilters && studentIds.length > 0) {
+      // CRITICAL FIX: Use chunked queries for large student ID arrays to avoid URL length limit
+      // For 500+ students across multiple desa, single .in() query may exceed ~8000 char limit
+      const CHUNK_SIZE = 500;
 
-    const { data: attendanceData } = await attendanceQuery;
+      if (studentIds.length > CHUNK_SIZE) {
+        // Batch large student arrays to avoid URL length limit
+        for (let i = 0; i < studentIds.length; i += CHUNK_SIZE) {
+          const chunk = studentIds.slice(i, i + CHUNK_SIZE);
+
+          const { data, error } = await supabase
+            .from('attendance_logs')
+            .select('date, status, student_id, meeting_id')
+            .gte('date', monthAgoStr)
+            .in('student_id', chunk);
+
+          if (error) {
+            console.error('[getDashboard] Attendance batch error:', error);
+          }
+
+          if (data) {
+            attendanceData.push(...data);
+          }
+        }
+      } else {
+        // Small array, single query is fine
+        const { data } = await supabase
+          .from('attendance_logs')
+          .select('date, status, student_id, meeting_id')
+          .gte('date', monthAgoStr)
+          .in('student_id', studentIds);
+
+        attendanceData = data || [];
+      }
+    } else {
+      // No filters - fetch all attendance
+      const { data } = await supabase
+        .from('attendance_logs')
+        .select('date, status, student_id, meeting_id')
+        .gte('date', monthAgoStr);
+
+      attendanceData = data || [];
+    }
 
     // Calculate attendance percentages
     const todayAttendance = attendanceData?.filter(a => a.date === today) || [];
@@ -228,6 +302,7 @@ export interface ClassMonitoringData {
   meeting_count: number;
   attendance_rate: number;
   student_count?: number; // Number of enrolled students (per kelompok in separated mode)
+  meeting_ids?: string[]; // Array of meeting IDs for deduplication in aggregation
 }
 
 export interface ClassMonitoringFilters extends DashboardFilters {
@@ -328,32 +403,76 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     const { classIds, studentIds, hasFilters } = filterConditions;
 
     // Get all classes with organizational info (RLS filtered)
-    let classesQuery = supabase
-      .from('classes')
-      .select(`
-        id,
-        name,
-        kelompok:kelompok_id(
-          id,
-          name,
-          desa:desa_id(
+    let classes: any[] = [];
+
+    if (hasFilters && classIds.length === 0) {
+      return [];
+    } else if (hasFilters && classIds.length > 0) {
+      // CRITICAL FIX: Chunk large classIds array to avoid URL length limit
+      // When many desa selected (5-6), classIds can be 200-500+ UUIDs
+      // Unchunked .in() query exceeds ~8000 char URL limit → returns null
+      const CHUNK_SIZE = 100; // Conservative for nested select query
+
+      for (let i = 0; i < classIds.length; i += CHUNK_SIZE) {
+        const chunk = classIds.slice(i, i + CHUNK_SIZE);
+
+        const { data: chunkClasses, error } = await supabase
+          .from('classes')
+          .select(`
             id,
             name,
-            daerah:daerah_id(
+            kelompok:kelompok_id(
               id,
-              name
+              name,
+              desa:desa_id(
+                id,
+                name,
+                daerah:daerah_id(
+                  id,
+                  name
+                )
+              )
+            )
+          `)
+          .in('id', chunk);
+
+        if (error) {
+          console.error('[getClassMonitoring] Classes chunk error:', error);
+          throw error;
+        }
+
+        if (chunkClasses && chunkClasses.length > 0) {
+          classes.push(...chunkClasses);
+        }
+      }
+    } else {
+      // No filters - fetch all (with RLS)
+      const { data, error } = await supabase
+        .from('classes')
+        .select(`
+          id,
+          name,
+          kelompok:kelompok_id(
+            id,
+            name,
+            desa:desa_id(
+              id,
+              name,
+              daerah:daerah_id(
+                id,
+                name
+              )
             )
           )
-        )
-      `);
+        `);
 
-    if (hasFilters && classIds.length > 0) {
-      classesQuery = classesQuery.in('id', classIds);
-    } else if (hasFilters && classIds.length === 0) {
-      return [];
+      if (error) {
+        console.error('[getClassMonitoring] Classes query error:', error);
+        throw error;
+      }
+
+      classes = data || [];
     }
-
-    const { data: classes } = await classesQuery;
 
     if (!classes || classes.length === 0) {
       return [];
@@ -384,11 +503,6 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
 
       return false;
     }) || [];
-
-    // console.log('[DASHBOARD DEBUG] Meetings:', {
-    //   totalMeetings: meetings.length,
-    //   dateRange: { startDate, endDate }
-    // });
 
     // Group meetings by class (support multi-class meetings)
     // A meeting counts for ALL classes involved (both primary class_id and classes in class_ids array)
@@ -441,12 +555,6 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       attendanceLogs = logsData || [];
     }
 
-    // console.log('[DASHBOARD DEBUG] Attendance Logs:', {
-    //   totalLogs: attendanceLogs.length,
-    //   meetingIds: allMeetingIds.length,
-    //   logsPerMeeting: attendanceLogs.length / (allMeetingIds.length || 1)
-    // });
-
     // Fetch student data to map student_id -> kelompok_id
     const uniqueStudentIds = [...new Set(attendanceLogs.map(log => log.student_id).filter(Boolean))];
     let studentsData: any[] = [];
@@ -474,9 +582,64 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
     meetings.forEach(meeting => {
       meetingMap.set(meeting.id, meeting);
     });
+    const enrollmentsByClass = new Map<string, Set<string>>();
 
-    // Build result array with meeting-based filtering (no pre-filtering by student enrollment)
-    let result: ClassMonitoringData[] = await Promise.all(classes.map(async (cls: any) => {
+    // Fetch all enrollments for all classes in batches
+    const ENROLLMENT_CHUNK_SIZE = 100; // Chunk class IDs to avoid URL length limit
+    let allEnrollments: any[] = [];
+
+    for (let i = 0; i < allClassIds.length; i += ENROLLMENT_CHUNK_SIZE) {
+      const chunk = allClassIds.slice(i, i + ENROLLMENT_CHUNK_SIZE);
+
+      let enrollmentQuery = supabase
+        .from('student_classes')
+        .select('student_id, class_id')
+        .in('class_id', chunk);
+
+      // Apply student filter if active (gender/organizational filters)
+      if (hasFilters && studentIds.length > 0) {
+        // CRITICAL FIX: Always chunk student IDs to avoid URL length limit
+        // Combined URL with chunk (100 class IDs) + studentIds can exceed 8000 chars
+        const STUDENT_CHUNK_SIZE = 200; // Conservative for combined query
+
+        for (let j = 0; j < studentIds.length; j += STUDENT_CHUNK_SIZE) {
+          const studentChunk = studentIds.slice(j, j + STUDENT_CHUNK_SIZE);
+          const { data, error } = await supabase
+            .from('student_classes')
+            .select('student_id, class_id')
+            .in('class_id', chunk)
+            .in('student_id', studentChunk);
+
+          if (error) {
+            console.error('[getClassMonitoring] Enrollment chunk error:', error);
+            throw error;
+          }
+
+          if (data) allEnrollments.push(...data);
+        }
+        continue; // Skip the query below, already done in chunks
+      }
+
+      const { data, error } = await enrollmentQuery;
+
+      if (error) {
+        console.error('[getClassMonitoring] Enrollment query error:', error);
+        throw error;
+      }
+
+      if (data) allEnrollments.push(...data);
+    }
+
+    // Build class_id -> Set<student_id> map
+    allEnrollments.forEach((enrollment: any) => {
+      if (!enrollmentsByClass.has(enrollment.class_id)) {
+        enrollmentsByClass.set(enrollment.class_id, new Set());
+      }
+      enrollmentsByClass.get(enrollment.class_id)!.add(enrollment.student_id);
+    });
+
+    // Build result array WITHOUT database queries (use pre-fetched enrollments)
+    let result: ClassMonitoringData[] = classes.map((cls: any) => {
       const kelompokData = Array.isArray(cls.kelompok) ? cls.kelompok[0] : cls.kelompok;
       const desaData = kelompokData?.desa ? (Array.isArray(kelompokData.desa) ? kelompokData.desa[0] : kelompokData.desa) : null;
       const daerahData = desaData?.daerah ? (Array.isArray(desaData.daerah) ? desaData.daerah[0] : desaData.daerah) : null;
@@ -484,32 +647,9 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       const classMeetingIdsSet = meetingsByClass.get(cls.id) || new Set<string>();
       const classMeetingIds = Array.from(classMeetingIdsSet);
 
-      // console.log(`[DASHBOARD DEBUG] Processing class: ${cls.name} (${cls.id})`);
-      // console.log(`[DASHBOARD DEBUG] - Meetings for this class: ${classMeetingIds.length}`);
-
-      // CRITICAL FIX: Query enrollment for THIS SPECIFIC CLASS only
-      // This prevents cross-class contamination from other selected classes
-      let studentClassesQuery = supabase
-        .from('student_classes')
-        .select('student_id, students!inner(kelompok_id)')
-        .eq('class_id', cls.id);
-
-      // Apply gender/student filters if active
-      if (hasFilters && studentIds.length > 0) {
-        studentClassesQuery = studentClassesQuery.in('student_id', studentIds);
-      }
-
-      const { data: classStudentEnrollments } = await studentClassesQuery;
-
-      // Build enrolled students set for this class
-      const enrolledStudents = new Set<string>();
-      classStudentEnrollments?.forEach((sc: any) => {
-        enrolledStudents.add(sc.student_id);
-      });
-
+      // Get pre-fetched enrollments for this class
+      const enrolledStudents = enrollmentsByClass.get(cls.id) || new Set<string>();
       const studentCount = enrolledStudents.size;
-
-      // console.log(`[DASHBOARD DEBUG] - Enrolled students in ${cls.name}: ${studentCount}`);
 
       if (classMeetingIds.length === 0) {
         return {
@@ -521,7 +661,8 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
           has_meeting: false,
           meeting_count: 0,
           attendance_rate: 0,
-          student_count: studentCount
+          student_count: studentCount,
+          meeting_ids: [] // Empty array for classes without meetings
         };
       }
 
@@ -533,15 +674,13 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         enrolledStudents
       );
 
-      // console.log(`[DASHBOARD DEBUG] - Total attendance logs: ${attendanceLogs.length}`);
-      // console.log(`[DASHBOARD DEBUG] - Filtered logs for ${cls.name}: ${filteredLogs.length}`);
-      // console.log(`[DASHBOARD DEBUG] - Present count: ${filteredLogs.filter(l => l.status === 'H').length}`);
+      // Calculate meeting count: Only count meetings that have attendance logs
+      // This prevents misleading UI where meeting_count=2 but only 1 meeting has logs
+      const meetingsWithLogs = new Set(filteredLogs.map(log => log.meeting_id));
+      const actualMeetingCount = meetingsWithLogs.size;
 
       // Calculate attendance rate using shared utility
       const attendanceRate = calculateAttendanceRate(filteredLogs);
-
-      // console.log(`[DASHBOARD DEBUG] - Attendance rate for ${cls.name}: ${attendanceRate}%`);
-      // console.log(`[DASHBOARD DEBUG] --------------------------------`);
 
       return {
         class_id: cls.id,
@@ -550,11 +689,12 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         desa_name: desaData?.name,
         daerah_name: daerahData?.name,
         has_meeting: true,
-        meeting_count: classMeetingIds.length,
+        meeting_count: actualMeetingCount,
         attendance_rate: attendanceRate,
-        student_count: studentCount
+        student_count: studentCount,
+        meeting_ids: Array.from(meetingsWithLogs) // For aggregation deduplication
       };
-    }));
+    });
 
     // Add secondary sorting: class_name ASC, then kelompok_name ASC
     result.sort((a, b) => {
@@ -613,18 +753,17 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       result = await Promise.all(
         Array.from(combinedMap.entries()).map(async ([className, data]) => {
           // Get enrollment for ALL class IDs in this combined group
+          // OPTIMIZED: Use single .in() query instead of loop with .eq()
           const allEnrolledStudents = new Set<string>();
 
-          for (const classId of data.classIds) {
-            const { data: classEnrollments } = await supabase
-              .from('student_classes')
-              .select('student_id')
-              .eq('class_id', classId);
+          const { data: classEnrollments } = await supabase
+            .from('student_classes')
+            .select('student_id')
+            .in('class_id', data.classIds);
 
-            classEnrollments?.forEach((sc: any) => {
-              allEnrolledStudents.add(sc.student_id);
-            });
-          }
+          classEnrollments?.forEach((sc: any) => {
+            allEnrolledStudents.add(sc.student_id);
+          });
 
           // Filter attendance logs for ALL meetings of this combined class with deduplication
           const processedLogs = new Set<string>();
@@ -648,6 +787,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             });
           }
 
+          // Calculate meeting count: Only count meetings that have attendance logs
+          const meetingsWithLogs = new Set(filteredLogs.map(log => log.meeting_id));
+          const actualMeetingCount = meetingsWithLogs.size;
+
           const attendanceRate = calculateAttendanceRate(filteredLogs);
 
           return {
@@ -657,9 +800,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             desa_name: Array.from(data.desaNames).sort().join(', '),
             daerah_name: Array.from(data.daerahNames).sort().join(', '),
             has_meeting: data.hasMeeting,
-            meeting_count: data.meetingIds.size,
+            meeting_count: actualMeetingCount,
             attendance_rate: attendanceRate,
-            student_count: data.totalStudents
+            student_count: data.totalStudents,
+            meeting_ids: Array.from(meetingsWithLogs) // For aggregation deduplication
           };
         })
       );
@@ -668,8 +812,13 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
       result.sort((a, b) => a.class_name.localeCompare(b.class_name));
     }
 
-    // Filter out classes with no students
-    result = result.filter(item => (item.student_count ?? 0) > 0);
+    // PANGALENGAN 0% NAMBO 100%
+    // Filter out classes with no students OR no meetings
+    // Classes without meetings should not appear in monitoring table
+    result = result.filter(item =>
+      (item.student_count ?? 0) > 0 &&
+      item.has_meeting === true
+    );
 
     return result;
   } catch (error) {

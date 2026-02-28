@@ -83,6 +83,7 @@ export default function AdminDashboard() {
       kelas: filters.kelas.sort().join(','),
       gender: filters.gender || '',
       viewMode: filters.classViewMode,
+      comparisonLevel: filters.comparisonLevel, // ADDED: Include comparison level in cache key
       // Dynamic date selectors
       selectedDate,
       selectedWeekOffset,
@@ -96,8 +97,9 @@ export default function AdminDashboard() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
-      // Keep data while revalidating
-      keepPreviousData: true
+      // CRITICAL FIX: Don't keep previous data to avoid filter/data mismatch
+      // When filters change, we need fresh data to match the new filters
+      keepPreviousData: false
     }
   );
 
@@ -119,34 +121,108 @@ export default function AdminDashboard() {
   const handleViewModeChange = (mode: 'separated' | 'combined') => {
     setFilter('classViewMode', mode);
   };
+  const handleComparisonLevelChange = (level: 'class' | 'kelompok' | 'desa' | 'daerah') => {
+    setFilter('comparisonLevel', level);
+  };
 
-  // Attendance Rate Calculation
-  const attendanceRate = useMemo(() => {
-    // If monitoring data is not available or empty, return 0
-    if (!monitoringData || monitoringData.length === 0) return 0;
+  // Attendance Rate Calculations - Dual Metrics
+  const attendanceMetrics = useMemo(() => {
+    // If monitoring data is not available or empty, return default values
+    if (!monitoringData || monitoringData.length === 0) {
+      return {
+        simpleAverage: 0,
+        weightedAverage: 0,
+        totalPresent: 0,
+        totalPotential: 0,
+        entityCount: 0
+      };
+    }
 
-    // We calculate the Weighted Average (Weighted Average) from the displayed monitoring data
-    // Formula: (Total Students Present in All Classes / Total Potential Attendance) * 100
+    // Get comparison level to determine grouping
+    const comparisonLevel = filters.comparisonLevel;
 
-    let totalPresentWeighted = 0;
-    let totalPotentialWeighted = 0;
+    // Aggregate by entity (class/kelompok/desa/daerah)
+    // CRITICAL: Use meeting_ids to deduplicate meetings for multi-class meetings
+    const grouped = monitoringData.reduce((acc, cls) => {
+      let entityKey: string | undefined;
 
-    monitoringData.forEach(cls => {
-      // Potential attendance = Number of Students x Number of Meetings
+      if (comparisonLevel === 'class') {
+        entityKey = cls.class_name;
+      } else if (comparisonLevel === 'kelompok') {
+        entityKey = cls.kelompok_name;
+      } else if (comparisonLevel === 'desa') {
+        entityKey = cls.desa_name;
+      } else {
+        entityKey = cls.daerah_name;
+      }
+
+      if (!entityKey) return acc;
+
+      if (!acc[entityKey]) {
+        acc[entityKey] = {
+          totalPresent: 0,
+          totalPotential: 0,
+          attendanceRate: 0,
+          meetingIds: new Set<string>() // Track unique meeting IDs
+        };
+      }
+
+      // Add meeting IDs to deduplicate multi-class meetings
+      if (cls.meeting_ids && cls.meeting_ids.length > 0) {
+        cls.meeting_ids.forEach(id => acc[entityKey].meetingIds.add(id));
+      }
+
+      // Weighted calculation per entity (use original meeting_count for potential)
+      // The deduplication will happen when we calculate final metrics
       const potential = (cls.student_count || 0) * cls.meeting_count;
-
-      // Estimated number present based on rate per class
-      // (attendance_rate / 100) * potential
       const present = (cls.attendance_rate / 100) * potential;
 
-      totalPotentialWeighted += potential;
-      totalPresentWeighted += present;
+      acc[entityKey].totalPresent += present;
+      acc[entityKey].totalPotential += potential;
+
+      return acc;
+    }, {} as Record<string, { totalPresent: number; totalPotential: number; attendanceRate: number; meetingIds: Set<string> }>);
+
+    // Calculate attendance rate per entity
+    Object.keys(grouped).forEach(key => {
+      const entity = grouped[key];
+      entity.attendanceRate = entity.totalPotential > 0
+        ? Math.round((entity.totalPresent / entity.totalPotential) * 100)
+        : 0;
     });
 
-    if (totalPotentialWeighted === 0) return 0;
+    const entities = Object.values(grouped);
+    const entityCount = entities.length;
 
-    return Math.round((totalPresentWeighted / totalPotentialWeighted) * 100);
-  }, [monitoringData]); // Dependency is only monitoringData, as monitoringData changes according to the date
+    // Simple Average: Average of entity attendance rates
+    const simpleAverage = entityCount > 0
+      ? Math.round(entities.reduce((sum, e) => sum + e.attendanceRate, 0) / entityCount)
+      : 0;
+
+    // Weighted Average: Total present / Total potential across all entities
+    const totalPresent = entities.reduce((sum, e) => sum + e.totalPresent, 0);
+    const totalPotential = entities.reduce((sum, e) => sum + e.totalPotential, 0);
+    const weightedAverage = totalPotential > 0
+      ? Math.round((totalPresent / totalPotential) * 100)
+      : 0;
+
+    return {
+      simpleAverage,
+      weightedAverage,
+      totalPresent: Math.round(totalPresent),
+      totalPotential: Math.round(totalPotential),
+      entityCount
+    };
+  }, [monitoringData, filters.comparisonLevel]);
+
+  // Get entity label based on comparison level
+  const entityLabel = useMemo(() => {
+    const level = filters.comparisonLevel;
+    if (level === 'class') return 'Kelas';
+    if (level === 'kelompok') return 'Kelompok';
+    if (level === 'desa') return 'Desa';
+    return 'Daerah';
+  }, [filters.comparisonLevel]);
 
   // Attendance Label Logic
   const attendanceLabel = useMemo(() => {
@@ -182,6 +258,15 @@ export default function AdminDashboard() {
 
     return 'Kehadiran Periode Ini';
   }, [selectedPeriod, selectedDate, selectedWeekOffset, selectedMonth, customDateRange]);
+
+  // Tooltip for attendance metrics
+  const attendanceTooltip = useMemo(() => {
+    if (!attendanceMetrics || attendanceMetrics.entityCount === 0) return '';
+
+    const { simpleAverage, weightedAverage, totalPresent, totalPotential, entityCount } = attendanceMetrics;
+
+    return `Rata-rata ${entityCount} ${entityLabel.toLowerCase()}: ${simpleAverage}%\n\nTotal siswa hadir: ${weightedAverage}% (${totalPresent.toLocaleString('id-ID')} dari ${totalPotential.toLocaleString('id-ID')} kehadiran)`;
+  }, [attendanceMetrics, entityLabel]);
 
 
   if (statsLoading && !stats) {
@@ -221,9 +306,12 @@ export default function AdminDashboard() {
             showKelas={true}
             showMeetingType={false}
             showGender={true}
-            cascadeFilters={false}
+            cascadeFilters={true}
             classViewMode={filters.classViewMode}
             onClassViewModeChange={handleViewModeChange}
+            showComparisonLevel={true}
+            comparisonLevel={filters.comparisonLevel}
+            onComparisonLevelChange={handleComparisonLevelChange}
           />
         </div>
 
@@ -247,12 +335,13 @@ export default function AdminDashboard() {
               monitoringLoading ? (
                 <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               ) : (
-                `${attendanceRate}%`
+                `${attendanceMetrics.simpleAverage}%`
               )
             }
             icon="✅"
             className="col-span-2 md:col-span-1"
             color="emerald"
+            tooltip={attendanceTooltip}
           />
         </div>
 

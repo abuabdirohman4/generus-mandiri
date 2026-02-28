@@ -150,7 +150,14 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
     return ['dashboard', 'organisasi', 'users'].includes(feature);
   }
   if (profile.role === 'teacher') {
-    // Teachers can access users (students) and absensi features
+    // Hierarchical teachers (Guru Kelompok/Desa/Daerah) can access dashboard
+    const isHierarchicalTeacher = isTeacherKelompok(profile) || isTeacherDesa(profile) || isTeacherDaerah(profile);
+
+    if (feature === 'dashboard' && isHierarchicalTeacher) {
+      return true;
+    }
+
+    // All teachers can access users (students) and absensi features
     return ['users', 'absensi'].includes(feature);
   }
   return false;

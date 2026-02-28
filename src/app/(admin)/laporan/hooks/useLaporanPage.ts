@@ -178,6 +178,21 @@ export function useLaporanPage() {
     }
   }, [userProfile?.role, userProfile?.classes, filters.organisasi?.kelas, setFilter])
 
+  // Auto-set kelompok filter for teachers with exactly 1 kelompok (no classes assigned)
+  useEffect(() => {
+    if (userProfile?.role === 'teacher' && userProfile.kelompok_id && (!userProfile.classes || userProfile.classes.length === 0)) {
+      // Check if organisasi.kelompok is empty or doesn't include the teacher's kelompok
+      if (!filters.organisasi?.kelompok?.includes(userProfile.kelompok_id)) {
+        setFilter('organisasi', {
+          daerah: [],
+          desa: [],
+          kelompok: [userProfile.kelompok_id],
+          kelas: []
+        })
+      }
+    }
+  }, [userProfile?.role, userProfile?.kelompok_id, userProfile?.classes, filters.organisasi?.kelompok, setFilter])
+
   // Actions
   const handleFilterChange = (key: string, value: string) => {
     // Convert numeric fields to numbers
