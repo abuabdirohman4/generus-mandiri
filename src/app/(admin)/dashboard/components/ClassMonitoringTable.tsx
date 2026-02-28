@@ -58,7 +58,7 @@ export default function ClassMonitoringTable({
 }: ClassMonitoringTableProps) {
     const { profile } = useUserProfile();
     const { filters, setFilter } = useDashboardStore();
-    const viewMode = filters.comparisonViewMode;
+    const viewMode = filters.comparisonViewMode || 'table';
 
     // Calculate date range display based on period
     const dateRangeDisplay = useMemo(() => {
