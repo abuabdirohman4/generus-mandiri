@@ -62,13 +62,46 @@ describe('userUtils', () => {
             vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
         })
 
-        it('clearUserCache should remove all known storages and reload', () => {
+        it('clearUserCache should remove all known storages and reload by default', () => {
             clearUserCache()
 
             expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
             expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
             expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
             expect(window.location.reload).toHaveBeenCalled()
+        })
+
+        it('clearUserCache(true) should remove all storages and reload', () => {
+            clearUserCache(true)
+
+            expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
+            expect(window.location.reload).toHaveBeenCalled()
+        })
+
+        it('clearUserCache(false) should remove all storages WITHOUT reload', () => {
+            clearUserCache(false)
+
+            expect(localStorage.removeItem).toHaveBeenCalledWith('swr-cache')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('user-profile-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('siswa-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('laporan-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('attendance-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('absensi-ui-store')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
+            expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
+            expect(window.location.reload).not.toHaveBeenCalled()
         })
 
         it('clearSWRCache should remove only SWR related items and NOT reload', () => {
