@@ -52,8 +52,6 @@ export default function AdminDashboard() {
   }), [filters.daerah, filters.desa, filters.kelompok, filters.kelas, filters.gender]);
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters);
-  console.log('dashboardFilters', dashboardFilters)
-  console.log('stats', stats)
 
   // Class Monitoring Data - affected by filters AND period AND viewMode AND dynamic dates
   const monitoringFetcher = async () => {
