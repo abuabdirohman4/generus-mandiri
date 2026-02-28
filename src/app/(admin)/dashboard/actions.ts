@@ -302,6 +302,7 @@ export interface ClassMonitoringData {
   meeting_count: number;
   attendance_rate: number;
   student_count?: number; // Number of enrolled students (per kelompok in separated mode)
+  meeting_ids?: string[]; // Array of meeting IDs for deduplication in aggregation
 }
 
 export interface ClassMonitoringFilters extends DashboardFilters {
@@ -660,7 +661,8 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
           has_meeting: false,
           meeting_count: 0,
           attendance_rate: 0,
-          student_count: studentCount
+          student_count: studentCount,
+          meeting_ids: [] // Empty array for classes without meetings
         };
       }
 
@@ -689,7 +691,8 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         has_meeting: true,
         meeting_count: actualMeetingCount,
         attendance_rate: attendanceRate,
-        student_count: studentCount
+        student_count: studentCount,
+        meeting_ids: Array.from(meetingsWithLogs) // For aggregation deduplication
       };
     });
 
@@ -784,8 +787,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             });
           }
 
-          // Ca
-          // lculate meeting count: Only count meetings that have attendance logs
+          // Calculate meeting count: Only count meetings that have attendance logs
           const meetingsWithLogs = new Set(filteredLogs.map(log => log.meeting_id));
           const actualMeetingCount = meetingsWithLogs.size;
 
@@ -800,7 +802,8 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             has_meeting: data.hasMeeting,
             meeting_count: actualMeetingCount,
             attendance_rate: attendanceRate,
-            student_count: data.totalStudents
+            student_count: data.totalStudents,
+            meeting_ids: Array.from(meetingsWithLogs) // For aggregation deduplication
           };
         })
       );

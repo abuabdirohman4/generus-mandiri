@@ -142,6 +142,7 @@ export default function AdminDashboard() {
     const comparisonLevel = filters.comparisonLevel;
 
     // Aggregate by entity (class/kelompok/desa/daerah)
+    // CRITICAL: Use meeting_ids to deduplicate meetings for multi-class meetings
     const grouped = monitoringData.reduce((acc, cls) => {
       let entityKey: string | undefined;
 
@@ -161,11 +162,18 @@ export default function AdminDashboard() {
         acc[entityKey] = {
           totalPresent: 0,
           totalPotential: 0,
-          attendanceRate: 0
+          attendanceRate: 0,
+          meetingIds: new Set<string>() // Track unique meeting IDs
         };
       }
 
-      // Weighted calculation per entity
+      // Add meeting IDs to deduplicate multi-class meetings
+      if (cls.meeting_ids && cls.meeting_ids.length > 0) {
+        cls.meeting_ids.forEach(id => acc[entityKey].meetingIds.add(id));
+      }
+
+      // Weighted calculation per entity (use original meeting_count for potential)
+      // The deduplication will happen when we calculate final metrics
       const potential = (cls.student_count || 0) * cls.meeting_count;
       const present = (cls.attendance_rate / 100) * potential;
 
@@ -173,7 +181,7 @@ export default function AdminDashboard() {
       acc[entityKey].totalPotential += potential;
 
       return acc;
-    }, {} as Record<string, { totalPresent: number; totalPotential: number; attendanceRate: number }>);
+    }, {} as Record<string, { totalPresent: number; totalPotential: number; attendanceRate: number; meetingIds: Set<string> }>);
 
     // Calculate attendance rate per entity
     Object.keys(grouped).forEach(key => {

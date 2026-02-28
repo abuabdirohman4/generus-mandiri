@@ -5,6 +5,7 @@ export interface AggregatedData {
   attendance_rate: number
   meeting_count: number
   student_count: number
+  meeting_ids?: string[] // For debugging/verification
 }
 
 /**
@@ -58,17 +59,23 @@ export function aggregateMonitoringData(
           totalPresent: 0,
           totalPotential: 0,
           meetingCount: 0,
-          studentCount: 0
+          studentCount: 0,
+          meetingIds: new Set<string>() // Track unique meeting IDs for deduplication
         }
       }
 
-      // Weighted attendance calculation
+      // Add meeting IDs to deduplicate multi-class meetings
+      if (item.meeting_ids && item.meeting_ids.length > 0) {
+        item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
+      }
+
+      // Weighted attendance calculation (use original meeting_count per class for potential)
       const potential = (item.student_count || 0) * item.meeting_count
       const present = (item.attendance_rate / 100) * potential
 
       acc[entityName].totalPresent += present
       acc[entityName].totalPotential += potential
-      acc[entityName].meetingCount += item.meeting_count
+      // Note: Don't sum meeting_count here, we'll use deduplicated count from meetingIds.size
       acc[entityName].studentCount += (item.student_count || 0)
 
       return acc
@@ -80,8 +87,9 @@ export function aggregateMonitoringData(
       attendance_rate: g.totalPotential > 0
         ? Math.round((g.totalPresent / g.totalPotential) * 100)
         : 0,
-      meeting_count: g.meetingCount,
-      student_count: g.studentCount
+      meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
+      student_count: g.studentCount,
+      meeting_ids: Array.from(g.meetingIds) as string[] // For debugging
     }))
 
     // Sort by attendance rate descending
@@ -105,17 +113,23 @@ export function aggregateMonitoringData(
         totalPresent: 0,
         totalPotential: 0,
         meetingCount: 0,
-        studentCount: 0
+        studentCount: 0,
+        meetingIds: new Set<string>() // Track unique meeting IDs for deduplication
       }
     }
 
-    // Weighted attendance calculation
+    // Add meeting IDs to deduplicate multi-class meetings
+    if (item.meeting_ids && item.meeting_ids.length > 0) {
+      item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
+    }
+
+    // Weighted attendance calculation (use original meeting_count per class for potential)
     const potential = (item.student_count || 0) * item.meeting_count
     const present = (item.attendance_rate / 100) * potential
 
     acc[entityName].totalPresent += present
     acc[entityName].totalPotential += potential
-    acc[entityName].meetingCount += item.meeting_count
+    // Note: Don't sum meeting_count here, we'll use deduplicated count from meetingIds.size
     acc[entityName].studentCount += (item.student_count || 0)
 
     return acc
@@ -127,8 +141,9 @@ export function aggregateMonitoringData(
     attendance_rate: g.totalPotential > 0
       ? Math.round((g.totalPresent / g.totalPotential) * 100)
       : 0,
-    meeting_count: g.meetingCount,
-    student_count: g.studentCount
+    meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
+    student_count: g.studentCount,
+    meeting_ids: Array.from(g.meetingIds) as string[] // For debugging
   }))
 
   // Sort by name descending
