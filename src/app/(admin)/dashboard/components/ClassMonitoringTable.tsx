@@ -151,7 +151,7 @@ export default function ClassMonitoringTable({
             // Add organization columns based on user level
             return [...baseColumns, ...getOrganizationColumns];
         } else {
-            // For organizational levels: show entity name + kehadiran only
+            // For organizational levels: show entity name + meeting count + student count + kehadiran
             const entityLabel = comparisonLevel === 'kelompok' ? 'Kelompok' :
                                comparisonLevel === 'desa' ? 'Desa' : 'Daerah';
 
@@ -161,6 +161,18 @@ export default function ClassMonitoringTable({
                     label: entityLabel,
                     sortable: true,
                     widthMobile: '150px'
+                },
+                {
+                    key: 'meeting_count',
+                    label: 'Pertemuan',
+                    sortable: true,
+                    align: 'center' as const
+                },
+                {
+                    key: 'student_count',
+                    label: 'Siswa',
+                    sortable: true,
+                    align: 'center' as const
                 },
                 {
                     key: 'attendance_rate',
@@ -213,6 +225,24 @@ export default function ClassMonitoringTable({
             );
         }
 
+        // Handle meeting count
+        if (column.key === 'meeting_count') {
+            return (
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {item.meeting_count || 0}
+                </span>
+            );
+        }
+
+        // Handle student count
+        if (column.key === 'student_count') {
+            return (
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {item.student_count || 0}
+                </span>
+            );
+        }
+
         // Handle attendance rate with color coding
         if (column.key === 'attendance_rate') {
             // Show "Tidak ada siswa" for classes with no students (only for class-level)
@@ -247,7 +277,7 @@ export default function ClassMonitoringTable({
         const comparisonLevel = filters.comparisonLevel;
         const columnCount = comparisonLevel === 'class'
             ? 3 + getOrganizationColumns.length  // Class + Pertemuan + Kehadiran + Org columns
-            : 2;  // Entity name + Kehadiran
+            : 4;  // Entity name + Pertemuan + Peserta + Kehadiran
 
         return (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:border-gray-700 p-4">
