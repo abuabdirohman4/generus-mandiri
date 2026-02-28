@@ -698,13 +698,40 @@ if (profile?.role === 'teacher') {
 - `src/app/(admin)/absensi/actions.ts` - getMeetingsWithStats()
 - `src/app/(admin)/laporan/actions.ts` - getAttendanceReport()
 - `src/app/(admin)/users/siswa/components/StudentsTable.tsx` - Class display
-- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping
+- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping + **auto-set filter**
+
+**Auto-Set Filter Pattern for Single Kelompok/Class**:
+For better UX, pages with DataFilter should auto-select filters when user has only 1 option:
+```typescript
+// Auto-set class filter for teachers with exactly 1 class
+useEffect(() => {
+  if (userProfile?.role === 'teacher' && userProfile.classes?.length === 1) {
+    const teacherClassId = userProfile.classes[0].id
+    if (!filters.organisasi?.kelas?.includes(teacherClassId)) {
+      setFilter('organisasi', { daerah: [], desa: [], kelompok: [], kelas: [teacherClassId] })
+    }
+  }
+}, [userProfile?.role, userProfile?.classes, filters.organisasi?.kelas, setFilter])
+
+// Auto-set kelompok filter for teachers with exactly 1 kelompok (no classes)
+useEffect(() => {
+  if (userProfile?.role === 'teacher' && userProfile.kelompok_id && (!userProfile.classes || userProfile.classes.length === 0)) {
+    if (!filters.organisasi?.kelompok?.includes(userProfile.kelompok_id)) {
+      setFilter('organisasi', { daerah: [], desa: [], kelompok: [userProfile.kelompok_id], kelas: [] })
+    }
+  }
+}, [userProfile?.role, userProfile?.kelompok_id, userProfile?.classes, filters.organisasi?.kelompok, setFilter])
+```
+- **When to use**: Pages that require filters to show data (Laporan, Absensi list, Student list)
+- **Benefit**: Prevents "no data" state when user has only 1 valid option
+- **Reference**: `src/app/(admin)/laporan/hooks/useLaporanPage.ts` line 166-194
 
 **Common Pitfalls**:
 - ❌ Checking only `teacher_classes` length (hierarchical teachers have 0)
 - ❌ Using regular user client instead of admin client
 - ❌ Forgetting to include organizational fields in profile query
 - ❌ Not handling both `class_id` and `class_ids` in meeting filtering
+- ❌ Not auto-setting filters for single-option users (causes "no data" bugs)
 
 **Reference Implementation**: See `.beads/progress/sm-3ud.md` for complete hierarchical teacher implementation.
 
