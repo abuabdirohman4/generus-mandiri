@@ -860,6 +860,24 @@ export function useMeetingFormSettings(userId?: string) {
   - See: `useLaporanPage.ts` auto-extract kelompok logic for reference implementation
 - **Related Issues**: sm-de3 (auto-clear bug fix), sm-hov (duplicate issue)
 
+**Dashboard Metrics Pattern** - Dual metrics for attendance calculation:
+- **Primary Metric (Simple Average)**: Displayed in main stat card
+  - Formula: `(Σ entity_attendance_rate) / entity_count`
+  - Use case: "Bagaimana performa rata-rata desa/kelompok/kelas?"
+  - Example: `(81% + 100% + 73% + 75% + 68% + 47%) / 6 = 74%`
+  - User-friendly, intuitif, consistent with table display
+- **Secondary Metric (Weighted Average)**: Displayed in tooltip
+  - Formula: `(Σ total_students_present) / (Σ total_potential_attendance) × 100`
+  - Use case: "Berapa persen siswa yang benar-benar hadir?"
+  - Example: `12,500 / 25,000 × 100 = 50%`
+  - Accurate for resource planning, reflects scale/impact
+- **Supporting Data**: Table shows "Pertemuan" and "Siswa" columns
+  - Helps user understand why simple ≠ weighted
+  - Enables manual verification and deeper analysis
+- **Implementation**: `src/app/(admin)/dashboard/page.tsx` - `attendanceMetrics` useMemo
+- **Documentation**: READ [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
+- **Related Issues**: sm-nol (dashboard comparison charts)
+
 ---
 
 ## ⚠️ Important Business Rules
@@ -979,3 +997,4 @@ import { isSuperAdmin } from '@/lib/userUtils'
 - **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md) - Complete testing setup, examples, TDD workflow
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md) - Critical domain logic for Students, Attendance, Transfers, Meetings
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md) - Bulk operations, user creation, migration patterns
+- **Dashboard Attendance Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md) - Dual metrics (simple vs weighted average), UX comparison
