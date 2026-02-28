@@ -56,7 +56,6 @@ export default function ClassMonitoringTable({
     customDateRange,
     classViewMode
 }: ClassMonitoringTableProps) {
-    console.log('data', data)
     const { profile } = useUserProfile();
     const { filters, setFilter } = useDashboardStore();
     const viewMode = filters.comparisonViewMode;
@@ -175,12 +174,6 @@ export default function ClassMonitoringTable({
 
     // Transform data based on comparison level
     const tableData = useMemo(() => {
-        console.log('[ClassMonitoringTable] tableData useMemo:', {
-            dataExists: !!data,
-            dataLength: data?.length || 0,
-            comparisonLevel: filters.comparisonLevel,
-            sampleData: data?.[0]
-        });
 
         if (!data) return [];
 

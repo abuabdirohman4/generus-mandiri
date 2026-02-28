@@ -188,45 +188,56 @@ export async function getValidClassIds(
     }
 
     if (rlsFilter?.desa_id) {
-        // Two-query pattern for RLS desa filter
-        const { data: kelompokData } = await supabase
+        // Step 1: Fetch all kelompok with pagination
+        const kelompokQuery = supabase
             .from('kelompok')
             .select('id')
             .eq('desa_id', rlsFilter.desa_id);
+        const kelompokData = await fetchAllRecords<{ id: string }>(kelompokQuery, 1000);
 
-        if (kelompokData && kelompokData.length > 0) {
+        if (kelompokData.length > 0) {
             const kelompokIds = kelompokData.map(k => k.id);
-            const { data } = await supabase
+
+            // Step 2: Fetch all classes with pagination
+            const classQuery = supabase
                 .from('classes')
                 .select('id')
                 .in('kelompok_id', kelompokIds);
-            intersect(data?.map(c => c.id) || []);
+            const classData = await fetchAllRecords<{ id: string }>(classQuery, 1000);
+            intersect(classData.map(c => c.id));
         } else {
             intersect([]);
         }
     }
 
     if (rlsFilter?.daerah_id) {
-        // Two-query pattern for RLS daerah filter
-        const { data: desaData } = await supabase
+        // Step 1: Fetch all desa with pagination
+        const desaQuery = supabase
             .from('desa')
             .select('id')
             .eq('daerah_id', rlsFilter.daerah_id);
+        const desaData = await fetchAllRecords<{ id: string }>(desaQuery, 1000);
 
-        if (desaData && desaData.length > 0) {
+        if (desaData.length > 0) {
             const desaIds = desaData.map(d => d.id);
-            const { data: kelompokData } = await supabase
+
+            // Step 2: Fetch all kelompok with pagination
+            const kelompokQuery = supabase
                 .from('kelompok')
                 .select('id')
                 .in('desa_id', desaIds);
+            const kelompokData = await fetchAllRecords<{ id: string }>(kelompokQuery, 1000);
 
-            if (kelompokData && kelompokData.length > 0) {
+            if (kelompokData.length > 0) {
                 const kelompokIds = kelompokData.map(k => k.id);
-                const { data } = await supabase
+
+                // Step 3: Fetch all classes with pagination
+                const classQuery = supabase
                     .from('classes')
                     .select('id')
                     .in('kelompok_id', kelompokIds);
-                intersect(data?.map(c => c.id) || []);
+                const classData = await fetchAllRecords<{ id: string }>(classQuery, 1000);
+                intersect(classData.map(c => c.id));
             } else {
                 intersect([]);
             }
@@ -275,43 +286,43 @@ export async function getValidStudentIds(
     // 1. Class Filter (most specific - via student_classes junction)
     if (uiFilters?.classId && uiFilters.classId.length > 0) {
         const classIds = normalizeIds(uiFilters.classId);
-        const { data } = await supabase
+        const query = supabase
             .from('student_classes')
             .select('student_id')
             .in('class_id', classIds);
-        intersect(data?.map(sc => sc.student_id) || []);
+        const data = await fetchAllRecords<{ student_id: string }>(query, 1000);
+        intersect(data.map(sc => sc.student_id));
     }
     // 2. Kelompok Filter (skip desa/daerah if active)
     else if (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) {
         const kelompokIds = Array.isArray(uiFilters.kelompokId) ? uiFilters.kelompokId : [uiFilters.kelompokId];
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .in('kelompok_id', kelompokIds);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
     // 3. Desa Filter (only if no kelompok filter)
     else if (uiFilters?.desaId && uiFilters.desaId.length > 0) {
         const desaIds = Array.isArray(uiFilters.desaId) ? uiFilters.desaId : [uiFilters.desaId];
 
-        // CRITICAL FIX: Use chunked queries to avoid HTTP URL length limit (~8000 chars)
-        // When filtering by many desa (5+), the .in() query URL can exceed server limits
-        // Chunk size = 50 UUIDs (~1800 chars) to stay well under limit
+        // CRITICAL FIX: Use pagination for each desa query
+        // When selecting all desa (6 desa), each may have > 400 students
+        // Need fetchAllRecords() to handle pagination per desa
         const allStudents: any[] = [];
         const CHUNK_SIZE = 50; // Conservative limit for UUID arrays in URL
 
         for (let i = 0; i < desaIds.length; i += CHUNK_SIZE) {
             const chunk = desaIds.slice(i, i + CHUNK_SIZE);
 
-            const { data: studentData, error: studentError } = await supabase
+            // Use fetchAllRecords to handle pagination for large result sets
+            const query = supabase
                 .from('students')
                 .select('id')
                 .in('desa_id', chunk);
 
-            if (studentError) {
-                console.error('[getValidStudentIds] Chunked query error:', studentError);
-                throw studentError;
-            }
+            const studentData = await fetchAllRecords<{ id: string }>(query, 1000);
 
             if (studentData && studentData.length > 0) {
                 allStudents.push(...studentData);
@@ -323,45 +334,50 @@ export async function getValidStudentIds(
     // 4. Daerah Filter (only if no desa filter)
     else if (uiFilters?.daerahId && uiFilters.daerahId.length > 0) {
         const daerahIds = Array.isArray(uiFilters.daerahId) ? uiFilters.daerahId : [uiFilters.daerahId];
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .in('daerah_id', daerahIds);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
 
     // 5. Gender Filter (applied independently)
     if (uiFilters?.gender) {
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .eq('gender', uiFilters.gender);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
 
     // 6. RLS Filters
     if (rlsFilter?.kelompok_id) {
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .eq('kelompok_id', rlsFilter.kelompok_id);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
 
     if (rlsFilter?.desa_id) {
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .eq('desa_id', rlsFilter.desa_id);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
 
     if (rlsFilter?.daerah_id) {
-        const { data } = await supabase
+        const query = supabase
             .from('students')
             .select('id')
             .eq('daerah_id', rlsFilter.daerah_id);
-        intersect(data?.map(s => s.id) || []);
+        const data = await fetchAllRecords<{ id: string }>(query, 1000);
+        intersect(data.map(s => s.id));
     }
 
     return validIds ? Array.from(validIds) : [];

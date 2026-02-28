@@ -94,8 +94,8 @@ export function aggregateMonitoringData(
   const grouped = monitoringData.reduce((acc, item) => {
     const entityName = item[groupKey]
 
-    // DEBUG: Log items without entity name
-    if (!entityName) {
+    // Skip items without entity name or without meetings
+    if (!entityName || !item.has_meeting) {
       return acc;
     }
 
@@ -131,6 +131,6 @@ export function aggregateMonitoringData(
     student_count: g.studentCount
   }))
 
-  // Sort by attendance rate descending
-  return result.sort((a, b) => b.attendance_rate - a.attendance_rate)
+  // Sort by name descending
+  return result.sort((a, b) => a.name.localeCompare(b.name))
 }

@@ -111,8 +111,6 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
       shouldRetryOnError: true,
       // Only log error after all retries failed
       onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
-        // Log for debugging
-        console.log(`[SWR Retry ${retryCount}/3] Retrying fetch...`)
 
         // Don't retry more than 3 times
         if (retryCount >= 3) {

@@ -91,11 +91,36 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
       (async () => {
         if (hasFilters && studentIds.length === 0) return 0;
 
-        let query = supabase.from('students').select('*', { count: 'exact', head: true });
+        // CRITICAL FIX: Chunk large studentIds array to avoid HTTP headers overflow
+        // PostgREST has 16KB header limit; 478 UUIDs = ~18KB → "HeadersOverflowError"
+        // Each UUID ~36 chars, so max ~200 UUIDs per chunk to stay under 16KB limit
         if (hasFilters && studentIds.length > 0) {
-          query = query.in('id', studentIds);
+          const CHUNK_SIZE = 200; // Safe limit to avoid 16KB HTTP header overflow
+          let totalCount = 0;
+
+          for (let i = 0; i < studentIds.length; i += CHUNK_SIZE) {
+            const chunk = studentIds.slice(i, i + CHUNK_SIZE);
+
+            const { count, error } = await supabase
+              .from('students')
+              .select('*', { count: 'exact', head: true })
+              .in('id', chunk);
+
+            if (error) {
+              console.error('[Student count chunk error]', error);
+              throw error;
+            }
+
+            totalCount += count || 0;
+          }
+
+          return totalCount;
         }
-        const { count } = await query;
+
+        // No filters - count all (with RLS)
+        const { count } = await supabase
+          .from('students')
+          .select('*', { count: 'exact', head: true });
         return count || 0;
       })(),
 

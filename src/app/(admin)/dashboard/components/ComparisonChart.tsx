@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts'
 import type { ClassMonitoringData } from '../actions'
 import { aggregateMonitoringData, type AggregatedData } from '../utils/aggregateMonitoringData'
+import { isMobile } from '@/lib/utils'
 
 // Re-export for backward compatibility
 type ChartDataPoint = AggregatedData
@@ -80,6 +81,8 @@ export default function ComparisonChart({
   filters,
   isLoading = false
 }: ComparisonChartProps) {
+  const isMobileView: boolean = isMobile();
+
   // Prepare chart data using shared utility
   const chartData = useMemo(() => {
     if (!monitoringData || monitoringData.length === 0) return []
@@ -163,9 +166,9 @@ export default function ComparisonChart({
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      {/* <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
         Perbandingan {levelLabel}
-      </h3>
+      </h3> */}
 
       {showWarning && (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -183,7 +186,7 @@ export default function ComparisonChart({
         </div>
       )}
 
-      <div className="h-80">
+      <div className="h-80 md:h-128">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
@@ -194,11 +197,11 @@ export default function ComparisonChart({
               dataKey="name"
               tick={{ fontSize: 12 }}
               tickLine={{ stroke: '#6B7280' }}
-              angle={chartData.length > 5 ? -45 : 0}
+              angle={chartData.length > 6 || isMobileView ? -45 : 0}
               textAnchor={chartData.length > 5 ? 'end' : 'middle'}
               height={chartData.length > 5 ? 80 : 30}
             />
-            <YAxis
+            {/* <YAxis
               domain={[0, 100]}
               tick={{ fontSize: 12 }}
               tickLine={{ stroke: '#6B7280' }}
@@ -208,7 +211,7 @@ export default function ComparisonChart({
                 position: 'insideLeft',
                 style: { fill: '#6B7280' }
               }}
-            />
+            /> */}
             <Tooltip content={<CustomTooltip />} />
             <Bar
               dataKey="attendance_rate"

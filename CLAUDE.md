@@ -79,6 +79,77 @@ npm run test:ui  # Interactive UI
 
 ---
 
+## 🔧 Git Workflow & Commit Protocol
+
+**CRITICAL**: Claude Code MUST NOT execute git operations that modify repository state.
+
+### Allowed Git Commands (Read-Only) ✅
+
+```bash
+git status           # Check working tree status
+git diff <file>      # Show file changes
+git log              # View commit history
+git show <commit>    # Show commit details
+git branch           # List branches
+```
+
+### Forbidden Git Commands ❌
+
+**NEVER execute**:
+- `git add` - User stages files manually
+- `git commit` - User creates commits
+- `git push` - User pushes to remote
+- `git pull`, `git merge`, `git rebase` - User handles integration
+- Any command that modifies `.git/` or working tree
+
+### Correct Workflow After Code Changes
+
+When implementation is complete:
+
+1. ✅ **Show what changed**: `git status`, `git diff <file>`
+2. ✅ **Provide commit message** as formatted text (with Co-Authored-By tag)
+3. ✅ **Inform user to run manually**:
+   ```bash
+   git add <files>
+   git commit -m "<message>"
+   git push
+   ```
+4. ❌ **DO NOT** run `git add`, `git commit`, or `git push` yourself
+
+### Rationale
+
+- **User maintains control** over git history and commit timing
+- **User can review** all changes before committing
+- **User can modify** commit message if needed
+- **Prevents accidents** (wrong commits, premature pushes)
+- **Respects workflow** (user may have pre-commit hooks, signing, etc.)
+
+### Example Output
+
+```
+✅ Implementation complete! Files changed:
+- src/app/(admin)/dashboard/dashboardHelpers.ts
+
+📝 Suggested commit message:
+
+fix: Apply pagination to RLS filter queries to handle large datasets
+
+ROOT CAUSE: Dashboard showing 0 students when > 400 students
+SOLUTION: Use fetchAllRecords() helper with pagination
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
+👉 Please run these commands:
+
+git add src/app/\(admin\)/dashboard/dashboardHelpers.ts
+git commit -m "<message above>"
+git push
+```
+
+**Exception**: `bd sync` (beads issue tracker) is allowed as it's a dedicated sync command, not direct git manipulation.
+
+---
+
 ## 📚 Documentation Strategy for AI Knowledge Management
 
 **CRITICAL**: Balance between inline knowledge vs external references for optimal token usage.
