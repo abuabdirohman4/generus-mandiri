@@ -905,6 +905,24 @@ export function useMeetingFormSettings(userId?: string) {
 - **Documentation**: READ [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
 - **Related Issues**: sm-nol (dashboard comparison charts)
 
+**Meeting Count Deduplication** - CRITICAL for multi-class meetings aggregation:
+- **Problem**: Multi-class meetings (SAMBUNG_KELOMPOK, SAMBUNG_DESA, SAMBUNG_DAERAH) were counted multiple times when aggregating by kelompok/desa/daerah
+  - Example: 1 meeting for 7 classes in Kelompok "Nambo" → showed as **2 meetings** ❌
+  - Root cause: Aggregation summed `meeting_count` per class without deduplication
+- **Solution**: Use `meeting_ids` array + Set for deduplication
+  - `ClassMonitoringData` includes `meeting_ids?: string[]` field
+  - `aggregateMonitoringData()` uses `Set<string>()` to track unique meeting IDs
+  - Final `meeting_count` = `meetingIds.size` (deduplicated)
+- **Files**:
+  - `src/app/(admin)/dashboard/actions.ts` - Returns `meeting_ids` in monitoring data
+  - `src/app/(admin)/dashboard/utils/aggregateMonitoringData.ts` - Deduplication logic
+  - `src/app/(admin)/dashboard/page.tsx` - Tracks `meetingIds` in aggregation
+- **Impact**:
+  - ✅ Per Kelompok: Multi-class meetings counted once (was N times)
+  - ✅ Per Desa: Cross-kelompok meetings counted once (was N times)
+  - ✅ Per Daerah: Cross-desa meetings counted once (was N times)
+- **Verification**: Kelompok "Nambo" now shows **1 pertemuan** ✅ (was 2 ❌)
+
 ---
 
 ## ⚠️ Important Business Rules
