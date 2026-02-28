@@ -29,6 +29,12 @@ function localStorageProvider(): Map<string, unknown> {
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', () => {
       try {
+        // Skip saving if cache was intentionally cleared (e.g., during logout)
+        // clearUserCache() sets this flag before calling window.location.reload()
+        if (sessionStorage.getItem('swr-cache-suppress-persist') === 'true') {
+          sessionStorage.removeItem('swr-cache-suppress-persist');
+          return;
+        }
         localStorage.setItem('swr-cache', JSON.stringify(Array.from(map.entries())));
       } catch (error) {
         console.warn('Failed to persist SWR cache to localStorage:', error);

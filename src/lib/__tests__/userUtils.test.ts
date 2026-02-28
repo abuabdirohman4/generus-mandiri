@@ -45,6 +45,8 @@ describe('userUtils', () => {
     })
 
     describe('Cache Clearing', () => {
+        let sessionStorageMock: Record<string, ReturnType<typeof vi.fn>>
+
         beforeEach(() => {
             // Clear all previous mock calls
             vi.clearAllMocks()
@@ -57,6 +59,15 @@ describe('userUtils', () => {
                 clear: vi.fn()
             }
             vi.stubGlobal('localStorage', localStorageMock)
+
+            // Mock sessionStorage
+            sessionStorageMock = {
+                getItem: vi.fn(),
+                setItem: vi.fn(),
+                removeItem: vi.fn(),
+                clear: vi.fn()
+            }
+            vi.stubGlobal('sessionStorage', sessionStorageMock)
 
             // Mock window.location.reload
             vi.stubGlobal('location', { ...window.location, reload: vi.fn() })
@@ -102,6 +113,16 @@ describe('userUtils', () => {
             expect(localStorage.removeItem).toHaveBeenCalledWith('dashboard-storage')
             expect(localStorage.removeItem).toHaveBeenCalledWith('materi-storage')
             expect(window.location.reload).not.toHaveBeenCalled()
+            // Should NOT set suppress flag when not reloading
+            expect(sessionStorageMock.setItem).not.toHaveBeenCalledWith('swr-cache-suppress-persist', 'true')
+        })
+
+        it('clearUserCache(true) should set suppress-persist flag before reload', () => {
+            clearUserCache(true)
+
+            // Should set suppress flag to prevent beforeunload from re-saving stale cache
+            expect(sessionStorageMock.setItem).toHaveBeenCalledWith('swr-cache-suppress-persist', 'true')
+            expect(window.location.reload).toHaveBeenCalled()
         })
 
         it('clearSWRCache should remove only SWR related items and NOT reload', () => {

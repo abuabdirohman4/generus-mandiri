@@ -80,6 +80,8 @@ export function clearUserCache(shouldReload = true) {
 
     // Force reload to clear all in-memory caches (unless explicitly disabled)
     if (shouldReload) {
+      // Prevent SWRProvider's beforeunload handler from re-saving stale cache
+      sessionStorage.setItem('swr-cache-suppress-persist', 'true');
       window.location.reload()
     }
   }
