@@ -541,7 +541,7 @@ export default function DataFilter({
       { value: 'class', label: 'Per Kelas' },
       { value: 'kelompok', label: 'Per Kelompok' }
     ]
-    if (isSuperAdmin || isAdminDaerah || isTeacherDaerah || isTeacherDesa) {
+    if (isSuperAdmin || isAdminDaerah || isTeacherDaerah) {
       levels.push({ value: 'desa', label: 'Per Desa' })
     }
     // "Per Daerah" only for Superadmin
