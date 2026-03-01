@@ -2,80 +2,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL: CLAUDE.md MAINTENANCE RULES (PREVENT BLOAT)
+
+**NEVER append feature-specific documentation, long code snippets, or detailed business logic directly to this file.** This file is strictly a **Master Index** and must remain under 300 lines to optimize the AI context window. When instructed to document new knowledge, you MUST route it to the correct external file:
+
+- ❌ **DON'T** add business rules here. ✅ **DO** update `docs/claude/business-rules.md`
+- ❌ **DON'T** add testing/TDD examples here. ✅ **DO** update `docs/claude/testing-guidelines.md`
+- ❌ **DON'T** add architecture edge cases here. ✅ **DO** update `docs/claude/architecture-patterns.md`
+- ❌ **DON'T** add SQL/Supabase queries here. ✅ **DO** update `docs/claude/database-operations.md`
+- ❌ **DON'T** add beads/git workflow details here. ✅ **DO** update `docs/claude/beads-workflow.md`
+
+**How to update this file correctly:** If you must document a completely new domain, create a new file in `docs/claude/` and add exactly ONE pointer line here (e.g., *"For [Topic], READ `docs/claude/new-topic.md`"*). **Do not dump the content here.**
+
 ## 🚨 MANDATORY: Test-Driven Development (TDD)
 
 **ALL new features, business logic, and permission systems MUST be developed using TDD.**
 
-### Why TDD is Mandatory
+- **Zero bugs on first implementation** - Tests catch issues before production
+- **Clear requirements** - Tests serve as executable specifications
+- **Safe refactoring** - Change code with confidence
+- **Better design** - TDD forces modular, testable code
 
-- ✅ **Zero bugs on first implementation** - Tests catch issues before production
-- ✅ **Clear requirements** - Tests serve as executable specifications
-- ✅ **Safe refactoring** - Change code with confidence
-- ✅ **Better design** - TDD forces modular, testable code
-- ✅ **Documentation** - Tests show how code should be used
-- ✅ **Time savings** - Less debugging, fewer production bugs
+**TDD Workflow**: RED (write failing tests) → GREEN (implement minimal code) → REFACTOR (clean up)
 
-**Real Example**: `studentPermissions.ts` (sm-8yf)
-- 🔴 Wrote 66 tests first (~10 min)
-- 🟢 Implemented 10 functions (~15 min)
-- 🔵 Refactored (~5 min)
-- ✅ Result: 126/126 tests passing, 100% coverage, **0 bugs**, ~30 minutes total
+**REQUIRED for**: Business logic, permission systems, data transformations, complex algorithms, integration points, critical features.
+**SKIP for**: Pure presentational UI, trivial getters/setters, config files, type definitions.
 
-### TDD Workflow: RED → GREEN → REFACTOR
+**Commands**: `npm run test:watch` | `npm run test:coverage` | `npm run test:ui`
 
-**Step 1: 🔴 RED - Write Failing Tests First**
-```typescript
-describe('myFeature', () => {
-  it('should handle basic case', () => {
-    expect(myFunction(input)).toBe(expectedOutput)
-  })
-  it('should handle edge case: null', () => {
-    expect(myFunction(null)).toBe(defaultValue)
-  })
-})
-```
-
-**Step 2: 🟢 GREEN - Implement Minimal Code**
-```typescript
-export function myFunction(input: InputType): OutputType {
-  if (!input) return defaultValue
-  return processInput(input)
-}
-```
-
-**Step 3: 🔵 REFACTOR - Clean Up Code**
-```typescript
-export function myFunction(input: InputType): OutputType {
-  validateInput(input)
-  return transformInput(input)
-}
-```
-
-### When to Use TDD (ALWAYS for these cases)
-
-**✅ REQUIRED for:**
-1. **New business logic** - Calculations, validations, rules
-2. **Permission systems** - Any access control or authorization
-3. **Data transformations** - Filtering, mapping, aggregations
-4. **Complex algorithms** - Attendance stats, report generation
-5. **Integration points** - API interactions, database queries
-6. **Critical features** - Student management, class eligibility
-
-**❌ SKIP TDD for:**
-- Simple UI components with no logic (pure presentational)
-- Trivial getters/setters
-- Configuration files
-- Type definitions
-
-### TDD Commands
-
-```bash
-npm run test:watch  # Auto-run tests on file save
-npm run test:coverage  # Check coverage
-npm run test:ui  # Interactive UI
-```
-
-**📖 For detailed testing setup, examples, and complete TDD workflow, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
+**📖 For detailed TDD examples and workflow, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
 
 ---
 
@@ -83,462 +38,64 @@ npm run test:ui  # Interactive UI
 
 **CRITICAL**: Claude Code MUST NOT execute git operations that modify repository state.
 
-### Allowed Git Commands (Read-Only) ✅
+**Allowed (Read-Only)**: `git status`, `git diff`, `git log`, `git show`, `git branch`
 
-```bash
-git status           # Check working tree status
-git diff <file>      # Show file changes
-git log              # View commit history
-git show <commit>    # Show commit details
-git branch           # List branches
-```
+**NEVER execute**: `git add`, `git commit`, `git push`, `git pull`, `git merge`, `git rebase`, or anything that modifies `.git/` or working tree.
 
-### Forbidden Git Commands ❌
+**After code changes**: Show `git status`/`git diff`, provide suggested commit message (with `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`), and inform user to run git commands manually.
 
-**NEVER execute**:
-- `git add` - User stages files manually
-- `git commit` - User creates commits
-- `git push` - User pushes to remote
-- `git pull`, `git merge`, `git rebase` - User handles integration
-- Any command that modifies `.git/` or working tree
-
-### Correct Workflow After Code Changes
-
-When implementation is complete:
-
-1. ✅ **Show what changed**: `git status`, `git diff <file>`
-2. ✅ **Provide commit message** as formatted text (with Co-Authored-By tag)
-3. ✅ **Inform user to run manually**:
-   ```bash
-   git add <files>
-   git commit -m "<message>"
-   git push
-   ```
-4. ❌ **DO NOT** run `git add`, `git commit`, or `git push` yourself
-
-### Rationale
-
-- **User maintains control** over git history and commit timing
-- **User can review** all changes before committing
-- **User can modify** commit message if needed
-- **Prevents accidents** (wrong commits, premature pushes)
-- **Respects workflow** (user may have pre-commit hooks, signing, etc.)
-
-### Example Output
-
-```
-✅ Implementation complete! Files changed:
-- src/app/(admin)/dashboard/dashboardHelpers.ts
-
-📝 Suggested commit message:
-
-fix: Apply pagination to RLS filter queries to handle large datasets
-
-ROOT CAUSE: Dashboard showing 0 students when > 400 students
-SOLUTION: Use fetchAllRecords() helper with pagination
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-
-👉 Please run these commands:
-
-git add src/app/\(admin\)/dashboard/dashboardHelpers.ts
-git commit -m "<message above>"
-git push
-```
-
-**Exception**: `bd sync` (beads issue tracker) is allowed as it's a dedicated sync command, not direct git manipulation.
+**Exception**: `bd sync` (beads issue tracker) is allowed.
 
 ---
 
-## 📚 Documentation Strategy for AI Knowledge Management
+## 📚 Documentation Strategy
 
-**CRITICAL**: Balance between inline knowledge vs external references for optimal token usage.
+**Inline limit**: Keep CLAUDE.md under **300 lines**. Use "READ [`file.md`]" pointers for external docs.
 
-### When to Add Knowledge INLINE in CLAUDE.md
-
-Use inline documentation when:
-- ✅ **High-frequency reference** - Used in >50% of tasks (e.g., TDD workflow, access control rules)
-- ✅ **Short & critical** - <50 lines AND mission-critical (e.g., MCP connection check)
-- ✅ **Quick lookup** - Needs instant recall without file read (e.g., development commands)
-- ✅ **Core conventions** - Fundamental patterns used across codebase (e.g., Supabase client usage)
-
-### When to Create EXTERNAL Reference Files
-
-Create separate files in `docs/claude/` when:
-- ✅ **Low-frequency reference** - Used in <20% of tasks (e.g., bulk database operations)
-- ✅ **Long & detailed** - >50 lines OR multiple examples (e.g., testing guidelines, database operations)
-- ✅ **Specialized knowledge** - Domain-specific or one-time setup (e.g., PWA configuration)
-- ✅ **Reference material** - Detailed examples, troubleshooting guides (e.g., business rules)
-
-### Current Documentation Structure
-
-```
-CLAUDE.md (inline)           docs/claude/ (external references)
-├─ TDD workflow              ├─ testing-guidelines.md (detailed TDD examples)
-├─ Access control rules      ├─ business-rules.md (domain logic)
-├─ Development commands      ├─ database-operations.md (bulk ops, migrations)
-├─ Architecture overview     └─ ... (future: pwa-setup.md, deployment.md)
-└─ MCP connection check
-```
-
-### Token Optimization Guidelines
-
-- **Inline limit**: Keep CLAUDE.md under 700 lines for optimal loading
-- **Reference pointers**: Use clear "READ [`file.md`]" syntax for external docs
-- **Avoid duplication**: Never duplicate between inline and external (use pointer)
-- **Update both**: When adding knowledge, decide inline vs external FIRST
-
-**Example of good pointer**:
-```markdown
-## Database Operations
-
-**For bulk user creation, migrations, and complex database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
-
-Key points:
-- NEVER manually INSERT into `auth.users` without auth.identities
-- Use empty string `''` for tokens, not NULL
-- Pre-hash passwords in bulk operations
-```
+**Inline when**: High-frequency (>50% tasks), short & critical (<50 lines), quick lookup, core conventions.
+**External when**: Low-frequency (<20% tasks), long & detailed (>50 lines), specialized, reference material.
 
 ---
 
-## 📋 Beads Issue Management Standards
+## 📋 Beads Issue Management
 
-### JSONL File Structure & Automatic Processing
+**For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
-**Field Order & Status Sorting**: This project uses **custom git hooks** to automatically maintain consistent structure.
-
-**Automatic Field Order** (applied on every commit):
-1. ✅ `"id"` - Always first
-2. ✅ `"status"` - Always second
-3. All other fields follow (title, description, priority, etc.)
-
-**Automatic Status Sorting** (applied on every commit):
-Issues in `issues.jsonl` are automatically sorted by status:
-1. ✅ **Closed issues** first (status = "closed")
-2. ✅ **Open issues** second (status = "open")
-3. ✅ **In Progress issues** third (status = "in_progress")
-4. Within each status group, sorted by issue ID
-
-**Example Correct Format**:
-```jsonl
-{"id":"sm-abc","status":"closed","title":"Feature X","description":"...","priority":2,"issue_type":"feature","created_at":"...","created_by":"...","updated_at":"..."}
-{"id":"sm-xyz","status":"open","title":"Bug Y","description":"...","priority":1,"issue_type":"bug","created_at":"...","created_by":"...","updated_at":"..."}
-```
-
-**How Git Hooks Work**:
-
-**Pre-commit hook** (`.git/hooks/pre-commit`):
-1. Runs `bd sync --flush-only` to export pending changes
-2. Reorders fields: `{id, status} + del(.id, .status)` using `jq`
-3. Sorts issues by status (closed → open → in_progress)
-4. **Filters out tombstones** (beads internal soft-delete markers)
-5. Auto-stages modified JSONL files
-
-**Post-merge hook** (`.git/hooks/post-merge`):
-1. Imports `issues.jsonl` after git pull/merge
-2. Also imports `closed.jsonl` to keep database in sync
-3. Ensures database reflects latest git state
-
-**Best Practices**:
-- ✅ Use `bd close <id>` to close issues (NEVER `bd delete` for closed issues!)
-- ✅ Run `bd sync` to commit and push changes
-- ✅ Closed issues stay in beads database (not deleted)
-- ❌ **NEVER manually edit** `.beads/*.jsonl` files (hooks will override)
-- ❌ **NEVER use `bd delete`** on closed issues (creates tombstones)
-
-**Tombstone Prevention**:
-- **What are tombstones?** Beads' internal soft-delete markers (`status: "tombstone"`)
-- **Why avoid them?** They clutter issues.jsonl and cause confusion
-- **How we prevent them:**
-  1. Never delete closed issues from database (keep them with status="closed")
-  2. Pre-commit hook filters out any tombstones before git commit
-  3. Post-merge hook imports both issues.jsonl and closed.jsonl
-- **If tombstones appear:** Run `bd compact --prune --older-than 0` then re-import clean JSONL
-
-**File Separation (Multi-file support)**:
-- `.beads/issues.jsonl` - All issues (closed + open + in_progress)
-- `.beads/closed.jsonl` - Backup of closed issues (for reference)
-- **Important:** Beads stores ALL issues in `issues.jsonl` sorted by status
-
-**Dependencies**:
-- `jq` command-line JSON processor (already installed)
-- If `jq` is not found, hook silently skips processing
-
----
-
-## 📋 Beads Issue Progress Documentation Standard
-
-**MANDATORY for all multi-session work tracked in Beads.**
-
-### When to Create Progress Documentation
-
-Create a progress file in `.beads/progress/` for ANY issue that:
-- ✅ Spans multiple sessions (can't complete in one sitting)
-- ✅ Has complex implementation steps (refactoring, architecture changes)
-- ✅ Involves TDD workflow (track test/implementation progress)
-- ✅ Has dependencies or blockers
-- ✅ Needs context preservation across compaction
-
-**Skip for**:
-- ❌ Simple one-session tasks (quick fixes, single file changes)
-- ❌ Trivial updates (typo fixes, documentation tweaks)
-
-### File Naming Convention
-
-**Location**: `.beads/progress/`
-**Format**: `{issue-id}.md` (e.g., `sm-mln.md`, `sm-8yf.md`)
-
-### Required Sections
-
-```markdown
-# {Issue Title} - Progress Summary
-
-**Beads Issue**: {issue-id}
-**Status**: {⏳ In Progress | ✅ Complete | ❌ Blocked}
-**Total Tests**: {X passing ✅}
-
-## ✅ Completed - {Phase Name}
-
-### {Step Number}. {Component Name} ({file-path})
-**Purpose**: {What this does}
-
-**Functions/Features Implemented**:
-- ✅ `functionName()` - Description
-
-**Tests**: {X tests, Y% coverage ✅}
-
-## ⏳ Current Phase - {Phase Name}
-
-### {Step Number}. {Component Name} - {Status}
-**Purpose**: {What this does}
-
-**Functions Implemented**:
-- ✅ `completedFunction()` - Description
-- ⏳ `inProgressFunction()` - WIP
-- ❌ `blockedFunction()` - Blocked by {reason}
-
-**Tests**: {X tests ✅ (more tests needed)}
-
-## 📊 Metrics
-
-- **Lines of Code Created**: ~{X} lines
-- **Test Coverage**: {Y}% overall
-- **Tests Passing**: {X}/{Y} ✅
-- **Files Created**: {N} ({breakdown})
-
-## 🎯 Next Steps
-
-1. ⏳ **Current Priority**: {What to do next}
-2. ⏳ **Phase {N}**: {Upcoming work}
-
-## 📝 Notes
-
-- **{Key Decision}**: {Rationale}
-- **{Blocker}**: {Issue and resolution}
-
----
-
-**Last Updated**: {YYYY-MM-DD} ({Phase name})
-**Next Session**: {What to focus on}
-```
-
-### Update Workflow
-
-**When starting work on an issue**:
-1. Check if `.beads/progress/{issue-id}.md` exists
-2. If NOT, create it with initial structure
-3. Update **Status** section with current phase
-
-**During implementation**:
-1. ✅ Mark completed steps with checkmarks
-2. ⏳ Update "Current Phase" section
-3. 📊 Update metrics (tests passing, coverage, LOC)
-4. 📝 Add notes for decisions/blockers
-
-**At end of session**:
-1. Update **Last Updated** timestamp
-2. Update **Next Session** with clear next steps
-3. Commit progress file WITH code changes
-4. Run `bd sync` to persist
-
-**Before closing issue**:
-1. Change **Status** to ✅ Complete
-2. Verify all sections are ✅
-3. Add final metrics and summary
-4. Commit final progress update
-
-### Example
-
-See `.beads/progress/sm-mln.md` for complete example.
+Key rules: Use `bd close <id>` (never `bd delete`). Never manually edit `.beads/*.jsonl`. Progress files go in `.beads/progress/{issue-id}.md`.
 
 ---
 
 ## 🚨 CRITICAL: MCP Connection Check
 
-**BEFORE running ANY Supabase operations** (migrations, queries, etc.), you MUST:
-
-1. **Check MCP Connection Status** using `mcp__generus-mandiri-v2__list_tables` or `mcp__better-planner__list_tables`
-2. **If connection fails**:
-   - ❌ **DO NOT** ask user to restart Claude Code
-   - ✅ **INFORM** user: "MCP Supabase belum terkoneksi. Silakan aktifkan MCP di settings Claude Code."
-   - ✅ Continue with other tasks that don't require database access
-3. **If connection succeeds**: Proceed with database operations normally
-
-**Why This Matters**:
-- MCP can be activated/deactivated without restart
-- Avoids confusion about "connection errors"
-- User knows exactly what to do (enable MCP in settings)
-
-**Example Check**:
-```typescript
-// Try to list tables to verify connection
-const result = await mcp__generus-mandiri-v2__list_tables({ schemas: ["public"] })
-// If successful, MCP is connected ✅
-// If error, inform user to enable MCP ❌
-```
+**BEFORE running ANY Supabase operations**, check MCP connection using `mcp__generus-mandiri-v2__list_tables` or `mcp__better-planner__list_tables`. If it fails, inform user: "MCP Supabase belum terkoneksi. Silakan aktifkan MCP di settings Claude Code." Do NOT ask to restart.
 
 ---
 
-## 📐 Type/Interface Management Guidelines
+## 📐 Type/Interface Management
 
-**CRITICAL**: Avoid type fragmentation by centralizing type definitions.
-
-### Rules for Type Definitions
-
-1. ✅ **Centralize Shared Types** in `src/types/` directory
-   - Database entities (Student, Class, User, etc.)
-   - API request/response types
-   - Shared business logic types
-
-2. ❌ **NEVER Duplicate Type Definitions** across files
-   - Before creating a type, search: `grep -r "interface MyType" src/` or `grep -r "type MyType" src/`
-   - If type exists, import it—don't recreate
-
-3. ✅ **Use Type Hierarchy** for complex entities (extends pattern)
-   ```typescript
-   // Example: Student types (src/types/student.ts)
-   export interface StudentBase { id, name, gender, status }
-   export interface StudentWithOrg extends StudentBase { daerah_id, desa_id, kelompok_id }
-   export interface StudentWithClasses extends StudentWithOrg { classes, class_id }
-   export interface StudentBiodata extends StudentWithClasses { all biodata fields }
-   ```
-
-4. ✅ **Re-export for Backward Compatibility** when migrating types
-   ```typescript
-   // Old location (for backward compatibility)
-   export type { StudentBiodata } from '@/types/student'
-   ```
-
-5. ✅ **Name Consistently**: Use descriptive, hierarchical names
-   - ✅ `UserBase`, `UserWithRole`, `UserProfile`
-   - ❌ `User1`, `User2`, `UserV2`
-
-6. ⚠️ **Local Types Are OK For**:
-   - Component-specific props
-   - Form data (internal to component)
-   - Internal state management
-
-7. ⚠️ **Centralize Types For**:
-   - Database entities
-   - API request/response
-   - Shared across 2+ files
-   - Used in multiple modules
-
-### Type Location Structure
-
-```
-src/
-├── types/              # Centralized types (NEW)
-│   ├── student.ts     # Student hierarchy
-│   ├── user.ts        # User/Profile types
-│   ├── class.ts       # Class/ClassMaster types
-│   └── README.md      # Type documentation
-├── app/
-│   └── (admin)/
-│       └── users/
-│           └── siswa/
-│               └── types.ts  # Re-exports from @/types/student
-└── lib/
-    └── studentPermissions.ts # Imports from @/types/student
-```
-
-### Check Before Creating Types
-
-**Before adding `interface MyType` or `type MyType`**:
-
-1. **Search for existing definitions**:
-   ```bash
-   grep -r "interface MyType" src/
-   grep -r "type MyType" src/
-   ```
-
-2. **If type exists**:
-   - ✅ Import it: `import type { MyType } from '@/types/...'`
-   - ❌ Don't recreate/duplicate
-
-3. **If type needs extension**:
-   - ✅ Use `extends`: `interface MyTypeExtended extends MyType { ... }`
-   - ❌ Don't copy-paste fields
-
-4. **If type doesn't exist and is shared**:
-   - Create in `src/types/[entity].ts`
-   - Export with clear hierarchy
-   - Document in comments
-
-### Example: Student Type Centralization
-
-**Problem**: 3 different `Student` interfaces caused type mismatches
-
-**Solution**: Created `src/types/student.ts` with hierarchy
-```typescript
-// src/types/student.ts - Single source of truth
-export interface StudentBase { ... }
-export interface StudentWithOrg extends StudentBase { ... }
-export interface StudentWithClasses extends StudentWithOrg { ... }
-export interface StudentBiodata extends StudentWithClasses { ... }
-
-// All modules import from here
-import type { StudentWithOrg } from '@/types/student'
-```
-
-**Related Issue**: See `sm-5nw` for comprehensive type audit
+**CRITICAL**: Avoid type fragmentation. For complete rules on centralizing types, checking before creating, and type hierarchy, READ [`docs/claude/type-management.md`](docs/claude/type-management.md)
 
 ---
 
 ## 📚 Project Overview
 
-**Generus Mandiri** is a Next.js 15 school management system for LDII (Lembaga Dakwah Islam Indonesia) religious education programs. It manages students (generus), teachers, classes, attendance tracking, academic reports, report cards (rapot), and educational materials (materi) with role-based access control. It uses Supabase for PostgreSQL database, authentication, and Row Level Security (RLS).
+**Generus Mandiri** is a Next.js 15 school management system for LDII religious education programs. It manages students, teachers, classes, attendance, reports, report cards (rapot), and materials (materi) with role-based access control using Supabase (PostgreSQL + Auth + RLS).
 
-**Organizational Structure**: The system follows a 3-level hierarchy:
-- **Daerah** (Region) - Top level organizational unit
-- **Desa** (Village) - Mid level under Daerah
-- **Kelompok** (Group) - Bottom level under Desa
-
-Each admin level (admin_daerah, admin_desa, admin_kelompok) has access restricted to their organizational scope and below.
+**Organizational Hierarchy**: Daerah (Region) → Desa (Village) → Kelompok (Group). Each admin level has access restricted to their scope and below.
 
 ---
 
 ## 🔧 Development Commands
 
 ```bash
-# Development
-npm run dev              # Start dev server at http://localhost:3000
-
-# Build & Type Checking
+npm run dev              # Dev server at localhost:3000
 npm run build            # Production build
-npm run type-check       # Run TypeScript compiler without emitting files
-
-# Code Quality
-npm run format           # Format code with Prettier
-npm run format:check     # Check formatting without writing
-npm run fix:all          # Format and type-check in sequence
-
-# Testing
-npm run test             # Run tests in watch mode
-npm run test:run         # Run tests once (for CI/CD)
-npm run test:ui          # Open Vitest UI (interactive test viewer)
-npm run test:coverage    # Generate coverage report
+npm run type-check       # TypeScript check (no emit)
+npm run format           # Format with Prettier
+npm run fix:all          # Format + type-check
+npm run test             # Tests in watch mode
+npm run test:run         # Tests once (CI/CD)
+npm run test:coverage    # Coverage report
 ```
 
 ---
@@ -547,499 +104,83 @@ npm run test:coverage    # Generate coverage report
 
 ### App Router Structure
 
-The app uses Next.js 15 App Router with two main layout groups:
-
-1. **`(full-width-pages)`** - Unauthenticated pages (signin, signup, errors)
-2. **`(admin)`** - Authenticated pages:
-   - `/home` - Dashboard with quick actions
-   - `/absensi` - Attendance management with meeting types
-   - `/laporan` - Reports and analytics
-   - `/users/siswa`, `/users/guru`, `/users/admin` - User management
-   - `/kelas` - Class and class master management
-   - `/organisasi` - Organization hierarchy management
-   - `/rapot` - Report card generation and templates
-   - `/materi` - Educational materials management
-   - `/settings` - PWA settings, cache management, profile
-
-Protected routes are under `src/app/(admin)/`. Each feature has its own directory with co-located:
-- `page.tsx` - Route component
-- `actions.ts` - Server actions for mutations
-- `hooks/` - SWR data fetching hooks
-- `stores/` - Zustand state management
-- `components/` - Feature-specific components
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/absensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
 
 ### Database & Supabase
 
-**Database**: `generus-mandiri-v2` on Supabase
+**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`.
 
-**Key Tables**:
-- `profiles` - User accounts with role-based access (superadmin, admin, teacher, student)
-- `students` - Student records with biodata
-- `classes` - Class definitions (linked to kelompok level)
-- `class_masters` - Master class types (Pra Nikah, Remaja, Orang Tua, etc.) with categories
-- `class_master_mappings` - Junction table linking classes to master classes (many-to-many)
-- `meetings` - Class meetings/sessions with support for multiple classes (`class_ids` array)
-- `attendance_logs` - Daily attendance (H/I/S/A status) with composite key (student_id, date)
-- `student_classes` - Junction table for student-class many-to-many
-- `teacher_classes` - Junction table for teacher-class many-to-many
-- `daerah`, `desa`, `kelompok` - Organizational hierarchy (Region > Village > Group)
-- `rapot_templates` - Report card templates with customizable sections
-- `rapot_data` - Generated report cards for students
-- `materials` - Educational materials (materi) with TipTap rich text content
-
-**Supabase Client Usage**:
-- `createClient()` from `@/lib/supabase/client` - Browser client for client components
-- `createClient()` from `@/lib/supabase/server` - Server client for server actions (uses cookies)
-- `createAdminClient()` from `@/lib/supabase/server` - Service role client to bypass RLS (admin operations only)
+**Supabase Clients**: `createClient()` from `client` (browser) or `server` (server actions with cookies), `createAdminClient()` from `server` (bypass RLS).
 
 ### Access Control
 
-**Role Hierarchy**:
-```
-superadmin (global access)
-  └─ admin
-      ├─ admin_daerah (region level)
-      ├─ admin_desa (village level)
-      └─ admin_kelompok (group level)
-teacher (assigned classes only)
-student (own data only)
-```
-
-**CRITICAL ACCESS CONTROL RULES**:
-- **Client Components/Hooks**: ALWAYS use `import { isSuperAdmin, isAdminDaerah, ... } from '@/lib/userUtils'`
-- **Server Actions**: ALWAYS use `import { canAccessFeature, getDataFilter, getCurrentUserProfile } from '@/lib/accessControlServer'`
+**Role Hierarchy**: superadmin → admin (daerah/desa/kelompok) → teacher → student.
+- **Client**: Use `import { isSuperAdmin, ... } from '@/lib/userUtils'`
+- **Server**: Use `import { canAccessFeature, getDataFilter } from '@/lib/accessControlServer'`
 - **NEVER** import directly from `@/lib/accessControl.ts`
 
-**Key Functions**:
-- `isSuperAdmin(profile)`, `isAdminDaerah(profile)`, `isAdminDesa(profile)`, `isAdminKelompok(profile)`, `isTeacher(profile)`
-- `canAccessFeature(profile, feature)` - Check feature-level access
-- `getDataFilter(profile)` - Get filter object based on user's organizational level
-- `shouldShowDaerahFilter(profile)`, `shouldShowDesaFilter(profile)`, etc. - UI visibility helpers
-
-### Hierarchical Teacher Pattern (Guru Desa/Daerah)
-
-**CRITICAL**: Teachers with organizational hierarchy (`desa_id`/`daerah_id`) behave differently from regular teachers.
-
-**Organizational Teachers** (Guru Desa/Daerah):
-- ✅ Have `role = 'teacher'` in profiles
-- ✅ Have `desa_id` (Guru Desa) OR `daerah_id` (Guru Daerah) populated
-- ❌ Do NOT have entries in `teacher_classes` junction table
-- ✅ Should see ALL data in their organizational scope (like admins)
-- ✅ Can ONLY create Sambung Desa/Sambung Daerah meetings
-
-**Detection Pattern**:
-```typescript
-// Client-side (components/hooks)
-const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
-                               (!userProfile.classes || userProfile.classes.length === 0)
-
-// Server-side (actions)
-if (profile?.role === 'teacher') {
-  if (profile.teacher_classes && profile.teacher_classes.length > 0) {
-    // Regular teacher: has assigned classes
-  } else if (profile.kelompok_id || profile.desa_id || profile.daerah_id) {
-    // Hierarchical teacher: has organizational access
-  }
-}
-```
-
-**Implementation Requirements**:
-
-1. **Profile Queries**: MUST include organizational fields
-   ```typescript
-   const { data: profile } = await supabase
-     .from('profiles')
-     .select(`
-       role,
-       kelompok_id,
-       desa_id,
-       daerah_id,
-       teacher_classes!left(class_id, classes(id, name))
-     `)
-   ```
-   - Use `left` join for `teacher_classes` (handles both regular and hierarchical)
-
-2. **Data Filtering**: Apply hierarchical filters like admins
-   ```typescript
-   if (profile.kelompok_id) {
-     query = query.eq('kelompok_id', profile.kelompok_id)
-   } else if (profile.desa_id) {
-     query = query.eq('kelompok.desa_id', profile.desa_id)
-   } else if (profile.daerah_id) {
-     query = query.eq('kelompok.desa.daerah_id', profile.daerah_id)
-   }
-   ```
-
-3. **Admin Client Usage**: Bypass RLS for hierarchical access
-   ```typescript
-   const adminClient = await createAdminClient()
-   // Use adminClient for queries, apply organizational filters manually
-   ```
-
-4. **UI Display Logic**: Show all classes like admins
-   ```typescript
-   if (isHierarchicalTeacher) {
-     // Show ALL classes in student's records
-     displayClasses = student.classes.map(c => c.name).join(', ')
-   } else {
-     // Regular teacher: filter to only their assigned classes
-     displayClasses = student.classes.filter(c => teacherClassIds.includes(c.id))
-   }
-   ```
-
-5. **Meeting Types & Attendance Access**: 
-   - Hierarchical teachers with no classes can still access meeting types by relying on organizational level (`daerah_id`, `desa_id`, `kelompok_id`).
-   - Use `isHierarchicalTeacher` bypassing logic in `absensi/[meetingId]/page.tsx` class filters (`canUserEditMeetingAttendance` from `meetingHelpersClient`).
-   - Ensure the `UserProfile` interfaces correctly type the organizational fields as `string | null` to match Supabase's structure and avoid strict TS assigning issues.
-
-**Files with Hierarchical Teacher Support** (sm-3ud):
-- `src/app/(admin)/users/siswa/actions/classes.ts` - getAllClasses()
-- `src/app/(admin)/users/siswa/actions.ts` - getAllStudents()
-- `src/app/(admin)/absensi/actions.ts` - getMeetingsWithStats()
-- `src/app/(admin)/laporan/actions.ts` - getAttendanceReport()
-- `src/app/(admin)/users/siswa/components/StudentsTable.tsx` - Class display
-- `src/app/(admin)/laporan/hooks/useLaporanPage.ts` - Table data mapping + **auto-set filter**
-
-**Auto-Set Filter Pattern for Single Kelompok/Class**:
-For better UX, pages with DataFilter should auto-select filters when user has only 1 option:
-```typescript
-// Auto-set class filter for teachers with exactly 1 class
-useEffect(() => {
-  if (userProfile?.role === 'teacher' && userProfile.classes?.length === 1) {
-    const teacherClassId = userProfile.classes[0].id
-    if (!filters.organisasi?.kelas?.includes(teacherClassId)) {
-      setFilter('organisasi', { daerah: [], desa: [], kelompok: [], kelas: [teacherClassId] })
-    }
-  }
-}, [userProfile?.role, userProfile?.classes, filters.organisasi?.kelas, setFilter])
-
-// Auto-set kelompok filter for teachers with exactly 1 kelompok (no classes)
-useEffect(() => {
-  if (userProfile?.role === 'teacher' && userProfile.kelompok_id && (!userProfile.classes || userProfile.classes.length === 0)) {
-    if (!filters.organisasi?.kelompok?.includes(userProfile.kelompok_id)) {
-      setFilter('organisasi', { daerah: [], desa: [], kelompok: [userProfile.kelompok_id], kelas: [] })
-    }
-  }
-}, [userProfile?.role, userProfile?.kelompok_id, userProfile?.classes, filters.organisasi?.kelompok, setFilter])
-```
-- **When to use**: Pages that require filters to show data (Laporan, Absensi list, Student list)
-- **Benefit**: Prevents "no data" state when user has only 1 valid option
-- **Reference**: `src/app/(admin)/laporan/hooks/useLaporanPage.ts` line 166-194
-
-**Common Pitfalls**:
-- ❌ Checking only `teacher_classes` length (hierarchical teachers have 0)
-- ❌ Using regular user client instead of admin client
-- ❌ Forgetting to include organizational fields in profile query
-- ❌ Not handling both `class_id` and `class_ids` in meeting filtering
-- ❌ Not auto-setting filters for single-option users (causes "no data" bugs)
-
-**Reference Implementation**: See `.beads/progress/sm-3ud.md` for complete hierarchical teacher implementation.
+**For Hierarchical Teachers, Dashboard Metrics, Meeting Deduplication, READ [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)**
 
 ### State Management
 
-**Zustand Stores** (persisted to localStorage):
-- `userProfileStore` - Current user profile with organizational hierarchy and assigned classes
-- `sidebarStore`, `themeStore`, `languageStore` - UI preferences
-- `attendanceStore`, `absensiUIStore` - Attendance management state
-- `siswaStore`, `kelasStore`, `guruStore`, `adminStore` - Feature-specific states
-- `laporanStore`, `organisasiStore` - Reports and organization management
+**Zustand Stores** (persisted to localStorage): `userProfileStore`, `sidebarStore`, `themeStore`, `languageStore`, `attendanceStore`, `absensiUIStore`, `siswaStore`, `kelasStore`, `guruStore`, `adminStore`, `laporanStore`, `organisasiStore`.
 
-**CRITICAL Store Patterns**:
-- **Dynamic Defaults**: NEVER hardcode dates/months in helper functions for production use
-  ```typescript
-  // ❌ BAD - Hardcoded for dummy data
-  const getCurrentMonth = () => 10 // October
-  const getCurrentYear = () => 2025
+**CRITICAL**: NEVER hardcode dates/months — always use `new Date()`. Default values should use helper functions. SWR keys centralized in `@/lib/swr.ts`. Cache cleared on login/logout via `clearUserCache()`.
 
-  // ✅ GOOD - Dynamic system date
-  const getCurrentMonth = () => new Date().getMonth() + 1 // 1-12
-  const getCurrentYear = () => new Date().getFullYear()
-  ```
-- **Store Initialization**: Default values should use helper functions, not hardcoded values
-- **Filter Defaults**: Monthly/yearly filters should default to current period for better UX
+### Data Fetching
 
-**SWR Configuration**:
-- 2-minute deduping interval (can be customized per hook)
-- Revalidates on focus and reconnect (can be disabled per hook)
-- localStorage-based persistent cache (survives page refresh)
-- Cache cleared on login/logout via `clearUserCache()` (with page reload)
-- Centralized SWR keys in `@/lib/swr.ts` for consistency (e.g., `meetingFormSettingsKeys`, `studentKeys`, `classKeys`)
+Three patterns: (1) Server Action + SWR Hook for reads, (2) Direct Server Action for mutations with `mutate()` + `revalidatePath()`, (3) Custom SWR config with `revalidateOnFocus: false` and longer `dedupingInterval` for stable data.
 
-### Data Fetching Patterns
+### UI Components & Utilities
 
-**Pattern 1**: Server Action + SWR Hook
-```typescript
-// In actions.ts
-export async function getAllStudents(classId?: string): Promise<Student[]> {
-  'use server'
-  const supabase = await createClient()
-  // Query with RLS
-}
+**Components**: `components/ui/` (base), `components/form/input/`, `components/layouts/`, `components/charts/`, `components/shared/DataFilter.tsx` (centralized filter). Add to DataFilter only if reused across 2+ pages.
 
-// In hooks or components
-export function useStudents({ classId }: Options) {
-  const { data, mutate } = useSWR(key, () => getAllStudents(classId))
-  return { students: data, mutate }
-}
-```
+**Key Utilities**: `classHelpers.ts` (isCaberawitClass, isTeacherClass, isSambungDesaEligible), `utils.ts` (cn, isMobile, etc.), `userUtils.ts` (getCurrentUserId, clearUserCache), `batchFetching.ts` (fetchAttendanceLogsInBatches — use for large datasets).
 
-**Pattern 2**: Direct Server Action for Mutations
-```typescript
-async function handleSubmit(data) {
-  const result = await saveAttendance(data)
-  if (result.success) {
-    mutate() // Revalidate SWR cache
-    revalidatePath('/absensi') // Server-side cache
-  }
-}
-```
-
-**Pattern 3**: Prefetch + Custom SWR Configuration (for optimal performance)
-```typescript
-// Example: Meeting form settings with long cache and no revalidation on focus
-export function useMeetingFormSettings(userId?: string) {
-  const { data, error, isLoading, mutate } = useSWR(
-    userId ? meetingFormSettingsKeys.settings(userId) : null,
-    async () => {
-      const result = await getMeetingFormSettings(userId)
-      return result.success && result.data ? result.data : DEFAULT_SETTINGS
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes cache
-      fallbackData: DEFAULT_SETTINGS,
-    }
-  )
-  return { settings: data || DEFAULT_SETTINGS, isLoading, error, mutate }
-}
-```
-
-### UI Components
-
-**Reusable Components**: Located in `src/components/`
-- Use existing components for buttons, modals, inputs, delete confirmations
-- For icons, use those in `public/icons` & `src/lib/icons.ts` (or add new ones there)
-
-**Key Component Groups**:
-- `components/ui/` - Base UI components (button, modal, dropdown, skeleton, pagination)
-- `components/form/input/` - Form inputs
-- `components/layouts/` - App header, sidebar, bottom navigation
-- `components/charts/` - Recharts-based visualizations
-- `components/shared/DataFilter.tsx` - Centralized filter component
-
-**Filter Guidelines - DataFilter Component**:
-- **IMPORTANT**: When adding new filter types, consider adding them to `DataFilter.tsx` if they will be reused across multiple pages
-- **Current filters in DataFilter**: Daerah, Desa, Kelompok, Class, Gender, Meeting Type, Month/Year
-- **When to add to DataFilter**:
-  - ✅ Filter will be used in 2+ pages
-  - ✅ Filter follows standard dropdown/select pattern
-  - ✅ Filter needs organizational hierarchy (daerah → desa → kelompok)
-- **When NOT to add to DataFilter**:
-  - ❌ Page-specific filter (only used once)
-  - ❌ Complex custom UI (date range picker, multi-step)
-  - ❌ Tightly coupled to page state
-
-**Mobile UI Patterns**:
-- **Floating Action Buttons**: For primary actions on pages with long scrollable content
-  - Use `fixed sm:static bottom-20 sm:bottom-0 left-4 right-4 z-50 shadow-lg sm:shadow-none`
-  - `bottom-20` accommodates bottom navigation (64-72px height)
-  - Desktop reverts to static positioning
-
-### Special Utilities
-
-**Class Helpers** (`@/lib/utils/classHelpers.ts`):
-- `isCaberawitClass(classData)` - Check if PAUD/Caberawit class (via category code/name)
-- `isTeacherClass(classData)` - Check if teacher training class (via class name contains 'pengajar')
-- `isSambungDesaEligible(classData)` - Check if class is eligible for Sambung Desa meetings
-
-**Common Utils** (`@/lib/utils.ts`):
-- `cn(...classes)` - Merge Tailwind classes (clsx + tailwind-merge)
-- `isMac()`, `isDesktop()`, `isMobile()`, `isTouchDevice()`, `isIOS()`, `shouldUseMobileUI()`
-
-**User Utils** (`@/lib/userUtils.ts`):
-- `getCurrentUserId()` - Get current user ID for SWR cache keys
-- `clearUserCache()` - Full logout cache clear (with reload)
-- `clearSWRCache()` - Soft cache clear (no reload, for login flow)
-
-**Batch Fetching** (`@/lib/utils/batchFetching.ts`):
-- `fetchAttendanceLogsInBatches(supabaseClient, meetingIds)` - Fetch attendance logs in batches of 10 to avoid database query limits
-- **CRITICAL**: Use this for large datasets (e.g., reports, attendance with many meetings) to prevent data loss from query limits
-
-**Class Sort Order** - ALL class dropdowns/lists MUST be sorted by `class_master.sort_order`:
-- Server-side: `getAllClasses()` and `getAllClassesByKelompok()` already return pre-sorted data
-- Client-side: Apply sort in components using `class_master_mappings[].class_master.sort_order` (min value), classes without mapping go last (9999)
-- `AdminLayoutProvider.tsx` fetches teacher classes with `sort_order` included in the nested query
-- ⚠️ **NEVER** fetch `class_master_mappings` with `sort_order` via PostgREST nested join (`class_masters!inner(sort_order)`) — it **silently fails/returns null**. Use the **two-query pattern** instead:
-  ```typescript
-  // 1. Query class_master_mappings → get class_master_ids
-  // 2. Query class_masters by those IDs → get sort_order
-  // 3. Join in code
-  // See: users/siswa/actions/classes.ts fetchClassMasterMappings()
-  ```
-
-**Class Filter Display Format** (sm-de3) - Unified format for multi-kelompok selection:
-- **All users** (Guru with 2+ kelompok, Admin Desa, Guru Desa, Guru Daerah, Admin Daerah) show **consistent format**
-- When 2+ kelompok selected: Show `"Class Name (X kelompok)"` format (deduplicated with count)
-- When single/no kelompok: Show `"Class Name"` only (no suffix)
-- Implementation: `DataFilter.tsx` uses unified Path 2 deduplication logic
-- ⚠️ **CRITICAL**: Class values may be comma-separated (`"id1,id2,id3"`) for multi-kelompok classes
-  - Always split comma-separated IDs before processing: `classId.includes(',') ? classId.split(',') : [classId]`
-  - See: `useLaporanPage.ts` auto-extract kelompok logic for reference implementation
-- **Related Issues**: sm-de3 (auto-clear bug fix), sm-hov (duplicate issue)
-
-**Dashboard Metrics Pattern** - Dual metrics for attendance calculation:
-- **Primary Metric (Simple Average)**: Displayed in main stat card
-  - Formula: `(Σ entity_attendance_rate) / entity_count`
-  - Use case: "Bagaimana performa rata-rata desa/kelompok/kelas?"
-  - Example: `(81% + 100% + 73% + 75% + 68% + 47%) / 6 = 74%`
-  - User-friendly, intuitif, consistent with table display
-- **Secondary Metric (Weighted Average)**: Displayed in tooltip
-  - Formula: `(Σ total_students_present) / (Σ total_potential_attendance) × 100`
-  - Use case: "Berapa persen siswa yang benar-benar hadir?"
-  - Example: `12,500 / 25,000 × 100 = 50%`
-  - Accurate for resource planning, reflects scale/impact
-- **Supporting Data**: Table shows "Pertemuan" and "Siswa" columns
-  - Helps user understand why simple ≠ weighted
-  - Enables manual verification and deeper analysis
-- **Implementation**: `src/app/(admin)/dashboard/page.tsx` - `attendanceMetrics` useMemo
-- **Documentation**: READ [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
-- **Related Issues**: sm-nol (dashboard comparison charts)
-
-**Meeting Count Deduplication** - CRITICAL for multi-class meetings aggregation:
-- **Problem**: Multi-class meetings (SAMBUNG_KELOMPOK, SAMBUNG_DESA, SAMBUNG_DAERAH) were counted multiple times when aggregating by kelompok/desa/daerah
-  - Example: 1 meeting for 7 classes in Kelompok "Nambo" → showed as **2 meetings** ❌
-  - Root cause: Aggregation summed `meeting_count` per class without deduplication
-- **Solution**: Use `meeting_ids` array + Set for deduplication
-  - `ClassMonitoringData` includes `meeting_ids?: string[]` field
-  - `aggregateMonitoringData()` uses `Set<string>()` to track unique meeting IDs
-  - Final `meeting_count` = `meetingIds.size` (deduplicated)
-- **Files**:
-  - `src/app/(admin)/dashboard/actions.ts` - Returns `meeting_ids` in monitoring data
-  - `src/app/(admin)/dashboard/utils/aggregateMonitoringData.ts` - Deduplication logic
-  - `src/app/(admin)/dashboard/page.tsx` - Tracks `meetingIds` in aggregation
-- **Impact**:
-  - ✅ Per Kelompok: Multi-class meetings counted once (was N times)
-  - ✅ Per Desa: Cross-kelompok meetings counted once (was N times)
-  - ✅ Per Daerah: Cross-desa meetings counted once (was N times)
-- **Verification**: Kelompok "Nambo" now shows **1 pertemuan** ✅ (was 2 ❌)
+**Class Sort Order**: ALL class lists sorted by `class_master.sort_order`. NEVER use PostgREST nested join for this (silently fails). Use the two-query pattern — see `users/siswa/actions/classes.ts`.
 
 ---
 
 ## ⚠️ Important Business Rules
 
-**Before implementing features related to Students, Attendance, Transfers, or Meetings, YOU MUST READ [`docs/claude/business-rules.md`](docs/claude/business-rules.md)**
-
-This document contains critical business logic including:
-- Attendance System rules and special permissions
-- Student Lifecycle Management (Archive vs Soft Delete - CRITICAL difference)
-- Approval-Based Transfer Workflow (auto-approval rules, status flow)
-- Meeting Types & Class Eligibility (ASAD, Sambung Desa restrictions)
-- Multi-class Support
-- Filtering & Reporting Conventions (Class Filter Logic)
+**YOU MUST READ [`docs/claude/business-rules.md`](docs/claude/business-rules.md)** before implementing features related to Students, Attendance, Transfers, or Meetings.
 
 ---
 
 ## 🔒 Security & Cache Management
 
-- All sensitive operations must be in server actions with permission checks
-- Use RLS at database level for defense in depth
-- Admin client (`createAdminClient()`) only for cross-organizational admin operations
-- Validate user permissions before any data modification
-- Use `revalidatePath()` after mutations in server actions
-- Call `mutate()` on SWR hooks after client-side updates
-- Both logout AND login use `clearUserCache()` to remove all persistent state and reload the page
-- For targeted cache invalidation (e.g., after saving settings), use `mutate(specificKey)` from SWR
+All sensitive operations in server actions with permission checks. Use RLS for defense in depth. `createAdminClient()` only for cross-org admin ops. Use `revalidatePath()` after server mutations, `mutate()` for SWR, and `clearUserCache()` on login/logout.
 
 ---
 
-## 🗄️ Database Operations & Migrations
+## 🗄️ Database Operations
 
-**For bulk user creation, complex migrations, and database operations, READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)**
+**READ [`docs/claude/database-operations.md`](docs/claude/database-operations.md)** for bulk user creation, auth user setup, migrations, and debugging queries.
 
-### 🚨 CRITICAL: Creating Supabase Auth Users
-
-**NEVER manually INSERT into `auth.users` without ALL required fields.**
-
-Common mistakes that cause "Database error querying schema":
-- ❌ Missing `auth.identities` record (CRITICAL!)
-- ❌ Empty `raw_user_meta_data` (no display name in UI)
-- ❌ Using `NULL` instead of `''` for token fields
-- ❌ Inconsistent email domains (check existing convention)
-
-**Required when creating users via SQL**:
-1. ✅ Insert into `auth.users` with ALL fields (see database-operations.md for template)
-2. ✅ Insert into `auth.identities` with provider info
-3. ✅ Insert into `profiles` with role and organization
-4. ✅ Use `''` (empty string) for tokens, NOT `NULL`
-5. ✅ Populate `raw_user_meta_data` with `{name, username, full_name}`
-
-**Debugging checklist**:
-```sql
--- Check if identities exists
-SELECT u.email, i.id IS NOT NULL as has_identity
-FROM auth.users u
-LEFT JOIN auth.identities i ON i.user_id = u.id
-WHERE u.email = 'problematic@email.com';
-
--- Check if display name is populated
-SELECT email, raw_user_meta_data->>'name' as display_name
-FROM auth.users WHERE email = 'problematic@email.com';
-```
+Key: NEVER INSERT into `auth.users` without `auth.identities`. Use `''` for tokens, not NULL.
 
 ---
 
-## 🌍 Environment Variables
+## 🌍 Environment & Configuration
 
-Required in `.env.local`:
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-```
-
-Optional:
-```
-NEXT_PUBLIC_USE_DUMMY_DATA=false
-NEXT_PUBLIC_UMAMI_WEBSITE_ID=
-```
-
----
-
-## 🗂️ Path Aliases
-
-TypeScript path alias configured: `@/*` maps to `src/*`
-
-Always use `@/` imports for consistency:
-```typescript
-import { createClient } from '@/lib/supabase/server'
-import { isSuperAdmin } from '@/lib/userUtils'
-```
+**Required** `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+**Optional**: `NEXT_PUBLIC_USE_DUMMY_DATA=false`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`
+**Path Alias**: `@/*` maps to `src/*` — always use `@/` imports.
 
 ---
 
 ## 🛠️ Key Technologies
 
-- **Next.js 15** with App Router (React Server Components)
-- **React 19** with TypeScript 5
-- **Tailwind CSS 4** with PostCSS
-- **Supabase** (PostgreSQL + Auth + RLS)
-- **SWR** for data fetching with persistent cache
-- **Zustand** for client state management (persisted to localStorage)
-- **Vitest** for unit testing
-- **Ant Design (antd)** for some UI components
-- **Recharts** for data visualization
-- **@react-pdf/renderer** for PDF generation (report cards)
-- **PWA** support with manifest and service workers
-- **TipTap** for rich text editing (educational materials)
-- **dnd-kit** for drag-and-drop interfaces
-- **Sonner** for toast notifications
-- **Flatpickr** for date/time pickers
+Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth + RLS), SWR, Zustand, Vitest, Ant Design, Recharts, @react-pdf/renderer, PWA, TipTap, dnd-kit, Sonner, Flatpickr.
 
 ---
 
 ## 📖 Additional Documentation
 
-- **Testing Guidelines**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md) - Complete testing setup, examples, TDD workflow
-- **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md) - Critical domain logic for Students, Attendance, Transfers, Meetings
-- **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md) - Bulk operations, user creation, migration patterns
-- **Dashboard Attendance Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md) - Dual metrics (simple vs weighted average), UX comparison
+- **Testing**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)
+- **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md)
+- **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
+- **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
+- **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
+- **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
+- **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
