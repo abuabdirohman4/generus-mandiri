@@ -206,3 +206,71 @@ Use `meeting_ids` array + Set for deduplication:
 - Per Daerah: Cross-desa meetings counted once (was N times)
 
 **Verification**: Kelompok "Nambo" now shows **1 pertemuan** (was 2).
+
+---
+
+## 3-Layer Functional Architecture for Server Actions
+
+**Pattern established in:** sm-vpo (absensi refactoring pilot)
+
+All feature `actions/` folders follow this structure:
+
+### Folder Structure
+```
+src/app/(admin)/<feature>/
+├── actions/
+│   ├── <domain1>.ts     ← Domain file with 3 layers
+│   ├── <domain2>.ts
+│   └── index.ts         ← Re-exports for backward compatibility
+```
+
+### Layer Responsibilities
+
+**Layer 1: Database Queries (Private)**
+- Prefix: `fetch*`, `insert*`, `update*`, `delete*`
+- Receive `supabase` client as parameter
+- Return raw data or throw error
+- NOT exported (internal to file)
+
+**Layer 2: Business Logic (Exported, Pure)**
+- Pure functions, no DB calls, no side effects
+- Exported for reuse and testing
+- Easy to test without mocking
+
+**Layer 3: Server Actions (Exported, Orchestrators)**
+- Entry points for client components
+- Orchestrate Layer 1 + Layer 2
+- Handle auth, permissions, revalidation
+
+### Example
+```typescript
+'use server'
+
+// Layer 1: Private query
+async function fetchMeeting(supabase, id) { ... }
+
+// Layer 2: Pure function
+export function validateMeeting(data) { ... }
+
+// Layer 3: Server action
+export async function createMeeting(data) {
+  const supabase = await createClient()
+  const validation = validateMeeting(data)  // L2
+  const result = await fetchMeeting(supabase)  // L1
+  revalidatePath('/...')
+  return result
+}
+```
+
+### Testing Strategy
+- **Priority:** Test Layer 2 (pure functions, no mocking needed)
+- **Pattern:** Same as `src/lib/utils/__tests__/classHelpers.test.ts`
+- **Skip:** Layer 1 and Layer 3 (require Supabase mocks)
+
+### Migration Strategy
+- Use Big Bang approach for clean cutover
+- Create `actions/index.ts` with re-exports for backward compatibility
+- Extract shared types to `src/types/`
+- One feature per session
+
+**Reference:** `docs/plans/2026-03-01-split-absensi-actions-design.md`

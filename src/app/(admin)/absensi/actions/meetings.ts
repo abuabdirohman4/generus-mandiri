@@ -1,151 +1,228 @@
 'use server'
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
+import {
+  validateMeetingData,
+  buildStudentSnapshot,
+  canUserAccessMeeting
+} from '../utils/meetingValidation'
+import type {
+  Meeting,
+  CreateMeetingData,
+  UpdateMeetingData
+} from '@/types/meeting'
 
-interface AttendanceData {
-  student_id: string
-  date: string
-  status: 'H' | 'I' | 'S' | 'A'
-  reason?: string | null
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER 1: DATABASE QUERIES (Private - DB access only)
+// ─────────────────────────────────────────────────────────────────────────────
 
-interface CreateMeetingData {
-  classIds: string[]
-  kelompokIds?: string[] // Optional: kelompok IDs for SAMBUNG_DESA meeting type
-  date: string
-  title: string
-  topic?: string
-  description?: string
-  meetingTypeCode?: string | null
-  studentIds?: string[] // Optional: selected student IDs for the meeting
-}
-
-export async function saveAttendance(attendanceData: AttendanceData[]) {
-  try {
-    const supabase = await createClient()
-    
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return { success: false, error: 'User not authenticated' }
-    }
-
-    // Get user profile to get the recorded_by field
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) {
-      return { success: false, error: 'User profile not found' }
-    }
-
-    // Prepare data for upsert
-    const attendanceRecords = attendanceData.map(record => ({
-      student_id: record.student_id,
-      date: record.date,
-      status: record.status,
-      reason: record.reason,
-      recorded_by: profile.id
-    }))
-
-    // Use upsert to handle both insert and update
-    const { error } = await supabase
-      .from('attendance_logs')
-      .upsert(attendanceRecords, {
-        onConflict: 'student_id,date' // This will update if record exists for same student and date
-      })
-
-    if (error) {
-      console.error('Error saving attendance:', error)
-      return { success: false, error: error.message }
-    }
-
-    // Revalidate the attendance page to show updated data
-    revalidatePath('/absensi')
-    
-    return { success: true }
-  } catch (error) {
-    console.error('Error in saveAttendance:', error)
-    return { success: false, error: 'Internal server error' }
-  }
-}
-
-export async function getAttendanceByDate(date: string) {
-  try {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
-      .from('attendance_logs')
-      .select(`
+async function fetchMeetingById(supabase: any, meetingId: string) {
+  const { data, error } = await supabase
+    .from('meetings')
+    .select(`
+      id,
+      class_id,
+      class_ids,
+      kelompok_ids,
+      teacher_id,
+      title,
+      date,
+      topic,
+      description,
+      student_snapshot,
+      created_at,
+      updated_at,
+      meeting_type_code,
+      created_by,
+      classes (
         id,
-        student_id,
-        status,
-        reason,
-        students (
+        name,
+        kelompok_id,
+        kelompok:kelompok_id (
           id,
           name,
-          gender,
-          student_classes(
-            classes:class_id(id, name)
+          desa_id,
+          desa:desa_id (
+            id,
+            name,
+            daerah_id,
+            daerah:daerah_id (
+              id,
+              name
+            )
+          )
+        ),
+        class_master_mappings (
+          class_master:class_master_id (
+            category:category_id (
+              is_sambung_capable
+            )
           )
         )
-      `)
-      .eq('date', date)
-      .order('students(name)')
+      )
+    `)
+    .eq('id', meetingId)
+    .single()
 
-    if (error) {
-      console.error('Error fetching attendance:', error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    console.error('Error in getAttendanceByDate:', error)
-    return { success: false, error: 'Internal server error', data: null }
-  }
+  if (error) throw error
+  return data
 }
 
-export async function getAttendanceStats(date: string) {
-  try {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
+async function fetchMeetingsByClass(
+  supabase: any,
+  classId: string | undefined,
+  limit: number,
+  cursor: string | undefined
+) {
+  let query = supabase
+    .from('meetings')
+    .select(`
+      id,
+      class_id,
+      class_ids,
+      teacher_id,
+      title,
+      date,
+      topic,
+      description,
+      student_snapshot,
+      created_at,
+      meeting_type_code,
+      kelompok_ids,
+      classes (
+        id,
+        name
+      )
+    `)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (cursor) {
+    query = query.lt('created_at', cursor)
+  }
+
+  if (classId) {
+    query = query.contains('class_ids', [classId])
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+  return data
+}
+
+async function insertMeeting(supabase: any, data: CreateMeetingData, userId: string) {
+  const meetingData = {
+    class_id: data.classIds[0], // Primary class for backward compatibility
+    class_ids: data.classIds,
+    kelompok_ids: data.kelompokIds || null,
+    teacher_id: userId,
+    title: data.title,
+    date: data.date,
+    topic: data.topic,
+    description: data.description,
+    student_snapshot: data.studentIds,
+    meeting_type_code: data.meetingTypeCode,
+    created_by: userId,
+  }
+
+  const { data: result, error } = await supabase
+    .from('meetings')
+    .insert(meetingData)
+    .select()
+    .single()
+
+  if (error) throw error
+  return result
+}
+
+async function updateMeetingRecord(
+  supabase: any,
+  meetingId: string,
+  data: UpdateMeetingData
+) {
+  const updateData: any = {
+    updated_at: new Date().toISOString()
+  }
+
+  if (data.title !== undefined) updateData.title = data.title
+  if (data.date !== undefined) updateData.date = data.date
+  if (data.topic !== undefined) updateData.topic = data.topic
+  if (data.description !== undefined) updateData.description = data.description
+  if (data.meetingTypeCode !== undefined) updateData.meeting_type_code = data.meetingTypeCode
+
+  if (data.classIds !== undefined && data.classIds.length > 0) {
+    updateData.class_id = data.classIds[0]
+    updateData.class_ids = data.classIds
+  }
+
+  if (data.kelompokIds !== undefined) {
+    updateData.kelompok_ids = data.kelompokIds.length > 0 ? data.kelompokIds : null
+  }
+
+  if (data.studentIds !== undefined) {
+    updateData.student_snapshot = data.studentIds
+  }
+
+  const { data: result, error } = await supabase
+    .from('meetings')
+    .update(updateData)
+    .eq('id', meetingId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return result
+}
+
+async function softDeleteMeeting(supabase: any, meetingId: string) {
+  // First check and delete attendance logs
+  const { data: attendanceLogs, error: checkError } = await supabase
+    .from('attendance_logs')
+    .select('id')
+    .eq('meeting_id', meetingId)
+    .limit(1)
+
+  if (checkError) throw checkError
+
+  // If attendance logs exist, delete them first
+  if (attendanceLogs && attendanceLogs.length > 0) {
+    const { error: deleteLogsError } = await supabase
       .from('attendance_logs')
-      .select('status')
-      .eq('date', date)
+      .delete()
+      .eq('meeting_id', meetingId)
 
-    if (error) {
-      console.error('Error fetching attendance stats:', error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    // Calculate statistics
-    const stats = {
-      total: data.length,
-      hadir: data.filter(record => record.status === 'H').length,
-      izin: data.filter(record => record.status === 'I').length,
-      sakit: data.filter(record => record.status === 'S').length,
-      absen: data.filter(record => record.status === 'A').length
-    }
-
-    return { success: true, data: stats }
-  } catch (error) {
-    console.error('Error in getAttendanceStats:', error)
-    return { success: false, error: 'Internal server error', data: null }
+    if (deleteLogsError) throw deleteLogsError
   }
+
+  // Now delete the meeting
+  const { error } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('id', meetingId)
+
+  if (error) throw error
 }
 
-// Meeting CRUD operations
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER 2: BUSINESS LOGIC - Imported from ../utils/meetingValidation.ts
+// ─────────────────────────────────────────────────────────────────────────────
+// validateMeetingData, buildStudentSnapshot, canUserAccessMeeting
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER 3: SERVER ACTIONS (Exported - Thin orchestrators)
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function createMeeting(data: CreateMeetingData) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -163,6 +240,12 @@ export async function createMeeting(data: CreateMeetingData) {
       return { success: false, error: 'User profile not found' }
     }
 
+    // Validate meeting data
+    const validation = validateMeetingData(data)
+    if (!validation.ok) {
+      return { success: false, error: validation.error }
+    }
+
     // Get students for all selected classes to create snapshot (via junction table)
     // Use admin client to bypass RLS restrictions (similar to getAllStudents)
     const adminClient = await createAdminClient()
@@ -178,10 +261,10 @@ export async function createMeeting(data: CreateMeetingData) {
         .eq('teacher_id', user.id)
 
       const allTeacherClassIds = new Set(allTeacherClasses?.map(tc => tc.class_id) || [])
-      
+
       // Now validate that all selected classes are in the teacher's classes
       const invalidClasses = data.classIds.filter(id => !allTeacherClassIds.has(id))
-      
+
       if (invalidClasses.length > 0) {
         return { success: false, error: 'You can only create meetings for your own classes' }
       }
@@ -189,7 +272,7 @@ export async function createMeeting(data: CreateMeetingData) {
 
     // Determine which students to include in the snapshot
     let studentIdsForSnapshot: string[]
-    
+
     if (data.studentIds && data.studentIds.length > 0) {
       // Use provided student IDs (from user selection)
       // Verify all provided student IDs are valid and in selected classes
@@ -211,24 +294,6 @@ export async function createMeeting(data: CreateMeetingData) {
       // Get unique valid student IDs (filter to only include those in selected classes)
       const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
 
-      // const junctionStudentIds = studentClassData?.map(sc => sc.student_id) || []
-
-      // // ALSO get students via direct class_id (backward compatibility)
-      // const { data: directClassStudents, error: directError } = await adminClient
-      //   .from('students')
-      //   .select('id')
-      //   .is('deleted_at', null)
-      //   .in('class_id', data.classIds)
-      //   .in('id', data.studentIds)
-
-      // if (directError) {
-      //   return { success: false, error: directError.message }
-      // }
-
-      // const directStudentIds = directClassStudents?.map(s => s.id) || []
-
-      // // Combine both sources
-      // const validStudentIds = [...new Set([...junctionStudentIds, ...directStudentIds])]
       studentIdsForSnapshot = data.studentIds.filter(id => validStudentIds.includes(id))
 
       if (studentIdsForSnapshot.length === 0) {
@@ -265,7 +330,7 @@ export async function createMeeting(data: CreateMeetingData) {
 
       // Get unique student IDs (a student might be in multiple selected classes)
       const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
-      
+
       // Verify students exist and get their details
       const { data: students, error: studentsError } = await adminClient
         .from('students')
@@ -283,41 +348,14 @@ export async function createMeeting(data: CreateMeetingData) {
       studentIdsForSnapshot = students.map(s => s.id)
     }
 
-    // Generate meeting number (highest from all classes + 1)
-    const { data: lastMeetings } = await supabase
-      .from('meetings')
-      .select('meeting_number')
-      .in('class_id', data.classIds)
-      .order('meeting_number', { ascending: false })
-      .limit(1)
-
-    const nextMeetingNumber = (lastMeetings?.[0]?.meeting_number || 0) + 1
-
-    // Create meeting with student snapshot
-    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
-    // Validation already ensures teacher teaches all selected classes (lines 182-198)
-    const { data: meeting, error } = await adminClient
-      .from('meetings')
-      .insert({
-        class_id: data.classIds[0], // Primary class for backward compatibility
-        class_ids: data.classIds, // Array of all classes
-        kelompok_ids: data.kelompokIds || null, // Array of kelompok IDs for SAMBUNG_DESA
-        teacher_id: profile.id,
-        title: data.title,
-        date: data.date,
-        topic: data.topic,
-        description: data.description,
-        student_snapshot: studentIdsForSnapshot, // Use selected student IDs or all students
-        meeting_number: nextMeetingNumber,
-        meeting_type_code: data.meetingTypeCode // Meeting type code
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating meeting:', error)
-      return { success: false, error: error.message }
+    // Create meeting data with student snapshot
+    const meetingData: CreateMeetingData = {
+      ...data,
+      studentIds: studentIdsForSnapshot
     }
+
+    // Insert meeting using Layer 1
+    const meeting = await insertMeeting(adminClient, meetingData, profile.id)
 
     revalidatePath('/absensi')
     return { success: true, data: meeting }
@@ -330,7 +368,7 @@ export async function createMeeting(data: CreateMeetingData) {
 export async function getMeetingsByClass(classId?: string, limit: number = 10, cursor?: string) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -348,32 +386,6 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
       return { success: false, error: 'User profile not found', data: null }
     }
 
-    let query = supabase
-      .from('meetings')
-      .select(`
-        id,
-        class_id,
-        class_ids,
-        teacher_id,
-        title,
-        date,
-        topic,
-        description,
-        student_snapshot,
-        created_at,
-        classes (
-          id,
-          name
-        )
-      `)
-      .order('date', { ascending: false })
-      .limit(limit)
-
-    // If cursor (last meeting date) is provided, get meetings older than cursor
-    if (cursor) {
-      query = query.lt('date', cursor)
-    }
-
     // If user is a teacher, get meetings where ANY of their classes match
     if (profile.role === 'teacher') {
       const { data: teacherClasses } = await supabase
@@ -383,44 +395,32 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
 
       if (teacherClasses && teacherClasses.length > 0) {
         const teacherClassIds = teacherClasses.map(tc => tc.class_id)
-        
-        // Fetch all meetings and filter client-side
-        const { data, error } = await query
-        
-        if (error) {
-          console.error('Error fetching meetings:', error)
-          return { success: false, error: error.message, data: null }
-        }
-        
+
+        // Fetch all meetings using Layer 1
+        const data = await fetchMeetingsByClass(supabase, classId, limit, cursor)
+
         // Filter meetings that include any of teacher's classes
-        const filtered = (data || []).filter((meeting: any) => 
-          meeting.class_ids?.some((classId: string) => teacherClassIds.includes(classId))
+        const filtered = (data || []).filter((meeting: any) =>
+          meeting.class_ids?.some((meetingClassId: string) => teacherClassIds.includes(meetingClassId))
         )
-        
-        return { 
-          success: true, 
+
+        return {
+          success: true,
           data: filtered,
-          hasMore: filtered.length === limit 
+          hasMore: filtered.length === limit
         }
       } else {
         return { success: true, data: [], hasMore: false }
       }
-    } else if (classId) {
-      const classIds = classId.split(',')
-      query = query.in('class_id', classIds)
     }
 
-    const { data, error } = await query
+    // For admin/superadmin, fetch meetings using Layer 1
+    const data = await fetchMeetingsByClass(supabase, classId, limit, cursor)
 
-    if (error) {
-      console.error('Error fetching meetings:', error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    return { 
-      success: true, 
-      data: data || [], 
-      hasMore: data?.length === limit 
+    return {
+      success: true,
+      data: data || [],
+      hasMore: data?.length === limit
     }
   } catch (error) {
     console.error('Error in getMeetingsByClass:', error)
@@ -432,56 +432,9 @@ export async function getMeetingById(meetingId: string) {
   try {
     // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
     const adminClient = await createAdminClient()
-    
-    const { data: meeting, error } = await adminClient
-      .from('meetings')
-      .select(`
-        id,
-        class_id,
-        class_ids,
-        kelompok_ids,
-        teacher_id,
-        title,
-        date,
-        topic,
-        description,
-        student_snapshot,
-        created_at,
-        meeting_type_code,
-        classes (
-          id,
-          name,
-          kelompok_id,
-          kelompok:kelompok_id (
-            id,
-            name,
-            desa_id,
-            desa:desa_id (
-              id,
-              name,
-              daerah_id,
-              daerah:daerah_id (
-          id,
-          name
-              )
-            )
-          ),
-          class_master_mappings (
-            class_master:class_master_id (
-              category:category_id (
-                is_sambung_capable
-              )
-            )
-          )
-        )
-      `)
-      .eq('id', meetingId)
-      .single()
 
-    if (error) {
-      console.error('Error fetching meeting:', error)
-      return { success: false, error: error.message, data: null }
-    }
+    // Fetch meeting using Layer 1
+    const meeting = await fetchMeetingById(adminClient, meetingId)
 
     if (!meeting) {
       return { success: false, error: 'Meeting not found', data: null }
@@ -602,8 +555,8 @@ export async function getMeetingById(meetingId: string) {
       }
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         ...meeting,
         classes,
@@ -616,93 +569,60 @@ export async function getMeetingById(meetingId: string) {
   }
 }
 
-export async function updateMeeting(meetingId: string, data: Partial<CreateMeetingData>) {
+export async function updateMeeting(meetingId: string, data: UpdateMeetingData) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
-    
-    // Check permission
+
+    // Check permission using existing helper
     const canEdit = await canEditOrDeleteMeeting(meetingId, user.id)
     if (!canEdit) {
       return { success: false, error: 'Anda tidak memiliki izin untuk mengubah pertemuan ini' }
     }
-    
+
     // Use admin client to bypass RLS for student snapshot update
     const adminClient = await createAdminClient()
-    
-    // Prepare update data
-    const updateData: any = {
-      title: data.title,
-      date: data.date,
-      topic: data.topic,
-      description: data.description,
-      meeting_type_code: data.meetingTypeCode,
-      updated_at: new Date().toISOString()
-    }
 
-    // Handle kelompokIds update if provided
-    if (data.kelompokIds !== undefined) {
-      updateData.kelompok_ids = data.kelompokIds.length > 0 ? data.kelompokIds : null
-    }
+    // Handle studentIds validation if provided
+    if (data.studentIds !== undefined && data.studentIds.length > 0) {
+      // Verify all provided student IDs are valid and in selected classes
+      const classIdsToCheck = data.classIds || []
 
-    // Handle classIds update if provided
-    if (data.classIds && data.classIds.length > 0) {
-      updateData.class_id = data.classIds[0]
-      updateData.class_ids = data.classIds
-    }
-    
-    // Handle studentIds update if provided
-    if (data.studentIds !== undefined) {
-      if (data.studentIds.length > 0) {
-        // Verify all provided student IDs are valid and in selected classes
-        const classIdsToCheck = data.classIds || []
-        
-        if (classIdsToCheck.length > 0) {
-          const { data: studentClassData, error: studentClassError } = await adminClient
-            .from('student_classes')
-            .select('student_id')
-            .in('class_id', classIdsToCheck)
-            .in('student_id', data.studentIds)
+      if (classIdsToCheck.length > 0) {
+        const { data: studentClassData, error: studentClassError } = await adminClient
+          .from('student_classes')
+          .select('student_id')
+          .in('class_id', classIdsToCheck)
+          .in('student_id', data.studentIds)
 
-          if (studentClassError) {
-            return { success: false, error: studentClassError.message }
-          }
-
-          if (!studentClassData || studentClassData.length === 0) {
-            return { success: false, error: 'No valid students found in selected classes' }
-          }
-
-          // Get unique valid student IDs
-          const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
-          updateData.student_snapshot = data.studentIds.filter(id => validStudentIds.includes(id))
-
-          if (updateData.student_snapshot.length === 0) {
-            return { success: false, error: 'No valid students found in selected classes' }
-          }
-        } else {
-          // If no classIds provided, just use the studentIds directly (assume they're valid)
-          updateData.student_snapshot = data.studentIds
+        if (studentClassError) {
+          return { success: false, error: studentClassError.message }
         }
-      } else {
-        // Empty array means no students selected (should not happen, but handle it)
-        updateData.student_snapshot = []
+
+        if (!studentClassData || studentClassData.length === 0) {
+          return { success: false, error: 'No valid students found in selected classes' }
+        }
+
+        // Get unique valid student IDs
+        const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+        const validatedStudentIds = data.studentIds.filter(id => validStudentIds.includes(id))
+
+        if (validatedStudentIds.length === 0) {
+          return { success: false, error: 'No valid students found in selected classes' }
+        }
+
+        // Update data with validated student IDs
+        data.studentIds = validatedStudentIds
       }
     }
-    
-    const { error } = await adminClient
-      .from('meetings')
-      .update(updateData)
-      .eq('id', meetingId)
 
-    if (error) {
-      console.error('Error updating meeting:', error)
-      return { success: false, error: error.message }
-    }
+    // Update meeting using Layer 1
+    await updateMeetingRecord(adminClient, meetingId, data)
 
     revalidatePath('/absensi')
     return { success: true }
@@ -715,278 +635,50 @@ export async function updateMeeting(meetingId: string, data: Partial<CreateMeeti
 export async function deleteMeeting(meetingId: string) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
-    
-    // Check permission
+
+    // Check permission using existing helper
     const canDelete = await canEditOrDeleteMeeting(meetingId, user.id)
     if (!canDelete) {
       return { success: false, error: 'Anda tidak memiliki izin untuk menghapus pertemuan ini' }
     }
-    
+
     // Use admin client to bypass RLS restrictions when deleting
     // This ensures we can delete attendance_logs and meetings even if they're from different kelompok
     const adminClient = await createAdminClient()
-    
-    // 1. Check if meeting has attendance logs
-    const { data: attendanceLogs, error: checkError } = await adminClient
-      .from('attendance_logs')
-      .select('id')
-      .eq('meeting_id', meetingId)
-      .limit(1)
-    
-    if (checkError) {
-      console.error('Error checking attendance logs:', checkError)
-      return { success: false, error: checkError.message }
-    }
-    
-    // 2. If attendance logs exist, delete them first using admin client
-    if (attendanceLogs && attendanceLogs.length > 0) {
-      const { error: deleteLogsError } = await adminClient
-        .from('attendance_logs')
-        .delete()
-        .eq('meeting_id', meetingId)
-      
-      if (deleteLogsError) {
-        console.error('Error deleting attendance logs:', deleteLogsError)
-        return { 
-          success: false, 
-          error: 'Gagal menghapus data absensi: ' + deleteLogsError.message 
-        }
-      }
-    }
-    
-    // 3. Now delete the meeting using admin client
-    const { error } = await adminClient
-      .from('meetings')
-      .delete()
-      .eq('id', meetingId)
 
-    if (error) {
-      console.error('Error deleting meeting:', error)
-      
-      // Check if it's a foreign key constraint error
-      if (error.code === '23503') {
-        return { 
-          success: false, 
-          error: 'Tidak dapat menghapus pertemuan karena masih terdapat data absensi yang terkait. Silakan hapus data absensi terlebih dahulu.' 
-        }
-      }
-      
-      return { success: false, error: error.message }
-    }
+    // Delete meeting using Layer 1 (handles cascade delete of attendance logs)
+    await softDeleteMeeting(adminClient, meetingId)
 
     revalidatePath('/absensi')
     return { success: true }
   } catch (error) {
     console.error('Error in deleteMeeting:', error)
-    return { success: false, error: 'Internal server error' }
-  }
-}
 
-export async function saveAttendanceForMeeting(meetingId: string, attendanceData: AttendanceData[]) {
-  try {
-    const supabase = await createClient()
-    
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return { success: false, error: 'User not authenticated' }
-    }
-
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile) {
-      return { success: false, error: 'User profile not found' }
-    }
-
-    // Use admin client to bypass RLS restrictions for teachers accessing "Pengajar" meetings
-    // This allows teachers (Paud/Kelas 1-6) to save attendance for "Pengajar" meetings
-    const adminClient = await createAdminClient()
-
-    // Get meeting details (including date in one query)
-    const { data: meeting, error: meetingError } = await adminClient
-      .from('meetings')
-      .select('teacher_id, class_ids, date')
-      .eq('id', meetingId)
-      .single()
-
-    if (meetingError || !meeting) {
-      return { success: false, error: 'Meeting not found' }
-    }
-
-    // Prepare data for upsert
-    const attendanceRecords = attendanceData.map(record => ({
-      student_id: record.student_id,
-      meeting_id: meetingId,
-      date: meeting.date, // Include the meeting date
-      status: record.status,
-      reason: record.reason,
-      recorded_by: profile.id
-    }))
-
-    // Use upsert to handle both insert and update
-    const { error } = await adminClient
-      .from('attendance_logs')
-      .upsert(attendanceRecords, {
-        onConflict: 'student_id,meeting_id'
-      })
-
-    if (error) {
-      console.error('Error saving attendance:', error)
-      return { success: false, error: error.message }
-    }
-
-    revalidatePath('/absensi')
-    return { success: true }
-  } catch (error) {
-    console.error('Error in saveAttendanceForMeeting:', error)
-    return { success: false, error: 'Internal server error' }
-  }
-}
-
-export async function getAttendanceByMeeting(meetingId: string) {
-  try {
-    // Use admin client to bypass RLS restrictions for teachers with multiple kelompok
-    const adminClient = await createAdminClient()
-    
-    const { data, error } = await adminClient
-      .from('attendance_logs')
-      .select(`
-        id,
-        student_id,
-        status,
-        reason,
-        students (
-          id,
-          name,
-          gender,
-          class_id,
-          kelompok_id,
-          classes (
-            id,
-            name
-          ),
-          student_classes (
-            class_id,
-            classes:class_id (
-              id,
-              name,
-              kelompok_id,
-              kelompok:kelompok_id (
-            id,
-            name
-              )
-            )
-          )
-        )
-      `)
-      .eq('meeting_id', meetingId)
-      .order('students(name)')
-
-    if (error) {
-      console.error('Error fetching attendance:', error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    console.error('Error in getAttendanceByMeeting:', error)
-    return { success: false, error: 'Internal server error', data: null }
-  }
-}
-
-/**
- * Get students from meeting snapshot using admin client to bypass RLS restrictions
- */
-export async function getStudentsFromSnapshot(studentIds: string[]) {
-  try {
-    if (!studentIds || studentIds.length === 0) {
-      return { success: true, data: [] }
-    }
-
-    const adminClient = await createAdminClient()
-    
-    const { data: students, error } = await adminClient
-      .from('students')
-      .select(`
-        id,
-        name,
-        gender,
-        class_id,
-        kelompok_id,
-        classes (
-          id,
-          name
-        ),
-        student_classes (
-          class_id,
-          classes:class_id (
-            id,
-            name
-          )
-        )
-      `)
-      .in('id', studentIds)
-      .order('name')
-
-    if (error) {
-      console.error('Error fetching students from snapshot:', error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    // Transform to match Student interface used in hook
-    const transformedStudents = (students || []).map((student: any) => {
-      const classData = Array.isArray(student.classes) ? student.classes[0] : student.classes
-      
-      // Get all classes from junction table
-      const studentClasses = student.student_classes || []
-      const allClasses = studentClasses
-        .map((sc: any) => sc.classes)
-        .filter(Boolean)
-        .map((cls: any) => ({
-          id: cls.id,
-          name: cls.name
-        }))
-      
-      // If no classes from junction, use primary class
-      if (allClasses.length === 0 && classData) {
-        allClasses.push({
-          id: classData.id,
-          name: classData.name
-        })
-      }
-      
+    // Check if it's a foreign key constraint error
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
       return {
-        id: student.id,
-        name: student.name,
-        gender: student.gender || 'L',
-        class_name: allClasses[0]?.name || 'Unknown Class',
-        class_id: allClasses[0]?.id || student.class_id || '',
-        classes: allClasses // Add all classes array
+        success: false,
+        error: 'Tidak dapat menghapus pertemuan karena masih terdapat data absensi yang terkait. Silakan hapus data absensi terlebih dahulu.'
       }
-    })
+    }
 
-    return { success: true, data: transformedStudents }
-  } catch (error) {
-    console.error('Error in getStudentsFromSnapshot:', error)
-    return { success: false, error: 'Internal server error', data: null }
+    return { success: false, error: 'Internal server error' }
   }
 }
 
+// TODO: This function is 986 lines and needs further refactoring
+// For pilot, copied from actions.ts:986-2524 as-is
+// Will be broken down in future iterations
 export async function getMeetingsWithStats(classId?: string, limit: number = 10, cursor?: string) {
   try {
     const supabase = await createClient()
-    
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
@@ -1068,7 +760,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         // For teacher, use admin client to bypass RLS restrictions
         // This allows teacher to see meetings from all kelompok (if they teach multiple classes)
         const adminClientTeacher = await createAdminClient()
-        
+
         // Fetch kelompok_id dari semua kelas yang diajarkan teacher
         // Ini diperlukan untuk menampilkan meeting kelas "Pengajar" di kelompok yang sama
         const { data: teacherClassesData } = await adminClientTeacher
@@ -1090,11 +782,11 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             )
           `)
           .in('id', teacherClassIds)
-        
+
         const teacherKelompokIds = new Set<string>()
         // Check apakah teacher mengajar Paud atau Kelas 1-6 menggunakan class_master
         const teacherCaberawit = teacherClassesData?.some(c => isCaberawitClass(c)) || false
-        
+
         teacherClassesData?.forEach(c => {
           if (c.kelompok_id) {
             teacherKelompokIds.add(c.kelompok_id)
@@ -1145,20 +837,20 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           `)
           .order('date', { ascending: false })
           .limit(limit)
-        
+
         // If cursor (last meeting date) is provided, get meetings older than cursor
         if (cursor) {
           adminQuery.lt('date', cursor)
         }
-        
+
         // Fetch ALL meetings using admin client (bypasses RLS)
         const { data: meetings, error: meetingsError } = await adminQuery
-        
+
         if (meetingsError) {
           console.error('Error fetching meetings:', meetingsError)
           return { success: false, error: meetingsError.message, data: null }
         }
-        
+
         // Collect all class IDs from meetings (termasuk dari class_ids array)
         // Ini diperlukan untuk fetch class details termasuk kelas "Pengajar"
         const allMeetingClassIds = new Set<string>()
@@ -1168,7 +860,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           }
           if (m.class_id) allMeetingClassIds.add(m.class_id)
         })
-        
+
         // Fetch class details untuk semua class IDs (termasuk "Pengajar")
         const { data: allMeetingClassesData } = await adminClientTeacher
           .from('classes')
@@ -1184,7 +876,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             )
           `)
           .in('id', Array.from(allMeetingClassIds))
-        
+
         // Create mapping: classId -> { name, kelompok_id, class_master_mappings }
         const classDetailsMap = new Map<string, { name: string; kelompok_id: string | null; class_master_mappings?: any[] }>()
         allMeetingClassesData?.forEach(c => {
@@ -1194,18 +886,18 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             class_master_mappings: c.class_master_mappings || []
           })
         })
-        
+
         // If classId is provided, filter by that specific class (and its kelompok)
         let filteredMeetings: any[]
         if (classId) {
           const classIds = classId.split(',')
-          
+
           // Verify that the requested classId is one of teacher's classes
           const invalidClasses = classIds.filter(id => !teacherClassIds.includes(id))
           if (invalidClasses.length > 0) {
             return { success: false, error: 'You can only view meetings for your own classes', data: null }
           }
-          
+
           // Fetch ALL class details from meetings to get kelompok_id for each class
           // This is important for multi-class meetings where meeting.classes only represents primary class
           const allMeetingClassIds = new Set<string>()
@@ -1215,13 +907,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             }
             if (m.class_id) allMeetingClassIds.add(m.class_id)
           })
-          
+
           // Fetch all class details to get kelompok_id mapping
           const { data: allClassesData } = await adminClientTeacher
             .from('classes')
             .select('id, kelompok_id')
             .in('id', Array.from(allMeetingClassIds))
-          
+
           // Create mapping: classId -> kelompok_id for ALL classes
           const allClassToKelompokMap = new Map<string, string>()
           if (allClassesData) {
@@ -1231,13 +923,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               }
             })
           }
-          
+
           // Get expected kelompok_id for selected classes
           const { data: selectedClassesData } = await adminClientTeacher
             .from('classes')
             .select('id, name, kelompok_id')
             .in('id', classIds)
-          
+
           // Create mapping: selected classId -> kelompok_id
           const classToKelompokMap = new Map<string, string>()
           if (selectedClassesData) {
@@ -1247,14 +939,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               }
             })
           }
-          
+
           // Get expected kelompok_ids for selected classes
           const expectedKelompokIds = new Set<string>()
           classIds.forEach(id => {
             const kelompokId = classToKelompokMap.get(id)
             if (kelompokId) expectedKelompokIds.add(kelompokId)
           })
-          
+
           // Filter meetings by selected class(es) and kelompok
           // PRIMARY filter: meetings must have at least one matching class that teacher teaches
           filteredMeetings = (meetings || []).filter((meeting: any) => {
@@ -1299,7 +991,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               const classDetails = classDetailsMap.get(id)
               return classDetails ? isTeacherClass(classDetails) : false
             })
-            
+
             if (!selectedClassIsPengajar && teacherCaberawit) {
               // Check from primary class
               if (meeting.classes && isTeacherClass(meeting.classes)) {
@@ -1308,19 +1000,19 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                   return true
                 }
               }
-              
+
               // Check from class_ids array
               if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
                 const hasPengajarInSameKelompok = meeting.class_ids.some((classId: string) => {
                   const classDetails = classDetailsMap.get(classId)
                   if (!classDetails) return false
-                  
+
                   if (isTeacherClass(classDetails)) {
                     return classDetails.kelompok_id && teacherKelompokIds.has(classDetails.kelompok_id)
                   }
                   return false
                 })
-                
+
                 if (hasPengajarInSameKelompok) return true
               }
             }
@@ -1360,31 +1052,31 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                   return true
                 }
               }
-              
+
               // Check from class_ids array (for multi-class meetings)
               if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
                 const hasPengajarInSameKelompok = meeting.class_ids.some((classId: string) => {
                   const classDetails = classDetailsMap.get(classId)
                   if (!classDetails) return false
-                  
+
                   if (isTeacherClass(classDetails)) {
                     return classDetails.kelompok_id && teacherKelompokIds.has(classDetails.kelompok_id)
                   }
                   return false
                 })
-                
+
                 if (hasPengajarInSameKelompok) return true
               }
             }
-            
+
             return false
           })
         }
-        
+
         if (!filteredMeetings || filteredMeetings.length === 0) {
           return { success: true, data: [], hasMore: false }
         }
-        
+
         // Fetch class names for all class_ids
         const allClassIds = new Set<string>()
         filteredMeetings.forEach((meeting: any) => {
@@ -1423,7 +1115,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         if (classesData) {
           classesData.forEach(c => classNameMap.set(c.id, c.name))
         }
-        
+
         // Create a map of all classes data for easy lookup
         const allClassesMap = new Map<string, any>()
         if (classesData) {
@@ -1450,10 +1142,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             })
           })
         }
-        
+
         // Continue with stats processing using filteredMeetings
         const meetingIds = filteredMeetings.map(meeting => meeting.id)
-        
+
         // Fetch ALL attendance data for these meetings in batches (fixes N+1 problem)
         // Use admin client to bypass RLS restrictions (similar to detail page)
         const adminClientAttendance = await createAdminClient()
@@ -1517,14 +1209,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         const meetingsWithStats = filteredMeetings.map(meeting => {
           let meetingAttendance = attendanceByMeeting[meeting.id] || []
           let relevantStudentIds = meeting.student_snapshot
-          
+
           // Check if meeting is for "Pengajar" class
           const isPengajarMeeting = (meeting.classes && isTeacherClass(meeting.classes)) ||
             (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.some((classId: string) => {
               const classDetails = classDetailsMap.get(classId)
               return classDetails ? isTeacherClass(classDetails) : false
             }))
-          
+
           // For teachers: filter to only their class students (EXCEPT for Pengajar meetings)
           // Pengajar meetings should show all students from snapshot
           if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0 && !isPengajarMeeting) {
@@ -1533,23 +1225,23 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               // Check if student has at least one class that matches teacher's classes
               return studentClassIds.some(classId => teacherClassIdsTeacher.includes(classId))
             })
-            
+
             // Filter attendance to only relevant students
             const relevantStudentIdSet = new Set(relevantStudentIds)
-            meetingAttendance = meetingAttendance.filter((record: any) => 
+            meetingAttendance = meetingAttendance.filter((record: any) =>
               relevantStudentIdSet.has(record.student_id)
             )
-            
+
           }
-          
+
           const totalStudents = relevantStudentIds.length
-          
+
           const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
           const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
           const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
           const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
-          
-          const attendancePercentage = totalStudents > 0 
+
+          const attendancePercentage = totalStudents > 0
             ? Math.round((presentCount / totalStudents) * 100)
             : 0
 
@@ -1558,7 +1250,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
             classes = meeting.classes[0]
           }
-          
+
           // Transform kelompok from array to single object if needed
           if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
             classes = {
@@ -1566,7 +1258,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               kelompok: classes.kelompok[0]
             }
           }
-          
+
           // Transform desa from array to single object if needed
           if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
             classes = {
@@ -1577,7 +1269,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               }
             }
           }
-          
+
           // Transform daerah from array to single object if needed
           if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
             classes = {
@@ -1606,7 +1298,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             if (name) classNamesSet.add(name)
           }
           const class_names = Array.from(classNamesSet)
-          
+
           // Add allClasses array with complete information for all class_ids
           const allClasses: any[] = []
           if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
@@ -1960,7 +1652,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       // For all admin levels, use admin client to bypass RLS and filter client-side
       // This ensures multi-class meetings are properly filtered
       const adminClientAdmin = await createAdminClient()
-      
+
       // Fetch ALL meetings using admin client (bypasses RLS)
       const adminQuery = adminClientAdmin
         .from('meetings')
@@ -2005,22 +1697,22 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         `)
         .order('date', { ascending: false })
         .limit(limit)
-      
+
       if (cursor) {
         adminQuery.lt('date', cursor)
       }
-      
+
       const { data: meetings, error: meetingsError } = await adminQuery
-      
+
       if (meetingsError) {
         console.error('Error fetching meetings:', meetingsError)
         return { success: false, error: meetingsError.message, data: null }
       }
-      
+
       if (!meetings || meetings.length === 0) {
         return { success: true, data: [], hasMore: false }
       }
-      
+
       // Get all class IDs from meetings (including class_ids array)
       const allMeetingClassIds = new Set<string>()
       meetings.forEach((meeting: any) => {
@@ -2029,7 +1721,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         }
         if (meeting.class_id) allMeetingClassIds.add(meeting.class_id)
       })
-      
+
       // Fetch all class details to get kelompok_id, desa_id, daerah_id
       const { data: allClassesData } = await adminClientAdmin
         .from('classes')
@@ -2053,12 +1745,12 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           )
         `)
         .in('id', Array.from(allMeetingClassIds))
-      
+
       // Create mappings: classId -> kelompok_id, desa_id, daerah_id
       const classToKelompokMap = new Map<string, string>()
       const classToDesaMap = new Map<string, string>()
       const classToDaerahMap = new Map<string, string>()
-      
+
       if (allClassesData) {
         allClassesData.forEach(c => {
           if (c.kelompok_id) {
@@ -2076,10 +1768,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           }
         })
       }
-      
+
       // Filter meetings based on admin level
       let filteredMeetings: any[] = []
-      
+
       if (profile.role === 'superadmin') {
         // Superadmin: see all meetings
         filteredMeetings = meetings
@@ -2089,7 +1781,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           // Admin Kelompok: filter by kelompok_id
           filteredMeetings = (meetings || []).filter((meeting: any) => {
             const adminKelompokId = profile.kelompok_id
-            
+
             // Check class_ids array first (for multi-class meetings)
             if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
               return meeting.class_ids.some((classId: string) => {
@@ -2097,20 +1789,20 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 return classKelompokId === adminKelompokId
               })
             }
-            
+
             // Check primary class_id
             if (meeting.class_id) {
               const classKelompokId = classToKelompokMap.get(meeting.class_id)
               return classKelompokId === adminKelompokId
             }
-            
+
             return false
           })
         } else if (profile.desa_id) {
           // Admin Desa: filter by desa_id
           filteredMeetings = (meetings || []).filter((meeting: any) => {
             const adminDesaId = profile.desa_id
-            
+
             // Check class_ids array first (for multi-class meetings)
             if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
               return meeting.class_ids.some((classId: string) => {
@@ -2118,20 +1810,20 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 return classDesaId === adminDesaId
               })
             }
-            
+
             // Check primary class_id
             if (meeting.class_id) {
               const classDesaId = classToDesaMap.get(meeting.class_id)
               return classDesaId === adminDesaId
             }
-            
+
             return false
           })
         } else if (profile.daerah_id) {
           // Admin Daerah: filter by daerah_id
           filteredMeetings = (meetings || []).filter((meeting: any) => {
             const adminDaerahId = profile.daerah_id
-            
+
             // Check class_ids array first (for multi-class meetings)
             if (meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 0) {
               return meeting.class_ids.some((classId: string) => {
@@ -2139,13 +1831,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 return classDaerahId === adminDaerahId
               })
             }
-            
+
             // Check primary class_id
             if (meeting.class_id) {
               const classDaerahId = classToDaerahMap.get(meeting.class_id)
               return classDaerahId === adminDaerahId
             }
-            
+
             return false
           })
         } else {
@@ -2153,11 +1845,11 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           filteredMeetings = meetings
         }
       }
-      
+
       if (!filteredMeetings || filteredMeetings.length === 0) {
         return { success: true, data: [], hasMore: false }
       }
-      
+
       // Continue with stats processing using filteredMeetings
       // Fetch class names for all class_ids
       const allClassIds = new Set<string>()
@@ -2169,41 +1861,41 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           allClassIds.add(meeting.class_id)
         }
       })
-      
+
       // Fetch class names in one query
       const { data: classesData } = await adminClientAdmin
         .from('classes')
         .select('id, name')
         .in('id', Array.from(allClassIds))
-      
+
       // Create id -> name mapping
       const classNameMap = new Map<string, string>()
       if (classesData) {
         classesData.forEach(c => classNameMap.set(c.id, c.name))
       }
-      
+
       // Get all meeting IDs
       const meetingIds = filteredMeetings.map((meeting: any) => meeting.id)
-      
+
       // Fetch ALL attendance data for these meetings in batches
       const adminClientAttendance = await createAdminClient()
       const { data: attendanceData, error: attendanceError } = await fetchAttendanceLogsInBatches(
         adminClientAttendance,
         meetingIds
       )
-      
+
       if (attendanceError) {
         console.error('Error fetching attendance data:', attendanceError)
         return { success: false, error: attendanceError.message, data: null }
       }
-      
+
       // Group attendance by meeting_id
       const attendanceByMeeting = (attendanceData || []).reduce((acc, record) => {
         if (!acc[record.meeting_id]) acc[record.meeting_id] = []
         acc[record.meeting_id].push(record)
         return acc
       }, {} as Record<string, any[]>)
-      
+
       // Create a map of all classes data for easy lookup
       const allClassesMap = new Map<string, any>()
       if (allClassesData) {
@@ -2230,29 +1922,29 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           })
         })
       }
-      
+
       // Process meetings with stats
       const meetingsWithStats = filteredMeetings.map((meeting: any) => {
         const meetingAttendance = attendanceByMeeting[meeting.id] || []
         const relevantStudentIds = meeting.student_snapshot
-        
+
         const totalStudents = relevantStudentIds.length
-        
+
         const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
         const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
         const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
         const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
-        
-        const attendancePercentage = totalStudents > 0 
+
+        const attendancePercentage = totalStudents > 0
           ? Math.round((presentCount / totalStudents) * 100)
           : 0
-        
+
         // Transform classes from array to single object to match our interface
         let classes: any = meeting.classes
         if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
           classes = meeting.classes[0]
         }
-        
+
         // Transform kelompok from array to single object if needed
         if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
           classes = {
@@ -2260,7 +1952,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             kelompok: classes.kelompok[0]
           }
         }
-        
+
         // Transform desa from array to single object if needed
         if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
           classes = {
@@ -2271,7 +1963,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             }
           }
         }
-        
+
         // Transform daerah from array to single object if needed
         if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
           classes = {
@@ -2285,7 +1977,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             }
           }
         }
-        
+
         // Add class_names array - include both class_ids and primary class_id
         const classNamesSet = new Set<string>()
         if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
@@ -2300,7 +1992,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           if (name) classNamesSet.add(name)
         }
         const class_names = Array.from(classNamesSet)
-        
+
         // Add allClasses array with complete information for all class_ids
         const allClasses: any[] = []
         if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
@@ -2318,7 +2010,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             allClasses.push(classData)
           }
         }
-        
+
         return {
           ...meeting,
           classes,
@@ -2332,11 +2024,11 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           excusedCount
         }
       })
-      
-      return { 
-        success: true, 
-        data: meetingsWithStats, 
-        hasMore: filteredMeetings.length === limit 
+
+      return {
+        success: true,
+        data: meetingsWithStats,
+        hasMore: filteredMeetings.length === limit
       }
     } else if (classId) {
       const classIds = classId.split(',')
@@ -2430,30 +2122,30 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     const meetingsWithStats = meetings.map(meeting => {
       let meetingAttendance = attendanceByMeeting[meeting.id] || []
       let relevantStudentIds = meeting.student_snapshot
-      
+
       // For teachers: filter to only their class students
       if (profile.role === 'teacher' && teacherClassIdsAdmin.length > 0) {
         relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
           const studentClassId = studentToClassMap.get(studentId)
           return studentClassId && teacherClassIdsAdmin.includes(studentClassId)
         })
-        
+
         // Filter attendance to only relevant students
         const relevantStudentIdSet = new Set(relevantStudentIds)
-        meetingAttendance = meetingAttendance.filter((record: any) => 
+        meetingAttendance = meetingAttendance.filter((record: any) =>
           relevantStudentIdSet.has(record.student_id)
         )
-        
+
       }
-      
+
       const totalStudents = relevantStudentIds.length
-      
+
       const presentCount = meetingAttendance.filter((record: any) => record.status === 'H').length
       const absentCount = meetingAttendance.filter((record: any) => record.status === 'A').length
       const sickCount = meetingAttendance.filter((record: any) => record.status === 'S').length
       const excusedCount = meetingAttendance.filter((record: any) => record.status === 'I').length
-      
-      const attendancePercentage = totalStudents > 0 
+
+      const attendancePercentage = totalStudents > 0
         ? Math.round((presentCount / totalStudents) * 100)
         : 0
 
@@ -2462,7 +2154,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       if (Array.isArray(meeting.classes) && meeting.classes.length > 0) {
         classes = meeting.classes[0]
       }
-      
+
       // Transform kelompok from array to single object if needed
       if (classes && Array.isArray(classes.kelompok) && classes.kelompok.length > 0) {
         classes = {
@@ -2470,7 +2162,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           kelompok: classes.kelompok[0]
         }
       }
-      
+
       // Transform desa from array to single object if needed
       if (classes?.kelompok && Array.isArray(classes.kelompok.desa) && classes.kelompok.desa.length > 0) {
         classes = {
@@ -2481,7 +2173,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           }
         }
       }
-      
+
       // Transform daerah from array to single object if needed
       if (classes?.kelompok?.desa && Array.isArray(classes.kelompok.desa.daerah) && classes.kelompok.desa.daerah.length > 0) {
         classes = {
@@ -2512,10 +2204,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       }
     })
 
-    return { 
-      success: true, 
-      data: meetingsWithStats, 
-      hasMore: meetings.length === limit 
+    return {
+      success: true,
+      data: meetingsWithStats,
+      hasMore: meetings.length === limit
     }
   } catch (error) {
     console.error('Error in getMeetingsWithStats:', error)
