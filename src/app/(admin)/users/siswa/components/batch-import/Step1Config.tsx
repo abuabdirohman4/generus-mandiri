@@ -9,11 +9,11 @@ import { useBatchImportStore } from '../../stores/batchImportStore'
 import { hasDraft, loadDraft } from '../../utils/draftStorage'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isAdminDesa } from '@/lib/userUtils'
-import { Class } from '@/app/(admin)/users/siswa/actions/classes'
+import { Class } from '@/app/(admin)/users/siswa/actions'
 
 interface Step1ConfigProps {
-  userProfile: { 
-    role: string; 
+  userProfile: {
+    role: string;
     classes?: Class[];
   } | null | undefined
   classes: Class[]
@@ -52,7 +52,7 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
 
   const handleLoadDraft = () => {
     if (!selectedClassId) return
-    
+
     const draftStudents = loadDraft(selectedClassId)
     if (draftStudents) {
       setStudents(draftStudents)
@@ -65,12 +65,12 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
       alert('Pilih kelas terlebih dahulu')
       return
     }
-    
+
     if (batchSize < 1 || batchSize > 20) {
       alert('Jumlah siswa harus antara 1-20')
       return
     }
-    
+
     onNext()
   }
 
@@ -146,8 +146,8 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
           options={availableClasses.map((cls) => ({
             value: cls.id,
             label: showKelompokInLabel && cls.kelompok?.name
-                ? `${cls.kelompok.name} - ${cls.name}`
-                : cls.name,
+              ? `${cls.kelompok.name} - ${cls.name}`
+              : cls.name,
           }))}
           allOptionLabel="Pilih kelas"
           widthClassName="!max-w-full"

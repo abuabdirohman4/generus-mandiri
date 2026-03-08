@@ -9,7 +9,7 @@
  */
 
 import type { StudentWithOrg } from '@/types/student'
-import { canTeacherAccessStudent } from './accessControl'
+import { canTeacherAccessStudent } from '@/lib/accessControl'
 
 export type { StudentWithOrg }
 

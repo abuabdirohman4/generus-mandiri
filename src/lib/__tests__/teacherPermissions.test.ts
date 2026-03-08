@@ -6,7 +6,7 @@ import {
   canHardDeleteStudent,
   type UserProfile,
   type StudentWithOrg
-} from '@/lib/studentPermissions'
+} from '@/app/(admin)/users/siswa/actions/students/permissions'
 
 describe('Teacher Permissions by Scope', () => {
   const teacherDesaWithPerms: UserProfile = {

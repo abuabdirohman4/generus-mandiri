@@ -13,7 +13,7 @@ import {
   canTransferStudent,
   canSoftDeleteStudent,
   canHardDeleteStudent
-} from '@/lib/studentPermissions'
+} from '../actions/students/permissions'
 
 interface StudentsTableProps {
   students: Student[]
@@ -71,7 +71,7 @@ export default function StudentsTable({
     isLoading: false,
     deletedAt: null
   })
-  
+
   const handleStudentClick = (studentId: string, column: 'name' | 'actions') => {
     setLoadingStudentId(studentId)
     setClickedColumn(column)
@@ -148,9 +148,9 @@ export default function StudentsTable({
       { key: 'name', label: 'Nama', widthMobile: '200px', align: 'left' as const },
       { key: 'gender', label: 'Jenis Kelamin', align: 'center' as const },
     ];
-    
+
     const orgColumns = [];
-    
+
     // Only show org columns for admin users
     if (isAdminLegacy(userProfile?.role)) {
       // Superadmin sees all
@@ -184,7 +184,7 @@ export default function StudentsTable({
         );
       }
     }
-    
+
     // Teacher organizational columns
     if (userProfile?.role === 'teacher') {
       const isTeacherDaerah = userProfile.daerah_id && !userProfile.desa_id && !userProfile.kelompok_id
@@ -211,7 +211,7 @@ export default function StudentsTable({
         )
       }
     }
-    
+
     return [
       ...baseColumns,
       ...orgColumns,
@@ -227,11 +227,11 @@ export default function StudentsTable({
       if (!student || typeof student !== 'object') {
         return '-'
       }
-      
+
       if (!student.classes || !Array.isArray(student.classes) || student.classes.length === 0) {
         return String(student.class_name || '-')
       }
-      
+
       // If admin, show all classes
       if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
         return student.classes
@@ -243,7 +243,7 @@ export default function StudentsTable({
       // If teacher with hierarchical access (Guru Desa/Daerah), show all classes like admin
       if (userProfile?.role === 'teacher') {
         const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
-                                       (!userProfile.classes || userProfile.classes.length === 0)
+          (!userProfile.classes || userProfile.classes.length === 0)
 
         if (isHierarchicalTeacher) {
           // Show all student classes (like admin)
@@ -270,7 +270,7 @@ export default function StudentsTable({
             .join(', ') || '-'
         }
       }
-      
+
       // Default: return first class
       const firstClass = student.classes[0]
       return (firstClass && firstClass.name) ? String(firstClass.name) : '-'
@@ -281,45 +281,45 @@ export default function StudentsTable({
   }
 
   // Ensure students is an array and filter out invalid entries
-  const validStudents = Array.isArray(students) 
+  const validStudents = Array.isArray(students)
     ? students.filter(s => s && typeof s === 'object' && s.id && s.name)
     : []
 
   const tableData = validStudents.length > 0
     ? validStudents
-        .sort((a, b) => {
-          const nameA = String(a.name || '').toLowerCase()
-          const nameB = String(b.name || '').toLowerCase()
-          return nameA.localeCompare(nameB)
-        })
-        .map((student) => {
-          try {
-            return {
-              id: String(student.id || ''),
-              name: String(student.name || ''),
-              gender: String(student.gender || '-'),
-              class_name: getDisplayClasses(student),
-              daerah_name: String(student.daerah_name || '-'),
-              desa_name: String(student.desa_name || '-'),
-              kelompok_name: String(student.kelompok_name || '-'),
-              actions: String(student.id || ''), // We'll use this in renderCell
-            }
-          } catch (error) {
-            console.error('Error mapping student to table data:', error, student)
-            return null
+      .sort((a, b) => {
+        const nameA = String(a.name || '').toLowerCase()
+        const nameB = String(b.name || '').toLowerCase()
+        return nameA.localeCompare(nameB)
+      })
+      .map((student) => {
+        try {
+          return {
+            id: String(student.id || ''),
+            name: String(student.name || ''),
+            gender: String(student.gender || '-'),
+            class_name: getDisplayClasses(student),
+            daerah_name: String(student.daerah_name || '-'),
+            desa_name: String(student.desa_name || '-'),
+            kelompok_name: String(student.kelompok_name || '-'),
+            actions: String(student.id || ''), // We'll use this in renderCell
           }
-        })
-        .filter(Boolean) // Remove any null entries
+        } catch (error) {
+          console.error('Error mapping student to table data:', error, student)
+          return null
+        }
+      })
+      .filter(Boolean) // Remove any null entries
     : []
 
   const renderCell = (column: any, item: any, index: number) => {
     if (column.key === 'actions') {
       const student = validStudents.find(s => s && s.id === item.actions);
-      
+
       if (!student) {
         return null;
       }
-      
+
       return (
         <div className="flex gap-4 justify-center items-center">
           {/* View Attendance - Link to student detail */}
@@ -404,11 +404,10 @@ export default function StudentsTable({
               <button
                 onClick={() => !hasPendingTransfer && onTransfer([student])}
                 disabled={hasPendingTransfer}
-                className={`transition-colors ${
-                  hasPendingTransfer
+                className={`transition-colors ${hasPendingTransfer
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300'
-                }`}
+                  }`}
                 title={hasPendingTransfer ? 'Siswa memiliki permintaan transfer yang pending' : 'Transfer'}
               >
                 <svg
@@ -460,17 +459,17 @@ export default function StudentsTable({
         </div>
       );
     }
-    
+
     // Handle name column - make it clickable
     if (column.key === 'name') {
       const student = validStudents.find(s => s && s.id === item.actions)
-      
+
       if (!student) {
         return item.name || '-'
       }
-      
+
       return (
-        <Link 
+        <Link
           href={`/users/siswa/${student.id}`}
           className="hover:text-blue-600 hover:underline"
           onClick={() => handleStudentClick(student.id, 'name')}
@@ -479,12 +478,12 @@ export default function StudentsTable({
         </Link>
       )
     }
-    
+
     // Handle organizational columns
     if (['daerah_name', 'desa_name', 'kelompok_name', 'class_name'].includes(column.key)) {
       return item[column.key] || '-';
     }
-    
+
     return item[column.key] || '-'
   }
 

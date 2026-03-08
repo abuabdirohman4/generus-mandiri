@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { classKeys } from '@/lib/swr'
 import { getCurrentUserId } from '@/lib/userUtils'
-import { getAllClasses, type Class } from '@/app/(admin)/users/siswa/actions/classes'
+import { getAllClasses, type Class } from '@/app/(admin)/users/siswa/actions'
 
 const fetcher = async (): Promise<Class[]> => {
   // Add timeout wrapper to prevent infinite loading
