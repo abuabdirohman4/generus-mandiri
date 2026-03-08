@@ -3,154 +3,21 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import {
+  calculateAttendanceStats,
+  validateAttendanceData
+} from './logic'
+import {
+  upsertAttendanceLogs,
+  fetchAttendanceByDate,
+  fetchAttendanceByMeeting,
+  fetchStudentsByIds
+} from './queries'
+import type {
   AttendanceData,
   AttendanceLog,
   AttendanceStats,
   AttendanceSaveResult
 } from '@/types/attendance'
-import {
-  calculateAttendanceStats,
-  validateAttendanceData
-} from '../utils/attendanceCalculation'
-
-// ============================================================================
-// LAYER 1: DATABASE QUERIES (Private)
-// ============================================================================
-
-/**
- * Upserts attendance logs in the database
- * @private
- */
-async function upsertAttendanceLogs(
-  supabase: any,
-  records: Array<{
-    student_id: string
-    date: string
-    meeting_id?: string | null
-    status: 'H' | 'I' | 'S' | 'A'
-    reason?: string | null
-    recorded_by: string
-  }>
-): Promise<{ error: any }> {
-  const conflictKey = records[0]?.meeting_id
-    ? 'student_id,meeting_id'
-    : 'student_id,date'
-
-  return await supabase
-    .from('attendance_logs')
-    .upsert(records, { onConflict: conflictKey })
-}
-
-/**
- * Fetches attendance logs for a specific date
- * @private
- */
-async function fetchAttendanceByDate(
-  supabase: any,
-  date: string
-): Promise<{ data: any[] | null; error: any }> {
-  return await supabase
-    .from('attendance_logs')
-    .select(`
-      id,
-      student_id,
-      date,
-      status,
-      reason,
-      students (
-        id,
-        name,
-        gender,
-        class_id,
-        classes (
-          id,
-          name
-        )
-      )
-    `)
-    .eq('date', date)
-    .order('students(name)')
-}
-
-/**
- * Fetches attendance logs for a specific meeting
- * @private
- */
-async function fetchAttendanceByMeeting(
-  supabase: any,
-  meetingId: string
-): Promise<{ data: any[] | null; error: any }> {
-  return await supabase
-    .from('attendance_logs')
-    .select(`
-      id,
-      student_id,
-      status,
-      reason,
-      students (
-        id,
-        name,
-        gender,
-        class_id,
-        kelompok_id,
-        classes (
-          id,
-          name
-        ),
-        student_classes (
-          class_id,
-          classes:class_id (
-            id,
-            name,
-            kelompok_id,
-            kelompok:kelompok_id (
-              id,
-              name
-            )
-          )
-        )
-      )
-    `)
-    .eq('meeting_id', meetingId)
-    .order('students(name)')
-}
-
-/**
- * Fetches students by their IDs with class information
- * @private
- */
-async function fetchStudentsByIds(
-  supabase: any,
-  studentIds: string[]
-): Promise<{ data: any[] | null; error: any }> {
-  return await supabase
-    .from('students')
-    .select(`
-      id,
-      name,
-      gender,
-      class_id,
-      kelompok_id,
-      classes (
-        id,
-        name
-      ),
-      student_classes (
-        class_id,
-        classes:class_id (
-          id,
-          name
-        )
-      )
-    `)
-    .in('id', studentIds)
-    .order('name')
-}
-
-// ============================================================================
-// LAYER 2: BUSINESS LOGIC - Imported from ../utils/attendanceCalculation.ts
-// ============================================================================
-// calculateAttendanceStats, validateAttendanceData
 
 // ============================================================================
 // LAYER 3: SERVER ACTIONS (Exported)

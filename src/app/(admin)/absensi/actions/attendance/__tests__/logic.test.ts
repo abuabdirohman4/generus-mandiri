@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest'
 import {
   calculateAttendanceStats,
   validateAttendanceData
-} from '../attendanceCalculation'
+} from '../logic'
 import type { AttendanceLog, AttendanceData } from '@/types/attendance'
 
 describe('Attendance Calculation Functions', () => {

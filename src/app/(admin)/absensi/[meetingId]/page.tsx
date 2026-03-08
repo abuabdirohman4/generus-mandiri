@@ -15,7 +15,7 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId, shouldShowKelompokFilter } from '@/lib/userUtils'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/utils/meetingHelpersClient'
+import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/actions/meetings/helpers.client'
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'

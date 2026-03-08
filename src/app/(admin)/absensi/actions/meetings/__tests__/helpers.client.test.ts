@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { canUserEditMeetingAttendance } from '../meetingHelpersClient'
+import { canUserEditMeetingAttendance } from '../helpers.client'
 
 describe('canUserEditMeetingAttendance', () => {
     it('should allow superadmin and admin', () => {

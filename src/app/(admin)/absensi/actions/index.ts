@@ -1,17 +1,14 @@
 // Re-export all server actions for backward compatibility
-// This allows existing imports like:
-//   import { createMeeting } from '@/app/(admin)/absensi/actions'
-// to continue working without changes
+// Components continue to use: import { createMeeting } from '@/app/(admin)/absensi/actions'
 
-// Server Actions - from action files
 export {
   createMeeting,
   updateMeeting,
   deleteMeeting,
   getMeetingById,
   getMeetingsByClass,
-  getMeetingsWithStats,
-} from './meetings'
+  getMeetingsWithStats
+} from './meetings/actions'
 
 export {
   saveAttendance,
@@ -19,17 +16,5 @@ export {
   getAttendanceByDate,
   getAttendanceByMeeting,
   getAttendanceStats,
-  getStudentsFromSnapshot,
-} from './attendance'
-
-// Business Logic Functions - from utils files
-export {
-  validateMeetingData,
-  buildStudentSnapshot,
-  canUserAccessMeeting,
-} from '../utils/meetingValidation'
-
-export {
-  calculateAttendanceStats,
-  validateAttendanceData,
-} from '../utils/attendanceCalculation'
+  getStudentsFromSnapshot
+} from './attendance/actions'

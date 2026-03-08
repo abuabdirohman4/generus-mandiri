@@ -1,219 +1,27 @@
 'use server'
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-
 import { revalidatePath } from 'next/cache'
-import { canEditOrDeleteMeeting } from '@/app/(admin)/absensi/utils/meetingHelpers'
+import { canEditOrDeleteMeeting } from './helpers.server'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 import {
   validateMeetingData,
   buildStudentSnapshot,
   canUserAccessMeeting
-} from '../utils/meetingValidation'
+} from './logic'
+import {
+  fetchMeetingById,
+  fetchMeetingsByClass,
+  insertMeeting,
+  updateMeetingRecord,
+  softDeleteMeeting
+} from './queries'
 import type {
   Meeting,
   CreateMeetingData,
   UpdateMeetingData
 } from '@/types/meeting'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LAYER 1: DATABASE QUERIES (Private - DB access only)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function fetchMeetingById(supabase: any, meetingId: string) {
-  const { data, error } = await supabase
-    .from('meetings')
-    .select(`
-      id,
-      class_id,
-      class_ids,
-      kelompok_ids,
-      teacher_id,
-      title,
-      date,
-      topic,
-      description,
-      student_snapshot,
-      created_at,
-      updated_at,
-      meeting_type_code,
-      created_by,
-      classes (
-        id,
-        name,
-        kelompok_id,
-        kelompok:kelompok_id (
-          id,
-          name,
-          desa_id,
-          desa:desa_id (
-            id,
-            name,
-            daerah_id,
-            daerah:daerah_id (
-              id,
-              name
-            )
-          )
-        ),
-        class_master_mappings (
-          class_master:class_master_id (
-            category:category_id (
-              is_sambung_capable
-            )
-          )
-        )
-      )
-    `)
-    .eq('id', meetingId)
-    .single()
-
-  if (error) throw error
-  return data
-}
-
-async function fetchMeetingsByClass(
-  supabase: any,
-  classId: string | undefined,
-  limit: number,
-  cursor: string | undefined
-) {
-  let query = supabase
-    .from('meetings')
-    .select(`
-      id,
-      class_id,
-      class_ids,
-      teacher_id,
-      title,
-      date,
-      topic,
-      description,
-      student_snapshot,
-      created_at,
-      meeting_type_code,
-      kelompok_ids,
-      classes (
-        id,
-        name
-      )
-    `)
-    .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(limit)
-
-  if (cursor) {
-    query = query.lt('created_at', cursor)
-  }
-
-  if (classId) {
-    query = query.contains('class_ids', [classId])
-  }
-
-  const { data, error } = await query
-
-  if (error) throw error
-  return data
-}
-
-async function insertMeeting(supabase: any, data: CreateMeetingData, userId: string) {
-  const meetingData = {
-    class_id: data.classIds[0], // Primary class for backward compatibility
-    class_ids: data.classIds,
-    kelompok_ids: data.kelompokIds || null,
-    teacher_id: userId,
-    title: data.title,
-    date: data.date,
-    topic: data.topic,
-    description: data.description,
-    student_snapshot: data.studentIds,
-    meeting_type_code: data.meetingTypeCode,
-    created_by: userId,
-  }
-
-  const { data: result, error } = await supabase
-    .from('meetings')
-    .insert(meetingData)
-    .select()
-    .single()
-
-  if (error) throw error
-  return result
-}
-
-async function updateMeetingRecord(
-  supabase: any,
-  meetingId: string,
-  data: UpdateMeetingData
-) {
-  const updateData: any = {
-    updated_at: new Date().toISOString()
-  }
-
-  if (data.title !== undefined) updateData.title = data.title
-  if (data.date !== undefined) updateData.date = data.date
-  if (data.topic !== undefined) updateData.topic = data.topic
-  if (data.description !== undefined) updateData.description = data.description
-  if (data.meetingTypeCode !== undefined) updateData.meeting_type_code = data.meetingTypeCode
-
-  if (data.classIds !== undefined && data.classIds.length > 0) {
-    updateData.class_id = data.classIds[0]
-    updateData.class_ids = data.classIds
-  }
-
-  if (data.kelompokIds !== undefined) {
-    updateData.kelompok_ids = data.kelompokIds.length > 0 ? data.kelompokIds : null
-  }
-
-  if (data.studentIds !== undefined) {
-    updateData.student_snapshot = data.studentIds
-  }
-
-  const { data: result, error } = await supabase
-    .from('meetings')
-    .update(updateData)
-    .eq('id', meetingId)
-    .select()
-    .single()
-
-  if (error) throw error
-  return result
-}
-
-async function softDeleteMeeting(supabase: any, meetingId: string) {
-  // First check and delete attendance logs
-  const { data: attendanceLogs, error: checkError } = await supabase
-    .from('attendance_logs')
-    .select('id')
-    .eq('meeting_id', meetingId)
-    .limit(1)
-
-  if (checkError) throw checkError
-
-  // If attendance logs exist, delete them first
-  if (attendanceLogs && attendanceLogs.length > 0) {
-    const { error: deleteLogsError } = await supabase
-      .from('attendance_logs')
-      .delete()
-      .eq('meeting_id', meetingId)
-
-    if (deleteLogsError) throw deleteLogsError
-  }
-
-  // Now delete the meeting
-  const { error } = await supabase
-    .from('meetings')
-    .delete()
-    .eq('id', meetingId)
-
-  if (error) throw error
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LAYER 2: BUSINESS LOGIC - Imported from ../utils/meetingValidation.ts
-// ─────────────────────────────────────────────────────────────────────────────
-// validateMeetingData, buildStudentSnapshot, canUserAccessMeeting
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYER 3: SERVER ACTIONS (Exported - Thin orchestrators)
@@ -355,7 +163,9 @@ export async function createMeeting(data: CreateMeetingData) {
     }
 
     // Insert meeting using Layer 1
-    const meeting = await insertMeeting(adminClient, meetingData, profile.id)
+    const { data: meeting, error: insertError } = await insertMeeting(adminClient, meetingData, profile.id)
+
+    if (insertError) throw insertError
 
     revalidatePath('/absensi')
     return { success: true, data: meeting }
@@ -397,10 +207,12 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
         const teacherClassIds = teacherClasses.map(tc => tc.class_id)
 
         // Fetch all meetings using Layer 1
-        const data = await fetchMeetingsByClass(supabase, classId, limit, cursor)
+        const { data: meetings, error } = await fetchMeetingsByClass(supabase, classId, limit, cursor)
+
+        if (error) throw error
 
         // Filter meetings that include any of teacher's classes
-        const filtered = (data || []).filter((meeting: any) =>
+        const filtered = (meetings || []).filter((meeting: any) =>
           meeting.class_ids?.some((meetingClassId: string) => teacherClassIds.includes(meetingClassId))
         )
 
@@ -415,7 +227,9 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
     }
 
     // For admin/superadmin, fetch meetings using Layer 1
-    const data = await fetchMeetingsByClass(supabase, classId, limit, cursor)
+    const { data, error } = await fetchMeetingsByClass(supabase, classId, limit, cursor)
+
+    if (error) throw error
 
     return {
       success: true,
@@ -434,7 +248,9 @@ export async function getMeetingById(meetingId: string) {
     const adminClient = await createAdminClient()
 
     // Fetch meeting using Layer 1
-    const meeting = await fetchMeetingById(adminClient, meetingId)
+    const { data: meeting, error: meetingError } = await fetchMeetingById(adminClient, meetingId)
+
+    if (meetingError) throw meetingError
 
     if (!meeting) {
       return { success: false, error: 'Meeting not found', data: null }
@@ -622,7 +438,9 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
     }
 
     // Update meeting using Layer 1
-    await updateMeetingRecord(adminClient, meetingId, data)
+    const { error: updateError } = await updateMeetingRecord(adminClient, meetingId, data)
+
+    if (updateError) throw updateError
 
     revalidatePath('/absensi')
     return { success: true }
@@ -653,7 +471,9 @@ export async function deleteMeeting(meetingId: string) {
     const adminClient = await createAdminClient()
 
     // Delete meeting using Layer 1 (handles cascade delete of attendance logs)
-    await softDeleteMeeting(adminClient, meetingId)
+    const { error: deleteError } = await softDeleteMeeting(adminClient, meetingId)
+
+    if (deleteError) throw deleteError
 
     revalidatePath('/absensi')
     return { success: true }

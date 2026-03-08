@@ -4,6 +4,52 @@ This document contains detailed implementation patterns for complex features in 
 
 ---
 
+## File Naming Convention: .server.ts and .client.ts
+
+**CRITICAL**: Use `.server.ts` and `.client.ts` suffixes to distinguish server-only and client-only code.
+
+**Why This Convention:**
+- ✅ Next.js idiom for server/client boundary (established pattern)
+- ✅ Files sort alphabetically together in explorer (`helpers.client.ts` next to `helpers.server.ts`)
+- ✅ Clear intent without opening file
+- ✅ Prevents accidental import errors (server code in client, vice versa)
+- ✅ Supported by Next.js ESLint plugin for boundary violations
+
+**Usage:**
+
+```typescript
+// helpers.server.ts - Server-only utilities
+import { createClient } from '@/lib/supabase/server'
+
+export async function canEditOrDeleteMeeting(meetingId: string, userId: string) {
+  const supabase = await createClient()  // Server client
+  // ... server-side logic with database access
+}
+
+// helpers.client.ts - Client-only utilities
+import { createClient } from '@/lib/supabase/client'
+
+export async function getTeacherClassIds(teacherId: string) {
+  const supabase = createClient()  // Browser client
+  // ... client-side data fetching
+}
+```
+
+**When to Use:**
+- Domain-specific utilities (not core business logic)
+- Permission checkers that need DB access
+- Data fetchers for client components
+- Format helpers specific to server/client
+
+**When NOT to Use:**
+- Pure business logic → use `logic.ts` (no suffix, works anywhere)
+- Database queries → use `queries.ts` (no suffix, accepts client as param)
+- Server actions → use `actions.ts` with `'use server'` directive
+
+**Reference:** See `src/app/(admin)/absensi/actions/meetings/` for real-world example (sm-d15).
+
+---
+
 ## Hierarchical Teacher Pattern (Guru Desa/Daerah)
 
 **CRITICAL**: Teachers with organizational hierarchy (`desa_id`/`daerah_id`) behave differently from regular teachers.
@@ -211,61 +257,151 @@ Use `meeting_ids` array + Set for deduplication:
 
 ## 3-Layer Functional Architecture for Server Actions
 
-**Pattern established in:** sm-vpo (absensi refactoring pilot)
+**Pattern evolution:**
+- **sm-vpo** (pilot): 3 layers in same file (`meetings.ts` with mixed Layer 1+3)
+- **sm-d15** (gold standard): 3 layers in separate files per domain
 
-All feature `actions/` folders follow this structure:
+**Current pattern (sm-d15):** All feature `actions/` folders follow this structure:
 
 ### Folder Structure
 ```
 src/app/(admin)/<feature>/
 ├── actions/
-│   ├── <domain1>.ts     ← Domain file with 3 layers
-│   ├── <domain2>.ts
-│   └── index.ts         ← Re-exports for backward compatibility
+│   ├── <domain>/
+│   │   ├── queries.ts         ← Layer 1: Database queries (exported)
+│   │   ├── logic.ts           ← Layer 2: Pure business logic (exported)
+│   │   ├── actions.ts         ← Layer 3: Server actions ('use server')
+│   │   ├── helpers.server.ts  ← Server utilities (optional)
+│   │   ├── helpers.client.ts  ← Client utilities (optional)
+│   │   └── __tests__/         ← Co-located tests
+│   │       ├── queries.test.ts
+│   │       ├── logic.test.ts
+│   │       ├── helpers.server.test.ts
+│   │       └── helpers.client.test.ts
+│   └── index.ts               ← Re-exports all server actions
 ```
+
+**Example:** `src/app/(admin)/absensi/actions/meetings/` (sm-d15)
 
 ### Layer Responsibilities
 
-**Layer 1: Database Queries (Private)**
-- Prefix: `fetch*`, `insert*`, `update*`, `delete*`
-- Receive `supabase` client as parameter
-- Return raw data or throw error
-- NOT exported (internal to file)
+**Layer 1: queries.ts (Database Queries)**
+- Prefix: `fetch*`, `insert*`, `update*`, `delete*`, `build*Query`
+- Receive `supabase` client as parameter (dependency injection)
+- Return raw data or error
+- Exported (for testing and reuse)
+- NO `'use server'` directive
 
-**Layer 2: Business Logic (Exported, Pure)**
+**Layer 2: logic.ts (Pure Business Logic)**
+- Prefix: `validate*`, `calculate*`, `build*`, `transform*`
 - Pure functions, no DB calls, no side effects
 - Exported for reuse and testing
+- NO `'use server'` directive
 - Easy to test without mocking
 
-**Layer 3: Server Actions (Exported, Orchestrators)**
+**Layer 3: actions.ts (Server Actions)**
 - Entry points for client components
-- Orchestrate Layer 1 + Layer 2
+- Orchestrate Layer 1 (queries) + Layer 2 (logic)
 - Handle auth, permissions, revalidation
+- HAS `'use server'` directive (all exports become server actions)
 
-### Example
+### Example (sm-d15 Separated Files)
+
+**queries.ts** (Layer 1):
+```typescript
+// NO 'use server' directive
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export async function fetchMeetingById(supabase: SupabaseClient, id: string) {
+  return await supabase.from('meetings').select('*').eq('id', id).single()
+}
+
+export async function insertMeeting(supabase: SupabaseClient, data: any) {
+  return await supabase.from('meetings').insert(data).select().single()
+}
+```
+
+**logic.ts** (Layer 2):
+```typescript
+// NO 'use server' directive
+export function validateMeetingData(data: CreateMeetingData) {
+  if (!data.classIds?.length) return { ok: false, error: 'At least one class required' }
+  if (!data.date) return { ok: false, error: 'Date required' }
+  return { ok: true }
+}
+```
+
+**actions.ts** (Layer 3):
 ```typescript
 'use server'
 
-// Layer 1: Private query
-async function fetchMeeting(supabase, id) { ... }
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { fetchMeetingById, insertMeeting } from './queries'
+import { validateMeetingData } from './logic'
 
-// Layer 2: Pure function
-export function validateMeeting(data) { ... }
-
-// Layer 3: Server action
-export async function createMeeting(data) {
+export async function createMeeting(data: CreateMeetingData) {
   const supabase = await createClient()
-  const validation = validateMeeting(data)  // L2
-  const result = await fetchMeeting(supabase)  // L1
-  revalidatePath('/...')
-  return result
+
+  // Auth check
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Business logic (Layer 2)
+  const validation = validateMeetingData(data)
+  if (!validation.ok) return { success: false, error: validation.error }
+
+  // Database query (Layer 1)
+  const { data: meeting, error } = await insertMeeting(supabase, data)
+  if (error) return { success: false, error: error.message }
+
+  // Revalidation
+  revalidatePath('/absensi')
+  return { success: true, data: meeting }
 }
 ```
 
 ### Testing Strategy
-- **Priority:** Test Layer 2 (pure functions, no mocking needed)
-- **Pattern:** Same as `src/lib/utils/__tests__/classHelpers.test.ts`
-- **Skip:** Layer 1 and Layer 3 (require Supabase mocks)
+
+**Layer 1 (queries.ts):** Basic structure tests with mock Supabase client
+```typescript
+// queries.test.ts
+import { vi } from 'vitest'
+import { fetchMeetingById } from './queries'
+
+const mockSupabase = { from: vi.fn(() => ({ select: vi.fn(), eq: vi.fn(), single: vi.fn() })) }
+fetchMeetingById(mockSupabase as any, 'test-id')
+expect(mockSupabase.from).toHaveBeenCalledWith('meetings')
+```
+
+**Layer 2 (logic.ts):** Comprehensive unit tests (pure functions, no mocks)
+```typescript
+// logic.test.ts
+import { validateMeetingData } from './logic'
+
+it('should reject empty classIds', () => {
+  const result = validateMeetingData({ classIds: [], date: '2026-03-08' })
+  expect(result.ok).toBe(false)
+  expect(result.error).toBe('At least one class required')
+})
+```
+
+**Layer 3 (actions.ts):** Integration tests (optional, can defer)
+
+### Why Separated Files (sm-d15) > Mixed Layers (sm-vpo)
+
+**sm-vpo Issues:**
+- Layer 1+3 in same file with `'use server'` → hard to test queries
+- Large files (2,216 lines for meetings.ts)
+- `'use server'` applies to ALL exports (even pure functions)
+
+**sm-d15 Benefits:**
+- ✅ Queries testable without `'use server'` complications
+- ✅ Smaller focused files (~100-250 lines each)
+- ✅ Clear layer boundaries
+- ✅ Easy to navigate (queries, logic, actions in separate files)
+
+**Reference:** `docs/plans/2026-03-08-split-absensi-3layer-design.md` for detailed migration guide
 
 ### Migration Strategy
 - Use Big Bang approach for clean cutover

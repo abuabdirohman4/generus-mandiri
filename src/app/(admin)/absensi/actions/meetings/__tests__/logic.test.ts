@@ -3,7 +3,7 @@ import {
   validateMeetingData,
   buildStudentSnapshot,
   canUserAccessMeeting
-} from '../meetingValidation'
+} from '../logic'
 import type { CreateMeetingData } from '@/types/meeting'
 
 describe('Meeting Validation Functions', () => {
