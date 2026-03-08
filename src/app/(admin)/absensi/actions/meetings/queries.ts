@@ -26,7 +26,6 @@ export async function fetchMeetingById(supabase: SupabaseClient, meetingId: stri
       created_at,
       updated_at,
       meeting_type_code,
-      created_by,
       classes (
         id,
         name,
@@ -119,7 +118,8 @@ export async function insertMeeting(
     description: data.description,
     student_snapshot: data.studentIds,
     meeting_type_code: data.meetingTypeCode,
-    created_by: userId,
+    // Note: created_by column does not exist in meetings table
+    // teacher_id already tracks who created the meeting
   }
 
   const { data: result, error } = await supabase

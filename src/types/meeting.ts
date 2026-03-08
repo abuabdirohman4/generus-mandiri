@@ -1,6 +1,6 @@
 export interface Meeting {
   id: string
-  title: string
+  title?: string // Optional - can be empty in production
   date: string
   topic?: string
   description?: string
@@ -9,15 +9,16 @@ export interface Meeting {
   meeting_type_code?: string | null
   student_snapshot?: string[]
   created_at: string
-  created_by: string
   updated_at?: string
+  // Note: created_by column does not exist in meetings table
+  // teacher_id field tracks who created the meeting
 }
 
 export interface CreateMeetingData {
   classIds: string[]
   kelompokIds?: string[]
   date: string
-  title: string
+  title?: string // Optional - UI label shows "Judul Pertemuan (Opsional)"
   topic?: string
   description?: string
   meetingTypeCode?: string | null

@@ -22,9 +22,8 @@ export function validateMeetingData(data: CreateMeetingData): {
     return { ok: false, error: 'Tanggal pertemuan harus diisi' }
   }
 
-  if (!data.title || data.title.trim() === '') {
-    return { ok: false, error: 'Judul pertemuan harus diisi' }
-  }
+  // Title is optional - validation removed
+  // Label in UI shows "Judul Pertemuan (Opsional)"
 
   return { ok: true }
 }

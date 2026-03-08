@@ -62,8 +62,8 @@ describe('Meeting Validation Functions', () => {
       expect(result.error).toBe('Tanggal pertemuan harus diisi')
     })
 
-    test('should return error when title is empty or whitespace', () => {
-      const invalidData: CreateMeetingData = {
+    test('should accept empty or whitespace title (title is optional)', () => {
+      const dataWithEmptyTitle: CreateMeetingData = {
         classIds: ['class-1'],
         date: '2026-03-01',
         title: '   ',
@@ -74,10 +74,10 @@ describe('Meeting Validation Functions', () => {
         studentIds: []
       }
 
-      const result = validateMeetingData(invalidData)
+      const result = validateMeetingData(dataWithEmptyTitle)
 
-      expect(result.ok).toBe(false)
-      expect(result.error).toBe('Judul pertemuan harus diisi')
+      expect(result.ok).toBe(true) // Title is optional
+      expect(result.error).toBeUndefined()
     })
   })
 
