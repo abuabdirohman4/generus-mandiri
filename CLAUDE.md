@@ -46,7 +46,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Exception**: `bd sync` (beads issue tracker) is allowed.
 
-**Beads Sync Branch**: Beads syncs to `beads-sync` branch (NOT master). Master is a normal working branch. Checkout master anytime without conflicts. Beads operates independently on beads-sync.
+**Beads & Git Integration:**
+- Beads syncs to `beads-sync` branch (dedicated sync branch, managed via worktree)
+- Master is normal working branch - user can checkout/merge normally
+- Feature branches work as expected - beads doesn't interfere
+- `bd sync` commits to beads-sync automatically, NOT to user's current branch
+- Never manually checkout or modify beads-sync branch
 
 ---
 
@@ -61,9 +66,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 📋 Beads Issue Management
 
-**For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
+**Beads Sync Branch:** `beads-sync` (NOT master)
+- Master is normal working branch - checkout anytime without conflicts
+- Beads syncs to dedicated `beads-sync` branch automatically via worktree
+- Work on feature branches normally, beads operates independently
 
-Key rules: Use `bd close <id>` (never `bd delete`). Never manually edit `.beads/*.jsonl`. Progress files go in `.beads/progress/{issue-id}.md`.
+**Key Commands:**
+- `bd close <id>` - Close issue (never use `bd delete`)
+- `bd sync` - Sync to remote (commits to beads-sync, not your branch)
+- `bd ready` - Find ready tasks
+
+**Critical Rules:**
+- Never manually edit `.beads/*.jsonl` files
+- Never change `sync-branch` config in `.beads/config.yaml`
+- Progress files go in `.beads/progress/{issue-id}.md`
+
+**For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
 ---
 

@@ -4,6 +4,114 @@ This document contains the complete Beads workflow standards for the Generus Man
 
 ---
 
+## 🔧 Beads & Git Integration (UPDATED 2026-03-13)
+
+### Sync Branch Configuration
+
+**IMPORTANT:** Beads syncs to a dedicated `beads-sync` branch, NOT to `master`.
+
+**Why This Matters:**
+- Master is your normal working branch (checkout/merge freely)
+- Feature branches work as expected (no beads interference)
+- Beads operations isolated to beads-sync branch via git worktree
+- No checkout conflicts when switching branches
+
+### Current Configuration
+
+```yaml
+# .beads/config.yaml
+sync-branch: "beads-sync"
+```
+
+**Branch Structure:**
+- `master` - Normal working branch (you work here)
+- `beads-sync` - Beads sync branch (managed via worktree, don't touch manually)
+- `refactoring-architecture`, `feature-xyz`, etc. - Your feature branches
+
+### How Beads Uses Worktree
+
+**What is a worktree?**
+Beads creates a separate workspace for sync operations:
+```
+Your workspace:     /project/  (any branch you're working on)
+Beads workspace:    /project/.git/beads-worktrees/beads-sync/
+```
+
+**Why worktree?**
+- ✅ Fast - No branch switching needed
+- ✅ Isolated - Doesn't interfere with your work
+- ✅ Safe - No merge conflicts in feature branches
+- ✅ Non-disruptive - Sync happens independently
+
+### Normal Workflow
+
+```bash
+# 1. Work on any branch normally
+git checkout master
+git checkout -b feature-new-thing
+
+# 2. Make changes, commit code
+git add .
+git commit -m "feat: add new feature"
+
+# 3. Use beads normally
+bd close sm-xxx
+bd sync  # ← Commits to beads-sync, NOT your current branch!
+
+# 4. Merge work normally
+git checkout master  # ← Works without conflicts!
+git merge feature-new-thing
+git push
+
+# 5. Beads keeps syncing
+bd sync  # Still works, still goes to beads-sync
+```
+
+### Critical Rules
+
+**DO:**
+- ✅ Work on master/feature branches normally
+- ✅ Checkout any branch anytime
+- ✅ Run `bd sync` at session end
+- ✅ Use `bd close`, `bd create`, `bd ready` commands
+
+**DON'T:**
+- ❌ Never manually checkout `beads-sync` branch
+- ❌ Never manually edit `.beads/*.jsonl` files
+- ❌ Never change `sync-branch` in `.beads/config.yaml`
+- ❌ Never manually manage `.git/beads-worktrees/`
+
+### Troubleshooting
+
+**If checkout fails with beads conflict:**
+```bash
+# 1. Check sync branch config
+bd config get sync.branch
+# Should show: beads-sync
+
+# 2. If wrong or not set
+bd config set sync.branch beads-sync
+
+# 3. Sync once
+bd sync
+
+# 4. Try checkout again
+git checkout master  # Should work now
+```
+
+**If you see beads warnings after checkout:**
+```
+Warning: Failed to sync bd changes after checkout
+→ Importing from JSONL...
+Error: importing: no database store available for inline import
+```
+
+This is NORMAL and can be ignored. These are beads hook warnings that don't affect functionality.
+
+To fix: `bd doctor --fix`
+
+---
+
 ## Beads Issue Management Standards
 
 ### JSONL File Structure & Automatic Processing
