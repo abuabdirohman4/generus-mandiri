@@ -46,6 +46,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Exception**: `bd sync` (beads issue tracker) is allowed.
 
+**Beads Sync Branch**: Beads syncs to `beads-sync` branch (NOT master). Master is a normal working branch. Checkout master anytime without conflicts. Beads operates independently on beads-sync.
+
 ---
 
 ## 📚 Documentation Strategy
