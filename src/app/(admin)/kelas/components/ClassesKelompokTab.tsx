@@ -99,7 +99,7 @@ export default function ClassesKelompokTab() {
               ...classItem,
               kelompok_name: classItem.kelompok?.name || '-',
               combined_classes: classItem.class_master_mappings?.length 
-                ? classItem.class_master_mappings.map(mapping => mapping.class_master.name).join(', ')
+                ? classItem.class_master_mappings.map(mapping => mapping.class_master?.name).filter(Boolean).join(', ')
                 : '-'
             }))}
         renderCell={(column, classItem) => {

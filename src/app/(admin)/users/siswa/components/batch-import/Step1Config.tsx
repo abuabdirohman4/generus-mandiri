@@ -10,15 +10,14 @@ import { hasDraft, loadDraft } from '../../utils/draftStorage'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isAdminDesa } from '@/lib/userUtils'
 import { Class } from '@/app/(admin)/users/siswa/actions'
+import type { UserProfile } from '@/types/user'
 
 interface Step1ConfigProps {
-  userProfile: {
-    role: string;
-    classes?: Class[];
-  } | null | undefined
+  userProfile: UserProfile | null | undefined
   classes: Class[]
   onNext: () => void
 }
+
 
 export default function Step1Config({ userProfile, classes, onNext }: Step1ConfigProps) {
   const {
@@ -76,7 +75,7 @@ export default function Step1Config({ userProfile, classes, onNext }: Step1Confi
 
   const rawClasses = userProfile?.role === 'admin'
     ? classes
-    : userProfile?.classes || []
+    : (userProfile?.classes as Class[] | undefined) || []
 
   const availableClasses = [...rawClasses].sort((a, b) => {
     const getSortOrder = (cls: Class): number => {

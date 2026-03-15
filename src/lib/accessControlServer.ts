@@ -1,13 +1,4 @@
-interface UserProfile {
-  id: string;
-  full_name: string;
-  role: string;
-  email?: string;
-  kelompok_id?: string | null;
-  desa_id?: string | null;
-  daerah_id?: string | null;
-  can_manage_materials?: boolean;
-}
+import type { UserProfile } from '@/types/user'
 
 export function canAccessFeature(profile: UserProfile, feature: string): boolean {
   if (profile.role === 'superadmin') return true;

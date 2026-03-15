@@ -341,7 +341,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       if (selectedKelompokFilters.length === 0) {
         return [];
       }
-      return allClasses.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+      return allClasses.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id ?? ''));
     }
     
     // Admin Daerah: filter by selectedKelompokFilters - if empty, show no classes
@@ -357,7 +357,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       });
       
       // Apply kelompok filter
-      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id ?? ''));
       
       return filtered;
     }
@@ -374,7 +374,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       });
       
       // Apply kelompok filter
-      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id));
+      filtered = filtered.filter(cls => selectedKelompokFilters.includes(cls.kelompok_id ?? ''));
+
       
       return filtered;
     }

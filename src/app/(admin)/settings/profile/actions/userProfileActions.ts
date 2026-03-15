@@ -11,7 +11,11 @@ export interface SoundSettings {
   focusSoundId: string;
 }
 
-export interface UserProfile {
+/**
+ * User settings stored in user_profiles table
+ * Note: This is different from auth UserProfile in @/types/user
+ */
+export interface UserSettings {
   id: string;
   user_id: string;
   sound_settings: SoundSettings;
@@ -29,7 +33,7 @@ const DEFAULT_SOUND_SETTINGS: SoundSettings = {
 /**
  * Get user profile with sound settings
  */
-export async function getUserProfile(): Promise<UserProfile | null> {
+export async function getUserProfile(): Promise<UserSettings | null> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

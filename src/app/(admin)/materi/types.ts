@@ -1,93 +1,35 @@
-// Types for existing components
-export interface ClassMaster {
-  id: string;
-  name: string;
-  semester?: number | null; // Semester info from material_item_classes mapping
-  category?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-}
+// Types for existing components - re-exported from centralized type files
+import type { ClassMaster } from '@/types/class'
+import type {
+  MaterialCategory,
+  MaterialType,
+  MaterialItem,
+  MaterialItemClass,
+  DayMaterialAssignment,
+  DayMaterialItem,
+  Semester,
+  Month,
+  Week,
+  DayOfWeek,
+} from '@/types/material'
 
-// New flexible material structure types
-export interface MaterialCategory {
-  id: string;
-  name: string;
-  description: string | null;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
+export type {
+  ClassMaster,
+  MaterialCategory,
+  MaterialType,
+  MaterialItem,
+  MaterialItemClass,
+  DayMaterialAssignment,
+  DayMaterialItem,
+  Semester,
+  Month,
+  Week,
+  DayOfWeek,
 }
-
-export interface MaterialType {
-  id: string;
-  category_id: string;
-  name: string;
-  description: string | null;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-  category?: MaterialCategory;
-}
-
-export interface MaterialItem {
-  id: string;
-  material_type_id: string;
-  name: string;
-  description: string | null;
-  content: string | null;
-  created_at: string;
-  updated_at: string;
-  material_type?: MaterialType;
-  classes?: ClassMaster[]; // Classes this item is mapped to
-}
-
-export interface MaterialItemClass {
-  id: string;
-  material_item_id: string;
-  class_master_id: string;
-  semester: number | null; // 1 = Ganjil, 2 = Genap
-  created_at: string;
-  updated_at: string;
-  material_item?: MaterialItem;
-  class_master?: ClassMaster;
-}
-
-export interface DayMaterialAssignment {
-  id: string;
-  class_master_id: string;
-  semester: number;
-  month: number;
-  week: number;
-  day_of_week: number;
-  material_type_id: string;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  material_type?: MaterialType;
-  items?: DayMaterialItem[];
-}
-
-export interface DayMaterialItem {
-  id: string;
-  assignment_id: string;
-  material_item_id: string;
-  display_order: number;
-  custom_content: string | null;
-  created_at: string;
-  updated_at: string;
-  material_item?: MaterialItem;
-}
-
-export type Semester = 1 | 2;
-export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-export type Week = 1 | 2 | 3 | 4;
-export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6;
 
 // Utility functions
 export function getDayName(day: DayOfWeek): string {
-  const days = {
+  const days: Record<DayOfWeek, string> = {
     1: 'Senin',
     2: 'Selasa',
     3: 'Rabu',
@@ -99,7 +41,7 @@ export function getDayName(day: DayOfWeek): string {
 }
 
 export function romanNumeral(week: Week): string {
-  const numerals = {
+  const numerals: Record<Week, string> = {
     1: 'I',
     2: 'II',
     3: 'III',
@@ -109,7 +51,7 @@ export function romanNumeral(week: Week): string {
 }
 
 export function getMonthName(month: Month): string {
-  const months = {
+  const months: Record<Month, string> = {
     1: 'Januari',
     2: 'Februari',
     3: 'Maret',

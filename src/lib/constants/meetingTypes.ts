@@ -1,6 +1,27 @@
 import { isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
-import type { UserProfile as AccessControlUserProfile } from '@/lib/accessControl'
+import type { UserProfile } from '@/types/user'
 import { isTeacherClass } from '@/lib/utils/classHelpers'
+
+/**
+ * Enriched UserProfile with class category information
+ * Used internally for determining available meeting types based on class categories
+ */
+interface EnrichedUserProfile extends UserProfile {
+  classes?: Array<{
+    id: string
+    name: string
+    kelompok_id?: string | null
+    kelompok?: { id: string; name: string } | null
+    master_class?: Array<{
+      category?: Array<{
+        is_sambung_capable?: boolean
+        exclude_pembinaan?: boolean
+        code?: string
+        name?: string
+      }>
+    }>
+  }>
+}
 
 export const MEETING_TYPES = {
   ASAD: { code: 'ASAD', label: 'ASAD' },
@@ -14,23 +35,7 @@ export const MEETING_TYPES = {
 export type MeetingTypes = typeof MEETING_TYPES[keyof typeof MEETING_TYPES]
 export type MeetingTypeCode = typeof MEETING_TYPES[keyof typeof MEETING_TYPES]['code']
 
-interface UserProfile extends Partial<AccessControlUserProfile> {
-  role: string
-  classes?: Array<{
-    id: string
-    name?: string
-    master_class?: Array<{
-      category?: Array<{
-        is_sambung_capable: boolean
-        exclude_pembinaan: boolean
-        code?: string
-        name?: string
-      }>
-    }>
-  }>
-}
-
-export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null): Partial<typeof MEETING_TYPES> {
+export function getAvailableMeetingTypesByRole(userProfile: EnrichedUserProfile | null): Partial<typeof MEETING_TYPES> {
   if (!userProfile) return { PEMBINAAN: MEETING_TYPES.PEMBINAAN }
 
   const role = userProfile.role
@@ -42,76 +47,42 @@ export function getAvailableMeetingTypesByRole(userProfile: UserProfile | null):
 
   // Admin Daerah: All including Sambung Pusat
   if (role === 'admin' && userProfile.daerah_id && !userProfile.desa_id) {
-    // Type guard to ensure we have required fields
-    if (userProfile.id && userProfile.full_name) {
-      const adminProfile: AccessControlUserProfile = {
-        id: userProfile.id,
-        full_name: userProfile.full_name,
-        role: userProfile.role,
-        daerah_id: userProfile.daerah_id,
-        desa_id: userProfile.desa_id,
-        kelompok_id: userProfile.kelompok_id
-      }
-
-      if (isAdminDaerah(adminProfile)) {
-        return {
-          ASAD: MEETING_TYPES.ASAD,
-          PEMBINAAN: MEETING_TYPES.PEMBINAAN,
-          SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
-          SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
-          SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH,
-          SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
-        }
+    if (isAdminDaerah(userProfile)) {
+      return {
+        ASAD: MEETING_TYPES.ASAD,
+        PEMBINAAN: MEETING_TYPES.PEMBINAAN,
+        SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
+        SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
+        SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH,
+        SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
       }
     }
   }
 
   // Admin Desa: ONLY Sambung Desa (simplified)
   if (role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
-    if (userProfile.id && userProfile.full_name) {
-      const adminProfile: AccessControlUserProfile = {
-        id: userProfile.id,
-        full_name: userProfile.full_name,
-        role: userProfile.role,
-        daerah_id: userProfile.daerah_id,
-        desa_id: userProfile.desa_id,
-        kelompok_id: userProfile.kelompok_id
-      }
-
-      if (isAdminDesa(adminProfile)) {
-        return {
-          ASAD: MEETING_TYPES.ASAD,
-          PEMBINAAN: MEETING_TYPES.PEMBINAAN,
-          SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
-          SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
-          SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH,
-          SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
-        }
+    if (isAdminDesa(userProfile)) {
+      return {
+        ASAD: MEETING_TYPES.ASAD,
+        PEMBINAAN: MEETING_TYPES.PEMBINAAN,
+        SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
+        SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA,
+        SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH,
+        SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
       }
     }
   }
 
   // Admin Kelompok: Pembinaan, Sambung Kelompok, Sambung Pusat
   if (role === 'admin' && userProfile.kelompok_id) {
-    if (userProfile.id && userProfile.full_name) {
-      const adminProfile: AccessControlUserProfile = {
-        id: userProfile.id,
-        full_name: userProfile.full_name,
-        role: userProfile.role,
-        daerah_id: userProfile.daerah_id,
-        desa_id: userProfile.desa_id,
-        kelompok_id: userProfile.kelompok_id
-      }
-
-      if (isAdminKelompok(adminProfile)) {
-        return {
-          ASAD: MEETING_TYPES.ASAD,
-          PEMBINAAN: MEETING_TYPES.PEMBINAAN,
-          SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
-          SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA, // hapus nanti
-          SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH, // hapus nanti
-          SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
-        }
+    if (isAdminKelompok(userProfile)) {
+      return {
+        ASAD: MEETING_TYPES.ASAD,
+        PEMBINAAN: MEETING_TYPES.PEMBINAAN,
+        SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK,
+        SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA, // hapus nanti
+        SAMBUNG_DAERAH: MEETING_TYPES.SAMBUNG_DAERAH, // hapus nanti
+        SAMBUNG_PUSAT: MEETING_TYPES.SAMBUNG_PUSAT
       }
     }
   }

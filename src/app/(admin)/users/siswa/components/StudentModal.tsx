@@ -11,28 +11,12 @@ import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import DataFilter from '@/components/shared/DataFilter'
 import { isAdminLegacy } from '@/lib/userUtils'
 import { getStudentClasses, type Student } from '../actions'
+import type { UserProfile } from '@/types/user'
+import type { Class } from '@/types/class'
+import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
 
-interface Class {
-  id: string
-  name: string
-  kelompok_id?: string | null
-}
-
-interface Daerah {
-  id: string
-  name: string
-}
-
-interface Desa {
-  id: string
-  name: string
-  daerah_id: string
-}
-
-interface Kelompok {
-  id: string
-  name: string
-  desa_id: string
+// Extend KelompokBase with optional display names for UI
+interface KelompokWithNames extends KelompokBase {
   desa_name?: string
   daerah_name?: string
 }
@@ -42,16 +26,11 @@ interface StudentModalProps {
   onClose: () => void
   mode: 'create' | 'edit'
   student?: Student | null | undefined
-  userProfile: { 
-    role: string; 
-    classes?: Array<{ id: string; name: string }>
-    desa_id?: string | null
-    kelompok_id?: string | null
-  } | null | undefined
+  userProfile: UserProfile | null | undefined
   classes: Class[]
-  daerah?: Daerah[]
-  desa?: Desa[]
-  kelompok?: Kelompok[]
+  daerah?: DaerahBase[]
+  desa?: DesaBase[]
+  kelompok?: KelompokWithNames[]
   onSubmit: (formData: FormData) => Promise<void>
   submitting: boolean
 }

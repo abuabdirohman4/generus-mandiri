@@ -22,6 +22,7 @@ export function filterCaberawitClasses(classes: any[]): ClassMaster[] {
         .map((cls: any) => ({
             id: cls.id,
             name: cls.name,
+            sort_order: cls.sort_order ?? 0,
             category: Array.isArray(cls.category) ? cls.category[0] : cls.category
         }))
 }

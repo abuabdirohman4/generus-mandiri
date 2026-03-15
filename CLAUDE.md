@@ -34,75 +34,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 📦 Centralized Types (MANDATORY)
+
+**ALL domain type definitions MUST live in `src/types/`.**
+- Never redefine domain types inline in action files, components, or stores.
+- Types must follow the **Base → Extended → Full** hierarchy pattern.
+- **📖 For detailed type rules and architecture, READ [`src/types/README.md`](src/types/README.md)**
+
+---
+
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**BEFORE implementing ANY feature/refactoring/task**, you MUST ask user:
+**BEFORE implementing ANY feature/refactoring/task**, ask user:
 
 > "Apakah Anda ingin saya yang langsung mengerjakan kode ini, atau menggunakan Google Antigravity untuk eksekusi?"
 
-**Option A: Claude Code Direct Execution**
-- Claude Code writes code immediately in this session
-- Faster for small changes (1-3 files, <200 lines)
-- Real-time feedback and iteration
+**Option A: Direct Execution** - Immediate implementation (1-3 files, <200 lines), real-time iteration
+**Option B: Google Antigravity** - Design + plan creation, user executes in Antigravity (3+ files, refactoring, large features)
 
-**Option B: Google Antigravity Execution**
-- Claude Code creates design doc + implementation plan (like `docs/plans/REFACTORING-QUICK-GUIDE.md`)
-- User executes plan in Google Antigravity (parallel processing, longer context)
-- Claude Code reviews results after completion
-- Better for: Refactoring (3+ files), type extraction, large features
-
-### Antigravity Execution Workflow
-
-**1. Planning Phase (Claude Code):**
-- Create design document: `docs/plans/YYYY-MM-DD-<topic>-design.md`
-- Create implementation plan: `docs/plans/YYYY-MM-DD-<topic>-implementation-plan.md`
-- Provide prompt templates below
-
-**2. Execution Phase (User → Google Antigravity):**
-
-Use this prompt template:
-```
-CONTEXT:
-I'm working on [project name] - a Next.js 15 school management system.
-
-CRITICAL: Read @CLAUDE.md in the repository for ALL coding rules, patterns, and constraints.
-
-TASK:
-Execute the implementation plan at @docs/plans/YYYY-MM-DD-<topic>-implementation-plan.md
-
-REQUIREMENTS:
-1. Follow the plan task-by-task sequentially
-2. Verify each step before proceeding (run commands shown in plan)
-3. Adhere to patterns in @CLAUDE.md (3-layer architecture, type management, TDD)
-4. DO NOT deviate from the plan without explicit approval
-5. After each major phase, output: "Phase N complete, proceeding to Phase N+1"
-
-REFERENCE FILES:
-- Design: @docs/plans/YYYY-MM-DD-<topic>-design.md
-- Plan: @docs/plans/YYYY-MM-DD-<topic>-implementation-plan.md
-- Rules: @CLAUDE.md
-- Patterns: @docs/claude/architecture-patterns.md
-
-Begin with Task 1 from the implementation plan.
-```
-
-**3. Review Phase (User → Claude Code):**
-
-After Antigravity completes, use this prompt:
-```
-Google Antigravity sudah selesai mengeksekusi plan di @docs/plans/YYYY-MM-DD-<topic>-implementation-plan.md
-
-Tolong review hasilnya menggunakan review checklist di design document (@docs/plans/YYYY-MM-DD-<topic>-design.md).
-
-Fokus pada:
-1. File structure - apakah semua file yang diharapkan ada?
-2. Type completeness - apakah ada types yang terlewat?
-3. Import updates - apakah semua imports sudah benar?
-4. Build verification - jalankan npm run type-check dan npm run build
-5. Documentation - apakah docs sudah di-update?
-
-Jika ada masalah, berikan feedback spesifik untuk diperbaiki.
-```
+**📖 For Google Antigravity workflow and prompt templates, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 
 ---
 
@@ -165,7 +115,13 @@ Jika ada masalah, berikan feedback spesifik untuk diperbaiki.
 
 ## 📐 Type/Interface Management
 
-**CRITICAL**: All domain types centralized in `src/types/`. For extraction rules and organization patterns, READ [`docs/claude/architecture-patterns.md#type-management--organization`](docs/claude/architecture-patterns.md#type-management--organization). For advanced type patterns (extends hierarchy, pre-flight checks), READ [`docs/claude/type-management.md`](docs/claude/type-management.md)
+**CRITICAL**: All domain types centralized in `src/types/`. For complete consolidation process, examples, and anti-patterns, READ [`docs/claude/architecture-patterns.md#type-management--organization`](docs/claude/architecture-patterns.md#type-management--organization)
+
+**Quick Reference:**
+- Search before creating: `grep -r "interface MyType" src/`
+- Import canonical: `import type { MyType } from '@/types/[domain]'`
+- Hierarchy pattern: EntityBase → EntityWithOrg → Entity
+- See `src/types/README.md` for detailed guidelines
 
 ---
 
@@ -286,4 +242,5 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
+- **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
 - **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)

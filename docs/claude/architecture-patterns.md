@@ -443,23 +443,29 @@ src/types/
 2. Simple request/response wrappers
 3. Component-specific UI state
 
-**File organization within type files:**
+**File organization within type files (Hierarchy Pattern):**
+All type definitions MUST follow the **Base → Extended → Full** hierarchy:
+
 ```typescript
 /**
  * [Domain] types for [Feature]
  */
 
-// ─── Core Entities ────────────────────────────────────────────────────────────
-export interface Entity { ... }
+// ─── Base Types ───────────────────────────────────────────────────────────────
+// Minimal fields, core ID + name. Use for: Dropdowns, basic references, IDs.
+export interface EntityBase { ... }
+
+// ─── Extended Types ───────────────────────────────────────────────────────────
+// Base + relational data/nested objects. Use for: Main listings, table rows.
+export interface Entity extends EntityBase { ... }
+
+// ─── Full Types ───────────────────────────────────────────────────────────────
+// Extended + audit fields (created_at). Use for: Master records, full details.
+export interface EntityFull extends Entity { ... }
 
 // ─── Request/Response ─────────────────────────────────────────────────────────
+// Payloads for API/Actions
 export interface CreateEntityData { ... }
-
-// ─── UI/Display ───────────────────────────────────────────────────────────────
-export interface EntityWithStats { ... }
-
-// ─── Filters ──────────────────────────────────────────────────────────────────
-export interface EntityFilters { ... }
 ```
 
 ### Import Patterns
@@ -502,3 +508,140 @@ When extracting types from actions to `src/types/`:
 - `src/types/attendance.ts` - Complete example with all sections
 - `src/types/meeting.ts` - Complex domain with nested types
 - `src/types/student.ts` - Entity with relationships
+
+### Type Consolidation Process
+
+When centralizing duplicate types:
+
+**1. Discovery**
+```bash
+# Find all definitions
+grep -r "^export interface EntityName\|^interface EntityName" src/ --include="*.ts"
+```
+
+**2. Identify Canonical**
+- Most complete version
+- Has JSDoc comments
+- Strict types (not `any` or loose unions)
+- Most usage across codebase
+
+**3. Build Hierarchy**
+```typescript
+// Minimal
+export interface EntityBase { id, name }
+
+// Add context
+export interface EntityWithFeature extends EntityBase { feature_fields }
+
+// Full (canonical)
+export interface Entity extends EntityWithFeature { all_fields }
+```
+
+**4. Migrate Imports**
+```bash
+# Find all usages
+grep -r "EntityName" src/ --include="*.ts" --include="*.tsx" -l
+
+# Update each file:
+# OLD: interface EntityName { ... }
+# NEW: import type { EntityName } from '@/types/entity'
+```
+
+**5. Delete Duplicates**
+- Remove all inline definitions
+- Keep canonical in `src/types/[domain].ts`
+- No re-exports for backward compatibility (clean break)
+
+**6. Verify**
+```bash
+npm run type-check  # Must pass
+npm run build       # Must succeed
+
+# Check no orphaned definitions
+grep -r "^interface EntityName" src/ --include="*.ts"
+# Should return ONLY src/types/entity.ts
+```
+
+### Common Anti-Patterns
+
+**❌ Don't:**
+```typescript
+// Duplicate definition
+interface UserProfile { ... }  // Already exists in src/types/user.ts!
+
+// Numbered versions
+interface Student1 { ... }
+interface Student2 { ... }
+
+// Copy-paste instead of extends
+interface MyStudent {
+  id: string
+  name: string  // Copy-pasted from StudentBase
+  myField: string
+}
+```
+
+**✅ Do:**
+```typescript
+// Import canonical
+import type { UserProfile } from '@/types/user'
+
+// Extend when needed
+import type { StudentBase } from '@/types/student'
+export interface MyStudent extends StudentBase {
+  myField: string
+}
+```
+
+### Pre-Flight Checklist
+
+Before creating ANY type:
+
+- [ ] Search codebase for existing definition
+- [ ] If exists → import from `@/types/`
+- [ ] If needs modification → use `extends`
+- [ ] If truly new → check if 2+ files will use it
+- [ ] If shared → create in `src/types/[domain].ts`
+- [ ] If single-use → keep inline (component props, helpers)
+
+### Type Consolidation Examples
+
+**Example 1: UserProfile (17 duplicates → 1 canonical)**
+```typescript
+// BEFORE: 17 different files with different definitions
+// src/stores/userProfileStore.ts
+interface UserProfile { id, role, classes }
+
+// src/lib/accessControl.ts
+interface UserProfile { id, role, daerah_id, desa_id }
+
+// ... 15 more variations
+
+// AFTER: Single source of truth
+// src/types/user.ts
+export interface UserProfileBase { id, role }
+export interface UserProfileWithOrg extends UserProfileBase { daerah_id, desa_id, kelompok_id }
+export interface UserProfile extends UserProfileWithOrg { classes, permissions, ... }
+
+// All other files:
+import type { UserProfile } from '@/types/user'
+```
+
+**Example 2: Class types (8 duplicates → 1 hierarchy)**
+```typescript
+// BEFORE: Scattered across multiple files
+// siswa/actions/classes/actions.ts
+interface Class { id, name, kelompok_id }
+
+// kelas/actions/classes.ts
+interface ClassWithMaster { ...all fields + class_master_mappings }
+
+// AFTER: Clean hierarchy
+// src/types/class.ts
+export interface ClassBase { id, name }
+export interface Class extends ClassBase { kelompok_id, kelompok, created_at }
+export interface ClassWithMaster extends Class { class_master_mappings }
+export interface ClassMaster { id, name, sort_order, ... }
+```
+
+---

@@ -4,35 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
+import type { ClassWithMaster } from '@/types/class'
 
-export interface ClassWithMaster {
-  id: string
-  name: string
-  kelompok_id: string
-  created_at: string
-  updated_at: string
-  kelompok?: {
-    id: string
-    name: string
-    desa_id?: string
-    desa?: {
-      id: string
-      name: string
-      daerah_id?: string
-      daerah?: {
-        id: string
-        name: string
-      }
-    }
-  }
-  class_master_mappings?: Array<{
-    class_master: {
-      id: string
-      name: string
-      description?: string
-    }
-  }>
-}
+export type { ClassWithMaster }
 
 /**
  * Sort classes by minimum class_master sort_order

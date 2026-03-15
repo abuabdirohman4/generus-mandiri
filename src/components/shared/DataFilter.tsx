@@ -6,51 +6,9 @@ import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectFilter from '@/components/form/input/MultiSelectFilter'
 import { useMeetingTypes } from '@/app/(admin)/absensi/hooks/useMeetingTypes'
 import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
-
-interface Daerah {
-  id: string
-  name: string
-}
-
-interface Desa {
-  id: string
-  name: string
-  daerah_id: string
-}
-
-interface Kelompok {
-  id: string
-  name: string
-  desa_id: string
-}
-
-interface Class {
-  id: string
-  name: string
-  kelompok_id?: string | null
-}
-
-interface UserProfile {
-  id?: string
-  full_name?: string
-  role: string
-  email?: string
-  kelompok_id?: string | null
-  desa_id?: string | null
-  daerah_id?: string | null
-  kelompok?: { id: string; name: string } | null
-  desa?: { id: string; name: string } | null
-  daerah?: { id: string; name: string } | null
-  classes?: Array<{
-    id: string
-    name: string
-    kelompok_id?: string | null
-    kelompok?: { id: string; name: string } | null
-  }>
-  // Siswa page user profile structure
-  class_id?: string | null
-  class_name?: string | null
-}
+import type { UserProfile } from '@/types/user'
+import type { Class } from '@/types/class'
+import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
 
 interface DataFilters {
   daerah: string[]
@@ -66,9 +24,9 @@ interface DataFilterProps {
   filters: DataFilters
   onFilterChange: (filters: DataFilters) => void
   userProfile: UserProfile | null | undefined
-  daerahList: Daerah[]
-  desaList: Desa[]
-  kelompokList: Kelompok[]
+  daerahList: DaerahBase[]
+  desaList: DesaBase[]
+  kelompokList: KelompokBase[]
   classList: Class[]
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
   showGender?: boolean // NEW - for pages that need gender filter
@@ -97,9 +55,9 @@ interface DataFilterProps {
     meetingType?: string
   }
   filterLists?: {                       // NEW - override for filtered lists
-    daerahList?: Daerah[]
-    desaList?: Desa[]
-    kelompokList?: Kelompok[]
+    daerahList?: DaerahBase[]
+    desaList?: DesaBase[]
+    kelompokList?: KelompokBase[]
   }
   cascadeFilters?: boolean              // NEW - control cascading behavior (default: true)
   classViewMode?: 'separated' | 'combined'  // NEW - for dashboard class monitoring

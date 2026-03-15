@@ -10,23 +10,10 @@
 
 import type { StudentWithOrg } from '@/types/student'
 import { canTeacherAccessStudent } from '@/lib/accessControl'
+import type { UserProfile } from '@/types/user'
 
 export type { StudentWithOrg }
-
-export interface UserProfile {
-  id: string
-  full_name: string
-  role: 'superadmin' | 'admin' | 'teacher' | 'student'
-  daerah_id?: string | null
-  desa_id?: string | null
-  kelompok_id?: string | null
-  permissions?: {
-    can_archive_students?: boolean
-    can_transfer_students?: boolean
-    can_soft_delete_students?: boolean
-    can_hard_delete_students?: boolean
-  }
-}
+export type { UserProfile }
 
 // Use centralized type for consistency
 export type Student = StudentWithOrg

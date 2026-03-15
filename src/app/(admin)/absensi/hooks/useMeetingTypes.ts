@@ -3,25 +3,7 @@
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { getAvailableMeetingTypesByRole, MEETING_TYPES } from '@/lib/constants/meetingTypes'
-
-interface UserProfile {
-  id: string
-  role: string
-  daerah_id?: string | null
-  desa_id?: string | null
-  kelompok_id?: string | null
-  classes?: Array<{
-    id: string
-    master_class?: Array<{
-      category?: Array<{
-        is_sambung_capable: boolean
-        exclude_pembinaan: boolean
-        code?: string
-        name?: string
-      }>
-    }>
-  }>
-}
+import type { UserProfile } from '@/types/user'
 
 export function useMeetingTypes(userProfile: UserProfile | null) {
   const { data, isLoading, error } = useSWR(

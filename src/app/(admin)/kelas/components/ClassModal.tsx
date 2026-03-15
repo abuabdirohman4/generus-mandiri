@@ -62,8 +62,8 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
       
       setFormData({
         name: classItem.name,
-        kelompok_id: classItem.kelompok_id,
-        masterIds: classItem.class_master_mappings?.map(mapping => mapping.class_master.id) || []
+        kelompok_id: classItem.kelompok_id || '',
+        masterIds: classItem.class_master_mappings?.map(mapping => mapping.class_master?.id).filter(Boolean) as string[] || []
       });
     } else if (userProfile && isAdminKelompok(userProfile)) {
       // Auto-fill kelompok_id for Admin Kelompok when creating new class

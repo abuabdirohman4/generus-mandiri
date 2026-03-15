@@ -6,23 +6,10 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
 import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
+import type { UserProfile } from '@/types/user'
 
-interface Profile {
-  id: string;
-  full_name: string;
-  role: string;
-  email?: string;
-  kelompok_id?: string | null;
-  desa_id?: string | null;
-  daerah_id?: string | null;
-  kelompok?: { id: string; name: string } | null;
-  desa?: { id: string; name: string } | null;
-  daerah?: { id: string; name: string } | null;
-  classes?: Array<{
-    id: string;
-    name: string;
-  }>;
-}
+type Profile = UserProfile
+
 
 interface QuickActionsProps {
   isAdmin: boolean;

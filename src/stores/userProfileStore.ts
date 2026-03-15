@@ -1,48 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { clearUserCache } from '@/lib/userUtils';
+import type { UserProfile, UserProfileState } from '@/types/user'
 
-export interface UserProfile {
-  id: string;
-  full_name: string;
-  role: string;
-  email?: string;
-  kelompok_id?: string | null;
-  desa_id?: string | null;
-  daerah_id?: string | null;
-  can_manage_materials?: boolean;
-  kelompok?: { id: string; name: string } | null;
-  desa?: { id: string; name: string } | null;
-  daerah?: { id: string; name: string } | null;
-  classes?: Array<{
-    id: string;
-    name: string;
-    kelompok_id?: string | null;
-    kelompok?: { id: string; name: string } | null;
-  }>;
-  notification_badge?: {
-    pending_transfer_requests?: number;
-  };
-  permissions?: {
-    can_archive_students?: boolean;
-    can_transfer_students?: boolean;
-    can_soft_delete_students?: boolean;
-    can_hard_delete_students?: boolean;
-  };
-}
-
-interface UserProfileState {
-  profile: UserProfile | null;
-  avatarUrl: string | null;
-  loading: boolean;
-  error: string | null;
-  isInitialized: boolean;
-  setProfile: (profile: UserProfile | null) => void;
-  setAvatarUrl: (avatarUrl: string) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  clearProfile: () => void;
-}
+export type { UserProfile }
 
 export const useUserProfileStore = create<UserProfileState>()(
   persist(

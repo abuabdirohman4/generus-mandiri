@@ -4,22 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
+import type { ClassMaster, ClassMasterData } from '@/types/class'
 
-export interface ClassMaster {
-  id: string
-  name: string
-  description?: string | null
-  sort_order: number
-  category_id?: string | null
-  created_at?: string
-  updated_at?: string
-}
-
-interface ClassMasterData {
-  name: string
-  description: string
-  sort_order: number
-}
+export type { ClassMaster }
 
 // Get all class masters (visible to all authenticated users)
 export async function getAllClassMasters(): Promise<ClassMaster[]> {

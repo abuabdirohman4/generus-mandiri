@@ -2,28 +2,10 @@
  * Helper functions for checking class types
  */
 
-export interface ClassData {
-  name?: string
-  class_master_mappings?: Array<{
-    class_master?: {
-      id?: string
-      name?: string
-      category?: {
-        id?: string
-        code?: string
-        name?: string
-      }
-    } | Array<{
-      id?: string
-      name?: string
-      category?: {
-        id?: string
-        code?: string
-        name?: string
-      }
-    }>
-  }>
-}
+import type { ClassData } from '@/types/class'
+
+export type { ClassData }
+
 
 /**
  * Check if a class is Caberawit (Paud/Kelas 1-6) based on category from class_master

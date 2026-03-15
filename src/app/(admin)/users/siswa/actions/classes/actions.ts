@@ -9,22 +9,9 @@ import {
     fetchClassesHierarchical,
 } from './queries'
 import { sortClassesByMasterOrder, attachClassMasterMappings } from './logic'
+import type { Class } from '@/types/class'
 
-export interface Class {
-    id: string
-    name: string
-    kelompok_id?: string | null
-    kelompok?: {
-        id: string
-        name: string
-    } | null
-    class_master_mappings?: Array<{
-        class_master: {
-            id: string
-            sort_order: number
-        }
-    }>
-}
+export type { Class }
 
 /**
  * Mendapatkan daftar kelas berdasarkan role user
