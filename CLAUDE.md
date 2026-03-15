@@ -185,10 +185,20 @@ npm run build            # Production build
 npm run type-check       # TypeScript check (no emit)
 npm run format           # Format with Prettier
 npm run fix:all          # Format + type-check
+
+# Unit Tests (Vitest)
 npm run test             # Tests in watch mode
 npm run test:run         # Tests once (CI/CD)
 npm run test:coverage    # Coverage report
+
+# E2E Tests (Playwright)
+npm run test:e2e         # Run E2E tests (headless)
+npm run test:e2e:ui      # Run E2E tests (UI mode)
+npm run test:e2e:headed  # Run E2E tests (headed browser)
+npm run test:e2e:debug   # Run E2E tests (debug mode)
 ```
+
+**📖 For E2E testing setup, multi-role authentication, and security best practices, READ [`tests/QUICK_START.md`](tests/QUICK_START.md)**
 
 ---
 
@@ -263,13 +273,14 @@ Key: NEVER INSERT into `auth.users` without `auth.identities`. Use `''` for toke
 
 ## 🛠️ Key Technologies
 
-Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth + RLS), SWR, Zustand, Vitest, Ant Design, Recharts, @react-pdf/renderer, PWA, TipTap, dnd-kit, Sonner, Flatpickr.
+Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth + RLS), SWR, Zustand, Vitest, Playwright, Ant Design, Recharts, @react-pdf/renderer, PWA, TipTap, dnd-kit, Sonner, Flatpickr.
 
 ---
 
 ## 📖 Additional Documentation
 
 - **Testing**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)
+- **E2E Testing**: [`tests/QUICK_START.md`](tests/QUICK_START.md) | [`tests/MULTI_ROLE_TESTING.md`](tests/MULTI_ROLE_TESTING.md)
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md)
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
