@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
 import { buildFilterConditions } from '../../dashboardHelpers'
-import type { Dashboard, DashboardFilters } from '../types'
+import type { Dashboard, DashboardFilters } from '@/types/dashboard'
 import {
     countStudents,
     countClasses,
@@ -18,7 +18,7 @@ import {
     sliceAttendanceByPeriod,
 } from './logic'
 
-export type { Dashboard, DashboardFilters, TodayMeeting, ClassPerformance, MeetingTypeDistribution } from '../types'
+export type { Dashboard, DashboardFilters, TodayMeeting, ClassPerformance, MeetingTypeDistribution } from '@/types/dashboard'
 
 /**
  * Get dashboard overview statistics

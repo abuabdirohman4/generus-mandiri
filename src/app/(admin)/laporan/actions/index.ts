@@ -2,4 +2,4 @@
 export { getAttendanceReport } from './reports/actions'
 
 // Re-export types
-export type { ReportFilters, ReportData } from './reports/actions'
+export type { ReportFilters, ReportData } from '@/types/report'

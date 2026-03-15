@@ -7,7 +7,7 @@
 
 import type { AttendanceLog, Meeting } from '@/lib/utils/attendanceCalculation'
 import { filterAttendanceForClass, calculateAttendanceRate } from '@/lib/utils/attendanceCalculation'
-import type { ClassMonitoringData } from '../types'
+import type { ClassMonitoringData } from '@/types/dashboard'
 
 /**
  * Get date range for a given period selector

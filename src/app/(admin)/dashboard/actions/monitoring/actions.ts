@@ -6,7 +6,7 @@ import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
 import { buildFilterConditions, fetchByIds } from '../../dashboardHelpers'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 import type { AttendanceLog, Meeting } from '@/lib/utils/attendanceCalculation'
-import type { ClassMonitoringData, ClassMonitoringFilters } from '../types'
+import type { ClassMonitoringData, ClassMonitoringFilters } from '@/types/dashboard'
 import {
     fetchClassesWithOrg,
     fetchMeetingsForMonitoring,
@@ -23,7 +23,7 @@ import {
     deduplicateLogsForCombined,
 } from './logic'
 
-export type { ClassMonitoringData, ClassMonitoringFilters } from '../types'
+export type { ClassMonitoringData, ClassMonitoringFilters } from '@/types/dashboard'
 
 /**
  * Get class monitoring data for the given period and filters

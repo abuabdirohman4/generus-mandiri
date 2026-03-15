@@ -6,7 +6,7 @@
  * No database access, no side effects.
  */
 
-import type { ReportFilters } from './actions'
+import type { ReportFilters } from '@/types/report'
 
 // ─── Date Helpers ─────────────────────────────────────────────────────────────
 

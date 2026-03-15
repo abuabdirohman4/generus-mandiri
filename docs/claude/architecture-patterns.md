@@ -410,3 +410,95 @@ it('should reject empty classIds', () => {
 - One feature per session
 
 **Reference:** `docs/plans/2026-03-01-split-absensi-actions-design.md`
+
+---
+
+## Type Management & Organization
+
+**Pattern:** Centralized domain-based type files in `src/types/`
+
+### Directory Structure
+
+```
+src/types/
+├── attendance.ts       # Attendance domain (AttendanceLog, AttendanceData, AttendanceStats)
+├── meeting.ts          # Meeting domain (Meeting, CreateMeetingData, MeetingWithStats)
+├── student.ts          # Student domain (Student, StudentWithClasses)
+├── dashboard.ts        # Dashboard domain (Dashboard, TodayMeeting, ClassMonitoringData)
+├── report.ts           # Report domain (ReportFilters, ReportData)
+├── material.ts         # Material domain (if applicable)
+├── rapot.ts            # Report card domain (if applicable)
+└── common.ts           # Shared types (ApiResponse, Pagination, etc.)
+```
+
+### Extraction Rules
+
+**When to create a new type file:**
+1. Domain has **3+ related types**
+2. Types are used across **2+ action files**
+3. Types represent **core domain entities** (not just local helpers)
+
+**When to keep types inline:**
+1. Used in **single file only**
+2. Simple request/response wrappers
+3. Component-specific UI state
+
+**File organization within type files:**
+```typescript
+/**
+ * [Domain] types for [Feature]
+ */
+
+// ─── Core Entities ────────────────────────────────────────────────────────────
+export interface Entity { ... }
+
+// ─── Request/Response ─────────────────────────────────────────────────────────
+export interface CreateEntityData { ... }
+
+// ─── UI/Display ───────────────────────────────────────────────────────────────
+export interface EntityWithStats { ... }
+
+// ─── Filters ──────────────────────────────────────────────────────────────────
+export interface EntityFilters { ... }
+```
+
+### Import Patterns
+
+**✅ Correct:**
+```typescript
+import type { Meeting, CreateMeetingData } from '@/types/meeting'
+import type { Student } from '@/types/student'
+import type { Dashboard } from '@/types/dashboard'
+```
+
+**❌ Incorrect:**
+```typescript
+import type { Meeting } from '@/app/(admin)/absensi/actions/meetings/actions'
+import type { Student } from '../actions/students/actions'
+```
+
+### Benefits
+
+1. **Single source of truth** - Types defined once, imported everywhere
+2. **Easier refactoring** - Change type in one place
+3. **Better IDE support** - Auto-import from centralized location
+4. **Clearer boundaries** - Types separated from implementation
+5. **Testability** - Types can be imported in tests without circular dependencies
+
+### Migration Checklist
+
+When extracting types from actions to `src/types/`:
+
+- [ ] Create `src/types/[domain].ts` with JSDoc header
+- [ ] Copy types from action files (preserve comments)
+- [ ] Sort alphabetically within sections
+- [ ] Update all imports in action files
+- [ ] Update imports in components/hooks/stores
+- [ ] Delete inline type definitions
+- [ ] Run `npm run type-check`
+- [ ] Verify no import errors
+
+**Reference Implementation:**
+- `src/types/attendance.ts` - Complete example with all sections
+- `src/types/meeting.ts` - Complex domain with nested types
+- `src/types/student.ts` - Entity with relationships
