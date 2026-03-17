@@ -54,6 +54,14 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 ---
 
+## 🦸 Superpowers (MANDATORY when using Claude Code)
+
+**ALL relevant skills MUST be invoked via the `Skill` tool BEFORE any response or action.** Even a 1% chance a skill applies means you MUST invoke it first — this is non-negotiable.
+
+**📖 For the full skill list, mandatory trigger table, and red flags, READ [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)**
+
+---
+
 ## 🤖 Execution Mode Selection (MANDATORY)
 
 **BEFORE implementing ANY feature/refactoring/task**, ask user:
@@ -254,4 +262,5 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
 - **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
+- **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
 - **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
