@@ -251,6 +251,58 @@ describe('logic.ts – filterAttendanceByClass', () => {
     })
 })
 
+// ─── sm-hov regression: multi-class filter ───────────────────────────────────
+
+describe('sm-hov regression – filterAttendanceByClass multi-class filter', () => {
+    /**
+     * Scenario:
+     *   - Meeting M1 has class_ids = [ClassA, ClassB]
+     *   - Student S1 is enrolled in ClassB only (NOT ClassA)
+     *   - Filter with classId = "ClassA,ClassB"
+     *
+     * Bug (before fix):
+     *   Function iterates meeting.class_ids = [ClassA, ClassB].
+     *   First match is ClassA (since "ClassA" is in filter).
+     *   meetingClassId = ClassA.
+     *   enrollmentMap.get("ClassA") → undefined (student not in ClassA) → excluded.
+     *
+     * Expected (after fix):
+     *   Student enrolled in ANY of the matching classes should be included.
+     */
+    const enrollmentMap = new Map([
+        // Student S1 enrolled in ClassB only
+        ['class-b', new Map([['kelompok-1', new Set(['student-1'])]])]
+        // ClassA has no enrollments
+    ])
+    const meetingMap = new Map([
+        ['meeting-1', { id: 'meeting-1', class_id: 'class-a', class_ids: ['class-a', 'class-b'] }]
+    ])
+
+    it('[sm-hov] includes student enrolled in ClassB when filtering ClassA+ClassB (multi-class)', () => {
+        const logs = [{ meeting_id: 'meeting-1', student_id: 'student-1', students: { id: 'student-1' } }]
+        // Filter: both ClassA and ClassB selected
+        const result = filterAttendanceByClass(logs, 'class-a,class-b', enrollmentMap, meetingMap)
+        // Student is enrolled in ClassB, meeting covers ClassB → should be included
+        expect(result).toHaveLength(1)
+    })
+
+    it('[sm-hov] multi-class filter result count >= single-class filter on ClassB', () => {
+        const logs = [{ meeting_id: 'meeting-1', student_id: 'student-1', students: { id: 'student-1' } }]
+
+        const singleClassResult = filterAttendanceByClass(logs, 'class-b', enrollmentMap, meetingMap)
+        const multiClassResult = filterAttendanceByClass(logs, 'class-a,class-b', enrollmentMap, meetingMap)
+
+        // Multi-class filter must return >= count of single-class filter (no data loss)
+        expect(multiClassResult.length).toBeGreaterThanOrEqual(singleClassResult.length)
+    })
+
+    it('[sm-hov] excludes student not enrolled in any of the filtered classes', () => {
+        const logs = [{ meeting_id: 'meeting-1', student_id: 'student-99', students: { id: 'student-99' } }]
+        const result = filterAttendanceByClass(logs, 'class-a,class-b', enrollmentMap, meetingMap)
+        expect(result).toHaveLength(0)
+    })
+})
+
 // ─── filterAttendanceByKelompok ───────────────────────────────────────────────
 
 describe('logic.ts – filterAttendanceByKelompok', () => {

@@ -32,6 +32,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **📖 For detailed TDD examples and workflow, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
 
+### Bug Fixing with E2E (MANDATORY for P0/P1 bugs)
+
+**When a bug is reported**, use this workflow:
+1. **Replicate** → Write E2E test that reproduces the bug (test RED)
+2. **Prove** → Run test to confirm it fails (bug is real)
+3. **Fix** → Fix the code
+4. **Verify** → Run test to confirm it passes (bug fixed)
+5. **Protect** → Test stays as regression guard
+
+This applies especially to Beads issues. Before fixing any P0/P1 bug, write the E2E test first.
+
 ---
 
 ## 📦 Centralized Types (MANDATORY)

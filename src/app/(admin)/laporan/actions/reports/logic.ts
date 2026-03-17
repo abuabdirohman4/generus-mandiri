@@ -340,30 +340,32 @@ export function filterAttendanceByClass(
         const meeting = meetingMap.get(log.meeting_id)
         if (!meeting || !student) return false
 
-        let meetingClassId: string | null = null
+        // Collect ALL class IDs from this meeting that match the filter
+        const matchingClassIds: string[] = []
 
         if (classIds.includes(meeting.class_id)) {
-            meetingClassId = meeting.class_id
+            matchingClassIds.push(meeting.class_id)
         }
 
-        if (!meetingClassId && meeting.class_ids && Array.isArray(meeting.class_ids)) {
+        if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
             for (const id of meeting.class_ids) {
-                if (classIds.includes(id)) {
-                    meetingClassId = id
-                    break
+                if (classIds.includes(id) && !matchingClassIds.includes(id)) {
+                    matchingClassIds.push(id)
                 }
             }
         }
 
-        if (!meetingClassId) return false
+        if (matchingClassIds.length === 0) return false
 
-        // STRICT enrollment check
-        const kelompokMapForClass = enrollmentMap.get(meetingClassId)
-        if (!kelompokMapForClass) return false
+        // STRICT enrollment check: student must be enrolled in ANY of the matching classes
+        for (const meetingClassId of matchingClassIds) {
+            const kelompokMapForClass = enrollmentMap.get(meetingClassId)
+            if (!kelompokMapForClass) continue
 
-        for (const [, enrolledStudents] of kelompokMapForClass.entries()) {
-            if (enrolledStudents.has(student.id)) {
-                return true
+            for (const [, enrolledStudents] of kelompokMapForClass.entries()) {
+                if (enrolledStudents.has(student.id)) {
+                    return true
+                }
             }
         }
 

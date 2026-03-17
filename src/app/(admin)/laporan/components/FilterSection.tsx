@@ -158,7 +158,7 @@ export default function FilterSection({
             showKelas={true}
             showGender={true}
             showMeetingType={true}
-            forceShowAllMeetingTypes={isAdmin(userProfile)}
+            forceShowAllMeetingTypes={!!userProfile && isAdmin(userProfile)}
             // cascadeFilters={false}
           />
 
@@ -198,7 +198,7 @@ export default function FilterSection({
             showKelas={true}
             showGender={true}
             showMeetingType={true}
-            forceShowAllMeetingTypes={isAdmin(userProfile)}
+            forceShowAllMeetingTypes={!!userProfile && isAdmin(userProfile)}
             cascadeFilters={false}
           />
 
