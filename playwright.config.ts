@@ -12,20 +12,27 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
 export default defineConfig({
   testDir: './tests/e2e',
 
+  /* Global setup and teardown */
+  globalSetup: require.resolve('./tests/global-setup.ts'),
+  globalTeardown: require.resolve('./tests/global-teardown.ts'),
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
 
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  /* Retry on CI only - also retry locally for connection issues */
+  retries: process.env.CI ? 2 : 1,
 
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Limit workers to prevent dev server overload and test isolation issues */
+  workers: 1, // Single worker to ensure test isolation and prevent session conflicts
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
+
+  /* Global timeout for each test - increased for async server actions */
+  timeout: 60000, // 1 minute per test (production build is more stable than dev)
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -40,6 +47,12 @@ export default defineConfig({
 
     /* Video on failure */
     video: 'retain-on-failure',
+
+    /* Timeout for individual actions (click, fill, etc.) */
+    actionTimeout: 15000, // 15s (production build handles actions faster)
+
+    /* Timeout for page navigations */
+    navigationTimeout: 45000, // 45s (generous for server warm-up on first test)
   },
 
   /* Configure projects for major browsers */

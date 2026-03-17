@@ -8,8 +8,12 @@ import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
 import Button from '@/components/ui/button/Button';
+import { isAdminKelompok } from '@/lib/userUtils';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function AdminManagementPage() {
+  const router = useRouter();
   const {
     admins,
     daerah,
@@ -34,6 +38,14 @@ export default function AdminManagementPage() {
     handleOrganisasiFilterChange,
     mutate
   } = useAdminPage();
+
+  useEffect(() => {
+    if (!userProfile) return;
+    const isTeacher = userProfile.role === 'teacher';
+    if (isTeacher || isAdminKelompok(userProfile)) {
+      router.push('/home');
+    }
+  }, [userProfile, router]);
 
   if (isLoading) {
     return <SuperadminTableSkeleton />;

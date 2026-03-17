@@ -82,13 +82,21 @@ export function getTestCredentials(role: TestUserRole = 'superadmin') {
 export async function login(page: Page, role: TestUserRole = 'superadmin') {
   const { username, password } = getTestCredentials(role);
 
-  await page.goto('/signin');
-  await page.fill('input[name="username"]', username);
-  await page.fill('input[name="password"]', password);
-  await page.click('button[type="submit"]');
+  const attemptLogin = async () => {
+    await page.goto('/signin');
+    await page.fill('input[name="username"]', username);
+    await page.fill('input[name="password"]', password);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/.*home/, { timeout: 45000 });
+  };
 
-  // Wait for navigation to complete
-  await page.waitForURL(/.*home/, { timeout: 10000 });
+  try {
+    await attemptLogin();
+  } catch {
+    // Retry once - server may have been busy (ECONNRESET, warm-up)
+    await page.waitForTimeout(2000);
+    await attemptLogin();
+  }
 }
 
 /**

@@ -9,8 +9,11 @@ import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
 import Button from '@/components/ui/button/Button';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function GuruManagementPage() {
+  const router = useRouter();
   const {
     teachers,
     daerah,
@@ -38,6 +41,13 @@ export default function GuruManagementPage() {
     handleOrganisasiFilterChange,
     mutate
   } = useGuruPage();
+
+  useEffect(() => {
+    if (!userProfile) return;
+    if (userProfile.role === 'teacher') {
+      router.push('/home');
+    }
+  }, [userProfile, router]);
 
   if (isLoading) {
     return <SuperadminTableSkeleton />;

@@ -6,10 +6,14 @@ import { loginAsSuperadmin } from './helpers/auth';
  * Test main dashboard functionality and navigation
  */
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Dashboard', () => {
-  // Run login before each test
+  // Login and ensure we start from /home before each test
   test.beforeEach(async ({ page }) => {
     await loginAsSuperadmin(page);
+    await page.goto('/home');
+    await expect(page.locator('h3').first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should display dashboard with quick actions', async ({ page }) => {
@@ -27,19 +31,19 @@ test.describe('Dashboard', () => {
   });
 
   test('should navigate to Absensi from quick action', async ({ page }) => {
-    // Click Absensi quick action
-    await page.click('text=Absensi');
+    // Quick action cards use client-side router.push, click heading inside card
+    await page.locator('h3:has-text("Absensi")').click();
 
-    // Should navigate to absensi page
-    await expect(page).toHaveURL(/.*absensi/);
+    // Client-side navigation - URL changes without full reload
+    await expect(page).toHaveURL(/.*absensi/, { timeout: 15000 });
   });
 
   test('should navigate to Siswa from quick action', async ({ page }) => {
-    // Click Siswa quick action
-    await page.click('text=Siswa');
+    // Quick action cards use client-side router.push, click heading inside card
+    await page.locator('h3:has-text("Siswa")').click();
 
-    // Should navigate to siswa page
-    await expect(page).toHaveURL(/.*users\/siswa/);
+    // Client-side navigation
+    await expect(page).toHaveURL(/.*users\/siswa/, { timeout: 15000 });
   });
 
   test('should show user profile information', async ({ page }) => {
@@ -48,20 +52,21 @@ test.describe('Dashboard', () => {
   });
 
   test('should have working sidebar navigation', async ({ page }) => {
-    // Test sidebar navigation items
+    // Test sidebar navigation items by clicking links with specific URLs
     const navItems = [
-      { text: 'Dashboard', url: /dashboard|home/ },
-      { text: 'Absensi', url: /absensi/ },
-      { text: 'Siswa', url: /siswa/ },
+      { href: '/absensi', url: /absensi/ },
+      { href: '/users/siswa', url: /users\/siswa/ },
+      { href: '/home', url: /home/ },
     ];
 
     for (const item of navItems) {
-      // Click sidebar item
-      const link = page.locator(`a:has-text("${item.text}")`).first();
+      // Click sidebar link by href
+      const link = page.locator(`a[href="${item.href}"]`).first();
+      await link.waitFor({ state: 'visible', timeout: 5000 });
       await link.click();
 
-      // Check URL
-      await expect(page).toHaveURL(item.url);
+      // Client-side navigation
+      await expect(page).toHaveURL(item.url, { timeout: 15000 });
     }
   });
 });

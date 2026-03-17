@@ -14,6 +14,8 @@ import {
  * Test permissions for different user roles
  */
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Role-Based Permissions', () => {
   test.describe('Superadmin Access', () => {
     test.beforeEach(async ({ page }) => {
@@ -22,16 +24,17 @@ test.describe('Role-Based Permissions', () => {
 
     test('should have access to all features', async ({ page }) => {
       // Superadmin should see all menu items
-      await expect(page.locator('text=/dashboard/i').first()).toBeVisible();
-      await expect(page.locator('text=/absensi/i').first()).toBeVisible();
-      await expect(page.locator('text=/siswa/i').first()).toBeVisible();
-      await expect(page.locator('text=/guru/i').first()).toBeVisible();
-      await expect(page.locator('text=/kelas/i').first()).toBeVisible();
-      await expect(page.locator('text=/organisasi/i').first()).toBeVisible();
+      await expect(page.locator('text=/dashboard/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/absensi/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/siswa/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/guru/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/kelas/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/organisasi/i').first()).toBeVisible({ timeout: 15000 });
     });
 
     test('should be able to access admin management', async ({ page }) => {
-      await page.goto('/users/admin');
+      // Admin page can be slow to load due to large dataset
+      await page.goto('/users/admin', { timeout: 60000 });
       // Should not redirect or show error
       await expect(page).toHaveURL(/.*users\/admin/);
     });
@@ -44,6 +47,7 @@ test.describe('Role-Based Permissions', () => {
     });
   });
 
+  // Skip multi-user tests until test users are set up
   test.describe('Admin Daerah Access', () => {
     test.beforeEach(async ({ page }) => {
       await loginAsAdminDaerah(page);
@@ -63,13 +67,13 @@ test.describe('Role-Based Permissions', () => {
       await page.goto('/absensi');
       await expect(page).toHaveURL(/.*absensi/);
 
-      // Should see create meeting button
+      // Should see create meeting button (title="Buat Pertemuan Baru")
       const createButton = page
         .locator(
-          'button:has-text("Buat"), button:has-text("Create"), button[aria-label*="create"]'
+          'button[title*="Buat"], button:has-text("Buat"), button:has-text("Create")'
         )
         .first();
-      await expect(createButton).toBeVisible();
+      await expect(createButton).toBeVisible({ timeout: 15000 });
     });
   });
 
@@ -109,7 +113,7 @@ test.describe('Role-Based Permissions', () => {
       const addButton = page
         .locator('button:has-text("Tambah"), button:has-text("Add")')
         .first();
-      await expect(addButton).toBeVisible();
+      await expect(addButton).toBeVisible({ timeout: 15000 });
     });
 
     test('should be able to create regular meetings', async ({ page }) => {
@@ -118,10 +122,10 @@ test.describe('Role-Based Permissions', () => {
 
       const createButton = page
         .locator(
-          'button:has-text("Buat"), button:has-text("Create"), button[aria-label*="create"]'
+          'button[title*="Buat"], button:has-text("Buat"), button:has-text("Create")'
         )
         .first();
-      await expect(createButton).toBeVisible();
+      await expect(createButton).toBeVisible({ timeout: 15000 });
     });
   });
 
@@ -135,7 +139,7 @@ test.describe('Role-Based Permissions', () => {
       await expect(page).toHaveURL(/.*home/);
 
       // Should see dashboard
-      await expect(page.locator('text=/selamat datang/i')).toBeVisible();
+      await expect(page.locator('text=/selamat datang/i')).toBeVisible({ timeout: 15000 });
     });
 
     test('should be able to access absensi', async ({ page }) => {
@@ -154,7 +158,7 @@ test.describe('Role-Based Permissions', () => {
       await expect(page).toHaveURL(/.*home/);
 
       // Should see dashboard
-      await expect(page.locator('text=/selamat datang/i')).toBeVisible();
+      await expect(page.locator('text=/selamat datang/i')).toBeVisible({ timeout: 15000 });
     });
 
     test('should be able to access absensi', async ({ page }) => {
@@ -165,6 +169,7 @@ test.describe('Role-Based Permissions', () => {
 
   test.describe('Guru Kelompok Access', () => {
     test.beforeEach(async ({ page }) => {
+      await page.context().clearCookies();
       await loginAsGuruKelompok(page);
     });
 
@@ -180,12 +185,12 @@ test.describe('Role-Based Permissions', () => {
       await page.goto('/absensi');
 
       // Wait for meetings to load
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Teacher should be able to create meetings for their classes
       const createButton = page
         .locator(
-          'button:has-text("Buat"), button:has-text("Create"), button[aria-label*="create"]'
+          'button[title*="Buat"], button:has-text("Buat"), button:has-text("Create")'
         )
         .first();
 
@@ -194,65 +199,34 @@ test.describe('Role-Based Permissions', () => {
       // This is OK - some teachers may not have permission to create meetings
     });
 
-    test('should NOT have access to organizational management', async ({
-      page,
-    }) => {
+    test('should be redirected away from organisasi page', async ({ page }) => {
       await page.goto('/organisasi');
 
-      // Should either redirect or show error
-      // Adjust based on your app's behavior for unauthorized access
-      await page.waitForTimeout(2000);
-
-      // Should not be on organisasi page
-      const currentUrl = page.url();
-      const isOnOrganisasiPage = currentUrl.includes('/organisasi');
-
-      if (isOnOrganisasiPage) {
-        // If still on page, should show access denied message
-        await expect(
-          page.locator('text=/tidak memiliki akses|access denied|forbidden/i')
-        ).toBeVisible();
-      } else {
-        // Should be redirected to home or error page
-        expect(currentUrl).toMatch(/\/(home|error|signin)/);
-      }
+      // Page does client-side redirect after userProfile loads
+      // Wait for redirect to complete
+      await expect(page).not.toHaveURL(/.*organisasi/, { timeout: 15000 });
     });
   });
 
   test.describe('Permission Boundaries', () => {
     test('teacher should not access admin features', async ({ page }) => {
+      await page.context().clearCookies();
       await loginAsGuruKelompok(page);
 
-      // Try to access admin pages
+      // Try to access admin pages — app does client-side redirect after userProfile loads
       await page.goto('/users/admin');
-
-      // Should redirect or show error
-      await page.waitForTimeout(1000);
-      const url = page.url();
-
-      // Should NOT be on admin page
-      if (url.includes('/users/admin')) {
-        // If still on page, should show access denied
-        await expect(
-          page.locator('text=/akses ditolak|access denied|forbidden/i')
-        ).toBeVisible();
-      }
+      await expect(page).not.toHaveURL(/.*users\/admin/, { timeout: 15000 });
     });
 
     test('admin kelompok should not access organizational management', async ({
       page,
     }) => {
+      await page.context().clearCookies();
       await loginAsAdminKelompok(page);
 
+      // Admin kelompok is redirected away from /organisasi (client-side redirect)
       await page.goto('/organisasi');
-      await page.waitForTimeout(1000);
-
-      const url = page.url();
-
-      // Depending on implementation:
-      // Either redirected away, or shown with limited access
-      // Adjust assertion based on your app's behavior
-      expect(url).toBeTruthy(); // Placeholder - implement based on your app
+      await expect(page).not.toHaveURL(/.*organisasi/, { timeout: 15000 });
     });
   });
 });
@@ -265,7 +239,7 @@ test.describe('Data Scope by Role', () => {
   test('superadmin sees all data', async ({ page }) => {
     await loginAsSuperadmin(page);
     await page.goto('/users/siswa');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Should see data from all organizations
     // Add specific assertions based on your test data
@@ -274,7 +248,7 @@ test.describe('Data Scope by Role', () => {
   test('admin kelompok sees only kelompok data', async ({ page }) => {
     await loginAsAdminKelompok(page);
     await page.goto('/users/siswa');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Should only see students from their kelompok
     // Add specific assertions based on your test data
@@ -283,7 +257,7 @@ test.describe('Data Scope by Role', () => {
   test('guru sees only their assigned classes', async ({ page }) => {
     await loginAsGuruKelompok(page);
     await page.goto('/absensi');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Should only see meetings for their classes
     // Add specific assertions based on your test data

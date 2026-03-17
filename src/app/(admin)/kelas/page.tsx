@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { useKelasStore } from './stores/kelasStore';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 import ClassMastersTab from './components/ClassMastersTab';
 import ClassesKelompokTab from './components/ClassesKelompokTab';
 import Button from '@/components/ui/button/Button';
+import { useRouter } from 'next/navigation';
 
 type TabType = 'masters' | 'kelompok';
 
 export default function KelasPage() {
+  const router = useRouter();
   const { profile: userProfile } = useUserProfile();
+
+  useEffect(() => {
+    if (!userProfile) return;
+    if (userProfile.role === 'teacher') {
+      router.push('/home');
+    }
+  }, [userProfile, router]);
   const [activeTab, setActiveTab] = useState<TabType>('kelompok');
   
   // Get store actions for buttons

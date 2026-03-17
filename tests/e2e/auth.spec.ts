@@ -6,6 +6,8 @@ import { getTestCredentials } from './helpers/auth';
  * Test login functionality and role-based access control
  */
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Authentication', () => {
   test('should show login page', async ({ page }) => {
     await page.goto('/');
@@ -28,14 +30,12 @@ test.describe('Authentication', () => {
     await page.fill('input[name="username"]', username);
     await page.fill('input[name="password"]', password);
 
-    // Submit form
+    // Submit form and wait for navigation
     await page.click('button[type="submit"]');
-
-    // Should redirect to /home
-    await expect(page).toHaveURL(/.*home/, { timeout: 10000 });
+    await page.waitForURL(/.*home/, { timeout: 45000 });
 
     // Should see welcome message
-    await expect(page.locator('text=/selamat datang/i')).toBeVisible();
+    await expect(page.locator('text=/selamat datang/i')).toBeVisible({ timeout: 15000 });
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
@@ -45,10 +45,12 @@ test.describe('Authentication', () => {
     await page.fill('input[name="username"]', 'invaliduser');
     await page.fill('input[name="password"]', 'wrongpassword');
 
-    // Submit form
+    // Submit form and wait for server response
     await page.click('button[type="submit"]');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Should show error message
+    // Should show error message (page stays on /signin with error)
+    await expect(page).toHaveURL(/.*signin/);
     await expect(page.locator('text=/invalid|salah|gagal/i')).toBeVisible({ timeout: 5000 });
   });
 
@@ -59,12 +61,18 @@ test.describe('Authentication', () => {
     await page.goto('/signin');
     await page.fill('input[name="username"]', username);
     await page.fill('input[name="password"]', password);
+
+    // Submit and wait for navigation
     await page.click('button[type="submit"]');
+    await page.waitForURL(/.*home/, { timeout: 45000 });
 
-    await expect(page).toHaveURL(/.*home/);
+    // Click on user profile dropdown (top right)
+    await page.click('text=Super Admin');
 
-    // Find and click logout button
-    await page.click('button:has-text("Keluar"), button:has-text("Logout")');
+    // Wait for dropdown menu and click logout
+    const logoutButton = page.locator('text=/keluar|logout|sign out/i').first();
+    await logoutButton.waitFor({ state: 'visible', timeout: 5000 });
+    await logoutButton.click();
 
     // Should redirect to signin
     await expect(page).toHaveURL(/.*signin/, { timeout: 5000 });

@@ -236,7 +236,7 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 ## 📖 Additional Documentation
 
 - **Testing**: [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)
-- **E2E Testing**: [`tests/QUICK_START.md`](tests/QUICK_START.md) | [`tests/MULTI_ROLE_TESTING.md`](tests/MULTI_ROLE_TESTING.md)
+- **E2E Testing**: [`tests/QUICK_START.md`](tests/QUICK_START.md) | [`tests/MULTI_ROLE_TESTING.md`](tests/MULTI_ROLE_TESTING.md) | [`docs/claude/e2e-testing-patterns.md`](docs/claude/e2e-testing-patterns.md)
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md)
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
