@@ -96,7 +96,7 @@ export default function DataFilter({
   onClassViewModeChange,
   // Comparison feature props
   showComparisonLevel = false,
-  comparisonLevel = 'kelompok',
+  comparisonLevel = 'class',
   onComparisonLevelChange
 }: DataFilterProps) {
   // Role detection logic
@@ -495,22 +495,20 @@ export default function DataFilter({
 
   // Comparison feature logic
   const availableComparisonLevels = useMemo(() => {
-    const levels = [
-      { value: 'class', label: 'Per Kelas' },
-      { value: 'kelompok', label: 'Per Kelompok' }
-    ]
-    if (isSuperAdmin || isAdminDaerah || isTeacherDaerah) {
-      levels.push({ value: 'desa', label: 'Per Desa' })
-    }
-    // "Per Daerah" only for Superadmin
-    if (isSuperAdmin) {
-      levels.push({ value: 'daerah', label: 'Per Daerah' })
-    }
-    return levels
-  }, [isSuperAdmin, isAdminDaerah, isTeacherDaerah, isTeacherDesa])
+    const hasAccessToDesa = isSuperAdmin || isAdminDaerah || isTeacherDaerah;
+    const hasAccessToKelompok = hasAccessToDesa || isAdminDesa || isTeacherDesa;
+                      
+    const levels = [{ value: 'class', label: 'Per Kelas' }];
+
+    if (hasAccessToKelompok) levels.push({ value: 'kelompok', label: 'Per Kelompok' });
+    if (hasAccessToDesa) levels.push({ value: 'desa', label: 'Per Desa' });
+    if (isSuperAdmin) levels.push({ value: 'daerah', label: 'Per Daerah' });
+
+    return levels;    
+  }, [isSuperAdmin, isAdminDaerah, isTeacherDaerah, isAdminDesa, isTeacherDesa]);
 
   // Validation for Independent Mode
-  const isDesaInvalid = useMemo(() => {
+  const isDesaInvalid = useMemo(() => { 
     if (cascadeFilters || !filters.daerah?.length || !filters.desa?.length) return false
 
     // Check if selected Desa belongs to selected Daerah

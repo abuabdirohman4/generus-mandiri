@@ -36,7 +36,7 @@ const defaultFilters: DashboardFilters = {
   kelas: [],
   classViewMode: 'separated',
   comparisonViewMode: 'table',
-  comparisonLevel: 'kelompok'
+  comparisonLevel: 'class'
 }
 export const useDashboardStore = create<DashboardState>()(
   persist(
