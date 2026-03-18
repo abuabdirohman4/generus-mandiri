@@ -181,6 +181,90 @@ async function globalSetup() {
       }
     }
 
+    // ── Attendance logs for laporan sm-hov regression test ──────────────────
+    // These logs are required for getAttendanceReport to return data rows.
+    // Without them, detailedRecords is always empty even if meetings exist.
+    console.log('📝 Upserting test attendance logs...');
+
+    const TEST_MEETING_1_ID = 'bbbbbbbb-1111-1111-1111-111111111111';
+    const TEST_MEETING_2_ID = 'bbbbbbbb-2222-2222-2222-222222222222';
+    const TEST_STUDENT_1_ID = 'aaaaaaaa-1111-1111-1111-111111111111';
+    const TEST_STUDENT_2_ID = 'aaaaaaaa-2222-2222-2222-222222222222';
+    const TEST_STUDENT_3_ID = 'aaaaaaaa-3333-3333-3333-333333333333';
+    const TEST_CLASS_1_ID = '11111111-aaaa-aaaa-aaaa-111111111111';
+
+    const testAttendanceLogs = [
+      // Meeting 1 (Kelas 1 + Kelas 2): all 3 students present
+      {
+        id: 'cccccccc-1111-1111-1111-111111111111',
+        meeting_id: TEST_MEETING_1_ID,
+        student_id: TEST_STUDENT_1_ID,
+        status: 'H',
+        date: '2026-03-10',
+      },
+      {
+        id: 'cccccccc-2222-2222-2222-222222222222',
+        meeting_id: TEST_MEETING_1_ID,
+        student_id: TEST_STUDENT_2_ID,
+        status: 'H',
+        date: '2026-03-10',
+      },
+      {
+        id: 'cccccccc-3333-3333-3333-333333333333',
+        meeting_id: TEST_MEETING_1_ID,
+        student_id: TEST_STUDENT_3_ID,
+        status: 'H',
+        date: '2026-03-10',
+      },
+      // Meeting 2 (Kelas 1 only): 2 students present
+      {
+        id: 'cccccccc-4444-4444-4444-444444444444',
+        meeting_id: TEST_MEETING_2_ID,
+        student_id: TEST_STUDENT_1_ID,
+        status: 'H',
+        date: '2026-03-03',
+      },
+      {
+        id: 'cccccccc-5555-5555-5555-555555555555',
+        meeting_id: TEST_MEETING_2_ID,
+        student_id: TEST_STUDENT_2_ID,
+        status: 'H',
+        date: '2026-03-03',
+      },
+    ];
+
+    const { error: logsError } = await supabase
+      .from('attendance_logs')
+      .upsert(testAttendanceLogs, { onConflict: 'id' });
+
+    if (logsError) {
+      console.error('❌ Failed to upsert attendance logs:', logsError);
+      throw logsError;
+    }
+
+    console.log(`  ✅ ${testAttendanceLogs.length} attendance logs upserted`);
+
+    // Fix test meetings: set class_id so fetchMeetingsWithFullDetails can join
+    // classes:class_id(kelompok_id) — required for classKelompokMap to populate.
+    // Without this, filterAttendanceByKelompok returns false for all logs.
+    console.log('🔧 Fixing test meetings class_id...');
+    const meetingClassIdFixes = [
+      { id: TEST_MEETING_1_ID, class_id: TEST_CLASS_1_ID },
+      { id: TEST_MEETING_2_ID, class_id: TEST_CLASS_1_ID },
+    ]
+    for (const fix of meetingClassIdFixes) {
+      const { error: meetingFixError } = await supabase
+        .from('meetings')
+        .update({ class_id: fix.class_id })
+        .eq('id', fix.id)
+      if (meetingFixError) {
+        console.error(`  ❌ Failed to fix meeting ${fix.id}:`, meetingFixError);
+        throw meetingFixError;
+      }
+    }
+    console.log('  ✅ Test meetings class_id fixed');
+    // ────────────────────────────────────────────────────────────────────────
+
     console.log('✅ Test setup complete!');
   } catch (error) {
     console.error('❌ Global setup failed:', error);

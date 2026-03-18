@@ -63,17 +63,17 @@ test.describe('sm-hov: Multi-class filter regression', () => {
     await expect(kelompokFilter).toBeVisible({ timeout: 15000 });
     await kelompokFilter.click();
     await page.locator('text=[TEST] Kelompok Test').first().click();
-    await page.keyboard.press('Escape');
+    await page.locator('h2:has-text("Filter Laporan")').click(); // close dropdown
 
     // Select Kelas 1 only
     const kelasFilter = page.locator('input[placeholder*="Kelas"]').first();
     await expect(kelasFilter).toBeVisible({ timeout: 10000 });
     await kelasFilter.click();
     await page.locator('text=[TEST] Kelas 1').first().click();
-    await page.keyboard.press('Escape');
+    await page.locator('h2:has-text("Filter Laporan")').click(); // close dropdown
 
-    // Wait for data table to load
-    await page.waitForLoadState('domcontentloaded');
+    // Wait for SWR data fetch to complete
+    await page.waitForTimeout(1500);
 
     // DataTable should show meetings — at least 1 row in tbody
     const rows = page.locator('tbody tr');
@@ -91,27 +91,30 @@ test.describe('sm-hov: Multi-class filter regression', () => {
     await expect(kelompokFilter).toBeVisible({ timeout: 15000 });
     await kelompokFilter.click();
     await page.locator('text=[TEST] Kelompok Test').first().click();
-    await page.keyboard.press('Escape');
+    await page.locator('h2:has-text("Filter Laporan")').click(); // close dropdown
 
     // --- Step 1: Filter with Kelas 1 only ---
     const kelasFilter = page.locator('input[placeholder*="Kelas"]').first();
     await expect(kelasFilter).toBeVisible({ timeout: 10000 });
     await kelasFilter.click();
     await page.locator('text=[TEST] Kelas 1').first().click();
-    await page.keyboard.press('Escape');
+    await page.locator('h2:has-text("Filter Laporan")').click(); // close dropdown
 
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1500);
     const rows = page.locator('tbody tr');
     await expect(rows.first()).toBeVisible({ timeout: 20000 });
     const singleClassCount = await rows.count();
     console.log(`Single class count: ${singleClassCount}`);
 
     // --- Step 2: Add Kelas 2 to filter (multi-class) ---
-    await kelasFilter.click();
+    // Re-locate: after data loads, placeholder disappears so use label-based locator
+    const kelasFilterStep2 = page.locator('text=Kelas').locator('..').locator('input').first();
+    await expect(kelasFilterStep2).toBeVisible({ timeout: 10000 });
+    await kelasFilterStep2.click();
     await page.locator('text=[TEST] Kelas 2').first().click();
-    await page.keyboard.press('Escape');
+    await page.locator('h2:has-text("Filter Laporan")').click(); // close dropdown
 
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1500);
     await expect(rows.first()).toBeVisible({ timeout: 20000 });
     const multiClassCount = await rows.count();
     console.log(`Multi-class count: ${multiClassCount}`);

@@ -17,7 +17,9 @@ export async function fetchAttendanceLogsInBatches(
         return { data: [], error: null }
     }
 
-    // Split into chunks of 50 to stay well under query limits
+    // Split into chunks of 10 to stay safely under Supabase's 1000-row response limit.
+    // With ~20 students per meeting, 10 meetings = ~200 rows per chunk (well under 1000).
+    // Previously used 100 which could produce ~2000 rows/chunk → silently truncated at 1000.
     const chunkSize = 10
     const chunks: string[][] = []
     for (let i = 0; i < meetingIds.length; i += chunkSize) {

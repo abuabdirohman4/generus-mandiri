@@ -67,7 +67,7 @@ describe('batchFetching', () => {
 
             expect(result.data).toHaveLength(25)
             expect(result.error).toBeNull()
-            // Should be called 3 times (3 batches)
+            // Should be called 3 times (3 batches of 10: 10, 10, 5)
             expect(mockSupabase.from).toHaveBeenCalledTimes(3)
         })
 
