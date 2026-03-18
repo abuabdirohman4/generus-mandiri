@@ -17,7 +17,7 @@ export function useDashboard(filters?: DashboardFilters) {
     swrKey,
     fetcher,
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
       revalidateOnReconnect: true,
       dedupingInterval: 5 * 60 * 1000, // 5 minutes
     }

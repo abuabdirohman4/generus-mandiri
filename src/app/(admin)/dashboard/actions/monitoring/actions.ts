@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
-import { buildFilterConditions, fetchByIds } from '../../dashboardHelpers'
+import { buildFilterConditions } from '../../dashboardHelpers'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 import type { AttendanceLog, Meeting } from '@/lib/utils/attendanceCalculation'
 import type { ClassMonitoringData, ClassMonitoringFilters } from '@/types/dashboard'
@@ -11,7 +11,6 @@ import {
     fetchClassesWithOrg,
     fetchMeetingsForMonitoring,
     fetchEnrollments,
-    fetchCombinedEnrollments,
 } from './queries'
 import {
     getDateRangeForPeriod,
@@ -74,12 +73,6 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             attendanceLogs = logsData || []
         }
 
-        // Fetch students to build student->kelompok map (kept for future use / compatibility)
-        const uniqueStudentIds = [...new Set(attendanceLogs.map(log => (log as any).student_id).filter(Boolean))]
-        if (uniqueStudentIds.length > 0) {
-            await fetchByIds(supabase, 'students', 'id', uniqueStudentIds, 'id, kelompok_id')
-        }
-
         // Build meeting map for attendance utility
         const meetingMap = new Map<string, Meeting>()
         meetings.forEach(m => meetingMap.set(m.id, m as unknown as Meeting))
@@ -134,22 +127,23 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
                 if (item.has_meeting) combined.hasMeeting = true
             })
 
-            result = await Promise.all(
-                Array.from(combinedMap.entries()).map(async ([className, data]) => {
-                    const allEnrolledStudents = new Set<string>()
-                    const { data: classEnrollments } = await fetchCombinedEnrollments(supabase, data.classIds)
-                    classEnrollments?.forEach((sc: any) => allEnrolledStudents.add(sc.student_id))
-
-                    const filteredLogs = deduplicateLogsForCombined(
-                        attendanceLogs,
-                        meetingMap,
-                        data.classIds,
-                        allEnrolledStudents
-                    )
-
-                    return combinedAggregateResult(className, data, filteredLogs)
+            result = Array.from(combinedMap.entries()).map(([className, data]) => {
+                // Reuse enrollmentsByClass already fetched above — no extra queries needed
+                const allEnrolledStudents = new Set<string>()
+                data.classIds.forEach(classId => {
+                    const enrolled = enrollmentsByClass.get(classId)
+                    if (enrolled) enrolled.forEach(sid => allEnrolledStudents.add(sid))
                 })
-            )
+
+                const filteredLogs = deduplicateLogsForCombined(
+                    attendanceLogs,
+                    meetingMap,
+                    data.classIds,
+                    allEnrolledStudents
+                )
+
+                return combinedAggregateResult(className, { ...data, totalStudents: allEnrolledStudents.size }, filteredLogs)
+            })
 
             result.sort((a, b) => a.class_name.localeCompare(b.class_name))
         }

@@ -27,9 +27,9 @@ export function useDaerah() {
     'daerah-list',
     fetcher,
     {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 2 * 60 * 1000, // 2 minutes
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10 * 60 * 1000, // 10 minutes (master data, rarely changes)
       shouldRetryOnError: true,
       errorRetryCount: 3,
       errorRetryInterval: 5000,

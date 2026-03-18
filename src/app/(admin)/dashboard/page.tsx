@@ -97,9 +97,7 @@ export default function AdminDashboard() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
-      // CRITICAL FIX: Don't keep previous data to avoid filter/data mismatch
-      // When filters change, we need fresh data to match the new filters
-      keepPreviousData: false
+      keepPreviousData: true
     }
   );
 

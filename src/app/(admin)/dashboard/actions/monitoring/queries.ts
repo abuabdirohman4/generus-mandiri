@@ -81,47 +81,38 @@ export async function fetchMeetingsForMonitoring(
 }
 
 /**
- * Fetch student enrollments for given class IDs (chunked), optionally filtered by studentIds
+ * Fetch student enrollments for given class IDs (chunked), optionally filtered by studentIds.
+ * Queries by class_id only (1-dimension chunking), then filters studentIds in JS via Set.has().
+ * Avoids double-nested loop: was ceil(classIds/100) × ceil(studentIds/200) queries,
+ * now only ceil(classIds/100) queries.
  */
 export async function fetchEnrollments(
     supabase: SupabaseClient,
     classIds: string[],
     studentIds?: string[]
 ): Promise<any[]> {
-    const ENROLLMENT_CHUNK_SIZE = 100
+    if (classIds.length === 0) return []
+
+    const CHUNK_SIZE = 100
     const allEnrollments: any[] = []
 
-    for (let i = 0; i < classIds.length; i += ENROLLMENT_CHUNK_SIZE) {
-        const chunk = classIds.slice(i, i + ENROLLMENT_CHUNK_SIZE)
+    for (let i = 0; i < classIds.length; i += CHUNK_SIZE) {
+        const chunk = classIds.slice(i, i + CHUNK_SIZE)
+        const { data, error } = await supabase
+            .from('student_classes')
+            .select('student_id, class_id')
+            .in('class_id', chunk)
 
-        if (studentIds && studentIds.length > 0) {
-            const STUDENT_CHUNK_SIZE = 200
-            for (let j = 0; j < studentIds.length; j += STUDENT_CHUNK_SIZE) {
-                const studentChunk = studentIds.slice(j, j + STUDENT_CHUNK_SIZE)
-                const { data, error } = await supabase
-                    .from('student_classes')
-                    .select('student_id, class_id')
-                    .in('class_id', chunk)
-                    .in('student_id', studentChunk)
-
-                if (error) {
-                    console.error('[getClassMonitoring] Enrollment chunk error:', error)
-                    throw error
-                }
-                if (data) allEnrollments.push(...data)
-            }
-        } else {
-            const { data, error } = await supabase
-                .from('student_classes')
-                .select('student_id, class_id')
-                .in('class_id', chunk)
-
-            if (error) {
-                console.error('[getClassMonitoring] Enrollment query error:', error)
-                throw error
-            }
-            if (data) allEnrollments.push(...data)
+        if (error) {
+            console.error('[getClassMonitoring] Enrollment chunk error:', error)
+            throw error
         }
+        if (data) allEnrollments.push(...data)
+    }
+
+    if (studentIds && studentIds.length > 0) {
+        const studentIdSet = new Set(studentIds)
+        return allEnrollments.filter(e => studentIdSet.has(e.student_id))
     }
 
     return allEnrollments

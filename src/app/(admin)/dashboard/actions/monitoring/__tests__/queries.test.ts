@@ -81,11 +81,21 @@ describe('fetchEnrollments', () => {
         expect(result).toHaveLength(1)
     })
 
-    it('applies studentIds filter when provided', async () => {
-        const supa = makeSupa({ data: [], error: null })
-        await fetchEnrollments(supa, ['c1'], ['s1', 's2'])
+    it('filters studentIds in JS (not via DB query) when studentIds provided', async () => {
+        const supa = makeSupa({
+            data: [
+                { student_id: 's1', class_id: 'c1' },
+                { student_id: 's3', class_id: 'c1' }, // not in studentIds filter
+            ],
+            error: null,
+        })
+        const result = await fetchEnrollments(supa, ['c1'], ['s1', 's2'])
+        // Only queries by class_id — no DB filter on student_id
         expect(supa._chain.in).toHaveBeenCalledWith('class_id', ['c1'])
-        expect(supa._chain.in).toHaveBeenCalledWith('student_id', ['s1', 's2'])
+        expect(supa._chain.in).not.toHaveBeenCalledWith('student_id', expect.anything())
+        // JS filter: only s1 passes (s3 not in ['s1','s2'])
+        expect(result).toHaveLength(1)
+        expect(result[0].student_id).toBe('s1')
     })
 })
 

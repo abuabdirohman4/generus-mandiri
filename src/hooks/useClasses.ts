@@ -56,9 +56,9 @@ export function useClasses() {
     userId ? classKeys.list(userId) : null, // Only fetch when we have userId
     fetcher,
     {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5 * 60 * 1000, // 5 minutes
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 10 * 60 * 1000, // 10 minutes (master data, rarely changes)
       shouldRetryOnError: true, // Retry on error
       errorRetryCount: 3, // Max 3 retries
       errorRetryInterval: 5000, // 5 seconds between retries
