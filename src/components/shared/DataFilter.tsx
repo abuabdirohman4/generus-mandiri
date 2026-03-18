@@ -9,16 +9,9 @@ import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import type { UserProfile } from '@/types/user'
 import type { Class } from '@/types/class'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
+import type { DataFilters } from './dataFilterHelpers'
 
-interface DataFilters {
-  daerah: string[]
-  desa: string[]
-  kelompok: string[]
-  kelas: string[]
-  gender?: string // NEW - single select for gender
-  status?: string // NEW - single select for status (active/graduated/inactive/all)
-  meetingType?: string[] // NEW - multi select for meeting type
-}
+export type { DataFilters }
 
 interface DataFilterProps {
   filters: DataFilters
@@ -29,39 +22,63 @@ interface DataFilterProps {
   kelompokList: KelompokBase[]
   classList: Class[]
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
-  showGender?: boolean // NEW - for pages that need gender filter
-  showStatus?: boolean // NEW - for pages that need status filter (active/graduated/inactive/all)
-  showMeetingType?: boolean // NEW - for pages that need meeting type filter
-  forceShowAllMeetingTypes?: boolean // NEW - for reporting/filtering pages (bypass role restrictions)
+  showGender?: boolean
+  showStatus?: boolean // active/graduated/inactive/all
+  showMeetingType?: boolean
+  /**
+   * When true, all meeting types are shown regardless of user role.
+   * Use on reporting/filtering pages where admins need to filter across all types.
+   * When false (default), only role-restricted types available to the user are shown.
+   */
+  forceShowAllMeetingTypes?: boolean
   showDaerah?: boolean // Override role-based visibility
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
   className?: string
-  variant?: 'page' | 'modal'           // NEW
-  compact?: boolean                     // NEW
-  hideAllOption?: boolean               // NEW - for modals (must select specific)
-  requiredFields?: {                    // NEW - mark which fields are required
+  variant?: 'page' | 'modal'
+  compact?: boolean
+  /**
+   * When true, the "All" option is removed from every select filter.
+   * Use in modal forms where a specific value must be selected (e.g. add meeting modal).
+   */
+  hideAllOption?: boolean
+  requiredFields?: {
     daerah?: boolean
     desa?: boolean
     kelompok?: boolean
     kelas?: boolean
     meetingType?: boolean
   }
-  errors?: {                            // NEW - field-specific error messages
+  errors?: {
     daerah?: string
     desa?: string
     kelompok?: string
     kelas?: string
     meetingType?: string
   }
-  filterLists?: {                       // NEW - override for filtered lists
+  /**
+   * Override the full org lists with pre-filtered subsets.
+   * Useful when the parent already has a scoped list (e.g. a teacher's assigned kelompok)
+   * and you don't want DataFilter to re-filter from the full dataset.
+   */
+  filterLists?: {
     daerahList?: DaerahBase[]
     desaList?: DesaBase[]
     kelompokList?: KelompokBase[]
   }
-  cascadeFilters?: boolean              // NEW - control cascading behavior (default: true)
-  classViewMode?: 'separated' | 'combined'  // NEW - for dashboard class monitoring
-  onClassViewModeChange?: (mode: 'separated' | 'combined') => void // NEW
+  /**
+   * Controls whether filters cascade (default: true).
+   *
+   * **Cascade mode (true):** Selecting a daerah narrows the desa options, selecting a desa
+   * narrows kelompok, etc. Used on list pages (Siswa, Laporan) for drill-down filtering.
+   *
+   * **Independent mode (false):** All dropdowns show their full role-scoped options
+   * regardless of other selections. Used in forms/modals where each field is selected
+   * independently (e.g. add meeting modal, rapot filters).
+   */
+  cascadeFilters?: boolean
+  classViewMode?: 'separated' | 'combined'
+  onClassViewModeChange?: (mode: 'separated' | 'combined') => void
   // Comparison feature props
   showComparisonLevel?: boolean
   comparisonLevel?: 'class' | 'kelompok' | 'desa' | 'daerah'
@@ -240,33 +257,14 @@ export default function DataFilter({
   }, [activeKelompokList, filters?.desa, filters?.daerah, userProfile?.desa_id, userProfile?.daerah_id, activeDesaList, isSuperAdmin, isAdminDesa, isAdminDaerah, isTeacherDesa, isTeacherDaerah, isTeacher, teacherHasMultipleKelompok, shouldShowKelompok, cascadeFilters])
 
   // Count options to determine if filters should be hidden when only one option exists
-  const daerahListCount = useMemo(() => activeDaerahList.length, [activeDaerahList])
-  const desaListCount = useMemo(() => filteredDesaList.length, [filteredDesaList])
-  const kelompokListCount = useMemo(() => filteredKelompokList.length, [filteredKelompokList])
+  const daerahListCount = activeDaerahList.length
+  const desaListCount = filteredDesaList.length
+  const kelompokListCount = filteredKelompokList.length
 
   // Apply single-option hiding: hide filter if user only has access to 1 option
   const effectiveShouldShowDaerah = shouldShowDaerah && daerahListCount > 1
   const effectiveShouldShowDesa = shouldShowDesa && desaListCount > 1
   const effectiveShouldShowKelompok = shouldShowKelompok && kelompokListCount > 1
-
-  // Teacher special case - only show Kelas filter if they have multiple classes
-  // if (isTeacher && teacherHasMultipleClasses && showKelas && !showGender) {
-  //   return (
-  //     <div className={cn("grid gap-x-4 grid-cols-1", className)}>
-  //       <MultiSelectFilter
-  //         id="kelasFilter"
-  //         label="Kelas"
-  //         value={filters.kelas || []}
-  //         onChange={(value) => onFilterChange({ ...filters, kelas: value })}
-  //         options={userProfile.classes?.map(c => ({ value: c.id, label: c.name })) || []}
-  //         allOptionLabel="Semua Kelas"
-  //         widthClassName="!max-w-full"
-  //         variant={variant}
-  //         compact={compact}
-  //       />
-  //     </div>
-  //   )
-  // }
 
   // If no filters to show, return null
   if (!showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType) {
