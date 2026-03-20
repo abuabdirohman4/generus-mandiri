@@ -96,6 +96,13 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 ---
 
+## 🚀 Release Protocol
+
+At session close, evaluate if changes since last release warrant a new version.
+READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
+
+---
+
 ## 📚 Documentation Strategy
 
 **Inline limit**: Keep CLAUDE.md under **300 lines**. Use "READ [`file.md`]" pointers for external docs.

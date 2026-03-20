@@ -1,0 +1,8 @@
+{
+  "changelog": "docs/marketing/changelog.md",
+  "channel": "docs/marketing/channel.md",
+  "versionFile": "package.json",
+  "projectName": "Generus Mandiri",
+  "projectDescription": "Sistem manajemen sekolah digital untuk program pendidikan LDII",
+  "language": "bilingual"
+}
