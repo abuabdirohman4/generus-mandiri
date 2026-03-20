@@ -3,6 +3,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] — 2026-03-20
+
+### Added
+- **Hierarchical Teacher Roles**: Teacher Desa and Teacher Daerah roles with scoped access control and attendance management across villages/regions
+- **New Meeting Types**: ASAD, PEMBINAAN, SAMBUNG_KELOMPOK, SAMBUNG_DAERAH, SAMBUNG_PUSAT for desa administrators
+- **Student Archive**: Archive inactive students with restore capability and role-based permission checks
+- **Student Soft Delete**: Soft-delete students with tombstone marker; hard delete excluded (still in progress)
+- **Dashboard Comparison Chart**: New chart with period filtering, gender filter, and class monitoring view
+- **Batch Edit Students**: Bulk update student gender and class assignments
+- **Academic Year Selector**: New academic year management in settings
+
+### Fixed
+- **Dashboard Attendance**: Fixed monthly report showing 0% attendance
+- **Dashboard Filters**: Fixed URL overflow with RPC functions, fixed multi-class filter dropping students
+- **Attendance Data Truncation**: Fixed attendance data truncation for large datasets
+- **Auth Stale Filters**: Multi-layer defense to prevent stale filters on logout
+- **Mobile Infinite Loading**: Timeout and error handling for infinite skeleton loading on mobile
+- **Laporan Multi-Kelompok**: Fixed filter being cleared when selecting class
+
+### Improved
+- **DataFilter**: Cascading filters by default, multi-kelompok teacher support
+- **Auto-set Filters**: Teachers with single class/kelompok get filters auto-set
+- **Meeting Modal**: Preserve student selections across class changes, auto-select students from newly added classes
+- **PWA Reliability**: Improved installation detection with fallback timeout
+- **Performance**: Chunked Supabase queries, batch fetching for large datasets
+
 ## [1.8.1]
 
 ### Fixed

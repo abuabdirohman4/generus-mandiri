@@ -1,3 +1,45 @@
+*Update v1.9.0 — Guru Desa/Daerah, Tipe Pertemuan Baru & Perbaikan* 🎉
+
+🇮🇩 *Update v1.9.0 — Fitur Baru & Perbaikan*
+
+Generus Mandiri hadir dengan pembaruan besar! 🚀
+
+👥 *Fitur Baru:*
+- *Guru Desa & Daerah* — Role guru baru dengan akses sesuai wilayah desa/daerah
+- *Tipe Pertemuan Baru* — ASAD, Pembinaan, Sambung Kelompok, Sambung Daerah, Sambung Pusat
+- *Arsip Siswa* — Arsipkan siswa tidak aktif dan kembalikan kapan saja
+- *Soft Delete Siswa* — Hapus siswa dengan aman, data tetap tersimpan
+- *Dashboard Lebih Lengkap* — Grafik perbandingan baru, filter gender, view monitoring kelas
+- *Edit Massal Siswa* — Update jenis kelamin dan kelas beberapa siswa sekaligus
+
+🔧 *Perbaikan:*
+- Dashboard tidak lagi menampilkan 0% kehadiran
+- Filter lebih akurat untuk guru multi-kelompok
+- Performa lebih cepat untuk data besar
+- Perbaikan loading tak terbatas di mobile
+
+---
+
+🇬🇧 *Update v1.9.0 — Teacher Roles, New Meeting Types & Fixes*
+
+Generus Mandiri gets a big update! 🚀
+
+👥 *New Features:*
+- *Teacher Desa & Daerah* — New teacher roles with village/region-scoped access
+- *New Meeting Types* — ASAD, Pembinaan, Sambung Kelompok/Daerah/Pusat
+- *Student Archive* — Archive inactive students and restore them anytime
+- *Student Soft Delete* — Safely delete students while keeping data intact
+- *Enhanced Dashboard* — New comparison chart, gender filter, class monitoring
+- *Bulk Edit Students* — Update gender and class for multiple students at once
+
+🔧 *Fixes:*
+- Dashboard no longer shows 0% attendance
+- More accurate filters for multi-group teachers
+- Better performance for large datasets
+- Fixed infinite loading on mobile
+
+---
+
 *Update v1.8.1 - Bug Fixes & Improvements*
 
 Perbaikan:
