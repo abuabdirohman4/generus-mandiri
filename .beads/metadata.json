@@ -1,4 +1,7 @@
 {
-  "database": "beads.db",
-  "jsonl_export": "issues.jsonl"
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "school_management",
+  "project_id": "ee91bc2e-3574-446b-b43f-b1e0222210c1"
 }
