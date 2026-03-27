@@ -9,7 +9,9 @@ import { StatsCards, StudentModal, StudentsTable, BatchImportModal, AssignStuden
 import ArchiveStudentModal from './components/ArchiveStudentModal'
 import TransferRequestModal from './components/TransferRequestModal'
 import PendingTransferRequestsSection from './components/PendingTransferRequestsSection'
-import { useSiswaPage } from './hooks'
+import { useSiswaPage, useSebaranSiswa } from './hooks'
+import { isTeacherDaerah, isTeacherDesa, isTeacherKelompok } from '@/lib/accessControl'
+import { SebaranSiswaTab } from './components/SebaranSiswa'
 import { useAssignStudentsStore } from './stores/assignStudentsStore'
 import {
   archiveStudent,
@@ -57,6 +59,15 @@ export default function SiswaPage() {
 
   const { showModal: showAssignModal, openModal: openAssignModal, closeModal: closeAssignModal } = useAssignStudentsStore()
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+
+  const { sebaranData, sebaranStats, sebaranError, sebaranLoading } = useSebaranSiswa(
+    userProfile?.id
+  )
+
+  const showSebaranTab = isAdmin ||
+    (userProfile ? isTeacherDaerah(userProfile) : false) ||
+    (userProfile ? isTeacherDesa(userProfile) : false) ||
+    (userProfile ? isTeacherKelompok(userProfile) : false)
 
   // Permission checks for student management actions
   const canArchive = isAdmin || userProfile?.permissions?.can_archive_students === true
@@ -344,8 +355,8 @@ export default function SiswaPage() {
           </div>
         </div>
 
-        {/* Tabs (only for admin) */}
-        {isAdmin && (
+        {/* Tabs (admin and hierarchical teachers) */}
+        {showSebaranTab && (
           <div className="mb-6">
             <div className="border-b border-gray-200 dark:border-gray-700">
               <nav className="-mb-px flex space-x-8">
@@ -358,8 +369,17 @@ export default function SiswaPage() {
                 >
                   Siswa
                 </button>
+                <button
+                  onClick={() => handleTabChange('sebaran-siswa')}
+                  className={`${activeTab === 'sebaran-siswa'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+                >
+                  Sebaran Siswa
+                </button>
                 {/* Show tab only when there are pending requests */}
-                {pendingRequests.length > 0 && (
+                {isAdmin && pendingRequests.length > 0 && (
                   <button
                     onClick={() => handleTabChange('pending-transfers')}
                     className={`${activeTab === 'pending-transfers'
@@ -421,6 +441,16 @@ export default function SiswaPage() {
               studentsWithPendingTransfer={studentsWithPendingTransfer}
             />
           </>
+        )}
+
+        {/* Sebaran Siswa Tab */}
+        {activeTab === 'sebaran-siswa' && showSebaranTab && (
+          <SebaranSiswaTab
+            data={sebaranData ?? { level: 'kelas', data: [] }}
+            stats={sebaranStats ?? { total_siswa: 0, kelompok_kosong: 0 }}
+            loading={sebaranLoading}
+            error={sebaranError}
+          />
         )}
 
         {/* Pending Transfers Tab (admin only) */}

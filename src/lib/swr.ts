@@ -175,6 +175,13 @@ export const brainDumpKeys = {
 };
 
 /**
+ * SWR key generator for sebaran siswa
+ */
+export const sebaranSiswaKeys = {
+  all: (userId: string) => ['sebaran-siswa', userId] as const,
+}
+
+/**
  * SWR key generator for students
  */
 export const studentKeys = {
