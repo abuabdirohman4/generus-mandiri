@@ -1,3 +1,23 @@
+*Update v1.10.0 — Student Distribution View*
+
+🇮🇩 *Tab Sebaran Siswa*
+
+Fitur Baru
+- 📊 Tab baru "Sebaran Siswa" di halaman Siswa — lihat pembagian siswa per kelompok dan kelas secara langsung
+- Tampil sesuai level akses: Superadmin lihat semua daerah, Admin Daerah lihat per desa, dst
+- Klik untuk expand ke detail kelompok dan kelas
+- ⚠️ Kelompok yang belum ada siswanya langsung terlihat
+
+🇬🇧 *Sebaran Siswa Tab*
+
+New Features
+- 📊 New "Sebaran Siswa" tab on the Students page — see student distribution across kelompok and classes at a glance
+- Role-scoped hierarchy: Superadmin sees all regions, Admin Daerah sees by village, etc.
+- Expand/collapse to drill into kelompok and class detail
+- ⚠️ Empty kelompok are flagged immediately
+
+---
+
 *Update v1.9.0 — Guru Desa/Daerah, Tipe Pertemuan Baru & Perbaikan* 🎉
 
 🇮🇩 *Update v1.9.0 — Fitur Baru & Perbaikan*

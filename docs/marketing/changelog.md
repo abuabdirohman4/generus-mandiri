@@ -3,6 +3,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] — 2026-03-28
+
+### Added
+- **Sebaran Siswa Tab**: New tab on the Students page showing hierarchical student distribution (Daerah → Desa → Kelompok → Kelas) with expand/collapse per node. Role-based drill-down depth, ⚠️ indicator for empty kelompok, stats bar, and class ordering by master sort order. Visible to admins and hierarchical teachers; classroom teachers see only their assigned classes.
+
 ## [1.9.0] — 2026-03-20
 
 ### Added
