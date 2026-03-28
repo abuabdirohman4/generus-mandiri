@@ -13,18 +13,18 @@ const settingsCategories = [
     description: "Kelola informasi akun dan profil pengguna",
     icon: 'user',
     items: [
-      {
-        name: "Profil Pengguna",
-        description: "Edit informasi profil dan foto",
-        href: "/settings/profile",
-        available: true
-      },
       // {
-      //   name: "Keamanan Akun",
-      //   description: "Password, 2FA, dan keamanan",
-      //   href: "/settings/security",
-      //   available: false
-      // }
+      //   name: "Profil Pengguna",
+      //   description: "Edit informasi profil dan foto",
+      //   href: "/settings/profile",
+      //   available: true
+      // },
+      {
+        name: "Keamanan Akun",
+        description: "Ubah password akun Anda",
+        href: "/settings/security",
+        available: true
+      }
     ]
   },
   {

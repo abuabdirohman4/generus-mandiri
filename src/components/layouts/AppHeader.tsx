@@ -52,6 +52,8 @@ function PageTitle() {
         return 'Organisasi';
       case '/settings':
         return 'Pengaturan';
+      case '/settings/security':
+        return 'Keamanan';
       case '/settings/profile':
         return 'Profil';
       case '/settings/pwa':
@@ -75,6 +77,7 @@ function PageTitle() {
       path === '/users/guru' ||
       path === '/users/admin' ||
       path === '/settings' ||
+      path === '/settings/security' ||
       path === '/settings/profile' ||
       path === '/settings/cache' ||
       path === '/settings/pwa' ||
