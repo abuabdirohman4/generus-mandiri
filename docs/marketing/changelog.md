@@ -1,6 +1,11 @@
 
 # Changelog
 
+## [1.11.0] — 2026-03-28
+
+### Added
+- **Self-Service Password Change**: Users can now change their own password from Settings → Keamanan Akun (`/settings/security`). Requires current password verification before updating.
+
 All notable changes to this project will be documented in this file.
 
 ## [1.10.0] — 2026-03-28

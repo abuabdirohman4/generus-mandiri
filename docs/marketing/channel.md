@@ -1,3 +1,17 @@
+*Update v1.11.0 — Self-Service Password Change*
+
+🇮🇩 *Ubah Password Sendiri*
+
+Fitur Baru
+- 🔐 Sekarang setiap pengguna bisa mengubah password sendiri di menu Pengaturan → Keamanan Akun. Cukup masukkan password lama, lalu set password baru.
+
+🇬🇧 *Change Your Own Password*
+
+New Feature
+- 🔐 Users can now change their own password from Settings → Account Security. Just enter the current password and set a new one.
+
+---
+
 *Update v1.10.0 — Student Distribution View*
 
 🇮🇩 *Tab Sebaran Siswa*
