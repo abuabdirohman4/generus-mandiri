@@ -31,6 +31,8 @@ export {
   shouldShowDesaFilter,
   shouldShowKelompokFilter,
   shouldShowKelasFilter,
+  modalShouldShowDesaFilter,
+  modalShouldShowKelompokFilter,
   getRequiredOrgFields,
   getAutoFilledOrgValues,
   canAccessFeature,

@@ -6,6 +6,9 @@ import { toast } from 'sonner'
 import { useBatchImportStore } from '../stores/batchImportStore'
 import { useClasses } from '@/hooks/useClasses'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { useDaerah } from '@/hooks/useDaerah'
+import { useDesa } from '@/hooks/useDesa'
+import { useKelompok } from '@/hooks/useKelompok'
 import { createStudentsBatch } from '../actions'
 import Step1Config from './batch-import/Step1Config'
 import Step2Input from './batch-import/Step2Input'
@@ -29,6 +32,9 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
 
   const { classes, isLoading: classesLoading } = useClasses()
   const { profile: userProfile, loading: profileLoading } = useUserProfile()
+  const { daerah } = useDaerah()
+  const { desa } = useDesa()
+  const { kelompok } = useKelompok()
 
   const [isImporting, setIsImporting] = useState(false)
 
@@ -148,6 +154,9 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
             <Step1Config
               userProfile={userProfile}
               classes={classes}
+              daerah={daerah}
+              desa={desa}
+              kelompok={kelompok}
               onNext={() => useBatchImportStore.getState().nextStep()}
             />
           )}

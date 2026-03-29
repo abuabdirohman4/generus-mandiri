@@ -12,7 +12,18 @@ import { useClasses } from '@/hooks/useClasses'
 import { useStudents } from '@/hooks/useStudents'
 import { assignStudentsToClass } from '../actions'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isAdminDesa } from '@/lib/userUtils'
+import {
+  isAdminKelompok,
+  isTeacherKelompok,
+  shouldShowDaerahFilter,
+  modalShouldShowDesaFilter,
+  modalShouldShowKelompokFilter,
+  getAutoFilledOrgValues,
+} from '@/lib/userUtils'
+import DataFilter, { type DataFilters } from '@/components/shared/DataFilter'
+import { useDaerah } from '@/hooks/useDaerah'
+import { useDesa } from '@/hooks/useDesa'
+import { useKelompok } from '@/hooks/useKelompok'
 
 interface AssignStudentsModalProps {
   isOpen: boolean
@@ -44,7 +55,21 @@ export default function AssignStudentsModal({
   const [isAssigning, setIsAssigning] = useState(false)
   const [studentsWithClasses, setStudentsWithClasses] = useState<Map<string, string[]>>(new Map())
   const { profile } = useUserProfile()
-  const showKelompokInLabel = profile ? isAdminDesa(profile) : false
+
+  const { daerah } = useDaerah()
+  const { desa } = useDesa()
+  const { kelompok } = useKelompok()
+
+  const autoFilled = profile ? getAutoFilledOrgValues(profile) : {}
+  const [orgFilters, setOrgFilters] = useState<DataFilters>({
+    daerah: autoFilled.daerah_id ? [autoFilled.daerah_id] : [],
+    desa: autoFilled.desa_id ? [autoFilled.desa_id] : [],
+    kelompok: autoFilled.kelompok_id ? [autoFilled.kelompok_id] : [],
+    kelas: [] as string[]
+  })
+
+  const needsKelompok = !!profile && modalShouldShowKelompokFilter(profile) && !isAdminKelompok(profile) && !isTeacherKelompok(profile)
+  const kelompokReady = !needsKelompok || orgFilters.kelompok.length > 0
 
   // Load students' classes when class is selected - use existing classes from student data
   useEffect(() => {
@@ -57,6 +82,25 @@ export default function AssignStudentsModal({
       setStudentsWithClasses(classMap)
     }
   }, [selectedClassId, students])
+
+  // Compute classes filtered by selected kelompok (for destination class selector)
+  const kelompokFilteredClasses = useMemo(() => {
+    if (orgFilters.kelompok.length > 0) {
+      return classes.filter(cls => cls.kelompok_id === orgFilters.kelompok[0])
+    }
+    if (profile && isAdminKelompok(profile)) {
+      return classes.filter(cls => cls.kelompok_id === profile.kelompok_id)
+    }
+    return classes
+  }, [classes, orgFilters.kelompok, profile])
+
+  // Reset selectedClassId when kelompok changes and the selected class is no longer valid
+  useEffect(() => {
+    if (selectedClassId && orgFilters.kelompok.length > 0) {
+      const isValid = kelompokFilteredClasses.some(cls => cls.id === selectedClassId)
+      if (!isValid) setSelectedClassId('')
+    }
+  }, [orgFilters.kelompok, kelompokFilteredClasses, selectedClassId, setSelectedClassId])
 
   // Filter students based on search query and class filter
   const filteredStudents = useMemo(() => {
@@ -131,6 +175,13 @@ export default function AssignStudentsModal({
   const handleClose = () => {
     if (isAssigning) return
     closeModal()
+    const autoFilledOnClose = profile ? getAutoFilledOrgValues(profile) : {}
+    setOrgFilters({
+      daerah: autoFilledOnClose.daerah_id ? [autoFilledOnClose.daerah_id] : [],
+      desa: autoFilledOnClose.desa_id ? [autoFilledOnClose.desa_id] : [],
+      kelompok: autoFilledOnClose.kelompok_id ? [autoFilledOnClose.kelompok_id] : [],
+      kelas: [] as string[]
+    })
     onClose()
   }
 
@@ -157,16 +208,37 @@ export default function AssignStudentsModal({
       </h2>
 
       <div className="space-y-6">
-        {/* Step 1: Pilih Kelas */}
+        {/* Step 1: Pilih Kelas (with org selector for non-kelompok roles) */}
         <div>
+          {profile && !isAdminKelompok(profile) && !isTeacherKelompok(profile) && (
+            <DataFilter
+              filters={orgFilters}
+              onFilterChange={setOrgFilters}
+              userProfile={profile}
+              daerahList={daerah}
+              desaList={desa}
+              kelompokList={kelompok}
+              classList={classes}
+              showDaerah={shouldShowDaerahFilter(profile)}
+              showDesa={modalShouldShowDesaFilter(profile)}
+              showKelompok={modalShouldShowKelompokFilter(profile)}
+              showKelas={false}
+              variant="modal"
+              compact={true}
+              hideAllOption={true}
+              cascadeFilters={true}
+            />
+          )}
           <InputFilter
             id="classId"
             label="Pilih Kelas Tujuan"
             value={selectedClassId}
             onChange={setSelectedClassId}
-            options={classes.map((cls) => ({
+            options={kelompokFilteredClasses.map((cls) => ({
               value: cls.id,
-              label: `${cls.name} - ${cls.kelompok?.name}`,
+              label: orgFilters.kelompok.length > 0
+                ? cls.name
+                : `${cls.name}${cls.kelompok?.name ? ` - ${cls.kelompok.name}` : ''}`,
             }))}
             allOptionLabel="Pilih kelas"
             widthClassName="!max-w-full"
@@ -288,7 +360,7 @@ export default function AssignStudentsModal({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedClassId || selectedStudentIds.length === 0 || isAssigning}
+            disabled={!selectedClassId || selectedStudentIds.length === 0 || isAssigning || !kelompokReady}
           >
             {isAssigning ? 'Mengassign...' : `Assign ${selectedStudentIds.length} Siswa`}
           </Button>

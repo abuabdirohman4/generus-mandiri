@@ -89,6 +89,15 @@ export function shouldShowKelompokFilter(profile: UserProfile): boolean {
   return isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile)
 }
 
+export function modalShouldShowDesaFilter(profile: UserProfile): boolean {
+  return isSuperAdmin(profile) || isAdminDaerah(profile) || isTeacherDaerah(profile)
+}
+
+export function modalShouldShowKelompokFilter(profile: UserProfile): boolean {
+  return isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile)
+    || isTeacherDaerah(profile) || isTeacherDesa(profile)
+}
+
 export function shouldShowKelasFilter(profile: UserProfile, hasMultipleClasses?: boolean): boolean {
   // For teachers, only show if they have multiple classes
   if (isTeacher(profile)) {

@@ -261,10 +261,13 @@ export default function DataFilter({
   const desaListCount = filteredDesaList.length
   const kelompokListCount = filteredKelompokList.length
 
-  // Apply single-option hiding: hide filter if user only has access to 1 option
-  const effectiveShouldShowDaerah = shouldShowDaerah && daerahListCount > 1
-  const effectiveShouldShowDesa = shouldShowDesa && desaListCount > 1
-  const effectiveShouldShowKelompok = shouldShowKelompok && kelompokListCount > 1
+  // Apply single-option hiding: hide filter if user only has access to 1 option.
+  // Exception: if the parent explicitly passes showDaerah/showDesa/showKelompok as an override prop,
+  // skip the list-count gate so the selector still renders while data is loading (count = 0)
+  // or when the org list legitimately has 1 item and the user still needs to see/confirm their scope.
+  const effectiveShouldShowDaerah = shouldShowDaerah && (showDaerah !== undefined || daerahListCount > 1)
+  const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || desaListCount > 1)
+  const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || kelompokListCount > 1)
 
   // If no filters to show, return null
   if (!showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType) {
@@ -782,6 +785,7 @@ export default function DataFilter({
               required={requiredFields.desa}
               error={!!errors.desa}
               hint={errors.desa}
+              disabled={!!effectiveShouldShowDaerah && !filters?.daerah?.[0]}
             />
           )}
         </div>
@@ -819,6 +823,7 @@ export default function DataFilter({
               required={requiredFields.kelompok}
               error={!!errors.kelompok}
               hint={errors.kelompok}
+              disabled={!!effectiveShouldShowDesa && !filters?.desa?.[0]}
             />
           )}
         </div>

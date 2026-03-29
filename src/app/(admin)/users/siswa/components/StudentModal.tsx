@@ -9,7 +9,15 @@ import Label from '@/components/form/Label'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import DataFilter from '@/components/shared/DataFilter'
-import { isAdminLegacy } from '@/lib/userUtils'
+import {
+  isAdminLegacy,
+  isAdminKelompok,
+  isTeacherKelompok,
+  modalShouldShowDesaFilter,
+  modalShouldShowKelompokFilter,
+  shouldShowDaerahFilter,
+  getAutoFilledOrgValues
+} from '@/lib/userUtils'
 import { getStudentClasses, type Student } from '../actions'
 import type { UserProfile } from '@/types/user'
 import type { Class } from '@/types/class'
@@ -56,9 +64,7 @@ export default function StudentModal({
   })
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [loadingClasses, setLoadingClasses] = useState(false)
-  // Check if user is admin desa: role === 'admin' && has desa_id && no kelompok_id
-  const isAdminDesaUser = userProfile?.role === 'admin' && !!userProfile.desa_id && !userProfile.kelompok_id
-  
+
   // State for DataFilter
   const [filters, setFilters] = useState({
     daerah: [] as string[],
@@ -69,67 +75,70 @@ export default function StudentModal({
 
   // Initialize filters and formData when modal opens
   useEffect(() => {
-    if (isOpen) {
-      if (mode === 'edit' && student) {
-        setFormData({
-          name: student.name,
-          gender: student.gender || '',
-          classId: student.class_id || '',
-          kelompokId: student.kelompok_id || ''
-        })
-        
-        // Set filters from student data
-        setFilters({
-          daerah: [],
-          desa: [],
-          kelompok: student.kelompok_id ? [student.kelompok_id] : [],
-          kelas: []
-        })
-        
-        // Fetch current classes for admin in edit mode
-        if (isAdminLegacy(userProfile?.role)) {
-          setLoadingClasses(true)
-          getStudentClasses(student.id)
-            .then(classes => {
-              setSelectedClassIds(classes.map(c => c.id))
-              // Sync selectedClassIds to filters.kelas
+    if (!isOpen) return
+
+    const autoFilled = userProfile ? getAutoFilledOrgValues(userProfile) : {}
+    const base = {
+      daerah: autoFilled.daerah_id ? [autoFilled.daerah_id] : [],
+      desa: autoFilled.desa_id ? [autoFilled.desa_id] : [],
+      kelompok: autoFilled.kelompok_id ? [autoFilled.kelompok_id] : [],
+      kelas: [] as string[]
+    }
+
+    if (mode === 'edit' && student) {
+      setFormData({
+        name: student.name,
+        gender: student.gender || '',
+        classId: student.class_id || '',
+        kelompokId: student.kelompok_id || ''
+      })
+
+      // Set filters from student data, falling back to auto-filled values
+      setFilters({
+        daerah: student.daerah_id ? [student.daerah_id] : base.daerah,
+        desa: student.desa_id ? [student.desa_id] : base.desa,
+        kelompok: student.kelompok_id ? [student.kelompok_id] : base.kelompok,
+        kelas: [] as string[]
+      })
+
+      // Fetch current classes for admin in edit mode
+      if (isAdminLegacy(userProfile?.role)) {
+        setLoadingClasses(true)
+        getStudentClasses(student.id)
+          .then(classes => {
+            setSelectedClassIds(classes.map(c => c.id))
+            // Sync selectedClassIds to filters.kelas
+            setFilters(prev => ({
+              ...prev,
+              kelas: classes.map(c => c.id)
+            }))
+          })
+          .catch(err => {
+            console.error('Error loading classes:', err)
+            // Fallback to single class_id if fetch fails
+            if (student.class_id) {
+              setSelectedClassIds([student.class_id])
               setFilters(prev => ({
                 ...prev,
-                kelas: classes.map(c => c.id)
+                kelas: [student.class_id].filter(Boolean) as string[]
               }))
-            })
-            .catch(err => {
-              console.error('Error loading classes:', err)
-              // Fallback to single class_id if fetch fails
-              if (student.class_id) {
-                setSelectedClassIds([student.class_id])
-                setFilters(prev => ({
-                  ...prev,
-                  kelas: [student.class_id].filter(Boolean) as string[]
-                }))
-              }
-            })
-            .finally(() => setLoadingClasses(false))
-        }
-      } else {
-        // Auto-fill class for teachers
-        const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
-        setFormData({
-          name: '',
-          gender: '',
-          classId: classId,
-          kelompokId: ''
-        })
-        setSelectedClassIds([])
-        setFilters({
-          daerah: [],
-          desa: [],
-          kelompok: [],
-          kelas: []
-        })
+            }
+          })
+          .finally(() => setLoadingClasses(false))
       }
+    } else {
+      // Auto-fill class for teachers
+      const classId = userProfile?.role === 'teacher' ? userProfile.classes?.[0]?.id || '' : ''
+      setFormData({
+        name: '',
+        gender: '',
+        classId: classId,
+        kelompokId: ''
+      })
+      setSelectedClassIds([])
+      setFilters(base)
     }
-  }, [mode, student, userProfile, isOpen, isAdminDesaUser])
+  }, [mode, student, userProfile, isOpen])
 
   const handleClose = () => {
     setFormData({
@@ -204,36 +213,28 @@ export default function StudentModal({
     }
   }
 
-  // Get selected kelompok data for display
-  const selectedKelompok = useMemo(() => {
-    if (filters.kelompok.length > 0) {
-      return kelompok.find(k => k.id === filters.kelompok[0]) || null
-    }
-    return null
-  }, [filters.kelompok, kelompok])
-
   // Get filtered classes based on selected kelompok (for MultiSelectCheckbox and InputFilter)
   const filteredClasses = useMemo(() => {
-    if (isAdminDesaUser && filters.kelompok.length > 0) {
-      // Filter classes by selected kelompok
+    if (filters.kelompok.length > 0) {
       return classes.filter(cls => cls.kelompok_id === filters.kelompok[0])
     }
-    // For non-admin-desa or when no kelompok selected, return all classes
+    if (userProfile && isAdminKelompok(userProfile)) return classes  // server-side scoped
+    if (userProfile && isTeacherKelompok(userProfile)) {
+      return classes.filter(cls => userProfile.classes?.some(tc => tc.id === cls.id))
+    }
     return classes
-  }, [classes, filters.kelompok, isAdminDesaUser])
+  }, [classes, filters.kelompok, userProfile])
 
-  // Filter selectedClassIds to only include classes from selected kelompok (for admin desa in edit mode)
+  // Filter selectedClassIds to only include classes from selected kelompok (in edit mode)
   useEffect(() => {
-    if (isAdminDesaUser && filters.kelompok.length > 0 && mode === 'edit' && selectedClassIds.length > 0) {
+    if (filters.kelompok.length > 0 && mode === 'edit' && selectedClassIds.length > 0) {
       const validClassIds = filteredClasses.map(cls => cls.id)
       const filteredSelectedIds = selectedClassIds.filter(id => validClassIds.includes(id))
       if (filteredSelectedIds.length !== selectedClassIds.length) {
         setSelectedClassIds(filteredSelectedIds)
-        // Also update filters.kelas
-        setFilters(prev => ({ ...prev, kelas: filteredSelectedIds }))
       }
     }
-  }, [filters.kelompok, filteredClasses, isAdminDesaUser, mode, selectedClassIds])
+  }, [filters.kelompok, filteredClasses, mode, selectedClassIds])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -242,8 +243,14 @@ export default function StudentModal({
       return
     }
 
-    // Validate kelompok for admin desa
-    if (isAdminDesaUser && !formData.kelompokId) {
+    // Validate kelompok when it should be shown (not for admin/teacher kelompok)
+    if (
+      userProfile &&
+      !isAdminKelompok(userProfile) &&
+      !isTeacherKelompok(userProfile) &&
+      modalShouldShowKelompokFilter(userProfile) &&
+      !formData.kelompokId
+    ) {
       toast.error('Pilih kelompok')
       return
     }
@@ -265,8 +272,8 @@ export default function StudentModal({
     formDataObj.append('name', formData.name)
     formDataObj.append('gender', formData.gender)
     
-    // Add kelompok_id for admin desa
-    if (isAdminDesaUser && formData.kelompokId) {
+    // Add kelompok_id whenever available
+    if (formData.kelompokId) {
       formDataObj.append('kelompok_id', formData.kelompokId)
     }
     
@@ -319,45 +326,26 @@ export default function StudentModal({
             </select>
           </div>
 
-          {/* Kelompok selection for Admin Desa */}
-          {isAdminDesaUser && (
-            <div>
-              {selectedKelompok && (
-                <>
-                  <div className="mt-2 mb-4">
-                    <Label>Daerah</Label>
-                    <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
-                      {selectedKelompok.daerah_name || 'N/A'}
-                    </div>
-                  </div>
-                  <div className="mt-2 mb-4">
-                    <Label>Desa</Label>
-                    <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
-                      {selectedKelompok.desa_name || 'N/A'}
-                    </div>
-                  </div>
-                </>
-              )}
-              <DataFilter
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                userProfile={userProfile}
-                daerahList={daerah}
-                desaList={desa}
-                kelompokList={kelompok}
-                classList={classes}
-                showKelompok={true}
-                showKelas={false}
-                showDaerah={false}
-                showDesa={false}
-                variant="modal"
-                compact={true}
-                hideAllOption={true}
-                requiredFields={{
-                  kelompok: true
-                }}
-              />
-            </div>
+          {/* Cascading org selector for all roles that need it */}
+          {userProfile && !isAdminKelompok(userProfile) && !isTeacherKelompok(userProfile) && (
+            <DataFilter
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              userProfile={userProfile}
+              daerahList={daerah}
+              desaList={desa}
+              kelompokList={kelompok}
+              classList={classes}
+              showDaerah={shouldShowDaerahFilter(userProfile)}
+              showDesa={modalShouldShowDesaFilter(userProfile)}
+              showKelompok={modalShouldShowKelompokFilter(userProfile)}
+              showKelas={false}
+              variant="modal"
+              compact={true}
+              hideAllOption={true}
+              cascadeFilters={true}
+              requiredFields={{ kelompok: modalShouldShowKelompokFilter(userProfile) }}
+            />
           )}
 
           {/* Only show class selection for admins or superadmins */}
@@ -392,34 +380,26 @@ export default function StudentModal({
                   }))}
                   allOptionLabel="Pilih kelas"
                   widthClassName="!max-w-full"
-                  disabled={isAdminDesaUser && filters.kelompok.length === 0}
+                  disabled={!!userProfile && modalShouldShowKelompokFilter(userProfile) && filters.kelompok.length === 0}
                 />
               )}
             </div>
           )}
 
-          {/* Show class info for teachers */}
-          {userProfile?.role === 'teacher' && userProfile.classes?.[0]?.name && (
+          {/* Show class selector for teachers */}
+          {userProfile?.role === 'teacher' && (
             <div>
-              {/* <Label>Kelas</Label>
-              <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300">
-                {userProfile.classes[0].name}
-              </div> */}
               <InputFilter
                 id="classId"
                 label="Kelas"
                 value={formData.classId}
                 onChange={(value: string) => setFormData({ ...formData, classId: value })}
-                options={classes
-                  .filter((cls) =>
-                    userProfile?.classes?.some((teacherClass) => teacherClass.id === cls.id)
-                  )
-                  .map((cls) => ({
-                    value: cls.id,
-                    label: cls.name,
-                  }))
-                }
+                options={filteredClasses.map((cls) => ({
+                  value: cls.id,
+                  label: cls.name,
+                }))}
                 widthClassName="!max-w-full"
+                disabled={!!userProfile && modalShouldShowKelompokFilter(userProfile) && filters.kelompok.length === 0}
               />
             </div>
           )}
