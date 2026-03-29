@@ -118,14 +118,28 @@ interface FilterKelompokParams {
   role: RoleFlags
   /** When true, kelompok list cascades based on selected daerah/desa. When false, shows all available for the role. */
   cascadeFilters: boolean
+  /** Pass true when teacher has classes spanning multiple kelompok */
+  teacherHasMultipleKelompok?: boolean
 }
 
 /**
  * Filters the kelompok list based on user role and selected filters.
  * Mirrors the `filteredKelompokList` useMemo in DataFilter.tsx.
  */
-export function filterKelompokList({ kelompokList, desaList, filters, userProfile, role, cascadeFilters }: FilterKelompokParams): KelompokBase[] {
-  const { isSuperAdmin, isAdminDaerah, isAdminDesa, isTeacherDaerah, isTeacherDesa } = role
+export function filterKelompokList({ kelompokList, desaList, filters, userProfile, role, cascadeFilters, teacherHasMultipleKelompok = false }: FilterKelompokParams): KelompokBase[] {
+  const { isSuperAdmin, isAdminDaerah, isAdminDesa, isTeacherDaerah, isTeacherDesa, isTeacher } = role
+
+  const buildFromClasses = (): KelompokBase[] => {
+    const seen = new Set<string>()
+    const result: KelompokBase[] = []
+    userProfile?.classes?.forEach(cls => {
+      if (cls.kelompok_id && cls.kelompok && !seen.has(cls.kelompok_id)) {
+        seen.add(cls.kelompok_id)
+        result.push({ id: cls.kelompok.id, name: cls.kelompok.name, desa_id: '' })
+      }
+    })
+    return result
+  }
 
   if (!cascadeFilters) {
     if (isAdminDesa || isTeacherDesa) {
@@ -136,6 +150,9 @@ export function filterKelompokList({ kelompokList, desaList, filters, userProfil
         .filter(d => d.daerah_id === userProfile?.daerah_id)
         .map(d => d.id)
       return kelompokList.filter(k => validDesaIds.includes(k.desa_id))
+    }
+    if (isTeacher && teacherHasMultipleKelompok) {
+      return buildFromClasses()
     }
     return kelompokList
   }
@@ -167,6 +184,10 @@ export function filterKelompokList({ kelompokList, desaList, filters, userProfil
     return kelompokList.filter(k => validDesaIds.includes(k.desa_id))
   }
 
+  if (isTeacher && teacherHasMultipleKelompok) {
+    return buildFromClasses()
+  }
+
   return kelompokList
 }
 
@@ -179,21 +200,49 @@ interface FilterClassParams {
   role: RoleFlags
   userProfile: MinimalProfile
   cascadeFilters: boolean
+  activeDesaList: DesaBase[]
+  activeKelompokList: KelompokBase[]
+  /** When false, skip kelompok-based filtering entirely */
+  shouldShowKelompok: boolean
+  /** True when teacher has >1 class across their assignments */
+  teacherHasMultipleClasses: boolean
 }
 
 /**
  * Filters the class list based on user role, selected kelompok filter, and cascade mode.
  * Mirrors the `filteredClassList` useMemo in DataFilter.tsx.
  */
-export function filterClassList({ classList, filters, filteredKelompokList, role, userProfile, cascadeFilters }: FilterClassParams): Class[] {
-  const { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher } = role
+export function filterClassList({ classList, filters, filteredKelompokList, role, userProfile, cascadeFilters, activeDesaList, activeKelompokList, shouldShowKelompok, teacherHasMultipleClasses }: FilterClassParams): Class[] {
+  const { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, isTeacherDesa, isTeacherDaerah } = role
 
   if (!classList.length) return []
+
+  // Guard: kelompok filter not shown → no kelompok-based narrowing
+  if (!shouldShowKelompok) return classList
 
   // Independent Mode
   if (!cascadeFilters) {
     if (isAdminKelompok) {
       return classList.filter(cls => !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id)
+    }
+    if (isTeacherDesa) {
+      const validKelompokIds = activeKelompokList
+        .filter(k => k.desa_id === userProfile?.desa_id)
+        .map(k => k.id)
+      return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
+    }
+    if (isTeacherDaerah) {
+      const validDesaIds = activeDesaList
+        .filter(d => d.daerah_id === userProfile?.daerah_id)
+        .map(d => d.id)
+      const validKelompokIds = activeKelompokList
+        .filter(k => validDesaIds.includes(k.desa_id))
+        .map(k => k.id)
+      return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
+    }
+    if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
+      const teacherClassIds = userProfile.classes.map(c => c.id)
+      return classList.filter(cls => teacherClassIds.includes(cls.id))
     }
     if (filters.kelompok.length > 0) {
       const selectedClassIds = (filters.kelas || []).flatMap(k => k.split(','))
@@ -214,7 +263,7 @@ export function filterClassList({ classList, filters, filteredKelompokList, role
     return classList
   }
 
-  if (isSuperAdmin || isAdminDaerah || isAdminDesa) {
+  if (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa) {
     const validKelompokIds = filteredKelompokList.map(k => k.id)
     if (validKelompokIds.length > 0) {
       return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))

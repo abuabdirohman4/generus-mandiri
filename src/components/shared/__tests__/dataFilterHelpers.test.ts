@@ -8,6 +8,39 @@ import {
 } from '../dataFilterHelpers'
 
 // --- Mock data ---
+const mockUserTeacherMultiKelompok = {
+  role: 'teacher' as const,
+  id: 'user-teacher-multi',
+  full_name: 'Guru Multi Kelompok',
+  daerah_id: 'daerah-1',
+  desa_id: 'desa-1',
+  kelompok_id: 'kelompok-1',
+  classes: [
+    { id: 'cls-1', kelompok_id: 'kelompok-1', kelompok: { id: 'kelompok-1', name: 'Kelompok 1' } },
+    { id: 'cls-2', kelompok_id: 'kelompok-2', kelompok: { id: 'kelompok-2', name: 'Kelompok 2' } },
+  ],
+}
+
+const mockUserTeacherDesa = {
+  role: 'teacher' as const,
+  id: 'user-teacher-desa',
+  full_name: 'Guru Desa',
+  daerah_id: 'daerah-1',
+  desa_id: 'desa-1',
+  kelompok_id: null,
+  classes: [],
+}
+
+const mockUserTeacherDaerah = {
+  role: 'teacher' as const,
+  id: 'user-teacher-daerah',
+  full_name: 'Guru Daerah',
+  daerah_id: 'daerah-1',
+  desa_id: null,
+  kelompok_id: null,
+  classes: [],
+}
+
 const mockUserSuperAdmin = {
   role: 'superadmin' as const,
   id: 'user-super',
@@ -62,6 +95,13 @@ const mockClassList = [
   { id: 'cls-1', name: 'Remaja', kelompok_id: 'kelompok-1' },
   { id: 'cls-2', name: 'Remaja', kelompok_id: 'kelompok-2' },
   { id: 'cls-3', name: 'Pemuda', kelompok_id: 'kelompok-1' },
+]
+// Extended class list used for teacher role tests (includes cls-4 in daerah-2)
+const mockClassListExtended = [
+  { id: 'cls-1', name: 'Remaja', kelompok_id: 'kelompok-1' },
+  { id: 'cls-2', name: 'Remaja', kelompok_id: 'kelompok-2' },
+  { id: 'cls-3', name: 'Pemuda', kelompok_id: 'kelompok-1' },
+  { id: 'cls-4', name: 'Pemuda', kelompok_id: 'kelompok-3' }, // kelompok-3 in desa-3 (daerah-2)
 ]
 const emptyFilters = { daerah: [], desa: [], kelompok: [], kelas: [] }
 
@@ -232,13 +272,46 @@ describe('filterKelompokList', () => {
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('kelompok-3')
   })
+
+  it('teacher multi-kelompok independent mode: builds list from classes', () => {
+    const result = filterKelompokList({
+      kelompokList: mockKelompokList,
+      desaList: mockDesaList,
+      filters: emptyFilters,
+      userProfile: mockUserTeacherMultiKelompok,
+      role: detectRole(mockUserTeacherMultiKelompok),
+      cascadeFilters: false,
+      teacherHasMultipleKelompok: true,
+    })
+    expect(result.map(k => k.id)).toEqual(['kelompok-1', 'kelompok-2'])
+  })
+
+  it('teacher multi-kelompok cascade mode: builds list from classes', () => {
+    const result = filterKelompokList({
+      kelompokList: mockKelompokList,
+      desaList: mockDesaList,
+      filters: emptyFilters,
+      userProfile: mockUserTeacherMultiKelompok,
+      role: detectRole(mockUserTeacherMultiKelompok),
+      cascadeFilters: true,
+      teacherHasMultipleKelompok: true,
+    })
+    expect(result.map(k => k.id)).toEqual(['kelompok-1', 'kelompok-2'])
+  })
 })
 
 // --- filterClassList ---
 
+// Default extra params for tests that don't need the new teacher-specific behaviour
+const defaultClassParams = {
+  activeDesaList: mockDesaList,
+  activeKelompokList: mockKelompokList,
+  shouldShowKelompok: true,
+  teacherHasMultipleClasses: false,
+}
+
 describe('filterClassList', () => {
-  it('returns empty when showKelasFilter is false (classList empty input)', () => {
-    // filterClassList receives already-filtered classList; empty means no filter applied
+  it('returns empty when classList is empty', () => {
     const result = filterClassList({
       classList: [],
       filters: emptyFilters,
@@ -246,8 +319,23 @@ describe('filterClassList', () => {
       role: detectRole(mockUserSuperAdmin),
       userProfile: mockUserSuperAdmin,
       cascadeFilters: true,
+      ...defaultClassParams,
     })
     expect(result).toHaveLength(0)
+  })
+
+  it('returns all classes when shouldShowKelompok is false', () => {
+    const result = filterClassList({
+      classList: mockClassList,
+      filters: emptyFilters,
+      filteredKelompokList: [],
+      role: detectRole(mockUserTeacherDesa),
+      userProfile: mockUserTeacherDesa,
+      cascadeFilters: true,
+      ...defaultClassParams,
+      shouldShowKelompok: false,
+    })
+    expect(result).toEqual(mockClassList)
   })
 
   it('returns classes for selected kelompok', () => {
@@ -258,6 +346,7 @@ describe('filterClassList', () => {
       role: detectRole(mockUserSuperAdmin),
       userProfile: mockUserSuperAdmin,
       cascadeFilters: true,
+      ...defaultClassParams,
     })
     // kelompok-1 has cls-1 (Remaja) and cls-3 (Pemuda)
     expect(result).toHaveLength(2)
@@ -273,6 +362,7 @@ describe('filterClassList', () => {
       role: detectRole(mockUserAdminDaerah),
       userProfile: mockUserAdminDaerah,
       cascadeFilters: true,
+      ...defaultClassParams,
     })
     expect(result).toHaveLength(3) // all 3 classes in kelompok-1 and kelompok-2
   })
@@ -285,10 +375,41 @@ describe('filterClassList', () => {
       role: detectRole(mockUserAdminKelompok),
       userProfile: mockUserAdminKelompok,
       cascadeFilters: true,
+      ...defaultClassParams,
     })
     // Admin kelompok-1 should see cls-1 and cls-3 (both in kelompok-1), not cls-2 (kelompok-2)
     expect(result.every(c => !c.kelompok_id || c.kelompok_id === 'kelompok-1')).toBe(true)
     expect(result).toHaveLength(2)
+  })
+
+  it('isTeacherDesa independent mode: returns classes in their desa kelompok only', () => {
+    // kelompok-1 and kelompok-2 are in desa-1; kelompok-3 is in desa-3 (daerah-2)
+    const result = filterClassList({
+      classList: mockClassListExtended,
+      filters: emptyFilters,
+      filteredKelompokList: [],
+      role: detectRole(mockUserTeacherDesa),
+      userProfile: mockUserTeacherDesa,
+      cascadeFilters: false,
+      ...defaultClassParams,
+    })
+    expect(result.map(c => c.id)).toEqual(['cls-1', 'cls-2', 'cls-3'])
+    expect(result.find(c => c.id === 'cls-4')).toBeUndefined()
+  })
+
+  it('isTeacherDaerah independent mode: returns classes in their daerah only', () => {
+    // daerah-1 has desa-1 and desa-2; kelompok-1 and kelompok-2 are in desa-1
+    const result = filterClassList({
+      classList: mockClassListExtended,
+      filters: emptyFilters,
+      filteredKelompokList: [],
+      role: detectRole(mockUserTeacherDaerah),
+      userProfile: mockUserTeacherDaerah,
+      cascadeFilters: false,
+      ...defaultClassParams,
+    })
+    expect(result.map(c => c.id)).toEqual(['cls-1', 'cls-2', 'cls-3'])
+    expect(result.find(c => c.id === 'cls-4')).toBeUndefined()
   })
 })
 

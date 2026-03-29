@@ -9,6 +9,7 @@ import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import type { UserProfile } from '@/types/user'
 import type { Class } from '@/types/class'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
+import { detectRole, filterDesaList, filterKelompokList, filterClassList } from './dataFilterHelpers'
 import type { DataFilters } from './dataFilterHelpers'
 
 export type { DataFilters }
@@ -116,18 +117,9 @@ export default function DataFilter({
   comparisonLevel = 'class',
   onComparisonLevelChange
 }: DataFilterProps) {
-  // Role detection logic
-  const isSuperAdmin = userProfile?.role === 'superadmin'
-  const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id
-  const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id
-  const isAdminKelompok = userProfile?.role === 'admin' && userProfile?.kelompok_id
-  const isAdmin = isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok
-  const isTeacher = userProfile?.role === 'teacher'
-
-  // Teacher level detection (NEW - for Teacher Desa/Daerah roles)
-  const isTeacherDaerah = isTeacher && userProfile?.daerah_id && !userProfile?.desa_id && !userProfile?.kelompok_id
-  const isTeacherDesa = isTeacher && userProfile?.desa_id && !userProfile?.kelompok_id
-  const isTeacherKelompok = isTeacher && userProfile?.kelompok_id
+  // Role detection
+  const role = useMemo(() => detectRole(userProfile ?? null), [userProfile])
+  const { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isAdmin, isTeacher, isTeacherDaerah, isTeacherDesa, isTeacherKelompok } = role
 
   // Use filtered lists if provided, otherwise use full lists
   const activeDaerahList = filterLists?.daerahList || daerahList
@@ -159,102 +151,21 @@ export default function DataFilter({
   // Filter options based on cascading logic (declare these before counting)
   const filteredDesaList = useMemo(() => {
     if (!shouldShowDesa) return []
-
-    // Independent Mode: Show all options (respecting role restrictions)
-    if (!cascadeFilters) {
-      if (isAdminDaerah || isTeacherDaerah) {
-        return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
-      }
-      // Superadmin sees all
-      return activeDesaList
-    }
-
-    if (isSuperAdmin) {
-      // Superadmin: filter by selected Daerah
-      if (filters?.daerah && filters.daerah.length > 0) {
-        return activeDesaList.filter(desa => filters.daerah.includes(desa.daerah_id))
-      }
-      return activeDesaList
-    } else if (isAdminDaerah || isTeacherDaerah) {
-      // Admin Daerah / Guru Daerah: filter by their daerah_id
-      return activeDesaList.filter(desa => desa.daerah_id === userProfile?.daerah_id)
-    }
-
-    return activeDesaList
-  }, [activeDesaList, filters?.daerah, userProfile?.daerah_id, isSuperAdmin, isAdminDaerah, isTeacherDaerah, shouldShowDesa, cascadeFilters])
+    return filterDesaList({ desaList: activeDesaList, filters, userProfile: userProfile ?? null, role, cascadeFilters })
+  }, [activeDesaList, filters, userProfile, role, shouldShowDesa, cascadeFilters])
 
   const filteredKelompokList = useMemo(() => {
     if (!shouldShowKelompok) return []
-
-    // Independent Mode: Show all options (respecting role restrictions)
-    if (!cascadeFilters) {
-      if (isAdminDesa || isTeacherDesa) {
-        return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
-      }
-      if (isAdminDaerah || isTeacherDaerah) {
-        // Admin daerah / Guru daerah sees all groups in their daerah
-        const validDesaIds = activeDesaList
-          .filter(desa => desa.daerah_id === userProfile?.daerah_id)
-          .map(desa => desa.id)
-        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
-      }
-      if (isTeacher && teacherHasMultipleKelompok) {
-        // Regular teacher with classes in multiple kelompok: build list from their classes
-        // (activeKelompokList may only contain 1 kelompok due to profile-level filtering)
-        const seen = new Set<string>()
-        const result: typeof activeKelompokList = []
-        userProfile!.classes!.forEach(cls => {
-          if (cls.kelompok_id && cls.kelompok && !seen.has(cls.kelompok_id)) {
-            seen.add(cls.kelompok_id)
-            result.push({ id: cls.kelompok.id, name: cls.kelompok.name, desa_id: '' })
-          }
-        })
-        return result
-      }
-      // Superadmin sees all
-      return activeKelompokList
-    }
-
-    if (isSuperAdmin) {
-      // Superadmin: filter by selected Daerah or Desa
-      if (filters?.desa && filters.desa.length > 0) {
-        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
-      }
-      if (filters?.daerah && filters.daerah.length > 0) {
-        const validDesaIds = activeDesaList
-          .filter(desa => filters.daerah.includes(desa.daerah_id))
-          .map(desa => desa.id)
-        return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
-      }
-      return activeKelompokList
-    } else if (isAdminDesa || isTeacherDesa) {
-      // Admin Desa / Guru Desa: filter by their desa_id
-      return activeKelompokList.filter(kelompok => kelompok.desa_id === userProfile?.desa_id)
-    } else if (isAdminDaerah || isTeacherDaerah) {
-      // Admin Daerah / Guru Daerah: filter by selected Desa or their Daerah
-      if (filters?.desa && filters.desa.length > 0) {
-        return activeKelompokList.filter(kelompok => filters.desa.includes(kelompok.desa_id))
-      }
-      const validDesaIds = activeDesaList
-        .filter(desa => desa.daerah_id === userProfile?.daerah_id)
-        .map(desa => desa.id)
-      return activeKelompokList.filter(kelompok => validDesaIds.includes(kelompok.desa_id))
-    } else if (isTeacher && teacherHasMultipleKelompok) {
-      // Regular teacher with classes in multiple kelompok: build list from their classes
-      // (activeKelompokList may only contain 1 kelompok due to profile-level filtering)
-      const seen = new Set<string>()
-      const result: typeof activeKelompokList = []
-      userProfile!.classes!.forEach(cls => {
-        if (cls.kelompok_id && cls.kelompok && !seen.has(cls.kelompok_id)) {
-          seen.add(cls.kelompok_id)
-          result.push({ id: cls.kelompok.id, name: cls.kelompok.name, desa_id: '' })
-        }
-      })
-      return result
-    }
-
-    return activeKelompokList
-  }, [activeKelompokList, filters?.desa, filters?.daerah, userProfile?.desa_id, userProfile?.daerah_id, activeDesaList, isSuperAdmin, isAdminDesa, isAdminDaerah, isTeacherDesa, isTeacherDaerah, isTeacher, teacherHasMultipleKelompok, shouldShowKelompok, cascadeFilters])
+    return filterKelompokList({
+      kelompokList: activeKelompokList,
+      desaList: activeDesaList,
+      filters,
+      userProfile: userProfile ?? null,
+      role,
+      cascadeFilters,
+      teacherHasMultipleKelompok,
+    })
+  }, [activeKelompokList, activeDesaList, filters, userProfile, role, shouldShowKelompok, cascadeFilters, teacherHasMultipleKelompok])
 
   // Count options to determine if filters should be hidden when only one option exists
   const daerahListCount = activeDaerahList.length
@@ -276,92 +187,19 @@ export default function DataFilter({
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
-
-    // If kelompok filter is not shown, return all classes (no filtering by kelompok_id)
-    // This is important for pages like meeting detail where we don't filter by kelompok
-    if (!shouldShowKelompok) {
-      return classList
-    }
-
-    // Independent Mode: Show all classes (respecting role restrictions)
-    if (!cascadeFilters) {
-      if (isAdminKelompok) {
-        return classList.filter(cls => !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id)
-      }
-      if (isTeacherDesa) {
-        // Guru Desa: show classes from all kelompok in their desa
-        const validKelompokIds = activeKelompokList
-          .filter(k => k.desa_id === userProfile?.desa_id)
-          .map(k => k.id)
-        return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
-      }
-      if (isTeacherDaerah) {
-        // Guru Daerah: show classes from all kelompok in their daerah
-        const validDesaIds = activeDesaList
-          .filter(d => d.daerah_id === userProfile?.daerah_id)
-          .map(d => d.id)
-        const validKelompokIds = activeKelompokList
-          .filter(k => validDesaIds.includes(k.desa_id))
-          .map(k => k.id)
-        return classList.filter(cls => cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id))
-      }
-      if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
-        const teacherClassIds = userProfile.classes.map(c => c.id)
-        return classList.filter(cls => teacherClassIds.includes(cls.id))
-      }
-      // Superadmin, Admin Daerah, Admin Desa see all classes (or filtered by selected Kelompok if any)
-      // In Independent Mode, we filter by Kelompok BUT keep selected classes visible
-      if (filters?.kelompok && filters.kelompok.length > 0) {
-        const selectedClassIds = (filters.kelas || []).flatMap(k => k.split(','))
-        return classList.filter(cls =>
-          (cls.kelompok_id && filters.kelompok.includes(cls.kelompok_id)) ||
-          selectedClassIds.includes(cls.id)
-        )
-      }
-      return classList
-    }
-
-    // PRIORITY: Jika user sudah pilih kelompok, gunakan yang dipilih
-    if (filters?.kelompok && filters.kelompok.length > 0) {
-      // Filter kelas berdasarkan kelompok yang dipilih user
-      return classList.filter(cls =>
-        cls.kelompok_id && filters.kelompok.includes(cls.kelompok_id)
-      )
-    }
-
-    // Fallback: Jika belum pilih kelompok, tampilkan dari semua kelompok tersedia
-    if (filteredKelompokList.length === 0) {
-      return classList
-    }
-
-    if (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa) {
-      // Get valid kelompok IDs from filteredKelompokList (kelompok yang tersedia)
-      const validKelompokIds = filteredKelompokList.map(k => k.id)
-
-      // Filter classes by valid kelompok IDs only if we have valid kelompok IDs
-      if (validKelompokIds.length > 0) {
-        return classList.filter(cls =>
-          cls.kelompok_id && validKelompokIds.includes(cls.kelompok_id)
-        )
-      }
-
-      // If no kelompok filter applied, show all classes
-      return classList
-    } else if (isAdminKelompok) {
-      // Admin Kelompok: filter by their kelompok_id only if kelas have kelompok_id
-      // But if some classes don't have kelompok_id (null), include them too
-      return classList.filter(cls =>
-        !cls.kelompok_id || cls.kelompok_id === userProfile?.kelompok_id
-      )
-    } else if (isTeacher && teacherHasMultipleClasses && userProfile?.classes) {
-      // Teacher with multiple classes: filter only classes they teach
-      const teacherClassIds = userProfile.classes.map(c => c.id)
-      return classList.filter(cls => teacherClassIds.includes(cls.id))
-    }
-
-    // For teacher or other roles, return all classes when kelompok filter is not active
-    return classList
-  }, [classList, filters?.kelompok, filteredKelompokList, shouldShowKelompok, isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacher, isTeacherDaerah, isTeacherDesa, teacherHasMultipleClasses, showKelasFilter, userProfile?.kelompok_id, userProfile?.classes, cascadeFilters, activeDesaList, activeKelompokList, userProfile?.desa_id, userProfile?.daerah_id])
+    return filterClassList({
+      classList,
+      filters,
+      filteredKelompokList,
+      role,
+      userProfile: userProfile ?? null,
+      cascadeFilters,
+      activeDesaList,
+      activeKelompokList,
+      shouldShowKelompok,
+      teacherHasMultipleClasses: teacherHasMultipleClasses ?? false,
+    })
+  }, [classList, filters, filteredKelompokList, role, userProfile, cascadeFilters, activeDesaList, activeKelompokList, shouldShowKelompok, teacherHasMultipleClasses, showKelasFilter])
 
   // Deduplicate class names and count occurrences
   const uniqueClassList = useMemo(() => {
