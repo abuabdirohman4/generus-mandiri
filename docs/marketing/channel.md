@@ -1,3 +1,21 @@
+*Update v1.12.0 — Pilih Kelas Lebih Mudah* 🏫
+
+🇮🇩 *Selector Organisasi Berjenjang di Form Siswa*
+
+Sekarang saat tambah/edit siswa, import massal, atau assign kelas, kamu bisa pilih dulu Desa dan Kelompok sebelum pilih kelas — supaya daftar kelas yang muncul lebih singkat dan sesuai scope kamu.
+- Admin Daerah: pilih Desa → Kelompok → Kelas
+- Admin Desa: langsung pilih Kelompok → Kelas
+- Admin Kelompok: langsung ke Kelas (tidak berubah)
+
+🇬🇧 *Cascading Org Selector in Student Forms*
+
+When adding/editing students, batch importing, or assigning classes, you can now filter by Desa and Kelompok before selecting a class — making the class list shorter and role-appropriate.
+- Admin Daerah: pick Desa → Kelompok → Class
+- Admin Desa: pick Kelompok → Class directly
+- Admin Kelompok: go straight to Class (no change)
+
+---
+
 *Update v1.11.0 — Self-Service Password Change*
 
 🇮🇩 *Ubah Password Sendiri*

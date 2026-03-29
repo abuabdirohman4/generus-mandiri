@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [1.12.0] — 2026-03-29
+
+### Added
+- **Cascading Org Selector in Student Forms**: Daerah → Desa → Kelompok selectors now appear
+  above the class dropdown in Tambah Siswa, Edit Siswa, Batch Import, and Assign Students modals.
+  Selectors are role-scoped (superadmin sees all 3; admin daerah sees Desa+Kelompok; admin desa
+  sees Kelompok only; admin/guru kelompok see none). Kelompok is disabled until Desa is selected;
+  class list is filtered by selected Kelompok.
+
 ## [1.11.0] — 2026-03-28
 
 ### Added
