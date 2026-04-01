@@ -64,14 +64,17 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**BEFORE implementing ANY feature/refactoring/task**, ask user:
+**Setelah plan selesai, Claude Code WAJIB output pilihan A/B:**
 
-> "Apakah Anda ingin saya yang langsung mengerjakan kode ini, atau menggunakan Google Antigravity untuk eksekusi?"
+- **A) Google Antigravity** — recommended jika ≥ 3 files ATAU ≥ 100 lines. Output prompt Antigravity yang sudah terisi otomatis.
+- **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
 
-**Option A: Direct Execution** - Immediate implementation (1-3 files, <200 lines), real-time iteration
-**Option B: Google Antigravity** - Design + plan creation, user executes in Antigravity (3+ files, refactoring, large features)
+**Role separation:**
+- Claude Code = planning + issue creation + review
+- Antigravity = TDD + implementasi + test runs
+- User = git operations (branch, commit, push, PR)
 
-**📖 For Google Antigravity workflow and prompt templates, READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
+**📖 Full SOP, format output A/B, standard plan format (ultra-detailed), dan troubleshooting: READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 
 ---
 
