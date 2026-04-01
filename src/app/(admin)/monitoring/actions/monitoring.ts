@@ -60,7 +60,6 @@ export async function getClassProgress(
     `)
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
         .eq('status', 'active');
 
     if (enrollError) {
