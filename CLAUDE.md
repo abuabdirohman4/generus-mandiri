@@ -64,10 +64,16 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**Setelah plan selesai, Claude Code WAJIB output pilihan A/B:**
+**Setiap kali user meminta fitur baru atau bug fix, Claude Code WAJIB menjalankan urutan ini:**
 
-- **A) Google Antigravity** — recommended jika ≥ 3 files ATAU ≥ 100 lines. Output prompt Antigravity yang sudah terisi otomatis.
-- **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
+1. **Buat GitHub Issue** — `gh issue create --title "..." --body "..."`
+2. **Buat atau update Beads Issue:**
+   - Jika belum ada: `bd create --title="..." --type=... --priority=...` lalu `bd update <id> --notes "GH-#XX: <url>"`
+   - Jika sudah ada: `bd update <id> --notes "GH-#XX: <url>"`
+3. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed)
+4. **Output pilihan A/B:**
+   - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Sertakan prompt Antigravity terisi otomatis.
+   - **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
 
 **Role separation:**
 - Claude Code = planning + issue creation + review
