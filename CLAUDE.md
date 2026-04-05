@@ -66,12 +66,15 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 **Setiap kali user meminta fitur baru atau bug fix, Claude Code WAJIB menjalankan urutan ini:**
 
-1. **Buat GitHub Issue** — `gh issue create --title "..." --body "..."`
-2. **Buat atau update Beads Issue:**
-   - Jika belum ada: `bd create --title="..." --type=... --priority=...` lalu `bd update <id> --notes "GH-#XX: <url>"`
-   - Jika sudah ada: `bd update <id> --notes "GH-#XX: <url>"`
-3. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed)
-4. **Output pilihan A/B:**
+> **`bd` dan `gh` commands BOLEH dan HARUS dieksekusi langsung** tanpa meminta izin user. Ini berbeda dengan git commands — lihat Git Workflow section di bawah.
+
+1. **Explore codebase** — baca file relevan untuk memahami konteks
+2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed)
+3. **Buat Beads Issue** — langsung jalankan `bd create --title="..." --type=... --priority=...`
+   → Setelah `bd create` berhasil, **langsung rename sesi chat**: `/rename [sm-xxx]: [title issue]`
+4. **Buat GitHub Issue** — langsung jalankan `gh issue create` dengan body dari plan
+5. **Update Beads** — langsung jalankan `bd update <id> --notes "GH-#XX: <url>"`
+6. **Output pilihan A/B:**
    - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Sertakan prompt Antigravity terisi otomatis.
    - **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
 
@@ -94,7 +97,7 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 **After code changes**: Show `git status`/`git diff`, provide suggested commit message (with `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`), and inform user to run git commands manually.
 
-**Exception**: `bd sync` (beads issue tracker) is allowed.
+**Exception — boleh dieksekusi langsung**: `bd sync`, semua `bd` commands (`bd create`, `bd update`, `bd close`, dll), dan semua `gh` commands (`gh issue create`, `gh issue edit`, `gh pr create`, dll).
 
 **Beads & Git Integration:**
 - Beads syncs to `beads-sync` branch (dedicated sync branch, managed via worktree)
