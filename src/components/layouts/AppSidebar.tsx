@@ -473,6 +473,23 @@ function SidebarContent({
             isLoading={isLoading}
             onNavigate={onNavigate}
           />
+          <ul className="flex flex-col gap-4">
+            <li>
+              <a
+                href="/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`menu-item group menu-item-inactive ${!isExpanded && !isHovered && !isMobileOpen ? "lg:justify-center" : "lg:justify-start"}`}
+              >
+                <span className="w-6 h-6 flex items-center justify-center menu-item-icon-inactive">
+                  <BookOpenIcon className="w-6 h-6" />
+                </span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className="menu-item-text">Dokumentasi</span>
+                )}
+              </a>
+            </li>
+          </ul>
         </nav>
       </div>
     </aside>
