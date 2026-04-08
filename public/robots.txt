@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /docs/
+
+# Allow everything else
+Allow: /

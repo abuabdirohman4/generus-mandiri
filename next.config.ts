@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
+import nextra from "nextra";
+
+const withNextra = nextra({
+  contentDirBasePath: "/docs",
+});
 
 const nextConfig: NextConfig = {
   /* config options here */
-  
+
   // Bundle optimization
   webpack(config) {
     config.module.rules.push({
@@ -51,4 +56,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextra(nextConfig);
