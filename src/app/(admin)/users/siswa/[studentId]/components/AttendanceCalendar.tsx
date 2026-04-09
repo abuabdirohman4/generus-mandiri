@@ -20,7 +20,8 @@ export default function AttendanceCalendar({
   onDateClick
 }: AttendanceCalendarProps) {
   const daysInMonth = currentDate.daysInMonth()
-  const firstDayOfMonth = currentDate.startOf('month').day()
+  // Convert dayjs Sunday=0 to Monday-first: Mon=0, Tue=1, ..., Sun=6
+  const firstDayOfMonth = (currentDate.startOf('month').day() + 6) % 7
   const today = dayjs()
 
   // Group attendance by date
@@ -30,22 +31,25 @@ export default function AttendanceCalendar({
     return acc
   }, {} as Record<string, AttendanceLog[]>)
 
-  // Get color for date based on attendance status
-  const getDateColor = (date: string) => {
+  // Get unique status colors for a date (ordered: A, S, I, H)
+  const getDateStatusColors = (date: string): string[] => {
     const logs = attendanceByDate[date]
-    if (!logs || logs.length === 0) return null
-    
-    // If multiple meetings on same day, prioritize: A > I/S > H
-    const hasAbsen = logs.some(log => log.status === 'A')
-    const hasIzin = logs.some(log => log.status === 'I')
-    const hasSakit = logs.some(log => log.status === 'S')
-    const hasHadir = logs.some(log => log.status === 'H')
+    if (!logs || logs.length === 0) return []
 
-    if (hasAbsen) return ATTENDANCE_COLORS.absen
-    if (hasIzin) return ATTENDANCE_COLORS.izin
-    if (hasSakit) return ATTENDANCE_COLORS.sakit
-    if (hasHadir) return ATTENDANCE_COLORS.hadir
-    return null
+    const statusOrder: Array<keyof typeof ATTENDANCE_COLORS> = ['absen', 'sakit', 'izin', 'hadir']
+    const statusMap: Record<string, keyof typeof ATTENDANCE_COLORS> = {
+      A: 'absen', S: 'sakit', I: 'izin', H: 'hadir'
+    }
+    const presentStatuses = new Set(logs.map(log => statusMap[log.status]).filter(Boolean))
+    return statusOrder.filter(s => presentStatuses.has(s)).map(s => ATTENDANCE_COLORS[s])
+  }
+
+  // Build conic-gradient string from colors (split evenly)
+  const buildConicGradient = (colors: string[]): string => {
+    if (colors.length === 1) return ''
+    const step = 360 / colors.length
+    const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`)
+    return `conic-gradient(${stops.join(', ')})`
   }
 
   // Render calendar days
@@ -54,31 +58,53 @@ export default function AttendanceCalendar({
     const totalCells = Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7
 
     for (let i = 0; i < totalCells; i++) {
-      const dayNumber = i - firstDayOfMonth + 2
+      const dayNumber = i - firstDayOfMonth + 1
       const isValidDay = dayNumber > 0 && dayNumber <= daysInMonth
       const date = isValidDay ? currentDate.date(dayNumber).format('YYYY-MM-DD') : null
       const isToday = date && dayjs(date).isSame(today, 'day')
-      const color = date ? getDateColor(date) : null
       const meetings = date ? attendanceByDate[date] : null
+      const statusColors = date ? getDateStatusColors(date) : []
+      const isMultiple = statusColors.length > 1
+      const singleColor = statusColors.length === 1 ? statusColors[0] : null
+      const meetingCount = meetings?.length ?? 0
 
       days.push(
-        <button
-          key={i}
-          onClick={() => date && meetings && onDateClick(date, meetings)}
-          disabled={!isValidDay || !meetings}
-          className={`
-            w-full aspect-square max-w-[60px] mx-auto rounded-full flex items-center justify-center text-sm md:text-base font-medium transition-all
-            ${!isValidDay ? 'invisible' : ''}
-            ${isToday ? 'ring-2 ring-blue-500' : ''}
-            ${meetings ? 'cursor-pointer hover:opacity-80 hover:scale-105' : 'text-gray-400 dark:text-gray-600 cursor-default'}
-            ${color ? 'text-white shadow-md' : 'text-gray-700 dark:text-gray-300'}
-          `}
-          style={{
-            backgroundColor: color || 'transparent',
-          }}
-        >
-          {isValidDay ? dayNumber : ''}
-        </button>
+        <div key={i} className={`relative flex items-center justify-center ${!isValidDay ? 'invisible' : ''}`} style={{ width: '100%', maxWidth: '65px', margin: '0 auto' }}>
+          <button
+            onClick={() => date && meetings && onDateClick(date, meetings)}
+            disabled={!isValidDay || !meetings}
+            className={`
+              w-full aspect-square max-w-[60px] mx-auto rounded-full flex items-center justify-center text-sm md:text-base font-medium transition-all
+              ${isToday ? 'ring-2 ring-blue-500' : ''}
+              ${meetings ? 'cursor-pointer hover:opacity-80 hover:scale-105' : 'text-gray-400 dark:text-gray-600 cursor-default'}
+              ${singleColor ? 'text-white shadow-md' : isMultiple ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white' : 'text-gray-700 dark:text-gray-300'}
+            `}
+            style={{
+              backgroundColor: singleColor || undefined,
+              ...(isMultiple ? {
+                background: `conic-gradient(from 0deg, ${statusColors.map((c, i) => {
+                  const step = 360 / statusColors.length
+                  return `${c} ${i * step}deg ${(i + 1) * step}deg`
+                }).join(', ')})`,
+                padding: '3px',
+              } : {}),
+            }}
+          >
+            {isMultiple ? (
+              <span className="w-full h-full rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-gray-800 dark:text-white text-sm md:text-base font-medium">
+                {isValidDay ? dayNumber : ''}
+              </span>
+            ) : (
+              isValidDay ? dayNumber : ''
+            )}
+          </button>
+          {/* Badge jumlah pertemuan jika > 1 */}
+          {meetingCount > 1 && isValidDay && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-800 text-[10px] font-bold flex items-center justify-center shadow z-10">
+              {meetingCount}
+            </div>
+          )}
+        </div>
       )
     }
 
@@ -127,7 +153,7 @@ export default function AttendanceCalendar({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 mt-6 text-sm">
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }} />
           <span className="text-gray-700 dark:text-gray-300">Hadir</span>
@@ -143,6 +169,10 @@ export default function AttendanceCalendar({
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }} />
           <span className="text-gray-700 dark:text-gray-300">Alfa</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full" style={{ background: `conic-gradient(${ATTENDANCE_COLORS.absen} 0deg 180deg, ${ATTENDANCE_COLORS.hadir} 180deg 360deg)` }} />
+          <span className="text-gray-700 dark:text-gray-300">Campuran</span>
         </div>
       </div>
     </div>

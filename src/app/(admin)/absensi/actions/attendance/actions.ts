@@ -128,11 +128,19 @@ export async function saveAttendanceForMeeting(
       return { success: false, error: 'Meeting not found' }
     }
 
+    // Extract meeting date in WIB (UTC+7) as YYYY-MM-DD string.
+    // meeting.date is a timestamptz stored as UTC midnight (e.g. "2026-03-14T00:00:00+00:00").
+    // Using new Date() + toLocaleDateString would give wrong date on UTC servers.
+    // Instead, manually offset by +7 hours before extracting the date part.
+    const meetingUtc = new Date(meeting.date)
+    const meetingWib = new Date(meetingUtc.getTime() + 7 * 60 * 60 * 1000)
+    const meetingDateStr = meetingWib.toISOString().split('T')[0] // "YYYY-MM-DD"
+
     // Prepare data for upsert
     const attendanceRecords = attendanceData.map(record => ({
       student_id: record.student_id,
       meeting_id: meetingId,
-      date: meeting.date, // Include the meeting date
+      date: meetingDateStr, // Use WIB date string, not raw timestamptz
       status: record.status,
       reason: record.reason,
       recorded_by: profile.id
