@@ -1,6 +1,17 @@
 
 # Changelog
 
+## [1.12.1] — 2026-04-09
+
+### Fixed
+- **Attendance Calendar**: Off-by-one error caused dates to render one column off;
+  calendar now correctly starts on Monday with proper WIB timezone alignment.
+- **Attendance Log Date**: Logs were saved with UTC date instead of WIB (UTC+7),
+  causing mismatches between meeting date and recorded attendance date. Existing
+  records fixed via migration.
+- **Mixed Attendance Display**: Days with multiple meetings now show a multi-color
+  conic-gradient border with a badge showing the meeting count.
+
 ## [1.12.0] — 2026-03-29
 
 ### Added

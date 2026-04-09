@@ -1,3 +1,21 @@
+*Update v1.12.1 — Perbaikan Kalender Kehadiran*
+
+🇮🇩 *Perbaikan Kalender Kehadiran*
+
+🔧 Perbaikan
+- Kalender kehadiran: tanggal sekarang tampil di hari yang benar (bug offset & timezone WIB diperbaiki)
+- Data absensi yang tercatat di tanggal salah sudah diperbaiki otomatis
+- Hari dengan lebih dari 1 pertemuan kini tampil dengan border warna-warni + badge jumlah pertemuan
+
+🇬🇧 *Attendance Calendar Fixes*
+
+🔧 Fixes
+- Attendance calendar date alignment corrected (off-by-one + WIB timezone)
+- Attendance log dates fixed for existing mismatched records
+- Days with multiple meetings show color-coded border + meeting count badge
+
+---
+
 *Update v1.12.0 — Pilih Kelas Lebih Mudah* 🏫
 
 🇮🇩 *Selector Organisasi Berjenjang di Form Siswa*
