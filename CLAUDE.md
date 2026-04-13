@@ -73,6 +73,7 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 3. **Buat Beads Issue** — langsung jalankan `bd create --title="..." --type=... --priority=...`
    → Setelah `bd create` berhasil, **langsung rename sesi chat**: `/rename [sm-xxx]: [title issue]`
 4. **Buat GitHub Issue** — langsung jalankan `gh issue create` dengan body dari plan
+   → Format title WAJIB: `[sm-xxx] type: short description` (prefix Beads ID di depan)
 5. **Update Beads** — langsung jalankan `bd update <id> --notes "GH-#XX: <url>"`
 6. **Output pilihan A/B:**
    - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Sertakan prompt Antigravity terisi otomatis.
