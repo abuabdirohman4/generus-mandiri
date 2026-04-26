@@ -1,7 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
+import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import {
     fetchClassMasterMappings,
     fetchAllClassesBasic,
@@ -63,16 +64,27 @@ export async function getAllClasses(): Promise<Class[]> {
 
             } else if (profile.kelompok_id || profile.desa_id || profile.daerah_id) {
                 // Teacher with hierarchical access (Guru Desa/Daerah)
-                const { data: classes, error } = await fetchClassesHierarchical(supabase, {
+                // Use adminClient to bypass RLS — hierarchical teachers don't have kelompok_id
+                // so RLS on kelompok/desa tables would block regular client queries
+                const adminClient = await createAdminClient()
+                const { data: classes, error } = await fetchClassesHierarchical(adminClient, {
                     kelompok_id: profile.kelompok_id,
                     desa_id: profile.desa_id,
                     daerah_id: profile.daerah_id,
                 })
                 if (error) throw error
 
-                const classIds = (classes || []).map(c => c.id)
+                // Filter by class master restriction if applicable
+                const allowedClassIds = await getTeacherAllowedClassIds(user.id, profile)
+                console.log('allowedClassIds', allowedClassIds);
+                let finalClasses = classes || []
+                if (allowedClassIds) {
+                    finalClasses = finalClasses.filter(c => allowedClassIds.has(c.id))
+                }
+
+                const classIds = finalClasses.map(c => c.id)
                 const classMappings = await fetchClassMasterMappings(supabase, classIds)
-                const transformed = attachClassMasterMappings(classes || [], classMappings)
+                const transformed = attachClassMasterMappings(finalClasses, classMappings)
                 return sortClassesByMasterOrder(transformed)
 
             } else {

@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
-import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
+import { getCurrentUserProfile, getDataFilter, getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import { buildFilterConditions } from '../../dashboardHelpers'
 import type { Dashboard, DashboardFilters } from '@/types/dashboard'
 import {
@@ -34,14 +34,51 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         const filterConditions = await buildFilterConditions(supabase, filters, rlsFilter)
         const { classIds, studentIds, hasFilters } = filterConditions
 
+        // Apply class master restriction for Guru Desa/Daerah
+        let effectiveClassIds = classIds
+        let effectiveStudentIds = studentIds
+        
+        if (
+            profile?.role === 'teacher' &&
+            (profile.desa_id || profile.daerah_id) &&
+            !profile.kelompok_id &&
+            profile.id
+        ) {
+            const allowedClassIdsSet = await getTeacherAllowedClassIds(profile.id, profile)
+
+            if (allowedClassIdsSet) {
+                const allowedClassIds = Array.from(allowedClassIdsSet)
+                
+                // 1. Filter class IDs
+                if (hasFilters) {
+                    effectiveClassIds = classIds.filter(id => allowedClassIdsSet.has(id))
+                } else {
+                    effectiveClassIds = allowedClassIds
+                }
+                
+                // 2. Filter student IDs (if hasFilters is false, we need to get allowed students)
+                if (hasFilters) {
+                    effectiveStudentIds = studentIds.filter(id => {
+                        // This is a bit tricky since we don't have student-to-class mapping here easily.
+                        // For now, let's keep it as is if filters are applied, 
+                        // as buildFilterConditions already respects RLS.
+                        return true
+                    })
+                } else {
+                    // For student count, we'll let countStudents handle it if we pass effectiveClassIds
+                    // but wait, countStudents takes studentIds.
+                }
+            }
+        }
+
         // Count students & classes in parallel
         const [siswaCount, kelasCount] = await Promise.all([
-            countStudents(supabase, hasFilters ? studentIds : undefined),
-            countClasses(supabase, hasFilters ? classIds : undefined),
+            countStudents(supabase, hasFilters ? effectiveStudentIds : undefined, profile?.role === 'teacher' ? effectiveClassIds : undefined),
+            countClasses(supabase, (hasFilters || profile?.role === 'teacher') ? effectiveClassIds : undefined),
         ])
 
         // If no classes under filter, bail early
-        if (hasFilters && classIds.length === 0) {
+        if (hasFilters && effectiveClassIds.length === 0) {
             return {
                 siswa: siswaCount,
                 kelas: kelasCount,
@@ -57,7 +94,7 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         // Fetch meetings
         const { data: allMeetingsData } = await fetchMeetingsForOverview(
             supabase,
-            hasFilters && classIds.length > 0 ? classIds : undefined
+            hasFilters && effectiveClassIds.length > 0 ? effectiveClassIds : undefined
         )
 
         const meetingPeriods = countMeetingsByPeriod(

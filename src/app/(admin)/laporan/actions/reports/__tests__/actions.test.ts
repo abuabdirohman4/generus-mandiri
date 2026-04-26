@@ -179,6 +179,10 @@ function setupDefaultHappyPathMocks() {
       student_name: 'Ahmad',
       student_gender: 'L',
       class_name: 'Kelas A',
+      all_classes: [],
+      kelompok_name: null,
+      desa_name: null,
+      daerah_name: null,
       total_days: 1,
       hadir: 1,
       izin: 0,
@@ -338,7 +342,8 @@ describe('getAttendanceReport (Layer 3)', () => {
         expect.any(Array),
         expect.objectContaining({ role: 'teacher' }),
         ['tc-1', 'tc-2'],
-        expect.any(Object)
+        expect.any(Object),
+        undefined
       )
     })
 
@@ -352,7 +357,8 @@ describe('getAttendanceReport (Layer 3)', () => {
         expect.any(Array),
         expect.objectContaining({ role: 'superadmin' }),
         [], // empty for non-teacher
-        expect.any(Object)
+        expect.any(Object),
+        undefined
       )
     })
   })

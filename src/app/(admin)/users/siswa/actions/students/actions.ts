@@ -9,6 +9,7 @@ import {
     type UserProfile,
     type Student as StudentPermission,
 } from './permissions'
+import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import type { StudentWithClasses } from '@/types/student'
 import {
     fetchAllStudents,
@@ -243,25 +244,42 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 studentsQuery = studentsQuery.eq('daerah_id', profile.daerah_id)
             }
 
-            if (classId) {
-                const classIds = classId.split(',')
-                const { data: studentClassData } = await adminClient
-                    .from('student_classes')
-                    .select('student_id')
-                    .in('class_id', classIds)
+            // --- Class Master Restriction ---
+            const allowedClassIdsSet = await getTeacherAllowedClassIds(user.id, profile)
 
-                if (studentClassData && studentClassData.length > 0) {
-                    const sIds = studentClassData.map(sc => sc.student_id)
-                    studentsQuery = studentsQuery.in('id', sIds)
+            // Apply classId filter only if small enough for .in() (avoid Bad Request on large arrays)
+            if (classId) {
+                const requestedIds = classId.split(',')
+                if (allowedClassIdsSet) {
+                    // Intersect requested IDs with allowed class master IDs
+                    const filtered = requestedIds.filter(id => allowedClassIdsSet.has(id))
+                    if (filtered.length === 0) return []
+                    studentsQuery = studentsQuery.in('class_id', filtered)
                 } else {
-                    return []
+                    studentsQuery = studentsQuery.in('class_id', requestedIds)
                 }
             }
+            // When no classId filter: scope is already applied via daerah/desa/kelompok above.
+            // Post-fetch filtering by allowedClassIdsSet is done below after the query.
 
             const { data: students, error } = await studentsQuery
             if (error) throw error
 
-            const missing = collectMissingClassIds(students || [])
+            // Post-fetch: filter by class master restriction if no classId was provided
+            // (when classId was provided, filtering was already applied above via .in())
+            let filteredStudents = students || []
+            if (!classId && allowedClassIdsSet) {
+                filteredStudents = filteredStudents.filter((student: any) => {
+                    const studentClassIds = (student.student_classes || [])
+                        .map((sc: any) => sc.classes?.id || sc.class_id)
+                        .filter(Boolean)
+                    // Also check primary class_id
+                    if (student.class_id && allowedClassIdsSet.has(student.class_id)) return true
+                    return studentClassIds.some((cId: string) => allowedClassIdsSet.has(cId))
+                })
+            }
+
+            const missing = collectMissingClassIds(filteredStudents)
             let classNameMap = new Map<string, string>()
             if (missing.size > 0) {
                 const { data: classesData } = await fetchClassNames(adminClient, Array.from(missing))
@@ -270,7 +288,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 }
             }
 
-            return transformStudentsData(students || [], classNameMap)
+            return transformStudentsData(filteredStudents, classNameMap)
         }
 
         // For non-teacher roles

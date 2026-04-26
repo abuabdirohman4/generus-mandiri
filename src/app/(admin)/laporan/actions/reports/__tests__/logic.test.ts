@@ -228,6 +228,33 @@ describe('logic.ts – filterMeetingsByRole', () => {
     })
 })
 
+describe('filterMeetingsByRole – class master restriction for Guru Desa', () => {
+  const maps = {
+    classKelompokMap: new Map(),
+    classToDesaMap: new Map([['c1', 'desa-1'], ['c2', 'desa-1'], ['c3', 'desa-1']]),
+    classToDaerahMap: new Map(),
+  }
+  const desaProfile = { role: 'teacher', desa_id: 'desa-1' }
+  const meetings = [
+    { id: 'm1', class_id: 'c1', class_ids: null },   // class master PAUD
+    { id: 'm2', class_id: 'c2', class_ids: null },   // class master Dewasa
+    { id: 'm3', class_ids: ['c1', 'c2'], class_id: 'c1' }, // multi-class
+  ]
+
+  it('returns all desa meetings when no class master restriction', () => {
+    const result = filterMeetingsByRole(meetings, desaProfile, [], maps, undefined)
+    expect(result).toEqual(['m1', 'm2', 'm3'])
+  })
+
+  it('filters to only allowed class master classes', () => {
+    const allowed = new Set(['c1'])
+    const result = filterMeetingsByRole(meetings, desaProfile, [], maps, allowed)
+    expect(result).toContain('m1')
+    expect(result).not.toContain('m2')
+    expect(result).toContain('m3') // m3 has c1 which is allowed
+  })
+})
+
 // ─── filterAttendanceByClass ──────────────────────────────────────────────────
 
 describe('logic.ts – filterAttendanceByClass', () => {

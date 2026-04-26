@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses } from '../actions';
+import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses, getTeacherClassMasters, updateTeacherClassMasters } from '../actions';
+import { getAllClassMasters } from '@/app/(admin)/kelas/actions/masters';
 import { useKelas } from '@/hooks/useKelas';
 import { Modal } from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
@@ -82,6 +83,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
   const { desa: desaList = [] } = useDesa();
   const { kelompok: kelompokList = [] } = useKelompok();
   const { kelas: allClasses = [] } = useKelas();
+
+  const [allClassMasters, setAllClassMasters] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     username: '',
@@ -89,7 +92,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     password: '',
     daerah_id: '',
     kelompok_id: '',
-    classIds: [] as string[]
+    classIds: [] as string[],
+    classMasterIds: [] as string[]
   });
   const [dataFilters, setDataFilters] = useState({
     daerah: [] as string[],
@@ -205,13 +209,24 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           const teacherClasses = await getTeacherClasses(guru.id);
           const classIds = teacherClasses.map(tc => tc.class_id);
 
+          let classMasterIds: string[] = [];
+          if (detectedLevel === 'desa' || detectedLevel === 'daerah') {
+            try {
+              const cmData = await getTeacherClassMasters(guru.id);
+              classMasterIds = cmData.map(cm => cm.class_master_id);
+            } catch (cmError) {
+              console.error('Error loading class masters:', cmError);
+            }
+          }
+
           setFormData({
             username: guru.username || '',
             full_name: guru.full_name || '',
             password: '', // Empty for edit mode
             daerah_id: guru.daerah_id || '',
             kelompok_id: guru.kelompok_id || '',
-            classIds: classIds
+            classIds: classIds,
+            classMasterIds: classMasterIds
           });
         } catch (error) {
           console.error('Error loading teacher classes:', error);
@@ -221,7 +236,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             password: '', // Empty for edit mode
             daerah_id: guru.daerah_id || '',
             kelompok_id: guru.kelompok_id || '',
-            classIds: []
+            classIds: [],
+            classMasterIds: []
           });
         }
 
@@ -262,7 +278,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           password: '',
           daerah_id: autoFilledDaerah,
           kelompok_id: autoFilledKelompok,
-          classIds: []
+          classIds: [],
+          classMasterIds: []
         });
         setDataFilters({
           daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
@@ -273,6 +290,14 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       }
       setErrors({});
       setGeneralError('');
+
+      // Load class masters for Guru Desa/Daerah UI
+      try {
+        const masters = await getAllClassMasters();
+        setAllClassMasters(masters);
+      } catch (e) {
+        console.error('Error loading class masters:', e);
+      }
     };
 
     loadData();
@@ -494,10 +519,21 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       if (guru) {
         await updateTeacher(guru.id, submitData);
         await updateTeacherClasses(guru.id, formData.classIds);
+        
+        if (teacherLevel === 'desa' || teacherLevel === 'daerah') {
+          await updateTeacherClassMasters(guru.id, formData.classMasterIds);
+        } else {
+          await updateTeacherClassMasters(guru.id, []);
+        }
       } else {
         const result = await createTeacher(submitData);
-        if (result.teacher?.id && formData.classIds.length > 0) {
-          await updateTeacherClasses(result.teacher.id, formData.classIds);
+        if (result.teacher?.id) {
+          if (formData.classIds.length > 0) {
+            await updateTeacherClasses(result.teacher.id, formData.classIds);
+          }
+          if ((teacherLevel === 'desa' || teacherLevel === 'daerah') && formData.classMasterIds.length > 0) {
+            await updateTeacherClassMasters(result.teacher.id, formData.classMasterIds);
+          }
         }
       }
       onSuccess();
@@ -793,6 +829,26 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                     </div>
                   )
                 )}
+              </div>
+            );
+          })()}
+
+          {/* Class Master Restriction - ONLY for Guru Desa/Daerah */}
+          {(teacherLevel === 'desa' || teacherLevel === 'daerah') && (() => {
+            return (
+              <div>
+                <Label>Batasan Tingkat Kelas (Opsional)</Label>
+                <div className="mb-3">
+                  <MultiSelectCheckbox
+                    label=""
+                    items={allClassMasters.map((m: any) => ({ id: m.id, label: m.name }))}
+                    selectedIds={formData.classMasterIds}
+                    onChange={(ids) => setFormData(prev => ({ ...prev, classMasterIds: ids }))}
+                    disabled={isLoading}
+                    maxHeight="8rem"
+                    hint="Jika dikosongkan, guru ini memiliki akses ke SEMUA kelas di wilayahnya. Jika diisi, guru HANYA bisa mengakses data kelas dari tingkat yang dipilih (misal: hanya melihat PAUD)."
+                  />
+                </div>
               </div>
             );
           })()}

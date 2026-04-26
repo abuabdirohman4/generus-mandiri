@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
@@ -11,7 +11,7 @@ export type { ClassMaster }
 // Get all class masters (visible to all authenticated users)
 export async function getAllClassMasters(): Promise<ClassMaster[]> {
   try {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { data, error } = await supabase
       .from('class_masters')
       .select('*')

@@ -121,7 +121,15 @@ function makeAdminSupabase(overrides: { fromBuilder?: any } = {}) {
   } as any
 }
 
-const validTeacherData = {
+const validTeacherData: {
+  username: string
+  full_name: string
+  email: string
+  password?: string
+  daerah_id: string
+  desa_id: string
+  kelompok_id: string
+} = {
   username: 'guru_ahmad',
   full_name: 'Ahmad Fauzi',
   email: 'ahmad@example.com',
@@ -540,7 +548,9 @@ describe('Teacher Actions (Layer 3)', () => {
 
     it('handles profile being null (no filter applied)', async () => {
       const supabase = makeSupabase()
+      const adminClient = makeAdminSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
       vi.mocked(getCurrentUserProfile).mockResolvedValue(null as any)
       vi.mocked(fetchTeachers).mockResolvedValue({ data: [], error: null } as any)
       vi.mocked(transformTeacher).mockImplementation((t: any) => t)
@@ -548,7 +558,7 @@ describe('Teacher Actions (Layer 3)', () => {
       const result = await getAllTeachers()
 
       expect(result).toEqual([])
-      expect(fetchTeachers).toHaveBeenCalledWith(supabase, undefined)
+      expect(fetchTeachers).toHaveBeenCalledWith(adminClient, undefined)
     })
   })
 

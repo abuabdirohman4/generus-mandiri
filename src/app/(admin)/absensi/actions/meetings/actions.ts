@@ -10,6 +10,7 @@ import {
   buildStudentSnapshot,
   canUserAccessMeeting
 } from './logic'
+import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import {
   fetchMeetingById,
   fetchMeetingsByClass,
@@ -1277,6 +1278,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           })
         }
 
+        // === CLASS MASTER RESTRICTION for Guru Desa/Daerah ===
+        const allowedClassMasterClassIdsAbsensi = await getTeacherAllowedClassIds(user.id, profile)
+
         // Filter meetings based on hierarchical level
         let filteredMeetings: any[] = []
 
@@ -1292,26 +1296,30 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             )
           })
         } else if (profile.desa_id) {
-          // Teacher Desa: filter by desa_id
+          // Teacher Desa: filter by desa_id + optional class master restriction
           filteredMeetings = (meetings || []).filter((meeting: any) => {
             const meetingClassIds = meeting.class_ids?.length > 0
               ? meeting.class_ids
               : [meeting.class_id].filter(Boolean)
 
-            return meetingClassIds.some((classId: string) =>
-              classToDesaMap.get(classId) === profile.desa_id
-            )
+            return meetingClassIds.some((classId: string) => {
+              if (classToDesaMap.get(classId) !== profile.desa_id) return false
+              if (!allowedClassMasterClassIdsAbsensi) return true
+              return allowedClassMasterClassIdsAbsensi.has(classId)
+            })
           })
         } else if (profile.daerah_id) {
-          // Teacher Daerah: filter by daerah_id
+          // Teacher Daerah: filter by daerah_id + optional class master restriction
           filteredMeetings = (meetings || []).filter((meeting: any) => {
             const meetingClassIds = meeting.class_ids?.length > 0
               ? meeting.class_ids
               : [meeting.class_id].filter(Boolean)
 
-            return meetingClassIds.some((classId: string) =>
-              classToDaerahMap.get(classId) === profile.daerah_id
-            )
+            return meetingClassIds.some((classId: string) => {
+              if (classToDaerahMap.get(classId) !== profile.daerah_id) return false
+              if (!allowedClassMasterClassIdsAbsensi) return true
+              return allowedClassMasterClassIdsAbsensi.has(classId)
+            })
           })
         }
 

@@ -5,6 +5,7 @@ import {
     calculateAttendanceStats,
     type AttendanceLog,
 } from '@/lib/utils/attendanceCalculation'
+import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import {
     fetchUserProfile,
     fetchMeetingsForDateRange,
@@ -50,6 +51,10 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             ? profile.teacher_classes.map((tc: any) => tc.classes?.id || tc.class_id).filter(Boolean)
             : []
 
+        // 3b. Get teacher class master restrictions
+        const allowedClassIdsSet = await getTeacherAllowedClassIds(user.id, profile)
+        let allowedClassMasterClassIds = allowedClassIdsSet || undefined
+
         // 4. Build date filter (Layer 2)
         const dateFilter = buildDateFilter(filters, new Date())
 
@@ -84,7 +89,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             meetingsForFilter || [],
             profile,
             teacherClassIds,
-            maps
+            maps,
+            allowedClassMasterClassIds
         )
 
         // 10. Fetch attendance logs in batches (Layer 1)

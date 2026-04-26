@@ -180,10 +180,8 @@ export default function DataFilter({
   const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || desaListCount > 1)
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || kelompokListCount > 1)
 
-  // If no filters to show, return null
-  if (!showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType) {
-    return null
-  }
+  // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
+  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -493,6 +491,9 @@ export default function DataFilter({
   }, [onClassViewModeChange])
 
   // Determine visible filters and their order
+  // (All hooks above must be called before this return)
+  if (shouldReturnNull) return null
+
   const visibleFilters = [
     showComparisonLevel && 'comparisonLevel', // NEW - comparison feature FIRST!
     showGender && 'gender', // NEW - add gender first

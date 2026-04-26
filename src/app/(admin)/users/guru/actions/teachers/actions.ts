@@ -141,12 +141,12 @@ export async function resetTeacherPassword(id: string, newPassword: string) {
  */
 export async function getAllTeachers() {
     try {
-        const supabase = await createClient()
+        const adminSupabase = await createAdminClient()
         const profile = await getCurrentUserProfile()
         const filter = profile ? getDataFilter(profile) : null
         const isAdminKelompok = profile?.role === 'admin' && !!profile?.kelompok_id
 
-        const { data, error } = await fetchTeachers(supabase, filter || undefined)
+        const { data, error } = await fetchTeachers(adminSupabase, filter || undefined)
         if (error) throw error
 
         let classesMap = new Map<string, any>()
@@ -156,24 +156,22 @@ export async function getAllTeachers() {
 
             if (allClassIds.size > 0) {
                 try {
-                    const adminSupabase = await createAdminClient()
-
                     const { data: classesData, error: classesError } = await fetchClassesByIdsFlat(
                         adminSupabase,
                         Array.from(allClassIds)
                     )
 
                     if (classesError) {
-                        // Fallback: regular client
+                        // Fallback: use adminSupabase anyway as it's already there
                         const { data: fallbackData, error: fallbackError } = await fetchClassesByIdsFlat(
-                            supabase,
+                            adminSupabase,
                             Array.from(allClassIds)
                         )
                         if (!fallbackError && fallbackData && fallbackData.length > 0) {
                             const kelompokIds = [...new Set(fallbackData.map((c: any) => c.kelompok_id).filter(Boolean))]
                             let kelompokMap = new Map<string, any>()
                             if (kelompokIds.length > 0) {
-                                const { data: kelompokData, error: kelError } = await fetchKelompokByIds(supabase, kelompokIds as string[])
+                                const { data: kelompokData, error: kelError } = await fetchKelompokByIds(adminSupabase, kelompokIds as string[])
                                 if (!kelError && kelompokData) kelompokMap = buildKelompokMap(kelompokData)
                             }
                             classesMap = buildClassesMap(fallbackData, kelompokMap)
@@ -191,16 +189,16 @@ export async function getAllTeachers() {
                         classesMap = buildClassesMap(classesData, kelompokMap)
                     }
                 } catch {
-                    // Fallback to regular client
+                    // Final fallback
                     const { data: fallbackData, error: fallbackError } = await fetchClassesByIdsFlat(
-                        supabase,
+                        adminSupabase,
                         Array.from(allClassIds)
                     )
                     if (!fallbackError && fallbackData && fallbackData.length > 0) {
                         const kelompokIds = [...new Set(fallbackData.map((c: any) => c.kelompok_id).filter(Boolean))]
                         let kelompokMap = new Map<string, any>()
                         if (kelompokIds.length > 0) {
-                            const { data: kelompokData, error: kelError } = await fetchKelompokByIds(supabase, kelompokIds as string[])
+                            const { data: kelompokData, error: kelError } = await fetchKelompokByIds(adminSupabase, kelompokIds as string[])
                             if (!kelError && kelompokData) kelompokMap = buildKelompokMap(kelompokData)
                         }
                         classesMap = buildClassesMap(fallbackData, kelompokMap)
@@ -213,7 +211,7 @@ export async function getAllTeachers() {
             const allClassIds = extractClassIds(data)
             if (allClassIds.size > 0) {
                 const { data: fetchedClasses, error: classesError } = await fetchClassesByIds(
-                    supabase,
+                    adminSupabase,
                     Array.from(allClassIds)
                 )
                 if (!classesError && fetchedClasses) {

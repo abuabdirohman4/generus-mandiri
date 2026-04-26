@@ -27,3 +27,9 @@ export {
 
 // ─── Settings Types ────────────────────────────────────────────────────────────
 export type { MeetingFormSettings } from './settings/actions'
+
+// ─── Class Master Restrictions (Guru Desa/Daerah) ──────────────────────────────
+export {
+    getTeacherClassMasters,
+    updateTeacherClassMasters,
+} from './teacher-class-masters/actions'

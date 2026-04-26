@@ -25,6 +25,10 @@ export async function fetchTeachers(supabase: SupabaseClient, filter?: {
       kelompok:kelompok_id(name),
       teacher_classes(
         class_id
+      ),
+      teacher_class_masters(
+        class_master_id,
+        class_masters(name)
       )
     `)
         .eq('role', 'teacher')

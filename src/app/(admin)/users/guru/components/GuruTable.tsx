@@ -13,6 +13,7 @@ interface Guru {
   daerah_name?: string;
   desa_name?: string;
   class_names?: string;
+  class_master_names?: string;
   created_at: string;
   permissions?: {
     can_archive_students?: boolean;
@@ -66,7 +67,8 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
     
     return [
       ...baseColumns,
-      { key: 'class_names', label: 'Kelas yang Diajar', width: '600px', widthMobile: '150px', sortable: true },
+      { key: 'class_names', label: 'Kelas yang Diajar', width: '300px', widthMobile: '150px', sortable: true },
+      { key: 'class_master_names', label: 'Tingkat Kelas', width: '200px', sortable: true },
       ...orgColumns,
       // { key: 'created_at', label: 'Dibuat', sortable: true },
       { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
@@ -117,11 +119,15 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
       );
     }
     
-    // Handle class names
-    if (column.key === 'class_names') {
+    // Handle class names and class master names
+    if (['class_names', 'class_master_names'].includes(column.key)) {
+      const value = item[column.key];
+      if (column.key === 'class_master_names' && !value) {
+        return <span className="text-gray-400 italic text-xs">Semua Tingkat</span>;
+      }
       return (
         <div className="text-sm text-gray-900 dark:text-white">
-          {item.class_names || '-'}
+          {value || '-'}
         </div>
       );
     }

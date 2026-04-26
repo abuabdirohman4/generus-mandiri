@@ -1,3 +1,6 @@
+- Bug untuk absensi reta
+- Dashboard desa, daerah munculkan desa daerah pas pilih kelas
+
 ## v1.10.2
 - [ ] Filter halaman organisasi tidak berjalan
 - [ ] Halaman Materi

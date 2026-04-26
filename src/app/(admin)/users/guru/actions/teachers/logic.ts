@@ -133,9 +133,19 @@ export function transformTeacher(teacher: any, classesMap: Map<string, any>): an
         return c.kelompokName ? `${c.className} (${c.kelompokName})` : c.className
     })
 
+    const teacherClassMasters = Array.isArray(teacher.teacher_class_masters)
+        ? teacher.teacher_class_masters
+        : teacher.teacher_class_masters ? [teacher.teacher_class_masters] : []
+
+    const classMasterNames = teacherClassMasters.map((tcm: any) => {
+        const master = Array.isArray(tcm.class_masters) ? tcm.class_masters[0] : tcm.class_masters
+        return master?.name
+    }).filter(Boolean)
+
     return {
         ...teacher,
         class_names: classNamesWithKelompok.length > 0 ? classNamesWithKelompok.join(', ') : '-',
+        class_master_names: classMasterNames.length > 0 ? classMasterNames.join(', ') : '',
         daerah_name: Array.isArray(teacher.daerah) ? teacher.daerah[0]?.name : teacher.daerah?.name || '',
         desa_name: Array.isArray(teacher.desa) ? teacher.desa[0]?.name : teacher.desa?.name || '',
         kelompok_name: Array.isArray(teacher.kelompok) ? teacher.kelompok[0]?.name : teacher.kelompok?.name || '',

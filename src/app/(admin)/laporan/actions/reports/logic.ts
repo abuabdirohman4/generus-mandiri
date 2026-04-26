@@ -271,7 +271,8 @@ export function filterMeetingsByRole(
         classKelompokMap: Map<string, string>
         classToDesaMap: Map<string, string>
         classToDaerahMap: Map<string, string>
-    }
+    },
+    allowedClassMasterClassIds?: Set<string>
 ): string[] {
     if (profile.role === 'teacher') {
         const teacherMeetings = (meetings || []).filter((meeting: any) => {
@@ -284,9 +285,17 @@ export function filterMeetingsByRole(
             if (profile.kelompok_id) {
                 return false
             } else if (profile.desa_id) {
-                return meetingClassIds.some((classId: string) => maps.classToDesaMap.get(classId) === profile.desa_id)
+                return meetingClassIds.some((classId: string) => {
+                    if (maps.classToDesaMap.get(classId) !== profile.desa_id) return false
+                    if (!allowedClassMasterClassIds || allowedClassMasterClassIds.size === 0) return true
+                    return allowedClassMasterClassIds.has(classId)
+                })
             } else if (profile.daerah_id) {
-                return meetingClassIds.some((classId: string) => maps.classToDaerahMap.get(classId) === profile.daerah_id)
+                return meetingClassIds.some((classId: string) => {
+                    if (maps.classToDaerahMap.get(classId) !== profile.daerah_id) return false
+                    if (!allowedClassMasterClassIds || allowedClassMasterClassIds.size === 0) return true
+                    return allowedClassMasterClassIds.has(classId)
+                })
             }
 
             return false

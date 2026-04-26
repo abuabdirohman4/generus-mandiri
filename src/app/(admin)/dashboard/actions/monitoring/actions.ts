@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
-import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
+import { getCurrentUserProfile, getDataFilter, getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import { buildFilterConditions } from '../../dashboardHelpers'
 import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
 import type { AttendanceLog, Meeting } from '@/lib/utils/attendanceCalculation'
@@ -45,8 +45,21 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         const filterConditions = await buildFilterConditions(supabase, filters, rlsFilter)
         const { classIds, studentIds, hasFilters } = filterConditions
 
+        // Apply class master restriction for Guru Desa/Daerah
+        let effectiveClassIds = classIds
+        if (profile?.role === 'teacher' && (profile.desa_id || profile.daerah_id) && !profile.kelompok_id) {
+            const allowedClassIdsSet = await getTeacherAllowedClassIds(profile.id, profile)
+            if (allowedClassIdsSet) {
+                if (hasFilters) {
+                    effectiveClassIds = classIds.filter(id => allowedClassIdsSet.has(id))
+                } else {
+                    effectiveClassIds = Array.from(allowedClassIdsSet)
+                }
+            }
+        }
+
         // Fetch classes with org hierarchy
-        const classes = await fetchClassesWithOrg(supabase, hasFilters ? classIds : undefined)
+        const classes = await fetchClassesWithOrg(supabase, (hasFilters || (profile?.role === 'teacher' && effectiveClassIds.length > 0)) ? effectiveClassIds : undefined)
         if (!classes || classes.length === 0) return []
 
         const allClassIds = classes.map((c: any) => c.id)

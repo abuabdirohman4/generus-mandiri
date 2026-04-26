@@ -20,16 +20,20 @@ export async function fetchClassMasterMappings(
     const classMappings: Map<string, any[]> = new Map()
     if (classIds.length === 0) return classMappings
 
-    // Step 1: get mappings
+    // Fetch ALL mappings (total ~657 rows, well under PostgREST 1000 limit),
+    // then filter in-memory. This avoids Headers Overflow when classIds is large (600+).
     const { data: mappings } = await supabase
         .from('class_master_mappings')
         .select('class_id, class_master_id')
-        .in('class_id', classIds)
 
     if (!mappings || mappings.length === 0) return classMappings
 
-    // Step 2: get class masters with sort_order
-    const masterIds = mappings.map((m: any) => m.class_master_id)
+    const classIdSet = new Set(classIds)
+    const relevantMappings = mappings.filter((m: any) => classIdSet.has(m.class_id))
+    if (relevantMappings.length === 0) return classMappings
+
+    // Step 2: get class masters with sort_order (max 27 unique masters — safe for .in())
+    const masterIds = [...new Set(relevantMappings.map((m: any) => m.class_master_id))]
     const { data: masters } = await supabase
         .from('class_masters')
         .select('id, sort_order')
@@ -37,9 +41,11 @@ export async function fetchClassMasterMappings(
 
     if (!masters) return classMappings
 
+    const mastersMap = new Map(masters.map((m: any) => [m.id, m]))
+
     // Step 3: group by class_id
-    mappings.forEach((mapping: any) => {
-        const master = masters.find((m: any) => m.id === mapping.class_master_id)
+    relevantMappings.forEach((mapping: any) => {
+        const master = mastersMap.get(mapping.class_master_id)
         if (!master) return
         if (!classMappings.has(mapping.class_id)) {
             classMappings.set(mapping.class_id, [])
@@ -71,31 +77,48 @@ export async function fetchClassesHierarchical(
         daerah_id?: string | null
     }
 ) {
-    let query = supabase
-        .from('classes')
-        .select(`
-      id,
-      name,
-      kelompok_id,
-      kelompok:kelompok_id(
-        id,
-        name,
-        desa_id,
-        desa:desa_id(
-          id,
-          name,
-          daerah_id
-        )
-      )
-    `)
-
+    // Guru Kelompok: direct filter on kelompok_id column
     if (filter.kelompok_id) {
-        query = query.eq('kelompok_id', filter.kelompok_id)
-    } else if (filter.desa_id) {
-        query = query.eq('kelompok.desa_id', filter.desa_id)
-    } else if (filter.daerah_id) {
-        query = query.eq('kelompok.desa.daerah_id', filter.daerah_id)
+        return await supabase
+            .from('classes')
+            .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
+            .eq('kelompok_id', filter.kelompok_id)
     }
 
-    return await query
+    // Guru Desa / Guru Daerah: use two-query pattern.
+    // PostgREST nested join filters (e.g. kelompok.desa_id) silently fail — NEVER use them.
+    // Step 1: resolve which kelompok_ids are in scope
+    let kelompokIds: string[] = []
+
+    if (filter.desa_id) {
+        const { data: kelompoks } = await supabase
+            .from('kelompok')
+            .select('id')
+            .eq('desa_id', filter.desa_id)
+        kelompokIds = (kelompoks || []).map((k: any) => k.id)
+    } else if (filter.daerah_id) {
+        // Step 1a: get desa IDs for this daerah
+        const { data: desas } = await supabase
+            .from('desa')
+            .select('id')
+            .eq('daerah_id', filter.daerah_id)
+        const desaIds = (desas || []).map((d: any) => d.id)
+
+        if (desaIds.length === 0) return { data: [], error: null }
+
+        // Step 1b: get kelompok IDs for those desas
+        const { data: kelompoks } = await supabase
+            .from('kelompok')
+            .select('id')
+            .in('desa_id', desaIds)
+        kelompokIds = (kelompoks || []).map((k: any) => k.id)
+    }
+
+    if (kelompokIds.length === 0) return { data: [], error: null }
+
+    // Step 2: fetch classes in those kelompok
+    return await supabase
+        .from('classes')
+        .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
+        .in('kelompok_id', kelompokIds)
 }

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
@@ -31,15 +31,43 @@ function sortClassesByMasterOrder(classes: any[]): any[] {
 // Get all classes by kelompok
 export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
   try {
-    const supabase = await createClient()
+    const adminClient = await createAdminClient()
     const profile = await getCurrentUserProfile()
-    
-    let query = supabase
+
+    // Two-query pattern for desa/daerah scope — PostgREST nested join filters silently fail
+    let kelompokIds: string[] | null = null
+
+    if (profile?.kelompok_id) {
+      kelompokIds = [profile.kelompok_id]
+    } else if (profile?.desa_id) {
+      const { data: kelompoks } = await adminClient
+        .from('kelompok')
+        .select('id')
+        .eq('desa_id', profile.desa_id)
+      kelompokIds = (kelompoks || []).map((k: any) => k.id)
+    } else if (profile?.daerah_id) {
+      const { data: desas } = await adminClient
+        .from('desa')
+        .select('id')
+        .eq('daerah_id', profile.daerah_id)
+      const desaIds = (desas || []).map((d: any) => d.id)
+      if (desaIds.length > 0) {
+        const { data: kelompoks } = await adminClient
+          .from('kelompok')
+          .select('id')
+          .in('desa_id', desaIds)
+        kelompokIds = (kelompoks || []).map((k: any) => k.id)
+      } else {
+        kelompokIds = []
+      }
+    }
+
+    let classQuery = adminClient
       .from('classes')
       .select(`
-        *,
+        id, name, kelompok_id,
         kelompok:kelompok_id (
-          id, 
+          id,
           name,
           desa_id,
           desa:desa_id (
@@ -51,80 +79,48 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
         )
       `)
 
-    // Apply filters based on user role
-    if (profile?.kelompok_id) {
-      query = query.eq('kelompok_id', profile.kelompok_id)
-    } else if (profile?.desa_id) {
-      query = query.eq('kelompok.desa_id', profile.desa_id)
-    } else if (profile?.daerah_id) {
-      query = query.eq('kelompok.desa.daerah_id', profile.daerah_id)
+    if (kelompokIds !== null) {
+      if (kelompokIds.length === 0) return []
+      classQuery = classQuery.in('kelompok_id', kelompokIds)
     }
 
-    const { data, error } = await query
-
+    const { data, error } = await classQuery
     if (error) throw error
-    
-    // Get class master mappings separately
-    const classIds = (data || []).map(item => item.id)
+
+    // Fetch ALL mappings (657 rows total, well under PostgREST 1000 limit),
+    // then filter in-memory by the class IDs we already have.
+    // This avoids the Headers Overflow from .in('class_id', [640 IDs]).
     let mappingsData: any[] = []
-    
-    if (classIds.length > 0) {
-      // First get mappings
-      const { data: mappings, error: mappingsError } = await supabase
+
+    if ((data || []).length > 0) {
+      const { data: allMappings, error: mappingsError } = await adminClient
         .from('class_master_mappings')
-        .select('class_id, class_master_id')
-        .in('class_id', classIds)
-      
+        .select('class_id, class_master_id, class_masters:class_master_id(id, name, description, sort_order)')
+
       if (mappingsError) {
         console.error('Error fetching mappings:', mappingsError)
-      } else if (mappings && mappings.length > 0) {
-        // Then get class masters
-        const masterIds = mappings.map(m => m.class_master_id)
-        
-        const { data: masters, error: mastersError } = await supabase
-          .from('class_masters')
-          .select(`
-            id,
-            name,
-            description,
-            sort_order,
-            category:category_id (
-              id,
-              code,
-              name
-            )
-          `)
-          .in('id', masterIds)
-        
-        if (mastersError) {
-          console.error('Error fetching masters:', mastersError)
-        } else {
-          // Combine the data
-          mappingsData = mappings.map(mapping => {
-            const master = masters?.find(m => m.id === mapping.class_master_id)
-            return {
-              class_id: mapping.class_id,
-              class_master: master
-            }
-          }).filter(mapping => mapping.class_master) // Only include valid mappings
-        }
+      } else {
+        const classIdSet = new Set((data || []).map((c: any) => c.id))
+        mappingsData = (allMappings || [])
+          .filter((m: any) => classIdSet.has(m.class_id))
+          .map((m: any) => {
+            const cm = Array.isArray(m.class_masters) ? m.class_masters[0] : m.class_masters
+            return { class_id: m.class_id, class_master_id: m.class_master_id, class_master: cm }
+          })
+          .filter((m: any) => m.class_master)
       }
     }
-    
-    // Group mappings by class_id
-    const mappingsByClass = mappingsData.reduce((acc, mapping) => {
-      if (!acc[mapping.class_id]) {
-        acc[mapping.class_id] = []
-      }
+
+    const mappingsByClass = mappingsData.reduce((acc: any, mapping: any) => {
+      if (!acc[mapping.class_id]) acc[mapping.class_id] = []
       acc[mapping.class_id].push(mapping)
       return acc
     }, {} as Record<string, any[]>)
-    
-    // Transform to ensure single objects instead of arrays
-    const transformed = (data || []).map(item => ({
+
+    const transformed = (data || []).map((item: any) => ({
       ...item,
       kelompok: Array.isArray(item.kelompok) ? item.kelompok[0] : item.kelompok,
-      class_master_mappings: mappingsByClass[item.id] || []
+      class_master_mappings: mappingsByClass[item.id] || [],
     }))
 
     return sortClassesByMasterOrder(transformed)

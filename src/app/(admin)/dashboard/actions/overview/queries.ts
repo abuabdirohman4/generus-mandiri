@@ -12,7 +12,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  */
 export async function countStudents(
     supabase: SupabaseClient,
-    studentIds?: string[]
+    studentIds?: string[],
+    classIds?: string[]
 ): Promise<number> {
     if (studentIds !== undefined && studentIds.length === 0) return 0
 
@@ -34,6 +35,22 @@ export async function countStudents(
             totalCount += count || 0
         }
         return totalCount
+    }
+
+    if (classIds && classIds.length > 0) {
+        // Count students in specific classes (junction table check)
+        const { data, error } = await supabase
+            .from('student_classes')
+            .select('student_id')
+            .in('class_id', classIds)
+
+        if (error) {
+            console.error('[Student count by class error]', error)
+            throw error
+        }
+        
+        const uniqueIds = new Set((data || []).map(sc => sc.student_id))
+        return uniqueIds.size
     }
 
     // No filter - count all
@@ -74,36 +91,47 @@ export async function countClasses(
 }
 
 /**
- * Fetch all meetings with class and teacher info, optionally filtered by class IDs
+ * Fetch all meetings with class and teacher info, optionally filtered by class IDs.
+ * Uses chunking (100 per request) to avoid HTTP header overflow for large class arrays.
  */
 export async function fetchMeetingsForOverview(
     supabase: SupabaseClient,
     classIds?: string[]
 ) {
-    let query = supabase
-        .from('meetings')
-        .select(`
+    const SELECT = `
       id,
       title,
       date,
       class_id,
       meeting_type_code,
-      classes:class_id(
-        id,
-        name,
-        kelompok_id
-      ),
-      profiles:teacher_id(
-        full_name
-      )
-    `)
-        .order('date', { ascending: false })
+      classes:class_id(id, name, kelompok_id),
+      profiles:teacher_id(full_name)
+    `
 
-    if (classIds && classIds.length > 0) {
-        query = query.in('class_id', classIds)
+    if (!classIds || classIds.length === 0) {
+        return await supabase
+            .from('meetings')
+            .select(SELECT)
+            .order('date', { ascending: false })
     }
 
-    return await query
+    // Chunk to avoid HTTP header overflow (16KB limit)
+    const CHUNK_SIZE = 100
+    const allData: any[] = []
+
+    for (let i = 0; i < classIds.length; i += CHUNK_SIZE) {
+        const chunk = classIds.slice(i, i + CHUNK_SIZE)
+        const { data, error } = await supabase
+            .from('meetings')
+            .select(SELECT)
+            .in('class_id', chunk)
+            .order('date', { ascending: false })
+
+        if (error) return { data: null, error }
+        if (data) allData.push(...data)
+    }
+
+    return { data: allData, error: null }
 }
 
 /**
