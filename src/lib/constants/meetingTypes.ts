@@ -97,9 +97,11 @@ export function getAvailableMeetingTypesByRole(userProfile: EnrichedUserProfile 
       if (userProfile.desa_id && !userProfile.kelompok_id) {
         return { SAMBUNG_DESA: MEETING_TYPES.SAMBUNG_DESA }
       }
-      if (userProfile.kelompok_id) {
-        return { SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK }
-      }
+    }
+
+    // Teacher level kelompok: ONLY Sambung Kelompok (regardless of class type)
+    if (userProfile.kelompok_id) {
+      return { SAMBUNG_KELOMPOK: MEETING_TYPES.SAMBUNG_KELOMPOK }
     }
 
     const hasExcludePembinaanClass = userProfile.classes?.some(cls => {
