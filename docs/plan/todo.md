@@ -1,265 +1,61 @@
-- Bug untuk absensi reta
-- Dashboard desa, daerah munculkan desa daerah pas pilih kelas
+## Backlog
+- Auth
+    - [ ] Kalau login gagal usernmae/password, username jangan hilang
 
-## v1.10.2
-- [ ] Filter halaman organisasi tidak berjalan
-- [ ] Halaman Materi
+- Dashboard
+    - [ ] Dashboard desa, daerah munculkan desa daerah pas pilih kelas
+
+- Meeting
+    - [ ] Add Pengajian Daerah
+        - Nama
+        - Tipe (Daerah)
+        - Peserta
+            - Kelas (Remaja, Orang Tua dll)
+            - Desa (Soreang, Baleendah dll)
+    - Pengaturan Opsi data yang bisa di input
+        - Jam Pengajian
+        - Pemateri
+        - Materi
+    - Kalender kegiatan atau agenda kegiatan
+
+- Siswa
+    - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
+    - [ ] Tambah NIS untuk Warlob
+    - [ ] Add Bulk with CSV, Excel, Text
+
+- Laporan
+    - [ ] Bug untuk absensi reta
+
+- Materi
     - [ ] Handle materi kelas sebelumnya
-- [ ] Halaman Raport
-- [ ] Error saat delete tipe materi
-- [ ] Dropdown action materi tidak bisa di klik selain desktop
-- [x] Label ketika assign siswa di desa belum muncul nama kelompok
-- [ ] Fitur archive siswa
-- [ ] Fitur pindah siswa
-- [ ] Tambah NIS untuk Warlob
-- Rapot
+    - [ ] Dropdown action materi tidak bisa di klik selain desktop
+    - [ ] Error saat delete tipe materi
+
+- Raport
     - [ ] Flexible struktur materi
     - [ ] Download Rapot per individu
-- "Absensi" -> "Presensi"
 
-## v1.10.1
-- [x] Tiap reset selalu kena "Terjadi kesalahan saat melakukan reset. Silakan coba lagi."
-- [x] Kelas 2 ada 11, tapi tertulis 12
-- [x] Siswa baru tidak masuk ke absensi, walaupun di snapshot ada
-- [x] Fix laporan
-    [x] Untuk kelas pra nikah, remaja, pra remaja untuk per kelasnya belum bener
-    [-] Untuk yang punya lebih dari satu kelompok, tampilkan kelompok
-    [-] Untuk yang punya lebih dari satu kelas, tampilkan kelas
-    [x] Saat pilih satu kelas dari satu kelompok, malah menampilkan kelompok lain atau kelas lain = persentase salah
-- [x] Fix Absensi persentase & meeting detail
-- [x] Clear cachae when login/logout for dashboard
-- [x] Fix styling academic years in mobile 
+- Guru, Admin, Organisasi
+    - [ ] Add Bulk Insert Guru, Admin, Organisasi
 
-## v1.10.0
-- [x] Dashboard Admin
-    - [x] Untuk Per hari dibuat flexible hari apa
-    - [x] Untuk Minggu juga bisa flexible
-    - [x] Untuk Bulan bisa diatur bulan apa
-    - [x] Persentase global dibuat dinamis
-- [x] Monitoring Materi
-    - [x] Collapsed Filter
-    - [x] Skeleton Loading
-    - [x] Pilihan "Pilih Semua Kelas"
-    - [-] Default langsung munculin semua kelas
-- [x] Menu bisa di klik kanan
-- [x] Halaman Materi
-    - [x] Bug di bulk action
-    - [x] Master Data (Show all materi)
-    - [x] Per Kelas
-        Per Materi (Category for info)
-        Per Sub Materi
-    - [x] Mobile
-        - [x] Saat pilih kategori sidebar langsung tertutup
-    - [x] CRUD Kategori
-    - [x] CRUD Materi Type
-    - [x] CRUD Materi
-        - [x] Di Klik langsung munculin materi
-        - [x] Guru hanya bisa lihat, admin bisa CRUD
-        - [x] Bisa nentuin di ajar di kelas mana, semester berapa
-    - Per Hari
-        Per Materi
+- Refactoring
+    - [ ] Buat satu file khusus untuk berbagai macam action
+        - [ ] Get Classes
+        - [ ] Get Teachers
+        - [ ] Get Students
+        - [ ] Get Meetings
+        - [ ] Get Attendance
+        - [ ] Get Attendance Log
+        - [ ] Get Attendance Log Detail
 
-## v1.9.2
-- [x] Add Tipe Pertemuan ASAD
-- [x] Independent Filter
+- Sidebar
+    - [ ] Buat component sidebar content
+        - [ ] Implement untuk Siswa Detail
+        - [ ] Implement untuk Siswa Biodata
+        - [ ] Implement untuk Monitoring
+        - [ ] Implement untuk Rapot
 
-## v1.9.1
-- [x] Fix attendance log in absensi & laporan 
-- [x] Button di meeting detail dibuat floating
-
-## v1.9.0
-- [x] Kelas Pengajar
-- [x] Add Jenis Kelamin (Untuk Pengajian Ibu2 / Bapak2, L/P)
-- [x] Add Template name
-- [x] Add Pengajian Desa
-    [x] Nama
-    [x] Tipe (Desa)
-    [x] Peserta
-        [x] Kelas (Remaja, Orang Tua dll)
-        [x] Kelompok (Warlob, Junti dll)
-    [x] Meeting Detail
-        [x] Filter Kelompok
-        [x] Filter Kelas
-- [x] Tipe Pertemuan di Laporan
-
-## v1.8.1
-- [x] Error Delete siswa
-- [x] Guru kelas warlob 1, create absensin warlob 2, error
-- [x] Tanggal di kalender salah
-
-## v1.8.0
-- [x] Add Filter Gender on Laporan
-- [x] Handle multiple class with different kelompok
-    [x] Halaman Guru
-    [x] Halaman Siswa
-        [ ] Di table tampilkan kelompok
-    [x] Halaman Absensi
-        [x] Filter di detail absensi belum muncul 2 kelompok
-        [x] Tampilkan nama kelas (kelompok)
-        [x] Untuk yang punya multiple kelas kayak mudamudi juga harusnya
-        [x] Di admin warlob 2 tidak muncul
-    [x] Halaman Laporan
-        [x] Belum jalan utk warlob 2
-- [x] Confirm modal pakai [tipe pertemuan/title]
-- [x] Handle student to have multiple class
-    [x] Halaman Siswa
-        [x] Assign student by admin
-        [x] Ada filter by kelas
-        [x] Muncul di masing2 kelas
-        [x] Fitur Edit kelas
-    [ ] Halaman Absensi
-    [x] Halaman Laporan
-
-Components
-- [x] Change All <button> to <Button> & fix loading button
-
-## v1.7.1
-- [x] sambung dan kelas kasih br
-- [x] kelas di absensi error
-- [x] ada filter jenis kelamin di siswa
-- [x] di halaman siswa, headernya utk kelas gabungan, antara dinamis kelas yg dipilih atau "Siswa" pas pilih semua kelas
-- [x] di home kalau PJ nya gabungan kelas antara gk ditampilkan atau tampilkan semua (tapi kalau panjang sebut aja PJ berapa kelas)
-- [x] di mobile L gk keliatan pas batch import
-- [x] import step 2 & 3, modal header ketutup
-- [z] import step 3, semua katefori nya caberawit
-- [x] tabel guru, kolom kelas nya di uat text wrap juga
-- [x] kasih loading di multifilter checbox
-
-## v1.7.0
-Meetings
-- [x] Add Tipe Pertemuan
-- [x] Create "Pilih Kelas" hanya muncul untuk kleas > 1
-
-Siswa
-- [x] Check use case for 'categories' in students table
-
-Detail Siswa
-- [x] Overlay Loading ketika masuk halaman
-
-## v1.6.3
-- [x] Fix bug create kelas admin desa, daerah & improve UI
-
-## v1.6.2
-- [x] Bug report for 1 teacher
-- [x] Kelas tidak muncul di detail siswa
-
-## v1.6.1
-
-- [x] Hide "Reset FIlter"
-- [x] No Data in first visit in laporan page
-- [x] Improve MultiSelectFilter interaction for non-searchable mode
-- [x] Replaced existing action icon with ReportIcon in both DataTable and StudentsTable for consistency and better representation.
-
-## v1.6.0
-Siswa
-- [x] Detail Kehadiran Siswa seperti Better Habit
-- [x] Bisa masuk lewat laporan
-- [x] Tambah 1 action untuk masuk ke detail ini
-
-MultiFIlter
-- [x] Disable seach feature
-
-Laporan
-- [x] Bug sorting tingkat kehadiran
-
-## v1.5.0
-
-Filter
-- [x] Multi Select Filter
-
-Meetings
-- [x] Add Pertemuan Gabungan
-- [x] Add Data Filter
-- [x] Disable edit/delete for non creator
-
-MeetingId
-- [x] Sort By Name/Jenis Kelamain & DataFilter
-- [x] Auto Update attendance log saat refresh
-- [x] Persentase terpisah
-
-## v1.4.2
-- [x] Di Iphone PWA tidak jalan
-- [x] Di Laporan Tren Kehadiran & Detail Siswa salah
-- [x] Buat guru & admin tidak bisa langsung login
-
-Laporan
-- [x] Add DataFilter in Laporan
-
-## v1.4.1
-- [x] Fix
-- [x] Move button "Tambah" di kelas
-
-## v1.4.0
-Kelas
-- [x] Buat table kelas & kelompok_kelas
-- [x] Dibuat flexibel, satu kelas isinya terdiri dari type apa
-- [x] Sambungkan dengan kelompok & guru
-- [x] Implementasi SWR + Zustand
-- [x] Perbaiki filter kelas yang duplicate
-
-Guru
-- [x] Assign satu guru ke beberapa kelas
-
-## v1.3.1
-Siswa
-- [x] Pindahkan ke dalam folder user
-
-Absensi
-- [x] Fix organization hierachy in meeting list
-
-Sign In
-- [x] Fix message "Sesi anda telah berakhir"
-- [x] Username tidak ditemukan
-
-## Archive
-- Add Bulk Insert Guru, Admin, Organisasi
-- Add Bulk with CSV, Excel, Text
-- Continue Dashboard Feature
-- Kalender kegiatan atau agenda kegiatan
-- Create student_archive, profiles_archive
-
-Siswa
-- Tambahkan tab di detail siswa
-    - Kehadiran
-    - Profile Lengkap
-
-Meetings
-- Pengaturan Opsi data yang bisa di input
-    - Jam Pengajian
-    - Pemateri
-    - Materi
-
-
-## Backlog
-- [ ] Unit Testing
-- [ ] Ubah Siswa -> Jamaah/Generus
-- [ ] Ubah Guru -> Penanggung Jawab
-- [ ] Kalau login gagal usernmae/password, username jangan hilang
-
-Siswa
-- [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
-
-Meeting
-- [ ] Add Pengajian Daerah
-    - Nama
-    - Tipe (Daerah)
-    - Peserta
-        - Kelas (Remaja, Orang Tua dll)
-        - Desa (Soreang, Baleendah dll)
-
-Refactoring
-- [ ] Buat satu file khusus untuk berbagai macam action
-    - [ ] Get Classes
-    - [ ] Get Teachers
-    - [ ] Get Students
-    - [ ] Get Meetings
-    - [ ] Get Attendance
-    - [ ] Get Attendance Log
-    - [ ] Get Attendance Log Detail
-
-Sidebar
-- [ ] Buat component sidebar content
-    - [ ] Implement untuk Siswa Detail
-    - [ ] Implement untuk Siswa Biodata
-    - [ ] Implement untuk Monitoring
-    - [ ] Implement untuk Rapot
+- Wording
+    - [ ] Ubah Siswa -> Jamaah/Generus
+    - [ ] Ubah Guru -> Penanggung Jawab
+    - [ ] "Absensi" -> "Presensi"
