@@ -112,9 +112,13 @@ export async function updateTeacherKelompok(supabase: SupabaseClient, teacherId:
 
 /**
  * Fetch classes for all given class IDs (non-Admin Kelompok path)
+ * Fetches ALL classes and filters in-memory to avoid HTTP Headers Overflow
+ * when classIds is large (600+ IDs → URL > 16KB → UND_ERR_HEADERS_OVERFLOW)
  */
 export async function fetchClassesByIds(supabase: SupabaseClient, classIds: string[]) {
-    return await supabase
+    if (classIds.length === 0) return { data: [], error: null }
+
+    const { data, error } = await supabase
         .from('classes')
         .select(`
       id,
@@ -122,7 +126,11 @@ export async function fetchClassesByIds(supabase: SupabaseClient, classIds: stri
       kelompok_id,
       kelompok:kelompok_id(id, name)
     `)
-        .in('id', classIds)
+
+    if (error || !data) return { data, error }
+
+    const classIdSet = new Set(classIds)
+    return { data: data.filter((c: any) => classIdSet.has(c.id)), error: null }
 }
 
 /**

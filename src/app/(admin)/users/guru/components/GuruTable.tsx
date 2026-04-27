@@ -67,8 +67,7 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
     
     return [
       ...baseColumns,
-      { key: 'class_names', label: 'Kelas yang Diajar', width: '300px', widthMobile: '150px', sortable: true },
-      { key: 'class_master_names', label: 'Tingkat Kelas', width: '200px', sortable: true },
+      { key: 'class_info', label: 'Kelas / Tingkat', width: '300px', widthMobile: '150px', sortable: false },
       ...orgColumns,
       // { key: 'created_at', label: 'Dibuat', sortable: true },
       { key: 'actions', label: 'Actions', align: 'center' as const, sortable: false }
@@ -119,17 +118,31 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
       );
     }
     
-    // Handle class names and class master names
-    if (['class_names', 'class_master_names'].includes(column.key)) {
-      const value = item[column.key];
-      if (column.key === 'class_master_names' && !value) {
-        return <span className="text-gray-400 italic text-xs">Semua Tingkat</span>;
+    // Handle combined class info column
+    if (column.key === 'class_info') {
+      const classNames = item.class_names;
+      const classMasterNames = item.class_master_names;
+
+      // Guru Kelompok: has assigned classes (not empty/dash)
+      if (classNames && classNames !== '-') {
+        return (
+          <div className="text-sm text-gray-900 dark:text-white">
+            {classNames}
+          </div>
+        );
       }
-      return (
-        <div className="text-sm text-gray-900 dark:text-white">
-          {value || '-'}
-        </div>
-      );
+
+      // Guru Desa/Daerah: show class master restriction
+      if (classMasterNames) {
+        return (
+          <div className="text-sm text-gray-900 dark:text-white">
+            {classMasterNames}
+          </div>
+        );
+      }
+
+      // No assignment at all
+      return <span className="text-gray-400 italic text-xs">Semua Kelas</span>;
     }
     
     // Handle organizational columns

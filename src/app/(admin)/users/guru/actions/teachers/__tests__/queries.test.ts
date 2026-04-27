@@ -175,11 +175,27 @@ describe('updateTeacherKelompok', () => {
 // ─── fetchClassesByIds ────────────────────────────────────────────────────────
 
 describe('fetchClassesByIds', () => {
-    it('queries classes by id list with kelompok join', async () => {
-        const supa = makeSupa({ data: [], error: null })
-        await fetchClassesByIds(supa, ['c1', 'c2'])
+    it('fetches ALL classes (no .in filter) and filters in-memory to avoid Headers Overflow', async () => {
+        const allClasses = [
+            { id: 'c1', name: 'Kelas 1', kelompok_id: 'k1', kelompok: { id: 'k1', name: 'Kelompok A' } },
+            { id: 'c2', name: 'Kelas 2', kelompok_id: 'k1', kelompok: { id: 'k1', name: 'Kelompok A' } },
+            { id: 'c99', name: 'Kelas Lain', kelompok_id: 'k2', kelompok: null },
+        ]
+        const supa = makeSupa({ data: allClasses, error: null })
+        const result = await fetchClassesByIds(supa, ['c1', 'c2'])
         expect(supa.from).toHaveBeenCalledWith('classes')
-        expect(supa._chain.in).toHaveBeenCalledWith('id', ['c1', 'c2'])
+        // No .in() filter — fetch all, filter in-memory
+        expect(supa._chain.in).not.toHaveBeenCalled()
+        // Only requested class IDs are returned
+        expect(result.data).toHaveLength(2)
+        expect(result.data?.map((c: any) => c.id)).toEqual(['c1', 'c2'])
+    })
+
+    it('returns empty array for empty classIds without querying DB', async () => {
+        const supa = makeSupa({ data: [], error: null })
+        const result = await fetchClassesByIds(supa, [])
+        expect(supa.from).not.toHaveBeenCalled()
+        expect(result.data).toEqual([])
     })
 })
 
