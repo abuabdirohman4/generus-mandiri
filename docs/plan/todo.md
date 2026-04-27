@@ -19,6 +19,7 @@
     - Kalender kegiatan atau agenda kegiatan
 
 - Siswa
+    - [ ] Admin belum selalu mendapat archive & transfer
     - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
     - [ ] Tambah NIS untuk Warlob
     - [ ] Add Bulk with CSV, Excel, Text
