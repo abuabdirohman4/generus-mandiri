@@ -74,8 +74,8 @@ export function getMonthName(month: Month): string {
 
 export function getSemesterMonths(semester: Semester): Month[] {
   if (semester === 1) {
-    return [1, 2, 3, 4, 5, 6]; // Januari - Juni
-  } else {
     return [7, 8, 9, 10, 11, 12]; // Juli - Desember
+  } else {
+    return [1, 2, 3, 4, 5, 6]; // Januari - Juni
   }
 }

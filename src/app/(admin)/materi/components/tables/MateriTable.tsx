@@ -15,9 +15,10 @@ interface MateriTableProps {
     onToggleAll?: (selected: boolean) => void;
     showTargetBadge?: boolean;
     selectedMonth?: number | null;
+    monthsByItemId?: Record<string, number[]>;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {} }: MateriTableProps) {
     const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
     const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
 
@@ -47,9 +48,16 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             label: 'NAMA MATERI',
             sortable: true,
             align: 'left' as const,
-            width: '30rem',
+            width: '25rem',
             widthMobile: onEdit && onDelete ? '11rem' : '16rem',
             leftMargin: onEdit && onDelete ? 'pl-1' : 'pl-4'
+        },
+        {
+            key: 'months',
+            label: 'BULAN',
+            sortable: false,
+            align: 'left' as const,
+            width: '180px',
         },
         ...(onEdit || onDelete
             ? [
@@ -101,6 +109,41 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                                 Target {getMonthName(selectedMonth as Month)}
                             </span>
                         </div>
+                    )}
+                </div>
+            );
+        }
+        if (column.key === 'months') {
+            const months = monthsByItemId[item.id] || [];
+            if (months.length === 0) {
+                return <span className="text-gray-400 dark:text-gray-600">—</span>;
+            }
+
+            const getShortMonth = (m: number) => {
+                const names: Record<number, string> = {
+                    1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
+                    7: 'Jul', 8: 'Ags', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
+                };
+                return names[m] || m.toString();
+            };
+
+            const displayedMonths = months.slice(0, 3);
+            const remainingCount = months.length - 3;
+
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {displayedMonths.map(m => (
+                        <span 
+                            key={m} 
+                            className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full border border-blue-100 dark:border-blue-800/30"
+                        >
+                            {getShortMonth(m)}
+                        </span>
+                    ))}
+                    {remainingCount > 0 && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full border border-gray-200 dark:border-gray-700">
+                            +{remainingCount}
+                        </span>
                     )}
                 </div>
             );

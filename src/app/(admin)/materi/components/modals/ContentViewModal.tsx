@@ -8,9 +8,10 @@ interface ContentViewModalProps {
     isOpen: boolean;
     onClose: () => void;
     item: MaterialItem | null;
+    onEdit?: (item: MaterialItem) => void;
 }
 
-export default function ContentViewModal({ isOpen, onClose, item }: ContentViewModalProps) {
+export default function ContentViewModal({ isOpen, onClose, item, onEdit }: ContentViewModalProps) {
     if (!item) return null;
 
     return (
@@ -39,7 +40,12 @@ export default function ContentViewModal({ isOpen, onClose, item }: ContentViewM
                     )}
                 </div>
 
-                <div className="flex justify-end pt-4 border-t dark:border-gray-700">
+                <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                    {onEdit && (
+                        <Button onClick={() => onEdit(item)} variant="outline">
+                            Edit
+                        </Button>
+                    )}
                     <Button onClick={onClose} variant="primary">
                         Tutup
                     </Button>

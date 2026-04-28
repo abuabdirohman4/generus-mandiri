@@ -12,7 +12,8 @@ import {
   deleteMonthlyTargetsByMonth,
   fetchMonthlyTargetItemIds,
   fetchMonthlyTargetsByItemId,
-  deleteMonthlyTargetsByItem
+  deleteMonthlyTargetsByItem,
+  fetchMonthlyTargetsByItemIds
 } from './queries'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
@@ -196,4 +197,41 @@ export async function syncItemMonthlyTargets(
 
   revalidatePath('/materi')
   return { success: true }
+}
+
+export async function getMonthlyTargetsByItems(
+  itemIds: string[]
+): Promise<Record<string, number[]>> {
+  if (itemIds.length === 0) return {}
+
+  const activeYear = await getActiveAcademicYear()
+  if (!activeYear) return {}
+
+  const supabase = await createClient()
+  const { data, error } = await fetchMonthlyTargetsByItemIds(supabase, {
+    material_item_ids: itemIds,
+    academic_year_id: activeYear.id
+  })
+
+  if (error) {
+    console.error('Error fetching monthly targets by items:', error)
+    return {}
+  }
+
+  const result: Record<string, number[]> = {}
+  data.forEach(d => {
+    if (!result[d.material_item_id]) {
+      result[d.material_item_id] = []
+    }
+    if (!result[d.material_item_id].includes(d.month)) {
+      result[d.material_item_id].push(d.month)
+    }
+  })
+
+  // Sort each array
+  Object.keys(result).forEach(itemId => {
+    result[itemId].sort((a, b) => a - b)
+  })
+
+  return result
 }

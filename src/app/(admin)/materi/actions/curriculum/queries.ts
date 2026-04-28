@@ -135,3 +135,17 @@ export async function deleteMonthlyTargetsByItem(
     .eq('material_item_id', params.material_item_id)
     .eq('academic_year_id', params.academic_year_id)
 }
+
+export async function fetchMonthlyTargetsByItemIds(
+  supabase: SupabaseClient,
+  params: {
+    material_item_ids: string[]
+    academic_year_id: string
+  }
+) {
+  return supabase
+    .from('material_monthly_targets')
+    .select('material_item_id, month')
+    .in('material_item_id', params.material_item_ids)
+    .eq('academic_year_id', params.academic_year_id)
+}

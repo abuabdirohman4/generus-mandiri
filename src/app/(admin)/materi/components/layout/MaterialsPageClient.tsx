@@ -458,6 +458,10 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             setViewingItem(null);
           }}
           item={viewingItem}
+          onEdit={(item) => {
+            setContentModalOpen(false);
+            handleEditItem(item);
+          }}
         />
 
         <BulkMappingUpdateModal

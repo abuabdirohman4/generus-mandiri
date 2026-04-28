@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
-import { getMonthlyTargetItemIds } from '../../actions/curriculum/actions';
+import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 // import MateriCardMobile from '../tables/MateriCardMobile';
@@ -47,6 +47,7 @@ export default function MateriContentView({
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
 
     const [targetItemIds, setTargetItemIds] = useState<Set<string>>(new Set());
+    const [monthsByItemId, setMonthsByItemId] = useState<Record<string, number[]>>({});
 
     useEffect(() => {
         if (filters.selectedSemester && filters.selectedMonth) {
@@ -59,6 +60,13 @@ export default function MateriContentView({
             setTargetItemIds(new Set());
         }
     }, [filters.selectedSemester, filters.selectedMonth, filters.viewMode, filters.selectedClassId]);
+
+    // Fetch monthly targets for all items for the column display
+    useEffect(() => {
+        if (items.length > 0) {
+            getMonthlyTargetsByItems(items.map(i => i.id)).then(setMonthsByItemId);
+        }
+    }, [items]);
 
     // Filter items for "by_class" mode - show items based on class + type selection
     const filteredItemsForClassMode = useMemo(() => {
@@ -326,6 +334,7 @@ export default function MateriContentView({
                             onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map(i => i.id))}
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
+                            monthsByItemId={monthsByItemId}
                         />
                     </div>
 
@@ -388,6 +397,7 @@ export default function MateriContentView({
                             onToggleAll={(selected) => onToggleAll?.(selected, filteredItemsForClassMode.map(i => i.id))}
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
+                            monthsByItemId={monthsByItemId}
                         />
                     </div>
 

@@ -13,7 +13,7 @@ import {
   deleteMaterialType,
   deleteMaterialItem
 } from '../../actions';
-import { getMonthlyTargetItemIds } from '../../actions/curriculum/actions';
+import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
 import { useMateriStore } from '../../stores/materiStore';
 import { getSemesterMonths, getMonthName, type Month } from '../../types';
 import Button from '@/components/ui/button/Button';
@@ -39,9 +39,10 @@ interface MaterialItemsTableProps {
   onEditType?: (type: MaterialType) => void;
   onDeleteType?: (type: MaterialType) => void;
   type?: MaterialType; // Full type object for edit/delete
+  monthsByItemId?: Record<string, number[]>;
 }
 
-function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription, typeId, onCreateItem, onEditType, onDeleteType, type }: MaterialItemsTableProps) {
+function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription, typeId, onCreateItem, onEditType, onDeleteType, type, monthsByItemId = {} }: MaterialItemsTableProps) {
   const columns = [
     // {
     //   key: 'no',
@@ -55,6 +56,13 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
       label: 'Nama Item',
       align: 'left' as const,
       sortable: true
+    },
+    {
+      key: 'months',
+      label: 'Bulan',
+      align: 'left' as const,
+      width: '180px',
+      sortable: false
     },
     {
       key: 'actions',
@@ -98,6 +106,44 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
           {showTargetBadge && (
             <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
               Target {getMonthName(filters.selectedMonth as Month)}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    if (column.key === 'months') {
+      const months = monthsByItemId[item.itemId] || [];
+      if (months.length === 0) {
+        return <span className="text-gray-400 dark:text-gray-600">—</span>;
+      }
+
+      // Short month names
+      const getShortMonth = (m: number) => {
+        const names: Record<number, string> = {
+          1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
+          7: 'Jul', 8: 'Ags', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
+        };
+        return names[m] || m.toString();
+      };
+
+      // Handle mobile/responsive display (if > 3 months)
+      const displayedMonths = months.slice(0, 3);
+      const remainingCount = months.length - 3;
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {displayedMonths.map(m => (
+            <span 
+              key={m} 
+              className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full border border-blue-100 dark:border-blue-800/30"
+            >
+              {getShortMonth(m)}
+            </span>
+          ))}
+          {remainingCount > 0 && (
+            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full border border-gray-200 dark:border-gray-700">
+              +{remainingCount}
             </span>
           )}
         </div>
@@ -164,10 +210,11 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
               )}
               {onDeleteType && type && (
                 <button
-                  onClick={() => onDeleteType(type)}
-                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                  title="Hapus Type"
-                >
+                type="button"
+                onClick={() => onDeleteType(type)}
+                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                title="Hapus Type"
+              >
                   <TrashBinIcon className="w-5 h-5" />
                 </button>
               )}
@@ -212,6 +259,7 @@ export default function MasterDataView() {
   const [types, setTypes] = useState<MaterialType[]>([]);
   const [items, setItems] = useState<MaterialItem[]>([]);
   const [classes, setClasses] = useState<ClassMaster[]>([]);
+  const [monthsByItemId, setMonthsByItemId] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('material');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -265,8 +313,10 @@ export default function MasterDataView() {
   const loadMasterData = async () => {
     try {
       setLoading(true);
+      let itemsData: MaterialItem[] = [];
+
       if (viewMode === 'material') {
-        const [categoriesData, typesData, itemsData] = await Promise.all([
+        const [categoriesData, typesData, loadedItemsData] = await Promise.all([
           getMaterialCategories(),
           getMaterialTypes(),
           getAllMaterialItems()
@@ -274,10 +324,11 @@ export default function MasterDataView() {
 
         setCategories(categoriesData);
         setTypes(typesData);
-        setItems(itemsData);
+        setItems(loadedItemsData);
+        itemsData = loadedItemsData;
       } else {
         // Load data for "View by Class"
-        const [categoriesData, typesData, classesData, itemsData] = await Promise.all([
+        const [categoriesData, typesData, classesData, loadedItemsData] = await Promise.all([
           getMaterialCategories(),
           getMaterialTypes(),
           getClassesWithMaterialItems(),
@@ -287,7 +338,16 @@ export default function MasterDataView() {
         setCategories(categoriesData);
         setTypes(typesData);
         setClasses(classesData);
-        setItems(itemsData);
+        setItems(loadedItemsData);
+        itemsData = loadedItemsData;
+      }
+
+      // After items are loaded, fetch monthly targets
+      // After items are loaded, fetch monthly targets
+      if (itemsData.length > 0) {
+        const itemIds = itemsData.map((i: MaterialItem) => i.id);
+        const monthsData = await getMonthlyTargetsByItems(itemIds);
+        setMonthsByItemId(monthsData);
       }
     } catch (error) {
       console.error('Error loading master data:', error);
@@ -298,7 +358,7 @@ export default function MasterDataView() {
 
   useEffect(() => {
     loadMasterData();
-  }, [viewMode]);
+  }, [viewMode, items.length]); // Added items.length to trigger months fetch if items change
 
   // Group types by category
   const typesByCategory = useMemo(() => {
@@ -346,13 +406,13 @@ export default function MasterDataView() {
     }> = {};
 
     classes.forEach(classMaster => {
-      const classItems = filteredItems.filter(item =>
-        item.classes?.some(c => c.id === classMaster.id)
+      const classItems = filteredItems.filter((item: MaterialItem) =>
+        item.classes?.some((c: any) => c.id === classMaster.id)
       );
 
       if (classItems.length > 0) {
         const itemsByTypeForClass: Record<string, MaterialItem[]> = {};
-        classItems.forEach(item => {
+        classItems.forEach((item: MaterialItem) => {
           if (!itemsByTypeForClass[item.material_type_id]) {
             itemsByTypeForClass[item.material_type_id] = [];
           }
