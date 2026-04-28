@@ -45,10 +45,14 @@ export async function fetchMeetingsForDateRange(
             lte?: string
         }
     },
-    meetingTypeFilter?: string
+    activityTypeFilter?: string,
+    activityLevelFilter?: string
 ) {
-    const meetingTypes = meetingTypeFilter
-        ? meetingTypeFilter.split(',').filter(Boolean)
+    const activityTypes = activityTypeFilter
+        ? activityTypeFilter.split(',').filter(Boolean)
+        : null
+    const activityLevels = activityLevelFilter
+        ? activityLevelFilter.split(',').filter(Boolean)
         : null
 
     let query = supabase
@@ -57,8 +61,11 @@ export async function fetchMeetingsForDateRange(
         .gte('date', dateFilter.date?.gte || '1900-01-01')
         .lte('date', dateFilter.date?.lte || '2100-12-31')
 
-    if (meetingTypes && meetingTypes.length > 0) {
-        query = query.in('meeting_type_code', meetingTypes)
+    if (activityTypes && activityTypes.length > 0) {
+        query = query.in('activity_type_id', activityTypes)
+    }
+    if (activityLevels && activityLevels.length > 0) {
+        query = query.in('activity_level_id', activityLevels)
     }
 
     return await query.order('date')
@@ -181,10 +188,14 @@ export async function fetchMeetingsWithFullDetails(
             lte?: string
         }
     },
-    meetingTypeFilter?: string
+    activityTypeFilter?: string,
+    activityLevelFilter?: string
 ) {
-    const meetingTypes = meetingTypeFilter
-        ? meetingTypeFilter.split(',').filter(Boolean)
+    const activityTypes = activityTypeFilter
+        ? activityTypeFilter.split(',').filter(Boolean)
+        : null
+    const activityLevels = activityLevelFilter
+        ? activityLevelFilter.split(',').filter(Boolean)
         : null
 
     let query = supabase
@@ -204,8 +215,11 @@ export async function fetchMeetingsWithFullDetails(
         .gte('date', dateFilter.date?.gte || '1900-01-01')
         .lte('date', dateFilter.date?.lte || '2100-12-31')
 
-    if (meetingTypes && meetingTypes.length > 0) {
-        query = query.in('meeting_type_code', meetingTypes)
+    if (activityTypes && activityTypes.length > 0) {
+        query = query.in('activity_type_id', activityTypes)
+    }
+    if (activityLevels && activityLevels.length > 0) {
+        query = query.in('activity_level_id', activityLevels)
     }
 
     return await query.order('date')

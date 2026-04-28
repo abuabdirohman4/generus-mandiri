@@ -17,8 +17,9 @@ interface UseReportDataOptions {
     classId?: string
     kelompokId?: string
     gender?: string
-    meetingType?: string
-    
+    activityType?: string
+    activityLevel?: string
+
     // Daily filters
     startDate?: string
     endDate?: string
@@ -60,7 +61,8 @@ export function useReportData({ filters, enabled = true }: UseReportDataOptions)
     classId: filters.classId || undefined,
     kelompokId: filters.kelompokId || undefined,
     gender: filters.gender || undefined,
-    meetingType: filters.meetingType || undefined,
+    activityType: filters.activityType || undefined,
+    activityLevel: filters.activityLevel || undefined,
     startDate: filters.startDate || undefined,
     endDate: filters.endDate || undefined,
     

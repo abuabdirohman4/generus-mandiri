@@ -63,8 +63,9 @@ describe('Meeting Queries', () => {
         topic: 'Test Topic',
         description: 'Test Description',
         student_snapshot: ['student-1'],
-        meeting_type_code: 'regular'
-        // Note: created_by field removed - teacher_id tracks meeting creator
+        meeting_type_code: 'regular',
+        activity_type_id: null,
+        activity_level_id: null
       })
       expect(result.data).toEqual({ id: 'new-id' })
     })

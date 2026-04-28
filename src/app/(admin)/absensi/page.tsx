@@ -164,11 +164,12 @@ export default function AbsensiPage() {
           return false
         })
 
-        // Apply meeting type filter if needed
-        if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
-          filtered = filtered.filter(m =>
-            dataFilters.meetingType?.includes(m.meeting_type_code || '')
-          )
+        // Apply activity type/level filter
+        if (dataFilters.activityType && dataFilters.activityType.length > 0) {
+          filtered = filtered.filter(m => dataFilters.activityType?.includes(m.activity_type_id || ''))
+        }
+        if (dataFilters.activityLevel && dataFilters.activityLevel.length > 0) {
+          filtered = filtered.filter(m => dataFilters.activityLevel?.includes(m.activity_level_id || ''))
         }
         return filtered
       }
@@ -193,21 +194,30 @@ export default function AbsensiPage() {
         return false
       })
 
-      // Apply meeting type filter if selected
-      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+      // Apply activity type/level filter if selected
+      if (dataFilters.activityType && dataFilters.activityType.length > 0) {
         filtered = filtered.filter(m =>
-          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+          dataFilters.activityType?.includes(m.activity_type_id || '')
+        )
+      }
+      if (dataFilters.activityLevel && dataFilters.activityLevel.length > 0) {
+        filtered = filtered.filter(m =>
+          dataFilters.activityLevel?.includes(m.activity_level_id || '')
         )
       }
       return filtered
     }
 
-    // FALLBACK: For teachers WITHOUT specific class filter, apply meeting type filter only
+    // FALLBACK: For teachers WITHOUT specific class filter, apply activity filter only
     if (userProfile?.role === 'teacher') {
-      // For teachers, apply meeting type filter if selected
-      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+      if (dataFilters.activityType && dataFilters.activityType.length > 0) {
         filtered = filtered.filter(m =>
-          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+          dataFilters.activityType?.includes(m.activity_type_id || '')
+        )
+      }
+      if (dataFilters.activityLevel && dataFilters.activityLevel.length > 0) {
+        filtered = filtered.filter(m =>
+          dataFilters.activityLevel?.includes(m.activity_level_id || '')
         )
       }
       return filtered
@@ -238,10 +248,15 @@ export default function AbsensiPage() {
         return false
       })
 
-      // Apply meeting type filter if selected
-      if (dataFilters.meetingType && dataFilters.meetingType.length > 0) {
+      // Apply activity type/level filter if selected
+      if (dataFilters.activityType && dataFilters.activityType.length > 0) {
         filtered = filtered.filter(m =>
-          dataFilters.meetingType?.includes(m.meeting_type_code || '')
+          dataFilters.activityType?.includes(m.activity_type_id || '')
+        )
+      }
+      if (dataFilters.activityLevel && dataFilters.activityLevel.length > 0) {
+        filtered = filtered.filter(m =>
+          dataFilters.activityLevel?.includes(m.activity_level_id || '')
         )
       }
 
@@ -250,7 +265,7 @@ export default function AbsensiPage() {
 
     // If no valid classes found, return empty array
     return []
-  }, [allMeetings, validClassIds, dataFilters.kelas, dataFilters.meetingType, userProfile])
+  }, [allMeetings, validClassIds, dataFilters.kelas, dataFilters.activityType, dataFilters.activityLevel, userProfile])
 
   // Paginate filtered meetings
   const paginatedMeetings = useMemo(() => {
@@ -435,7 +450,8 @@ export default function AbsensiPage() {
           kelompokList={kelompok || []}
           classList={classes || []}
           showKelas={true}
-          showMeetingType={true}
+          showActivityType={true}
+          showActivityLevel={true}
           cascadeFilters={true}
         />
 

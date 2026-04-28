@@ -23,8 +23,9 @@ export interface LaporanFilters {
   // Gender filter
   gender: string
 
-  // Meeting type filter
-  meetingType: string[]
+  // Activity filters (DB-driven)
+  activityType: string[]
+  activityLevel: string[]
 
   // Daily filters
   startDate: Dayjs | null
@@ -85,8 +86,9 @@ const defaultFilters: LaporanFilters = {
   // Gender filter
   gender: '',
 
-  // Meeting type filter
-  meetingType: [],
+  // Activity filters
+  activityType: [],
+  activityLevel: [],
 
   // Daily filters
   startDate: null,
@@ -162,7 +164,8 @@ export const useLaporanStore = create<LaporanState>()(
           period: state.filters.period,
           classId: state.filters.classId,
           gender: state.filters.gender,
-          meetingType: state.filters.meetingType,
+          activityType: state.filters.activityType,
+          activityLevel: state.filters.activityLevel,
 
           // Persist organisasi filter (CRITICAL: needed for class filter to work on reload)
           organisasi: state.filters.organisasi,
@@ -197,7 +200,8 @@ export const useLaporan = () => {
     hasActiveFilters: store.filters.viewMode === 'detailed' ? (
       store.filters.classId !== '' ||
       store.filters.organisasi?.kelas?.length > 0 ||
-      store.filters.meetingType?.length > 0 ||
+      store.filters.activityType?.length > 0 ||
+      store.filters.activityLevel?.length > 0 ||
       store.filters.startDate !== null ||
       store.filters.endDate !== null
     ) : (
@@ -205,13 +209,15 @@ export const useLaporan = () => {
       store.filters.year !== getCurrentYear() ||
       store.filters.classId !== '' ||
       store.filters.organisasi?.kelas?.length > 0 ||
-      store.filters.meetingType?.length > 0
+      store.filters.activityType?.length > 0 ||
+      store.filters.activityLevel?.length > 0
     ),
     // Helper to get filter count
     filterCount: store.filters.viewMode === 'detailed' ? [
       store.filters.classId !== '',
       store.filters.organisasi?.kelas?.length > 0,
-      store.filters.meetingType?.length > 0,
+      store.filters.activityType?.length > 0,
+      store.filters.activityLevel?.length > 0,
       store.filters.startDate !== null,
       store.filters.endDate !== null
     ].filter(Boolean).length : [
@@ -219,7 +225,8 @@ export const useLaporan = () => {
       store.filters.year !== getCurrentYear(),
       store.filters.classId !== '',
       store.filters.organisasi?.kelas?.length > 0,
-      store.filters.meetingType?.length > 0
+      store.filters.activityType?.length > 0,
+      store.filters.activityLevel?.length > 0
     ].filter(Boolean).length
   }
 }

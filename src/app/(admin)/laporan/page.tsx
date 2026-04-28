@@ -107,7 +107,8 @@ export default function LaporanPage() {
             organisasiFilters={{
               ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
               gender: filters.gender || '',
-              meetingType: filters.meetingType || []
+              activityType: filters.activityType || [],
+              activityLevel: filters.activityLevel || []
             }}
             onOrganisasiFilterChange={handleOrganisasiFilterChange}
           />

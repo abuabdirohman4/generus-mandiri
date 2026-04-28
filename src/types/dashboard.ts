@@ -55,6 +55,8 @@ export interface TodayMeeting {
     class_name: string
     teacher_name: string
     meeting_type_code: string | null
+    activity_type?: { id: string; code: string; name: string } | null
+    activity_level?: { id: string; code: string; name: string } | null
     total_students: number
     present_count: number
     attendance_percentage: number

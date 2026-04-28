@@ -18,7 +18,11 @@ interface Meeting {
   description?: any
   student_snapshot: any
   created_at: any
-  meeting_type_code?: string | null // NEW: Meeting type code
+  meeting_type_code?: string | null
+  activity_type_id?: string | null
+  activity_level_id?: string | null
+  activity_type?: { id: string; code: string; name: string } | null
+  activity_level?: { id: string; code: string; name: string } | null
   classes: {
     id: string
     name: string

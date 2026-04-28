@@ -68,7 +68,8 @@ export interface ReportFilters {
     classId?: string
     kelompokId?: string
     gender?: string
-    meetingType?: string
+    activityType?: string
+    activityLevel?: string
 
     // Daily filters
     startDate?: string

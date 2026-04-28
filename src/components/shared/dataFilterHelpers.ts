@@ -17,7 +17,9 @@ export interface DataFilters {
   kelas: string[]
   gender?: string
   status?: string
-  meetingType?: string[]
+  meetingType?: string[] // legacy — kept for backward compat
+  activityType?: string[] // activity_type_id values
+  activityLevel?: string[] // activity_level_id values
 }
 
 export interface RoleFlags {

@@ -14,7 +14,7 @@ import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
 import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/accessControl'
 import { useClasses } from '@/hooks/useClasses'
 import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
@@ -31,8 +31,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
   if (!meeting.classes) return ''
   
   const isSuperAdminUser = isSuperAdmin(userProfile)
-  const isAdminDaerahUser = isAdminDaerah(userProfile)
-  const isAdminDesaUser = isAdminDesa(userProfile)
+  const isDaerahUser = isAdminDaerah(userProfile) || isTeacherDaerah(userProfile)
+  const isDesaUser = isAdminDesa(userProfile) || isTeacherDesa(userProfile)
   const isAdminKelompokUser = isAdminKelompok(userProfile)
   const isTeacherUser = userProfile?.role === 'teacher'
   
@@ -79,8 +79,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Daerah: Show Desa, Kelompok
-    else if (isAdminDaerahUser) {
+    // Daerah: Show Desa, Kelompok
+    else if (isDaerahUser) {
       if (desaNames.length > 0) {
         parts.push(desaNames.join(' & '))
       }
@@ -88,8 +88,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Desa: Show Kelompok only
-    else if (isAdminDesaUser) {
+    // Desa: Show Kelompok only
+    else if (isDesaUser) {
       if (kelompokNames.length > 0) {
         parts.push(kelompokNames.join(' & '))
       }
@@ -115,8 +115,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       parts.push(meeting.classes.kelompok.name)
     }
   }
-  // Admin Daerah: Show Desa, Kelompok, Class
-  else if (isAdminDaerahUser) {
+  // Daerah: Show Desa, Kelompok, Class
+  else if (isDaerahUser) {
     if (meeting.classes.kelompok?.desa?.name) {
       parts.push(meeting.classes.kelompok.desa.name)
     }
@@ -124,8 +124,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       parts.push(meeting.classes.kelompok.name)
     }
   }
-  // Admin Desa: Show Kelompok, Class
-  else if (isAdminDesaUser) {
+  // Desa: Show Kelompok, Class
+  else if (isDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }

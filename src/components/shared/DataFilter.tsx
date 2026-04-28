@@ -4,8 +4,8 @@ import { useMemo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectFilter from '@/components/form/input/MultiSelectFilter'
-import { useMeetingTypes } from '@/app/(admin)/absensi/hooks/useMeetingTypes'
-import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
+import { useActivityTypes } from '@/hooks/useActivityTypes'
+import { useActivityLevels } from '@/hooks/useActivityLevels'
 import type { UserProfile } from '@/types/user'
 import type { Class } from '@/types/class'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
@@ -25,13 +25,10 @@ interface DataFilterProps {
   showKelas?: boolean // For pages that need class filter (Siswa, Absensi, Laporan)
   showGender?: boolean
   showStatus?: boolean // active/graduated/inactive/all
+  showActivityType?: boolean
+  showActivityLevel?: boolean
+  /** @deprecated use showActivityType instead */
   showMeetingType?: boolean
-  /**
-   * When true, all meeting types are shown regardless of user role.
-   * Use on reporting/filtering pages where admins need to filter across all types.
-   * When false (default), only role-restricted types available to the user are shown.
-   */
-  forceShowAllMeetingTypes?: boolean
   showDaerah?: boolean // Override role-based visibility
   showDesa?: boolean // Override role-based visibility
   showKelompok?: boolean // Override role-based visibility
@@ -48,14 +45,16 @@ interface DataFilterProps {
     desa?: boolean
     kelompok?: boolean
     kelas?: boolean
-    meetingType?: boolean
+    activityType?: boolean
+    activityLevel?: boolean
   }
   errors?: {
     daerah?: string
     desa?: string
     kelompok?: string
     kelas?: string
-    meetingType?: string
+    activityType?: string
+    activityLevel?: string
   }
   /**
    * Override the full org lists with pre-filtered subsets.
@@ -95,10 +94,11 @@ export default function DataFilter({
   kelompokList,
   classList,
   showKelas = false,
-  showGender = false, // NEW
-  showStatus = false, // NEW
-  showMeetingType = false, // NEW
-  forceShowAllMeetingTypes = false, // NEW
+  showGender = false,
+  showStatus = false,
+  showActivityType = false,
+  showActivityLevel = false,
+  showMeetingType = false, // deprecated
   showDaerah,
   showDesa,
   showKelompok,
@@ -181,7 +181,7 @@ export default function DataFilter({
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || kelompokListCount > 1)
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
-  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showMeetingType
+  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -320,15 +320,9 @@ export default function DataFilter({
     })
   }, [filteredClassList, isTeacher, teacherHasMultipleClasses, teacherHasMultipleKelompok, activeKelompokList, filters?.kelompok, userProfile?.classes])
 
-  // Get available meeting types based on user profile
-  const { availableTypes, isLoading: meetingTypesLoading } = useMeetingTypes(userProfile as any)
-
-  // Determine which meeting types to show
-  // For reporting/filtering pages, show all types regardless of role
-  // For creation pages, use role-restricted types
-  const meetingTypesToShow = forceShowAllMeetingTypes
-    ? MEETING_TYPES  // Show all types for reporting/filtering
-    : availableTypes // Use role-restricted types for creation
+  // Activity types and levels (DB-driven)
+  const { activityTypes, isLoading: activityTypesLoading } = useActivityTypes()
+  const { activityLevels, isLoading: activityLevelsLoading } = useActivityLevels()
 
   // Comparison feature logic
   const availableComparisonLevels = useMemo(() => {
@@ -484,6 +478,14 @@ export default function DataFilter({
     })
   }, [filters, onFilterChange])
 
+  const handleActivityTypeChange = useCallback((value: string[]) => {
+    onFilterChange({ ...filters, activityType: value })
+  }, [filters, onFilterChange])
+
+  const handleActivityLevelChange = useCallback((value: string[]) => {
+    onFilterChange({ ...filters, activityLevel: value })
+  }, [filters, onFilterChange])
+
   const handleClassViewModeChange = useCallback((value: string) => {
     if (onClassViewModeChange) {
       onClassViewModeChange(value as 'separated' | 'combined')
@@ -495,15 +497,16 @@ export default function DataFilter({
   if (shouldReturnNull) return null
 
   const visibleFilters = [
-    showComparisonLevel && 'comparisonLevel', // NEW - comparison feature FIRST!
-    showGender && 'gender', // NEW - add gender first
-    showStatus && 'status', // NEW - add status after gender
+    showComparisonLevel && 'comparisonLevel',
+    showGender && 'gender',
+    showStatus && 'status',
     effectiveShouldShowDaerah && 'daerah',
     effectiveShouldShowDesa && 'desa',
     effectiveShouldShowKelompok && 'kelompok',
     showKelasFilter && 'kelas',
-    (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode', // NEW - for dashboard
-    showMeetingType && 'meetingType' // NEW
+    (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode',
+    showActivityType && 'activityType',
+    showActivityLevel && 'activityLevel',
   ].filter(Boolean)
 
   const filterCount = visibleFilters.length
@@ -523,7 +526,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'meetingType']
+    const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -768,50 +771,43 @@ export default function DataFilter({
         </div>
       )}
 
-      {showMeetingType && (
-        <div className={getFilterClass(getFilterIndex('meetingType'))}>
-          {variant === 'page' ? (
-            (meetingTypesLoading || Object.keys(meetingTypesToShow).length === 0) ? (
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {meetingTypesLoading ? 'Memuat tipe pertemuan...' : 'Pilih kelas terlebih dahulu'}
-              </div>
-            ) : (
-              <MultiSelectFilter
-                id="meetingTypeFilter"
-                label="Tipe Pertemuan"
-                value={filters?.meetingType || []}
-                onChange={handleMeetingTypeChange}
-                options={Object.entries(meetingTypesToShow).map(([key, type]) => ({
-                  value: type.code,
-                  label: type.label
-                }))}
-                allOptionLabel="Semua Tipe"
-                widthClassName="!max-w-full"
-                variant={variant}
-                compact={compact}
-                placeholder="Pilih Tipe"
-              />
-            )
-          ) : (
-            <InputFilter
-              id="meetingTypeFilter"
-              label="Tipe Pertemuan"
-              value={filters?.meetingType?.[0] || ''}
-              onChange={(value) => handleMeetingTypeChange(value ? [value] : [])}
-              options={Object.entries(meetingTypesToShow).map(([key, type]) => ({
-                value: type.code,
-                label: type.label
-              }))}
-              allOptionLabel={hideAllOption ? undefined : "Semua Tipe"}
-              widthClassName="!max-w-full"
-              variant={variant}
-              compact={compact}
-              required={requiredFields.meetingType}
-              error={!!errors.meetingType}
-              hint={errors.meetingType}
-              disabled={meetingTypesLoading || Object.keys(availableTypes).length === 0}
-            />
-          )}
+      {showActivityType && (
+        <div className={getFilterClass(getFilterIndex('activityType'))}>
+          <MultiSelectFilter
+            id="activityTypeFilter"
+            label="Tipe Kegiatan"
+            value={filters?.activityType || []}
+            onChange={handleActivityTypeChange}
+            options={(activityTypes || []).filter((t: any) => t.is_active).map((t: any) => ({
+              value: t.id,
+              label: t.name
+            }))}
+            allOptionLabel="Semua Tipe"
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+            placeholder="Pilih Tipe"
+          />
+        </div>
+      )}
+
+      {showActivityLevel && (
+        <div className={getFilterClass(getFilterIndex('activityLevel'))}>
+          <MultiSelectFilter
+            id="activityLevelFilter"
+            label="Tingkat Kegiatan"
+            value={filters?.activityLevel || []}
+            onChange={handleActivityLevelChange}
+            options={(activityLevels || []).filter((l: any) => l.is_active).map((l: any) => ({
+              value: l.id,
+              label: l.name
+            }))}
+            allOptionLabel="Semua Tingkat"
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+            placeholder="Pilih Tingkat"
+          />
         </div>
       )}
 

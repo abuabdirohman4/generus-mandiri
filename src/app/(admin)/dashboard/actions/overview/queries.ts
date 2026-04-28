@@ -104,6 +104,10 @@ export async function fetchMeetingsForOverview(
       date,
       class_id,
       meeting_type_code,
+      activity_type_id,
+      activity_level_id,
+      activity_type:activity_types(id, code, name),
+      activity_level:activity_levels(id, code, name),
       classes:class_id(id, name, kelompok_id),
       profiles:teacher_id(full_name)
     `

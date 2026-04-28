@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import type { TodayMeeting } from '../actions';
-import { getMeetingTypeLabel } from '@/lib/constants/meetingTypes';
 
 interface TodayMeetingsProps {
     meetings: TodayMeeting[];
@@ -52,9 +51,9 @@ export default function TodayMeetings({ meetings }: TodayMeetingsProps) {
                                     {meeting.title}
                                 </p>
                             </div>
-                            {meeting.meeting_type_code && (
+                            {(meeting.activity_type?.name || meeting.meeting_type_code) && (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    {getMeetingTypeLabel(meeting.meeting_type_code)}
+                                    {meeting.activity_type?.name || meeting.meeting_type_code}
                                 </span>
                             )}
                         </div>

@@ -57,13 +57,13 @@ describe('queries.ts – Layer 1', () => {
             expect(chain.order).toHaveBeenCalledWith('date')
         })
 
-        it('applies meeting type filter when provided', async () => {
+        it('applies activity type filter when provided', async () => {
             const chain = makeMockChain({ data: [], error: null })
             const supabase = { from: vi.fn().mockReturnValue(chain) } as any
 
-            await fetchMeetingsForDateRange(supabase, { date: {} }, 'hadir,remaja')
+            await fetchMeetingsForDateRange(supabase, { date: {} }, 'uuid-1,uuid-2')
 
-            expect(chain.in).toHaveBeenCalledWith('meeting_type_code', ['hadir', 'remaja'])
+            expect(chain.in).toHaveBeenCalledWith('activity_type_id', ['uuid-1', 'uuid-2'])
         })
 
         it('skips meeting type filter when not provided', async () => {

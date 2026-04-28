@@ -38,7 +38,8 @@ export function useLaporanPage() {
       classId: filters.organisasi?.kelas?.length ? filters.organisasi.kelas.join(',') : filters.classId || undefined,
       kelompokId: filters.organisasi?.kelompok?.length ? filters.organisasi.kelompok.join(',') : undefined,
       gender: filters.gender || undefined,
-      meetingType: filters.meetingType?.length ? filters.meetingType.join(',') : undefined,
+      activityType: filters.activityType?.length ? filters.activityType.join(',') : undefined,
+      activityLevel: filters.activityLevel?.length ? filters.activityLevel.join(',') : undefined,
       
       // Period-specific filters
       ...(filters.period === 'daily' && {
@@ -221,16 +222,18 @@ export function useLaporanPage() {
     mutate(undefined, { revalidate: false })
   }
 
-  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; meetingType?: string[] }) => {
-    // Extract gender and meetingType from organisasiFilters and update separately
-    const { gender, meetingType, ...organisasi } = organisasiFilters
+  const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }) => {
+    const { gender, activityType, activityLevel, ...organisasi } = organisasiFilters
 
     setFilter('organisasi', organisasi)
     if (gender !== undefined) {
       setFilter('gender', gender || '')
     }
-    if (meetingType !== undefined) {
-      setFilter('meetingType', meetingType)
+    if (activityType !== undefined) {
+      setFilter('activityType', activityType)
+    }
+    if (activityLevel !== undefined) {
+      setFilter('activityLevel', activityLevel)
     }
   }, [setFilter])
 

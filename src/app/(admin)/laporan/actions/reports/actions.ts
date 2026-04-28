@@ -65,7 +65,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         const { data: meetingsForFilter } = await fetchMeetingsForDateRange(
             adminClient,
             dateFilter,
-            filters.meetingType
+            filters.activityType,
+            filters.activityLevel
         )
 
         // 7. Collect all class IDs from meetings
@@ -124,7 +125,8 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         const { data: meetings } = await fetchMeetingsWithFullDetails(
             adminClient,
             dateFilter,
-            filters.meetingType
+            filters.activityType,
+            filters.activityLevel
         )
 
         // 16. Enrich classKelompokMap from full meetings
