@@ -366,7 +366,7 @@ export function filterAttendanceByClass(
 
         if (matchingClassIds.length === 0) return false
 
-        // STRICT enrollment check: student must be enrolled in ANY of the matching classes
+        // Check enrollment map (junction table via student_classes)
         for (const meetingClassId of matchingClassIds) {
             const kelompokMapForClass = enrollmentMap.get(meetingClassId)
             if (!kelompokMapForClass) continue
@@ -378,7 +378,18 @@ export function filterAttendanceByClass(
             }
         }
 
-        return false
+        // Fallback: Check student's primary class_id (legacy support for students
+        // enrolled via class_id field instead of student_classes junction table)
+        if (student.class_id && matchingClassIds.includes(student.class_id)) {
+            return true
+        }
+
+        // Fallback: Check student's student_classes data (enriched from fetchStudentDetails)
+        const studentClassIds = (student.student_classes || [])
+            .map((sc: any) => sc.classes?.id || sc.class_id)
+            .filter(Boolean)
+
+        return matchingClassIds.some((id: string) => studentClassIds.includes(id))
     })
 }
 

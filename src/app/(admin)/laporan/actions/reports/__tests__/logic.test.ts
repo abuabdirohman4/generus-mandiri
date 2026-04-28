@@ -330,6 +330,122 @@ describe('sm-hov regression – filterAttendanceByClass multi-class filter', () 
     })
 })
 
+// ─── sm-0p4: multi-class student legacy class_id fallback ────────────────────
+
+describe('sm-0p4 – filterAttendanceByClass multi-class student (legacy class_id)', () => {
+    /**
+     * Scenario: Student S1 has 2 classes — "Pra Nikah 1" (c-pn1) and "Pengajar" (c-pg).
+     * Their primary class_id = 'c-pn1' (legacy), and student_classes has both.
+     *
+     * Bug: When filter = "Pra Nikah 1" only, if enrollment map doesn't have S1 for c-pn1
+     * (because student_classes for c-pn1 not fetched), student gets blocked.
+     *
+     * Fix: Add fallback check via student.class_id and student.student_classes.
+     */
+
+    // Meeting for "Pra Nikah 1" only
+    const meetingMap = new Map([
+        ['m-pn1', { id: 'm-pn1', class_id: 'c-pn1', class_ids: ['c-pn1'] }],
+        ['m-pg',  { id: 'm-pg',  class_id: 'c-pg',  class_ids: ['c-pg']  }],
+    ])
+
+    it('[sm-0p4] student with legacy class_id matching filter appears in result', () => {
+        // Enrollment map is empty for c-pn1 (simulating legacy student)
+        const enrollmentMap = new Map<string, Map<string, Set<string>>>()
+
+        const logs = [{
+            meeting_id: 'm-pn1',
+            student_id: 's1',
+            students: {
+                id: 's1',
+                class_id: 'c-pn1', // legacy class_id matches
+                student_classes: []
+            }
+        }]
+
+        const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
+        expect(result).toHaveLength(1)
+    })
+
+    it('[sm-0p4] student with class in student_classes array matches filter', () => {
+        const enrollmentMap = new Map<string, Map<string, Set<string>>>()
+
+        const logs = [{
+            meeting_id: 'm-pn1',
+            student_id: 's1',
+            students: {
+                id: 's1',
+                class_id: 'c-pg', // primary class is different
+                student_classes: [
+                    { classes: { id: 'c-pn1', name: 'Pra Nikah 1' }, class_id: 'c-pn1' },
+                    { classes: { id: 'c-pg', name: 'Pengajar' }, class_id: 'c-pg' },
+                ]
+            }
+        }]
+
+        // Filter by c-pn1 — student has it in student_classes
+        const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
+        expect(result).toHaveLength(1)
+    })
+
+    it('[sm-0p4] student with 2 classes appears when either class is filtered', () => {
+        const enrollmentMap = new Map<string, Map<string, Set<string>>>()
+
+        const logsForPn1 = [{
+            meeting_id: 'm-pn1',
+            student_id: 's1',
+            students: {
+                id: 's1',
+                class_id: 'c-pn1',
+                student_classes: [
+                    { classes: { id: 'c-pn1', name: 'Pra Nikah 1' }, class_id: 'c-pn1' },
+                    { classes: { id: 'c-pg', name: 'Pengajar' }, class_id: 'c-pg' },
+                ]
+            }
+        }]
+
+        const logsForPg = [{
+            meeting_id: 'm-pg',
+            student_id: 's1',
+            students: {
+                id: 's1',
+                class_id: 'c-pn1',
+                student_classes: [
+                    { classes: { id: 'c-pn1', name: 'Pra Nikah 1' }, class_id: 'c-pn1' },
+                    { classes: { id: 'c-pg', name: 'Pengajar' }, class_id: 'c-pg' },
+                ]
+            }
+        }]
+
+        // Filter by Pra Nikah 1
+        const result1 = filterAttendanceByClass(logsForPn1, 'c-pn1', enrollmentMap, meetingMap)
+        expect(result1).toHaveLength(1)
+
+        // Filter by Pengajar
+        const result2 = filterAttendanceByClass(logsForPg, 'c-pg', enrollmentMap, meetingMap)
+        expect(result2).toHaveLength(1)
+    })
+
+    it('[sm-0p4] student not enrolled in filtered class is excluded', () => {
+        const enrollmentMap = new Map<string, Map<string, Set<string>>>()
+
+        const logs = [{
+            meeting_id: 'm-pn1',
+            student_id: 's2',
+            students: {
+                id: 's2',
+                class_id: 'c-pg', // only in Pengajar, not Pra Nikah 1
+                student_classes: [
+                    { classes: { id: 'c-pg', name: 'Pengajar' }, class_id: 'c-pg' },
+                ]
+            }
+        }]
+
+        const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
+        expect(result).toHaveLength(0)
+    })
+})
+
 // ─── filterAttendanceByKelompok ───────────────────────────────────────────────
 
 describe('logic.ts – filterAttendanceByKelompok', () => {

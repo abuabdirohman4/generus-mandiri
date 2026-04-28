@@ -34,9 +34,10 @@ export default function StudentDetailPage() {
   })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedMeeting, setSelectedMeeting] = useState<AttendanceLog | null>(null)
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
 
   // Use SWR hook for data fetching
-  const { student, attendanceLogs, stats, isLoading, error } = useStudentDetail(studentId, currentDate)
+  const { student, attendanceLogs, stats, isLoading, error } = useStudentDetail(studentId, currentDate, selectedClassId)
   const { profile: userProfile } = useUserProfile()
 
   // Filter classes based on user role
@@ -175,6 +176,35 @@ export default function StudentDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Class Filter — only shown if student has 2+ classes */}
+        {displayedClasses && displayedClasses.length > 1 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
+            <button
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                !selectedClassId
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              onClick={() => { setSelectedClassId(null); setSelectedDate(null) }}
+            >
+              Semua Kelas
+            </button>
+            {displayedClasses.map(cls => (
+              <button
+                key={cls.id}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  selectedClassId === cls.id
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => { setSelectedClassId(cls.id); setSelectedDate(null) }}
+              >
+                {cls.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Monthly Stats */}
         <MonthlyStats stats={stats} />

@@ -9,7 +9,11 @@ import {
   type AttendanceHistoryResponse 
 } from '@/app/(admin)/users/siswa/actions'
 
-export function useStudentDetail(studentId: string, currentDate: dayjs.Dayjs) {
+export function useStudentDetail(
+  studentId: string,
+  currentDate: dayjs.Dayjs,
+  classId?: string | null
+) {
   // Fetch student info (doesn't change with month)
   const { data: studentInfo, error: studentError, isLoading: studentLoading } = useSWR<StudentInfo>(
     studentId ? `student-${studentId}` : null,
@@ -20,13 +24,13 @@ export function useStudentDetail(studentId: string, currentDate: dayjs.Dayjs) {
     }
   )
 
-  // Fetch attendance history (changes with month)
+  // Fetch attendance history (changes with month and classId)
   const year = currentDate.year()
   const month = currentDate.month() + 1
-  
+
   const { data: attendanceData, error: attendanceError, isLoading: attendanceLoading } = useSWR<AttendanceHistoryResponse>(
-    studentId ? `attendance-${studentId}-${year}-${month}` : null,
-    () => getStudentAttendanceHistory(studentId, year, month),
+    studentId ? `attendance-${studentId}-${year}-${month}-${classId || 'all'}` : null,
+    () => getStudentAttendanceHistory(studentId, year, month, classId || undefined),
     {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,

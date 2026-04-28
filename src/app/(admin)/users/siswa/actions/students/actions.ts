@@ -927,10 +927,15 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
 /**
  * Mendapatkan riwayat kehadiran siswa untuk bulan tertentu
  */
+/**
+ * Mendapatkan riwayat kehadiran siswa untuk bulan tertentu
+ * @param classId - Optional: filter attendance by specific class ID
+ */
 export async function getStudentAttendanceHistory(
     studentId: string,
     year: number,
-    month: number
+    month: number,
+    classId?: string
 ): Promise<AttendanceHistoryResponse> {
     try {
         const supabase = await createClient()
@@ -965,16 +970,30 @@ export async function getStudentAttendanceHistory(
             throw error
         }
 
+        // Filter by class if classId provided (client-side, handles both class_id and class_ids array)
+        let filteredLogs = attendanceLogs || []
+        if (classId) {
+            filteredLogs = filteredLogs.filter((log: any) => {
+                const meeting = log.meetings
+                if (!meeting) return false
+                if (meeting.class_id === classId) return true
+                if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+                    return meeting.class_ids.includes(classId)
+                }
+                return false
+            })
+        }
+
         const stats = {
-            total: attendanceLogs?.length || 0,
-            hadir: attendanceLogs?.filter(log => log.status === 'H').length || 0,
-            izin: attendanceLogs?.filter(log => log.status === 'I').length || 0,
-            sakit: attendanceLogs?.filter(log => log.status === 'S').length || 0,
-            absen: attendanceLogs?.filter(log => log.status === 'A').length || 0
+            total: filteredLogs.length,
+            hadir: filteredLogs.filter((log: any) => log.status === 'H').length,
+            izin: filteredLogs.filter((log: any) => log.status === 'I').length,
+            sakit: filteredLogs.filter((log: any) => log.status === 'S').length,
+            absen: filteredLogs.filter((log: any) => log.status === 'A').length,
         }
 
         return {
-            attendanceLogs: (attendanceLogs || []) as unknown as AttendanceLog[],
+            attendanceLogs: filteredLogs as unknown as AttendanceLog[],
             stats: stats as MonthlyStats
         }
     } catch (error) {

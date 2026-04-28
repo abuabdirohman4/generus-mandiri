@@ -288,6 +288,8 @@ export async function fetchStudentAttendanceHistory(
         topic,
         description,
         meeting_type_code,
+        class_id,
+        class_ids,
         classes (
           id,
           name,
