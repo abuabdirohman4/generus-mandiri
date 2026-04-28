@@ -13,6 +13,9 @@ import {
   deleteMaterialType,
   deleteMaterialItem
 } from '../../actions';
+import { getMonthlyTargetItemIds } from '../../actions/curriculum/actions';
+import { useMateriStore } from '../../stores/materiStore';
+import { getSemesterMonths, getMonthName, type Month } from '../../types';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
@@ -73,6 +76,9 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
     itemId: item.id // Store the item ID for reference
   }));
 
+  const filters = useMateriStore(state => state.filters);
+  const showTargetBadge = filters.selectedSemester && filters.selectedMonth;
+
   const renderCell = (column: any, item: any, index: number) => {
     const materialItem = itemsMap.get(item.itemId);
 
@@ -89,6 +95,11 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
       return (
         <div className="text-sm font-medium text-gray-900 dark:text-white">
           {item.name}
+          {showTargetBadge && (
+            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
+              Target {getMonthName(filters.selectedMonth as Month)}
+            </span>
+          )}
         </div>
       );
     }
@@ -206,7 +217,24 @@ export default function MasterDataView() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filters = useMateriStore(state => state.filters);
+  const setFilter = useMateriStore(state => state.setFilter);
+  const searchQuery = filters.searchQuery;
+  const setSearchQuery = (val: string) => setFilter('searchQuery', val);
+
+  const [targetItemIds, setTargetItemIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (filters.selectedSemester && filters.selectedMonth) {
+      getMonthlyTargetItemIds({
+        semester: filters.selectedSemester,
+        month: filters.selectedMonth,
+      }).then(ids => setTargetItemIds(new Set(ids)));
+    } else {
+      setTargetItemIds(new Set());
+    }
+  }, [filters.selectedSemester, filters.selectedMonth]);
 
   // Modal states
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -284,17 +312,29 @@ export default function MasterDataView() {
     return grouped;
   }, [types]);
 
+  // Filter items based on selected semester, month, and type
+  const filteredItems = useMemo(() => {
+    let result = items;
+    if (filters.selectedSemester && filters.selectedMonth) {
+      result = result.filter(item => targetItemIds.has(item.id));
+    }
+    if (filters.selectedTypeId) {
+      result = result.filter(item => item.material_type_id === filters.selectedTypeId);
+    }
+    return result;
+  }, [items, targetItemIds, filters.selectedSemester, filters.selectedMonth, filters.selectedTypeId]);
+
   // Group items by material type
   const itemsByType = useMemo(() => {
     const grouped: Record<string, MaterialItem[]> = {};
-    items.forEach(item => {
+    filteredItems.forEach(item => {
       if (!grouped[item.material_type_id]) {
         grouped[item.material_type_id] = [];
       }
       grouped[item.material_type_id].push(item);
     });
     return grouped;
-  }, [items]);
+  }, [filteredItems]);
 
   // Group items by class for "View by Class" mode
   const itemsByClass = useMemo(() => {
@@ -306,7 +346,7 @@ export default function MasterDataView() {
     }> = {};
 
     classes.forEach(classMaster => {
-      const classItems = items.filter(item =>
+      const classItems = filteredItems.filter(item =>
         item.classes?.some(c => c.id === classMaster.id)
       );
 
@@ -327,7 +367,7 @@ export default function MasterDataView() {
     });
 
     return grouped;
-  }, [viewMode, classes, items]);
+  }, [viewMode, classes, filteredItems]);
 
   // Filter classes for "View by Class" mode
   const filteredClasses = useMemo(() => {
@@ -359,13 +399,19 @@ export default function MasterDataView() {
     });
   }, [viewMode, classes, itemsByClass, types, searchQuery]);
 
-  // Filter data based on search query (for "View by Material" mode)
+  // Filter data based on search query and category filter (for "View by Material" mode)
   const filteredCategories = useMemo(() => {
     if (viewMode !== 'material') return [];
-    if (!searchQuery.trim()) return categories;
+    
+    let cats = categories;
+    if (filters.selectedCategoryId) {
+      cats = cats.filter(c => c.id === filters.selectedCategoryId);
+    }
+    
+    if (!searchQuery.trim()) return cats;
 
     const query = searchQuery.toLowerCase();
-    return categories.filter(cat => {
+    return cats.filter(cat => {
       const categoryMatches = cat.name.toLowerCase().includes(query) ||
         (cat.description?.toLowerCase().includes(query) || false);
 
@@ -386,7 +432,7 @@ export default function MasterDataView() {
 
       return categoryMatches || typeMatches || itemMatches;
     });
-  }, [viewMode, categories, typesByCategory, itemsByType, searchQuery]);
+  }, [viewMode, categories, typesByCategory, itemsByType, searchQuery, filters.selectedCategoryId]);
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -591,6 +637,65 @@ export default function MasterDataView() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <select
+            value={filters.selectedCategoryId || ''}
+            onChange={(e) => {
+              setFilter('selectedCategoryId', e.target.value || null);
+              setFilter('selectedTypeId', null); // reset type when category changes
+            }}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">Semua Kategori</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={filters.selectedTypeId || ''}
+            onChange={(e) => setFilter('selectedTypeId', e.target.value || null)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+            disabled={!filters.selectedCategoryId}
+          >
+            <option value="">Semua Tipe</option>
+            {types
+              .filter(t => !filters.selectedCategoryId || t.category_id === filters.selectedCategoryId)
+              .map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={filters.selectedSemester || ''}
+            onChange={(e) => {
+              const sem = e.target.value ? parseInt(e.target.value) : null;
+              setFilter('selectedSemester', sem);
+              if (!sem) setFilter('selectedMonth', null);
+            }}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">Semua Semester</option>
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+          </select>
+
+          <select
+            value={filters.selectedMonth || ''}
+            onChange={(e) => setFilter('selectedMonth', e.target.value ? parseInt(e.target.value) : null)}
+            disabled={!filters.selectedSemester}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+          >
+            <option value="">Semua Bulan</option>
+            {filters.selectedSemester && getSemesterMonths(filters.selectedSemester).map((month) => (
+              <option key={month} value={month}>
+                {getMonthName(month)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

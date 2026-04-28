@@ -1,7 +1,8 @@
 'use client';
 
 import DataTable from '@/components/table/Table';
-import { MaterialItem } from '../../types';
+import { MaterialItem, type Month } from '../../types';
+import { getMonthName } from '../../types';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 
 interface MateriTableProps {
@@ -12,9 +13,11 @@ interface MateriTableProps {
     selectedIds?: Set<string>;
     onToggleSelection?: (id: string) => void;
     onToggleAll?: (selected: boolean) => void;
+    showTargetBadge?: boolean;
+    selectedMonth?: number | null;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth }: MateriTableProps) {
     const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
     const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
 
@@ -90,6 +93,13 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                     {item.description && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
                             {item.description}
+                        </div>
+                    )}
+                    {showTargetBadge && selectedMonth && (
+                        <div className="mt-1">
+                            <span className="px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
+                                Target {getMonthName(selectedMonth as Month)}
+                            </span>
                         </div>
                     )}
                 </div>

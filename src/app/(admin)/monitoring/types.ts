@@ -103,3 +103,29 @@ export function getPredikatWithDesc(score: number): { predikat: string; deskrips
         deskripsi: getDeskripsiPredikat(score)
     };
 }
+
+// ─── Monthly Target Progress ──────────────────────────────────────────────────
+
+export interface MonthlyTargetProgress {
+  month: number
+  total_targets: number
+  completed: number  // nilai >= passing_score
+  percentage: number // (completed / total_targets) * 100
+}
+
+export interface CrossClassHistoryItem {
+  progress: MaterialProgress | null  // null = belum pernah diisi
+  material_item: {
+    id: string
+    name: string
+    material_type?: {
+      id: string
+      name: string
+    }
+  }
+  academic_year_name: string
+  class_master_name: string
+  class_master_id: string
+  academic_year_id: string
+  semester: 1 | 2
+}

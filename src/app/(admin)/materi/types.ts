@@ -11,6 +11,8 @@ import type {
   Month,
   Week,
   DayOfWeek,
+  MonthlyTarget,
+  MonthlyTargetInput,
 } from '@/types/material'
 
 export type {
@@ -25,6 +27,8 @@ export type {
   Month,
   Week,
   DayOfWeek,
+  MonthlyTarget,
+  MonthlyTargetInput,
 }
 
 // Utility functions

@@ -31,6 +31,7 @@ interface StudentSidebarProps {
     onToggle: () => void;
     isLoading?: boolean;
     selectedClassName?: string;
+    monthlyPercentages?: Map<string, number>;
 }
 
 export default function StudentSidebar({
@@ -42,7 +43,8 @@ export default function StudentSidebar({
     isOpen,
     onToggle,
     isLoading = false,
-    selectedClassName = ''
+    selectedClassName = '',
+    monthlyPercentages
 }: StudentSidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -171,6 +173,8 @@ export default function StudentSidebar({
                                     const progressColor = getProgressColor(completion);
                                     const isSelected = student.id === selectedStudentId;
                                     const initial = student.name.charAt(0).toUpperCase();
+                                    const monthlyTarget = monthlyPercentages?.get(student.id);
+                                    const hasCompletedMonthly = monthlyTarget !== undefined && monthlyTarget >= 100;
 
                                     return (
                                         <button
@@ -198,8 +202,13 @@ export default function StudentSidebar({
                                                     {initial}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-gray-900 dark:text-white truncate">
-                                                        {student.name}
+                                                    <div className="font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
+                                                        <span className="truncate">{student.name}</span>
+                                                        {hasCompletedMonthly && (
+                                                            <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                            </svg>
+                                                        )}
                                                     </div>
                                                     {/* Commented until NIS ready 
                                                     <div className="text-xs text-gray-500 dark:text-gray-400">

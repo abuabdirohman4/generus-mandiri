@@ -5,6 +5,9 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import { MaterialItem, ClassMaster } from '../../types';
 import { getAllClasses, bulkUpdateMaterialMapping } from '../../actions';
+import { bulkSetMonthlyTargets } from '../../actions/curriculum/actions';
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import { getSemesterMonths, getMonthName, type Semester, type Month } from '../../types';
 import { toast } from 'sonner';
 
 interface BulkMappingUpdateModalProps {
@@ -19,7 +22,10 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
     const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
     // Map classId -> Set of semesters (1 or 2)
     const [classSemesterMappings, setClassSemesterMappings] = useState<Record<string, Set<1 | 2>>>({});
+    // Map classId -> semester -> Set of months
+    const [classSemesterMonthMappings, setClassSemesterMonthMappings] = useState<Record<string, Record<number, Set<Month>>>>({});
     const [mode, setMode] = useState<'replace' | 'add'>('replace');
+    const [activeAcademicYearId, setActiveAcademicYearId] = useState<string>('');
 
     const [isLoading, setIsLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(false);
@@ -31,6 +37,7 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
             // Reset selections
             setSelectedClasses(new Set());
             setClassSemesterMappings({});
+            setClassSemesterMonthMappings({});
             setMode('replace');
             setGeneralError('');
         }
@@ -41,6 +48,11 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
             setLoadingData(true);
             const classesData = await getAllClasses();
             setClasses(classesData);
+            
+            const activeYear = await getActiveAcademicYear();
+            if (activeYear) {
+                setActiveAcademicYearId(activeYear.id);
+            }
         } catch (error) {
             console.error('Error loading data:', error);
             setGeneralError('Gagal memuat data kelas');
@@ -67,10 +79,38 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
             const newSet = new Set(currentSet);
             if (newSet.has(semester)) {
                 newSet.delete(semester);
+                // Also clear month mappings for this semester
+                setClassSemesterMonthMappings(prevMonthMap => {
+                    const classMonthMap = { ...prevMonthMap[classId] };
+                    delete classMonthMap[semester];
+                    return { ...prevMonthMap, [classId]: classMonthMap };
+                });
             } else {
                 newSet.add(semester);
             }
             return { ...prev, [classId]: newSet };
+        });
+    };
+
+    const handleMonthToggle = (classId: string, semester: 1 | 2, month: Month) => {
+        setClassSemesterMonthMappings(prev => {
+            const classMap = prev[classId] || {};
+            const semesterMap = classMap[semester] || new Set<Month>();
+            const newSemesterMap = new Set(semesterMap);
+            
+            if (newSemesterMap.has(month)) {
+                newSemesterMap.delete(month);
+            } else {
+                newSemesterMap.add(month);
+            }
+            
+            return {
+                ...prev,
+                [classId]: {
+                    ...classMap,
+                    [semester]: newSemesterMap
+                }
+            };
         });
     };
 
@@ -105,6 +145,35 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
 
             const itemIds = selectedItems.map(i => i.id);
             await bulkUpdateMaterialMapping(itemIds, mappingsToSave, mode);
+
+            // Save monthly targets if any are selected
+            if (activeAcademicYearId) {
+                for (const classId of selectedClasses) {
+                    const semesters = classSemesterMonthMappings[classId];
+                    if (!semesters) continue;
+                    
+                    for (const semStr of Object.keys(semesters)) {
+                        const semester = parseInt(semStr) as 1 | 2;
+                        const months = semesters[semester];
+                        
+                        if (months && months.size > 0) {
+                            for (const month of months) {
+                                try {
+                                    await bulkSetMonthlyTargets({
+                                        class_master_id: classId,
+                                        academic_year_id: activeAcademicYearId,
+                                        semester,
+                                        month
+                                    }, itemIds);
+                                } catch (err) {
+                                    console.error(`Failed to save targets for month ${month}:`, err);
+                                    // Non-fatal, just log it
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             toast.success(`${selectedItems.length} item materi berhasil diperbarui`);
             onSuccess();
@@ -219,27 +288,49 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
 
                                                 {/* Semester Selection (Only if class is selected) */}
                                                 {isSelected && (
-                                                    <div className="flex gap-2 ml-6 mt-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleClassSemesterToggle(cls.id, 1)}
-                                                            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${classSemesters.has(1)
-                                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
-                                                                }`}
-                                                        >
-                                                            Semester 1
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleClassSemesterToggle(cls.id, 2)}
-                                                            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${classSemesters.has(2)
-                                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
-                                                                }`}
-                                                        >
-                                                            Semester 2
-                                                        </button>
+                                                    <div className="flex flex-col gap-3 ml-6 mt-1">
+                                                        {[1, 2].map(sem => {
+                                                            const semester = sem as Semester;
+                                                            const isSemSelected = classSemesters.has(semester);
+                                                            const months = getSemesterMonths(semester);
+                                                            const selectedMonths = classSemesterMonthMappings[cls.id]?.[semester] || new Set<Month>();
+                                                            
+                                                            return (
+                                                                <div key={semester} className="flex flex-col gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleClassSemesterToggle(cls.id, semester)}
+                                                                        className={`self-start px-3 py-1 text-xs font-medium rounded-full border transition-colors ${isSemSelected
+                                                                            ? 'bg-blue-600 text-white border-blue-600'
+                                                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                                                                            }`}
+                                                                    >
+                                                                        Semester {semester}
+                                                                    </button>
+                                                                    
+                                                                    {isSemSelected && (
+                                                                        <div className="flex flex-wrap gap-1.5 ml-2">
+                                                                            {months.map(month => {
+                                                                                const isMonthSelected = selectedMonths.has(month);
+                                                                                return (
+                                                                                    <button
+                                                                                        key={month}
+                                                                                        type="button"
+                                                                                        onClick={() => handleMonthToggle(cls.id, semester, month)}
+                                                                                        className={`px-2 py-0.5 text-[10px] font-medium rounded border transition-colors ${isMonthSelected
+                                                                                            ? 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700'
+                                                                                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-750'
+                                                                                        }`}
+                                                                                    >
+                                                                                        {getMonthName(month)}
+                                                                                    </button>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>

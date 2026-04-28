@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getClassProgress, getMaterialsByClassAndSemester, bulkUpdateProgress, getHafalanCategories } from './actions/monitoring';
+import { getClassProgress, getMaterialsByClassAndSemester, bulkUpdateProgress, getHafalanCategories, getMonthlyTargetProgress, getCrossClassHistory, getClassMonthlyTargetSummary } from './actions/monitoring';
+import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types';
+import type { Semester, Month } from '@/app/(admin)/materi/types';
 import { getClasses } from './actions/classes';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok';
@@ -69,6 +71,18 @@ export default function MonitoringPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
+    // New states for Monthly Curriculum Targets
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+    const [monthlyTargetProgress, setMonthlyTargetProgress] = useState<{
+        total_targets: number;
+        completed: number;
+        percentage: number;
+    } | null>(null);
+    const [monthlyTargetItemIds, setMonthlyTargetItemIds] = useState<Set<string>>(new Set());
+    const [crossClassHistory, setCrossClassHistory] = useState<any[]>([]);
+    const [crossClassLoading, setCrossClassLoading] = useState(false);
+    const [monthlyPercentages, setMonthlyPercentages] = useState<Map<string, number>>(new Map());
+
     // Load initial data
     useEffect(() => {
         loadInitialData();
@@ -97,6 +111,63 @@ export default function MonitoringPage() {
             setSelectedStudentId('');
         }
     }, [students]);
+
+    // Load monthly target progress for selected student and month
+    useEffect(() => {
+        if (!selectedStudentId || !selectedClassId || !selectedMonth || !selectedYearId) {
+            setMonthlyTargetProgress(null);
+            setMonthlyTargetItemIds(new Set());
+            return;
+        }
+
+        getMonthlyTargetProgress({
+            classId: selectedClassId,
+            academicYearId: selectedYearId,
+            semester: selectedSemester,
+            month: selectedMonth,
+            studentId: selectedStudentId
+        }).then(result => {
+            setMonthlyTargetProgress({
+                total_targets: result.targets.length,
+                completed: result.progress.filter(p => {
+                    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.hafal ? 100 : 0);
+                    return score >= 70; // passing score default
+                }).length,
+                percentage: result.percentage
+            });
+            setMonthlyTargetItemIds(new Set(result.targets.map((t: any) => t.material_item_id)));
+        }).catch(console.error);
+    }, [selectedStudentId, selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]); // Re-run when progressMap changes to update live
+
+    // Load cross-class history for selected student
+    useEffect(() => {
+        if (selectedStudentId && selectedYearId) {
+            setCrossClassLoading(true);
+            getCrossClassHistory(selectedStudentId, selectedYearId)
+                .then(setCrossClassHistory)
+                .catch(console.error)
+                .finally(() => setCrossClassLoading(false));
+        } else {
+            setCrossClassHistory([]);
+        }
+    }, [selectedStudentId, selectedYearId]);
+
+    // Load class monthly target summary for all students in the class
+    useEffect(() => {
+        if (!selectedClassId || !selectedMonth || !selectedYearId) {
+            setMonthlyPercentages(new Map());
+            return;
+        }
+
+        getClassMonthlyTargetSummary({
+            classId: selectedClassId,
+            academicYearId: selectedYearId,
+            semester: selectedSemester,
+            month: selectedMonth
+        }).then(summary => {
+            setMonthlyPercentages(new Map(summary.map(s => [s.student_id, s.percentage])));
+        }).catch(console.error);
+    }, [selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]);
 
     const loadInitialData = async () => {
         try {
@@ -383,6 +454,7 @@ export default function MonitoringPage() {
                     onToggle={() => setSidebarOpen(!sidebarOpen)}
                     isLoading={loading}
                     selectedClassName={selectedClassName}
+                    monthlyPercentages={monthlyPercentages}
                 />
             )}
 
@@ -465,7 +537,7 @@ export default function MonitoringPage() {
                             {/* Collapsible Content */}
                             <div className={`overflow-hidden transition-all duration-300 ${isFilterCollapsed ? 'max-h-0 md:max-h-none' : 'max-h-96'}`}>
                                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                         {/* Academic Year & Semester */}
                                         <div className="md:col-span-2">
                                             <AcademicYearSelector
@@ -517,6 +589,25 @@ export default function MonitoringPage() {
                                                 />
                                             )}
                                         </div>
+
+                                        {/* Bulan Filter — hanya tampil jika ada kelas dipilih */}
+                                        {selectedClassId && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    Bulan
+                                                </label>
+                                                <select
+                                                    value={selectedMonth ?? ''}
+                                                    onChange={e => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
+                                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
+                                                >
+                                                    <option value="">Semua Bulan</option>
+                                                    {getSemesterMonths(selectedSemester as Semester).map(m => (
+                                                        <option key={m} value={m}>{getMonthName(m)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -700,6 +791,31 @@ export default function MonitoringPage() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Monthly Target Progress Card */}
+                                    {selectedMonth && monthlyTargetProgress && monthlyTargetProgress.total_targets > 0 && (
+                                        <div className="mt-4 p-4 md:mx-4 md:mb-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                                            <div className="flex justify-between items-end mb-2">
+                                                <p className="text-sm font-medium text-indigo-700 dark:text-indigo-400">
+                                                    Target {getMonthName(selectedMonth as Month)}
+                                                </p>
+                                                <span className="text-sm font-bold text-indigo-700 dark:text-indigo-400">
+                                                    {monthlyTargetProgress.completed}/{monthlyTargetProgress.total_targets} Selesai
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 bg-indigo-200 dark:bg-indigo-800 rounded-full h-2.5">
+                                                    <div
+                                                        className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500"
+                                                        style={{ width: `${monthlyTargetProgress.percentage}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 w-8 text-right">
+                                                    {monthlyTargetProgress.percentage}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
 
@@ -754,6 +870,11 @@ export default function MonitoringPage() {
                                                                         <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
                                                                             <td className="px-3 md:px-4 py-2 md:py-3 text-sm text-gray-900 dark:text-white">
                                                                                 {material.name}
+                                                                                {selectedMonth && monthlyTargetItemIds.has(material.id) && (
+                                                                                    <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
+                                                                                        Target
+                                                                                    </span>
+                                                                                )}
                                                                             </td>
                                                                             <td className="px-3 md:px-4 py-2 md:py-3 text-center">
                                                                                 <input
@@ -781,6 +902,65 @@ export default function MonitoringPage() {
                                             ));
                                         })()}
                                     </>
+                                )}
+
+                                {/* Cross-Class History Section */}
+                                {crossClassHistory.length > 0 && (
+                                    <div className="mt-6 border border-amber-200 dark:border-amber-800 rounded-lg overflow-hidden">
+                                        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800">
+                                            <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-500 flex items-center gap-2">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Materi Belum Tuntas (Tahun Ajaran Sebelumnya)
+                                            </h4>
+                                        </div>
+                                        <div className="bg-white dark:bg-gray-800 p-0">
+                                            {crossClassLoading ? (
+                                                <div className="p-4 text-center text-sm text-gray-500">Memuat riwayat...</div>
+                                            ) : (
+                                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                                    {crossClassHistory.map((item, idx) => (
+                                                        <div key={idx} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-750">
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {item.material_name}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                                    TA {item.academic_year_name} • Smt {item.semester} • {item.class_name}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="text-center">
+                                                                    <div className="text-[10px] text-gray-500 uppercase">Nilai Akhir</div>
+                                                                    <div className={`text-sm font-bold ${getGrade(item.nilai).color}`}>
+                                                                        {item.nilai} ({getGrade(item.nilai).grade})
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        const existing = materials.find(m => m.id === item.material_item_id);
+                                                                        if (!existing) {
+                                                                            setMaterials(prev => [...prev, {
+                                                                                id: item.material_item_id,
+                                                                                name: item.material_name,
+                                                                                material_type: { name: 'Riwayat' }
+                                                                            }]);
+                                                                        }
+                                                                        toast.info('Materi ditambahkan ke form penilaian saat ini');
+                                                                    }}
+                                                                >
+                                                                    Uji Ulang
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
 
 

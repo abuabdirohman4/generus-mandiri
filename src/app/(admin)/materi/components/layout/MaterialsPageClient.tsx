@@ -14,7 +14,7 @@ import BulkMappingUpdateModal from '../modals/BulkMappingUpdateModal';
 import CategoryModal from '../modals/CategoryModal';
 import TypeModal from '../modals/TypeModal';
 import { useMateriStore } from '../../stores/materiStore';
-import { isAdmin, isTeacher, canManageMaterials } from '@/lib/accessControl';
+import { isAdmin, isTeacher, canManageMaterials, canManageCurriculum } from '@/lib/accessControl';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { toast } from 'sonner';
 import FloatingActionButton, { type FABAction } from '@/components/ui/button/FloatingActionButton';
@@ -23,11 +23,12 @@ import { PlusIcon, FolderIcon } from '@/lib/icons';
 interface MaterialsPageClientProps {
   classMasters: ClassMaster[];
   userProfile: any;
+  academicYears: Array<{ id: string; name: string; is_active: boolean }>;
 }
 
 type ViewMode = 'daily' | 'master';
 
-export default function MaterialsPageClient({ classMasters, userProfile }: MaterialsPageClientProps) {
+export default function MaterialsPageClient({ classMasters, userProfile, academicYears }: MaterialsPageClientProps) {
   const [activeTab, setActiveTab] = useState<ViewMode>('master');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -262,7 +263,7 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-full px-0">
         {/* Header - Only show when not in master tab with sidebar */}
-        {activeTab !== 'master' && (
+        {/* {activeTab !== 'master' && (
           <div className="px-6 py-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Materi Pembelajaran</h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -271,7 +272,7 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
                 : 'Kelola master data kategori, jenis materi, dan item materi'}
             </p>
           </div>
-        )}
+        )} */}
 
         {/* Tabs - Only show for Admin */}
         {/* {isAdminUser && (
@@ -307,6 +308,8 @@ export default function MaterialsPageClient({ classMasters, userProfile }: Mater
             </div>
           </div>
         )} */}
+
+
 
         {/* Content */}
         {activeTab === 'daily' ? (

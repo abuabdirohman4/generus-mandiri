@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { MaterialItem, MaterialType, MaterialCategory } from '../../types';
+import { useMemo, useState, useEffect } from 'react';
+import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
+import { getMonthlyTargetItemIds } from '../../actions/curriculum/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 // import MateriCardMobile from '../tables/MateriCardMobile';
@@ -40,10 +41,24 @@ export default function MateriContentView({
     onToggleAll,
     onBulkEdit
 }: MateriContentViewProps) {
-    const { filters } = useMateriStore();
+    const { filters, setFilter } = useMateriStore();
 
     const isAdminUser = userProfile ? isAdmin(userProfile) : false;
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
+
+    const [targetItemIds, setTargetItemIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (filters.selectedSemester && filters.selectedMonth) {
+            getMonthlyTargetItemIds({
+                semester: filters.selectedSemester,
+                month: filters.selectedMonth,
+                class_master_id: filters.viewMode === 'by_class' && filters.selectedClassId ? filters.selectedClassId : undefined
+            }).then(ids => setTargetItemIds(new Set(ids)));
+        } else {
+            setTargetItemIds(new Set());
+        }
+    }, [filters.selectedSemester, filters.selectedMonth, filters.viewMode, filters.selectedClassId]);
 
     // Filter items for "by_class" mode - show items based on class + type selection
     const filteredItemsForClassMode = useMemo(() => {
@@ -95,6 +110,11 @@ export default function MateriContentView({
             }
         }
 
+        // Filter by targetItemIds if month filter is active
+        if (filters.selectedSemester && filters.selectedMonth) {
+            result = result.filter(item => targetItemIds.has(item.id));
+        }
+
         // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -105,7 +125,7 @@ export default function MateriContentView({
         }
 
         return result;
-    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, filters.selectedSemester, userProfile, isTeacherUser, searchQuery]);
+    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, filters.selectedSemester, userProfile, isTeacherUser, searchQuery, filters.selectedMonth, targetItemIds]);
 
     // Get current type/category info for header
     const selectedType = useMemo(() => {
@@ -150,6 +170,11 @@ export default function MateriContentView({
             result = result.filter(i => i.material_type_id === filters.selectedTypeId);
         }
 
+        // Filter by selected semester and month targets
+        if (filters.selectedSemester && filters.selectedMonth) {
+            result = result.filter(item => targetItemIds.has(item.id));
+        }
+
         // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -160,7 +185,7 @@ export default function MateriContentView({
         }
 
         return result;
-    }, [items, types, filters, userProfile, isTeacherUser, searchQuery]);
+    }, [items, types, filters, userProfile, isTeacherUser, searchQuery, targetItemIds]);
 
     // Get header title
     const headerTitle = selectedType?.name || selectedCategory?.name || 'Semua Materi';
@@ -176,7 +201,7 @@ export default function MateriContentView({
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                         placeholder="Cari materi disini..."
-                        className="w-full px-4 py-3 pl-11 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                        className="w-full px-4 py-3 pl-11 border bg-white border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
                     <svg
                         className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"
@@ -223,6 +248,65 @@ export default function MateriContentView({
                 )}
             </div>
 
+            {/* Filter Bar */}
+            <div className="flex flex-wrap gap-3 py-4 border-b border-gray-200 dark:border-gray-700">
+                <select
+                    value={filters.selectedCategoryId || ''}
+                    onChange={(e) => {
+                        setFilter('selectedCategoryId', e.target.value || null);
+                        setFilter('selectedTypeId', null); // reset type when category changes
+                    }}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                    <option value="">Semua Kategori</option>
+                    {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                </select>
+
+                <select
+                    value={filters.selectedTypeId || ''}
+                    onChange={(e) => setFilter('selectedTypeId', e.target.value || null)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                    disabled={!filters.selectedCategoryId}
+                >
+                    <option value="">Semua Tipe</option>
+                    {types
+                        .filter(t => !filters.selectedCategoryId || t.category_id === filters.selectedCategoryId)
+                        .map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                </select>
+
+                <select
+                    value={filters.selectedSemester || ''}
+                    onChange={(e) => {
+                        const sem = e.target.value ? parseInt(e.target.value) : null;
+                        setFilter('selectedSemester', sem);
+                        if (!sem) setFilter('selectedMonth', null);
+                    }}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                >
+                    <option value="">Semua Semester</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                </select>
+
+                <select
+                    value={filters.selectedMonth || ''}
+                    onChange={(e) => setFilter('selectedMonth', e.target.value ? parseInt(e.target.value) : null)}
+                    disabled={!filters.selectedSemester}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                >
+                    <option value="">Semua Bulan</option>
+                    {filters.selectedSemester && getSemesterMonths(filters.selectedSemester).map((month) => (
+                        <option key={month} value={month}>
+                            {getMonthName(month)}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             {/* Conditional Rendering Based on View Mode */}
             {filters.viewMode === 'by_material' ? (
                 <>
@@ -240,6 +324,8 @@ export default function MateriContentView({
                             selectedIds={selectedIds}
                             onToggleSelection={onToggleSelection}
                             onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map(i => i.id))}
+                            showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
+                            selectedMonth={filters.selectedMonth}
                         />
                     </div>
 
@@ -300,6 +386,8 @@ export default function MateriContentView({
                             selectedIds={selectedIds}
                             onToggleSelection={onToggleSelection}
                             onToggleAll={(selected) => onToggleAll?.(selected, filteredItemsForClassMode.map(i => i.id))}
+                            showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
+                            selectedMonth={filters.selectedMonth}
                         />
                     </div>
 

@@ -129,3 +129,41 @@ export type Semester = 1 | 2
 export type Month = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 export type Week = 1 | 2 | 3 | 4
 export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6
+
+// ─── Monthly Curriculum Targets ───────────────────────────────────────────────
+
+/**
+ * Monthly curriculum target for a class master
+ * week and day_of_week are nullable — null means month-level target (no week/day granularity)
+ */
+export interface MonthlyTarget {
+  id: string
+  class_master_id: string
+  academic_year_id: string
+  semester: Semester
+  month: Month
+  week?: Week | null
+  day_of_week?: DayOfWeek | null
+  material_item_id: string
+  display_order: number
+  created_by?: string | null
+  created_at: string
+  updated_at: string
+  material_item?: MaterialItem
+}
+
+export interface MonthlyTargetInput {
+  class_master_id: string
+  academic_year_id: string
+  semester: Semester
+  month: Month
+  week?: Week | null
+  day_of_week?: DayOfWeek | null
+  material_item_id: string
+  display_order?: number
+}
+
+export interface AppSettingPassingScore {
+  default: number
+  by_category: Record<string, number> // category_id → score
+}

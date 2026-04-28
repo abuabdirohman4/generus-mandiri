@@ -35,3 +35,11 @@ export {
     getDayMaterialAssignments,
     deleteDayMaterialAssignment,
 } from './items/actions'
+
+// ─── Curriculum (Monthly Targets) ─────────────────────────────────────────────
+export {
+  getMonthlyTargets,
+  createMonthlyTarget,
+  deleteMonthlyTarget,
+  bulkSetMonthlyTargets,
+} from './curriculum/actions'

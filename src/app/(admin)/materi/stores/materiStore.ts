@@ -7,6 +7,7 @@ export interface MateriFilters {
     selectedTypeId: string | null
     selectedClassId: string | null
     selectedSemester: 1 | 2 | null
+    selectedMonth: number | null
     searchQuery: string
     sidebarCollapsed: boolean
 }
@@ -24,6 +25,7 @@ const defaultFilters: MateriFilters = {
     selectedTypeId: null,
     selectedClassId: null,
     selectedSemester: null,
+    selectedMonth: null,
     searchQuery: '',
     sidebarCollapsed: false
 }
@@ -53,6 +55,8 @@ export const useMateriStore = create<MateriState>()(
                     selectedCategoryId: null,
                     selectedTypeId: null,
                     selectedClassId: null,
+                    selectedSemester: null,
+                    selectedMonth: null,
                     searchQuery: ''
                 }
             })
