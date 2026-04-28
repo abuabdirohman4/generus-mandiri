@@ -18,6 +18,7 @@ import LoadingState from './components/LoadingState'
 import Spinner from '@/components/ui/spinner/Spinner'
 import Pagination from '@/components/ui/pagination/Pagination'
 import { useMeetingFormSettings } from './hooks/useMeetingFormSettings'
+import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 
 export default function AbsensiPage() {
   const router = useRouter()
@@ -31,6 +32,8 @@ export default function AbsensiPage() {
 
   // Prefetch meeting form settings for optimal modal performance
   useMeetingFormSettings(userProfile?.id)
+
+  const { activityTypes: myActivityTypes } = useMyActivityTypes()
 
   // Get UI state from Zustand store (excluding currentPage - now from URL)
   const {
@@ -452,6 +455,7 @@ export default function AbsensiPage() {
           showKelas={true}
           showActivityType={true}
           showActivityLevel={true}
+          activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
           cascadeFilters={true}
         />
 

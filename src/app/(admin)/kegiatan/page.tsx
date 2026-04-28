@@ -55,9 +55,9 @@ export default function KegiatanPage() {
 
   // Build available tabs
   const tabs = [
-    { id: 'tipe' as TabType, label: 'Tipe Kegiatan', count: activityTypes?.length || 0 },
+    { id: 'tipe' as TabType, label: 'Tipe Pertemuan', count: activityTypes?.length || 0 },
     ...(isSuperAdminUser
-      ? [{ id: 'tingkat' as TabType, label: 'Tingkat Kegiatan', count: activityLevels?.length || 0 }]
+      ? [{ id: 'tingkat' as TabType, label: 'Tingkat Pertemuan', count: activityLevels?.length || 0 }]
       : []),
   ]
 
@@ -107,7 +107,7 @@ export default function KegiatanPage() {
       closeDeleteConfirm()
     } catch (err) {
       console.error('Error deleting activity type:', err)
-      toast.error(err instanceof Error ? err.message : 'Gagal menghapus tipe kegiatan')
+      toast.error(err instanceof Error ? err.message : 'Gagal menghapus tipe pertemuan')
     } finally {
       setIsDeleting(false)
     }
@@ -148,8 +148,8 @@ export default function KegiatanPage() {
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 {isSuperAdminUser
-                  ? 'Kelola tipe dan tingkat kegiatan'
-                  : 'Kelola tipe kegiatan'}
+                  ? 'Kelola tipe dan tingkat pertemuan'
+                  : 'Kelola tipe pertemuan'}
               </p>
             </div>
             {activeTab === 'tipe' && (
@@ -227,8 +227,8 @@ export default function KegiatanPage() {
           isOpen={deleteConfirm.isOpen}
           onClose={closeDeleteConfirm}
           onConfirm={handleDelete}
-          title="Hapus Tipe Kegiatan?"
-          message={`Apakah Anda yakin ingin menghapus tipe kegiatan "${deleteConfirm.item?.name}"?`}
+          title="Hapus Tipe Pertemuan?"
+          message={`Apakah Anda yakin ingin menghapus tipe pertemuan "${deleteConfirm.item?.name}"?`}
           confirmText="Hapus"
           cancelText="Batal"
           isDestructive={true}

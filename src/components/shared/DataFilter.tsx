@@ -27,6 +27,8 @@ interface DataFilterProps {
   showStatus?: boolean // active/graduated/inactive/all
   showActivityType?: boolean
   showActivityLevel?: boolean
+  /** Override the activity type options shown in the filter (e.g. pass user's allowed types only) */
+  activityTypeOptions?: { value: string; label: string }[]
   /** @deprecated use showActivityType instead */
   showMeetingType?: boolean
   showDaerah?: boolean // Override role-based visibility
@@ -98,6 +100,7 @@ export default function DataFilter({
   showStatus = false,
   showActivityType = false,
   showActivityLevel = false,
+  activityTypeOptions,
   showMeetingType = false, // deprecated
   showDaerah,
   showDesa,
@@ -778,7 +781,7 @@ export default function DataFilter({
             label="Tipe Kegiatan"
             value={filters?.activityType || []}
             onChange={handleActivityTypeChange}
-            options={(activityTypes || []).filter((t: any) => t.is_active).map((t: any) => ({
+            options={activityTypeOptions ?? (activityTypes || []).filter((t: any) => t.is_active).map((t: any) => ({
               value: t.id,
               label: t.name
             }))}

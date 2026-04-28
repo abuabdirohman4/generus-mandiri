@@ -6,6 +6,7 @@ import { useLaporanPage } from './hooks'
 import { FilterSection, SummaryCards, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
 import DataFilter from '@/components/shared/DataFilter'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
+import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -38,6 +39,8 @@ export default function LaporanPage() {
     classOptions,
     periodOptions
   } = useLaporanPage()
+
+  const { activityTypes: myActivityTypes } = useMyActivityTypes()
 
   if (hasError) {
     return (
@@ -111,6 +114,7 @@ export default function LaporanPage() {
               activityLevel: filters.activityLevel || []
             }}
             onOrganisasiFilterChange={handleOrganisasiFilterChange}
+            activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
           />
         </div>
 

@@ -31,6 +31,7 @@ interface FilterSectionProps {
   classList: any[]
   organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }
   onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }) => void
+  activityTypeOptions?: { value: string; label: string }[]
 }
 
 export default function FilterSection({
@@ -50,7 +51,8 @@ export default function FilterSection({
   kelompokList,
   classList,
   organisasiFilters,
-  onOrganisasiFilterChange
+  onOrganisasiFilterChange,
+  activityTypeOptions
 }: FilterSectionProps) {
 
   const monthOptions = [
@@ -135,6 +137,7 @@ export default function FilterSection({
             showGender={true}
             showActivityType={true}
             showActivityLevel={true}
+            activityTypeOptions={activityTypeOptions}
             // cascadeFilters={false}
           />
 
@@ -175,6 +178,7 @@ export default function FilterSection({
             showGender={true}
             showActivityType={true}
             showActivityLevel={true}
+            activityTypeOptions={activityTypeOptions}
             cascadeFilters={false}
           />
 
