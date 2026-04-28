@@ -455,8 +455,11 @@ export default function MeetingAttendancePage() {
       })
     }
 
-    // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
-    if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+    // For SAMBUNG_DESA / Desa-level meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
+    const desaLevelIdAdmin = activityLevels?.find((l: any) => l.code === 'DESA')?.id
+    const isDesaLevelMeetingForAdmin = (desaLevelIdAdmin && meeting.activity_level_id === desaLevelIdAdmin) ||
+      (!meeting.activity_level_id && meeting.meeting_type_code === 'SAMBUNG_DESA')
+    if (isDesaLevelMeetingForAdmin) {
       classDetails = classDetails.filter(cls => {
         const classData = classesData.find(c => c.id === cls.id) ||
           (meeting.allClasses && Array.isArray(meeting.allClasses)

@@ -41,7 +41,7 @@ export async function createMeeting(data: CreateMeetingData) {
     // Get user profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, role')
+      .select('id, role, desa_id, daerah_id, kelompok_id')
       .eq('id', user.id)
       .single()
 
@@ -60,22 +60,23 @@ export async function createMeeting(data: CreateMeetingData) {
     const adminClient = await createAdminClient()
 
     // If user is a teacher, verify they teach all selected classes
-    // Use admin client to bypass RLS restrictions
+    // Hierarchical teachers (Guru Desa/Daerah) have desa_id/daerah_id but no teacher_classes rows —
+    // they access all classes in their scope, so skip the per-class ownership check
     if (profile.role === 'teacher') {
-      // First, get ALL classes that the teacher teaches (not filtered by data.classIds)
-      // This ensures we get all classes regardless of order or filter state
       const { data: allTeacherClasses } = await adminClient
         .from('teacher_classes')
         .select('class_id')
         .eq('teacher_id', user.id)
 
       const allTeacherClassIds = new Set(allTeacherClasses?.map(tc => tc.class_id) || [])
+      const isHierarchicalTeacher = allTeacherClassIds.size === 0 &&
+        !!(profile.desa_id || profile.daerah_id)
 
-      // Now validate that all selected classes are in the teacher's classes
-      const invalidClasses = data.classIds.filter(id => !allTeacherClassIds.has(id))
-
-      if (invalidClasses.length > 0) {
-        return { success: false, error: 'You can only create meetings for your own classes' }
+      if (!isHierarchicalTeacher) {
+        const invalidClasses = data.classIds.filter(id => !allTeacherClassIds.has(id))
+        if (invalidClasses.length > 0) {
+          return { success: false, error: 'You can only create meetings for your own classes' }
+        }
       }
     }
 
@@ -2056,5 +2057,45 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
   } catch (error) {
     console.error('Error in getMeetingsWithStats:', error)
     return { success: false, error: 'Internal server error', data: null }
+  }
+}
+
+/**
+ * Returns the allowed class IDs for the current teacher based on teacher_class_masters.
+ * allowedClassIds: null = no restriction (teacher sees all classes in their scope)
+ * allowedClassIds: string[] = restricted to these specific class IDs only
+ *
+ * Used by CreateMeetingModal to filter "Pilih Kelas" for Guru Desa/Daerah.
+ */
+export async function getMyAllowedClassesForMeeting(): Promise<{
+  allowedClassIds: string[] | null
+}> {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { allowedClassIds: null }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, role, daerah_id, desa_id, kelompok_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) return { allowedClassIds: null }
+
+    // Only applies to teachers — admins/superadmin see everything
+    if (profile.role !== 'teacher') return { allowedClassIds: null }
+
+    const allowedSet = await getTeacherAllowedClassIds(user.id, profile)
+
+    // null = no class master restriction (teacher sees all in their scope)
+    if (allowedSet === null) return { allowedClassIds: null }
+
+    // Empty set = teacher has restrictions but no matching classes found
+    return { allowedClassIds: [...allowedSet] }
+  } catch (error) {
+    console.error('Error in getMyAllowedClassesForMeeting:', error)
+    return { allowedClassIds: null }
   }
 }

@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses, type Class } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
+import { useMyAllowedClasses } from '@/hooks/useMyAllowedClasses'
 import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
@@ -50,6 +51,10 @@ export default function CreateMeetingModal({
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
+  const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
+  // For hierarchical teachers (Guru Desa/Daerah): user picks deduplicated class names,
+  // selectedClassIds is auto-derived from selectedClassNames × selectedKelompokIds
+  const [selectedClassNames, setSelectedClassNames] = useState<string[]>([])
   const [meetingType, setMeetingType] = useState<string>('')
   const [activityTypeId, setActivityTypeId] = useState<string | null>(null)
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
@@ -72,6 +77,7 @@ export default function CreateMeetingModal({
   const { settings: formSettings, isLoading: isLoadingSettings } = useMeetingFormSettings(userProfile?.id)
   const { activityTypes: myActivityTypes, isLoading: activityTypesLoading } = useMyActivityTypes()
   const { activityLevels } = useActivityLevels()
+  const { allowedClassIds, isLoading: allowedClassesLoading } = useMyAllowedClasses()
 
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
@@ -158,6 +164,18 @@ export default function CreateMeetingModal({
     return counts
   }, [students])
 
+  // Kelompok yang tersedia untuk Guru Desa (filter by desa_id)
+  const availableKelompok = useMemo(() => {
+    if (!kelompok || !userProfile) return []
+    // Hanya untuk Guru Desa (ada desa_id, tidak ada kelompok_id langsung)
+    if (!isHierarchicalTeacher) return []
+    if (userProfile.desa_id && !userProfile.kelompok_id) {
+      return kelompok.filter((k: any) => k.desa_id === userProfile.desa_id)
+    }
+    // Guru Daerah: tampilkan semua (scope terpisah, bisa dikembangkan nanti)
+    return []
+  }, [kelompok, userProfile, isHierarchicalTeacher])
+
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
   const availableClasses = useMemo(() => {
@@ -191,15 +209,26 @@ export default function CreateMeetingModal({
     }
 
     // Sort by class_master.sort_order (existing logic)
-    const sorted = sortClassesByMasterOrder(filtered)
+    let sorted = sortClassesByMasterOrder(filtered)
 
-    // NEW: Filter out classes with 0 active students
+    // Apply class master restriction for Guru Desa/Daerah
+    if (isHierarchicalTeacher && allowedClassIds !== null) {
+      sorted = sorted.filter(cls => allowedClassIds.includes(cls.id))
+    }
+
+    // Apply kelompok filter if kelompok selector is active and user has selected kelompok
+    if (isHierarchicalTeacher && availableKelompok.length > 1 && selectedKelompokIds.length > 0) {
+      sorted = sorted.filter(cls =>
+        (cls as any).kelompok_id && selectedKelompokIds.includes((cls as any).kelompok_id)
+      )
+    }
+
+    // Filter out classes with 0 active students
     const withStudents = sorted.filter(cls => {
       const count = classStudentCounts.get(cls.id) || 0
       return count > 0
     })
 
-    // Edge case: warn if all classes were filtered out
     if (withStudents.length === 0) {
       console.warn('No classes with active students found')
     }
@@ -212,8 +241,45 @@ export default function CreateMeetingModal({
     classes?.length,
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(','),
     isHierarchicalTeacher,
-    classStudentCounts // NEW dependency
+    classStudentCounts,
+    allowedClassIds,
+    selectedKelompokIds,
+    availableKelompok
   ])
+
+  // Deduplicated class name options (for hierarchical teacher — Opsi B)
+  // Unique class names preserving sort_order via first occurrence
+  const dedupedClassOptions = useMemo(() => {
+    if (!isHierarchicalTeacher) return []
+    const seen = new Set<string>()
+    const result: { id: string; label: string; name: string }[] = []
+    for (const cls of availableClasses) {
+      if (!seen.has(cls.name)) {
+        seen.add(cls.name)
+        result.push({ id: cls.name, label: cls.name, name: cls.name })
+      }
+    }
+    return result
+  }, [isHierarchicalTeacher, availableClasses])
+
+  // For hierarchical teachers: auto-derive selectedClassIds from selectedClassNames × selectedKelompokIds
+  useEffect(() => {
+    if (!isHierarchicalTeacher) return
+    const kelompokFilter = selectedKelompokIds.length > 0 ? new Set(selectedKelompokIds) : null
+    const derived = selectedClassNames.length === 0
+      ? []
+      : availableClasses
+          .filter(cls =>
+            selectedClassNames.includes(cls.name) &&
+            (kelompokFilter === null || ((cls as any).kelompok_id && kelompokFilter.has((cls as any).kelompok_id)))
+          )
+          .map(cls => cls.id)
+    setSelectedClassIds(prev => {
+      if (prev.length === derived.length && prev.every((id, i) => id === derived[i])) return prev
+      return derived
+    })
+  }, [isHierarchicalTeacher, selectedClassNames, selectedKelompokIds, availableClasses])
+
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
     // Find first class from student.classes that exists in selectedClassIds
@@ -279,6 +345,22 @@ export default function CreateMeetingModal({
     return [...filteredStudents, ...previouslySelected]
   }, [filteredStudents, previouslySelectedStudents])
 
+  // Auto-init kelompok selection when modal opens for Guru Desa
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedKelompokIds([])
+      return
+    }
+    if (availableKelompok.length === 0) return
+    if (availableKelompok.length === 1) {
+      // Only 1 kelompok → auto-select it silently
+      setSelectedKelompokIds([availableKelompok[0].id])
+      return
+    }
+    // Multiple kelompok → default pilih semua
+    setSelectedKelompokIds(availableKelompok.map((k: any) => k.id))
+  }, [isOpen, availableKelompok.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Force revalidate students when modal opens to get fresh data
   useEffect(() => {
     if (isOpen) {
@@ -313,7 +395,18 @@ export default function CreateMeetingModal({
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
       const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
-      setSelectedClassIds(meetingClassIds)
+      if (isHierarchicalTeacher) {
+        // Derive selected names from class IDs
+        const names = [...new Set(
+          availableClasses
+            .filter(c => meetingClassIds.includes(c.id))
+            .map(c => c.name)
+        )]
+        setSelectedClassNames(names)
+        // selectedClassIds will be auto-derived by the useEffect above
+      } else {
+        setSelectedClassIds(meetingClassIds)
+      }
       initializedRef.current = true
     } else if (classId) {
       // Create mode with specific class
@@ -322,18 +415,18 @@ export default function CreateMeetingModal({
       setSelectedClassIds(classIds)
       initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
-      // Create mode: Determine selection based on UI visibility
-      // UI is shown when: formSettings.showClassSelection AND availableClasses.length > 1
-      const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
-
-      if (isUIShown) {
-        // Class selection UI IS visible: start with NO classes selected
-        // User must explicitly choose which classes to include
-        setSelectedClassIds([])
+      if (isHierarchicalTeacher) {
+        // Hierarchical teacher: default pilih semua nama kelas (user bisa uncheck)
+        setSelectedClassNames(dedupedClassOptions.map(o => o.name))
+        // selectedClassIds auto-derived by useEffect
       } else {
-        // Class selection UI is HIDDEN: auto-select available classes
-        // This handles both single-class teachers and showClassSelection=false
-        setSelectedClassIds(availableClasses.map(cls => cls.id))
+        // Create mode: Determine selection based on UI visibility
+        const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
+        if (isUIShown) {
+          setSelectedClassIds([])
+        } else {
+          setSelectedClassIds(availableClasses.map(cls => cls.id))
+        }
       }
       initializedRef.current = true
     }
@@ -344,26 +437,21 @@ export default function CreateMeetingModal({
   useEffect(() => {
     if (!isOpen || initializedRef.current) return
     if (!classId && !meeting && availableClasses && availableClasses.length > 0) {
-      setSelectedClassIds(prev => {
-        // Only set if not already set
-        if (prev.length === 0) {
-          // Check if class selection UI is actually shown
-          // UI is shown when: formSettings.showClassSelection AND availableClasses.length > 1
-          const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
-
-          if (isUIShown) {
-            // Class selection UI IS visible: start with NO classes selected
-            return []
-          } else {
-            // Class selection UI is HIDDEN: auto-select available classes
-            // This handles both single-class teachers and showClassSelection=false
-            return availableClasses.map(cls => cls.id)
-          }
+      if (isHierarchicalTeacher) {
+        if (dedupedClassOptions.length > 0) {
+          setSelectedClassNames(dedupedClassOptions.map(o => o.name))
         }
-        return prev
-      })
+      } else {
+        setSelectedClassIds(prev => {
+          if (prev.length === 0) {
+            const isUIShown = formSettings.showClassSelection && availableClasses.length > 1
+            return isUIShown ? [] : availableClasses.map(cls => cls.id)
+          }
+          return prev
+        })
+      }
     }
-  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id, formSettings.showClassSelection])
+  }, [isOpen, availableClasses?.length, availableClasses?.[0]?.id, formSettings.showClassSelection, isHierarchicalTeacher, dedupedClassOptions?.length])
 
   // Update form data when meeting changes
   useEffect(() => {
@@ -633,8 +721,22 @@ export default function CreateMeetingModal({
         }
       } else {
         // Create mode
+        // Derive kelompokIds: prefer selectedKelompokIds (Guru Desa path), else infer from selected classes
+        const kelompokIds: string[] =
+          isHierarchicalTeacher && selectedKelompokIds.length > 0
+            ? selectedKelompokIds
+            : [...new Set(
+                selectedClassIds
+                  .map(id => {
+                    const cls = availableClasses.find(c => c.id === id)
+                    return (cls as any)?.kelompok_id as string | undefined
+                  })
+                  .filter((id): id is string => Boolean(id))
+              )]
+
         const result = await createMeeting({
           classIds: selectedClassIds,
+          kelompokIds: kelompokIds.length > 0 ? kelompokIds : undefined,
           date: formData.date.format('YYYY-MM-DD'),
           title: formData.title,
           topic: formData.topic || undefined,
@@ -674,6 +776,8 @@ export default function CreateMeetingModal({
     setActivityTypeId(null)
     setSelectedStudentIds([])
     setSelectedGender(null)
+    setSelectedKelompokIds([])
+    setSelectedClassNames([])
     setPreviouslySelectedStudents([])
     isManualSelectionRef.current = false
     previousClassIdsRef.current = []
@@ -701,53 +805,71 @@ export default function CreateMeetingModal({
             </div>
           ) : (
             <>
-              {/* Class Selection */}
-              {/* Class Selector - Only show if user has more than 1 class */}
-              {formSettings.showClassSelection && availableClasses.length > 1 && (
+              {/* Kelompok Selector — hanya untuk Guru Desa dengan >1 kelompok */}
+              {isHierarchicalTeacher && availableKelompok.length > 1 && (
                 <div className="mb-4">
                   <MultiSelectCheckbox
-                    label="Pilih Kelas"
-                    items={(() => {
-                      // For teacher with multiple classes, check for duplicate names
-                      if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
-                        // Create mapping kelompok_id -> kelompok name
-                        const kelompokMap = new Map(
-                          kelompok.map((k: any) => [k.id, k.name])
-                        )
-
-                        // Check for duplicate class names
-                        const nameCounts = availableClasses.reduce((acc, cls: any) => {
-                          acc[cls.name] = (acc[cls.name] || 0) + 1
-                          return acc
-                        }, {} as Record<string, number>)
-
-                        // Format labels
-                        return availableClasses.map((cls: any) => {
-                          const hasDuplicate = nameCounts[cls.name] > 1
-                          const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
-                          const label = hasDuplicate && kelompokName
-                            ? `${cls.name} (${kelompokName})`
-                            : cls.name
-
-                          return {
-                            id: cls.id,
-                            label
-                          }
-                        })
-                      }
-
-                      // Default: no format change
-                      return availableClasses.map(cls => ({
-                        id: cls.id,
-                        label: cls.name
-                      }))
-                    })()}
-                    selectedIds={selectedClassIds}
-                    onChange={setSelectedClassIds}
-                    hint="Pilih satu atau lebih kelas untuk pertemuan ini"
-                    disabled={isSubmitting || classesLoading}
+                    label="Pilih Kelompok"
+                    items={availableKelompok.map((k: any) => ({
+                      id: k.id,
+                      label: k.name
+                    }))}
+                    selectedIds={selectedKelompokIds}
+                    onChange={setSelectedKelompokIds}
+                    hint="Pilih kelompok yang akan mengikuti pertemuan ini"
+                    disabled={isSubmitting || allowedClassesLoading}
                   />
                 </div>
+              )}
+
+              {/* Class Selection */}
+              {formSettings.showClassSelection && (
+                isHierarchicalTeacher ? (
+                  // Hierarchical teacher (Guru Desa/Daerah): show deduplicated class names
+                  dedupedClassOptions.length > 0 && (
+                    <div className="mb-4">
+                      <MultiSelectCheckbox
+                        label="Pilih Kelas"
+                        items={dedupedClassOptions.map(o => ({ id: o.name, label: o.label }))}
+                        selectedIds={selectedClassNames}
+                        onChange={setSelectedClassNames}
+                        hint={`Pilih tingkat kelas untuk pertemuan ini (${selectedClassIds.length} kelas dipilih)`}
+                        disabled={isSubmitting || classesLoading || allowedClassesLoading}
+                      />
+                    </div>
+                  )
+                ) : (
+                  // Regular teacher / admin: show individual classes
+                  availableClasses.length > 1 && (
+                    <div className="mb-4">
+                      <MultiSelectCheckbox
+                        label="Pilih Kelas"
+                        items={(() => {
+                          if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
+                            const kelompokMap = new Map(kelompok.map((k: any) => [k.id, k.name]))
+                            const nameCounts = availableClasses.reduce((acc, cls: any) => {
+                              acc[cls.name] = (acc[cls.name] || 0) + 1
+                              return acc
+                            }, {} as Record<string, number>)
+                            return availableClasses.map((cls: any) => {
+                              const hasDuplicate = nameCounts[cls.name] > 1
+                              const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
+                              return {
+                                id: cls.id,
+                                label: hasDuplicate && kelompokName ? `${cls.name} (${kelompokName})` : cls.name
+                              }
+                            })
+                          }
+                          return availableClasses.map(cls => ({ id: cls.id, label: cls.name }))
+                        })()}
+                        selectedIds={selectedClassIds}
+                        onChange={setSelectedClassIds}
+                        hint="Pilih satu atau lebih kelas untuk pertemuan ini"
+                        disabled={isSubmitting || classesLoading}
+                      />
+                    </div>
+                  )
+                )
               )}
 
               {/* Gender Filter */}

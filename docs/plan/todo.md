@@ -17,6 +17,7 @@
         - Pemateri
         - Materi
     - Kalender kegiatan atau agenda kegiatan
+    - Untuk Kelas 1 - 6 Warlob, di modal create pertemuan (Warlob 2) tidak muncul tapi di detailnya bisa muncul
 
 - Siswa
     - [ ] Admin belum selalu mendapat archive & transfer
