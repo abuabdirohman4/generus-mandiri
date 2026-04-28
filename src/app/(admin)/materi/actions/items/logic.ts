@@ -10,21 +10,15 @@ import type { MaterialItem, ClassMaster } from '../../types'
 // ─── Class Master Transformations ─────────────────────────────────────────────
 
 /**
- * Filter class masters to only CABERAWIT and PAUD categories
+ * Map class masters to ClassMaster shape
  */
 export function filterCaberawitClasses(classes: any[]): ClassMaster[] {
-    return classes
-        .filter((cls: any) => {
-            const category = Array.isArray(cls.category) ? cls.category[0] : cls.category
-            const categoryCode = category?.code?.toUpperCase()
-            return categoryCode === 'CABERAWIT' || categoryCode === 'PAUD'
-        })
-        .map((cls: any) => ({
-            id: cls.id,
-            name: cls.name,
-            sort_order: cls.sort_order ?? 0,
-            category: Array.isArray(cls.category) ? cls.category[0] : cls.category
-        }))
+    return classes.map((cls: any) => ({
+        id: cls.id,
+        name: cls.name,
+        sort_order: cls.sort_order ?? 0,
+        category: Array.isArray(cls.category) ? cls.category[0] : cls.category
+    }))
 }
 
 /**

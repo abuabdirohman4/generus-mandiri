@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../../types';
-import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
+import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getAllClasses, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
 import MaterialsLayout from '../daily/MaterialsLayout';
 import MasterDataView from '../views/MasterDataView';
 import MateriContentView from '../views/MateriContentView';
@@ -100,11 +100,11 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
         setItems(itemsData);
         setClasses([]); // Clear classes when in material mode
       } else {
-        // Load data for class view - need class mappings
+        // Load data for class view - all 17 classes + items with mappings
         const [categoriesData, typesData, classesData, itemsData] = await Promise.all([
           getMaterialCategories(),
           getMaterialTypes(),
-          getClassesWithMaterialItems(),
+          getAllClasses(),
           getMaterialItemsWithClassMappings()
         ]);
         setCategories(categoriesData);
@@ -421,6 +421,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
                     onToggleSelection={handleToggleSelection}
                     onToggleAll={handleToggleAll}
                     onBulkEdit={handleBulkEdit}
+                    classMasters={classMasters}
                   />
                 )}
               </div>

@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import { MaterialItem, ClassMaster } from '../../types';
 import { getAllClasses, bulkUpdateMaterialMapping } from '../../actions';
-import { bulkSetMonthlyTargets } from '../../actions/curriculum/actions';
+import { syncItemMonthlyTargetsBulk } from '../../actions/curriculum/actions';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { getSemesterMonths, getMonthName, type Semester, type Month } from '../../types';
 import { toast } from 'sonner';
@@ -146,33 +146,23 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
             const itemIds = selectedItems.map(i => i.id);
             await bulkUpdateMaterialMapping(itemIds, mappingsToSave, mode);
 
-            // Save monthly targets if any are selected
-            if (activeAcademicYearId) {
-                for (const classId of selectedClasses) {
-                    const semesters = classSemesterMonthMappings[classId];
-                    if (!semesters) continue;
+            // Save monthly targets
+            const monthlyMappings: Array<{ class_master_id: string; semester: number; month: number }> = [];
+            Object.entries(classSemesterMonthMappings).forEach(([classId, semesters]) => {
+                if (!selectedClasses.has(classId)) return;
+                
+                Object.entries(semesters).forEach(([semStr, months]) => {
+                    const semester = parseInt(semStr);
+                    if (!classSemesterMappings[classId]?.has(semester as 1 | 2)) return;
                     
-                    for (const semStr of Object.keys(semesters)) {
-                        const semester = parseInt(semStr) as 1 | 2;
-                        const months = semesters[semester];
-                        
-                        if (months && months.size > 0) {
-                            for (const month of months) {
-                                try {
-                                    await bulkSetMonthlyTargets({
-                                        class_master_id: classId,
-                                        academic_year_id: activeAcademicYearId,
-                                        semester,
-                                        month
-                                    }, itemIds);
-                                } catch (err) {
-                                    console.error(`Failed to save targets for month ${month}:`, err);
-                                    // Non-fatal, just log it
-                                }
-                            }
-                        }
-                    }
-                }
+                    months.forEach(month => {
+                        monthlyMappings.push({ class_master_id: classId, semester, month });
+                    });
+                });
+            });
+
+            if (monthlyMappings.length > 0 || mode === 'replace') {
+                await syncItemMonthlyTargetsBulk(itemIds, monthlyMappings, mode);
             }
 
             toast.success(`${selectedItems.length} item materi berhasil diperbarui`);

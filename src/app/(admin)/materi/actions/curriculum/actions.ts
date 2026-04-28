@@ -13,6 +13,7 @@ import {
   fetchMonthlyTargetItemIds,
   fetchMonthlyTargetsByItemId,
   deleteMonthlyTargetsByItem,
+  deleteMonthlyTargetsByItemIds,
   fetchMonthlyTargetsByItemIds
 } from './queries'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
@@ -191,6 +192,62 @@ export async function syncItemMonthlyTargets(
     const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records as any)
     if (insertError) {
       console.error('Error inserting item monthly targets:', insertError)
+      throw new Error('Gagal menyimpan target bulanan')
+    }
+  }
+
+  revalidatePath('/materi')
+  return { success: true }
+}
+
+export async function syncItemMonthlyTargetsBulk(
+  itemIds: string[],
+  mappings: Array<{ class_master_id: string; semester: number; month: number }>,
+  mode: 'replace' | 'add'
+): Promise<{ success: boolean }> {
+  const profile = await getCurrentUserProfile()
+  if (!profile) throw new Error('Not authenticated')
+  if (!canManageCurriculum(profile)) throw new Error('Unauthorized')
+
+  const activeYear = await getActiveAcademicYear()
+  if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
+
+  const supabase = await createClient()
+
+  // 1. Delete existing if replace mode
+  if (mode === 'replace') {
+    const { error: deleteError } = await deleteMonthlyTargetsByItemIds(supabase, {
+      material_item_ids: itemIds,
+      academic_year_id: activeYear.id
+    })
+
+    if (deleteError) {
+      console.error('Error deleting bulk item monthly targets:', deleteError)
+      throw new Error('Gagal memperbarui target bulanan')
+    }
+  }
+
+  // 2. Insert new targets if any
+  if (mappings.length > 0 && itemIds.length > 0) {
+    const records: any[] = []
+    
+    itemIds.forEach(itemId => {
+      mappings.forEach((m, index) => {
+        records.push({
+          class_master_id: m.class_master_id,
+          academic_year_id: activeYear.id,
+          semester: m.semester as 1 | 2,
+          month: m.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
+          material_item_id: itemId,
+          display_order: index,
+          created_by: profile.id
+        })
+      })
+    })
+
+    const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records)
+    if (insertError) {
+      console.error('Error inserting bulk item monthly targets:', insertError)
       throw new Error('Gagal menyimpan target bulanan')
     }
   }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 
-import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName, Semester, Month } from '../../types';
+import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName, Semester, Month, ClassMaster } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
 import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
@@ -25,6 +25,7 @@ interface MateriContentViewProps {
     onToggleSelection?: (id: string) => void;
     onToggleAll?: (selected: boolean, itemIds: string[]) => void;
     onBulkEdit?: () => void;
+    classMasters: ClassMaster[];
 }
 
 export default function MateriContentView({
@@ -41,7 +42,8 @@ export default function MateriContentView({
     selectedIds,
     onToggleSelection,
     onToggleAll,
-    onBulkEdit
+    onBulkEdit,
+    classMasters
 }: MateriContentViewProps) {
     const { filters, setFilter } = useMateriStore();
 
@@ -180,6 +182,13 @@ export default function MateriContentView({
             result = result.filter(i => i.material_type_id === filters.selectedTypeId);
         }
 
+        // Filter by selected class (Master Data View)
+        if (filters.selectedClassId) {
+            result = result.filter(item =>
+                item.classes?.some(c => c.id === filters.selectedClassId)
+            );
+        }
+
         // Filter by selected semester and month targets
         if (filters.selectedSemester && filters.selectedMonth) {
             result = result.filter(item => targetItemIds.has(item.id));
@@ -293,6 +302,23 @@ export default function MateriContentView({
                     variant="modal"
                     compact
                 />
+
+                {filters.viewMode === 'by_material' && (
+                    <InputFilter
+                        id="class-filter-content"
+                        label="Kelas"
+                        value={filters.selectedClassId || ''}
+                        onChange={(val) => setFilter('selectedClassId', val || null)}
+                        allOptionLabel="Semua Kelas"
+                        options={classMasters.map(cls => ({
+                            value: cls.id,
+                            label: cls.name
+                        }))}
+                        widthClassName="w-48"
+                        variant="modal"
+                        compact
+                    />
+                )}
             </div>
 
             {/* Conditional Rendering Based on View Mode */}
@@ -315,6 +341,7 @@ export default function MateriContentView({
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
+                            showClassColumn={true}
                         />
                     </div>
 

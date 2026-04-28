@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { MaterialCategory, MaterialType, MaterialItem, ClassMaster, Semester, Month } from '../../types';
+import { MaterialCategory, MaterialType, MaterialItem, ClassMaster, Semester, Month, getSemesterMonths, getMonthName } from '../../types';
 import {
   getMaterialCategories,
   getMaterialTypes,
@@ -11,11 +11,11 @@ import {
   getMaterialItemsWithClassMappings,
   deleteMaterialCategory,
   deleteMaterialType,
-  deleteMaterialItem
+  deleteMaterialItem,
+  getAllClasses
 } from '../../actions';
 import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
 import { useMateriStore } from '../../stores/materiStore';
-import { getSemesterMonths, getMonthName } from '../../types';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
@@ -41,9 +41,10 @@ interface MaterialItemsTableProps {
   onDeleteType?: (type: MaterialType) => void;
   type?: MaterialType; // Full type object for edit/delete
   monthsByItemId?: Record<string, number[]>;
+  showClassColumn?: boolean;
 }
 
-function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription, typeId, onCreateItem, onEditType, onDeleteType, type, monthsByItemId = {} }: MaterialItemsTableProps) {
+function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription, typeId, onCreateItem, onEditType, onDeleteType, type, monthsByItemId = {}, showClassColumn = false }: MaterialItemsTableProps) {
   const columns = [
     // {
     //   key: 'no',
@@ -58,6 +59,12 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
       align: 'left' as const,
       sortable: true
     },
+    ...(showClassColumn ? [{
+      key: 'classes',
+      label: 'Kelas',
+      align: 'left' as const,
+      sortable: false
+    }] : []),
     {
       key: 'months',
       label: 'Bulan',
@@ -109,6 +116,26 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
               Target {getMonthName(filters.selectedMonth as Month)}
             </span>
           )}
+        </div>
+      );
+    }
+
+    if (column.key === 'classes') {
+      const classes = materialItem?.classes || [];
+      if (classes.length === 0) {
+        return <span className="text-gray-400 dark:text-gray-600">—</span>;
+      }
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {classes.map(cls => (
+            <span 
+              key={cls.id} 
+              className="px-1.5 py-0.5 text-[10px] font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded border border-indigo-100 dark:border-indigo-800/30"
+            >
+              {cls.name}
+            </span>
+          ))}
         </div>
       );
     }
@@ -190,14 +217,6 @@ function MaterialItemsTable({ items, onEdit, onDelete, typeName, typeDescription
                   {typeName}
                 </h4>
               </div>
-              {/* {typeDescription && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-5">
-                  {typeDescription}
-                </p>
-              )}
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-5">
-                {items.length} item
-              </p> */}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {onEditType && type && (
@@ -306,52 +325,38 @@ export default function MasterDataView() {
     type: 'category'
   });
 
-  useEffect(() => {
-    loadMasterData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode]);
-
   const loadMasterData = async () => {
     try {
       setLoading(true);
+      
+      // Fetch common data
+      const [cats, typs, allClss] = await Promise.all([
+        getMaterialCategories(),
+        getMaterialTypes(),
+        getAllClasses()
+      ]);
+      setCategories(cats);
+      setTypes(typs);
+      setClasses(allClss);
+
       let itemsData: MaterialItem[] = [];
 
       if (viewMode === 'material') {
-        const [categoriesData, typesData, loadedItemsData] = await Promise.all([
-          getMaterialCategories(),
-          getMaterialTypes(),
-          getAllMaterialItems()
-        ]);
-
-        setCategories(categoriesData);
-        setTypes(typesData);
-        setItems(loadedItemsData);
-        itemsData = loadedItemsData;
+        itemsData = await getAllMaterialItems();
       } else {
-        // Load data for "View by Class"
-        const [categoriesData, typesData, classesData, loadedItemsData] = await Promise.all([
-          getMaterialCategories(),
-          getMaterialTypes(),
-          getClassesWithMaterialItems(),
-          getMaterialItemsWithClassMappings()
-        ]);
-
-        setCategories(categoriesData);
-        setTypes(typesData);
-        setClasses(classesData);
-        setItems(loadedItemsData);
-        itemsData = loadedItemsData;
+        itemsData = await getMaterialItemsWithClassMappings();
       }
+      setItems(itemsData);
 
-      // After items are loaded, fetch monthly targets
-      // After items are loaded, fetch monthly targets
+      // Fetch monthly targets for the loaded items
       if (itemsData.length > 0) {
         const itemIds = itemsData.map((i: MaterialItem) => i.id);
-        const monthsData = await getMonthlyTargetsByItems(itemIds);
-        setMonthsByItemId(monthsData);
+        const monthsByItem = await getMonthlyTargetsByItems(itemIds);
+        setMonthsByItemId(monthsByItem);
       }
     } catch (error) {
       console.error('Error loading master data:', error);
+      toast.error('Gagal memuat data');
     } finally {
       setLoading(false);
     }
@@ -359,7 +364,7 @@ export default function MasterDataView() {
 
   useEffect(() => {
     loadMasterData();
-  }, [viewMode, items.length]); // Added items.length to trigger months fetch if items change
+  }, [viewMode]);
 
   // Group types by category
   const typesByCategory = useMemo(() => {
@@ -373,17 +378,28 @@ export default function MasterDataView() {
     return grouped;
   }, [types]);
 
-  // Filter items based on selected semester, month, and type
+  // Filtered Items for Display
   const filteredItems = useMemo(() => {
     let result = items;
+
+    // Filter by selected class
+    if (viewMode === 'material' && filters.selectedClassId) {
+      result = result.filter(item => 
+        item.classes?.some(c => c.id === filters.selectedClassId)
+      );
+    }
+
+    // Filter by selected semester and month targets
     if (filters.selectedSemester && filters.selectedMonth) {
       result = result.filter(item => targetItemIds.has(item.id));
     }
+    
     if (filters.selectedTypeId) {
       result = result.filter(item => item.material_type_id === filters.selectedTypeId);
     }
+
     return result;
-  }, [items, targetItemIds, filters.selectedSemester, filters.selectedMonth, filters.selectedTypeId]);
+  }, [items, filters.selectedClassId, filters.selectedSemester, filters.selectedMonth, filters.selectedTypeId, targetItemIds, viewMode]);
 
   // Group items by material type
   const itemsByType = useMemo(() => {
@@ -396,6 +412,36 @@ export default function MasterDataView() {
     });
     return grouped;
   }, [filteredItems]);
+
+  const toggleCategory = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const toggleType = (typeId: string) => {
+    const newExpanded = new Set(expandedTypes);
+    if (newExpanded.has(typeId)) {
+      newExpanded.delete(typeId);
+    } else {
+      newExpanded.add(typeId);
+    }
+    setExpandedTypes(newExpanded);
+  };
+
+  const toggleClass = (classId: string) => {
+    const newExpanded = new Set(expandedClasses);
+    if (newExpanded.has(classId)) {
+      newExpanded.delete(classId);
+    } else {
+      newExpanded.add(classId);
+    }
+    setExpandedClasses(newExpanded);
+  };
 
   // Group items by class for "View by Class" mode
   const itemsByClass = useMemo(() => {
@@ -495,25 +541,7 @@ export default function MasterDataView() {
     });
   }, [viewMode, categories, typesByCategory, itemsByType, searchQuery, filters.selectedCategoryId]);
 
-  const toggleCategory = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
 
-  const toggleType = (typeId: string) => {
-    const newExpanded = new Set(expandedTypes);
-    if (newExpanded.has(typeId)) {
-      newExpanded.delete(typeId);
-    } else {
-      newExpanded.add(typeId);
-    }
-    setExpandedTypes(newExpanded);
-  };
 
   const getCategoryIcon = (categoryName: string): string => {
     const icons: Record<string, string> = {
@@ -524,6 +552,20 @@ export default function MasterDataView() {
       'Akhlakul Karimah': '💎',
     };
     return icons[categoryName] || '📝';
+  };
+
+  const getDeleteMessage = () => {
+    if (!deleteConfirm.item) return '';
+
+    const itemName = 'name' in deleteConfirm.item ? deleteConfirm.item.name : '';
+
+    if (deleteConfirm.type === 'category') {
+      return `Apakah Anda yakin ingin menghapus kategori "${itemName}"?`;
+    } else if (deleteConfirm.type === 'type') {
+      return `Apakah Anda yakin ingin menghapus jenis materi "${itemName}"?`;
+    } else {
+      return `Apakah Anda yakin ingin menghapus item materi "${itemName}"?`;
+    }
   };
 
   // CRUD Handlers for Categories
@@ -609,20 +651,6 @@ export default function MasterDataView() {
     }
   };
 
-  const getDeleteMessage = (): string => {
-    if (!deleteConfirm.item) return '';
-
-    const itemName = 'name' in deleteConfirm.item ? deleteConfirm.item.name : '';
-
-    if (deleteConfirm.type === 'category') {
-      return `Apakah Anda yakin ingin menghapus kategori <br> "${itemName}"?`;
-    } else if (deleteConfirm.type === 'type') {
-      return `Apakah Anda yakin ingin menghapus jenis materi <br> "${itemName}"?`;
-    } else {
-      return `Apakah Anda yakin ingin menghapus item materi <br> "${itemName}"?`;
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -646,17 +674,6 @@ export default function MasterDataView() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Add Category Button */}
-            {/* {viewMode === 'material' && (
-              <Button
-                onClick={handleCreateCategory}
-                variant="primary"
-                size="sm"
-              >
-                + Tambah Kategori
-              </Button>
-            )} */}
-
             {/* View Mode Switcher */}
             <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               <button
@@ -735,6 +752,23 @@ export default function MasterDataView() {
             variant="modal"
             compact
           />
+
+          {viewMode === 'material' && (
+            <InputFilter
+              id="class-filter-master"
+              label="Kelas"
+              value={filters.selectedClassId || ''}
+              onChange={(val) => setFilter('selectedClassId', val || null)}
+              allOptionLabel="Semua Kelas"
+              options={classes.map(cls => ({
+                value: cls.id,
+                label: cls.name
+              }))}
+              widthClassName="w-48"
+              variant="modal"
+              compact
+            />
+          )}
         </div>
       </div>
 
@@ -887,6 +921,7 @@ export default function MasterDataView() {
                                         onEditType={handleEditType}
                                         onDeleteType={handleDeleteType}
                                         type={type}
+                                        showClassColumn={true}
                                       />
                                     </div>
                                   </div>

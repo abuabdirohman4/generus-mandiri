@@ -200,17 +200,24 @@ describe('Materi Items Actions (Layer 3)', () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   describe('getAllClasses', () => {
-    it('returns filtered classes on happy path', async () => {
-      const rawClasses = [{ id: 'cm-1', name: 'Caberawit 1', category: { code: 'CABERAWIT' } }]
-      const filteredClasses = [{ id: 'cm-1', name: 'Caberawit 1', sort_order: 0, category: { code: 'CABERAWIT' } }]
+    it('returns all classes mapped to ClassMaster shape on happy path', async () => {
+      const rawClasses = [
+        { id: 'cm-1', name: 'Caberawit 1', category: { code: 'CABERAWIT' } },
+        { id: 'cm-2', name: 'SMP 1', category: { code: 'SMP' } }
+      ]
+      const mappedClasses = [
+        { id: 'cm-1', name: 'Caberawit 1', sort_order: 0, category: { code: 'CABERAWIT' } },
+        { id: 'cm-2', name: 'SMP 1', sort_order: 0, category: { code: 'SMP' } }
+      ]
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(fetchAllClassMastersWithCategory).mockResolvedValue({ data: rawClasses, error: null } as any)
-      vi.mocked(filterCaberawitClasses).mockReturnValue(filteredClasses as any)
+      vi.mocked(filterCaberawitClasses).mockReturnValue(mappedClasses as any)
 
       const result = await getAllClasses()
 
-      expect(result).toEqual(filteredClasses)
+      expect(result).toHaveLength(2)
+      expect(result).toEqual(mappedClasses)
       expect(filterCaberawitClasses).toHaveBeenCalledWith(rawClasses)
     })
 

@@ -10,18 +10,25 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 // ─── Class Masters ────────────────────────────────────────────────────────────
 
+// Classes excluded from materi: bridge/transition classes not used as curriculum targets
+const EXCLUDED_CLASS_NAMES = ['Pra Remaja', 'Remaja', 'Pra Nikah']
+
 /**
  * Fetch available class masters for assignment selection
+ * (Paud–Kelas 6, SMP 1-3, SMA 1-3, Pra Nikah 1-4 — excludes bridge classes)
  */
 export async function fetchAvailableClassMasters(supabase: SupabaseClient) {
     return await supabase
         .from('class_masters')
         .select('*')
-        .order('name')
+        .lte('sort_order', 20)
+        .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
+        .order('sort_order', { ascending: true })
 }
 
 /**
  * Fetch all class masters with category for filtering
+ * (Paud–Kelas 6, SMP 1-3, SMA 1-3, Pra Nikah 1-4 — excludes bridge classes)
  */
 export async function fetchAllClassMastersWithCategory(supabase: SupabaseClient) {
     return await supabase
@@ -29,17 +36,21 @@ export async function fetchAllClassMastersWithCategory(supabase: SupabaseClient)
         .select(`
       id,
       name,
+      sort_order,
       category:category_id (
         id,
         code,
         name
       )
     `)
+        .lte('sort_order', 20)
+        .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
         .order('sort_order', { ascending: true })
 }
 
 /**
  * Fetch class masters that have at least one material item (inner join)
+ * (Paud–Kelas 6, SMP 1-3, SMA 1-3, Pra Nikah 1-4 — excludes bridge classes)
  */
 export async function fetchClassMastersWithMaterialItems(supabase: SupabaseClient) {
     return await supabase
@@ -48,7 +59,9 @@ export async function fetchClassMastersWithMaterialItems(supabase: SupabaseClien
       *,
       material_item_classes!inner(id)
     `)
-        .order('name')
+        .lte('sort_order', 20)
+        .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
+        .order('sort_order', { ascending: true })
 }
 
 // ─── Material Items ───────────────────────────────────────────────────────────

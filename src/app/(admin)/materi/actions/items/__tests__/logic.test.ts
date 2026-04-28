@@ -15,34 +15,22 @@ import {
 // ─── filterCaberawitClasses ───────────────────────────────────────────────────
 
 describe('filterCaberawitClasses', () => {
-    it('keeps CABERAWIT classes', () => {
+    it('returns all classes mapped to ClassMaster shape', () => {
         const data = [
             { id: 'c1', name: 'Kelas A', category: { code: 'CABERAWIT' } },
             { id: 'c2', name: 'Kelas B', category: { code: 'SMP' } },
         ]
         const result = filterCaberawitClasses(data)
-        expect(result).toHaveLength(1)
+        expect(result).toHaveLength(2)
         expect(result[0].id).toBe('c1')
-    })
-
-    it('keeps PAUD classes', () => {
-        const data = [{ id: 'c1', name: 'TK', category: { code: 'PAUD' } }]
-        expect(filterCaberawitClasses(data)).toHaveLength(1)
-    })
-
-    it('case-insensitive match (lowercase code)', () => {
-        const data = [{ id: 'c1', name: 'TK', category: { code: 'caberawit' } }]
-        expect(filterCaberawitClasses(data)).toHaveLength(1)
+        expect(result[1].id).toBe('c2')
     })
 
     it('handles array category format from Supabase', () => {
-        const data = [{ id: 'c1', name: 'K', category: [{ code: 'CABERAWIT' }] }]
-        expect(filterCaberawitClasses(data)).toHaveLength(1)
-    })
-
-    it('filters out classes with no category', () => {
-        const data = [{ id: 'c1', name: 'K', category: null }]
-        expect(filterCaberawitClasses(data)).toHaveLength(0)
+        const data: any[] = [{ id: 'c1', name: 'K', category: [{ code: 'CABERAWIT' }] }]
+        const result = filterCaberawitClasses(data)
+        expect(result).toHaveLength(1)
+        expect((result[0].category as any).code).toBe('CABERAWIT')
     })
 
     it('returns empty array for empty input', () => {

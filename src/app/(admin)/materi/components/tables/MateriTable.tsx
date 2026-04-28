@@ -16,9 +16,10 @@ interface MateriTableProps {
     showTargetBadge?: boolean;
     selectedMonth?: number | null;
     monthsByItemId?: Record<string, number[]>;
+    showClassColumn?: boolean;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {} }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {}, showClassColumn = false }: MateriTableProps) {
     const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
     const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
 
@@ -52,6 +53,13 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             widthMobile: onEdit && onDelete ? '11rem' : '16rem',
             leftMargin: onEdit && onDelete ? 'pl-1' : 'pl-4'
         },
+        ...(showClassColumn ? [{
+            key: 'classes',
+            label: 'KELAS',
+            sortable: false,
+            align: 'left' as const,
+            width: '180px',
+        }] : []),
         {
             key: 'months',
             label: 'BULAN',
@@ -110,6 +118,25 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                             </span>
                         </div>
                     )}
+                </div>
+            );
+        }
+        if (column.key === 'classes') {
+            const classes = item.itemData?.classes || [];
+            if (classes.length === 0) {
+                return <span className="text-gray-400 dark:text-gray-600">—</span>;
+            }
+
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {classes.map((cls: any) => (
+                        <span 
+                            key={cls.id} 
+                            className="px-1.5 py-0.5 text-[10px] font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded border border-indigo-100 dark:border-indigo-800/30"
+                        >
+                            {cls.name}
+                        </span>
+                    ))}
                 </div>
             );
         }

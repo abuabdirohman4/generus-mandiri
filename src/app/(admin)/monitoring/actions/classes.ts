@@ -31,23 +31,8 @@ export async function getClasses(): Promise<any[]> {
 
   if (!classes) return [];
 
-  // Filter to only Caberawit/PAUD classes
-  const caberawitClasses = classes.filter(cls => {
-    if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) {
-      return false;
-    }
-
-    return cls.class_master_mappings.some((mapping: any) => {
-      const category = mapping.class_master?.category;
-      if (!category) return false;
-
-      const code = category.code?.toUpperCase() || '';
-      return code === 'CABERAWIT' || code === 'PAUD';
-    });
-  });
-
   // Return clean class objects with kelompok data
-  return caberawitClasses.map(cls => ({
+  return classes.map(cls => ({
     id: cls.id,
     name: cls.name,
     kelompok_id: cls.kelompok_id,
