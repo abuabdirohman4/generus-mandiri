@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName } from '../../types';
+
+import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName, Semester, Month } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
 import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
+import InputFilter from '@/components/form/input/InputFilter';
 // import MateriCardMobile from '../tables/MateriCardMobile';
 
 interface MateriContentViewProps {
@@ -256,63 +258,41 @@ export default function MateriContentView({
                 )}
             </div>
 
-            {/* Filter Bar */}
-            <div className="flex flex-wrap gap-3 py-4 border-b border-gray-200 dark:border-gray-700">
-                <select
-                    value={filters.selectedCategoryId || ''}
-                    onChange={(e) => {
-                        setFilter('selectedCategoryId', e.target.value || null);
-                        setFilter('selectedTypeId', null); // reset type when category changes
-                    }}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                    <option value="">Semua Kategori</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-
-                <select
-                    value={filters.selectedTypeId || ''}
-                    onChange={(e) => setFilter('selectedTypeId', e.target.value || null)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-                    disabled={!filters.selectedCategoryId}
-                >
-                    <option value="">Semua Tipe</option>
-                    {types
-                        .filter(t => !filters.selectedCategoryId || t.category_id === filters.selectedCategoryId)
-                        .map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                </select>
-
-                <select
-                    value={filters.selectedSemester || ''}
-                    onChange={(e) => {
-                        const sem = e.target.value ? parseInt(e.target.value) : null;
+            <div className="flex flex-wrap gap-4 py-4 border-b border-gray-200 dark:border-gray-700">
+                <InputFilter
+                    id="semester-filter"
+                    label="Semester"
+                    value={filters.selectedSemester?.toString() || ''}
+                    onChange={(val) => {
+                        const sem = val ? parseInt(val) : null;
                         setFilter('selectedSemester', sem);
                         if (!sem) setFilter('selectedMonth', null);
                     }}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                    <option value="">Semua Semester</option>
-                    <option value="1">Semester 1</option>
-                    <option value="2">Semester 2</option>
-                </select>
+                    allOptionLabel="Semua Semester"
+                    options={[
+                        { value: '1', label: 'Semester 1' },
+                        { value: '2', label: 'Semester 2' }
+                    ]}
+                    widthClassName="w-40"
+                    variant="modal"
+                    compact
+                />
 
-                <select
-                    value={filters.selectedMonth || ''}
-                    onChange={(e) => setFilter('selectedMonth', e.target.value ? parseInt(e.target.value) : null)}
+                <InputFilter
+                    id="month-filter"
+                    label="Bulan"
+                    value={filters.selectedMonth?.toString() || ''}
+                    onChange={(val) => setFilter('selectedMonth', val ? parseInt(val) : null)}
                     disabled={!filters.selectedSemester}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-                >
-                    <option value="">Semua Bulan</option>
-                    {filters.selectedSemester && getSemesterMonths(filters.selectedSemester).map((month) => (
-                        <option key={month} value={month}>
-                            {getMonthName(month)}
-                        </option>
-                    ))}
-                </select>
+                    allOptionLabel="Semua Bulan"
+                    options={filters.selectedSemester ? getSemesterMonths(filters.selectedSemester as Semester).map(m => ({
+                        value: m.toString(),
+                        label: getMonthName(m as Month)
+                    })) : []}
+                    widthClassName="w-40"
+                    variant="modal"
+                    compact
+                />
             </div>
 
             {/* Conditional Rendering Based on View Mode */}
@@ -331,7 +311,7 @@ export default function MateriContentView({
                             onView={onViewItem}
                             selectedIds={selectedIds}
                             onToggleSelection={onToggleSelection}
-                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map(i => i.id))}
+                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map((i: MaterialItem) => i.id))}
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
@@ -394,7 +374,7 @@ export default function MateriContentView({
                             onView={onViewItem}
                             selectedIds={selectedIds}
                             onToggleSelection={onToggleSelection}
-                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItemsForClassMode.map(i => i.id))}
+                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItemsForClassMode.map((i: MaterialItem) => i.id))}
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
