@@ -20,6 +20,7 @@ import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
+import { useActivityLevels } from '@/hooks/useActivityLevels'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -48,6 +49,7 @@ export default function MeetingAttendancePage() {
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
   const { kelompok: kelompokData } = useKelompok()
+  const { activityLevels } = useActivityLevels()
 
   // DataFilter state
   const [filters, setFilters] = useState<{
@@ -398,8 +400,11 @@ export default function MeetingAttendancePage() {
         })
       }
 
-      // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
-      if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+      // For SAMBUNG_DESA / Desa-level meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
+      const desaLevelId = activityLevels?.find((l: any) => l.code === 'DESA')?.id
+      const isDesaLevelMeeting = (desaLevelId && meeting.activity_level_id === desaLevelId) ||
+        (!meeting.activity_level_id && meeting.meeting_type_code === 'SAMBUNG_DESA')
+      if (isDesaLevelMeeting) {
         classDetails = classDetails.filter(cls => {
           const classData = classesData.find(c => c.id === cls.id) ||
             (meeting.allClasses && Array.isArray(meeting.allClasses)

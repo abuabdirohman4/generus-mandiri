@@ -408,6 +408,10 @@ interface Meeting {
   student_snapshot: string[]
   created_at: string
   meeting_type_code?: string | null
+  activity_type_id?: string | null
+  activity_level_id?: string | null
+  activity_type?: { id: string; code: string; name: string } | null
+  activity_level?: { id: string; code: string; name: string } | null
   classes: {
     id: string
     name: string
@@ -592,14 +596,10 @@ export default function MeetingCards({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {meeting.meeting_type_code && (
-                          <MeetingTypeBadge 
-                            meetingTypeCode={meeting.meeting_type_code}
-                            isSambungCapable={meeting.classes?.class_master_mappings?.[0]?.class_master?.category?.is_sambung_capable}
-                          />
-                        )}
-                        {meeting.meeting_type_code && meeting.title ? ": " : ""}
-                        {meeting.title}
+                        {meeting.activity_type?.name
+                          ? `${meeting.activity_type.name}${meeting.title ? `: ${meeting.title}` : ''}`
+                          : meeting.title || '-'
+                        }
                       </h4>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -609,6 +609,17 @@ export default function MeetingCards({
                       {formatMeetingLocation(meeting, userProfile, classesData || [], kelompokData || [], desaData || [], daerahData || [])}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {meeting.activity_level && (
+                        <span className={`inline-flex items-center px-2 py-0.5 mr-2 rounded-full text-xs font-medium ${
+                          meeting.activity_level.code === 'DAERAH'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                            : meeting.activity_level.code === 'DESA'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {meeting.activity_level.name}
+                        </span>
+                      )}
                       {(() => {
                         const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
                         return uniqueKelompokCount > 1 ? (

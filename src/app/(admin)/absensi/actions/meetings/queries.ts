@@ -26,6 +26,10 @@ export async function fetchMeetingById(supabase: SupabaseClient, meetingId: stri
       created_at,
       updated_at,
       meeting_type_code,
+      activity_type_id,
+      activity_level_id,
+      activity_type:activity_types(id, code, name),
+      activity_level:activity_levels(id, code, name),
       classes (
         id,
         name,
@@ -79,6 +83,10 @@ export async function fetchMeetingsByClass(
       student_snapshot,
       created_at,
       meeting_type_code,
+      activity_type_id,
+      activity_level_id,
+      activity_type:activity_types(id, code, name),
+      activity_level:activity_levels(id, code, name),
       kelompok_ids,
       classes (
         id,
@@ -118,6 +126,8 @@ export async function insertMeeting(
     description: data.description,
     student_snapshot: data.studentIds,
     meeting_type_code: data.meetingTypeCode,
+    activity_type_id: data.activityTypeId || null,
+    activity_level_id: data.activityLevelId || null,
     // Note: created_by column does not exist in meetings table
     // teacher_id already tracks who created the meeting
   }
@@ -145,6 +155,8 @@ export async function updateMeetingRecord(
   if (data.topic !== undefined) updateData.topic = data.topic
   if (data.description !== undefined) updateData.description = data.description
   if (data.meetingTypeCode !== undefined) updateData.meeting_type_code = data.meetingTypeCode
+  if (data.activityTypeId !== undefined) updateData.activity_type_id = data.activityTypeId
+  if (data.activityLevelId !== undefined) updateData.activity_level_id = data.activityLevelId
 
   if (data.classIds !== undefined && data.classIds.length > 0) {
     updateData.class_id = data.classIds[0]

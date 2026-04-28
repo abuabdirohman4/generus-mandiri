@@ -7,6 +7,10 @@ export interface Meeting {
   class_ids: string[]
   kelompok_ids?: string[]
   meeting_type_code?: string | null
+  activity_type_id?: string | null
+  activity_level_id?: string | null
+  activity_type?: { id: string; code: string; name: string } | null
+  activity_level?: { id: string; code: string; name: string } | null
   student_snapshot?: string[]
   created_at: string
   updated_at?: string
@@ -22,6 +26,8 @@ export interface CreateMeetingData {
   topic?: string
   description?: string
   meetingTypeCode?: string | null
+  activityTypeId?: string | null
+  activityLevelId?: string | null
   studentIds?: string[]
 }
 

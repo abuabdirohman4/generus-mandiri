@@ -186,6 +186,41 @@ export async function updateActivityLevel(id: string, data: { name: string }) {
   }
 }
 
+/**
+ * Get activity types assigned to the currently logged-in user (teacher).
+ * For admins, returns all active activity types.
+ */
+export async function getMyActivityTypes(): Promise<ActivityType[]> {
+  try {
+    const supabase = await createClient()
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Tidak terautentikasi')
+
+    // Admin roles: return all active types
+    if (profile.role !== 'teacher') {
+      const { data, error } = await supabase
+        .from('activity_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      if (error) throw error
+      return data || []
+    }
+
+    // Teachers: return only their assigned types
+    const { data, error } = await supabase
+      .from('teacher_activity_types')
+      .select('activity_type:activity_types(id, code, name, description, is_active, sort_order, created_at, updated_at)')
+      .eq('teacher_id', profile.id)
+
+    if (error) throw error
+    return (data || []).map((row: any) => row.activity_type).filter(Boolean)
+  } catch (error) {
+    console.error('Error fetching my activity types:', error)
+    throw handleApiError(error, 'memuat data', 'Gagal mengambil tipe kegiatan')
+  }
+}
+
 export async function getTeacherActivityTypes(teacherId: string): Promise<TeacherActivityType[]> {
   try {
     const supabase = await createClient()

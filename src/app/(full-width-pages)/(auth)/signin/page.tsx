@@ -26,7 +26,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
       {/* Mobile Header with Gradient Background and Wave Separator */}
       <div className="lg:hidden relative overflow-hidden">
         {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-700 to-brand-800"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-brand-700 via-brand-700 to-brand-800"></div>
         
         {/* Content */}
         <div className="relative z-10 px-6 py-12">
@@ -96,7 +96,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
       </div>
 
       <div className="lg:hidden relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-700 via-brand-700 to-brand-800"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-brand-700 via-brand-700 to-brand-800"></div>
         <div className="relative z-10 px-6 py-12">
           <div className="text-center">
           </div>

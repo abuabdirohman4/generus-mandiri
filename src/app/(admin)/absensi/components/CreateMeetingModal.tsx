@@ -21,6 +21,8 @@ import { invalidateAllMeetingsCache } from '../utils/cache'
 import { isTeacherClass } from '@/lib/utils/classHelpers'
 import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
+import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
+import { useActivityLevels } from '@/hooks/useActivityLevels'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -49,6 +51,7 @@ export default function CreateMeetingModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [meetingType, setMeetingType] = useState<string>('')
+  const [activityTypeId, setActivityTypeId] = useState<string | null>(null)
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
 
@@ -67,6 +70,8 @@ export default function CreateMeetingModal({
   const { profile: userProfile } = useUserProfile()
   const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
   const { settings: formSettings, isLoading: isLoadingSettings } = useMeetingFormSettings(userProfile?.id)
+  const { activityTypes: myActivityTypes, isLoading: activityTypesLoading } = useMyActivityTypes()
+  const { activityLevels } = useActivityLevels()
 
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
@@ -112,6 +117,24 @@ export default function CreateMeetingModal({
     return !!((userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
       (!userProfile.classes || userProfile.classes.length === 0))
   }, [userProfile])
+
+  // Auto-determine activity level based on user role
+  const activityLevelId = useMemo(() => {
+    if (!userProfile || !activityLevels || activityLevels.length === 0) return null
+    let levelCode = 'KELOMPOK'
+    if (userProfile.role === 'superadmin') {
+      // Superadmin: could be any level — default to KELOMPOK for now
+      levelCode = 'KELOMPOK'
+    } else if (userProfile.daerah_id && !userProfile.desa_id) {
+      levelCode = 'DAERAH'
+    } else if (userProfile.desa_id && !userProfile.kelompok_id) {
+      levelCode = 'DESA'
+    } else {
+      levelCode = 'KELOMPOK'
+    }
+    const level = activityLevels.find((l: any) => l.code === levelCode)
+    return level?.id || null
+  }, [userProfile, activityLevels])
 
   // Count active students per class for filtering empty classes
   const classStudentCounts = useMemo(() => {
@@ -352,6 +375,7 @@ export default function CreateMeetingModal({
         description: meeting.description || ''
       })
       setMeetingType(meeting.meeting_type_code || '')
+      setActivityTypeId(meeting.activity_type_id || null)
     }
   }, [meeting])
 
@@ -503,6 +527,17 @@ export default function CreateMeetingModal({
     return true
   }, [finalAvailableTypes, typesLoading])
 
+  // Auto-initialize activityTypeId when DB activity types load (create mode only)
+  useEffect(() => {
+    if (meeting) return // edit mode: already set from meeting.activity_type_id
+    if (!isOpen) return
+    if (activityTypesLoading || myActivityTypes.length === 0) return
+    if (activityTypeId) return // already set
+    const first = myActivityTypes[0]
+    setActivityTypeId(first.id)
+    setMeetingType(first.code)
+  }, [isOpen, activityTypesLoading, myActivityTypes.length, myActivityTypes[0]?.id])
+
   // Auto-select meeting type based on available options
   useEffect(() => {
     // Don't auto-select in edit mode (meeting type is already set)
@@ -561,7 +596,12 @@ export default function CreateMeetingModal({
       return
     }
 
-    if (!meetingType) {
+    // Validate meeting type (use DB activity type if available, else legacy)
+    if (myActivityTypes.length > 0 && !activityTypeId) {
+      toast.error('Pilih tipe kegiatan terlebih dahulu')
+      return
+    }
+    if (myActivityTypes.length === 0 && !meetingType) {
       toast.error('Pilih tipe pertemuan terlebih dahulu')
       return
     }
@@ -577,6 +617,8 @@ export default function CreateMeetingModal({
           topic: formData.topic || undefined,
           description: formData.description || undefined,
           meetingTypeCode: meetingType,
+          activityTypeId: activityTypeId || undefined,
+          activityLevelId: activityLevelId || undefined,
           studentIds: selectedStudentIds
         })
 
@@ -598,6 +640,8 @@ export default function CreateMeetingModal({
           topic: formData.topic || undefined,
           description: formData.description || undefined,
           meetingTypeCode: meetingType,
+          activityTypeId: activityTypeId || undefined,
+          activityLevelId: activityLevelId || undefined,
           studentIds: selectedStudentIds
         })
 
@@ -627,6 +671,7 @@ export default function CreateMeetingModal({
       description: ''
     })
     setMeetingType('')
+    setActivityTypeId(null)
     setSelectedStudentIds([])
     setSelectedGender(null)
     setPreviouslySelectedStudents([])
@@ -725,8 +770,32 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
-              {/* Meeting Type Selector */}
-              {formSettings.showMeetingType && (
+              {/* Activity Type Selector (DB-driven) */}
+              {myActivityTypes.length > 0 && (
+                <div className="mb-4">
+                  <InputFilter
+                    id="activityType"
+                    label="Tipe Kegiatan"
+                    value={activityTypeId || ''}
+                    onChange={(val) => {
+                      setActivityTypeId(val || null)
+                      // Sync meetingTypeCode for backward compat
+                      const selected = myActivityTypes.find((t: any) => t.id === val)
+                      if (selected) setMeetingType(selected.code)
+                    }}
+                    options={myActivityTypes.map((t: any) => ({
+                      value: t.id,
+                      label: t.name
+                    }))}
+                    disabled={isSubmitting || activityTypesLoading}
+                    widthClassName="!max-w-full"
+                    className='mb-0!'
+                  />
+                </div>
+              )}
+
+              {/* Meeting Type Selector (legacy, hidden when DB activity types available) */}
+              {formSettings.showMeetingType && myActivityTypes.length === 0 && (
                 <div className="mb-4">
                   <InputFilter
                     id="meetingType"
