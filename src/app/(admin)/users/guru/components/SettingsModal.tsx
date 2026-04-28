@@ -5,11 +5,13 @@ import Modal from '@/components/ui/modal'
 import Button from '@/components/ui/button/Button'
 import Label from '@/components/form/Label'
 import { getMeetingFormSettings, updateMeetingFormSettings, updateTeacherPermissions } from '../actions'
+import { getAllActivityTypes, getTeacherActivityTypes, assignActivityTypeToTeacher, removeActivityTypeFromTeacher } from '@/app/(admin)/kegiatan/actions'
 import { toast } from 'sonner'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import { mutate } from 'swr'
 import { meetingFormSettingsKeys } from '@/lib/swr'
 import { useUserProfile } from '@/stores/userProfileStore'
+import type { ActivityType } from '@/types/activityType'
 
 interface MeetingFormSettings {
   showTitle: boolean
@@ -70,7 +72,11 @@ export default function SettingsModal({
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Load settings and permissions when modal opens
+  // Activity types state
+  const [allActivityTypes, setAllActivityTypes] = useState<ActivityType[]>([])
+  const [assignedActivityTypeIds, setAssignedActivityTypeIds] = useState<Set<string>>(new Set())
+  const [savingActivityTypeId, setSavingActivityTypeId] = useState<string | null>(null)
+
   useEffect(() => {
     if (isOpen && userId) {
       loadData()
@@ -80,16 +86,21 @@ export default function SettingsModal({
   const loadData = async () => {
     setIsLoading(true)
     try {
-      // Load meeting form settings
-      const result = await getMeetingFormSettings(userId)
-      if (result.success && result.data) {
-        setSettings({ ...DEFAULT_SETTINGS, ...result.data })
+      const [settingsResult, types, assigned] = await Promise.all([
+        getMeetingFormSettings(userId),
+        getAllActivityTypes(),
+        getTeacherActivityTypes(userId),
+      ])
+
+      if (settingsResult.success && settingsResult.data) {
+        setSettings({ ...DEFAULT_SETTINGS, ...settingsResult.data })
       } else {
         setSettings(DEFAULT_SETTINGS)
       }
 
-      // Load permissions
       setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
+      setAllActivityTypes(types || [])
+      setAssignedActivityTypeIds(new Set(assigned.map(a => a.activity_type_id)))
     } catch (error) {
       console.error('Error loading data:', error)
       toast.error('Gagal memuat pengaturan')
@@ -100,10 +111,31 @@ export default function SettingsModal({
     }
   }
 
+  const handleActivityTypeToggle = async (typeId: string, currentlyAssigned: boolean) => {
+    setSavingActivityTypeId(typeId)
+    try {
+      if (currentlyAssigned) {
+        await removeActivityTypeFromTeacher(userId, typeId)
+        setAssignedActivityTypeIds(prev => {
+          const next = new Set(prev)
+          next.delete(typeId)
+          return next
+        })
+      } else {
+        await assignActivityTypeToTeacher(userId, typeId)
+        setAssignedActivityTypeIds(prev => new Set(prev).add(typeId))
+      }
+    } catch (error) {
+      console.error('Error toggling activity type:', error)
+      toast.error('Gagal mengubah tipe kegiatan')
+    } finally {
+      setSavingActivityTypeId(null)
+    }
+  }
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Save meeting form settings
       const settingsResult = await updateMeetingFormSettings(userId, settings)
       if (!settingsResult.success) {
         toast.error('Gagal menyimpan pengaturan form: ' + settingsResult.error)
@@ -111,9 +143,7 @@ export default function SettingsModal({
         return
       }
 
-      // Save permissions
       const permissionsResult = await updateTeacherPermissions(userId, permissions)
-
       if (!permissionsResult.success) {
         toast.error('Gagal menyimpan hak akses: ' + permissionsResult.error)
         setIsSaving(false)
@@ -121,10 +151,7 @@ export default function SettingsModal({
       }
 
       toast.success('Pengaturan berhasil disimpan')
-
-      // Invalidate SWR cache for this user's settings
       await mutate(meetingFormSettingsKeys.settings(userId))
-
       onSuccess?.()
       onClose()
     } catch (error) {
@@ -159,7 +186,6 @@ export default function SettingsModal({
       <div className="space-y-6">
         {isLoading ? (
           <div className="space-y-6">
-            {/* Settings skeleton */}
             <div className="space-y-4">
               <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
@@ -172,8 +198,6 @@ export default function SettingsModal({
                 ))}
               </div>
             </div>
-
-            {/* Permissions skeleton */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-3">
               <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               {[1, 2, 3, 4].map((i) => (
@@ -183,8 +207,6 @@ export default function SettingsModal({
                 </div>
               ))}
             </div>
-
-            {/* Buttons skeleton */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
@@ -192,8 +214,44 @@ export default function SettingsModal({
           </div>
         ) : (
           <>
-            {/* Meeting Form Settings Section */}
+            {/* Tipe Kegiatan Section */}
             <div>
+              <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+                Tipe Kegiatan
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Pilih tipe kegiatan yang dapat dibuat oleh guru ini.
+              </p>
+              <div className="space-y-2">
+                {allActivityTypes.map((type) => {
+                  const isAssigned = assignedActivityTypeIds.has(type.id)
+                  const saving = savingActivityTypeId === type.id
+                  return (
+                    <label key={type.id} className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isAssigned}
+                        onChange={() => handleActivityTypeToggle(type.id, isAssigned)}
+                        disabled={saving || isSaving}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {type.name}
+                        {!type.is_active && (
+                          <span className="ml-2 text-xs text-gray-400">(nonaktif)</span>
+                        )}
+                      </span>
+                      {saving && (
+                        <span className="text-xs text-gray-400 animate-pulse">menyimpan...</span>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Meeting Form Settings Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
                 Form Pertemuan
               </h4>
@@ -206,7 +264,6 @@ export default function SettingsModal({
                 items={fieldOptions}
                 selectedIds={selectedIds}
                 onChange={(ids) => {
-                  // Start with all fields set to false
                   const newSettings: MeetingFormSettings = {
                     showTitle: false,
                     showTopic: false,
@@ -217,7 +274,6 @@ export default function SettingsModal({
                     showStudentSelection: false,
                     showGenderFilter: false
                   }
-                  // Then set only the selected ones to true
                   ids.forEach(id => {
                     newSettings[id as keyof MeetingFormSettings] = true
                   })
@@ -299,7 +355,7 @@ export default function SettingsModal({
                       disabled={isSaving}
                     />
                     <span className="ml-2 text-sm text-red-600 dark:text-red-400 font-medium">
-                      Hapus Permanen (Hard Delete - Tidak dapat dikembalikan) ⚠️
+                      Hapus Permanen (Hard Delete - Tidak dapat dikembalikan)
                     </span>
                   </label>
                 )}

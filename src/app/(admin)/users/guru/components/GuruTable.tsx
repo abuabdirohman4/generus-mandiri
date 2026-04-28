@@ -2,7 +2,7 @@
 
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
-import { PencilIcon, TrashBinIcon, LockIcon, SettingsIcon, ListIcon } from '@/lib/icons';
+import { PencilIcon, TrashBinIcon, LockIcon, SettingsIcon } from '@/lib/icons';
 import { isAdminDaerah, isAdminDesa, isAdminKelompok, UserProfile } from '@/lib/userUtils';
 
 interface Guru {
@@ -29,11 +29,10 @@ interface GuruTableProps {
   onDelete: (guru: Guru) => void;
   onResetPassword: (guru: Guru) => void;
   onConfigureForm?: (guru: Guru) => void;
-  onConfigureActivityTypes?: (guru: Guru) => void;
   userProfile?: UserProfile | null;
 }
 
-export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onConfigureForm, onConfigureActivityTypes, userProfile }: GuruTableProps) {
+export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onConfigureForm, userProfile }: GuruTableProps) {
   // Build columns based on user role
   const buildColumns = (userProfile: UserProfile | null | undefined) => {
     const baseColumns = [
@@ -92,13 +91,6 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
               onClick: () => onEdit(item),
               title: 'Edit',
               color: 'indigo'
-            },
-            {
-              id: 'configure-activity-types',
-              icon: ListIcon,
-              onClick: () => onConfigureActivityTypes?.(item),
-              title: 'Tipe Kegiatan',
-              color: 'green'
             },
             {
               id: 'configure-form',

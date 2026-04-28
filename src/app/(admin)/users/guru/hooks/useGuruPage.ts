@@ -23,7 +23,6 @@ export function useGuruPage() {
     resetPasswordModal,
     deleteConfirm,
     formSettingsModal,
-    activityTypesModal,
     filters,
     openCreateModal,
     openEditModal,
@@ -34,8 +33,6 @@ export function useGuruPage() {
     closeDeleteConfirm,
     openFormSettingsModal,
     closeFormSettingsModal,
-    openActivityTypesModal,
-    closeActivityTypesModal,
     setFilters
   } = useGuruStore()
 
@@ -103,7 +100,6 @@ export function useGuruPage() {
     resetPasswordModal,
     deleteConfirm,
     formSettingsModal,
-    activityTypesModal,
     filters,
     openCreateModal,
     openEditModal,
@@ -114,8 +110,6 @@ export function useGuruPage() {
     closeDeleteConfirm,
     openFormSettingsModal,
     closeFormSettingsModal,
-    openActivityTypesModal,
-    closeActivityTypesModal,
     handleDelete,
     handleOrganisasiFilterChange,
     mutate

@@ -7,7 +7,6 @@ interface GuruState {
   resetPasswordModal: { isOpen: boolean; guru: any }
   deleteConfirm: { isOpen: boolean; guru: any }
   formSettingsModal: { isOpen: boolean; guru: any }
-  activityTypesModal: { isOpen: boolean; guru: any }
   
   // Filter states
   filters: {
@@ -28,8 +27,6 @@ interface GuruState {
   closeDeleteConfirm: () => void
   openFormSettingsModal: (guru: any) => void
   closeFormSettingsModal: () => void
-  openActivityTypesModal: (guru: any) => void
-  closeActivityTypesModal: () => void
   setFilters: (filters: Partial<GuruState['filters']>) => void
   resetFilters: () => void
 }
@@ -41,7 +38,6 @@ export const useGuruStore = create<GuruState>((set) => ({
   resetPasswordModal: { isOpen: false, guru: null },
   deleteConfirm: { isOpen: false, guru: null },
   formSettingsModal: { isOpen: false, guru: null },
-  activityTypesModal: { isOpen: false, guru: null },
   filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' },
   
   // Actions
@@ -54,8 +50,6 @@ export const useGuruStore = create<GuruState>((set) => ({
   closeDeleteConfirm: () => set({ deleteConfirm: { isOpen: false, guru: null } }),
   openFormSettingsModal: (guru) => set({ formSettingsModal: { isOpen: true, guru } }),
   closeFormSettingsModal: () => set({ formSettingsModal: { isOpen: false, guru: null } }),
-  openActivityTypesModal: (guru) => set({ activityTypesModal: { isOpen: true, guru } }),
-  closeActivityTypesModal: () => set({ activityTypesModal: { isOpen: false, guru: null } }),
   setFilters: (newFilters) => set((state) => ({ 
     filters: { ...state.filters, ...newFilters } 
   })),

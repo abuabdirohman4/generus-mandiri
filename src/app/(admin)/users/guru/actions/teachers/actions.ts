@@ -51,6 +51,24 @@ export async function createTeacher(data: TeacherData) {
             throw profileError
         }
 
+        // Auto-assign default activity types: PENGAJIAN and ASAD
+        const { data: defaultTypes } = await supabase
+            .from('activity_types')
+            .select('id')
+            .in('code', ['PENGAJIAN', 'ASAD'])
+            .eq('is_active', true)
+
+        if (defaultTypes && defaultTypes.length > 0) {
+            await supabase
+                .from('teacher_activity_types')
+                .insert(defaultTypes.map((t: { id: string }) => ({
+                    teacher_id: authData.user.id,
+                    activity_type_id: t.id,
+                })))
+                // Ignore conflict — safe if types already exist
+                .select()
+        }
+
         revalidatePath('/users/guru')
         return {
             success: true,

@@ -5,7 +5,6 @@ import GuruTable from './components/GuruTable';
 import GuruModal from './components/GuruModal';
 import ResetPasswordModal from './components/ResetPasswordModal';
 import SettingsModal from './components/SettingsModal';
-import TeacherActivityTypesModal from './components/TeacherActivityTypesModal';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
@@ -28,7 +27,6 @@ export default function GuruManagementPage() {
     resetPasswordModal,
     deleteConfirm,
     formSettingsModal,
-    activityTypesModal,
     filters,
     openCreateModal,
     openEditModal,
@@ -39,8 +37,6 @@ export default function GuruManagementPage() {
     closeDeleteConfirm,
     openFormSettingsModal,
     closeFormSettingsModal,
-    openActivityTypesModal,
-    closeActivityTypesModal,
     handleDelete,
     handleOrganisasiFilterChange,
     mutate
@@ -116,7 +112,6 @@ export default function GuruManagementPage() {
           onResetPassword={openResetPasswordModal}
           onDelete={openDeleteConfirm}
           onConfigureForm={openFormSettingsModal}
-          onConfigureActivityTypes={openActivityTypesModal}
           userProfile={userProfile}
         />
 
@@ -166,12 +161,6 @@ export default function GuruManagementPage() {
           }}
         />
 
-        <TeacherActivityTypesModal
-          isOpen={activityTypesModal.isOpen}
-          onClose={closeActivityTypesModal}
-          teacherId={activityTypesModal.guru?.id || ''}
-          teacherName={activityTypesModal.guru?.full_name || ''}
-        />
       </div>
     </div>
   );
