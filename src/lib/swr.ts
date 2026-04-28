@@ -218,6 +218,30 @@ export const meetingFormSettingsKeys = {
 };
 
 /**
+ * SWR key generator for activity types
+ */
+export const activityTypeKeys = {
+  all: ['activity-types'] as const,
+  list: () => [...activityTypeKeys.all, 'list'] as const,
+};
+
+/**
+ * SWR key generator for activity levels
+ */
+export const activityLevelKeys = {
+  all: ['activity-levels'] as const,
+  list: () => [...activityLevelKeys.all, 'list'] as const,
+};
+
+/**
+ * SWR key generator for teacher activity types
+ */
+export const teacherActivityTypeKeys = {
+  all: ['teacher-activity-types'] as const,
+  byTeacher: (teacherId: string) => [...teacherActivityTypeKeys.all, teacherId] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -236,4 +260,7 @@ export const dataKeys = {
   classes: classKeys,
   userProfile: userProfileKeys,
   meetingFormSettings: meetingFormSettingsKeys,
+  activityTypes: activityTypeKeys,
+  activityLevels: activityLevelKeys,
+  teacherActivityTypes: teacherActivityTypeKeys,
 }; 

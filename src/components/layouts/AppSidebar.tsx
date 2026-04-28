@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
-import { isSuperAdmin, isAdminKelompok } from "@/lib/userUtils";
+import { isSuperAdmin, isAdminKelompok, isAdminDesa } from "@/lib/userUtils";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -31,6 +31,7 @@ type NavItem = {
   subItems?: SubNavItem[];
   adminOnly?: boolean;
   excludeAdminKelompok?: boolean;
+  excludeAdminDesa?: boolean;
 };
 
 const allNavItems: NavItem[] = [
@@ -90,6 +91,14 @@ const allNavItems: NavItem[] = [
     path: "/organisasi",
     adminOnly: true,
     excludeAdminKelompok: true,
+  },
+  {
+    icon: <TableIcon className="w-6 h-6" />,
+    name: "Kegiatan",
+    path: "/kegiatan",
+    adminOnly: true,
+    excludeAdminKelompok: true,
+    excludeAdminDesa: true,
   },
   {
     icon: <SettingsIcon className="w-6 h-6" />,
@@ -411,6 +420,11 @@ function SidebarContent({
 
     // Filter out items that exclude Admin Kelompok
     if (item.excludeAdminKelompok && profile && isAdminKelompok(profile)) {
+      return false
+    }
+
+    // Filter out items that exclude Admin Desa
+    if (item.excludeAdminDesa && profile && isAdminDesa(profile)) {
       return false
     }
 

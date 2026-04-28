@@ -212,6 +212,18 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: false
     },
     {
+      id: 'kegiatan',
+      name: 'Kegiatan',
+      description: 'Kelola tipe kegiatan',
+      href: '/kegiatan',
+      icon: <TableIcon className="w-6 h-6" />,
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400',
+      adminOnly: true,
+      excludeAdminKelompok: true,
+      disabled: false
+    },
+    {
       id: 'settings',
       name: 'Pengaturan',
       description: 'Kelola pengaturan aplikasi',

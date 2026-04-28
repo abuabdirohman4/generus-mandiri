@@ -50,10 +50,12 @@ function PageTitle() {
         return 'Materi';
       case '/organisasi':
         return 'Organisasi';
+      case '/kegiatan':
+        return 'Kegiatan';
       case '/settings':
-        return 'Pengaturan';
+          return 'Pengaturan';
       case '/settings/security':
-        return 'Keamanan';
+      return 'Keamanan';
       case '/settings/profile':
         return 'Profil';
       case '/settings/pwa':
