@@ -88,6 +88,7 @@ export function getAvailableMeetingTypesByRole(userProfile: EnrichedUserProfile 
   }
 
   // Teacher: Check class capabilities
+  if (role === 'teacher') {
     // Hierarchical teachers (no classes)
     if (!userProfile.classes || userProfile.classes.length === 0) {
       if (userProfile.daerah_id && !userProfile.desa_id) {
