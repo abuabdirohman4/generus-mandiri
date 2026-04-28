@@ -972,8 +972,22 @@ export async function getStudentAttendanceHistory(
             throw error
         }
 
-        // Filter by class if classId provided (client-side, handles both class_id and class_ids array)
+        // Role-based filter: teacher hanya boleh lihat attendance dari kelasnya sendiri
         let filteredLogs = attendanceLogs || []
+        if (profile.role === 'teacher' && profile.teacher_classes && profile.teacher_classes.length > 0) {
+            const teacherClassIds = (profile.teacher_classes as any[]).map((tc) => tc.class_id)
+            filteredLogs = filteredLogs.filter((log: any) => {
+                const meeting = log.meetings
+                if (!meeting) return false
+                if (meeting.class_id && teacherClassIds.includes(meeting.class_id)) return true
+                if (meeting.class_ids && Array.isArray(meeting.class_ids)) {
+                    return meeting.class_ids.some((id: string) => teacherClassIds.includes(id))
+                }
+                return false
+            })
+        }
+
+        // Filter by specific class if classId provided
         if (classId) {
             filteredLogs = filteredLogs.filter((log: any) => {
                 const meeting = log.meetings

@@ -151,60 +151,50 @@ export default function StudentDetailPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {student.name}
           </h1>
-          <div className="text-gray-600 dark:text-gray-400">
+          {/* Unified class badges — clickable filter if 2+ classes, static badge if 1 class */}
+          <div className="flex flex-wrap justify-center gap-2 mt-2">
             {displayedClasses && displayedClasses.length > 0 ? (
-              <div className="flex flex-wrap justify-center gap-2">
-                {displayedClasses.map((cls, index) => (
-                  <span
-                    key={cls.id}
-                    className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded-full text-sm"
+              <>
+                {displayedClasses.length > 1 && (
+                  <button
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      !selectedClassId
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
+                    }`}
+                    onClick={() => { setSelectedClassId(null); setSelectedDate(null) }}
                   >
-                    {cls.name}
-                  </span>
-                ))}
-                {/* Show indicator if there are more classes (for admin) */}
-                {userProfile?.role === 'admin' || userProfile?.role === 'superadmin' ? (
-                  student.classes && student.classes.length > displayedClasses.length && (
-                    <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-500">
-                      +{student.classes.length - displayedClasses.length} kelas lainnya
+                    Semua Kelas
+                  </button>
+                )}
+                {displayedClasses.map(cls => (
+                  displayedClasses.length === 1 ? (
+                    <span
+                      key={cls.id}
+                      className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                    >
+                      {cls.name}
                     </span>
+                  ) : (
+                    <button
+                      key={cls.id}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        selectedClassId === cls.id
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
+                      }`}
+                      onClick={() => { setSelectedClassId(cls.id); setSelectedDate(null) }}
+                    >
+                      {cls.name}
+                    </button>
                   )
-                ) : null}
-              </div>
+                ))}
+              </>
             ) : (
-              <span>Kelas tidak ditemukan</span>
+              <span className="text-gray-500 text-sm">Kelas tidak ditemukan</span>
             )}
           </div>
         </div>
-
-        {/* Class Filter — only shown if student has 2+ classes */}
-        {displayedClasses && displayedClasses.length > 1 && (
-          <div className="flex flex-wrap justify-center gap-2 mb-4">
-            <button
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                !selectedClassId
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-              onClick={() => { setSelectedClassId(null); setSelectedDate(null) }}
-            >
-              Semua Kelas
-            </button>
-            {displayedClasses.map(cls => (
-              <button
-                key={cls.id}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedClassId === cls.id
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-                onClick={() => { setSelectedClassId(cls.id); setSelectedDate(null) }}
-              >
-                {cls.name}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Monthly Stats */}
         <MonthlyStats stats={stats} />
