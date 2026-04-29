@@ -23,6 +23,7 @@ import {
     buildKelompokMap,
     transformTeacher,
 } from './logic'
+import { logActivity } from '@/lib/activityLogger'
 
 export type { TeacherData }
 
@@ -70,6 +71,16 @@ export async function createTeacher(data: TeacherData) {
         }
 
         revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            action: 'create_teacher',
+            entityType: 'teacher',
+            entityId: authData.user.id,
+            entityLabel: data.full_name,
+            pagePath: '/users/guru',
+        })
+
         return {
             success: true,
             teacher: {
@@ -115,6 +126,16 @@ export async function updateTeacher(id: string, data: TeacherData) {
         if (metadataError) throw metadataError
 
         revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            action: 'update_teacher',
+            entityType: 'teacher',
+            entityId: id,
+            entityLabel: data.full_name,
+            pagePath: '/users/guru',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Error updating teacher:', error)
@@ -127,11 +148,23 @@ export async function updateTeacher(id: string, data: TeacherData) {
  */
 export async function deleteTeacher(id: string) {
     try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
         const adminClient = await createAdminClient()
         const { error } = await adminClient.auth.admin.deleteUser(id)
         if (error) throw error
 
         revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: user?.id ?? '',
+            action: 'delete_teacher',
+            entityType: 'teacher',
+            entityId: id,
+            pagePath: '/users/guru',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Error deleting teacher:', error)
@@ -145,8 +178,20 @@ export async function deleteTeacher(id: string) {
 export async function resetTeacherPassword(id: string, newPassword: string) {
     try {
         const supabase = await createClient()
-        const { error } = await supabase.auth.admin.updateUserById(id, { password: newPassword })
+        const { data: { user } } = await supabase.auth.getUser()
+
+        const adminClient = await createAdminClient()
+        const { error } = await adminClient.auth.admin.updateUserById(id, { password: newPassword })
         if (error) throw error
+
+        void logActivity({
+            userId: user?.id ?? '',
+            action: 'reset_teacher_password',
+            entityType: 'teacher',
+            entityId: id,
+            pagePath: '/users/guru',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Error resetting teacher password:', error)
@@ -255,6 +300,16 @@ export async function assignTeacherToKelompok(teacherId: string, kelompokId: str
         if (error) throw error
 
         revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            action: 'assign_class_teacher',
+            entityType: 'teacher',
+            entityId: teacherId,
+            metadata: { kelompok_id: kelompokId },
+            pagePath: '/users/guru',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Error assigning teacher to kelompok:', error)

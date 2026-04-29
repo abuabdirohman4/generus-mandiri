@@ -12,6 +12,8 @@ import type {
   CharacterAssessmentInput,
   ReportTemplateInput
 } from '../types'
+import { logActivity } from '@/lib/activityLogger'
+import { createClient } from '@/lib/supabase/server'
 
 // Import Layer 1 (queries)
 import {
@@ -150,6 +152,18 @@ export async function updateGrade(data: GradeInput): Promise<void> {
     console.error('Error updating grade:', error)
     throw new Error('Gagal menyimpan nilai')
   }
+
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'save_grade',
+      entityType: 'student',
+      entityId: data.student_id,
+      metadata: { subject_id: data.subject_id, score: data.score },
+      pagePath: '/rapot',
+    })
+  }
 }
 
 export async function bulkUpdateGrades(updates: GradeInput[]): Promise<void> {
@@ -172,6 +186,16 @@ export async function bulkUpdateGrades(updates: GradeInput[]): Promise<void> {
   if (error) {
     console.error('Error bulk updating grades:', error)
     throw new Error('Gagal menyimpan update nilai masal')
+  }
+
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'bulk_save_grade',
+      metadata: { count: updates.length },
+      pagePath: '/rapot',
+    })
   }
 }
 
@@ -219,6 +243,18 @@ export async function updateCharacterAssessment(data: CharacterAssessmentInput):
   if (error) {
     console.error('Error updating character assessment:', error)
     throw new Error('Gagal menyimpan penilaian karakter')
+  }
+
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'save_character_assessment',
+      entityType: 'student',
+      entityId: data.student_id,
+      metadata: { character_aspect: data.character_aspect, grade: data.grade },
+      pagePath: '/rapot',
+    })
   }
 }
 
@@ -286,6 +322,18 @@ export async function createReportTemplate(data: ReportTemplateInput): Promise<R
     }
   }
 
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'create_report_template',
+      entityType: 'report_template',
+      entityId: template.id,
+      entityLabel: template.name,
+      pagePath: '/rapot/settings',
+    })
+  }
+
   return template
 }
 
@@ -311,6 +359,18 @@ export async function updateReportTemplate(id: string, data: ReportTemplateInput
   // If subject_ids provided, replace existing subjects
   if (data.subject_ids) {
     await updateTemplateSubjects(id, data.subject_ids)
+  }
+
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'update_report_template',
+      entityType: 'report_template',
+      entityId: id,
+      entityLabel: data.name,
+      pagePath: '/rapot/settings',
+    })
   }
 }
 
@@ -420,6 +480,18 @@ export async function generateReport(
     throw new Error('Gagal regenerate rapot')
   }
 
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'generate_report',
+      entityType: 'student_report',
+      entityId: report.id,
+      entityLabel: `Rapot Semester ${semester}`,
+      pagePath: '/rapot',
+    })
+  }
+
   return report
 }
 
@@ -430,6 +502,17 @@ export async function publishReport(reportId: string): Promise<void> {
 
   if (error) {
     throw new Error('Gagal publish rapot')
+  }
+
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'publish_report',
+      entityType: 'student_report',
+      entityId: reportId,
+      pagePath: '/rapot',
+    })
   }
 }
 

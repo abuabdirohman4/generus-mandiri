@@ -18,6 +18,7 @@ import type {
   AttendanceStats,
   AttendanceSaveResult
 } from '@/types/attendance'
+import { logActivity } from '@/lib/activityLogger'
 
 // ============================================================================
 // LAYER 3: SERVER ACTIONS (Exported)
@@ -73,6 +74,14 @@ export async function saveAttendance(
     }
 
     revalidatePath('/absensi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'save_attendance',
+      metadata: { count: attendanceRecords.length },
+      pagePath: '/absensi',
+    })
+
     return { success: true }
   } catch (error) {
     console.error('Error in saveAttendance:', error)
@@ -155,6 +164,17 @@ export async function saveAttendanceForMeeting(
     }
 
     revalidatePath('/absensi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'save_attendance',
+      entityType: 'meeting',
+      entityId: meetingId,
+      entityLabel: `Meeting ${meetingDateStr}`,
+      metadata: { count: attendanceRecords.length },
+      pagePath: '/absensi',
+    })
+
     return { success: true }
   } catch (error) {
     console.error('Error in saveAttendanceForMeeting:', error)

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
 import type { MaterialItem, DayMaterialAssignment, ClassMaster } from '../../types'
+import { logActivity } from '@/lib/activityLogger'
 import {
     fetchAvailableClassMasters,
     fetchAllClassMastersWithCategory,
@@ -241,6 +242,16 @@ export async function createMaterialItem(data: {
     }
 
     revalidatePath('/materi')
+
+    void logActivity({
+        userId: profile.id,
+        action: 'create_material',
+        entityType: 'material_item',
+        entityId: item.id,
+        entityLabel: data.name,
+        pagePath: '/materi',
+    })
+
     return item
 }
 
@@ -273,6 +284,16 @@ export async function updateMaterialItem(
     if (!item) throw new Error('Item materi tidak ditemukan setelah update')
 
     revalidatePath('/materi')
+
+    void logActivity({
+        userId: profile.id,
+        action: 'update_material',
+        entityType: 'material_item',
+        entityId: id,
+        entityLabel: data.name,
+        pagePath: '/materi',
+    })
+
     return item
 }
 
@@ -293,6 +314,15 @@ export async function deleteMaterialItem(id: string): Promise<{ success: boolean
     }
 
     revalidatePath('/materi')
+
+    void logActivity({
+        userId: profile.id,
+        action: 'delete_material',
+        entityType: 'material_item',
+        entityId: id,
+        pagePath: '/materi',
+    })
+
     return { success: true }
 }
 
@@ -352,6 +382,19 @@ export async function updateMaterialItemClassMappings(
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_material_mapping',
+            entityType: 'material_item',
+            entityId: materialItemId,
+            metadata: { class_count: mappings.length },
+            pagePath: '/materi',
+        })
+    }
+
     return { success: true }
 }
 
@@ -389,6 +432,18 @@ export async function bulkUpdateMaterialMapping(
         }
 
         revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'bulk_update_material_mapping',
+                entityType: 'material_item_batch',
+                metadata: { item_count: itemIds.length, mode },
+                pagePath: '/materi',
+            })
+        }
+
         return { success: true }
     } catch (error) {
         console.error('Bulk update error:', error)
@@ -439,6 +494,19 @@ export async function saveDayMaterialAssignment(data: {
         }
 
         revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'save_material_assignment',
+                entityType: 'day_material_assignment',
+                entityId: assignment.id,
+                metadata: { class_master_id: data.class_master_id, day: data.day_of_week },
+                pagePath: '/materi',
+            })
+        }
+
         return { success: true, assignment_id: assignment.id }
     } catch (error) {
         console.error('Error in saveDayMaterialAssignment:', error)
@@ -480,5 +548,17 @@ export async function deleteDayMaterialAssignment(assignmentId: string) {
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'delete_material_assignment',
+            entityType: 'day_material_assignment',
+            entityId: assignmentId,
+            pagePath: '/materi',
+        })
+    }
+
     return { success: true }
 }

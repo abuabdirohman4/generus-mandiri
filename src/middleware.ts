@@ -47,7 +47,8 @@ export async function middleware(request: NextRequest) {
       '/users/admin',
       '/organisasi',
       '/kelas',
-      '/settings'
+      '/settings',
+      '/audit'
     ]
     
     const isPublicRoute = publicRoutes.includes(pathname)
@@ -72,6 +73,35 @@ export async function middleware(request: NextRequest) {
       const signinUrl = new URL('/signin', request.url)
       signinUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(signinUrl)
+    }
+
+    // Page view tracking (fire-and-forget)
+    if (session && isProtectedRoute) {
+      const userId = session.user.id
+      // Perform logging asynchronously without awaiting
+      ;(async () => {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, daerah_id, desa_id, kelompok_id')
+            .eq('id', userId)
+            .single()
+
+          if (profile) {
+            await supabase.from('activity_logs').insert({
+              user_id: userId,
+              user_role: profile.role,
+              org_daerah_id: profile.daerah_id,
+              org_desa_id: profile.desa_id,
+              org_kelompok_id: profile.kelompok_id,
+              action: 'open_page',
+              page_path: pathname,
+            })
+          }
+        } catch (err) {
+          // Silent fail for logging
+        }
+      })()
     }
 
     // Allow public routes and authenticated protected routes

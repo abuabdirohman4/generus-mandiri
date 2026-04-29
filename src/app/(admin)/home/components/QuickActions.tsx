@@ -226,6 +226,18 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: false
     },
     {
+      id: 'audit',
+      name: 'Audit Log',
+      description: 'Audit Log',
+      href: '/audit',
+      icon: <DashboardIcon className="w-6 h-6" />,
+      bgColor: 'bg-red-100 dark:bg-red-900',
+      iconColor: 'text-red-600 dark:text-red-400',
+      adminOnly: true,
+      excludeAdminKelompok: true,
+      disabled: false
+    },
+    {
       id: 'settings',
       name: 'Pengaturan',
       description: 'Kelola pengaturan aplikasi',

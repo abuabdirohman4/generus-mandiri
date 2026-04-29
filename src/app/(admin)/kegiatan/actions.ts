@@ -11,6 +11,7 @@ import type {
   CreateActivityTypeData,
   UpdateActivityTypeData,
 } from '@/types/activityType'
+import { logActivity } from '@/lib/activityLogger'
 
 async function assertAdminAccess() {
   const profile = await getCurrentUserProfile()
@@ -67,6 +68,18 @@ export async function createActivityType(data: CreateActivityTypeData) {
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_activity_type',
+        entityType: 'activity_type',
+        entityLabel: data.name,
+        pagePath: '/kegiatan',
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error creating activity type:', error)
@@ -96,6 +109,19 @@ export async function updateActivityType(id: string, data: UpdateActivityTypeDat
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_activity_type',
+        entityType: 'activity_type',
+        entityId: id,
+        entityLabel: data.name || '',
+        pagePath: '/kegiatan',
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error updating activity type:', error)
@@ -133,6 +159,18 @@ export async function deleteActivityType(id: string) {
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'delete_activity_type',
+        entityType: 'activity_type',
+        entityId: id,
+        pagePath: '/kegiatan',
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error deleting activity type:', error)

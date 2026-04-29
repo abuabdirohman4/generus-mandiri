@@ -104,6 +104,12 @@ const allNavItems: NavItem[] = [
     excludeAdminDesa: true,
   },
   {
+    icon: <DashboardIcon className="w-6 h-6" />,
+    name: "Audit Aktivitas",
+    path: "/audit",
+    adminOnly: true,
+  },
+  {
     icon: <SettingsIcon className="w-6 h-6" />,
     name: "Pengaturan",
     path: "/settings",

@@ -34,6 +34,7 @@ import {
     checkStudentsFromSameOrg,
     findStudentsWithPendingTransfer,
 } from './logic'
+import { logActivity } from '@/lib/activityLogger'
 
 // Re-export centralized types
 export type { Student, TransferRequest }
@@ -116,6 +117,17 @@ export async function archiveStudent(
 
         revalidatePath('/users/siswa')
         revalidatePath('/absensi')
+
+        void logActivity({
+            userId: user.id,
+            action: 'archive_student',
+            entityType: 'student',
+            entityId: input.studentId,
+            entityLabel: student.name,
+            metadata: { status: input.status, notes: input.notes },
+            pagePath: '/users/siswa',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Archive student error:', error)
@@ -362,6 +374,16 @@ export async function createTransferRequest(
             }
 
             revalidatePath('/users/siswa')
+
+            void logActivity({
+                userId: user.id,
+                action: 'transfer_student',
+                entityType: 'transfer_request',
+                entityId: request.id,
+                metadata: { student_ids: input.studentIds, status: 'pending' },
+                pagePath: '/users/siswa',
+            })
+
             return { success: true, requestId: request.id, autoApproved: false }
         } else {
             // Auto-approve and execute
@@ -384,6 +406,16 @@ export async function createTransferRequest(
             }
 
             revalidatePath('/users/siswa')
+
+            void logActivity({
+                userId: user.id,
+                action: 'transfer_student',
+                entityType: 'transfer_request',
+                entityId: request.id,
+                metadata: { student_ids: input.studentIds, status: 'auto_approved' },
+                pagePath: '/users/siswa',
+            })
+
             return { success: true, requestId: request.id, autoApproved: true }
         }
     } catch (error) {

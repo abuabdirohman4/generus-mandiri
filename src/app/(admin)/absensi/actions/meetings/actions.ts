@@ -23,6 +23,7 @@ import type {
   CreateMeetingData,
   UpdateMeetingData
 } from '@/types/meeting'
+import { logActivity } from '@/lib/activityLogger'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYER 3: SERVER ACTIONS (Exported - Thin orchestrators)
@@ -170,6 +171,18 @@ export async function createMeeting(data: CreateMeetingData) {
     if (insertError) throw insertError
 
     revalidatePath('/absensi')
+
+    if (meeting?.id) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_meeting',
+        entityType: 'meeting',
+        entityId: meeting.id,
+        entityLabel: data.title,
+        pagePath: '/absensi',
+      })
+    }
+
     return { success: true, data: meeting }
   } catch (error) {
     console.error('Error in createMeeting:', error)
@@ -445,6 +458,16 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
     if (updateError) throw updateError
 
     revalidatePath('/absensi')
+
+    void logActivity({
+      userId: user.id,
+      action: 'update_meeting',
+      entityType: 'meeting',
+      entityId: meetingId,
+      entityLabel: data.title,
+      pagePath: '/absensi',
+    })
+
     return { success: true }
   } catch (error) {
     console.error('Error in updateMeeting:', error)
@@ -478,6 +501,15 @@ export async function deleteMeeting(meetingId: string) {
     if (deleteError) throw deleteError
 
     revalidatePath('/absensi')
+
+    void logActivity({
+      userId: user.id,
+      action: 'delete_meeting',
+      entityType: 'meeting',
+      entityId: meetingId,
+      pagePath: '/absensi',
+    })
+
     return { success: true }
   } catch (error) {
     console.error('Error in deleteMeeting:', error)

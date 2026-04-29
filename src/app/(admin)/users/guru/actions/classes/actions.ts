@@ -18,6 +18,7 @@ import {
     validateClassesForDaerah,
     validateClassesForKelompok,
 } from './logic'
+import { logActivity } from '@/lib/activityLogger'
 
 /**
  * Get class assignments for a specific teacher
@@ -75,6 +76,16 @@ export async function updateTeacherClasses(teacherId: string, classIds: string[]
         }
 
         revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'assign_class_teacher',
+            entityType: 'teacher',
+            entityId: teacherId,
+            metadata: { class_ids: classIds },
+            pagePath: '/users/guru',
+        })
+
         return { success: true }
     } catch (error) {
         throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate kelas guru')
@@ -91,6 +102,19 @@ export async function assignTeacherToClass(teacherId: string, classId: string) {
         if (error) throw error
 
         revalidatePath('/users/guru')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'assign_class_teacher',
+                entityType: 'teacher',
+                entityId: teacherId,
+                metadata: { class_id: classId },
+                pagePath: '/users/guru',
+            })
+        }
+
         return { success: true }
     } catch (error) {
         console.error('Error assigning teacher to class:', error)

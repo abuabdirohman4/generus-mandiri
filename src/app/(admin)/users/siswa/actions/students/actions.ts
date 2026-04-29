@@ -32,6 +32,7 @@ import {
     insertStudentsBatch,
     insertStudentClassesBatch,
 } from './queries'
+import { logActivity } from '@/lib/activityLogger'
 import {
     transformStudentsData,
     collectMissingClassIds,
@@ -392,6 +393,18 @@ export async function createStudent(formData: FormData) {
 
         revalidatePath('/users/siswa')
         revalidatePath('/absensi')
+
+        if (newStudent?.id) {
+            void logActivity({
+                userId: user.id,
+                action: 'create_student',
+                entityType: 'student',
+                entityId: newStudent.id,
+                entityLabel: name,
+                pagePath: '/users/siswa',
+            })
+        }
+
         return { success: true, student: newStudent }
     } catch (error) {
         handleApiError(error, 'menyimpan data', 'Gagal membuat siswa')
@@ -531,6 +544,18 @@ export async function updateStudent(studentId: string, formData: FormData) {
         }
 
         revalidatePath('/users/siswa')
+
+        if (updatedStudent?.id) {
+            void logActivity({
+                userId: user.id,
+                action: 'update_student',
+                entityType: 'student',
+                entityId: studentId,
+                entityLabel: name,
+                pagePath: '/users/siswa',
+            })
+        }
+
         return { success: true, student: updatedStudent }
     } catch (error) {
         handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa')
@@ -635,6 +660,16 @@ export async function deleteStudent(
 
         revalidatePath('/users/siswa')
         revalidatePath('/absensi')
+
+        void logActivity({
+            userId: user.id,
+            action: permanent ? 'hard_delete_student' : 'soft_delete_student',
+            entityType: 'student',
+            entityId: studentId,
+            entityLabel: student.name,
+            pagePath: '/users/siswa',
+        })
+
         return { success: true }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Gagal menghapus siswa'
@@ -720,6 +755,19 @@ export async function assignStudentsToClass(
         }
 
         revalidatePath('/users/siswa')
+
+        if (newStudentIds.length > 0) {
+            void logActivity({
+                userId: (await supabase.auth.getUser()).data.user?.id || '',
+                action: 'assign_class_teacher', // or a more specific action if defined
+                entityType: 'student_batch',
+                entityId: classId,
+                entityLabel: classData.name,
+                metadata: { student_ids: newStudentIds },
+                pagePath: '/users/siswa',
+            })
+        }
+
         return {
             success: true,
             assigned: newStudentIds.length,
@@ -786,6 +834,19 @@ export async function createStudentsBatch(
         }
 
         revalidatePath('/users/siswa')
+
+        if (insertedStudents && insertedStudents.length > 0) {
+            void logActivity({
+                userId: (await supabase.auth.getUser()).data.user?.id || '',
+                action: 'create_student',
+                entityType: 'student_batch',
+                entityId: classId,
+                entityLabel: classData.name,
+                metadata: { count: insertedStudents.length },
+                pagePath: '/users/siswa',
+            })
+        }
+
         return {
             success: true,
             imported: insertedStudents?.length || 0,

@@ -13,6 +13,7 @@ import {
   transformAdminList
 } from './logic';
 import type { AdminData } from '../types';
+import { logActivity } from '@/lib/activityLogger';
 
 export async function createAdmin(data: AdminData) {
   try {
@@ -75,6 +76,19 @@ export async function createAdmin(data: AdminData) {
     }
 
     revalidatePath('/users/admin');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_admin',
+        entityType: 'admin',
+        entityId: authData.user.id,
+        entityLabel: data.full_name,
+        pagePath: '/users/admin',
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error creating admin:', error);
@@ -141,6 +155,19 @@ export async function updateAdmin(id: string, data: AdminData) {
     }
 
     revalidatePath('/users/admin');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_admin',
+        entityType: 'admin',
+        entityId: id,
+        entityLabel: data.full_name,
+        pagePath: '/users/admin',
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error updating admin:', error);
@@ -160,6 +187,18 @@ export async function deleteAdmin(id: string) {
     }
 
     revalidatePath('/users/admin');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'delete_admin',
+        entityType: 'admin',
+        entityId: id,
+        pagePath: '/users/admin',
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting admin:', error);
@@ -179,6 +218,17 @@ export async function resetAdminPassword(id: string, newPassword: string) {
 
     if (error) {
       throw error;
+    }
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'reset_admin_password',
+        entityType: 'admin',
+        entityId: id,
+        pagePath: '/users/admin',
+      });
     }
 
     return { success: true };
