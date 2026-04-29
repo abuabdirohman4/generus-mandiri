@@ -22,28 +22,48 @@ const PAGE_LABELS: Record<string, string> = {
 
 export default function OnlinePresence() {
   const [onlineUsers, setOnlineUsers] = useState<any[]>([])
-  // Stable client — tidak dibuat ulang setiap render
-  const supabaseRef = useRef(createClient())
+  
+  // Gunakan singleton client
+  const supabase = createClient()
 
   useEffect(() => {
-    const supabase = supabaseRef.current
-    // Subscribe tanpa presence key — pure observer
+    // Subscribe ke channel yang sama dengan Tracker
+    // Kita tidak memberikan 'key' di sini agar tidak menabrak track() milik usePresence
     const channel = supabase.channel('online-users')
+
+    console.log('OnlinePresence: Subscribing to channel...')
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
+        console.log('Raw Presence State:', state)
+        
+        // Transform state (Object of arrays) menjadi flat array
         const stateValues = Object.values(state).flat()
         const uniqueUsersMap = new Map()
+        
         stateValues.forEach((u: any) => {
-          if (u.user_id) uniqueUsersMap.set(u.user_id, u)
+          // Hanya tambahkan jika payload track() valid
+          if (u && u.user_id) {
+            const existing = uniqueUsersMap.get(u.user_id)
+            // Ambil sesi yang memiliki timestamp paling baru
+            if (!existing || (u.online_at && (!existing.online_at || new Date(u.online_at) > new Date(existing.online_at)))) {
+              uniqueUsersMap.set(u.user_id, u)
+            }
+          }
         })
-        setOnlineUsers(Array.from(uniqueUsersMap.values()))
+        
+        const finalUsers = Array.from(uniqueUsersMap.values())
+        console.log('Processed Online Users:', finalUsers)
+        setOnlineUsers(finalUsers)
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log('OnlinePresence Subscription Status:', status)
+      })
 
     return () => {
-      supabase.removeChannel(channel)
+      console.log('OnlinePresence: Unsubscribing from channel...')
+      channel.unsubscribe()
     }
   }, [])
 
@@ -62,8 +82,13 @@ export default function OnlinePresence() {
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <TeamOutlined className="text-green-500" />
-        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">User Online Saat Ini</h3>
-        <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse ml-2" />
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest flex items-center gap-2">
+          User Online Saat Ini
+          <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full text-[10px]">
+            {onlineUsers.length}
+          </span>
+        </h3>
+        <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
       </div>
       
       <div className="flex flex-wrap gap-3">

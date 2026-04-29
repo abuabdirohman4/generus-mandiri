@@ -13,18 +13,16 @@ export function usePresence() {
   const { profile } = useUserProfileStore()
   const pathname = usePathname()
   const channelRef = useRef<any>(null)
-  // Stable supabase client — dibuat sekali, tidak di render cycle
-  const supabaseRef = useRef(createClient())
+  
+  // Gunakan singleton client
+  const supabase = createClient()
 
   useEffect(() => {
     if (!profile?.id) return
 
-    const supabase = supabaseRef.current
-
-    // Unsubscribe channel lama jika ada
+    // Bersihkan channel lama jika ada
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current)
-      channelRef.current = null
     }
 
     const channel = supabase.channel('online-users', {
@@ -33,33 +31,58 @@ export function usePresence() {
 
     channelRef.current = channel
 
+    const handleTrack = async () => {
+      // VALIDASI: Jangan track jika data belum lengkap
+      if (!profile?.id || !profile?.full_name) {
+        console.warn('usePresence: Missing profile data, skipping track')
+        return
+      }
+
+      try {
+        const payload = {
+          user_id: profile.id,
+          full_name: profile.full_name,
+          role: profile.role || 'user',
+          page_path: pathname,
+          online_at: new Date().toISOString(),
+        }
+        
+        console.log('usePresence: Tracking payload:', payload)
+        await channel.track(payload)
+      } catch (err) {
+        console.error('Error tracking presence:', err)
+      }
+    }
+
     channel.subscribe(async (status: string) => {
-      if (status !== 'SUBSCRIBED') return
-      await channel.track({
-        user_id: profile.id,
-        full_name: profile.full_name,
-        role: profile.role,
-        page_path: pathname,
-        online_at: new Date().toISOString(),
-      })
+      console.log(`usePresence: Channel status for ${profile.id}:`, status)
+      if (status === 'SUBSCRIBED') {
+        await handleTrack()
+      }
     })
 
     return () => {
-      supabase.removeChannel(channel)
-      channelRef.current = null
+      if (channel) {
+        console.log(`usePresence: Unsubscribing tracker for ${profile.id}`)
+        channel.unsubscribe()
+        channelRef.current = null
+      }
     }
-  // Hanya re-subscribe jika profile berubah (login/logout)
-  }, [profile?.id, profile?.full_name, profile?.role])
+  // Re-subscribe hanya jika ID user berubah (login/logout)
+  }, [profile?.id])
 
-  // Re-track saat navigasi — update page_path tanpa re-subscribe
+  // Re-track saat navigasi tanpa re-subscribe
   useEffect(() => {
-    if (!channelRef.current || !profile?.id) return
-    channelRef.current.track({
+    const channel = channelRef.current
+    // Pastikan channel sudah joined dan profile data lengkap
+    if (!channel || channel.state !== 'joined' || !profile?.id || !profile?.full_name) return
+    
+    channel.track({
       user_id: profile.id,
       full_name: profile.full_name,
-      role: profile.role,
+      role: profile.role || 'user',
       page_path: pathname,
       online_at: new Date().toISOString(),
     })
-  }, [pathname])
+  }, [pathname, profile?.id, profile?.full_name, profile?.role])
 }
