@@ -75,58 +75,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(signinUrl)
     }
 
-    // Page view tracking (fire-and-forget via service role)
-    // Hanya log full page navigation — skip RSC data fetch dan prefetch
-    const isRSCRequest = request.headers.get('rsc') === '1'
-    const isPrefetch = request.headers.get('next-router-prefetch') === '1'
-    if (session && isProtectedRoute && !isRSCRequest && !isPrefetch) {
-      const userId = session.user.id
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-      if (supabaseUrl && serviceRoleKey) {
-        ;(async () => {
-          try {
-            // Fetch profile with service role (bypass RLS)
-            const profileRes = await fetch(
-              `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=role,daerah_id,desa_id,kelompok_id&limit=1`,
-              {
-                headers: {
-                  apikey: serviceRoleKey,
-                  Authorization: `Bearer ${serviceRoleKey}`,
-                  'Content-Type': 'application/json',
-                },
-              }
-            )
-            const profiles = await profileRes.json()
-            const profile = profiles?.[0]
-
-            if (profile) {
-              await fetch(`${supabaseUrl}/rest/v1/activity_logs`, {
-                method: 'POST',
-                headers: {
-                  apikey: serviceRoleKey,
-                  Authorization: `Bearer ${serviceRoleKey}`,
-                  'Content-Type': 'application/json',
-                  Prefer: 'return=minimal',
-                },
-                body: JSON.stringify({
-                  user_id: userId,
-                  user_role: profile.role,
-                  org_daerah_id: profile.daerah_id ?? null,
-                  org_desa_id: profile.desa_id ?? null,
-                  org_kelompok_id: profile.kelompok_id ?? null,
-                  action: 'open_page',
-                  page_path: pathname,
-                }),
-              })
-            }
-          } catch {
-            // Silent fail for logging
-          }
-        })()
-      }
-    }
+    // Page view tracking — disabled sementara, perlu pendekatan berbeda
+    // TODO: re-enable dengan solusi yang tidak spam per-request
 
     // Allow public routes and authenticated protected routes
     return response
