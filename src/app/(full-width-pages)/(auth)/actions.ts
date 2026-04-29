@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { handleApiError, handleAuthError, isRedirectError } from '@/lib/errorUtils';
 import { createClient } from "@/lib/supabase/server";
 import { isNonEmptyString, isValidEmail } from '@/lib/typeGuards';
+import { logActivity } from '@/lib/activityLogger';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -50,6 +51,13 @@ export async function login(formData: FormData) {
       const errorMessage = handleAuthError(error);
       return redirect(`/signin?message=${encodeURIComponent(errorMessage)}`);
     }
+
+    void logActivity({
+      userId: profile.id,
+      action: 'login',
+      entityType: 'auth',
+      pagePath: '/signin',
+    })
 
     revalidatePath("/", "layout");
     redirect("/home");
@@ -175,6 +183,17 @@ export async function signOut() {
   const supabase = await createClient();
   
   try {
+    // Log logout sebelum session dihapus
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      void logActivity({
+        userId: user.id,
+        action: 'logout',
+        entityType: 'auth',
+        pagePath: '/home',
+      })
+    }
+
     // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     

@@ -75,33 +75,54 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(signinUrl)
     }
 
-    // Page view tracking (fire-and-forget)
+    // Page view tracking (fire-and-forget via service role)
     if (session && isProtectedRoute) {
       const userId = session.user.id
-      // Perform logging asynchronously without awaiting
-      ;(async () => {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role, daerah_id, desa_id, kelompok_id')
-            .eq('id', userId)
-            .single()
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-          if (profile) {
-            await supabase.from('activity_logs').insert({
-              user_id: userId,
-              user_role: profile.role,
-              org_daerah_id: profile.daerah_id,
-              org_desa_id: profile.desa_id,
-              org_kelompok_id: profile.kelompok_id,
-              action: 'open_page',
-              page_path: pathname,
-            })
+      if (supabaseUrl && serviceRoleKey) {
+        ;(async () => {
+          try {
+            // Fetch profile with service role (bypass RLS)
+            const profileRes = await fetch(
+              `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=role,daerah_id,desa_id,kelompok_id&limit=1`,
+              {
+                headers: {
+                  apikey: serviceRoleKey,
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            )
+            const profiles = await profileRes.json()
+            const profile = profiles?.[0]
+
+            if (profile) {
+              await fetch(`${supabaseUrl}/rest/v1/activity_logs`, {
+                method: 'POST',
+                headers: {
+                  apikey: serviceRoleKey,
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  'Content-Type': 'application/json',
+                  Prefer: 'return=minimal',
+                },
+                body: JSON.stringify({
+                  user_id: userId,
+                  user_role: profile.role,
+                  org_daerah_id: profile.daerah_id ?? null,
+                  org_desa_id: profile.desa_id ?? null,
+                  org_kelompok_id: profile.kelompok_id ?? null,
+                  action: 'open_page',
+                  page_path: pathname,
+                }),
+              })
+            }
+          } catch {
+            // Silent fail for logging
           }
-        } catch (err) {
-          // Silent fail for logging
-        }
-      })()
+        })()
+      }
     }
 
     // Allow public routes and authenticated protected routes

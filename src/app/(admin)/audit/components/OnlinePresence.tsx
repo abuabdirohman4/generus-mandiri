@@ -25,7 +25,9 @@ export default function OnlinePresence() {
   const supabase = createClient()
 
   useEffect(() => {
-    const channel = supabase.channel('online-users')
+    const channel = supabase.channel('online-users', {
+      config: { presence: { key: 'audit-observer' } },
+    })
 
     channel
       .on('presence', { event: 'sync' }, () => {
