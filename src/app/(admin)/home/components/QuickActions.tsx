@@ -227,8 +227,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     },
     {
       id: 'audit',
-      name: 'Audit Log',
-      description: 'Audit Log',
+      name: 'Tracking',
+      description: 'Tracking',
       href: '/audit',
       icon: <DashboardIcon className="w-6 h-6" />,
       bgColor: 'bg-red-100 dark:bg-red-900',

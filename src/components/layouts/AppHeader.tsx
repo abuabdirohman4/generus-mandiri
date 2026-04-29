@@ -52,10 +52,12 @@ function PageTitle() {
         return 'Organisasi';
       case '/kegiatan':
         return 'Kegiatan';
+      case '/audit':
+        return 'Tracking System';
       case '/settings':
           return 'Pengaturan';
       case '/settings/security':
-      return 'Keamanan';
+        return 'Keamanan';
       case '/settings/profile':
         return 'Profil';
       case '/settings/pwa':

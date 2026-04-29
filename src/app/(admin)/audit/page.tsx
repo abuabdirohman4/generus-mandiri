@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { 
   SafetyCertificateOutlined, 
-  ReloadOutlined, 
   LeftOutlined, 
   RightOutlined, 
   BarsOutlined, 
@@ -14,6 +13,7 @@ import AuditTable from './components/AuditTable'
 import AuditFilters from './components/AuditFilters'
 import OnlinePresence from './components/OnlinePresence'
 import UserSummaryTable from './components/UserSummaryTable'
+import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton'
 import { toast } from 'sonner'
 
 export default function AuditPage() {
@@ -32,28 +32,30 @@ export default function AuditPage() {
     limit: 50
   })
 
-  const loadLogs = async (currentParams: GetLogsParams) => {
-    setLoading(true)
+  const loadLogs = async (currentParams: GetLogsParams, showLoading = true) => {
+    if (showLoading) setLoading(true)
     try {
       const data = await getActivityLogs(currentParams)
       setLogs(data.logs)
       setTotal(data.total)
     } catch (error) {
-      toast.error('Gagal memuat log aktivitas')
+      console.error(error)
+      // toast.error('Gagal memuat log aktivitas')
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
-  const loadSummary = async () => {
-    setSummaryLoading(true)
+  const loadSummary = async (showLoading = true) => {
+    if (showLoading) setSummaryLoading(true)
     try {
       const data = await getUserActivitySummary()
       setUserSummaries(data)
     } catch (error) {
-      toast.error('Gagal memuat ringkasan user')
+      console.error(error)
+      // toast.error('Gagal memuat ringkasan user')
     } finally {
-      setSummaryLoading(false)
+      if (showLoading) setSummaryLoading(false)
     }
   }
 
@@ -66,7 +68,27 @@ export default function AuditPage() {
     loadLogs(params)
     loadMetadata()
     loadSummary()
-  }, [])
+
+    // Initialize Supabase Realtime
+    const { createClient } = require('@/lib/supabase/client')
+    const supabase = createClient()
+    
+    const channel = supabase.channel('audit-logs-changes')
+      .on(
+        'postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'activity_logs' }, 
+        () => {
+          // Trigger SILENT refresh when new log inserted
+          loadLogs(params, false)
+          loadSummary(false)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [params])
 
   const handleFilter = (newFilters: Partial<GetLogsParams>) => {
     const newParams = { ...params, ...newFilters, page: 1 }
@@ -83,27 +105,16 @@ export default function AuditPage() {
   const totalPages = Math.ceil(total / (params.limit || 50))
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    // <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="flex flex-col gap-6 bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Audit System</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Tracking System</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">Pantau semua aktivitas sistem dan keamanan secara real-time</p>
           </div>
         </div>
-        
-        <button 
-          onClick={() => {
-            if (activeTab === 'all') loadLogs(params)
-            else loadSummary()
-          }}
-          disabled={loading || summaryLoading}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-all disabled:opacity-50 shadow-sm"
-        >
-          <ReloadOutlined className={loading || summaryLoading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
       </div>
 
       {/* Real-time Presence */}
@@ -137,19 +148,9 @@ export default function AuditPage() {
 
       {activeTab === 'all' ? (
         <>
-          {/* Filters */}
-          {/* <AuditFilters 
-            onFilter={handleFilter} 
-            actions={metadata.actions} 
-            entityTypes={metadata.entityTypes} 
-          /> */}
-
           {/* Table */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-               <div className="h-12 w-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-               <p className="text-gray-500 dark:text-gray-400 font-medium">Memuat data aktivitas...</p>
-            </div>
+          {loading && logs.length === 0 ? (
+            <SuperadminTableSkeleton />
           ) : (
             <div className="overflow-hidden">
               <AuditTable logs={logs} />
@@ -209,11 +210,8 @@ export default function AuditPage() {
         </>
       ) : (
         <>
-          {summaryLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-               <div className="h-12 w-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-               <p className="text-gray-500 dark:text-gray-400 font-medium">Menganalisis ringkasan aktivitas...</p>
-            </div>
+          {summaryLoading && userSummaries.length === 0 ? (
+            <SuperadminTableSkeleton />
           ) : (
             <div className="overflow-hidden">
               <UserSummaryTable data={userSummaries} />
