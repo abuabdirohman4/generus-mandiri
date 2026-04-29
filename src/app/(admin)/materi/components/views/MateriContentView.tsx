@@ -320,11 +320,13 @@ export default function MateriContentView({
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
                             showClassColumn={columnVisibility.showClassColumn}
+                            showSemesterColumn={columnVisibility.showSemesterColumn}
                             showMonthColumn={columnVisibility.showMonthColumn}
                             columnToggle={
                                 <ColumnToggle
                                     columns={[
                                         { key: 'showClassColumn', label: 'Kelas' },
+                                        { key: 'showSemesterColumn', label: 'Semester' },
                                         { key: 'showMonthColumn', label: 'Bulan' },
                                     ]}
                                     visibility={columnVisibility}
@@ -350,10 +352,12 @@ export default function MateriContentView({
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
+                            showSemesterColumn={columnVisibility.showSemesterColumn}
                             showMonthColumn={columnVisibility.showMonthColumn}
                             columnToggle={
                                 <ColumnToggle
                                     columns={[
+                                        { key: 'showSemesterColumn', label: 'Semester' },
                                         { key: 'showMonthColumn', label: 'Bulan' },
                                     ]}
                                     visibility={columnVisibility}

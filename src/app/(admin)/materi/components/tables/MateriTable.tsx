@@ -18,11 +18,12 @@ interface MateriTableProps {
     selectedMonth?: number | null;
     monthsByItemId?: Record<string, number[]>;
     showClassColumn?: boolean;
+    showSemesterColumn?: boolean;
     showMonthColumn?: boolean;
     columnToggle?: ReactNode;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {}, showClassColumn = false, showMonthColumn = true, columnToggle }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {}, showClassColumn = false, showSemesterColumn = true, showMonthColumn = true, columnToggle }: MateriTableProps) {
     const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
     const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
 
@@ -59,6 +60,13 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             sortable: false,
             align: 'left' as const,
             width: '180px',
+        }] : []),
+        ...(showSemesterColumn ? [{
+            key: 'semesters',
+            label: 'SEMESTER',
+            sortable: false,
+            align: 'left' as const,
+            width: '140px',
         }] : []),
         ...(showMonthColumn ? [{
             key: 'months',
@@ -135,6 +143,29 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                             className="px-1.5 py-0.5 text-[10px] font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded border border-indigo-100 dark:border-indigo-800/30"
                         >
                             {cls.name}
+                        </span>
+                    ))}
+                </div>
+            );
+        }
+        if (column.key === 'semesters') {
+            const classes = item.itemData?.classes || [];
+            const semesters = Array.from(new Set(
+                classes.map((c: any) => c.semester).filter((s: any) => s === 1 || s === 2)
+            )).sort() as (1 | 2)[];
+
+            if (semesters.length === 0) {
+                return <span className="text-gray-400 dark:text-gray-600">—</span>;
+            }
+
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {semesters.map(s => (
+                        <span
+                            key={s}
+                            className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded border border-purple-100 dark:border-purple-800/30 uppercase tracking-wide"
+                        >
+                            S{s}
                         </span>
                     ))}
                 </div>

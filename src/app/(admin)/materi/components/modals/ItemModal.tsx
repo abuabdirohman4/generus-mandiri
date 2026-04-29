@@ -460,14 +460,14 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
                                       {/* Month selection for this semester */}
                                       {isSemesterSelected && (
-                                        <div className="flex flex-wrap gap-1.5 ml-2">
+                                        <div className="flex flex-wrap gap-1.5">
                                           {getSemesterMonths(semester).map((month) => (
                                             <button
                                               key={month}
                                               type="button"
                                               onClick={() => handleMonthToggle(cls.id, semester, month)}
-                                              className={`px-2 py-0.5 text-[10px] rounded-md border transition-colors ${classMonths.has(month)
-                                                ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800'
+                                              className={`px-2 py-0.5 text-[10px] rounded-full border transition-colors ${classMonths.has(month)
+                                                ? 'bg-blue-600 text-white border-blue-600'
                                                 : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                                                 }`}
                                             >

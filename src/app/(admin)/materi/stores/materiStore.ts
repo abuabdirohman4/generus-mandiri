@@ -14,6 +14,7 @@ export interface MateriFilters {
 
 export interface MateriColumnVisibility {
     showClassColumn: boolean
+    showSemesterColumn: boolean
     showMonthColumn: boolean
 }
 
@@ -39,6 +40,7 @@ const defaultFilters: MateriFilters = {
 
 const defaultColumnVisibility: MateriColumnVisibility = {
     showClassColumn: true,
+    showSemesterColumn: true,
     showMonthColumn: true,
 }
 
