@@ -11,6 +11,7 @@ import { AdminLayoutProvider } from "@/components/layouts/AdminLayoutProvider";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { canAccessFeature } from "@/lib/accessControl";
+import PageViewTracker from "@/components/common/PageViewTracker";
 
 export default function AdminLayout({
   children,
@@ -46,6 +47,7 @@ export default function AdminLayout({
 
   return (
     <AdminLayoutProvider>
+      <PageViewTracker />
       <div className="min-h-screen dark:bg-gray-900 xl:flex">
         <AppSidebar />
         <Backdrop />

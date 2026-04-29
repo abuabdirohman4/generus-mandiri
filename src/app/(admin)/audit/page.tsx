@@ -138,11 +138,11 @@ export default function AuditPage() {
       {activeTab === 'all' ? (
         <>
           {/* Filters */}
-          <AuditFilters 
+          {/* <AuditFilters 
             onFilter={handleFilter} 
             actions={metadata.actions} 
             entityTypes={metadata.entityTypes} 
-          />
+          /> */}
 
           {/* Table */}
           {loading ? (
@@ -151,7 +151,7 @@ export default function AuditPage() {
                <p className="text-gray-500 dark:text-gray-400 font-medium">Memuat data aktivitas...</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="overflow-hidden">
               <AuditTable logs={logs} />
               
               {/* Pagination */}
@@ -208,18 +208,18 @@ export default function AuditPage() {
           )}
         </>
       ) : (
-        <div className="mt-2">
+        <>
           {summaryLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                <div className="h-12 w-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
                <p className="text-gray-500 dark:text-gray-400 font-medium">Menganalisis ringkasan aktivitas...</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="overflow-hidden">
               <UserSummaryTable data={userSummaries} />
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   )

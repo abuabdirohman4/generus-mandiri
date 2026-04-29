@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState, useMemo, useEffect } from 'react'
+import { ReactNode, useState, useMemo, useEffect, Fragment } from 'react'
 import Spinner from '../ui/spinner/Spinner'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/lib/icons'
 
@@ -20,7 +20,7 @@ interface Column {
 interface DataTableProps {
   columns: Column[]
   data: any[]
-  renderCell?: (column: Column, item: any, index: number) => ReactNode
+  renderCell?: (column: Column, item: any, index: number, isExpanded: boolean) => ReactNode
   className?: string
   headerClassName?: string
   rowClassName?: string | ((item: any, index: number) => string)
@@ -37,6 +37,8 @@ interface DataTableProps {
   defaultSortColumn?: string
   defaultSortDirection?: 'asc' | 'desc'
   columnToggle?: ReactNode
+  expandable?: boolean
+  renderExpandedRow?: (item: any, index: number) => ReactNode
 }
 
 export default function DataTable({
@@ -58,7 +60,9 @@ export default function DataTable({
   getRowId = (item, index) => item.id || item.student_id || index,
   defaultSortColumn,
   defaultSortDirection = 'asc',
-  columnToggle
+  columnToggle,
+  expandable = false,
+  renderExpandedRow
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
@@ -67,6 +71,7 @@ export default function DataTable({
   const [sortColumn, setSortColumn] = useState<string | null>(defaultSortColumn || null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(defaultSortColumn ? defaultSortDirection : null)
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedRowId, setExpandedRowId] = useState<string | number | null>(null)
 
   // Screen size detection
   useEffect(() => {
@@ -177,6 +182,8 @@ export default function DataTable({
   }
 
   const handleSort = (columnKey: string) => {
+    // Clear expansion when sorting to avoid confusion
+    setExpandedRowId(null)
     if (sortColumn === columnKey) {
       // Toggle through: asc → desc → null
       if (sortDirection === 'asc') {
@@ -364,12 +371,17 @@ export default function DataTable({
                   const rowId = getRowId(item, index)
 
                   return (
-                    <tr
-                      key={rowId}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick ? 'cursor-pointer' : ''} ${typeof rowClassName === 'function' ? rowClassName(item, index) : rowClassName
-                        }`}
-                      onClick={() => onRowClick?.(item, index)}
-                    >
+                    <Fragment key={rowId}>
+                      <tr
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${onRowClick || expandable ? 'cursor-pointer' : ''} ${typeof rowClassName === 'function' ? rowClassName(item, index) : rowClassName
+                          }`}
+                        onClick={() => {
+                          if (expandable) {
+                            setExpandedRowId(expandedRowId === rowId ? null : rowId)
+                          }
+                          onRowClick?.(item, index)
+                        }}
+                      >
                       {columns.map((column) => {
                         const getAlignmentClass = (align?: string) => {
                           switch (align) {
@@ -413,15 +425,28 @@ export default function DataTable({
                                 )
                               }
 
-                              return renderCell ? renderCell(column, item, index) : defaultRenderCell(column, item)
+                              const isExpanded = String(expandedRowId) === String(rowId)
+                              return renderCell ? renderCell(column, item, index, isExpanded) : defaultRenderCell(column, item)
                             })()}
                           </td>
                         )
                       })}
                     </tr>
-                  )
-                })
-              ) : (
+
+                    {/* Expandable Row */}
+                    {expandable && renderExpandedRow && String(expandedRowId) === String(rowId) && (
+                      <tr className="bg-gray-50/50 dark:bg-gray-900/30">
+                        <td colSpan={columns.length} className="px-0">
+                          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                            {renderExpandedRow(item, index)}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })
+            ) : (
                 <tr>
                   <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'No matching records found' : 'No data available'}

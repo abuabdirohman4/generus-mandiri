@@ -3,6 +3,7 @@
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/id'
+import DataTable from '@/components/table/Table'
 
 dayjs.extend(relativeTime)
 dayjs.locale('id')
@@ -41,58 +42,57 @@ export default function UserSummaryTable({ data }: UserSummaryTableProps) {
     return 'text-green-400 font-bold'
   }
 
+  const columns = [
+    { key: 'full_name', label: 'Nama', sortable: true },
+    { key: 'username', label: 'Username', sortable: true },
+    { key: 'role', label: 'Role', sortable: true },
+    { key: 'last_active', label: 'Terakhir Aktif', sortable: true },
+    { key: 'total_actions_30d', label: 'Aksi 30 Hari', align: 'center' as const, sortable: true },
+  ]
+
+  const renderCell = (column: any, user: UserSummary) => {
+    switch (column.key) {
+      case 'full_name':
+        return <span className="text-sm font-semibold text-gray-900 dark:text-gray-200">{user.full_name}</span>
+      case 'username':
+        return <span className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</span>
+      case 'role':
+        return (
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getRoleBadge(user.role)}`}>
+            {user.role}
+          </span>
+        )
+      case 'last_active':
+        return (
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {user.last_active 
+              ? dayjs(user.last_active).fromNow()
+              : 'Belum pernah aktif'}
+          </span>
+        )
+      case 'total_actions_30d':
+        return (
+          <span className={`text-sm text-center ${getActionColor(user.total_actions_30d)}`}>
+            {user.total_actions_30d}
+          </span>
+        )
+      default:
+        return null
+    }
+  }
+
   return (
-    <div className="w-full overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              <th className="px-6 py-4">Nama</th>
-              <th className="px-6 py-4">Username</th>
-              <th className="px-6 py-4">Role</th>
-              <th className="px-6 py-4">Terakhir Aktif</th>
-              <th className="px-6 py-4 text-right">Aksi 30 Hari</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {data.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                  Tidak ada data user ditemukan
-                </td>
-              </tr>
-            ) : (
-              data.sort((a, b) => b.total_actions_30d - a.total_actions_30d).map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-200">{user.full_name}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getRoleBadge(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {user.last_active 
-                        ? dayjs(user.last_active).fromNow()
-                        : 'Belum pernah aktif'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right whitespace-nowrap">
-                    <span className={`text-sm ${getActionColor(user.total_actions_30d)}`}>
-                      {user.total_actions_30d}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="w-full">
+      <DataTable 
+        columns={columns}
+        data={data}
+        renderCell={renderCell}
+        searchable={true}
+        pagination={true}
+        defaultSortColumn="last_active"
+        defaultSortDirection="desc"
+        searchPlaceholder="Cari pengguna..."
+      />
     </div>
   )
 }
