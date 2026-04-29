@@ -20,6 +20,17 @@ export async function fetchMeetingFormSettings(supabase: SupabaseClient, userId:
 }
 
 /**
+ * Fetch material permission flag for a user
+ */
+export async function fetchTeacherMaterialPermissions(supabase: SupabaseClient, userId: string) {
+    return await supabase
+        .from('profiles')
+        .select('can_manage_materials')
+        .eq('id', userId)
+        .single()
+}
+
+/**
  * Update meeting form settings for a user
  */
 export async function updateMeetingFormSettingsQuery(
@@ -53,6 +64,23 @@ export async function updateTeacherPermissionsQuery(
         .from('profiles')
         .update({
             permissions,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+}
+
+/**
+ * Update material access permissions for a teacher
+ */
+export async function updateTeacherMaterialPermissionsQuery(
+    supabase: SupabaseClient,
+    userId: string,
+    data: { can_manage_materials: boolean }
+) {
+    return await supabase
+        .from('profiles')
+        .update({
+            can_manage_materials: data.can_manage_materials,
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId)

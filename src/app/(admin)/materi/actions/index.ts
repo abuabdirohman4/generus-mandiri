@@ -36,10 +36,10 @@ export {
     deleteDayMaterialAssignment,
 } from './items/actions'
 
-// ─── Curriculum (Monthly Targets) ─────────────────────────────────────────────
+// ─── Monthly Targets ───────────────────────────────────────────────────────────
 export {
   getMonthlyTargets,
   createMonthlyTarget,
   deleteMonthlyTarget,
   bulkSetMonthlyTargets,
-} from './curriculum/actions'
+} from './monthly-targets/actions'

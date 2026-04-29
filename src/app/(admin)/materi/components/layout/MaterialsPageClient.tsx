@@ -14,7 +14,7 @@ import BulkMappingUpdateModal from '../modals/BulkMappingUpdateModal';
 import CategoryModal from '../modals/CategoryModal';
 import TypeModal from '../modals/TypeModal';
 import { useMateriStore } from '../../stores/materiStore';
-import { isAdmin, isTeacher, canManageMaterials, canManageCurriculum } from '@/lib/accessControl';
+import { isAdmin, isTeacher, canManageMaterials } from '@/lib/accessControl';
 import ConfirmModal from '@/components/ui/modal/ConfirmModal';
 import { toast } from 'sonner';
 import FloatingActionButton, { type FABAction } from '@/components/ui/button/FloatingActionButton';

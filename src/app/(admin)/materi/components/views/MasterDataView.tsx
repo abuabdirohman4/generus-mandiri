@@ -14,7 +14,7 @@ import {
   deleteMaterialItem,
   getAllClasses
 } from '../../actions';
-import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
+import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
 import { useMateriStore } from '../../stores/materiStore';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';

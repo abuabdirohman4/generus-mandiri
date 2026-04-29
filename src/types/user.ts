@@ -29,7 +29,6 @@ export interface UserProfileWithOrg extends UserProfileBase {
   desa_id?: string | null
   kelompok_id?: string | null
   can_manage_materials?: boolean
-  can_manage_curriculum?: boolean
 }
 
 // ─── Full Types ───────────────────────────────────────────────────────────────

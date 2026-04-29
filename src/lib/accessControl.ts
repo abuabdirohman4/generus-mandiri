@@ -73,7 +73,10 @@ export function isMaterialCoordinator(profile: UserProfile | null): boolean {
 }
 
 export function canManageMaterials(profile: UserProfile | null): boolean {
-  return profile?.can_manage_materials === true
+  if (!profile) return false
+  if (profile.role === 'superadmin') return true
+  if (profile.role === 'admin') return true
+  return profile.can_manage_materials === true
 }
 
 // Filter visibility utilities (for modal forms)
@@ -176,12 +179,4 @@ export function getDataFilter(profile: UserProfile) {
     };
   }
   return null; // No access
-}
-
-// Curriculum management permission check (client-side)
-export function canManageCurriculum(profile: UserProfile | null): boolean {
-  if (!profile) return false
-  if (profile.role === 'superadmin') return true
-  if (profile.role === 'admin') return true
-  return profile.can_manage_curriculum === true
 }

@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 
 import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName, Semester, Month, ClassMaster } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
-import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/curriculum/actions';
+import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 import InputFilter from '@/components/form/input/InputFilter';

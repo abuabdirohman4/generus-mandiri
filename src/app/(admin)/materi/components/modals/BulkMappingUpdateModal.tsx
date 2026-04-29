@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import { MaterialItem, ClassMaster } from '../../types';
 import { getAllClasses, bulkUpdateMaterialMapping } from '../../actions';
-import { syncItemMonthlyTargetsBulk } from '../../actions/curriculum/actions';
+import { syncItemMonthlyTargetsBulk } from '../../actions/monthly-targets/actions';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { getSemesterMonths, getMonthName, type Semester, type Month } from '../../types';
 import { toast } from 'sonner';

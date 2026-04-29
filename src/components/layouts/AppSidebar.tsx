@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { isSuperAdmin, isAdminKelompok, isAdminDesa } from "@/lib/userUtils";
+import { canManageMaterials } from "@/lib/accessControl";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -30,6 +31,7 @@ type NavItem = {
   path?: string;
   subItems?: SubNavItem[];
   adminOnly?: boolean;
+  requireCanManageMaterials?: boolean;
   excludeAdminKelompok?: boolean;
   excludeAdminDesa?: boolean;
 };
@@ -56,11 +58,12 @@ const allNavItems: NavItem[] = [
     name: "Laporan",
     path: "/laporan",
   },
-  // {
-  //   icon: <BookOpenIcon className="w-6 h-6" />,
-  //   name: "Materi",
-  //   path: "/materi",
-  // },
+  {
+    icon: <BookOpenIcon className="w-6 h-6" />,
+    name: "Materi",
+    path: "/materi",
+    requireCanManageMaterials: true,
+  },
   {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
@@ -410,9 +413,15 @@ function SidebarContent({
   const { profile } = useUserProfile();
   const isSuperAdminUser = profile ? isSuperAdmin(profile) : false;
   const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
+  const userCanManageMaterials = profile ? canManageMaterials(profile) : false;
 
   // Filter navigation items based on admin status and role-specific exclusions
   const visibleNavItems = allNavItems.filter(item => {
+    // Items that require can_manage_materials: show for admin OR guru with permission
+    if (item.requireCanManageMaterials && !userCanManageMaterials) {
+      return false
+    }
+
     // Filter out admin-only items for non-admins
     if (item.adminOnly && !isAdminUser) {
       return false

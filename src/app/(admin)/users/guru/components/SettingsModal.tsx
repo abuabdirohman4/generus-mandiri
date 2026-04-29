@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Modal from '@/components/ui/modal'
 import Button from '@/components/ui/button/Button'
 import Label from '@/components/form/Label'
-import { getMeetingFormSettings, updateMeetingFormSettings, updateTeacherPermissions } from '../actions'
+import { getMeetingFormSettings, updateMeetingFormSettings, updateTeacherPermissions, getTeacherMaterialPermissions, updateTeacherMaterialPermissions } from '../actions'
 import { getAllActivityTypes, getTeacherActivityTypes, assignActivityTypeToTeacher, removeActivityTypeFromTeacher } from '@/app/(admin)/kegiatan/actions'
 import { toast } from 'sonner'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
@@ -69,6 +69,7 @@ export default function SettingsModal({
   const { profile: userProfile } = useUserProfile()
   const [settings, setSettings] = useState<MeetingFormSettings>(DEFAULT_SETTINGS)
   const [permissions, setPermissions] = useState<TeacherPermissions>(DEFAULT_PERMISSIONS)
+  const [canManageMaterials, setCanManageMaterials] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -86,10 +87,11 @@ export default function SettingsModal({
   const loadData = async () => {
     setIsLoading(true)
     try {
-      const [settingsResult, types, assigned] = await Promise.all([
+      const [settingsResult, types, assigned, materialPerms] = await Promise.all([
         getMeetingFormSettings(userId),
         getAllActivityTypes(),
         getTeacherActivityTypes(userId),
+        getTeacherMaterialPermissions(userId),
       ])
 
       if (settingsResult.success && settingsResult.data) {
@@ -99,6 +101,7 @@ export default function SettingsModal({
       }
 
       setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
+      setCanManageMaterials(materialPerms.can_manage_materials)
       setAllActivityTypes(types || [])
       setAssignedActivityTypeIds(new Set(assigned.map(a => a.activity_type_id)))
     } catch (error) {
@@ -146,6 +149,13 @@ export default function SettingsModal({
       const permissionsResult = await updateTeacherPermissions(userId, permissions)
       if (!permissionsResult.success) {
         toast.error('Gagal menyimpan hak akses: ' + permissionsResult.error)
+        setIsSaving(false)
+        return
+      }
+
+      const materialResult = await updateTeacherMaterialPermissions(userId, { can_manage_materials: canManageMaterials })
+      if (!materialResult.success) {
+        toast.error('Gagal menyimpan hak akses materi: ' + materialResult.error)
         setIsSaving(false)
         return
       }
@@ -359,6 +369,33 @@ export default function SettingsModal({
                     </span>
                   </label>
                 )}
+              </div>
+            </div>
+
+            {/* Material Access Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+                Hak Akses Materi
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Berikan akses kepada guru untuk mengelola konten materi pembelajaran
+              </p>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={canManageMaterials}
+                    onChange={(e) => setCanManageMaterials(e.target.checked)}
+                    className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    disabled={isSaving}
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Kelola Materi
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Tambah, edit, hapus item materi, assign ke kelas, dan set target bulanan
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
 

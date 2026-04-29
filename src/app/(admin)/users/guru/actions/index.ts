@@ -23,6 +23,8 @@ export {
     getMeetingFormSettings,
     updateMeetingFormSettings,
     updateTeacherPermissions,
+    getTeacherMaterialPermissions,
+    updateTeacherMaterialPermissions,
 } from './settings/actions'
 
 // ─── Settings Types ────────────────────────────────────────────────────────────

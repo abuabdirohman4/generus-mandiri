@@ -6,6 +6,7 @@ import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
 import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
+import { canManageMaterials } from '@/lib/accessControl';
 import type { UserProfile } from '@/types/user'
 
 type Profile = UserProfile
@@ -38,6 +39,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
   const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
   const isPPG = isAdminUser || isTeacherDesa || isTeacherDaerah
+  const userCanManageMaterials = canManageMaterials(profile)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -115,8 +117,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       icon: <BookOpenIcon className="w-6 h-6" />,
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
-      adminOnly: teacherCaberawit ? false : true,
-      disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
+      adminOnly: false,
+      disabled: isAdminUser || userCanManageMaterials ? false : true
     },
     {
       id: 'tahun-ajaran',
@@ -144,9 +146,9 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
         </svg>
       ),
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
-      iconColor: 'text-emerald-600 dark:text-econst canManage = userProfile ? canManageMaterials(userProfile) : false;merald-400',
-      adminOnly: teacherCaberawit ? false : true,
-      disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
+      iconColor: 'text-emerald-600 dark:text-econst emerald-400',
+      adminOnly: false,
+      disabled: isAdminUser || userCanManageMaterials ? false : true
     },
     {
       id: 'rapot',
@@ -160,8 +162,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       ),
       bgColor: 'bg-rose-100 dark:bg-rose-900',
       iconColor: 'text-rose-600 dark:text-rose-400',
-      adminOnly: teacherCaberawit ? false : true,
-      disabled: isTeacher(profile) && !isKelas6Warlob ? true : false
+      adminOnly: false,
+      disabled: isAdminUser || userCanManageMaterials ? false : true
     },
     {
       id: 'guru',

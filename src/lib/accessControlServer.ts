@@ -66,7 +66,7 @@ export async function getCurrentUserProfile() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, can_manage_materials, can_manage_curriculum')
+    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, can_manage_materials')
     .eq('id', user.id)
     .single();
     
@@ -83,14 +83,6 @@ export function canManageMaterials(profile: UserProfile | null): boolean {
 
 export function isMaterialCoordinator(profile: UserProfile | null): boolean {
   return profile?.role === 'material_coordinator'
-}
-
-// Curriculum management permission check (server-side)
-export function canManageCurriculum(profile: UserProfile | null): boolean {
-  if (!profile) return false
-  if (profile.role === 'superadmin') return true
-  if (profile.role === 'admin') return true
-  return profile.can_manage_curriculum === true
 }
 
 /**

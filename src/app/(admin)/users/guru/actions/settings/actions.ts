@@ -6,12 +6,31 @@ import { revalidatePath } from 'next/cache'
 import type { MeetingFormSettings } from '../types'
 import {
     fetchMeetingFormSettings,
+    fetchTeacherMaterialPermissions,
     updateMeetingFormSettingsQuery,
     updateTeacherPermissionsQuery,
+    updateTeacherMaterialPermissionsQuery,
 } from './queries'
 import { extractMeetingFormSettings } from './logic'
 
 export type { MeetingFormSettings }
+
+/**
+ * Get material permission for a teacher
+ */
+export async function getTeacherMaterialPermissions(
+    userId: string
+): Promise<{ can_manage_materials: boolean }> {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await fetchTeacherMaterialPermissions(supabase, userId)
+        if (error) throw error
+        return { can_manage_materials: data?.can_manage_materials ?? false }
+    } catch (error) {
+        console.error('Error getting material permissions:', error)
+        return { can_manage_materials: false }
+    }
+}
 
 /**
  * Get meeting form settings for a teacher
@@ -89,6 +108,30 @@ export async function updateTeacherPermissions(
         return {
             success: false,
             error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses').message,
+        }
+    }
+}
+
+/**
+ * Update material access permissions for a teacher (can_manage_materials)
+ */
+export async function updateTeacherMaterialPermissions(
+    userId: string,
+    data: { can_manage_materials: boolean }
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const supabase = await createClient()
+        const { error } = await updateTeacherMaterialPermissionsQuery(supabase, userId, data)
+        if (error) throw error
+
+        revalidatePath('/users/guru')
+        revalidatePath('/materi')
+        return { success: true }
+    } catch (error) {
+        console.error('Error updating material permissions:', error)
+        return {
+            success: false,
+            error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses materi').message,
         }
     }
 }

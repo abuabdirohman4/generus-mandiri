@@ -15,7 +15,7 @@ import {
   getMaterialItemClassMappings,
   updateMaterialItemClassMappings
 } from '../../actions';
-import { getMonthlyTargetsByItem, syncItemMonthlyTargets } from '../../actions/curriculum/actions';
+import { getMonthlyTargetsByItem, syncItemMonthlyTargets } from '../../actions/monthly-targets/actions';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { toast } from 'sonner';
 

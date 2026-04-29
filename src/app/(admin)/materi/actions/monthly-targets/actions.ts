@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { getCurrentUserProfile, canManageCurriculum } from '@/lib/accessControlServer'
+import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
 import type { MonthlyTarget, MonthlyTargetInput } from '../../types'
 import {
   fetchMonthlyTargets,
@@ -38,7 +38,7 @@ export async function getMonthlyTargets(params: {
 export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<MonthlyTarget> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
-  if (!canManageCurriculum(profile)) throw new Error('Unauthorized: Curriculum management access required')
+  if (!canManageMaterials(profile)) throw new Error('Unauthorized: Curriculum management access required')
 
   const supabase = await createClient()
   const { data, error } = await insertMonthlyTarget(supabase, {
@@ -59,7 +59,7 @@ export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<Mo
 export async function deleteMonthlyTarget(id: string): Promise<{ success: boolean }> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
-  if (!canManageCurriculum(profile)) throw new Error('Unauthorized')
+  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
   const supabase = await createClient()
   const { error } = await deleteMonthlyTargetById(supabase, id)
@@ -79,7 +79,7 @@ export async function bulkSetMonthlyTargets(
 ): Promise<{ success: boolean }> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
-  if (!canManageCurriculum(profile)) throw new Error('Unauthorized')
+  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
   const supabase = await createClient()
 
@@ -159,7 +159,7 @@ export async function syncItemMonthlyTargets(
 ): Promise<{ success: boolean }> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
-  if (!canManageCurriculum(profile)) throw new Error('Unauthorized')
+  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
   const activeYear = await getActiveAcademicYear()
   if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
@@ -207,7 +207,7 @@ export async function syncItemMonthlyTargetsBulk(
 ): Promise<{ success: boolean }> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
-  if (!canManageCurriculum(profile)) throw new Error('Unauthorized')
+  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
   const activeYear = await getActiveAcademicYear()
   if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
