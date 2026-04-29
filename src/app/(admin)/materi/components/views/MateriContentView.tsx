@@ -8,6 +8,7 @@ import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 import InputFilter from '@/components/form/input/InputFilter';
+import ColumnToggle from '../ui/ColumnToggle';
 // import MateriCardMobile from '../tables/MateriCardMobile';
 
 interface MateriContentViewProps {
@@ -45,7 +46,7 @@ export default function MateriContentView({
     onBulkEdit,
     classMasters
 }: MateriContentViewProps) {
-    const { filters, setFilter } = useMateriStore();
+    const { filters, setFilter, columnVisibility, setColumnVisibility } = useMateriStore();
 
     const isAdminUser = userProfile ? isAdmin(userProfile) : false;
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
@@ -268,58 +269,56 @@ export default function MateriContentView({
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 border-b border-gray-200 dark:border-gray-700">
-                <InputFilter
-                    id="semester-filter"
-                    label="Semester"
-                    value={filters.selectedSemester?.toString() || ''}
-                    onChange={(val) => {
-                        const sem = val ? parseInt(val) : null;
-                        setFilter('selectedSemester', sem);
-                        if (!sem) setFilter('selectedMonth', null);
-                    }}
-                    allOptionLabel="Semua Semester"
-                    options={[
-                        { value: '1', label: 'Semester 1' },
-                        { value: '2', label: 'Semester 2' }
-                    ]}
-                    widthClassName="w-40"
-                    variant="modal"
-                    compact
-                />
-
-                <InputFilter
-                    id="month-filter"
-                    label="Bulan"
-                    value={filters.selectedMonth?.toString() || ''}
-                    onChange={(val) => setFilter('selectedMonth', val ? parseInt(val) : null)}
-                    disabled={!filters.selectedSemester}
-                    allOptionLabel="Semua Bulan"
-                    options={filters.selectedSemester ? getSemesterMonths(filters.selectedSemester as Semester).map(m => ({
-                        value: m.toString(),
-                        label: getMonthName(m as Month)
-                    })) : []}
-                    widthClassName="w-40"
-                    variant="modal"
-                    compact
-                />
-
-                {filters.viewMode === 'by_material' && (
                     <InputFilter
-                        id="class-filter-content"
-                        label="Kelas"
-                        value={filters.selectedClassId || ''}
-                        onChange={(val) => setFilter('selectedClassId', val || null)}
-                        allOptionLabel="Semua Kelas"
-                        options={classMasters.map(cls => ({
-                            value: cls.id,
-                            label: cls.name
-                        }))}
-                        widthClassName="w-48"
+                        id="semester-filter"
+                        label="Semester"
+                        value={filters.selectedSemester?.toString() || ''}
+                        onChange={(val) => {
+                            const sem = val ? parseInt(val) : null;
+                            setFilter('selectedSemester', sem);
+                            if (!sem) setFilter('selectedMonth', null);
+                        }}
+                        allOptionLabel="Semua Semester"
+                        options={[
+                            { value: '1', label: 'Semester 1' },
+                            { value: '2', label: 'Semester 2' }
+                        ]}
+                        widthClassName="w-40"
                         variant="modal"
                         compact
                     />
-                )}
-            </div>
+                    <InputFilter
+                        id="month-filter"
+                        label="Bulan"
+                        value={filters.selectedMonth?.toString() || ''}
+                        onChange={(val) => setFilter('selectedMonth', val ? parseInt(val) : null)}
+                        disabled={!filters.selectedSemester}
+                        allOptionLabel="Semua Bulan"
+                        options={filters.selectedSemester ? getSemesterMonths(filters.selectedSemester as Semester).map(m => ({
+                            value: m.toString(),
+                            label: getMonthName(m as Month)
+                        })) : []}
+                        widthClassName="w-40"
+                        variant="modal"
+                        compact
+                    />
+                    {filters.viewMode === 'by_material' && (
+                        <InputFilter
+                            id="class-filter-content"
+                            label="Kelas"
+                            value={filters.selectedClassId || ''}
+                            onChange={(val) => setFilter('selectedClassId', val || null)}
+                            allOptionLabel="Semua Kelas"
+                            options={classMasters.map(cls => ({
+                                value: cls.id,
+                                label: cls.name
+                            }))}
+                            widthClassName="w-48"
+                            variant="modal"
+                            compact
+                        />
+                    )}
+                </div>
 
             {/* Conditional Rendering Based on View Mode */}
             {filters.viewMode === 'by_material' ? (
@@ -341,7 +340,18 @@ export default function MateriContentView({
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
-                            showClassColumn={true}
+                            showClassColumn={columnVisibility.showClassColumn}
+                            showMonthColumn={columnVisibility.showMonthColumn}
+                            columnToggle={
+                                <ColumnToggle
+                                    columns={[
+                                        { key: 'showClassColumn', label: 'Kelas' },
+                                        { key: 'showMonthColumn', label: 'Bulan' },
+                                    ]}
+                                    visibility={columnVisibility}
+                                    onChange={setColumnVisibility}
+                                />
+                            }
                         />
                     </div>
 
@@ -405,6 +415,16 @@ export default function MateriContentView({
                             showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
                             selectedMonth={filters.selectedMonth}
                             monthsByItemId={monthsByItemId}
+                            showMonthColumn={columnVisibility.showMonthColumn}
+                            columnToggle={
+                                <ColumnToggle
+                                    columns={[
+                                        { key: 'showMonthColumn', label: 'Bulan' },
+                                    ]}
+                                    visibility={columnVisibility}
+                                    onChange={setColumnVisibility}
+                                />
+                            }
                         />
                     </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { type ReactNode } from 'react';
 import DataTable from '@/components/table/Table';
 import { MaterialItem, type Month } from '../../types';
 import { getMonthName } from '../../types';
@@ -17,9 +18,11 @@ interface MateriTableProps {
     selectedMonth?: number | null;
     monthsByItemId?: Record<string, number[]>;
     showClassColumn?: boolean;
+    showMonthColumn?: boolean;
+    columnToggle?: ReactNode;
 }
 
-export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {}, showClassColumn = false }: MateriTableProps) {
+export default function MateriTable({ items, onEdit, onDelete, onView, selectedIds, onToggleSelection, onToggleAll, showTargetBadge, selectedMonth, monthsByItemId = {}, showClassColumn = false, showMonthColumn = true, columnToggle }: MateriTableProps) {
     const allSelected = items.length > 0 && selectedIds && items.every(item => selectedIds.has(item.id));
     const someSelected = selectedIds && selectedIds.size > 0 && !allSelected;
 
@@ -60,13 +63,13 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             align: 'left' as const,
             width: '180px',
         }] : []),
-        {
+        ...(showMonthColumn ? [{
             key: 'months',
             label: 'BULAN',
             sortable: false,
             align: 'left' as const,
             width: '180px',
-        },
+        }] : []),
         ...(onEdit || onDelete
             ? [
                 {
@@ -213,6 +216,7 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             itemsPerPageOptions={[10, 25, 50, 100]}
             onRowClick={(item) => onView?.(item.itemData)}
             rowClassName="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            columnToggle={columnToggle}
         />
     );
 }

@@ -36,6 +36,7 @@ interface DataTableProps {
   getRowId?: (item: any, index: number) => string | number
   defaultSortColumn?: string
   defaultSortDirection?: 'asc' | 'desc'
+  columnToggle?: ReactNode
 }
 
 export default function DataTable({
@@ -56,7 +57,8 @@ export default function DataTable({
   spinnerSize = 16,
   getRowId = (item, index) => item.id || item.student_id || index,
   defaultSortColumn,
-  defaultSortDirection = 'asc'
+  defaultSortDirection = 'asc',
+  columnToggle
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
@@ -246,24 +248,27 @@ export default function DataTable({
       {/* Search and Items Per Page Controls */}
       {(searchable || pagination) && (
         <div className="flex flex-col sm:flex-row justify-between gap-4">
-          {/* Items Per Page Selector */}
+          {/* Items Per Page Selector + Column Toggle */}
           {pagination && (
-            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <label>Show</label>
-              <select
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
-                className="w-full px-3 py-2 border bg-white border-gray-100 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 8px center'
-                }}
-              >
-                {itemsPerPageOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-              <label>entries</label>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label>Show</label>
+                <select
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="w-full px-3 py-2 border bg-white border-gray-100 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 8px center'
+                  }}
+                >
+                  {itemsPerPageOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <label>entries</label>
+              </div>
+              {columnToggle}
             </div>
           )}
 
