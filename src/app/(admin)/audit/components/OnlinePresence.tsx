@@ -31,22 +31,19 @@ export default function OnlinePresence() {
     // Kita tidak memberikan 'key' di sini agar tidak menabrak track() milik usePresence
     const channel = supabase.channel('online-users')
 
-    console.log('OnlinePresence: Subscribing to channel...')
+    console.log('OnlinePresence: Attaching listener to shared channel...')
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
         console.log('Raw Presence State:', state)
         
-        // Transform state (Object of arrays) menjadi flat array
         const stateValues = Object.values(state).flat()
         const uniqueUsersMap = new Map()
         
         stateValues.forEach((u: any) => {
-          // Hanya tambahkan jika payload track() valid
           if (u && u.user_id) {
             const existing = uniqueUsersMap.get(u.user_id)
-            // Ambil sesi yang memiliki timestamp paling baru
             if (!existing || (u.online_at && (!existing.online_at || new Date(u.online_at) > new Date(existing.online_at)))) {
               uniqueUsersMap.set(u.user_id, u)
             }
@@ -57,13 +54,32 @@ export default function OnlinePresence() {
         console.log('Processed Online Users:', finalUsers)
         setOnlineUsers(finalUsers)
       })
-      .subscribe((status) => {
+
+    // Hanya panggil subscribe jika channel belum dalam status joined
+    if (channel.state !== 'joined') {
+      channel.subscribe((status) => {
         console.log('OnlinePresence Subscription Status:', status)
       })
+    } else {
+      console.log('OnlinePresence: Channel already joined by Tracker')
+      // Trigger sync manual sekali di awal jika sudah joined
+      const state = channel.presenceState()
+      const stateValues = Object.values(state).flat()
+      const uniqueUsersMap = new Map()
+      stateValues.forEach((u: any) => {
+        if (u && u.user_id) {
+          const existing = uniqueUsersMap.get(u.user_id)
+          if (!existing || (u.online_at && (!existing.online_at || new Date(u.online_at) > new Date(existing.online_at)))) {
+            uniqueUsersMap.set(u.user_id, u)
+          }
+        }
+      })
+      setOnlineUsers(Array.from(uniqueUsersMap.values()))
+    }
 
     return () => {
-      console.log('OnlinePresence: Unsubscribing from channel...')
-      channel.unsubscribe()
+      // JANGAN unsubscribe di sini karena akan mematikan Tracker global (Singleton Client)
+      console.log('OnlinePresence: Detaching listener (keeping channel alive for Tracker)')
     }
   }, [])
 

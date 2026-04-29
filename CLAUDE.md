@@ -118,6 +118,9 @@ READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 
 ## 📚 Documentation Strategy
 
+- **Realtime Presence**: Architecture and maintenance guidelines.
+  - Technical: [`docs/technical/realtime-presence.md`](docs/technical/realtime-presence.md)
+  - Claude Rules: [`docs/claude/realtime-presence.md`](docs/claude/realtime-presence.md)
 **Inline limit**: Keep CLAUDE.md under **300 lines**. Use "READ [`file.md`]" pointers for external docs.
 
 **Inline when**: High-frequency (>50% tasks), short & critical (<50 lines), quick lookup, core conventions.
