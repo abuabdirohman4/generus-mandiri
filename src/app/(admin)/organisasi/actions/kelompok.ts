@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
+import { logActivity } from '@/lib/activityLogger';
 
 export interface KelompokData {
   name: string;
@@ -34,6 +35,19 @@ export async function createKelompok(data: KelompokData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_kelompok',
+        entityType: 'kelompok',
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error creating kelompok:', error);
@@ -67,6 +81,20 @@ export async function updateKelompok(id: string, data: KelompokData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_kelompok',
+        entityType: 'kelompok',
+        entityId: id,
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error updating kelompok:', error);
@@ -103,6 +131,18 @@ export async function deleteKelompok(id: string) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'delete_kelompok',
+        entityType: 'kelompok',
+        entityId: id,
+        pagePath: '/organisasi'
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting kelompok:', error);

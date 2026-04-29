@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
+import { logActivity } from '@/lib/activityLogger';
 
 export interface DaerahData {
   name: string;
@@ -24,6 +25,19 @@ export async function createDaerah(data: DaerahData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_daerah',
+        entityType: 'daerah',
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error creating daerah:', error);
@@ -48,6 +62,20 @@ export async function updateDaerah(id: string, data: DaerahData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_daerah',
+        entityType: 'daerah',
+        entityId: id,
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error updating daerah:', error);
@@ -89,6 +117,18 @@ export async function deleteDaerah(id: string) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'delete_daerah',
+        entityType: 'daerah',
+        entityId: id,
+        pagePath: '/organisasi'
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting daerah:', error);

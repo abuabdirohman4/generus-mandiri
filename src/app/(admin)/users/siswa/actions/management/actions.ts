@@ -182,6 +182,16 @@ export async function unarchiveStudent(
 
         revalidatePath('/users/siswa')
         revalidatePath('/absensi')
+
+        void logActivity({
+            userId: user.id,
+            action: 'unarchive_student',
+            entityType: 'student',
+            entityId: studentId,
+            entityLabel: student.name,
+            pagePath: '/users/siswa',
+        })
+
         return { success: true }
     } catch (error) {
         console.error('Unarchive student error:', error)
@@ -477,11 +487,22 @@ export async function approveTransferRequest(
         }
 
         const executeResult = await executeTransfer(requestId, user.id)
-        if (!executeResult.success) {
+        if (executeResult.success === false) {
             return { success: false, error: executeResult.error }
         }
 
         revalidatePath('/users/siswa')
+
+        void logActivity({
+            userId: user.id,
+            action: 'transfer_student',
+            entityType: 'transfer_request',
+            entityId: requestId,
+            entityLabel: 'Approve Transfer',
+            pagePath: '/users/siswa',
+            metadata: { status: 'approved' }
+        })
+
         return { success: true, requestId }
     } catch (error) {
         console.error('Approve transfer request error:', error)
@@ -537,11 +558,21 @@ export async function rejectTransferRequest(
         })
 
         if (updateError) {
-            console.error('Reject transfer request error:', updateError)
             return { success: false, error: 'Gagal menolak transfer request' }
         }
 
         revalidatePath('/users/siswa')
+
+        void logActivity({
+            userId: user.id,
+            action: 'transfer_student',
+            entityType: 'transfer_request',
+            entityId: requestId,
+            entityLabel: 'Reject Transfer',
+            pagePath: '/users/siswa',
+            metadata: { status: 'rejected' }
+        })
+
         return { success: true, requestId }
     } catch (error) {
         console.error('Reject transfer request error:', error)
@@ -582,11 +613,21 @@ export async function cancelTransferRequest(
         })
 
         if (updateError) {
-            console.error('Cancel transfer request error:', updateError)
             return { success: false, error: 'Gagal membatalkan transfer request' }
         }
 
         revalidatePath('/users/siswa')
+
+        void logActivity({
+            userId: user.id,
+            action: 'transfer_student',
+            entityType: 'transfer_request',
+            entityId: requestId,
+            entityLabel: 'Cancel Transfer',
+            pagePath: '/users/siswa',
+            metadata: { status: 'cancelled' }
+        })
+
         return { success: true, requestId }
     } catch (error) {
         console.error('Cancel transfer request error:', error)

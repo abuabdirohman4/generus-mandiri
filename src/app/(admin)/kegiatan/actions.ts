@@ -217,6 +217,20 @@ export async function updateActivityLevel(id: string, data: { name: string }) {
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_activity_type',
+        entityType: 'activity_type',
+        entityId: id,
+        entityLabel: `Update Level: ${data.name}`,
+        pagePath: '/kegiatan',
+        metadata: data
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error updating activity level:', error)
@@ -300,6 +314,20 @@ export async function assignActivityTypeToTeacher(teacherId: string, activityTyp
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_teacher_settings',
+        entityType: 'teacher',
+        entityId: teacherId,
+        entityLabel: `Assign Activity Type: ${activityTypeId}`,
+        pagePath: '/kegiatan',
+        metadata: { activityTypeId }
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error assigning activity type to teacher:', error)
@@ -324,6 +352,20 @@ export async function removeActivityTypeFromTeacher(teacherId: string, activityT
     }
 
     revalidatePath('/kegiatan')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_teacher_settings',
+        entityType: 'teacher',
+        entityId: teacherId,
+        entityLabel: `Remove Activity Type: ${activityTypeId}`,
+        pagePath: '/kegiatan',
+        metadata: { activityTypeId }
+      })
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Error removing activity type from teacher:', error)

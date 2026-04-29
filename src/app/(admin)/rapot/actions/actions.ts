@@ -130,6 +130,18 @@ export async function bulkUpsertSectionGrades(data: {
 
   if (error) throw error
 
+  const { data: { user } } = await (await createClient()).auth.getUser()
+  if (user) {
+    void logActivity({
+      userId: user.id,
+      action: 'save_grade',
+      entityType: 'student',
+      entityId: data.student_id,
+      metadata: { template_id: data.template_id, count: data.grades.length },
+      pagePath: '/rapot',
+    })
+  }
+
   return { success: true }
 }
 

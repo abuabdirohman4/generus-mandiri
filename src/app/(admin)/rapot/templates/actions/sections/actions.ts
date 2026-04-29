@@ -2,6 +2,8 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { ReportSection, ReportSectionItem, TemplateWithSections } from '../../types'
 import {
     fetchSectionsByTemplate,
@@ -136,6 +138,20 @@ export async function createSection(data: {
         if (error) throw error
 
         revalidatePath(`/rapot/templates/${data.template_id}`)
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_report_template',
+                entityType: 'report_template',
+                entityId: data.template_id,
+                entityLabel: `Create Section: ${data.name}`,
+                pagePath: `/rapot/templates/${data.template_id}`,
+                metadata: data
+            })
+        }
+
         return { success: true, data: section }
     } catch (error: any) {
         return { success: false, error: error.message }
@@ -165,6 +181,19 @@ export async function updateSection(
         const { data: section } = await fetchSectionTemplateId(adminClient, sectionId)
         if (section) {
             revalidatePath(`/rapot/templates/${section.template_id}`)
+
+            const profile = await getCurrentUserProfile()
+            if (profile) {
+                void logActivity({
+                    userId: profile.id,
+                    action: 'update_report_template',
+                    entityType: 'report_template',
+                    entityId: section.template_id,
+                    entityLabel: `Update Section: ${data.name || sectionId}`,
+                    pagePath: `/rapot/templates/${section.template_id}`,
+                    metadata: data
+                })
+            }
         }
 
         return { success: true }
@@ -188,6 +217,18 @@ export async function deleteSection(
 
         if (section) {
             revalidatePath(`/rapot/templates/${section.template_id}`)
+
+            const profile = await getCurrentUserProfile()
+            if (profile) {
+                void logActivity({
+                    userId: profile.id,
+                    action: 'update_report_template',
+                    entityType: 'report_template',
+                    entityId: section.template_id,
+                    entityLabel: `Delete Section: ${sectionId}`,
+                    pagePath: `/rapot/templates/${section.template_id}`
+                })
+            }
         }
 
         return { success: true }
@@ -217,6 +258,19 @@ export async function createSectionItem(data: {
         const { data: section } = await fetchSectionTemplateIdForItem(adminClient, data.section_id)
         if (section) {
             revalidatePath(`/rapot/templates/${section.template_id}`)
+
+            const profile = await getCurrentUserProfile()
+            if (profile) {
+                void logActivity({
+                    userId: profile.id,
+                    action: 'update_report_template',
+                    entityType: 'report_template',
+                    entityId: section.template_id,
+                    entityLabel: `Add Item to Section ${data.section_id}`,
+                    pagePath: `/rapot/templates/${section.template_id}`,
+                    metadata: data
+                })
+            }
         }
 
         return { success: true, data: item }

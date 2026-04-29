@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { MaterialType } from '../../types'
 import {
     fetchAllTypes,
@@ -50,6 +52,20 @@ export async function createMaterialType(data: {
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'create_material_type',
+            entityType: 'material_type',
+            entityId: type.id,
+            entityLabel: type.name,
+            pagePath: '/materi',
+            metadata: data
+        })
+    }
+
     return type
 }
 
@@ -75,6 +91,20 @@ export async function updateMaterialType(
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_material_type',
+            entityType: 'material_type',
+            entityId: id,
+            entityLabel: data.name,
+            pagePath: '/materi',
+            metadata: data
+        })
+    }
+
     return type
 }
 
@@ -111,5 +141,17 @@ export async function deleteMaterialType(id: string): Promise<{ success: boolean
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'delete_material_type',
+            entityType: 'material_type',
+            entityId: id,
+            pagePath: '/materi'
+        })
+    }
+
     return { success: true }
 }

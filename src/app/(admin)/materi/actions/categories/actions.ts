@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { MaterialCategory } from '../../types'
 import {
     fetchAllCategories,
@@ -49,6 +51,20 @@ export async function createMaterialCategory(data: {
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'create_material_category',
+            entityType: 'material_category',
+            entityId: category.id,
+            entityLabel: category.name,
+            pagePath: '/materi',
+            metadata: data
+        })
+    }
+
     return category
 }
 
@@ -73,6 +89,20 @@ export async function updateMaterialCategory(
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_material_category',
+            entityType: 'material_category',
+            entityId: id,
+            entityLabel: data.name,
+            pagePath: '/materi',
+            metadata: data
+        })
+    }
+
     return category
 }
 
@@ -102,5 +132,17 @@ export async function deleteMaterialCategory(id: string): Promise<{ success: boo
     }
 
     revalidatePath('/materi')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'delete_material_category',
+            entityType: 'material_category',
+            entityId: id,
+            pagePath: '/materi'
+        })
+    }
+
     return { success: true }
 }

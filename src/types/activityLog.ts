@@ -72,11 +72,34 @@ export type LogAction =
   | 'create_activity_type'
   | 'update_activity_type'
   | 'delete_activity_type'
+  // Organisasi
+  | 'create_daerah'
+  | 'update_daerah'
+  | 'delete_daerah'
+  | 'create_desa'
+  | 'update_desa'
+  | 'delete_desa'
+  | 'create_kelompok'
+  | 'update_kelompok'
+  | 'delete_kelompok'
+  // Kelas
+  | 'create_class'
+  | 'update_class'
+  | 'delete_class'
+  // Tahun Ajaran
+  | 'create_academic_year'
+  | 'update_academic_year'
+  | 'delete_academic_year'
+  | 'update_academic_year_status'
+  // Monitoring
+  | 'update_monitoring_data'
   // Navigation
   | 'open_page'
   // Auth
   | 'login'
   | 'logout'
+  | 'change_password'
+  | 'update_security_settings'
 
 // ─── Request/Response ─────────────────────────────────────────────────────────
 

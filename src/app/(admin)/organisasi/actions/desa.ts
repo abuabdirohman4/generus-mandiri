@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
+import { logActivity } from '@/lib/activityLogger';
 
 export interface DesaData {
   name: string;
@@ -34,6 +35,19 @@ export async function createDesa(data: DesaData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'create_desa',
+        entityType: 'desa',
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error creating desa:', error);
@@ -67,6 +81,20 @@ export async function updateDesa(id: string, data: DesaData) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_desa',
+        entityType: 'desa',
+        entityId: id,
+        entityLabel: data.name,
+        pagePath: '/organisasi',
+        metadata: data as any
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error updating desa:', error);
@@ -103,6 +131,18 @@ export async function deleteDesa(id: string) {
     }
 
     revalidatePath('/organisasi');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'delete_desa',
+        entityType: 'desa',
+        entityId: id,
+        pagePath: '/organisasi'
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Error deleting desa:', error);

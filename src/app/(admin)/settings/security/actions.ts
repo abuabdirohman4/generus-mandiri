@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { validatePasswordChangeInput } from './logic'
+import { logActivity } from '@/lib/activityLogger'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
 
 export interface ChangePasswordResult {
   success?: boolean
@@ -40,6 +42,16 @@ export async function changePassword(
     }
 
     revalidatePath('/settings/security')
+
+    const profile = await getCurrentUserProfile()
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'change_password',
+        pagePath: '/settings/security'
+      })
+    }
+
     return { success: true }
   } catch (err) {
     if (err instanceof Error) {

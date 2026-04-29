@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { AcademicYear, AcademicYearInput } from '../types';
+import { logActivity } from '@/lib/activityLogger';
+import { getCurrentUserProfile } from '@/lib/accessControlServer';
 
 export async function getAcademicYears(): Promise<AcademicYear[]> {
     const supabase = await createClient();
@@ -41,6 +43,20 @@ export async function createAcademicYear(input: AcademicYearInput): Promise<Acad
     if (error) throw new Error(error.message);
 
     revalidatePath('/tahun-ajaran');
+    
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'create_academic_year',
+            entityType: 'academic_year',
+            entityId: data.id,
+            entityLabel: `${data.start_year}/${data.end_year}`,
+            pagePath: '/tahun-ajaran',
+            metadata: input as any
+        });
+    }
+
     return data;
 }
 
@@ -55,6 +71,18 @@ export async function updateAcademicYear(id: string, input: Partial<AcademicYear
     if (error) throw new Error(error.message);
 
     revalidatePath('/tahun-ajaran');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_academic_year',
+            entityType: 'academic_year',
+            entityId: id,
+            pagePath: '/tahun-ajaran',
+            metadata: input as any
+        });
+    }
 }
 
 export async function setActiveAcademicYear(id: string): Promise<void> {
@@ -75,6 +103,18 @@ export async function setActiveAcademicYear(id: string): Promise<void> {
     if (error) throw new Error(error.message);
 
     revalidatePath('/tahun-ajaran');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_academic_year_status',
+            entityType: 'academic_year',
+            entityId: id,
+            entityLabel: 'Set Active',
+            pagePath: '/tahun-ajaran'
+        });
+    }
 }
 
 export async function deleteAcademicYear(id: string): Promise<void> {
@@ -99,4 +139,15 @@ export async function deleteAcademicYear(id: string): Promise<void> {
     if (error) throw new Error(error.message);
 
     revalidatePath('/tahun-ajaran');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'delete_academic_year',
+            entityType: 'academic_year',
+            entityId: id,
+            pagePath: '/tahun-ajaran'
+        });
+    }
 }

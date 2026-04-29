@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { MonthlyTarget, MonthlyTargetInput } from '../../types'
 import {
   fetchMonthlyTargets,
@@ -41,19 +42,33 @@ export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<Mo
   if (!canManageMaterials(profile)) throw new Error('Unauthorized: Curriculum management access required')
 
   const supabase = await createClient()
-  const { data, error } = await insertMonthlyTarget(supabase, {
-    ...input,
-    created_by: profile.id
-  })
+  try {
+    const { data, error } = await insertMonthlyTarget(supabase, {
+      ...input,
+      created_by: profile.id
+    })
 
-  if (error) {
-    if (error.code === '23505') throw new Error('Materi ini sudah ada sebagai target bulan tersebut')
+    if (error) {
+      if (error.code === '23505') throw new Error('Materi ini sudah ada sebagai target bulan tersebut')
+      throw error
+    }
+
+    revalidatePath('/materi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'create_monthly_target',
+      entityType: 'monthly_target',
+      entityId: data.id,
+      pagePath: '/materi',
+      metadata: input as any
+    })
+
+    return data
+  } catch (error) {
     console.error('Error creating monthly target:', error)
     throw new Error('Gagal membuat target bulanan')
   }
-
-  revalidatePath('/materi')
-  return data
 }
 
 export async function deleteMonthlyTarget(id: string): Promise<{ success: boolean }> {
@@ -62,15 +77,25 @@ export async function deleteMonthlyTarget(id: string): Promise<{ success: boolea
   if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
   const supabase = await createClient()
-  const { error } = await deleteMonthlyTargetById(supabase, id)
+  try {
+    const { error } = await deleteMonthlyTargetById(supabase, id)
+    if (error) throw error
 
-  if (error) {
+    revalidatePath('/materi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'delete_monthly_target',
+      entityType: 'monthly_target',
+      entityId: id,
+      pagePath: '/materi'
+    })
+
+    return { success: true }
+  } catch (error) {
     console.error('Error deleting monthly target:', error)
     throw new Error('Gagal menghapus target bulanan')
   }
-
-  revalidatePath('/materi')
-  return { success: true }
 }
 
 export async function bulkSetMonthlyTargets(
@@ -83,32 +108,44 @@ export async function bulkSetMonthlyTargets(
 
   const supabase = await createClient()
 
-  // Delete semua target bulan ini dulu (replace strategy)
-  await deleteMonthlyTargetsByMonth(supabase, params)
+  try {
+    // Delete semua target bulan ini dulu (replace strategy)
+    await deleteMonthlyTargetsByMonth(supabase, params)
 
-  // Insert yang baru
-  if (materialItemIds.length > 0) {
-    const records = materialItemIds.map((itemId, index) => ({
-      class_master_id: params.class_master_id,
-      academic_year_id: params.academic_year_id,
-      semester: params.semester as 1 | 2,
-      month: params.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
-      week: null,
-      day_of_week: null,
-      material_item_id: itemId,
-      display_order: index,
-      created_by: profile.id
-    }))
+    // Insert yang baru
+    if (materialItemIds.length > 0) {
+      const records = materialItemIds.map((itemId, index) => ({
+        class_master_id: params.class_master_id,
+        academic_year_id: params.academic_year_id,
+        semester: params.semester as 1 | 2,
+        month: params.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
+        week: null,
+        day_of_week: null,
+        material_item_id: itemId,
+        display_order: index,
+        created_by: profile.id
+      }))
 
-    const { error } = await bulkUpsertMonthlyTargets(supabase, records as any)
-    if (error) {
-      console.error('Error bulk setting monthly targets:', error)
-      throw new Error('Gagal menyimpan target bulanan')
+      const { error } = await bulkUpsertMonthlyTargets(supabase, records as any)
+      if (error) throw error
     }
-  }
 
-  revalidatePath('/materi')
-  return { success: true }
+    revalidatePath('/materi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'update_monthly_target',
+      entityType: 'monthly_target',
+      entityLabel: 'Bulk Set Targets',
+      pagePath: '/materi',
+      metadata: { ...params, count: materialItemIds.length }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error bulk setting monthly targets:', error)
+    throw new Error('Gagal menyimpan target bulanan')
+  }
 }
 
 export async function getMonthlyTargetItemIds(params: {
@@ -166,38 +203,48 @@ export async function syncItemMonthlyTargets(
 
   const supabase = await createClient()
 
-  // 1. Delete all existing monthly targets for THIS item in THIS academic year
-  const { error: deleteError } = await deleteMonthlyTargetsByItem(supabase, {
-    material_item_id: itemId,
-    academic_year_id: activeYear.id
-  })
+  try {
+    // 1. Delete all existing monthly targets for THIS item in THIS academic year
+    const { error: deleteError } = await deleteMonthlyTargetsByItem(supabase, {
+      material_item_id: itemId,
+      academic_year_id: activeYear.id
+    })
 
-  if (deleteError) {
-    console.error('Error deleting item monthly targets:', deleteError)
+    if (deleteError) throw deleteError
+
+    // 2. Insert new targets if any
+    if (mappings.length > 0) {
+      const records = mappings.map((m, index) => ({
+        class_master_id: m.class_master_id,
+        academic_year_id: activeYear.id,
+        semester: m.semester as 1 | 2,
+        month: m.month as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) | null,
+        material_item_id: itemId,
+        display_order: index,
+        created_by: profile.id
+      }))
+
+      const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records as any)
+      if (insertError) throw insertError
+    }
+
+    revalidatePath('/materi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'update_monthly_target',
+      entityType: 'monthly_target',
+      entityId: itemId,
+      entityLabel: 'Sync Item Targets',
+      pagePath: '/materi',
+      metadata: { mappings }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error syncing item monthly targets:', error)
     throw new Error('Gagal memperbarui target bulanan')
   }
-
-  // 2. Insert new targets if any
-  if (mappings.length > 0) {
-    const records = mappings.map((m, index) => ({
-      class_master_id: m.class_master_id,
-      academic_year_id: activeYear.id,
-      semester: m.semester as 1 | 2,
-      month: m.month as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) | null,
-      material_item_id: itemId,
-      display_order: index,
-      created_by: profile.id
-    }))
-
-    const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records as any)
-    if (insertError) {
-      console.error('Error inserting item monthly targets:', insertError)
-      throw new Error('Gagal menyimpan target bulanan')
-    }
-  }
-
-  revalidatePath('/materi')
-  return { success: true }
 }
 
 export async function syncItemMonthlyTargetsBulk(
@@ -214,46 +261,55 @@ export async function syncItemMonthlyTargetsBulk(
 
   const supabase = await createClient()
 
-  // 1. Delete existing if replace mode
-  if (mode === 'replace') {
-    const { error: deleteError } = await deleteMonthlyTargetsByItemIds(supabase, {
-      material_item_ids: itemIds,
-      academic_year_id: activeYear.id
-    })
+  try {
+    // 1. Delete existing if replace mode
+    if (mode === 'replace') {
+      const { error: deleteError } = await deleteMonthlyTargetsByItemIds(supabase, {
+        material_item_ids: itemIds,
+        academic_year_id: activeYear.id
+      })
 
-    if (deleteError) {
-      console.error('Error deleting bulk item monthly targets:', deleteError)
-      throw new Error('Gagal memperbarui target bulanan')
+      if (deleteError) throw deleteError
     }
-  }
 
-  // 2. Insert new targets if any
-  if (mappings.length > 0 && itemIds.length > 0) {
-    const records: any[] = []
-    
-    itemIds.forEach(itemId => {
-      mappings.forEach((m, index) => {
-        records.push({
-          class_master_id: m.class_master_id,
-          academic_year_id: activeYear.id,
-          semester: m.semester as 1 | 2,
-          month: m.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
-          material_item_id: itemId,
-          display_order: index,
-          created_by: profile.id
+    // 2. Insert new targets if any
+    if (mappings.length > 0 && itemIds.length > 0) {
+      const records: any[] = []
+      
+      itemIds.forEach(itemId => {
+        mappings.forEach((m, index) => {
+          records.push({
+            class_master_id: m.class_master_id,
+            academic_year_id: activeYear.id,
+            semester: m.semester as 1 | 2,
+            month: m.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
+            material_item_id: itemId,
+            display_order: index,
+            created_by: profile.id
+          })
         })
       })
+
+      const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records)
+      if (insertError) throw insertError
+    }
+
+    revalidatePath('/materi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'update_monthly_target',
+      entityType: 'monthly_target',
+      entityLabel: 'Bulk Sync Items',
+      pagePath: '/materi',
+      metadata: { itemIds, mappings, mode }
     })
 
-    const { error: insertError } = await bulkUpsertMonthlyTargets(supabase, records)
-    if (insertError) {
-      console.error('Error inserting bulk item monthly targets:', insertError)
-      throw new Error('Gagal menyimpan target bulanan')
-    }
+    return { success: true }
+  } catch (error) {
+    console.error('Error syncing bulk item monthly targets:', error)
+    throw new Error('Gagal memperbarui target bulanan')
   }
-
-  revalidatePath('/materi')
-  return { success: true }
 }
 
 export async function getMonthlyTargetsByItems(

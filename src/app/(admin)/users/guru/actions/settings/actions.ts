@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { MeetingFormSettings } from '../types'
 import {
     fetchMeetingFormSettings,
@@ -73,6 +75,20 @@ export async function updateMeetingFormSettings(
 
         revalidatePath('/users/guru')
         revalidatePath('/absensi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_teacher_settings',
+                entityType: 'teacher',
+                entityId: userId,
+                entityLabel: 'Update Meeting Form Settings',
+                pagePath: '/users/guru',
+                metadata: settings as any
+            })
+        }
+
         return { success: true }
     } catch (error) {
         console.error('Error updating meeting form settings:', error)
@@ -102,6 +118,20 @@ export async function updateTeacherPermissions(
 
         revalidatePath('/users/guru')
         revalidatePath('/users/siswa')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_teacher_settings',
+                entityType: 'teacher',
+                entityId: userId,
+                entityLabel: 'Update Permissions',
+                pagePath: '/users/guru',
+                metadata: permissions as any
+            })
+        }
+
         return { success: true }
     } catch (error) {
         console.error('Error updating teacher permissions:', error)
@@ -126,6 +156,20 @@ export async function updateTeacherMaterialPermissions(
 
         revalidatePath('/users/guru')
         revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_teacher_settings',
+                entityType: 'teacher',
+                entityId: userId,
+                entityLabel: 'Update Material Permissions',
+                pagePath: '/users/guru',
+                metadata: data as any
+            })
+        }
+
         return { success: true }
     } catch (error) {
         console.error('Error updating material permissions:', error)

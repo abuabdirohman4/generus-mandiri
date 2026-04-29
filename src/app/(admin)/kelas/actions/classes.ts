@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { ClassWithMaster } from '@/types/class'
 
 export type { ClassWithMaster }
@@ -190,6 +191,24 @@ export async function createClassFromMaster(
     }
 
     revalidatePath('/kelas')
+
+    const userProfile = await getCurrentUserProfile()
+    if (userProfile) {
+      void logActivity({
+        userId: userProfile.id,
+        action: 'create_class',
+        entityType: 'class',
+        entityId: classData.id,
+        entityLabel: className,
+        pagePath: '/kelas',
+        metadata: {
+          kelompokId,
+          masterIds,
+          customName
+        }
+      })
+    }
+
     return { success: true, class: classData }
   } catch (error) {
     handleApiError(error, 'membuat kelas', 'Gagal membuat kelas')
@@ -223,6 +242,23 @@ export async function createCustomClass(kelompokId: string, className: string) {
     if (error) throw error
 
     revalidatePath('/kelas')
+
+    const userProfile = await getCurrentUserProfile()
+    if (userProfile) {
+      void logActivity({
+        userId: userProfile.id,
+        action: 'create_class',
+        entityType: 'class',
+        entityId: result.id,
+        entityLabel: className,
+        pagePath: '/kelas',
+        metadata: {
+          kelompokId,
+          className
+        }
+      })
+    }
+
     return { success: true, class: result }
   } catch (error) {
     handleApiError(error, 'membuat kelas', 'Gagal membuat kelas custom')
@@ -288,6 +324,20 @@ export async function updateClass(
     }
 
     revalidatePath('/kelas')
+
+    const userProfile = await getCurrentUserProfile()
+    if (userProfile) {
+      void logActivity({
+        userId: userProfile.id,
+        action: 'update_class',
+        entityType: 'class',
+        entityId: classId,
+        entityLabel: name,
+        pagePath: '/kelas',
+        metadata: data
+      })
+    }
+
     return { success: true, class: result }
   } catch (error) {
     handleApiError(error, 'mengupdate data', 'Gagal mengupdate kelas')
@@ -313,6 +363,18 @@ export async function deleteClass(classId: string) {
     if (error) throw error
 
     revalidatePath('/kelas')
+
+    const userProfile = await getCurrentUserProfile()
+    if (userProfile) {
+      void logActivity({
+        userId: userProfile.id,
+        action: 'delete_class',
+        entityType: 'class',
+        entityId: classId,
+        pagePath: '/kelas'
+      })
+    }
+
     return { success: true }
   } catch (error) {
     handleApiError(error, 'menghapus data', 'Gagal menghapus kelas')

@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, canAccessFeature } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import {
   fetchTeacherClassMasters,
   deleteTeacherClassMasterAssignments,
@@ -40,6 +41,19 @@ export async function updateTeacherClassMasters(teacherId: string, classMasterId
     }
 
     revalidatePath('/users/guru')
+
+    if (profile) {
+      void logActivity({
+        userId: profile.id,
+        action: 'update_teacher_settings',
+        entityType: 'teacher',
+        entityId: teacherId,
+        entityLabel: 'Update Class Master Assignments',
+        pagePath: '/users/guru',
+        metadata: { classMasterIds }
+      })
+    }
+
     return { success: true }
   } catch (error) {
     throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate tingkatan kelas guru')

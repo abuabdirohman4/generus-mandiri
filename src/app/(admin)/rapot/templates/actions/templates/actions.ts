@@ -2,6 +2,8 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { logActivity } from '@/lib/activityLogger'
 import type { ReportTemplate } from '../../types'
 import {
     fetchAllTemplates,
@@ -71,6 +73,20 @@ export async function createTemplate(data: {
         }
 
         revalidatePath('/rapot/templates')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'create_report_template',
+                entityType: 'report_template',
+                entityId: template.id,
+                entityLabel: template.name,
+                pagePath: '/rapot/templates',
+                metadata: data
+            })
+        }
+
         return { success: true, data: template }
     } catch (error: any) {
         return { success: false, error: error.message }
@@ -98,6 +114,20 @@ export async function updateTemplate(
 
         revalidatePath('/rapot/templates')
         revalidatePath(`/rapot/templates/${templateId}`)
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_report_template',
+                entityType: 'report_template',
+                entityId: templateId,
+                entityLabel: data.name || templateId,
+                pagePath: '/rapot/templates',
+                metadata: data
+            })
+        }
+
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }
@@ -116,6 +146,18 @@ export async function deleteTemplate(
         if (error) throw error
 
         revalidatePath('/rapot/templates')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'delete_report_template',
+                entityType: 'report_template',
+                entityId: templateId,
+                pagePath: '/rapot/templates'
+            })
+        }
+
         return { success: true }
     } catch (error: any) {
         return { success: false, error: error.message }

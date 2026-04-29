@@ -3,6 +3,8 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { MaterialProgress, ProgressInput } from '../types';
+import { logActivity } from '@/lib/activityLogger';
+import { getCurrentUserProfile } from '@/lib/accessControlServer';
 
 /**
  * Get hafalan categories (categories with name containing "Hafalan")
@@ -118,6 +120,18 @@ export async function updateMaterialProgress(input: ProgressInput): Promise<void
     if (error) throw new Error(error.message);
 
     revalidatePath('/hafalan');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_monitoring_data',
+            entityType: 'student_progress',
+            entityId: input.student_id,
+            pagePath: '/monitoring',
+            metadata: input as any
+        });
+    }
 }
 
 export async function bulkUpdateProgress(updates: ProgressInput[]): Promise<void> {
@@ -138,6 +152,18 @@ export async function bulkUpdateProgress(updates: ProgressInput[]): Promise<void
     if (error) throw new Error(error.message);
 
     revalidatePath('/hafalan');
+
+    const profile = await getCurrentUserProfile();
+    if (profile) {
+        void logActivity({
+            userId: profile.id,
+            action: 'update_monitoring_data',
+            entityType: 'student_progress',
+            entityLabel: 'Bulk Update',
+            pagePath: '/monitoring',
+            metadata: { count: updates.length }
+        });
+    }
 }
 
 /**
