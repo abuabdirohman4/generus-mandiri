@@ -59,29 +59,13 @@ export async function bulkUpsertMonthlyTargets(
   supabase: SupabaseClient,
   records: Array<MonthlyTargetInput & { created_by: string }>
 ) {
-  const withMonth = records.filter(r => r.month != null)
-  const withoutMonth = records.filter(r => r.month == null)
-
-  // Rows with month: use upsert with partial index columns
-  if (withMonth.length > 0) {
-    const { error } = await supabase
-      .from('material_monthly_targets')
-      .upsert(withMonth, {
-        onConflict: 'class_master_id,academic_year_id,semester,month,material_item_id',
-        ignoreDuplicates: true
-      })
-    if (error) return { error }
-  }
-
-  // Rows without month: plain insert (caller must delete existing null-month rows first)
-  if (withoutMonth.length > 0) {
-    const { error } = await supabase
-      .from('material_monthly_targets')
-      .insert(withoutMonth)
-    if (error) return { error }
-  }
-
-  return { error: null }
+  // Caller (syncItemMonthlyTargets / syncItemMonthlyTargetsBulk) always deletes
+  // existing rows before calling this, so plain insert is safe — no conflicts possible.
+  if (records.length === 0) return { error: null }
+  const { error } = await supabase
+    .from('material_monthly_targets')
+    .insert(records)
+  return { error }
 }
 
 export async function deleteMonthlyTargetsByMonth(
