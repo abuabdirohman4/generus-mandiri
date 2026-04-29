@@ -1,77 +1,32 @@
-# Supabase Realtime Presence Implementation
+# Realtime Presence Architecture (Zustand Version)
 
-This document describes the technical implementation of the Realtime Presence feature used for tracking and displaying online users in the Generus Mandiri system.
+Dokumen ini menjelaskan implementasi fitur Realtime Presence di Generus Mandiri menggunakan Supabase Realtime dan Zustand.
 
-## Overview
+## Arsitektur Utama: "Single Source of Truth"
 
-The system uses Supabase Realtime Presence to track user activity across the admin dashboard. It is designed to be lightweight, efficient, and resilient to page navigations.
+Untuk menghindari konflik koneksi WebSocket dan masalah sinkronisasi (seperti status `CLOSED` atau `TIMED_OUT`), seluruh logika Realtime dipusatkan di dalam **Zustand Store**.
 
-## Architecture
+### 1. Zustand Store (`src/stores/usePresenceStore.ts`)
+Store ini adalah satu-satunya tempat yang mengelola lifecycle channel Supabase.
+- **Module-scoped Channel**: Objek `realtimeChannel` disimpan sebagai variabel di luar state store untuk menjamin stabilitas total (tidak terpengaruh oleh re-render React).
+- **Deduplikasi Metadata**: Menggunakan `lastTrackedPath` untuk mencegah *socket overflow* akibat pemanggilan `.track()` yang terlalu sering.
+- **Auto-Sync**: Mengelola pembersihan data dan deduplikasi user berdasarkan `user_id`.
 
-The implementation follows a Pub/Sub pattern with three main parts:
+### 2. Tracker Hook (`src/hooks/usePresence.ts`)
+Hook ringan yang dipasang secara global (via `PreloadProvider`).
+- Tugasnya hanya memicu `initializePresence` saat login dan `updatePath` saat navigasi halaman.
 
-### 1. Singleton Supabase Client
-**File**: `src/lib/supabase/client.ts`
+### 3. Observer Component (`OnlinePresence.tsx`)
+Komponen UI yang murni bertugas menampilkan data.
+- Mengambil data `onlineUsers` langsung dari store.
+- Mengaktifkan `isDebug` mode secara otomatis untuk membantu debugging Admin.
 
-To ensure connection stability and prevent multiple WebSocket connections, the browser-side Supabase client is implemented as a singleton.
+## Aturan Penting Realtime
 
-```typescript
-let supabase: SupabaseClient | null = null
+1.  **Dilarang membuat channel baru di komponen UI**: Selalu gunakan `usePresenceStore`.
+2.  **Jangan gunakan custom presence key**: Biarkan Supabase menggunakan UUID default per sesi agar tabrakan sesi tidak terjadi, namun tetap sertakan `user_id` di payload.
+3.  **Urutan Registrasi**: Selalu daftarkan event listener (`.on()`) **sebelum** memanggil `.subscribe()`.
+4.  **Singleton Client**: Pastikan selalu menggunakan `createClient()` singleton dari `@/lib/supabase/client`.
 
-export function createClient() {
-  if (supabase) return supabase
-  // ... initialization
-  return supabase
-}
-```
-
-### 2. The Tracker (Producer)
-**File**: `src/hooks/usePresence.ts`
-**Hook**: `usePresence()`
-
-This hook is responsible for broadcasting the user's presence.
-- **Mount Point**: `PreloadProvider.tsx` (Global).
-- **Behavior**:
-    - Subscribes to the `online-users` channel.
-    - Uses `channel.track()` to broadcast metadata: `user_id`, `full_name`, `role`, `page_path`, and `online_at`.
-    - **Navigation Tracking**: Monitors `pathname` changes and sends an updated `track()` payload without re-subscribing.
-    - **Stability**: Checks `channel.state === 'joined'` before tracking to avoid race conditions.
-
-### 3. The Observer (Listener)
-**File**: `src/app/(admin)/audit/components/OnlinePresence.tsx`
-
-This component displays the real-time list of online users.
-- **Behavior**:
-    - Acts as a **Listener**. It joins the existing `online-users` channel.
-    - **PENTING**: Menggunakan pola **Master/Listener**. Karena menggunakan Singleton Client, komponen ini **TIDAK BOLEH** memanggil `channel.unsubscribe()` atau `removeChannel()` saat unmount.
-    - Melakukan sinkronisasi manual di awal jika channel sudah dalam status `joined` oleh Tracker.
-
-## Crucial Implementation Details
-
-### Shared Channel Management
-Dalam lingkungan Singleton Client, satu objek channel dibagikan ke seluruh komponen. 
-- **Master** (Global Hook/Provider) bertanggung jawab atas `subscribe()` dan `unsubscribe()` (saat logout).
-- **Listener** (UI Component) hanya menempelkan event handler (`.on()`) dan tidak boleh memutus koneksi channel secara sepihak.
-
-### Unsubscribe vs RemoveChannel
-- `unsubscribe()`: Memutus koneksi socket untuk channel tersebut. Dalam singleton, ini akan memutus koneksi bagi SEMUA komponen.
-- `removeChannel()`: Menghapus channel dari daftar internal client. Lebih destruktif dari `unsubscribe()`.
-- **Aturan**: Hindari keduanya untuk channel global di dalam komponen UI.
-
-### Presence Key
-- The Tracker uses `{ config: { presence: { key: profile.id } } }`.
-- The Observer subscribes without a specific key to act as a pure listener.
-
-## Metadata Schema
-
-The tracked payload follows this structure:
-
-```typescript
-{
-  user_id: string;
-  full_name: string;
-  role: string;
-  page_path: string;
-  online_at: string; // ISO Timestamp for deduplication
-}
-```
+## Debugging
+Admin dapat melihat log sinkronisasi di console browser saat membuka halaman Audit. Log ini dikontrol oleh state `isDebug` di dalam store.

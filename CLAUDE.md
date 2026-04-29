@@ -118,7 +118,7 @@ READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 
 ## 📚 Documentation Strategy
 
-- **Realtime Presence**: Architecture and maintenance guidelines.
+- **Realtime Presence**: Architecture (Zustand) and maintenance guidelines.
   - Technical: [`docs/technical/realtime-presence.md`](docs/technical/realtime-presence.md)
   - Claude Rules: [`docs/claude/realtime-presence.md`](docs/claude/realtime-presence.md)
 **Inline limit**: Keep CLAUDE.md under **300 lines**. Use "READ [`file.md`]" pointers for external docs.
@@ -223,7 +223,7 @@ Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected 
 
 ### State Management
 
-**Zustand Stores** (persisted to localStorage): `userProfileStore`, `sidebarStore`, `themeStore`, `languageStore`, `attendanceStore`, `absensiUIStore`, `siswaStore`, `kelasStore`, `guruStore`, `adminStore`, `laporanStore`, `organisasiStore`.
+**Zustand Stores** (some persisted to localStorage): `userProfileStore`, `sidebarStore`, `themeStore`, `languageStore`, `attendanceStore`, `absensiUIStore`, `siswaStore`, `kelasStore`, `guruStore`, `adminStore`, `laporanStore`, `organisasiStore`, `presenceStore`.
 
 **CRITICAL**: NEVER hardcode dates/months — always use `new Date()`. Default values should use helper functions. SWR keys centralized in `@/lib/swr.ts`. Cache cleared on login/logout via `clearUserCache()`.
 
