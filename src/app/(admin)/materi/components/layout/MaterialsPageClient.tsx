@@ -87,11 +87,11 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
       setDataLoading(true);
 
       if (filters.viewMode === 'by_material') {
-        // Load data for material view
+        // Load data for material view (with class mappings for KELAS column)
         const [categoriesData, typesData, itemsData] = await Promise.all([
           getMaterialCategories(),
           getMaterialTypes(),
-          getAllMaterialItems()
+          getMaterialItemsWithClassMappings()
         ]);
         setCategories(categoriesData);
         setTypes(typesData);

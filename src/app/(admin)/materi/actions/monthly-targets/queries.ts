@@ -98,6 +98,7 @@ export async function fetchMonthlyTargetItemIds(
     .from('material_monthly_targets')
     .select('material_item_id')
     .eq('academic_year_id', params.academic_year_id)
+    .eq('semester', params.semester)
     .eq('month', params.month)
 
   if (params.class_master_id) {

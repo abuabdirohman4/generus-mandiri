@@ -8,7 +8,7 @@ import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 import InputFilter from '@/components/form/input/InputFilter';
-import ColumnToggle from '../ui/ColumnToggle';
+import ColumnToggle from '@/components/table/ColumnToggle';
 
 interface MateriContentViewProps {
     categories: MaterialCategory[];
@@ -182,14 +182,24 @@ export default function MateriContentView({
             result = result.filter(i => i.material_type_id === filters.selectedTypeId);
         }
 
-        // Filter by selected class (Master Data View)
+        // Filter by selected class
         if (filters.selectedClassId) {
             result = result.filter(item =>
                 item.classes?.some(c => c.id === filters.selectedClassId)
             );
         }
 
-        // Filter by selected semester and month targets
+        // Filter by semester (via class mappings) if no month selected
+        if (filters.selectedSemester && !filters.selectedMonth) {
+            result = result.filter(item =>
+                item.classes?.some((c: any) =>
+                    (!filters.selectedClassId || c.id === filters.selectedClassId) &&
+                    c.semester === filters.selectedSemester
+                )
+            );
+        }
+
+        // Filter by semester + month targets (via monthly_targets table)
         if (filters.selectedSemester && filters.selectedMonth) {
             result = result.filter(item => targetItemIds.has(item.id));
         }
