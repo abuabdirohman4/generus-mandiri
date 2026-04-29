@@ -9,7 +9,6 @@ import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 import InputFilter from '@/components/form/input/InputFilter';
 import ColumnToggle from '../ui/ColumnToggle';
-// import MateriCardMobile from '../tables/MateriCardMobile';
 
 interface MateriContentViewProps {
     categories: MaterialCategory[];
@@ -207,10 +206,6 @@ export default function MateriContentView({
         return result;
     }, [items, types, filters, userProfile, isTeacherUser, searchQuery, targetItemIds]);
 
-    // Get header title
-    const headerTitle = selectedType?.name || selectedCategory?.name || 'Semua Materi';
-    const headerDescription = selectedType?.description || selectedCategory?.description || 'Kelola item materi pembelajaran';
-
     return (
         <div className="space-y-6">
             {/* Header with Search and Create Button */}
@@ -242,29 +237,6 @@ export default function MateriContentView({
                         </svg>
                         <span>Edit Massal ({selectedIds.size})</span>
                     </button>
-                )}
-                {onCreateItem && (
-                    <>
-                        {/* <button
-                            onClick={onCreateItem}
-                            className="hidden lg:flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm ml-auto md:ml-0"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span className="md:inline">Tambah Materi</span>
-                        </button> */}
-
-                        {/* <button
-                            onClick={onCreateItem}
-                            className=""
-                            title="Buat Pertemuan Baru"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                        </button> */}
-                    </>
                 )}
             </div>
 
@@ -324,9 +296,6 @@ export default function MateriContentView({
             {filters.viewMode === 'by_material' ? (
                 <>
                     {/* View by Material Mode */}
-                    {/* Desktop: Table */}
-                    {/* <div className="hidden md:block"> */}
-
                     {/* Table View (All Screens) */}
                     <div className="mt-5 md:mt-0">
                         <MateriTable
@@ -354,54 +323,10 @@ export default function MateriContentView({
                             }
                         />
                     </div>
-
-                    {/* Mobile: Cards */}
-                    {/* <div className="md:hidden space-y-3 mt-4 md:mt-0">
-                        {filteredItems.map(item => (
-                            <MateriCardMobile
-                                key={item.id}
-                                item={item}
-                                types={types}
-                                isAdmin={isAdminUser}
-                                onEdit={onEditItem}
-                                onDelete={onDeleteItem}
-                            />
-                        ))}
-                    </div> */}
-
-                    {/* Empty State for Material View */}
-                    {/* {filteredItems.length === 0 && (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
-                            <div className="text-center">
-                                <svg
-                                    className="mx-auto h-12 w-12 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                                    Tidak ada materi
-                                </h3>
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    {searchQuery ? 'Tidak ada hasil untuk pencarian ini' : 'Tidak ada materi yang ditemukan untuk filter ini'}
-                                </p>
-                            </div>
-                        </div>
-                    )} */}
                 </>
             ) : (
                 <>
                     {/* View by Class Mode - Show items in table/card format */}
-                    {/* Desktop: Table */}
-                    {/* <div className="hidden md:block"> */}
-
                     {/* Table View (All Screens) */}
                     <div className="mt-5 md:mt-0">
                         <MateriTable
@@ -427,47 +352,6 @@ export default function MateriContentView({
                             }
                         />
                     </div>
-
-                    {/* Mobile: Cards */}
-                    {/* <div className="md:hidden space-y-3 mt-4 md:mt-0">
-                        {filteredItemsForClassMode.map(item => (
-                            <MateriCardMobile
-                                key={item.id}
-                                item={item}
-                                types={types}
-                                isAdmin={isAdminUser}
-                                onEdit={onEditItem}
-                                onDelete={onDeleteItem}
-                            />
-                        ))}
-                    </div> */}
-
-                    {/* Empty State for Class View */}
-                    {/* {filteredItemsForClassMode.length === 0 && (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-12 border shadow-sm">
-                            <div className="text-center">
-                                <svg
-                                    className="mx-auto h-12 w-12 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                                    Tidak ada materi
-                                </h3>
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    {searchQuery ? 'Tidak ada hasil untuk pencarian ini' : filters.selectedClassId && filters.selectedTypeId ? 'Pilih kategori materi dari sidebar' : 'Pilih kelas dan kategori dari sidebar'}
-                                </p>
-                            </div>
-                        </div>
-                    )} */}
                 </>
             )}
         </div>

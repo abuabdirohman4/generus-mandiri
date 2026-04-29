@@ -34,9 +34,6 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                     <input
                         type="checkbox"
                         checked={allSelected}
-                        // ref={input => {
-                        //     if (input) input.indeterminate = !!someSelected;
-                        // }}
                         onChange={(e) => onToggleAll?.(e.target.checked)}
                         className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                     />

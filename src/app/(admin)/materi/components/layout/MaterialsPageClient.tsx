@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../../types';
 import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getAllClasses, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
-import MaterialsLayout from '../daily/MaterialsLayout';
-import MasterDataView from '../views/MasterDataView';
 import MateriContentView from '../views/MateriContentView';
 import MateriSidebar from './MateriSidebar';
 import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
@@ -312,132 +310,123 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
 
 
         {/* Content */}
-        {activeTab === 'daily' ? (
-          <div className="px-6 py-6">
-            <MaterialsLayout
-              classMasters={classMasters}
-              userProfile={userProfile}
-            />
-          </div>
-        ) : (
-          // Master Data with Sidebar Layout
-          <div className="flex h-[calc(100vh-8rem)] relative">
-            {/* Sidebar */}
-            <MateriSidebar
-              categories={categories}
-              types={types}
-              items={items}
-              classes={classes}
-              isOpen={sidebarOpen}
-              onToggle={() => setSidebarOpen(!sidebarOpen)}
-              isLoading={dataLoading}
-              onDataChange={loadSidebarData}
-            />
+        {/* Master Data with Sidebar Layout */}
+        <div className="flex h-[calc(100vh-8rem)] relative">
+          {/* Sidebar */}
+          <MateriSidebar
+            categories={categories}
+            types={types}
+            items={items}
+            classes={classes}
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen(!sidebarOpen)}
+            isLoading={dataLoading}
+            onDataChange={loadSidebarData}
+          />
 
-            {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-              {/* Mobile Header with Hamburger */}
-              <div className="lg:hidden sticky top-0 z-20 bg-white dark:bg-gray-800 rounded-lg border shadow-sm border-gray-200 dark:border-gray-700 px-2 py-3">
-                {isSearchOpen ? (
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari materi..."
-                        autoFocus
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                      <svg
-                        className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setIsSearchOpen(false);
-                        setSearchQuery('');
-                      }}
-                      className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto">
+            {/* Mobile Header with Hamburger */}
+            <div className="lg:hidden sticky top-0 z-20 bg-white dark:bg-gray-800 rounded-lg border shadow-sm border-gray-200 dark:border-gray-700 px-2 py-3">
+              {isSearchOpen ? (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Cari materi..."
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    />
+                    <svg
+                      className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Batal
-                    </button>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                      </button>
-                      <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">
-                        {selectedType
-                          ? selectedType.name
-                          : (filters.viewMode === 'by_class' && selectedClass
-                            ? selectedClass.name
-                            : (selectedCategory ? selectedCategory.name : 'Daftar Materi')
-                          )
-                        }
-                      </h1>
-                    </div>
+                  <button
+                    onClick={() => {
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Batal
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setIsSearchOpen(true)}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                      onClick={() => setSidebarOpen(true)}
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                       </svg>
                     </button>
+                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-50">
+                      {selectedType
+                        ? selectedType.name
+                        : (filters.viewMode === 'by_class' && selectedClass
+                          ? selectedClass.name
+                          : (selectedCategory ? selectedCategory.name : 'Daftar Materi')
+                        )
+                      }
+                    </h1>
                   </div>
-                )}
-              </div>
-
-              {/* Role-Based Content */}
-              <div className="pb-12 py-0 md:pb-0 md:px-6">
-                {dataLoading ? (
-                  <MateriContentSkeleton />
-                ) : (
-                  <MateriContentView
-                    categories={categories}
-                    types={types}
-                    items={items}
-                    userProfile={userProfile}
-                    onEditItem={canManage ? handleEditItem : undefined}
-                    onDeleteItem={canManage ? handleDeleteItem : undefined}
-                    onCreateItem={canManage ? handleCreateItem : undefined}
-                    onViewItem={handleViewContent}
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    selectedIds={selectedItemIds}
-                    onToggleSelection={handleToggleSelection}
-                    onToggleAll={handleToggleAll}
-                    onBulkEdit={handleBulkEdit}
-                    classMasters={classMasters}
-                  />
-                )}
-              </div>
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Floating Action Button - visible on all devices */}
-            {canManage && (
-              <FloatingActionButton
-                actions={fabActions}
-                position="bottom-right"
-                mainIcon={<PlusIcon className="w-6 h-6" />}
-                mainLabel="Tambah"
-              />
-            )}
+            {/* Role-Based Content */}
+            <div className="pb-12 py-0 md:pb-0 md:px-6">
+              {dataLoading ? (
+                <MateriContentSkeleton />
+              ) : (
+                <MateriContentView
+                  categories={categories}
+                  types={types}
+                  items={items}
+                  userProfile={userProfile}
+                  onEditItem={canManage ? handleEditItem : undefined}
+                  onDeleteItem={canManage ? handleDeleteItem : undefined}
+                  onCreateItem={canManage ? handleCreateItem : undefined}
+                  onViewItem={handleViewContent}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  selectedIds={selectedItemIds}
+                  onToggleSelection={handleToggleSelection}
+                  onToggleAll={handleToggleAll}
+                  onBulkEdit={handleBulkEdit}
+                  classMasters={classMasters}
+                />
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Floating Action Button - visible on all devices */}
+          {canManage && (
+            <FloatingActionButton
+              actions={fabActions}
+              position="bottom-right"
+              mainIcon={<PlusIcon className="w-6 h-6" />}
+              mainLabel="Tambah"
+            />
+          )}
+        </div>
 
         {/* Modals */}
         <ItemModal
