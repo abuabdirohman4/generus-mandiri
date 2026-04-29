@@ -247,11 +247,12 @@ export default function DataTable({
     <div className="space-y-4">
       {/* Search and Items Per Page Controls */}
       {(searchable || pagination) && (
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <div className="flex justify-between gap-4">
           {/* Items Per Page Selector + Column Toggle */}
           {pagination && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            // <div className="flex justify-between gap-3">
+            <>
+              <div className="flex items-center gap-2 jus text-sm text-gray-700 dark:text-gray-300">
                 <label>Show</label>
                 <select
                   value={itemsPerPage}
@@ -269,7 +270,8 @@ export default function DataTable({
                 <label>entries</label>
               </div>
               {columnToggle}
-            </div>
+            </>
+            // </div>
           )}
 
           {/* Search Input */}
