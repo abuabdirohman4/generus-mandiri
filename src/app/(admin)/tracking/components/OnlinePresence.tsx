@@ -6,18 +6,21 @@ import { useUserProfileStore } from '@/stores/userProfileStore'
 import { useEffect } from 'react'
 
 const PAGE_LABELS: Record<string, string> = {
-  '/home': 'Dashboard',
+  '/home': 'Home',
+  '/dashboard': 'Dashboard',
   '/absensi': 'Absensi',
   '/laporan': 'Laporan',
-  '/users/siswa': 'Data Siswa',
-  '/users/guru': 'Data Guru',
-  '/users/admin': 'Data Admin',
+  '/users/siswa': 'Siswa',
+  '/users/guru': 'Guru',
+  '/users/admin': 'Admin',
   '/kelas': 'Kelas',
   '/rapot': 'Rapot',
   '/materi': 'Materi',
   '/tracking': 'Tracking',
   '/monitoring': 'Monitoring',
   '/organisasi': 'Organisasi',
+  '/tahun-ajaran': 'Tahun Ajaran',
+  '/kegiatan': 'Kegiatan',
   '/settings': 'Pengaturan',
 }
 

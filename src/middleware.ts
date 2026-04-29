@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
     const publicRoutes = ['/signin', '/signup']
     const protectedRoutes = [
       '/home', 
+      '/dashboard',
       '/absensi',
       '/laporan',
       '/users/siswa',
@@ -47,6 +48,11 @@ export async function middleware(request: NextRequest) {
       '/users/admin',
       '/organisasi',
       '/kelas',
+      '/materi',
+      '/tahun-ajaran',
+      '/monitoring',
+      '/rapot',
+      '/kegiatan',
       '/settings',
       '/tracking'
     ]

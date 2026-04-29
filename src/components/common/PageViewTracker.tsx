@@ -7,6 +7,7 @@ import { trackPageView } from '@/app/(admin)/tracking/trackPageView'
 // Halaman yang di-track (sesuai protectedRoutes di middleware)
 const TRACKED_PATHS = [
   '/home',
+  '/dashboard',
   '/absensi',
   '/laporan',
   '/users/siswa',
@@ -14,6 +15,11 @@ const TRACKED_PATHS = [
   '/users/admin',
   '/organisasi',
   '/kelas',
+  '/materi',
+  '/tahun-ajaran',
+  '/monitoring',
+  '/rapot',
+  '/kegiatan',
   '/settings',
   '/tracking',
 ]
