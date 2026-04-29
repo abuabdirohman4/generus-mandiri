@@ -92,12 +92,12 @@ describe('accessControlServer', () => {
 
     describe('canManageMaterials', () => {
         it('should return true if can_manage_materials is true', () => {
-            const profile = { id: '1', full_name: 'User', role: 'teacher', can_manage_materials: true }
+            const profile = { id: '1', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: true } }
             expect(canManageMaterials(profile)).toBe(true)
         })
 
         it('should return false if can_manage_materials is false', () => {
-            const profile = { id: '1', full_name: 'User', role: 'teacher', can_manage_materials: false }
+            const profile = { id: '1', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: false } }
             expect(canManageMaterials(profile)).toBe(false)
         })
 

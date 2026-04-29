@@ -28,7 +28,6 @@ export interface UserProfileWithOrg extends UserProfileBase {
   daerah_id?: string | null
   desa_id?: string | null
   kelompok_id?: string | null
-  can_manage_materials?: boolean
 }
 
 // ─── Full Types ───────────────────────────────────────────────────────────────
@@ -58,6 +57,7 @@ export interface UserProfile extends UserProfileWithOrg {
     can_transfer_students?: boolean
     can_soft_delete_students?: boolean
     can_hard_delete_students?: boolean
+    can_manage_materials?: boolean
   }
 }
 

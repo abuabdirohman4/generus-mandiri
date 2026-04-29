@@ -266,7 +266,7 @@ describe('Admin Actions (Layer 3)', () => {
 
       expect(insertAdminProfile).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ can_manage_materials: true })
+        expect.objectContaining({ permissions: { can_manage_materials: true } })
       )
     })
   })

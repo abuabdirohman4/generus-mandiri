@@ -65,7 +65,7 @@ export async function createAdmin(data: AdminData) {
       daerah_id: data.daerah_id,
       desa_id: data.desa_id || null,
       kelompok_id: data.kelompok_id || null,
-      can_manage_materials: data.can_manage_materials || false
+      permissions: { can_manage_materials: data.can_manage_materials || false }
     });
 
     if (profileError) {
@@ -93,6 +93,14 @@ export async function updateAdmin(id: string, data: AdminData) {
     const supabase = await createClient();
     const adminClient = await createAdminClient();
 
+    // Fetch existing permissions to merge (avoid overwriting other permission flags)
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('permissions')
+      .eq('id', id)
+      .single();
+    const existingPermissions = (existing?.permissions as Record<string, unknown>) || {};
+
     // Update profile using regular client (Layer 1)
     const { error: profileError } = await updateAdminProfile(supabase, id, {
       username: data.username,
@@ -101,7 +109,7 @@ export async function updateAdmin(id: string, data: AdminData) {
       daerah_id: data.daerah_id,
       desa_id: data.desa_id || null,
       kelompok_id: data.kelompok_id || null,
-      can_manage_materials: data.can_manage_materials || false,
+      permissions: { ...existingPermissions, can_manage_materials: data.can_manage_materials || false },
       updated_at: new Date().toISOString()
     });
 

@@ -45,7 +45,7 @@ describe('Admin Queries', () => {
         daerah_id: 'daerah-1',
         desa_id: 'desa-1',
         kelompok_id: 'kelompok-1',
-        can_manage_materials: true
+        permissions: { can_manage_materials: true }
       });
 
       expect(mockInsert).toHaveBeenCalledWith([{
@@ -57,7 +57,7 @@ describe('Admin Queries', () => {
         daerah_id: 'daerah-1',
         desa_id: 'desa-1',
         kelompok_id: 'kelompok-1',
-        can_manage_materials: true
+        permissions: { can_manage_materials: true }
       }]);
     });
   });
@@ -77,7 +77,7 @@ describe('Admin Queries', () => {
         daerah_id: 'daerah-2',
         desa_id: 'desa-1',
         kelompok_id: null,
-        can_manage_materials: true,
+        permissions: { can_manage_materials: true },
         updated_at: '2026-03-12T10:00:00.000Z'
       };
 

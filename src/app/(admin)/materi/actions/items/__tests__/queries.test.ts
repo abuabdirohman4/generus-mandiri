@@ -27,6 +27,8 @@ function makeChain(returnValue: any = { data: null, error: null }) {
     chain.delete = vi.fn().mockReturnValue(chain)
     chain.eq = vi.fn().mockReturnValue(chain)
     chain.in = vi.fn().mockReturnValue(chain)
+    chain.not = vi.fn().mockReturnValue(chain)
+    chain.lte = vi.fn().mockReturnValue(chain)
     chain.range = vi.fn().mockReturnValue(chain)
     chain.order = vi.fn().mockResolvedValue(returnValue)
     chain.limit = vi.fn().mockResolvedValue(returnValue)
@@ -42,11 +44,11 @@ function makeSupa(returnValue?: any) {
 // ─── fetchAvailableClassMasters ───────────────────────────────────────────────
 
 describe('fetchAvailableClassMasters', () => {
-    it('queries class_masters ordered by name', async () => {
+    it('queries class_masters ordered by sort_order ascending', async () => {
         const supa = makeSupa({ data: [], error: null })
         await fetchAvailableClassMasters(supa)
         expect(supa.from).toHaveBeenCalledWith('class_masters')
-        expect(supa._chain.order).toHaveBeenCalledWith('name')
+        expect(supa._chain.order).toHaveBeenCalledWith('sort_order', { ascending: true })
     })
 })
 
@@ -64,11 +66,11 @@ describe('fetchAllClassMastersWithCategory', () => {
 // ─── fetchClassMastersWithMaterialItems ───────────────────────────────────────
 
 describe('fetchClassMastersWithMaterialItems', () => {
-    it('queries class_masters and orders by name', async () => {
+    it('queries class_masters and orders by sort_order ascending', async () => {
         const supa = makeSupa({ data: [], error: null })
         await fetchClassMastersWithMaterialItems(supa)
         expect(supa.from).toHaveBeenCalledWith('class_masters')
-        expect(supa._chain.order).toHaveBeenCalledWith('name')
+        expect(supa._chain.order).toHaveBeenCalledWith('sort_order', { ascending: true })
     })
 })
 

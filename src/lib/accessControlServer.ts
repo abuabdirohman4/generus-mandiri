@@ -66,7 +66,7 @@ export async function getCurrentUserProfile() {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, can_manage_materials')
+    .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, permissions')
     .eq('id', user.id)
     .single();
     
@@ -78,7 +78,7 @@ export const getUserProfile = getCurrentUserProfile;
 
 // Material management permission check (server-side version)
 export function canManageMaterials(profile: UserProfile | null): boolean {
-  return profile?.can_manage_materials === true
+  return profile?.permissions?.can_manage_materials === true
 }
 
 export function isMaterialCoordinator(profile: UserProfile | null): boolean {

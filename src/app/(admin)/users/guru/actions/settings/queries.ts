@@ -20,12 +20,12 @@ export async function fetchMeetingFormSettings(supabase: SupabaseClient, userId:
 }
 
 /**
- * Fetch material permission flag for a user
+ * Fetch material permission flag for a user (via permissions JSONB)
  */
 export async function fetchTeacherMaterialPermissions(supabase: SupabaseClient, userId: string) {
     return await supabase
         .from('profiles')
-        .select('can_manage_materials')
+        .select('permissions')
         .eq('id', userId)
         .single()
 }
@@ -70,17 +70,27 @@ export async function updateTeacherPermissionsQuery(
 }
 
 /**
- * Update material access permissions for a teacher
+ * Update material access permissions for a teacher (via permissions JSONB merge)
  */
 export async function updateTeacherMaterialPermissionsQuery(
     supabase: SupabaseClient,
     userId: string,
     data: { can_manage_materials: boolean }
 ) {
+    // Fetch existing permissions first, then merge
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('permissions')
+        .eq('id', userId)
+        .single()
+
+    const existing = (profile?.permissions as Record<string, unknown>) || {}
+    const merged = { ...existing, can_manage_materials: data.can_manage_materials }
+
     return await supabase
         .from('profiles')
         .update({
-            can_manage_materials: data.can_manage_materials,
+            permissions: merged,
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId)

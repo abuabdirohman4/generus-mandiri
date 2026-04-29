@@ -504,7 +504,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
     it('creates item and revalidates path on happy path', async () => {
       const createdItem = { id: 'item-new', name: 'New Item' }
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -517,7 +517,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws mapped error message when insert fails with duplicate key', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -553,7 +553,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
     it('updates item and revalidates path on happy path', async () => {
       const updatedItem = { id: 'item-1', name: 'Updated Item' }
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -566,7 +566,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws specific error for duplicate name (23505)', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -578,7 +578,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws error when updated item not found (PGRST116)', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -590,7 +590,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws generic error for other DB errors', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -600,7 +600,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws error when data is null after update', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -631,7 +631,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws error when dependency check fails', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -641,7 +641,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws error when item has dependencies', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -652,7 +652,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('deletes item and revalidates path on happy path', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -667,7 +667,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     })
 
     it('throws error when delete query fails', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', can_manage_materials: true } as any)
+      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)

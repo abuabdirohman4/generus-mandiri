@@ -62,7 +62,6 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
             kelompok_id,
             desa_id,
             daerah_id,
-            can_manage_materials,
             permissions,
             kelompok:kelompok_id(id, name),
             desa:desa_id(id, name),

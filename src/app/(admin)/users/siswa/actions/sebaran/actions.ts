@@ -26,7 +26,7 @@ async function getProfileWithClasses(): Promise<UserProfile | null> {
   const { data: profile } = await supabase
     .from('profiles')
     .select(`
-      id, full_name, role, email, daerah_id, desa_id, kelompok_id, can_manage_materials,
+      id, full_name, role, email, daerah_id, desa_id, kelompok_id, permissions,
       teacher_classes!teacher_classes_teacher_id_fkey(
         class_id,
         class_detail:class_id(id, name, kelompok_id)

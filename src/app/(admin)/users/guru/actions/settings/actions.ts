@@ -25,7 +25,7 @@ export async function getTeacherMaterialPermissions(
         const supabase = await createClient()
         const { data, error } = await fetchTeacherMaterialPermissions(supabase, userId)
         if (error) throw error
-        return { can_manage_materials: data?.can_manage_materials ?? false }
+        return { can_manage_materials: (data?.permissions as any)?.can_manage_materials ?? false }
     } catch (error) {
         console.error('Error getting material permissions:', error)
         return { can_manage_materials: false }

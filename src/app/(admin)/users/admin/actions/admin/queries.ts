@@ -15,7 +15,7 @@ export async function insertAdminProfile(
     daerah_id: string;
     desa_id?: string | null;
     kelompok_id?: string | null;
-    can_manage_materials?: boolean;
+    permissions?: Record<string, unknown>;
   }
 ) {
   return await supabase.from('profiles').insert([profileData]);
@@ -31,7 +31,7 @@ export async function updateAdminProfile(
     daerah_id: string;
     desa_id?: string | null;
     kelompok_id?: string | null;
-    can_manage_materials?: boolean;
+    permissions?: Record<string, unknown>;
     updated_at: string;
   }
 ) {

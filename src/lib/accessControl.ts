@@ -76,7 +76,7 @@ export function canManageMaterials(profile: UserProfile | null): boolean {
   if (!profile) return false
   if (profile.role === 'superadmin') return true
   if (profile.role === 'admin') return true
-  return profile.can_manage_materials === true
+  return profile.permissions?.can_manage_materials === true
 }
 
 // Filter visibility utilities (for modal forms)

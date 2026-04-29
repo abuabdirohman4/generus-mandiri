@@ -46,7 +46,10 @@ interface Admin {
   daerah_id?: string;
   desa_id?: string;
   kelompok_id?: string;
-  can_manage_materials?: boolean;
+  permissions?: {
+    can_manage_materials?: boolean;
+    [key: string]: unknown;
+  };
   created_at: string;
 }
 
@@ -194,7 +197,7 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
         role: admin.role || 'admin',
         daerah_id: admin.daerah_id || '',
         kelompok_id: admin.kelompok_id || '',
-        can_manage_materials: admin.can_manage_materials || false
+        can_manage_materials: admin.permissions?.can_manage_materials || false
       });
       setDataFilters({
         daerah: admin.daerah_id ? [admin.daerah_id] : [],
