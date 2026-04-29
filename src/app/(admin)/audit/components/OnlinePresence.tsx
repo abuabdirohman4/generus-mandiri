@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TeamOutlined } from '@ant-design/icons'
 
@@ -22,25 +22,22 @@ const PAGE_LABELS: Record<string, string> = {
 
 export default function OnlinePresence() {
   const [onlineUsers, setOnlineUsers] = useState<any[]>([])
-  const supabase = createClient()
+  // Stable client — tidak dibuat ulang setiap render
+  const supabaseRef = useRef(createClient())
 
   useEffect(() => {
-    // Subscribe tanpa presence key — hanya observe, tidak track diri sendiri
+    const supabase = supabaseRef.current
+    // Subscribe tanpa presence key — pure observer
     const channel = supabase.channel('online-users')
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
-        // Deduplicate users by user_id
         const stateValues = Object.values(state).flat()
         const uniqueUsersMap = new Map()
-        
         stateValues.forEach((u: any) => {
-          if (u.user_id) {
-            uniqueUsersMap.set(u.user_id, u)
-          }
+          if (u.user_id) uniqueUsersMap.set(u.user_id, u)
         })
-        
         setOnlineUsers(Array.from(uniqueUsersMap.values()))
       })
       .subscribe()
@@ -48,7 +45,7 @@ export default function OnlinePresence() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase])
+  }, [])
 
   if (onlineUsers.length === 0) {
     return (

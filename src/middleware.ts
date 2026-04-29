@@ -76,12 +76,10 @@ export async function middleware(request: NextRequest) {
     }
 
     // Page view tracking (fire-and-forget via service role)
-    // Skip RSC/prefetch internal requests — hanya log full page navigation
-    const isInternalRequest =
-      request.headers.get('next-router-prefetch') === '1' ||
-      request.headers.get('rsc') === '1' ||
-      request.headers.get('next-router-state-tree') !== null
-    if (session && isProtectedRoute && !isInternalRequest) {
+    // Hanya log full page navigation — skip RSC data fetch dan prefetch
+    const isRSCRequest = request.headers.get('rsc') === '1'
+    const isPrefetch = request.headers.get('next-router-prefetch') === '1'
+    if (session && isProtectedRoute && !isRSCRequest && !isPrefetch) {
       const userId = session.user.id
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
