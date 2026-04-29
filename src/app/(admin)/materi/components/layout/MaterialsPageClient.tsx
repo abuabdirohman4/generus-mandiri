@@ -187,11 +187,13 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
   // Delete confirmation handler
   const handleConfirmDelete = async () => {
     if (!deleteConfirm.item) return;
+    const deletedId = deleteConfirm.item.id;
 
     try {
-      await deleteMaterialItem(deleteConfirm.item.id);
+      await deleteMaterialItem(deletedId);
+      // Optimistic update: remove from local state without full reload
+      setItems(prev => prev.filter(i => i.id !== deletedId));
       toast.success('Item materi berhasil dihapus');
-      await loadSidebarData();
       setDeleteConfirm({ isOpen: false, item: null, type: 'item' });
     } catch (error: any) {
       console.error('Error deleting item:', error);

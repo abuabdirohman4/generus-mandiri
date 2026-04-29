@@ -15,7 +15,6 @@ import {
     fetchItemsForClass,
     fetchItemsForClassAndType,
     fetchClassMappingsBatch,
-    fetchDayItemsForItem,
     insertItem,
     updateItemById,
     deleteItemById,
@@ -39,7 +38,6 @@ import {
     sortAssignmentItems,
     buildDayItemsPayload,
     buildBulkMappingsPayload,
-    itemHasDependencies,
     mapItemErrorMessage,
 } from './logic'
 
@@ -287,17 +285,6 @@ export async function deleteMaterialItem(id: string): Promise<{ success: boolean
     if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
 
     const supabase = await createClient()
-
-    // Dependency check
-    const { data: dayItems, error: checkError } = await fetchDayItemsForItem(supabase, id)
-    if (checkError) {
-        console.error('Error checking dependencies:', checkError)
-        throw new Error('Gagal memeriksa dependensi')
-    }
-
-    if (itemHasDependencies(dayItems?.length || 0)) {
-        throw new Error('Tidak dapat menghapus item. Item masih digunakan dalam assignment materi.')
-    }
 
     const { error } = await deleteItemById(supabase, id)
     if (error) {

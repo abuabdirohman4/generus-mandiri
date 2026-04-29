@@ -134,7 +134,13 @@ export default function DataTable({
         }
       }
 
-      // Default comparison for non-percentage values
+      // String comparison: use localeCompare for case-insensitive, locale-aware sort
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const cmp = aValue.localeCompare(bValue, 'id', { sensitivity: 'base' })
+        return sortDirection === 'asc' ? cmp : -cmp
+      }
+
+      // Default comparison for numbers/other types
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
