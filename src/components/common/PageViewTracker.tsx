@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { trackPageView } from '@/app/(admin)/audit/trackPageView'
+import { trackPageView } from '@/app/(admin)/tracking/trackPageView'
 
 // Halaman yang di-track (sesuai protectedRoutes di middleware)
 const TRACKED_PATHS = [
@@ -15,7 +15,7 @@ const TRACKED_PATHS = [
   '/organisasi',
   '/kelas',
   '/settings',
-  '/audit',
+  '/tracking',
 ]
 
 /**

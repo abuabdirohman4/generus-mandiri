@@ -106,7 +106,7 @@ const allNavItems: NavItem[] = [
   {
     icon: <DashboardIcon className="w-6 h-6" />,
     name: "Tracking",
-    path: "/audit",
+    path: "/tracking",
     adminOnly: true,
   },
   {

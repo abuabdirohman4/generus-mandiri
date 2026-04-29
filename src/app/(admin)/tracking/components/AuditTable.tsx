@@ -30,7 +30,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/kelas': 'Kelas',
   '/rapot': 'Rapot',
   '/materi': 'Materi',
-  '/audit': 'Audit',
+  '/tracking': 'Tracking',
   '/monitoring': 'Monitoring',
   '/organisasi': 'Organisasi',
   '/settings': 'Pengaturan',

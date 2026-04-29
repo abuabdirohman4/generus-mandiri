@@ -52,8 +52,8 @@ function PageTitle() {
         return 'Organisasi';
       case '/kegiatan':
         return 'Kegiatan';
-      case '/audit':
-        return 'Tracking System';
+      case '/tracking':
+        return 'Tracking';
       case '/settings':
           return 'Pengaturan';
       case '/settings/security':

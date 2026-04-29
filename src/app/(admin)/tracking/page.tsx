@@ -16,7 +16,7 @@ import UserSummaryTable from './components/UserSummaryTable'
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton'
 import { toast } from 'sonner'
 
-export default function AuditPage() {
+export default function TrackingPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'summary'>('all')
   const [logs, setLogs] = useState<any[]>([])
   const [userSummaries, setUserSummaries] = useState<any[]>([])
@@ -73,7 +73,7 @@ export default function AuditPage() {
     const { createClient } = require('@/lib/supabase/client')
     const supabase = createClient()
     
-    const channel = supabase.channel('audit-logs-changes')
+    const channel = supabase.channel('tracking-logs-changes')
       .on(
         'postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'activity_logs' }, 

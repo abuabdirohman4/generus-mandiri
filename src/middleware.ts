@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
       '/organisasi',
       '/kelas',
       '/settings',
-      '/audit'
+      '/tracking'
     ]
     
     const isPublicRoute = publicRoutes.includes(pathname)

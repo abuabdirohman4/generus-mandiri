@@ -229,7 +229,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       id: 'audit',
       name: 'Tracking',
       description: 'Tracking',
-      href: '/audit',
+      href: '/tracking',
       icon: <DashboardIcon className="w-6 h-6" />,
       bgColor: 'bg-red-100 dark:bg-red-900',
       iconColor: 'text-red-600 dark:text-red-400',

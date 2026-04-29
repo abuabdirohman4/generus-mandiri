@@ -15,7 +15,7 @@ const PAGE_LABELS: Record<string, string> = {
   '/kelas': 'Kelas',
   '/rapot': 'Rapot',
   '/materi': 'Materi',
-  '/audit': 'Audit',
+  '/tracking': 'Tracking',
   '/monitoring': 'Monitoring',
   '/organisasi': 'Organisasi',
   '/settings': 'Pengaturan',
@@ -27,7 +27,7 @@ export default function OnlinePresence() {
   const { profile } = useUserProfileStore()
   const currentUserId = profile?.id
 
-  // Aktifkan debug mode hanya saat di halaman Audit
+  // Aktifkan debug mode hanya saat di halaman Tracking
   useEffect(() => {
     setDebug(true)
     return () => setDebug(false)
