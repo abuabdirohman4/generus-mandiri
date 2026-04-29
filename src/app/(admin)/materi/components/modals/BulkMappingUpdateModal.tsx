@@ -126,21 +126,10 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
         setIsLoading(true);
 
         try {
-            const mappingsToSave: Array<{ class_master_id: string; semester: number | null }> = [];
+            const mappingsToSave: Array<{ class_master_id: string }> = [];
 
-            // Combine selected classes and semesters
             selectedClasses.forEach(classId => {
-                const semesters = classSemesterMappings[classId];
-
-                if (semesters && semesters.size > 0) {
-                    // If semesters are selected for this class, add mapping for each semester
-                    semesters.forEach(semester => {
-                        mappingsToSave.push({ class_master_id: classId, semester });
-                    });
-                } else {
-                    // If class is selected but no semester, add mapping with null semester (uncategorized)
-                    mappingsToSave.push({ class_master_id: classId, semester: null });
-                }
+                mappingsToSave.push({ class_master_id: classId });
             });
 
             const itemIds = selectedItems.map(i => i.id);

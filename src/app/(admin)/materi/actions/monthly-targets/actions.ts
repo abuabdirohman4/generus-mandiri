@@ -155,7 +155,7 @@ export async function getMonthlyTargetsByItem(itemId: string): Promise<Array<{ c
 
 export async function syncItemMonthlyTargets(
   itemId: string,
-  mappings: Array<{ class_master_id: string; semester: number; month: number }>
+  mappings: Array<{ class_master_id: string; semester: number; month: number | null }>
 ): Promise<{ success: boolean }> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Not authenticated')
@@ -183,7 +183,7 @@ export async function syncItemMonthlyTargets(
       class_master_id: m.class_master_id,
       academic_year_id: activeYear.id,
       semester: m.semester as 1 | 2,
-      month: m.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
+      month: m.month as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) | null,
       material_item_id: itemId,
       display_order: index,
       created_by: profile.id
@@ -258,7 +258,7 @@ export async function syncItemMonthlyTargetsBulk(
 
 export async function getMonthlyTargetsByItems(
   itemIds: string[]
-): Promise<Record<string, number[]>> {
+): Promise<Record<string, Array<{ class_master_id: string; semester: number; month: number }>>> {
   if (itemIds.length === 0) return {}
 
   const activeYear = await getActiveAcademicYear()
@@ -275,19 +275,16 @@ export async function getMonthlyTargetsByItems(
     return {}
   }
 
-  const result: Record<string, number[]> = {}
+  const result: Record<string, Array<{ class_master_id: string; semester: number; month: number }>> = {}
   data.forEach(d => {
     if (!result[d.material_item_id]) {
       result[d.material_item_id] = []
     }
-    if (!result[d.material_item_id].includes(d.month)) {
-      result[d.material_item_id].push(d.month)
-    }
-  })
-
-  // Sort each array
-  Object.keys(result).forEach(itemId => {
-    result[itemId].sort((a, b) => a - b)
+    result[d.material_item_id].push({
+      class_master_id: d.class_master_id,
+      semester: d.semester,
+      month: d.month
+    })
   })
 
   return result

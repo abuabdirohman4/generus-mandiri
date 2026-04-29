@@ -19,6 +19,7 @@ interface MateriSidebarProps {
     types: MaterialType[];
     items: MaterialItem[];
     classes: ClassMaster[];
+    monthsByItemId: Record<string, Array<{ class_master_id: string; semester: number; month: number }>>;
     isOpen: boolean;
     onToggle: () => void;
     isLoading?: boolean;
@@ -30,6 +31,7 @@ export default function MateriSidebar({
     types,
     items,
     classes,
+    monthsByItemId,
     isOpen,
     onToggle,
     isLoading = false,
@@ -154,19 +156,23 @@ export default function MateriSidebar({
     };
 
     // Helper functions for semester-based filtering
+    // Semester is derived from monthly targets (class-specific)
     const getItemsBySemesterForClass = (classId: string) => {
         const classItems = items.filter(i => i.classes?.some(c => c.id === classId));
 
         return {
-            semester1: classItems.filter(i =>
-                i.classes?.some(c => c.id === classId && c.semester === 1)
-            ),
-            semester2: classItems.filter(i =>
-                i.classes?.some(c => c.id === classId && c.semester === 2)
-            ),
-            uncategorized: classItems.filter(i =>
-                i.classes?.some(c => c.id === classId && !c.semester)
-            )
+            semester1: classItems.filter(i => {
+                const targets = monthsByItemId[i.id] || [];
+                return targets.some(t => t.class_master_id === classId && t.semester === 1);
+            }),
+            semester2: classItems.filter(i => {
+                const targets = monthsByItemId[i.id] || [];
+                return targets.some(t => t.class_master_id === classId && t.semester === 2);
+            }),
+            uncategorized: classItems.filter(i => {
+                const targets = monthsByItemId[i.id] || [];
+                return !targets.some(t => t.class_master_id === classId);
+            })
         };
     };
 
@@ -186,13 +192,13 @@ export default function MateriSidebar({
         typeId: string,
         semester: 1 | 2 | null
     ) => {
-        return items.filter(i =>
-            i.material_type_id === typeId &&
-            i.classes?.some(c =>
-                c.id === classId &&
-                (semester === null ? !c.semester : c.semester === semester)
-            )
-        ).length;
+        return items.filter(i => {
+            if (i.material_type_id !== typeId) return false;
+            if (!i.classes?.some(c => c.id === classId)) return false;
+            const targets = monthsByItemId[i.id] || [];
+            if (semester === null) return !targets.some(t => t.class_master_id === classId);
+            return targets.some(t => t.class_master_id === classId && t.semester === semester);
+        }).length;
     };
 
     const handleSemesterTypeClick = (classId: string, typeId: string, semester: 1 | 2 | null) => {

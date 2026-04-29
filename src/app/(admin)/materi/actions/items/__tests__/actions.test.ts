@@ -716,7 +716,7 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(insertItemClassMappings).mockResolvedValue({ data: null, error: null } as any)
 
       const result = await updateMaterialItemClassMappings('item-1', [
-        { class_master_id: 'cm-1', semester: 1 },
+        { class_master_id: 'cm-1' },
       ])
 
       expect(result).toEqual({ success: true })
@@ -731,7 +731,7 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(deleteItemClassMappings).mockResolvedValue({ data: null, error: new Error('Delete error') } as any)
 
       await expect(
-        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1', semester: 1 }])
+        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
       ).rejects.toThrow('Gagal menghapus mapping lama')
     })
 
@@ -742,7 +742,7 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(insertItemClassMappings).mockResolvedValue({ data: null, error: new Error('Insert error') } as any)
 
       await expect(
-        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1', semester: 1 }])
+        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
       ).rejects.toThrow('Gagal menyimpan mapping baru')
     })
 
@@ -765,7 +765,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
   describe('bulkUpdateMaterialMapping', () => {
     const itemIds = ['item-1', 'item-2']
-    const mappings = [{ class_master_id: 'cm-1', semester: 1 }]
+    const mappings = [{ class_master_id: 'cm-1' }]
 
     it('replaces existing mappings and upserts new ones in replace mode', async () => {
       const newMappings = [

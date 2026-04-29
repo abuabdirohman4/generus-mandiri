@@ -140,9 +140,9 @@ export async function getMaterialItem(id: string): Promise<MaterialItem | null> 
         // Continue without mappings if error
     }
 
-    // 3. Map classes + semester
+    // 3. Map classes
     const classes = (mappingsData || [])
-        .map((m: any) => ({ ...m.class_master, semester: m.semester }))
+        .map((m: any) => m.class_master)
         .filter((cm: any) => cm)
 
     return { ...itemData, classes }
@@ -318,7 +318,7 @@ export async function getMaterialItemClassMappings(materialItemId: string) {
  */
 export async function updateMaterialItemClassMappings(
     materialItemId: string,
-    mappings: Array<{ class_master_id: string; semester: number | null }>
+    mappings: Array<{ class_master_id: string }>
 ) {
     const supabase = await createClient()
 
@@ -331,11 +331,18 @@ export async function updateMaterialItemClassMappings(
 
     // Insert new ones if any
     if (mappings.length > 0) {
-        const payload = mappings.map(m => ({
-            material_item_id: materialItemId,
-            class_master_id: m.class_master_id,
-            semester: m.semester
-        }))
+        // Deduplicate by class_master_id to prevent constraint violations
+        const seen = new Set<string>()
+        const payload = mappings
+            .filter(m => {
+                if (seen.has(m.class_master_id)) return false
+                seen.add(m.class_master_id)
+                return true
+            })
+            .map(m => ({
+                material_item_id: materialItemId,
+                class_master_id: m.class_master_id,
+            }))
 
         const { error: insertError } = await insertItemClassMappings(supabase, payload)
         if (insertError) {
@@ -353,7 +360,7 @@ export async function updateMaterialItemClassMappings(
  */
 export async function bulkUpdateMaterialMapping(
     itemIds: string[],
-    mappings: { class_master_id: string; semester: number | null }[],
+    mappings: { class_master_id: string }[],
     mode: 'replace' | 'add'
 ) {
     const supabase = await createClient()

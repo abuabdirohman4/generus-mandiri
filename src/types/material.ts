@@ -141,7 +141,7 @@ export interface MonthlyTarget {
   class_master_id: string
   academic_year_id: string
   semester: Semester
-  month: Month
+  month: Month | null
   week?: Week | null
   day_of_week?: DayOfWeek | null
   material_item_id: string
@@ -156,7 +156,7 @@ export interface MonthlyTargetInput {
   class_master_id: string
   academic_year_id: string
   semester: Semester
-  month: Month
+  month: Month | null
   week?: Week | null
   day_of_week?: DayOfWeek | null
   material_item_id: string

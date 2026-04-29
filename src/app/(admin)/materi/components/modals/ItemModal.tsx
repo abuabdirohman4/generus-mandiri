@@ -103,7 +103,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         const mappingsData = await getMaterialItemClassMappings(item.id);
         const monthlyTargets = await getMonthlyTargetsByItem(item.id);
 
-        // Extract unique class IDs and semesters from mappings
+        // Extract class IDs from mappings
         const classIds = new Set<string>();
         const mappings: Record<string, Set<1 | 2>> = {};
         const monthMappings: Record<string, Record<number, Set<Month>>> = {};
@@ -111,31 +111,28 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         mappingsData.forEach((m: any) => {
           if (m.class_master_id) {
             classIds.add(m.class_master_id);
-
-            if (m.semester === 1 || m.semester === 2) {
-              if (!mappings[m.class_master_id]) {
-                mappings[m.class_master_id] = new Set();
-              }
-              mappings[m.class_master_id].add(m.semester as 1 | 2);
-            }
           }
         });
 
-        // Add monthly targets to mappings
+        // Add monthly targets to mappings (this is the source of truth for semester+month)
         monthlyTargets.forEach(target => {
           const { class_master_id, semester, month } = target;
-          if (!monthMappings[class_master_id]) {
-            monthMappings[class_master_id] = {};
-          }
-          if (!monthMappings[class_master_id][semester]) {
-            monthMappings[class_master_id][semester] = new Set();
-          }
-          monthMappings[class_master_id][semester].add(month as Month);
-          
-          // Ensure class and semester are also selected
+
+          // Always mark class and semester as selected
           classIds.add(class_master_id);
           if (!mappings[class_master_id]) mappings[class_master_id] = new Set();
           mappings[class_master_id].add(semester as 1 | 2);
+
+          // Only add to month mappings if month is not null
+          if (month != null) {
+            if (!monthMappings[class_master_id]) {
+              monthMappings[class_master_id] = {};
+            }
+            if (!monthMappings[class_master_id][semester]) {
+              monthMappings[class_master_id][semester] = new Set();
+            }
+            monthMappings[class_master_id][semester].add(month as Month);
+          }
         });
 
         setSelectedClasses(classIds);
@@ -252,39 +249,33 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         toast.success('Item materi berhasil ditambahkan');
       }
 
-      // Save mappings - generate from selected classes and semesters
+      // Save mappings - one entry per selected class
       if (itemId) {
-        const mappingsToSave: Array<{ class_master_id: string; semester: number | null }> = [];
+        const mappingsToSave: Array<{ class_master_id: string }> = [];
 
-        // Combine selected classes and semesters
         selectedClasses.forEach(classId => {
-          const semesters = classSemesterMappings[classId];
-
-          if (semesters && semesters.size > 0) {
-            // If semesters are selected for this class, add mapping for each semester
-            semesters.forEach(semester => {
-              mappingsToSave.push({ class_master_id: classId, semester });
-            });
-          } else {
-            // If class is selected but no semester, add mapping with null semester (uncategorized)
-            mappingsToSave.push({ class_master_id: classId, semester: null });
-          }
+          mappingsToSave.push({ class_master_id: classId });
         });
 
         await updateMaterialItemClassMappings(itemId, mappingsToSave);
 
         // Save monthly targets
-        const monthlyMappingsToSave: Array<{ class_master_id: string; semester: number; month: number }> = [];
-        Object.entries(classSemesterMonthMappings).forEach(([classId, semesters]) => {
-          if (!selectedClasses.has(classId)) return;
-          
-          Object.entries(semesters).forEach(([semStr, months]) => {
-            const semester = parseInt(semStr);
-            if (!classSemesterMappings[classId]?.has(semester as 1 | 2)) return;
-            
-            months.forEach(month => {
-              monthlyMappingsToSave.push({ class_master_id: classId, semester, month });
-            });
+        const monthlyMappingsToSave: Array<{ class_master_id: string; semester: number; month: number | null }> = [];
+        selectedClasses.forEach(classId => {
+          const semesters = classSemesterMappings[classId];
+          if (!semesters || semesters.size === 0) return;
+
+          semesters.forEach(semester => {
+            const months = classSemesterMonthMappings[classId]?.[semester];
+            if (months && months.size > 0) {
+              // Has specific months → insert one row per month
+              months.forEach(month => {
+                monthlyMappingsToSave.push({ class_master_id: classId, semester, month });
+              });
+            } else {
+              // Semester selected but no months → insert null-month row to preserve semester selection
+              monthlyMappingsToSave.push({ class_master_id: classId, semester, month: null });
+            }
           });
         });
 

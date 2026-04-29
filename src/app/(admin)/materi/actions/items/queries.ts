@@ -188,7 +188,6 @@ export async function fetchClassMappingsBatch(
         .from('material_item_classes')
         .select(`
       material_item_id,
-      semester,
       class_master:class_masters(*)
     `)
         .range(offset, offset + batchSize - 1)
@@ -296,7 +295,6 @@ export async function fetchItemClassMappings(supabase: SupabaseClient, itemId: s
         .select(`
       id,
       class_master_id,
-      semester,
       class_master:class_masters(*)
     `)
         .eq('material_item_id', itemId)
@@ -327,7 +325,7 @@ export async function deleteItemClassMappingsBulk(supabase: SupabaseClient, item
  */
 export async function insertItemClassMappings(
     supabase: SupabaseClient,
-    mappings: Array<{ material_item_id: string; class_master_id: string; semester: number | null }>
+    mappings: Array<{ material_item_id: string; class_master_id: string }>
 ) {
     return await supabase
         .from('material_item_classes')
@@ -339,7 +337,7 @@ export async function insertItemClassMappings(
  */
 export async function upsertItemClassMappings(
     supabase: SupabaseClient,
-    mappings: Array<{ material_item_id: string; class_master_id: string; semester: number | null }>
+    mappings: Array<{ material_item_id: string; class_master_id: string }>
 ) {
     return await supabase
         .from('material_item_classes')

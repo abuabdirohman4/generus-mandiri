@@ -16,7 +16,7 @@ interface MateriTableProps {
     onToggleAll?: (selected: boolean) => void;
     showTargetBadge?: boolean;
     selectedMonth?: number | null;
-    monthsByItemId?: Record<string, number[]>;
+    monthsByItemId?: Record<string, Array<{ class_master_id: string; semester: number; month: number }>>;
     showClassColumn?: boolean;
     showSemesterColumn?: boolean;
     showMonthColumn?: boolean;
@@ -131,15 +131,17 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
         }
         if (column.key === 'classes') {
             const classes = item.itemData?.classes || [];
-            if (classes.length === 0) {
+            // Deduplicate by id (same class can appear twice for S1+S2)
+            const uniqueClasses = Array.from(new Map(classes.map((c: any) => [c.id, c])).values()) as any[];
+            if (uniqueClasses.length === 0) {
                 return <span className="text-gray-400 dark:text-gray-600">—</span>;
             }
 
             return (
                 <div className="flex flex-wrap gap-1">
-                    {classes.map((cls: any) => (
-                        <span 
-                            key={cls.id} 
+                    {uniqueClasses.map((cls: any) => (
+                        <span
+                            key={cls.id}
                             className="px-1.5 py-0.5 text-[10px] font-medium bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded border border-indigo-100 dark:border-indigo-800/30"
                         >
                             {cls.name}
@@ -149,10 +151,8 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             );
         }
         if (column.key === 'semesters') {
-            const classes = item.itemData?.classes || [];
-            const semesters = Array.from(new Set(
-                classes.map((c: any) => c.semester).filter((s: any) => s === 1 || s === 2)
-            )).sort() as (1 | 2)[];
+            const targets = monthsByItemId[item.id] || [];
+            const semesters = Array.from(new Set(targets.map(t => t.semester))).sort() as (1 | 2)[];
 
             if (semesters.length === 0) {
                 return <span className="text-gray-400 dark:text-gray-600">—</span>;
@@ -172,8 +172,10 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             );
         }
         if (column.key === 'months') {
-            const months = monthsByItemId[item.id] || [];
-            if (months.length === 0) {
+            const targets = monthsByItemId[item.id] || [];
+            // Deduplicate months across all classes/semesters, skip null-month rows, then sort
+            const uniqueMonths = Array.from(new Set(targets.filter(t => t.month != null).map(t => t.month as number))).sort((a, b) => a - b);
+            if (uniqueMonths.length === 0) {
                 return <span className="text-gray-400 dark:text-gray-600">—</span>;
             }
 
@@ -185,14 +187,14 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                 return names[m] || m.toString();
             };
 
-            const displayedMonths = months.slice(0, 3);
-            const remainingCount = months.length - 3;
+            const displayedMonths = uniqueMonths.slice(0, 3);
+            const remainingCount = uniqueMonths.length - 3;
 
             return (
                 <div className="flex flex-wrap gap-1">
                     {displayedMonths.map(m => (
-                        <span 
-                            key={m} 
+                        <span
+                            key={m}
                             className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full border border-blue-100 dark:border-blue-800/30"
                         >
                             {getShortMonth(m)}

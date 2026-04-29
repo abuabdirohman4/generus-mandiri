@@ -59,12 +59,29 @@ export async function bulkUpsertMonthlyTargets(
   supabase: SupabaseClient,
   records: Array<MonthlyTargetInput & { created_by: string }>
 ) {
-  return supabase
-    .from('material_monthly_targets')
-    .upsert(records, {
-      onConflict: 'class_master_id,academic_year_id,semester,month,week,day_of_week,material_item_id',
-      ignoreDuplicates: true
-    })
+  const withMonth = records.filter(r => r.month != null)
+  const withoutMonth = records.filter(r => r.month == null)
+
+  // Rows with month: use upsert with partial index columns
+  if (withMonth.length > 0) {
+    const { error } = await supabase
+      .from('material_monthly_targets')
+      .upsert(withMonth, {
+        onConflict: 'class_master_id,academic_year_id,semester,month,material_item_id',
+        ignoreDuplicates: true
+      })
+    if (error) return { error }
+  }
+
+  // Rows without month: plain insert (caller must delete existing null-month rows first)
+  if (withoutMonth.length > 0) {
+    const { error } = await supabase
+      .from('material_monthly_targets')
+      .insert(withoutMonth)
+    if (error) return { error }
+  }
+
+  return { error: null }
 }
 
 export async function deleteMonthlyTargetsByMonth(
@@ -159,7 +176,7 @@ export async function fetchMonthlyTargetsByItemIds(
 ) {
   return supabase
     .from('material_monthly_targets')
-    .select('material_item_id, month')
+    .select('material_item_id, class_master_id, semester, month')
     .in('material_item_id', params.material_item_ids)
     .eq('academic_year_id', params.academic_year_id)
 }

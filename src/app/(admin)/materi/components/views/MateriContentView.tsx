@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 
 import { MaterialItem, MaterialType, MaterialCategory, getSemesterMonths, getMonthName, Semester, Month, ClassMaster } from '../../types';
 import { useMateriStore } from '../../stores/materiStore';
-import { getMonthlyTargetItemIds, getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
+import { getMonthlyTargetItemIds } from '../../actions/monthly-targets/actions';
 import { isTeacher, isAdmin } from '@/lib/accessControl';
 import MateriTable from '../tables/MateriTable';
 import InputFilter from '@/components/form/input/InputFilter';
@@ -26,6 +26,7 @@ interface MateriContentViewProps {
     onToggleAll?: (selected: boolean, itemIds: string[]) => void;
     onBulkEdit?: () => void;
     classMasters: ClassMaster[];
+    monthsByItemId: Record<string, Array<{ class_master_id: string; semester: number; month: number }>>;
 }
 
 export default function MateriContentView({
@@ -43,7 +44,8 @@ export default function MateriContentView({
     onToggleSelection,
     onToggleAll,
     onBulkEdit,
-    classMasters
+    classMasters,
+    monthsByItemId
 }: MateriContentViewProps) {
     const { filters, setFilter, columnVisibility, setColumnVisibility } = useMateriStore();
 
@@ -51,7 +53,6 @@ export default function MateriContentView({
     const isTeacherUser = userProfile ? isTeacher(userProfile) : false;
 
     const [targetItemIds, setTargetItemIds] = useState<Set<string>>(new Set());
-    const [monthsByItemId, setMonthsByItemId] = useState<Record<string, number[]>>({});
 
     useEffect(() => {
         if (filters.selectedSemester && filters.selectedMonth) {
@@ -64,13 +65,6 @@ export default function MateriContentView({
             setTargetItemIds(new Set());
         }
     }, [filters.selectedSemester, filters.selectedMonth, filters.viewMode, filters.selectedClassId]);
-
-    // Fetch monthly targets for all items for the column display
-    useEffect(() => {
-        if (items.length > 0) {
-            getMonthlyTargetsByItems(items.map(i => i.id)).then(setMonthsByItemId);
-        }
-    }, [items]);
 
     // Filter items for "by_class" mode - show items based on class + type selection
     const filteredItemsForClassMode = useMemo(() => {
@@ -98,31 +92,18 @@ export default function MateriContentView({
             result = result.filter(i => i.material_type_id === filters.selectedTypeId);
         }
 
-        // Filter by selected semester (from sidebar)
-        // Note: selectedSemester can be 1, 2, or null (for uncategorized)
-        // But here we need to handle the logic carefully because null in store might mean "no semester selected" or "uncategorized"
-        // In our case, if selectedTypeId is set, selectedSemester should also be respected if it was set by the sidebar click
-        if (filters.selectedClassId && filters.selectedTypeId) {
-            // If we are filtering by class AND type, we should also check semester
-            // The sidebar sets selectedSemester when clicking a type under a semester section
-
-            if (filters.selectedSemester !== undefined) {
-                result = result.filter(item => {
-                    const classMapping = item.classes?.find(c => c.id === filters.selectedClassId);
-                    if (!classMapping) return false;
-
-                    if (filters.selectedSemester === null) {
-                        // Uncategorized: semester is null or undefined
-                        return !classMapping.semester;
-                    } else {
-                        // Specific semester
-                        return classMapping.semester === filters.selectedSemester;
-                    }
-                });
-            }
+        // Filter by semester only (no month selected)
+        if (filters.selectedSemester && !filters.selectedMonth) {
+            result = result.filter(item => {
+                const targets = monthsByItemId[item.id] || [];
+                return targets.some(t =>
+                    t.semester === filters.selectedSemester &&
+                    (!filters.selectedClassId || t.class_master_id === filters.selectedClassId)
+                );
+            });
         }
 
-        // Filter by targetItemIds if month filter is active
+        // Filter by semester + month targets
         if (filters.selectedSemester && filters.selectedMonth) {
             result = result.filter(item => targetItemIds.has(item.id));
         }
@@ -137,7 +118,7 @@ export default function MateriContentView({
         }
 
         return result;
-    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, filters.selectedSemester, userProfile, isTeacherUser, searchQuery, filters.selectedMonth, targetItemIds]);
+    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, userProfile, isTeacherUser, searchQuery, filters.selectedSemester, filters.selectedMonth, targetItemIds, monthsByItemId]);
 
     // Get current type/category info for header
     const selectedType = useMemo(() => {
@@ -189,14 +170,15 @@ export default function MateriContentView({
             );
         }
 
-        // Filter by semester (via class mappings) if no month selected
+        // Filter by semester (via monthly targets) if no month selected
         if (filters.selectedSemester && !filters.selectedMonth) {
-            result = result.filter(item =>
-                item.classes?.some((c: any) =>
-                    (!filters.selectedClassId || c.id === filters.selectedClassId) &&
-                    c.semester === filters.selectedSemester
-                )
-            );
+            result = result.filter(item => {
+                const targets = monthsByItemId[item.id] || [];
+                return targets.some(t =>
+                    t.semester === filters.selectedSemester &&
+                    (!filters.selectedClassId || t.class_master_id === filters.selectedClassId)
+                );
+            });
         }
 
         // Filter by semester + month targets (via monthly_targets table)
@@ -214,7 +196,7 @@ export default function MateriContentView({
         }
 
         return result;
-    }, [items, types, filters, userProfile, isTeacherUser, searchQuery, targetItemIds]);
+    }, [items, types, filters, userProfile, isTeacherUser, searchQuery, targetItemIds, monthsByItemId]);
 
     return (
         <div className="space-y-6">

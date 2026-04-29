@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../../types';
 import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getAllClasses, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
+import { getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
 import MateriContentView from '../views/MateriContentView';
 import MateriSidebar from './MateriSidebar';
 import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
@@ -35,6 +36,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
   const [types, setTypes] = useState<MaterialType[]>([]);
   const [items, setItems] = useState<MaterialItem[]>([]);
   const [classes, setClasses] = useState<ClassMaster[]>([]);
+  const [monthsByItemId, setMonthsByItemId] = useState<Record<string, Array<{ class_master_id: string; semester: number; month: number }>>>({});
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -97,6 +99,10 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
         setTypes(typesData);
         setItems(itemsData);
         setClasses([]); // Clear classes when in material mode
+        if (itemsData.length > 0) {
+          const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));
+          setMonthsByItemId(months);
+        }
       } else {
         // Load data for class view - all 17 classes + items with mappings
         const [categoriesData, typesData, classesData, itemsData] = await Promise.all([
@@ -109,6 +115,10 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
         setTypes(typesData);
         setClasses(classesData);
         setItems(itemsData);
+        if (itemsData.length > 0) {
+          const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));
+          setMonthsByItemId(months);
+        }
       }
     } catch (error) {
       console.error('Error loading sidebar data:', error);
@@ -208,18 +218,12 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
       try {
         const updatedItem = await getMaterialItem(itemId);
         if (updatedItem) {
-          setItems(prevItems => {
-            const index = prevItems.findIndex(i => i.id === itemId);
-            if (index >= 0) {
-              // Update existing
-              const newItems = [...prevItems];
-              newItems[index] = updatedItem;
-              return newItems;
-            } else {
-              // Add new
-              return [...prevItems, updatedItem];
-            }
-          });
+          const newItems = items.findIndex(i => i.id === itemId) >= 0
+            ? items.map(i => i.id === itemId ? updatedItem : i)
+            : [...items, updatedItem];
+          setItems(newItems);
+          // Refresh monthsByItemId for all items
+          getMonthlyTargetsByItems(newItems.map(i => i.id)).then(setMonthsByItemId);
         }
       } catch (error) {
         console.error('Error updating item locally:', error);
@@ -320,6 +324,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             types={types}
             items={items}
             classes={classes}
+            monthsByItemId={monthsByItemId}
             isOpen={sidebarOpen}
             onToggle={() => setSidebarOpen(!sidebarOpen)}
             isLoading={dataLoading}
@@ -414,6 +419,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
                   onToggleAll={handleToggleAll}
                   onBulkEdit={handleBulkEdit}
                   classMasters={classMasters}
+                  monthsByItemId={monthsByItemId}
                 />
               )}
             </div>

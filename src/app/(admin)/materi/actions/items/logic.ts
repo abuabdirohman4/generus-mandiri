@@ -67,10 +67,7 @@ export function mapClassMappingsToItems(itemsData: any[], mappingsData: any[]): 
     return itemsData.map((item: any) => {
         const itemMappings = mappingsData.filter((m: any) => m.material_item_id === item.id) || []
         const classes = itemMappings
-            .map((m: any) => ({
-                ...m.class_master,
-                semester: m.semester
-            }))
+            .map((m: any) => m.class_master)
             .filter((cm: any) => cm)
 
         return { ...item, classes }
@@ -123,13 +120,12 @@ export function buildDayItemsPayload(
  */
 export function buildBulkMappingsPayload(
     itemIds: string[],
-    mappings: { class_master_id: string; semester: number | null }[]
+    mappings: { class_master_id: string }[]
 ) {
     return itemIds.flatMap(itemId =>
         mappings.map(m => ({
             material_item_id: itemId,
             class_master_id: m.class_master_id,
-            semester: m.semester
         }))
     )
 }

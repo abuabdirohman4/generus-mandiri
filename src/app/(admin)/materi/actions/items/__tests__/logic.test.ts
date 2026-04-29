@@ -198,19 +198,19 @@ describe('buildBulkMappingsPayload', () => {
     it('cross-joins itemIds with mappings correctly', () => {
         const result = buildBulkMappingsPayload(
             ['i1', 'i2'],
-            [{ class_master_id: 'c1', semester: 1 }]
+            [{ class_master_id: 'c1' }]
         )
         expect(result).toHaveLength(2)
-        expect(result[0]).toEqual({ material_item_id: 'i1', class_master_id: 'c1', semester: 1 })
-        expect(result[1]).toEqual({ material_item_id: 'i2', class_master_id: 'c1', semester: 1 })
+        expect(result[0]).toEqual({ material_item_id: 'i1', class_master_id: 'c1' })
+        expect(result[1]).toEqual({ material_item_id: 'i2', class_master_id: 'c1' })
     })
 
     it('handles multiple mappings per item', () => {
         const result = buildBulkMappingsPayload(
             ['i1'],
             [
-                { class_master_id: 'c1', semester: 1 },
-                { class_master_id: 'c2', semester: 2 },
+                { class_master_id: 'c1' },
+                { class_master_id: 'c2' },
             ]
         )
         expect(result).toHaveLength(2)
