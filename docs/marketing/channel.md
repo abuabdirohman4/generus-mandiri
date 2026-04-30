@@ -1,3 +1,17 @@
+*Update v1.13.1 — Terminology Fix: Absensi → Presensi*
+
+🇮🇩 *Koreksi Istilah: Absensi → Presensi*
+
+Perbaikan
+- Seluruh label, menu, dan URL yang sebelumnya menggunakan kata "Absensi" kini berubah menjadi "Presensi" — istilah yang lebih tepat untuk pencatatan kehadiran 📋
+
+🇬🇧 *Terminology Fix: Absensi → Presensi*
+
+Improved
+- All labels, navigation items, and URLs previously using "Absensi" now use "Presensi" — the more accurate Indonesian term for attendance tracking 📋
+
+---
+
 *Update v1.13.0 — Tipe Kegiatan, Peta Tracking & Target Kurikulum*
 
 🇮🇩 *Tipe Kegiatan, Peta Tracking & Target Kurikulum*

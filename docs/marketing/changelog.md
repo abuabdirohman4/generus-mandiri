@@ -1,6 +1,11 @@
 
 # Changelog
 
+## [1.13.1] — 2026-04-30
+
+### Improved
+- **Terminology**: Renamed "Absensi" to "Presensi" throughout the app — URL route, navigation labels, page titles, and toast messages now use the more accurate Indonesian term for attendance tracking.
+
 ## [1.13.0] — 2026-04-30
 
 ### Added
