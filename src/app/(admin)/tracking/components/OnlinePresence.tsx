@@ -38,7 +38,7 @@ export default function OnlinePresence() {
 
   if (onlineUsers.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-2">
           <TeamOutlined className="text-gray-400 dark:text-gray-500" />
           <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Tidak ada user online</h3>
@@ -48,7 +48,7 @@ export default function OnlinePresence() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 mb-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <TeamOutlined className="text-green-500" />
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest flex items-center gap-2">

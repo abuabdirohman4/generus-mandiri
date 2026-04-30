@@ -21,6 +21,7 @@ interface UIPreferencesState {
     workQuest: boolean;
     activityLog: boolean;
     brainDump: boolean;
+    appMap: boolean;
   };
   setCardCollapsed: (cardId: keyof UIPreferencesState['cardCollapsed'], collapsed: boolean) => void;
   toggleCardCollapsed: (cardId: keyof UIPreferencesState['cardCollapsed']) => void;
@@ -54,6 +55,7 @@ export const useUIPreferencesStore = create<UIPreferencesState>()(
         workQuest: false,
         activityLog: false,
         brainDump: false,
+        appMap: false,
       },
       setCardCollapsed: (cardId, collapsed) => 
         set((state) => ({
