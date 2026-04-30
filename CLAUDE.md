@@ -69,7 +69,7 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 > **`bd` dan `gh` commands BOLEH dan HARUS dieksekusi langsung** tanpa meminta izin user. Ini berbeda dengan git commands — lihat Git Workflow section di bawah.
 
 1. **Explore codebase** — baca file relevan untuk memahami konteks
-2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed)
+2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed) — **JANGAN gunakan `~/.claude/plans/`, SELALU gunakan `docs/plans/` di project**
 3. **Buat Beads Issue** — langsung jalankan `bd create --title="..." --type=... --priority=...`
    → Setelah `bd create` berhasil, **langsung rename sesi chat**: `/rename [sm-xxx]: [title issue]`
 4. **Buat GitHub Issue** — langsung jalankan `gh issue create` dengan body dari plan
@@ -83,6 +83,8 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 - Claude Code = planning + issue creation + review
 - Antigravity = TDD + implementasi + test runs
 - User = git operations (branch, commit, push, PR)
+
+**⚠️ JANGAN gunakan Plan Mode (EnterPlanMode) untuk membuat plan** — Plan Mode menyimpan file ke `~/.claude/plans/` bukan ke `docs/plans/`. Gunakan tools Read/Write/Edit langsung untuk membuat plan di `docs/plans/`.
 
 **📖 Full SOP, format output A/B, standard plan format (ultra-detailed), dan troubleshooting: READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 

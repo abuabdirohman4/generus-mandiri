@@ -6,9 +6,13 @@ import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types';
 import type { Semester, Month } from '@/app/(admin)/materi/types';
 import { getClasses } from './actions/classes';
 import { useUserProfile } from '@/stores/userProfileStore';
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import { getAllDaerah } from '@/app/(admin)/organisasi/actions/daerah';
+import { getAllDesa } from '@/app/(admin)/organisasi/actions/desa';
 import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok';
 import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import { shouldShowDaerahFilter, shouldShowDesaFilter, shouldShowKelompokFilter } from '@/lib/accessControl';
+import type { Daerah, Desa, Kelompok } from '@/types/organization';
 import InputFilter from '@/components/form/input/InputFilter';
 import { toast } from 'sonner';
 import Button from '@/components/ui/button/Button';
@@ -59,7 +63,14 @@ export default function MonitoringPage() {
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
 
     const [hafalanCategories, setHafalanCategories] = useState<HafalanCategory[]>([]);
-    const [kelompok, setKelompok] = useState<any[]>([]);
+    
+    // Org states
+    const [daerahList, setDaerahList] = useState<Daerah[]>([]);
+    const [desaList, setDesaList] = useState<Desa[]>([]);
+    const [kelompokList, setKelompokList] = useState<Kelompok[]>([]);
+    const [selectedDaerahId, setSelectedDaerahId] = useState<string>('');
+    const [selectedDesaId, setSelectedDesaId] = useState<string>('');
+    const [selectedKelompokId, setSelectedKelompokId] = useState<string>('');
 
     const [classes, setClasses] = useState<any[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
@@ -178,16 +189,19 @@ export default function MonitoringPage() {
                 setSelectedYearId(activeYear.id);
             }
 
-            // Load kelompok data for label formatting
-            const kelompokData = await getAllKelompok();
-            setKelompok(kelompokData);
+            // Load org data and categories in parallel
+            const [daerahData, desaData, allKelompokData, categoriesData, classesData] = await Promise.all([
+                getAllDaerah(),
+                getAllDesa(),
+                getAllKelompok(),
+                getHafalanCategories(),
+                getClasses()
+            ]);
 
-            // Load hafalan categories
-            const categoriesData = await getHafalanCategories();
+            setDaerahList(daerahData);
+            setDesaList(desaData);
+            setKelompokList(allKelompokData);
             setHafalanCategories(categoriesData);
-
-            // Get all Caberawit/PAUD classes
-            const classesData = await getClasses();
 
             // Filter classes based on user role
             let filteredClasses = classesData;
@@ -306,6 +320,57 @@ export default function MonitoringPage() {
         }
     };
 
+    const filteredDesaList = useMemo(() => {
+        if (!selectedDaerahId) return desaList;
+        return desaList.filter(d => d.daerah_id === selectedDaerahId);
+    }, [desaList, selectedDaerahId]);
+
+    const filteredKelompokList = useMemo(() => {
+        if (!selectedDesaId) {
+            if (selectedDaerahId) {
+                const desaIdsInDaerah = desaList
+                    .filter(d => d.daerah_id === selectedDaerahId)
+                    .map(d => d.id);
+                return kelompokList.filter(k => desaIdsInDaerah.includes(k.desa_id));
+            }
+            return kelompokList;
+        }
+        return kelompokList.filter(k => k.desa_id === selectedDesaId);
+    }, [kelompokList, desaList, selectedDaerahId, selectedDesaId]);
+
+    // Kelas yang ditampilkan di dropdown difilter oleh kelompok terpilih
+    const filteredClasses = useMemo(() => {
+        if (!selectedKelompokId) return classes;
+        return classes.filter((cls: any) => cls.kelompok_id === selectedKelompokId);
+    }, [classes, selectedKelompokId]);
+
+    const handleDaerahChange = (daerahId: string) => {
+        setSelectedDaerahId(daerahId);
+        setSelectedDesaId('');
+        setSelectedKelompokId('');
+        setSelectedClassId('');
+        setSelectedStudentId('');
+        setStudents([]);
+        setMaterials([]);
+    };
+
+    const handleDesaChange = (desaId: string) => {
+        setSelectedDesaId(desaId);
+        setSelectedKelompokId('');
+        setSelectedClassId('');
+        setSelectedStudentId('');
+        setStudents([]);
+        setMaterials([]);
+    };
+
+    const handleKelompokChange = (kelompokId: string) => {
+        setSelectedKelompokId(kelompokId);
+        setSelectedClassId('');
+        setSelectedStudentId('');
+        setStudents([]);
+        setMaterials([]);
+    };
+
     const handleProgressChange = (
         materialId: string,
         field: 'nilai' | 'notes',
@@ -375,28 +440,35 @@ export default function MonitoringPage() {
 
     // Format class options with kelompok name for duplicates (from CreateMeetingModal pattern)
     const classOptions = useMemo(() => {
-        if (!classes.length) return [];
+        if (!filteredClasses.length) return [];
 
         let options: { value: string; label: string }[] = [];
 
-        // For teacher with multiple classes, check for duplicate names
-        if (userProfile?.role === 'teacher' && classes.length > 1 && kelompok.length > 0) {
-            // Create mapping kelompok_id -> kelompok name
-            const kelompokMap = new Map(
-                kelompok.map((k: any) => [k.id, k.name])
-            );
+        // If multiple classes exist, check for duplicate names and add kelompok suffix
+        if (filteredClasses.length > 1) {
+            // Create mapping kelompok_id -> kelompok name directly from classes data
+            // as filteredClasses already includes joined kelompok info
+            const kelompokMap = new Map();
+            filteredClasses.forEach((cls: any) => {
+                if (cls.kelompok_id && cls.kelompok?.name) {
+                    kelompokMap.set(cls.kelompok_id, cls.kelompok.name);
+                }
+            });
 
-            // Check for duplicate class names
-            const nameCounts = classes.reduce((acc, cls: any) => {
-                acc[cls.name] = (acc[cls.name] || 0) + 1;
+            // Check for duplicate class names (trim for accuracy)
+            const nameCounts = filteredClasses.reduce((acc, cls: any) => {
+                const normalizedName = (cls.name || '').trim();
+                acc[normalizedName] = (acc[normalizedName] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>);
 
             // Format labels
-            options = classes.map((cls: any) => {
-                const hasDuplicate = nameCounts[cls.name] > 1;
+            options = filteredClasses.map((cls: any) => {
+                const normalizedName = (cls.name || '').trim();
+                const hasDuplicate = nameCounts[normalizedName] > 1;
                 const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null;
-                const label = hasDuplicate && kelompokName
+                
+                const label = (hasDuplicate && kelompokName)
                     ? `${cls.name} (${kelompokName})`
                     : cls.name;
 
@@ -407,14 +479,14 @@ export default function MonitoringPage() {
             });
         } else {
             // For non-teacher or single class, just use simple mapping
-            options = classes.map((c: any) => ({
+            options = filteredClasses.map((c: any) => ({
                 value: c.id,
                 label: c.name
             }));
         }
 
         // Add "Pilih Semua" option at the beginning if there are multiple classes
-        if (classes.length > 1) {
+        if (filteredClasses.length > 1) {
             options.unshift({
                 value: 'ALL',
                 label: 'Semua Kelas'
@@ -422,7 +494,7 @@ export default function MonitoringPage() {
         }
 
         return options;
-    }, [classes, kelompok, userProfile?.role]);
+    }, [filteredClasses, kelompokList, userProfile?.role]);
 
     const currentStudent = selectedStudentId
         ? students.find(s => s.id === selectedStudentId)
@@ -537,37 +609,61 @@ export default function MonitoringPage() {
                             {/* Collapsible Content */}
                             <div className={`overflow-hidden transition-all duration-300 ${isFilterCollapsed ? 'max-h-0 md:max-h-none' : 'max-h-96'}`}>
                                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
                                         {/* Academic Year & Semester */}
                                         <div className="md:col-span-2">
                                             <AcademicYearSelector
                                                 selectedYearId={selectedYearId}
                                                 selectedSemester={selectedSemester}
                                                 onYearChange={setSelectedYearId}
-                                                onSemesterChange={setSelectedSemester}
+                                                onSemesterChange={(semester) => {
+                                                    setSelectedSemester(semester);
+                                                    setSelectedMonth(null); // Reset month when semester changes
+                                                }}
                                                 showSemester={true}
                                             />
                                         </div>
 
-                                        {/* Kategori with Skeleton */}
-                                        <div>
-                                            {filterLoading ? (
-                                                <div className="animate-pulse">
-                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
-                                                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                                </div>
-                                            ) : (
-                                                <InputFilter
-                                                    id="category-filter"
-                                                    label="Kategori"
-                                                    value={selectedCategoryId}
-                                                    onChange={setSelectedCategoryId}
-                                                    options={hafalanCategories.map(c => ({ value: c.id, label: c.name }))}
-                                                    variant="modal"
-                                                    compact
-                                                />
-                                            )}
-                                        </div>
+                                        {userProfile && shouldShowDaerahFilter(userProfile) && daerahList.length > 1 && (
+                                            <InputFilter
+                                                id="daerah-filter"
+                                                label="Daerah"
+                                                value={selectedDaerahId}
+                                                onChange={handleDaerahChange}
+                                                options={daerahList.map(d => ({ value: d.id, label: d.name }))}
+                                                allOptionLabel="Semua Daerah"
+                                                variant="modal"
+                                                compact
+                                            />
+                                        )}
+
+                                        {userProfile && shouldShowDesaFilter(userProfile) && filteredDesaList.length > 1 && (
+                                            <InputFilter
+                                                id="desa-filter"
+                                                label="Desa"
+                                                value={selectedDesaId}
+                                                onChange={handleDesaChange}
+                                                options={filteredDesaList.map(d => ({ value: d.id, label: d.name }))}
+                                                allOptionLabel="Semua Desa"
+                                                variant="modal"
+                                                compact
+                                                disabled={userProfile && shouldShowDaerahFilter(userProfile) && !selectedDaerahId}
+                                            />
+                                        )}
+
+                                        {userProfile && shouldShowKelompokFilter(userProfile) && filteredKelompokList.length > 1 && (
+                                            <InputFilter
+                                                id="kelompok-filter"
+                                                label="Kelompok"
+                                                value={selectedKelompokId}
+                                                onChange={handleKelompokChange}
+                                                options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
+                                                allOptionLabel="Semua Kelompok"
+                                                variant="modal"
+                                                compact
+                                                disabled={userProfile && shouldShowDesaFilter(userProfile) && !selectedDesaId}
+                                            />
+                                        )}
 
                                         {/* Kelas with Skeleton */}
                                         <div>
@@ -590,23 +686,42 @@ export default function MonitoringPage() {
                                             )}
                                         </div>
 
+                                        {/* Kategori with Skeleton */}
+                                        <div>
+                                            {filterLoading ? (
+                                                <div className="animate-pulse">
+                                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                                                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                </div>
+                                            ) : (
+                                                <InputFilter
+                                                    id="category-filter"
+                                                    label="Kategori"
+                                                    value={selectedCategoryId}
+                                                    onChange={setSelectedCategoryId}
+                                                    options={hafalanCategories.map(c => ({ value: c.id, label: c.name }))}
+                                                    variant="modal"
+                                                    compact
+                                                />
+                                            )}
+                                        </div>
+
                                         {/* Bulan Filter — hanya tampil jika ada kelas dipilih */}
                                         {selectedClassId && (
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                    Bulan
-                                                </label>
-                                                <select
-                                                    value={selectedMonth ?? ''}
-                                                    onChange={e => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
-                                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm"
-                                                >
-                                                    <option value="">Semua Bulan</option>
-                                                    {getSemesterMonths(selectedSemester as Semester).map(m => (
-                                                        <option key={m} value={m}>{getMonthName(m)}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            <InputFilter
+                                                id="month-filter"
+                                                label="Bulan"
+                                                value={selectedMonth?.toString() ?? ''}
+                                                onChange={(val) => setSelectedMonth(val ? Number(val) : null)}
+                                                options={getSemesterMonths(selectedSemester as Semester).map(m => ({
+                                                    value: m.toString(),
+                                                    label: getMonthName(m as Month)
+                                                }))}
+                                                allOptionLabel="Semua Bulan"
+                                                variant="modal"
+                                                compact
+                                                disabled={!selectedClassId}
+                                            />
                                         )}
                                     </div>
                                 </div>

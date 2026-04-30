@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { MaterialProgress, ProgressInput } from '../types';
 import { logActivity } from '@/lib/activityLogger';
 import { getCurrentUserProfile } from '@/lib/accessControlServer';
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 
 /**
  * Get hafalan categories (categories with name containing "Hafalan")
@@ -192,43 +193,43 @@ export async function getMaterialsByClassAndSemester(
 ): Promise<any[]> {
     const supabase = await createAdminClient();
 
-    // Step 1: Get class_master_id(s) for this class
     const classMasterIds = await getClassMasterIds(classId);
+    if (classMasterIds.length === 0) return [];
 
-    if (classMasterIds.length === 0) {
-        return []; // No materials for this class
-    }
+    const activeYear = await getActiveAcademicYear();
+    if (!activeYear) return [];
 
-    // Step 2: Get materials for these class masters and semester
+    const { data: targetRows, error: targetError } = await supabase
+        .from('material_monthly_targets')
+        .select('material_item_id')
+        .in('class_master_id', classMasterIds)
+        .eq('academic_year_id', activeYear.id)
+        .eq('semester', semester);
+
+    if (targetError) throw new Error(targetError.message);
+    if (!targetRows || targetRows.length === 0) return [];
+
+    const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
+
     const { data, error } = await supabase
-        .from('material_item_classes')
+        .from('material_items')
         .select(`
-            material_item:material_items(
+            id,
+            name,
+            description,
+            material_type:material_types(
                 id,
                 name,
-                description,
-                material_type:material_types(
+                material_category:material_categories(
                     id,
-                    name,
-                    material_category:material_categories(
-                        id,
-                        name
-                    )
+                    name
                 )
             )
         `)
-        .in('class_master_id', classMasterIds)
-        .eq('semester', semester);
+        .in('id', itemIds);
 
     if (error) throw new Error(error.message);
-
-    // Deduplicate materials
-    const materials = data?.map((m: any) => m.material_item).filter(Boolean) || [];
-    const uniqueMaterials = Array.from(
-        new Map(materials.map((m: any) => [m?.id, m])).values()
-    ).filter(Boolean);
-
-    return uniqueMaterials;
+    return data || [];
 }
 
 export async function getMaterialsByCategory(
@@ -238,14 +239,24 @@ export async function getMaterialsByCategory(
 ): Promise<any[]> {
     const supabase = await createAdminClient();
 
-    // Step 1: Get class_master_ids
     const classMasterIds = await getClassMasterIds(classId);
+    if (classMasterIds.length === 0) return [];
 
-    if (classMasterIds.length === 0) {
-        return [];
-    }
+    const activeYear = await getActiveAcademicYear();
+    if (!activeYear) return [];
 
-    // Step 2: Get materials with category filter
+    const { data: targetRows, error: targetError } = await supabase
+        .from('material_monthly_targets')
+        .select('material_item_id')
+        .in('class_master_id', classMasterIds)
+        .eq('academic_year_id', activeYear.id)
+        .eq('semester', semester);
+
+    if (targetError) throw new Error(targetError.message);
+    if (!targetRows || targetRows.length === 0) return [];
+
+    const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
+
     const { data, error } = await supabase
         .from('material_items')
         .select(`
@@ -258,24 +269,13 @@ export async function getMaterialsByCategory(
                     id,
                     name
                 )
-            ),
-            material_item_classes!inner(
-                class_master_id,
-                semester
             )
         `)
-        .eq('material_type.material_category_id', categoryId)
-        .in('material_item_classes.class_master_id', classMasterIds)
-        .eq('material_item_classes.semester', semester);
+        .in('id', itemIds)
+        .eq('material_type.material_category_id', categoryId);
 
     if (error) throw new Error(error.message);
-
-    // Deduplicate materials
-    const uniqueMaterials = Array.from(
-        new Map(data?.map((m: any) => [m.id, m]) || []).values()
-    );
-
-    return uniqueMaterials;
+    return Array.from(new Map((data || []).map((m: any) => [m.id, m])).values());
 }
 
 /**

@@ -845,22 +845,37 @@ export default function CreateMeetingModal({
                       <MultiSelectCheckbox
                         label="Pilih Kelas"
                         items={(() => {
-                          if (userProfile?.role === 'teacher' && availableClasses.length > 1 && kelompok) {
-                            const kelompokMap = new Map(kelompok.map((k: any) => [k.id, k.name]))
+                          if (availableClasses.length > 1) {
+                            // Create mapping kelompok_id -> kelompok name directly from availableClasses
+                            const kelompokMap = new Map();
+                            availableClasses.forEach((cls: any) => {
+                              if (cls.kelompok_id && cls.kelompok?.name) {
+                                kelompokMap.set(cls.kelompok_id, cls.kelompok.name);
+                              }
+                            });
+
                             const nameCounts = availableClasses.reduce((acc, cls: any) => {
-                              acc[cls.name] = (acc[cls.name] || 0) + 1
-                              return acc
-                            }, {} as Record<string, number>)
+                              const normalizedName = (cls.name || '').trim();
+                              acc[normalizedName] = (acc[normalizedName] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>);
+
                             return availableClasses.map((cls: any) => {
-                              const hasDuplicate = nameCounts[cls.name] > 1
-                              const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null
+                              const normalizedName = (cls.name || '').trim();
+                              const hasDuplicate = nameCounts[normalizedName] > 1;
+                              const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null;
+                              
+                              const label = (hasDuplicate && kelompokName)
+                                ? `${cls.name} (${kelompokName})`
+                                : cls.name;
+
                               return {
                                 id: cls.id,
-                                label: hasDuplicate && kelompokName ? `${cls.name} (${kelompokName})` : cls.name
-                              }
-                            })
+                                label: label
+                              };
+                            });
                           }
-                          return availableClasses.map(cls => ({ id: cls.id, label: cls.name }))
+                          return availableClasses.map(cls => ({ id: cls.id, label: cls.name }));
                         })()}
                         selectedIds={selectedClassIds}
                         onChange={setSelectedClassIds}

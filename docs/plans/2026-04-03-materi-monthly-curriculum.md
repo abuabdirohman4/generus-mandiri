@@ -1557,4 +1557,123 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 | 7 | `src/app/(admin)/materi/components/layout/MaterialsPageClient.tsx` | MODIFY |
 | 7 | `src/app/(admin)/materi/page.tsx` | MODIFY |
 | 8 | `src/app/(admin)/monitoring/page.tsx` | MODIFY |
+
+---
+
+## Phase 2 (2026-04-30): Enhanced Monitoring — Org Hierarchy Filter
+
+### Context
+
+Filter kelas di halaman monitoring menampilkan SEMUA kelas saat diakses oleh superadmin/admin daerah/admin desa. Perlu filter cascading Daerah → Desa → Kelompok → Kelas.
+
+### Step 1 — Tambah state org filters di page.tsx
+
+```typescript
+const [daerahList, setDaerahList] = useState<Daerah[]>([])
+const [desaList, setDesaList] = useState<Desa[]>([])
+const [kelompokList, setKelompokList] = useState<Kelompok[]>([])
+const [selectedDaerahId, setSelectedDaerahId] = useState<string | null>(null)
+const [selectedDesaId, setSelectedDesaId] = useState<string | null>(null)
+const [selectedKelompokId, setSelectedKelompokId] = useState<string | null>(null)
+```
+
+### Step 2 — Fetch org data di loadInitialData (parallel)
+
+```typescript
+import { getAllDaerah } from '@/app/(admin)/organisasi/actions/daerah'
+import { getAllDesa } from '@/app/(admin)/organisasi/actions/desa'
+import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok'
+
+const [daerahData, desaData, kelompokData] = await Promise.all([
+  getAllDaerah(), getAllDesa(), getAllKelompok(),
+])
+setDaerahList(daerahData); setDesaList(desaData); setKelompokList(kelompokData)
+```
+
+Server actions sudah respect `getDataFilter(profile)` — tidak perlu filter tambahan di client.
+
+### Step 3 — Cascade filter logic via useMemo
+
+```typescript
+import { filterDesaList, filterKelompokList } from '@/components/shared/dataFilterHelpers'
+
+const filteredDesaList = useMemo(() =>
+  filterDesaList(desaList, selectedDaerahId ? [selectedDaerahId] : []),
+  [desaList, selectedDaerahId])
+
+const filteredKelompokList = useMemo(() =>
+  filterKelompokList(kelompokList,
+    selectedDaerahId ? [selectedDaerahId] : [],
+    selectedDesaId ? [selectedDesaId] : [],
+    classes),
+  [kelompokList, selectedDaerahId, selectedDesaId, classes])
+
+const filteredClasses = useMemo(() => {
+  if (!selectedKelompokId) return classes
+  return classes.filter(cls => (cls as any).kelompok_id === selectedKelompokId)
+}, [classes, selectedKelompokId])
+```
+
+### Step 4 — Handler functions dengan cascade reset
+
+```typescript
+const handleDaerahChange = (id: string | null) => {
+  setSelectedDaerahId(id); setSelectedDesaId(null)
+  setSelectedKelompokId(null); setSelectedClassId('')
+  setStudents([]); setMaterials([])
+}
+const handleDesaChange = (id: string | null) => {
+  setSelectedDesaId(id); setSelectedKelompokId(null)
+  setSelectedClassId(''); setStudents([]); setMaterials([])
+}
+const handleKelompokChange = (id: string | null) => {
+  setSelectedKelompokId(id); setSelectedClassId('')
+  setStudents([]); setMaterials([])
+}
+```
+
+### Step 5 — Render dropdowns (sebelum dropdown Kelas)
+
+```typescript
+import { shouldShowDaerahFilter, shouldShowDesaFilter, shouldShowKelompokFilter } from '@/lib/accessControl'
+```
+
+Tambahkan kondisional berdasarkan role:
+- `shouldShowDaerahFilter(userProfile)` → superadmin saja
+- `shouldShowDesaFilter(userProfile)` → superadmin + admin_daerah + teacher_daerah
+- `shouldShowKelompokFilter(userProfile)` → superadmin + admin_daerah + admin_desa + teacher_daerah + teacher_desa
+
+Ganti source dropdown Kelas dari `classes` → `filteredClasses`.
+
+### Step 6 — Pastikan kelompok_id tersedia di class data
+
+Cek `src/app/(admin)/monitoring/actions/classes.ts` — pastikan SELECT include `kelompok_id`.
+
+### Step 7 — Verifikasi bulan filter
+
+Cek `getMonthlyTargetProgress` di `actions/monitoring.ts` — pastikan query `material_monthly_targets` filter `.not('month', 'is', null)` jika perlu (karena month sekarang bisa nullable).
+
+### Critical Files (Phase 2)
+
+| File | Action |
+|------|--------|
+| `src/app/(admin)/monitoring/page.tsx` | Tambah state + fetch org + cascade logic + render dropdowns + ganti `classes` → `filteredClasses` |
+| `src/app/(admin)/monitoring/actions/classes.ts` | Pastikan `kelompok_id` di-select |
+
+**Reuse (jangan buat baru):**
+- `getAllDaerah/Desa/Kelompok` dari `src/app/(admin)/organisasi/actions/`
+- `shouldShowDaerahFilter/DesaFilter/KelompokFilter` dari `src/lib/accessControl.ts`
+- `filterDesaList`, `filterKelompokList` dari `src/components/shared/dataFilterHelpers.ts`
+
+### Verification (Phase 2)
+
+```bash
+npm run type-check
+
+# Manual: login sebagai superadmin → buka /monitoring
+# → muncul filter Daerah, Desa, Kelompok, Kelas dengan cascade benar
+# Login admin_daerah → hanya filter Desa + Kelompok + Kelas
+# Login admin_desa → hanya filter Kelompok + Kelas
+# Login teacher → tidak ada filter org
+```
 | 8 | `src/app/(admin)/monitoring/components/StudentSidebar.tsx` | MODIFY |
