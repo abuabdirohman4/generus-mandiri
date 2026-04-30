@@ -1,3 +1,33 @@
+*Update v1.13.0 — Tipe Kegiatan, Peta Tracking & Target Kurikulum*
+
+🇮🇩 *Tipe Kegiatan, Peta Tracking & Target Kurikulum*
+
+Fitur Baru ✨
+- Tipe & Tingkat Kegiatan kini dari database — bisa diatur per guru
+- Form pertemuan Guru Desa: pilih kelompok, tampilkan kelas terdeduplikasi
+- Peta pengguna aktif real-time dengan avatar animasi
+- Target kurikulum bulanan per kelas di modul Materi
+- Filter tipe kegiatan guru sesuai permission masing-masing
+
+Perbaikan 🔧
+- Nama pertemuan di detail siswa pakai tipe dari database
+- Visibilitas siswa multi-kelas di laporan diperbaiki
+
+🇬🇧 *Activity Types, Tracking Map & Curriculum Targets*
+
+New Features ✨
+- DB-driven activity types & levels — configurable per teacher
+- Guru Desa meeting form: kelompok selector with deduplicated class names
+- Real-time active user map with animated avatars
+- Monthly curriculum targets per class in Materi module
+- Activity type filter respects per-teacher permissions
+
+Fixes 🔧
+- Meeting title in student detail uses DB activity type name
+- Multi-class student visibility in reports fixed
+
+---
+
 *Update v1.12.1 — Perbaikan Kalender Kehadiran*
 
 🇮🇩 *Perbaikan Kalender Kehadiran*

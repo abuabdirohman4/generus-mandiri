@@ -1,6 +1,20 @@
 
 # Changelog
 
+## [1.13.0] — 2026-04-30
+
+### Added
+- **Tipe & Tingkat Kegiatan DB-driven**: Tipe pertemuan (Pengajian, ASAD, Sambung, dll) kini dikelola dari database, dapat diatur per guru via halaman Kegiatan
+- **Pilih Kelompok untuk Guru Desa**: Form buat pertemuan kini menampilkan selector kelompok dan nama kelas terdeduplikasi untuk Guru Desa/Daerah
+- **Real-time Tracking Map**: Peta interaktif pengguna aktif dengan avatar animasi dan status halaman
+- **Target Kurikulum Bulanan Materi**: Tracking progress target per kelas dengan indikator visual
+- **Filter Tipe Kegiatan per-Guru**: Filter absensi & laporan hanya menampilkan tipe yang di-assign ke guru
+
+### Fixed
+- **Multi-class Student Visibility**: Perbaikan visibilitas siswa multi-kelas di halaman laporan dan detail
+- **Nama Pertemuan di Detail Siswa**: Tampilkan tipe kegiatan dari DB (bukan meeting_type_code lama)
+- **Filter tipe kegiatan halaman absensi**: Guru hanya melihat tipe yang mereka miliki permission
+
 ## [1.12.1] — 2026-04-09
 
 ### Fixed
