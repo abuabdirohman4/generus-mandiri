@@ -1,7 +1,7 @@
 import { generateStaticParamsFor, importPage } from "nextra/pages";
 import { useMDXComponents } from "@/mdx-components";
 
-// generateStaticParamsFor returns keys like ["docs"], ["docs","fitur","absensi"]
+// generateStaticParamsFor returns keys like ["docs"], ["docs","fitur","presensi"]
 // Our route is /docs/[[...mdxPath]], so mdxPath segment should NOT include "docs"
 // We strip the leading "docs" from static params, but keep full key for importPage
 const _generateStaticParams = generateStaticParamsFor("mdxPath");
@@ -16,8 +16,8 @@ interface Props {
   params: Promise<{ mdxPath?: string[] }>;
 }
 
-// mdxPath from URL: undefined or ["fitur","absensi"]
-// importPage needs full Nextra key: ["docs"] or ["docs","fitur","absensi"]
+// mdxPath from URL: undefined or ["fitur","presensi"]
+// importPage needs full Nextra key: ["docs"] or ["docs","fitur","presensi"]
 function toNextraKey(mdxPath?: string[]): string[] {
   if (!mdxPath || mdxPath.length === 0) return ["docs"];
   return ["docs", ...mdxPath];

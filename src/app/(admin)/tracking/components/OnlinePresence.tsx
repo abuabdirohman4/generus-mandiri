@@ -8,7 +8,7 @@ import { useEffect } from 'react'
 const PAGE_LABELS: Record<string, string> = {
   '/home': 'Home',
   '/dashboard': 'Dashboard',
-  '/absensi': 'Absensi',
+  '/presensi': 'Presensi',
   '/laporan': 'Laporan',
   '/users/siswa': 'Siswa',
   '/users/guru': 'Guru',

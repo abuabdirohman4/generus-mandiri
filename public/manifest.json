@@ -44,10 +44,10 @@
   "id": "warlob-school-management",
   "shortcuts": [
     {
-      "name": "Absensi",
-      "short_name": "Absensi",
+      "name": "Presensi",
+      "short_name": "Presensi",
       "description": "Kelola kehadiran siswa",
-      "url": "/absensi",
+      "url": "/presensi",
       "icons": [
         {
           "src": "/images/logo/logo-icon.svg",

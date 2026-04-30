@@ -204,7 +204,7 @@ npm run test:e2e:debug   # Run E2E tests (debug mode)
 
 ### App Router Structure
 
-Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/absensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
 
 ### Database & Supabase
 

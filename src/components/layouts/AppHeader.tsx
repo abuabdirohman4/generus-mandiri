@@ -65,8 +65,8 @@ function PageTitle() {
       case '/settings/cache':
         return 'Reset';
       default:
-        if (path.startsWith('/absensi')) { // meeting detail pages
-          return 'Absensi';
+        if (path.startsWith('/presensi')) { // meeting detail pages
+          return 'Presensi';
         } else if (path.startsWith('/users/siswa/')) {
           return 'Detail Siswa';
         }
@@ -76,7 +76,7 @@ function PageTitle() {
 
   // If page needs back button
   const needsBackButton = (path: string) => {
-    return path.startsWith('/absensi/') || // Include all absensi sub-pages including meeting IDs
+    return path.startsWith('/presensi/') || // Include all presensi sub-pages including meeting IDs
       path.startsWith('/users/siswa/') ||
       path === '/users/guru' ||
       path === '/users/admin' ||

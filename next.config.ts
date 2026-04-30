@@ -39,6 +39,23 @@ const nextConfig: NextConfig = {
   // Powered by header
   poweredByHeader: false,
   
+  // Redirect sementara dari /absensi ke /presensi
+  // Dapat dihapus setelah dipastikan tidak ada lagi akses ke /absensi
+  async redirects() {
+    return [
+      {
+        source: '/absensi',
+        destination: '/presensi',
+        permanent: false, // 307 — sementara, mudah dihapus nanti
+      },
+      {
+        source: '/absensi/:path*',
+        destination: '/presensi/:path*',
+        permanent: false,
+      },
+    ];
+  },
+
   // Konfigurasi untuk file audio
   async headers() {
     return [

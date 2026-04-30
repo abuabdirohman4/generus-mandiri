@@ -71,7 +71,7 @@ export function clearUserCache(shouldReload = true) {
     // Clear attendance store (attendance data)
     localStorage.removeItem('attendance-storage')
 
-    // Clear absensi UI store (class filters)
+    // Clear absensi UI store (class filters) — key intentionally kept as 'absensi-ui-store'
     localStorage.removeItem('absensi-ui-store')
 
     // Clear dashboard store (dashboard filters)

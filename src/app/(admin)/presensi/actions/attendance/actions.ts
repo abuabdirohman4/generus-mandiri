@@ -73,13 +73,13 @@ export async function saveAttendance(
       return { success: false, error: error.message }
     }
 
-    revalidatePath('/absensi')
+    revalidatePath('/presensi')
 
     void logActivity({
       userId: profile.id,
       action: 'save_attendance',
       metadata: { count: attendanceRecords.length },
-      pagePath: '/absensi',
+      pagePath: '/presensi',
     })
 
     return { success: true }
@@ -163,7 +163,7 @@ export async function saveAttendanceForMeeting(
       return { success: false, error: error.message }
     }
 
-    revalidatePath('/absensi')
+    revalidatePath('/presensi')
 
     void logActivity({
       userId: profile.id,
@@ -172,7 +172,7 @@ export async function saveAttendanceForMeeting(
       entityId: meetingId,
       entityLabel: `Meeting ${meetingDateStr}`,
       metadata: { count: attendanceRecords.length },
-      pagePath: '/absensi',
+      pagePath: '/presensi',
     })
 
     return { success: true }

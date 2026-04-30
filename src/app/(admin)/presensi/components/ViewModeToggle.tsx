@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAbsensiUIStore } from '@/app/(admin)/absensi/stores/absensiUIStore'
+import { useAbsensiUIStore } from '@/app/(admin)/presensi/stores/absensiUIStore'
 
 export type ViewMode = 'list' | 'card'
 

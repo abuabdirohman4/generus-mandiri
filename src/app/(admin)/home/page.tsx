@@ -124,7 +124,7 @@ export default function HomePage() {
             {/* <div className="text-brand-600 dark:text-brand-400">{profile.full_name}!</div> */}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Kelola data & absensi generus dengan mudah melalui aplikasi ini.
+            Kelola data & presensi generus dengan mudah melalui aplikasi ini.
           </p>
         </div>
 

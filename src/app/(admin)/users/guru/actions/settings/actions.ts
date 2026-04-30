@@ -74,7 +74,7 @@ export async function updateMeetingFormSettings(
         if (error) throw error
 
         revalidatePath('/users/guru')
-        revalidatePath('/absensi')
+        revalidatePath('/presensi')
 
         const profile = await getCurrentUserProfile()
         if (profile) {

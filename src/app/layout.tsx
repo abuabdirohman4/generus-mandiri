@@ -22,7 +22,7 @@ const toastConfig = {
 
 export const metadata: Metadata = {
   title: "Generus Mandiri - Sistem Digital Generus LDII",
-  description: "Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa",
+  description: "Sistem Digital Generus LDII untuk manajemen pengajian, presensi dan data siswa",
   manifest: "/manifest.json",
   metadataBase: new URL('https://generus.abuabdirohman.com'),
   openGraph: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     url: 'https://generus.abuabdirohman.com',
     siteName: 'Generus Mandiri',
     title: 'Generus Mandiri - Sistem Digital Generus LDII',
-    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa',
+    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, presensi dan data siswa',
     images: [
       {
         url: '/images/logo/logo-icon.png',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     title: 'Generus Mandiri - Sistem Digital Generus LDII',
-    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, absensi dan data siswa',
+    description: 'Sistem Digital Generus LDII untuk manajemen pengajian, presensi dan data siswa',
     images: ['/images/logo/logo-icon.png'],
   },
   appleWebApp: {

@@ -185,10 +185,10 @@ describe('Guru Settings Actions (Layer 3)', () => {
         DEFAULT_SETTINGS
       )
       expect(revalidatePath).toHaveBeenCalledWith('/users/guru')
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
-    it('revalidates both /users/guru and /absensi paths on success', async () => {
+    it('revalidates both /users/guru and /presensi paths on success', async () => {
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateMeetingFormSettingsQuery).mockResolvedValue({ error: null } as any)
@@ -198,7 +198,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       expect(revalidatePath).toHaveBeenCalledTimes(2)
       const calls = vi.mocked(revalidatePath).mock.calls.map(([path]) => path)
       expect(calls).toContain('/users/guru')
-      expect(calls).toContain('/absensi')
+      expect(calls).toContain('/presensi')
     })
 
     it('returns error when updateMeetingFormSettingsQuery returns a database error', async () => {
@@ -270,7 +270,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
     })
 
-    it('revalidates /users/guru and /users/siswa (not /absensi) on success', async () => {
+    it('revalidates /users/guru and /users/siswa (not /presensi) on success', async () => {
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateTeacherPermissionsQuery).mockResolvedValue({ error: null } as any)
@@ -281,7 +281,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const calls = vi.mocked(revalidatePath).mock.calls.map(([path]) => path)
       expect(calls).toContain('/users/guru')
       expect(calls).toContain('/users/siswa')
-      expect(calls).not.toContain('/absensi')
+      expect(calls).not.toContain('/presensi')
     })
 
     it('returns error when updateTeacherPermissionsQuery returns a database error', async () => {

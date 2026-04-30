@@ -8,7 +8,7 @@ import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { useAbsensiUIStore } from '@/app/(admin)/absensi/stores/absensiUIStore'
+import { useAbsensiUIStore } from '@/app/(admin)/presensi/stores/absensiUIStore'
 import ViewModeToggle, { ViewMode } from './components/ViewModeToggle'
 import CreateMeetingModal from './components/CreateMeetingModal'
 import MeetingList from './components/MeetingList'
@@ -121,14 +121,14 @@ export default function AbsensiPage() {
 
   // Handle pagination change
   const handlePageChange = (page: number) => {
-    router.push(`/absensi?page=${page}`, { scroll: false })
+    router.push(`/presensi?page=${page}`, { scroll: false })
   }
 
   // Reset page when filters change
   useEffect(() => {
     // Only reset if not already on page 1
     if (currentPage !== 1) {
-      router.replace('/absensi?page=1')
+      router.replace('/presensi?page=1')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataFilters, validClassIds])
@@ -427,7 +427,7 @@ export default function AbsensiPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Absensi Pertemuan
+              Presensi Pertemuan
               {userProfile?.role === 'teacher' && userProfile.classes && userProfile.classes.length <= 1 && (
                 <> {userProfile.classes[0]?.name}</>
               )}

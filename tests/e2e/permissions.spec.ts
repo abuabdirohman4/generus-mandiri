@@ -25,7 +25,7 @@ test.describe('Role-Based Permissions', () => {
     test('should have access to all features', async ({ page }) => {
       // Superadmin should see all menu items
       await expect(page.locator('text=/dashboard/i').first()).toBeVisible({ timeout: 15000 });
-      await expect(page.locator('text=/absensi/i').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=/presensi/i').first()).toBeVisible({ timeout: 15000 });
       await expect(page.locator('text=/siswa/i').first()).toBeVisible({ timeout: 15000 });
       await expect(page.locator('text=/guru/i').first()).toBeVisible({ timeout: 15000 });
       await expect(page.locator('text=/kelas/i').first()).toBeVisible({ timeout: 15000 });
@@ -64,8 +64,8 @@ test.describe('Role-Based Permissions', () => {
     test('should be able to create meetings in daerah scope', async ({
       page,
     }) => {
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
 
       // Should see create meeting button (title="Buat Pertemuan Baru")
       const createButton = page
@@ -89,8 +89,8 @@ test.describe('Role-Based Permissions', () => {
 
     test('should only create Sambung Desa meetings', async ({ page }) => {
       // Admin Desa can only create SAMBUNG_DESA meetings
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
 
       // Add specific test for meeting type restrictions
     });
@@ -117,8 +117,8 @@ test.describe('Role-Based Permissions', () => {
     });
 
     test('should be able to create regular meetings', async ({ page }) => {
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
 
       const createButton = page
         .locator(
@@ -142,9 +142,9 @@ test.describe('Role-Based Permissions', () => {
       await expect(page.locator('text=/selamat datang/i')).toBeVisible({ timeout: 15000 });
     });
 
-    test('should be able to access absensi', async ({ page }) => {
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+    test('should be able to access presensi', async ({ page }) => {
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
     });
   });
 
@@ -161,9 +161,9 @@ test.describe('Role-Based Permissions', () => {
       await expect(page.locator('text=/selamat datang/i')).toBeVisible({ timeout: 15000 });
     });
 
-    test('should be able to access absensi', async ({ page }) => {
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+    test('should be able to access presensi', async ({ page }) => {
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
     });
   });
 
@@ -174,15 +174,15 @@ test.describe('Role-Based Permissions', () => {
     });
 
     test('should only see assigned classes', async ({ page }) => {
-      await page.goto('/absensi');
-      await expect(page).toHaveURL(/.*absensi/);
+      await page.goto('/presensi');
+      await expect(page).toHaveURL(/.*presensi/);
 
       // Teacher should see meetings for their classes only
       // Add specific assertions based on your data
     });
 
     test('should be able to take attendance', async ({ page }) => {
-      await page.goto('/absensi');
+      await page.goto('/presensi');
 
       // Wait for meetings to load
       await page.waitForLoadState('domcontentloaded');
@@ -256,7 +256,7 @@ test.describe('Data Scope by Role', () => {
 
   test('guru sees only their assigned classes', async ({ page }) => {
     await loginAsGuruKelompok(page);
-    await page.goto('/absensi');
+    await page.goto('/presensi');
     await page.waitForLoadState('domcontentloaded');
 
     // Should only see meetings for their classes

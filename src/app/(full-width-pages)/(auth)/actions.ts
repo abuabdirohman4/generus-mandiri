@@ -204,7 +204,7 @@ export async function signOut() {
     // Revalidate all paths to clear cached data
     revalidatePath("/", "layout");
     revalidatePath("/home");
-    revalidatePath("/absensi");
+    revalidatePath("/presensi");
     revalidatePath("/teachers");
     revalidatePath("/settings");
     revalidatePath("/dashboard");

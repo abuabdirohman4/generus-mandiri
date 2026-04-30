@@ -181,7 +181,7 @@ describe('Meeting Actions (Layer 3)', () => {
 
       expect(result.success).toBe(true)
       expect((result as any).data).toEqual({ id: 'meeting-1' })
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
     it('returns error when insertMeeting fails', async () => {
@@ -388,7 +388,7 @@ describe('Meeting Actions (Layer 3)', () => {
       const result = await updateMeeting('meeting-1', updateData as any)
 
       expect(result.success).toBe(true)
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
     it('returns error when updateMeetingRecord fails', async () => {
@@ -465,7 +465,7 @@ describe('Meeting Actions (Layer 3)', () => {
       const result = await deleteMeeting('meeting-1')
 
       expect(result.success).toBe(true)
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
     it('returns friendly error on foreign key constraint violation (code 23503)', async () => {
@@ -482,7 +482,7 @@ describe('Meeting Actions (Layer 3)', () => {
       const result = await deleteMeeting('meeting-1')
 
       expect(result.success).toBe(false)
-      expect(result.error).toContain('data absensi')
+      expect(result.error).toContain('data presensi')
     })
 
     it('returns generic error when softDeleteMeeting throws unexpected error', async () => {

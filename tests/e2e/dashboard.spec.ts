@@ -19,7 +19,7 @@ test.describe('Dashboard', () => {
   test('should display dashboard with quick actions', async ({ page }) => {
     // Check for quick action cards
     const quickActions = [
-      'Absensi',
+      'Presensi',
       'Siswa',
       'Kelas',
       'Laporan',
@@ -30,12 +30,12 @@ test.describe('Dashboard', () => {
     }
   });
 
-  test('should navigate to Absensi from quick action', async ({ page }) => {
+  test('should navigate to Presensi from quick action', async ({ page }) => {
     // Quick action cards use client-side router.push, click heading inside card
-    await page.locator('h3:has-text("Absensi")').click();
+    await page.locator('h3:has-text("Presensi")').click();
 
     // Client-side navigation - URL changes without full reload
-    await expect(page).toHaveURL(/.*absensi/, { timeout: 15000 });
+    await expect(page).toHaveURL(/.*presensi/, { timeout: 15000 });
   });
 
   test('should navigate to Siswa from quick action', async ({ page }) => {
@@ -54,7 +54,7 @@ test.describe('Dashboard', () => {
   test('should have working sidebar navigation', async ({ page }) => {
     // Test sidebar navigation items by clicking links with specific URLs
     const navItems = [
-      { href: '/absensi', url: /absensi/ },
+      { href: '/presensi', url: /presensi/ },
       { href: '/users/siswa', url: /users\/siswa/ },
       { href: '/home', url: /home/ },
     ];

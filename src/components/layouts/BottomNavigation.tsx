@@ -21,8 +21,8 @@ const navItems: NavItem[] = [
     activeIcon: <GridIcon />,
   },
   {
-    href: "/absensi",
-    label: "Absensi",
+    href: "/presensi",
+    label: "Presensi",
     icon: <CheckCircleIcon />,
     activeIcon: <CheckCircleIcon />,
   },

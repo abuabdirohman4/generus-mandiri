@@ -1,5 +1,5 @@
 // Re-export all server actions for backward compatibility
-// Components continue to use: import { createMeeting } from '@/app/(admin)/absensi/actions'
+// Components continue to use: import { createMeeting } from '@/app/(admin)/presensi/actions'
 
 export {
   createMeeting,

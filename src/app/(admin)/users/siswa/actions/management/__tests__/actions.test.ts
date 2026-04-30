@@ -149,7 +149,7 @@ describe('archiveStudent', () => {
 
         expect(result.success).toBe(true)
         expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
-        expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+        expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 })
 
@@ -204,7 +204,7 @@ describe('unarchiveStudent', () => {
         const result = await unarchiveStudent('s1')
         expect(result.success).toBe(true)
         expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
-        expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+        expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 })
 

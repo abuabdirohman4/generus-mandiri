@@ -74,10 +74,10 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: false
     },
     {
-      id: 'absensi',
-      name: 'Absensi',
+      id: 'presensi',
+      name: 'Presensi',
       description: 'Kelola kehadiran siswa',
-      href: '/absensi',
+      href: '/presensi',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -90,7 +90,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     {
       id: 'laporan',
       name: 'Laporan',
-      description: 'Laporan absensi',
+      description: 'Laporan presensi',
       href: '/laporan',
       icon: <ReportIcon className="w-6 h-6" />,
       bgColor: 'bg-red-100 dark:bg-red-900',

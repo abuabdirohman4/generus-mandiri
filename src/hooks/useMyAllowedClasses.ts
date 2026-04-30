@@ -1,7 +1,7 @@
 'use client'
 
 import useSWR from 'swr'
-import { getMyAllowedClassesForMeeting } from '@/app/(admin)/absensi/actions/meetings/actions'
+import { getMyAllowedClassesForMeeting } from '@/app/(admin)/presensi/actions/meetings/actions'
 
 const fetcher = () => getMyAllowedClassesForMeeting()
 

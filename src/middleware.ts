@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
     const protectedRoutes = [
       '/home', 
       '/dashboard',
-      '/absensi',
+      '/presensi',
       '/laporan',
       '/users/siswa',
       '/users/guru',
