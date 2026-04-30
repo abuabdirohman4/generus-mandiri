@@ -12,6 +12,7 @@ import { getActivityLogs, getLogMetadata, getUserActivitySummary, type GetLogsPa
 import AuditTable from './components/AuditTable'
 import AuditFilters from './components/AuditFilters'
 import OnlinePresence from './components/OnlinePresence'
+import AppMap from './components/AppMap'
 import UserSummaryTable from './components/UserSummaryTable'
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton'
 import { toast } from 'sonner'
@@ -119,6 +120,9 @@ export default function TrackingPage() {
 
       {/* Real-time Presence */}
       <OnlinePresence />
+
+      {/* Denah Aplikasi */}
+      <AppMap />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 p-1 w-fit rounded-xl bg-gray-200/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
