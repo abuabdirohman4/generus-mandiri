@@ -25,7 +25,7 @@ export default function PWAComponents() {
   // Check if we're on auth pages (not landing page)
   const isAuthPage = pathname === '/signin' || pathname === '/signup';
   const isProtectedPage = pathname.startsWith('/home') || 
-                         pathname.startsWith('/absensi') || 
+                         pathname.startsWith('/presensi') || 
                          pathname.startsWith('/teachers') || 
                          pathname.startsWith('/settings') || 
                          pathname.startsWith('/dashboard');

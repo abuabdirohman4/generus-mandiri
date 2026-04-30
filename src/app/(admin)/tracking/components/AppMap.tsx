@@ -26,7 +26,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const PAGE_MAP = [
   { path: '/home',          label: 'Home',         Icon: HomeOutlined },
-  { path: '/absensi',       label: 'Absensi',      Icon: CheckSquareOutlined },
+  { path: '/presensi',       label: 'Presensi',      Icon: CheckSquareOutlined },
   { path: '/laporan',       label: 'Laporan',      Icon: BarChartOutlined },
   { path: '/users/siswa',   label: 'Siswa',        Icon: TeamOutlined },
   { path: '/users/guru',    label: 'Guru',         Icon: UserOutlined },

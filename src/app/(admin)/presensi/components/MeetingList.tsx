@@ -4,8 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
-import { updateMeeting, deleteMeeting } from '../actions'
+import { deleteMeeting } from '../actions'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
@@ -13,10 +12,9 @@ import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
-import MeetingCardSkeleton from '@/components/ui/skeleton/MeetingCardSkeleton'
+import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
-import MeetingTypeBadge from './MeetingTypeBadge'
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/accessControl'
 import { useClasses } from '@/hooks/useClasses'
 import { invalidateAllMeetingsCache } from '../utils/cache'
 import { useKelompok } from '@/hooks/useKelompok'
@@ -33,8 +31,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
   if (!meeting.classes) return ''
   
   const isSuperAdminUser = isSuperAdmin(userProfile)
-  const isAdminDaerahUser = isAdminDaerah(userProfile)
-  const isAdminDesaUser = isAdminDesa(userProfile)
+  const isDaerahUser = isAdminDaerah(userProfile) || isTeacherDaerah(userProfile)
+  const isDesaUser = isAdminDesa(userProfile) || isTeacherDesa(userProfile)
   const isAdminKelompokUser = isAdminKelompok(userProfile)
   const isTeacherUser = userProfile?.role === 'teacher'
   
@@ -81,8 +79,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Daerah: Show Desa, Kelompok
-    else if (isAdminDaerahUser) {
+    // Daerah: Show Desa, Kelompok
+    else if (isDaerahUser) {
       if (desaNames.length > 0) {
         parts.push(desaNames.join(' & '))
       }
@@ -90,8 +88,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Desa: Show Kelompok only
-    else if (isAdminDesaUser) {
+    // Desa: Show Kelompok only
+    else if (isDesaUser) {
       if (kelompokNames.length > 0) {
         parts.push(kelompokNames.join(' & '))
       }
@@ -117,8 +115,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       parts.push(meeting.classes.kelompok.name)
     }
   }
-  // Admin Daerah: Show Desa, Kelompok, Class
-  else if (isAdminDaerahUser) {
+  // Daerah: Show Desa, Kelompok, Class
+  else if (isDaerahUser) {
     if (meeting.classes.kelompok?.desa?.name) {
       parts.push(meeting.classes.kelompok.desa.name)
     }
@@ -126,8 +124,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       parts.push(meeting.classes.kelompok.name)
     }
   }
-  // Admin Desa: Show Kelompok, Class
-  else if (isAdminDesaUser) {
+  // Desa: Show Kelompok, Class
+  else if (isDesaUser) {
     if (meeting.classes.kelompok?.name) {
       parts.push(meeting.classes.kelompok.name)
     }
@@ -138,6 +136,46 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
   }
   
   return parts.join(', ')
+}
+
+// Helper function to count unique kelompok in a meeting
+const countUniqueKelompok = (meeting: any, classesData: any[], kelompokData: any[]): number => {
+  if (!meeting.class_ids || !Array.isArray(meeting.class_ids) || meeting.class_ids.length === 0) {
+    return 0
+  }
+  
+  const kelompokIds = new Set<string>()
+  
+  // First, try to use meeting.allClasses if available (from backend, bypasses RLS)
+  if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+    meeting.allClasses.forEach((classData: any) => {
+      if (classData.kelompok_id) {
+        kelompokIds.add(classData.kelompok_id)
+      }
+    })
+  } else {
+    // Fallback: try to get kelompok_id from classesData or meeting.classes
+    meeting.class_ids.forEach((classId: string) => {
+      // Try to get kelompok_id from classesData first
+      const classData = classesData.find(c => c.id === classId)
+      if (classData && classData.kelompok_id) {
+        kelompokIds.add(classData.kelompok_id)
+      } else {
+        // Fallback: try to get from meeting.classes if it's an array with multiple classes
+        // This handles cases where classesData might be filtered by RLS
+        if (Array.isArray(meeting.classes)) {
+          const meetingClass = meeting.classes.find((c: any) => c.id === classId)
+          if (meetingClass?.kelompok_id) {
+            kelompokIds.add(meetingClass.kelompok_id)
+          }
+        } else if (meeting.classes?.id === classId && meeting.classes?.kelompok_id) {
+          kelompokIds.add(meeting.classes.kelompok_id)
+        }
+      }
+    })
+  }
+  
+  return kelompokIds.size
 }
 
 const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], kelompokData: any[]) => {
@@ -244,10 +282,10 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
       acc[classDetail.name].push(classDetail)
       return acc
     }, {})
-    
+
     // Check if there are classes with same name but different kelompok
     const hasDuplicateNames = Object.values(groupedByClassName).some((classes: any) => classes.length > 1)
-    
+
     if (hasDuplicateNames) {
       // Format: "Kelas 1: Warlob 1, Warlob 2"
       return Object.entries(groupedByClassName)
@@ -321,46 +359,6 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
   }
 }
 
-// Helper function to count unique kelompok in a meeting
-const countUniqueKelompok = (meeting: any, classesData: any[], kelompokData: any[]): number => {
-  if (!meeting.class_ids || !Array.isArray(meeting.class_ids) || meeting.class_ids.length === 0) {
-    return 0
-  }
-  
-  const kelompokIds = new Set<string>()
-  
-  // First, try to use meeting.allClasses if available (from backend, bypasses RLS)
-  if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
-    meeting.allClasses.forEach((classData: any) => {
-      if (classData.kelompok_id) {
-        kelompokIds.add(classData.kelompok_id)
-      }
-    })
-  } else {
-    // Fallback: try to get kelompok_id from classesData or meeting.classes
-    meeting.class_ids.forEach((classId: string) => {
-      // Try to get kelompok_id from classesData first
-      const classData = classesData.find(c => c.id === classId)
-      if (classData && classData.kelompok_id) {
-        kelompokIds.add(classData.kelompok_id)
-      } else {
-        // Fallback: try to get from meeting.classes if it's an array with multiple classes
-        // This handles cases where classesData might be filtered by RLS
-        if (Array.isArray(meeting.classes)) {
-          const meetingClass = meeting.classes.find((c: any) => c.id === classId)
-          if (meetingClass?.kelompok_id) {
-            kelompokIds.add(meetingClass.kelompok_id)
-          }
-        } else if (meeting.classes?.id === classId && meeting.classes?.kelompok_id) {
-          kelompokIds.add(meeting.classes.kelompok_id)
-        }
-      }
-    })
-  }
-  
-  return kelompokIds.size
-}
-
 // Helper function to check if user can edit/delete meeting
 const canEditOrDeleteMeeting = (meeting: any, userProfile: any): boolean => {
   if (!userProfile) return false
@@ -408,8 +406,6 @@ interface Meeting {
   student_snapshot: string[]
   created_at: string
   meeting_type_code?: string | null
-  activity_type_id?: string | null
-  activity_level_id?: string | null
   activity_type?: { id: string; code: string; name: string } | null
   activity_level?: { id: string; code: string; name: string } | null
   classes: {
@@ -446,7 +442,7 @@ interface Meeting {
   excusedCount: number
 }
 
-interface MeetingCardsProps {
+interface MeetingListProps {
   meetings: Meeting[]
   onEdit?: (meeting: Meeting) => void
   onDelete?: (meetingId: string) => void
@@ -454,13 +450,13 @@ interface MeetingCardsProps {
   isLoading?: boolean
 }
 
-export default function MeetingCards({ 
+export default function MeetingList({ 
   meetings, 
   onEdit, 
   onDelete, 
   className = '',
   isLoading = false
-}: MeetingCardsProps) {
+}: MeetingListProps) {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null)
@@ -480,6 +476,20 @@ export default function MeetingCards({
   const { kelompok: kelompokData } = useKelompok()
   const { desa: desaData } = useDesa()
   const { daerah: daerahData } = useDaerah()
+
+  // FILTER: Hide Pengajar meetings from non-Pengajar teachers
+  // To disable this filter, comment out the filterMeetingsForUser call below
+  const filteredMeetings = filterMeetingsForUser(meetings, userProfile)
+
+  // Group filtered meetings by date
+  const groupedMeetings = filteredMeetings.reduce((acc, meeting) => {
+    const date = dayjs(meeting.date).format('YYYY-MM-DD')
+    if (!acc[date]) {
+      acc[date] = []
+    }
+    acc[date].push(meeting)
+    return acc
+  }, {} as Record<string, Meeting[]>)
 
   const handleEdit = async (meeting: Meeting) => {
     if (onEdit) {
@@ -541,7 +551,7 @@ export default function MeetingCards({
 
   // Show skeleton while loading
   if (isLoading) {
-    return <MeetingCardSkeleton />
+    return <MeetingSkeleton />
   }
 
   // Show empty state only when not loading and no meetings
@@ -565,228 +575,182 @@ export default function MeetingCards({
 
   return (
     <>
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-        {/* FILTER: Hide Pengajar meetings from non-Pengajar teachers */}
-        {/* To disable this filter, comment out the filterMeetingsForUser call below */}
-        {filterMeetingsForUser(meetings, userProfile)
-          .sort((a, b) => {
-            // Sort by created_at descending (newest first)
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          })
-          .map((meeting) => {
-        // Prepare data for pie chart
-        const chartData = [
-          { name: 'Hadir', value: meeting.presentCount, color: ATTENDANCE_COLORS.hadir },
-          { name: 'Izin', value: meeting.excusedCount, color: ATTENDANCE_COLORS.izin },
-          { name: 'Sakit', value: meeting.sickCount, color: ATTENDANCE_COLORS.sakit },
-          { name: 'Absen', value: meeting.absentCount, color: ATTENDANCE_COLORS.absen }
-        ].filter(item => item.value > 0) // Only show categories with data
-
-        return (
-          <Link
-            key={meeting.id}
-            href={`/absensi/${meeting.id}`}
-            className="block"
-            onClick={() => handleMeetingClick(meeting.id)}
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow cursor-pointer relative">
-              <div className="p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {meeting.activity_type?.name
-                          ? `${meeting.activity_type.name}${meeting.title ? `: ${meeting.title}` : ''}`
-                          : meeting.title || '-'
-                        }
-                      </h4>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                      {dayjs(meeting.date).format('DD MMM YYYY')}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                      {formatMeetingLocation(meeting, userProfile, classesData || [], kelompokData || [], desaData || [], daerahData || [])}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {meeting.activity_level && (
-                        <span className={`inline-flex items-center px-2 py-0.5 mr-2 rounded-full text-xs font-medium ${
-                          meeting.activity_level.code === 'DAERAH'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                            : meeting.activity_level.code === 'DESA'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                        }`}>
-                          {meeting.activity_level.name}
-                        </span>
-                      )}
-                      {(() => {
-                        const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
-                        return uniqueKelompokCount > 1 ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
-                            {uniqueKelompokCount} Kelompok
-                          </span>
-                        ) : meeting.class_ids && meeting.class_ids.length > 1 && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
-                            {meeting.class_ids.length} Kelas
-                          </span>
-                        )
-                      })()}
-                      {listGroupedClasses(meeting, userProfile, classesData || [], kelompokData || [])}
-                    </p>
-                  </div>
-
-                  {/* Dropdown Menu */}
-                  {canEditOrDeleteMeeting(meeting, userProfile) && (
-                    <div className="ml-2">
-                      <DropdownMenu
-                        items={[
-                          {
-                            label: 'Edit Info',
-                            onClick: () => {
-                              setEditingMeeting(meeting)
-                              setShowEditModal(true)
-                            },
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            )
-                          },
-                          {
-                            label: 'Hapus',
-                            variant: 'danger',
-                            onClick: () => handleDeleteClick(meeting.id, meeting.title),
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            )
-                          }
-                        ]}
-                      />
-                    </div>
-                  )}
-                </div>
-
-              {/* Topic */}
-              {meeting.topic && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                  {meeting.topic}
-                </p>
-              )}
-
-              {/* Chart and Stats */}
-              <div className="flex items-center gap-4">
-                {/* Pie Chart */}
-                <div className="w-20 h-20">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={20}
-                          outerRadius={35}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">-</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {meeting.attendancePercentage}%
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBgColor(meeting.attendancePercentage)} ${getStatusColor(meeting.attendancePercentage)}`}>
-                      Kehadiran
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
-                      <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
-                      <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
-                      <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
-                      <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
-                    </div>
-                  </div>
-                </div>
+      <div className={`space-y-6 ${className}`}>
+        {(Object.entries(groupedMeetings) as [string, Meeting[]][])
+          .sort(([a], [b]) => b.localeCompare(a)) // Sort dates descending
+          .map(([date, dateMeetings]) => (
+            <div key={date}>
+              {/* Date Header */}
+              <div className="bg-gray-50 dark:bg-gray-800 py-2 mb-3">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  {dayjs(date).format('dddd, DD MMMM YYYY')}
+                </h3>
               </div>
 
-              {/* Total Students */}
-              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Total: {meeting.totalStudents} siswa
-                </p>
+              {/* Meetings for this date */}
+              <div className="space-y-2">
+                {dateMeetings
+                  .sort((a, b) => {
+                    // Sort by created_at descending (newest first)
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                  })
+                  .map((meeting) => (
+                  <Link
+                    key={meeting.id}
+                    href={`/presensi/${meeting.id}`}
+                    className="block"
+                    onClick={() => handleMeetingClick(meeting.id)}
+                  >
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer relative">
+                      <div className="p-4">
+                        {/* Row 1: Title (left) + Percentage & Menu (right) */}
+                        <div className="flex items-start justify-between">
+                          <h4 className="text-lg mt-1 font-semibold text-gray-900 dark:text-white">
+                            {meeting.activity_type?.name
+                              ? `${meeting.activity_type.name}${meeting.title ? `: ${meeting.title}` : ''}`
+                              : meeting.title || '-'
+                            }
+                          </h4>
+                          <div className="flex items-center gap-2 ml-4 shrink-0">
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBgColor(meeting.attendancePercentage)} ${getStatusColor(meeting.attendancePercentage)}`}>
+                              {meeting.attendancePercentage}%
+                            </div>
+                            {canEditOrDeleteMeeting(meeting, userProfile) ? (
+                              <DropdownMenu
+                                items={[
+                                  {
+                                    label: 'Edit Info',
+                                    onClick: () => {
+                                      setEditingMeeting(meeting)
+                                      setShowEditModal(true)
+                                    },
+                                    icon: (
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                    )
+                                  },
+                                  {
+                                    label: 'Hapus',
+                                    variant: 'danger',
+                                    onClick: () => handleDeleteClick(meeting.id, meeting.title),
+                                    icon: (
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    )
+                                  }
+                                ]}
+                              />
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Row 2: Location */}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {formatMeetingLocation(meeting, userProfile, classesData || [], kelompokData || [], desaData || [], daerahData || [])}
+                        </div>
+                        
+                        {/* Row 3: Class names / location */}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {meeting.activity_level && (
+                            <span className={`inline-flex items-center px-2 py-0.5 mr-2 rounded-full text-xs font-medium ${
+                              meeting.activity_level.code === 'DAERAH'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                : meeting.activity_level.code === 'DESA'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            }`}>
+                              {meeting.activity_level.name}
+                            </span>
+                          )}
+                          {(() => {
+                            const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
+                            return uniqueKelompokCount > 1 ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                                {uniqueKelompokCount} Kelompok
+                              </span>
+                            ) : meeting.class_ids && meeting.class_ids.length > 1 && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                                {meeting.class_ids.length} Kelas
+                              </span>
+                            )
+                          })()}
+                          {listGroupedClasses(meeting, userProfile, classesData || [], kelompokData || [])}
+                        </div>
+
+                        {/* Optional topic */}
+                        {/* {meeting.topic && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            {meeting.topic}
+                          </p>
+                        )} */}
+
+                        {/* Row 4: Attendance stats */}
+                        <div className="flex flex-wrap gap-2 md:gap-3 text-xs mt-2">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.hadir }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.presentCount} Hadir</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.absen }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.absentCount} Alfa</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.izin }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.excusedCount} Izin</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ATTENDANCE_COLORS.sakit }}></div>
+                            <span className="text-gray-600 dark:text-gray-400">{meeting.sickCount} Sakit</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Loading Overlay */}
+                      {loadingMeetingId === meeting.id && (
+                        <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
+                          <div className="flex flex-col items-center gap-2">
+                            <Spinner size={24} />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Memuat...</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
+          ))}
+      </div>
 
-            {/* Loading Overlay */}
-            {loadingMeetingId === meeting.id && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
-                <div className="flex flex-col items-center gap-2">
-                  <Spinner size={24} />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Memuat...</span>
-                </div>
-              </div>
-            )}
-          </div>
-          </Link>
-        )
-      })}
-    </div>
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Hapus Pertemuan"
+        message={`Apakah Anda yakin ingin menghapus pertemuan ini?`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+        isLoading={deletingMeetingId === deleteModal.meetingId}
+      />
 
-    {/* Delete Confirmation Modal */}
-    <ConfirmModal
-      isOpen={deleteModal.isOpen}
-      onClose={handleDeleteCancel}
-      onConfirm={handleDeleteConfirm}
-      title="Hapus Pertemuan"
-      message={`Apakah Anda yakin ingin menghapus <br> "${deleteModal.meetingTitle}"?`}
-      confirmText="Hapus"
-      cancelText="Batal"
-      isDestructive={true}
-      isLoading={deletingMeetingId === deleteModal.meetingId}
-    />
-
-    {/* Edit Modal */}
-    <CreateMeetingModal
-      isOpen={showEditModal}
-      onClose={() => {
-        setShowEditModal(false)
-        setEditingMeeting(null)
-      }}
-      onSuccess={() => {
-        onDelete?.('') // Trigger refresh
-        setShowEditModal(false)
-        setEditingMeeting(null)
-      }}
-      meeting={editingMeeting}
-    />
-  </>
+      {/* Edit Modal */}
+      <CreateMeetingModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setEditingMeeting(null)
+        }}
+        onSuccess={() => {
+          onDelete?.('') // Trigger refresh
+          setShowEditModal(false)
+          setEditingMeeting(null)
+        }}
+        meeting={editingMeeting}
+      />
+    </>
   )
 }

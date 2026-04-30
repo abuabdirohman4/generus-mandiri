@@ -161,8 +161,8 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
       return true;
     }
 
-    // All teachers can access users (students) and absensi features
-    return ['users', 'absensi'].includes(feature);
+    // All teachers can access users (students) and presensi features
+    return ['users', 'presensi'].includes(feature);
   }
   return false;
 }

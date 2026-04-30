@@ -331,7 +331,7 @@ test.describe('Admin Kelompok Permissions', () => {
   });
 
   test('can create regular meetings', async ({ page }) => {
-    await page.goto('/absensi');
+    await page.goto('/presensi');
 
     // Should see create button
     const createBtn = page.locator('button[aria-label*="buat"]');

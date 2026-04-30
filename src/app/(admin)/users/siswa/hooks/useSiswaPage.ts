@@ -197,7 +197,7 @@ export function useSiswaPage() {
     }
     
     // Apply kelas filter - for teacher with multiple classes, allow filtering by specific class
-    // This works the same way as absensi page: filter applies to BOTH teacher and admin
+    // This works the same way as presensi page: filter applies to BOTH teacher and admin
     if (dataFilters.kelas.length > 0) {
       // Support comma-separated class IDs from DataFilter
       const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))

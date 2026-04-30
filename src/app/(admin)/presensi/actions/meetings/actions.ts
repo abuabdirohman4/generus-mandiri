@@ -170,7 +170,7 @@ export async function createMeeting(data: CreateMeetingData) {
 
     if (insertError) throw insertError
 
-    revalidatePath('/absensi')
+    revalidatePath('/presensi')
 
     if (meeting?.id) {
       void logActivity({
@@ -179,7 +179,7 @@ export async function createMeeting(data: CreateMeetingData) {
         entityType: 'meeting',
         entityId: meeting.id,
         entityLabel: data.title,
-        pagePath: '/absensi',
+        pagePath: '/presensi',
       })
     }
 
@@ -457,7 +457,7 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
 
     if (updateError) throw updateError
 
-    revalidatePath('/absensi')
+    revalidatePath('/presensi')
 
     void logActivity({
       userId: user.id,
@@ -465,7 +465,7 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
       entityType: 'meeting',
       entityId: meetingId,
       entityLabel: data.title,
-      pagePath: '/absensi',
+      pagePath: '/presensi',
     })
 
     return { success: true }
@@ -500,14 +500,14 @@ export async function deleteMeeting(meetingId: string) {
 
     if (deleteError) throw deleteError
 
-    revalidatePath('/absensi')
+    revalidatePath('/presensi')
 
     void logActivity({
       userId: user.id,
       action: 'delete_meeting',
       entityType: 'meeting',
       entityId: meetingId,
-      pagePath: '/absensi',
+      pagePath: '/presensi',
     })
 
     return { success: true }
@@ -518,7 +518,7 @@ export async function deleteMeeting(meetingId: string) {
     if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
       return {
         success: false,
-        error: 'Tidak dapat menghapus pertemuan karena masih terdapat data absensi yang terkait. Silakan hapus data absensi terlebih dahulu.'
+        error: 'Tidak dapat menghapus pertemuan karena masih terdapat data presensi yang terkait. Silakan hapus data presensi terlebih dahulu.'
       }
     }
 

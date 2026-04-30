@@ -39,7 +39,7 @@ export default function TodayMeetings({ meetings }: TodayMeetingsProps) {
                 {meetings.map((meeting) => (
                     <Link
                         key={meeting.id}
-                        href={`/admin/absensi/${meeting.id}`}
+                        href={`/presensi/${meeting.id}`}
                         className="block border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                         <div className="flex items-start justify-between mb-2">

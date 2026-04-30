@@ -2,29 +2,29 @@ import { test, expect } from '@playwright/test';
 import { loginAsSuperadmin } from './helpers/auth';
 
 /**
- * Attendance Management Tests
+ * Presence Management Tests
  * Test meeting creation and attendance recording
  */
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Attendance Management', () => {
+test.describe('Presence Management', () => {
   test.beforeEach(async ({ page }) => {
     // Login as superadmin
     await loginAsSuperadmin(page);
 
-    // Navigate to absensi page
-    await page.goto('/absensi');
+    // Navigate to presensi page
+    await page.goto('/presensi');
   });
 
-  test('should display absensi page', async ({ page }) => {
+  test('should display presensi page', async ({ page }) => {
     // Should show meeting list or empty state
-    await expect(page.locator('text=/meeting|pertemuan|absensi/i').first()).toBeVisible();
+    await expect(page.locator('text=/meeting|pertemuan|presensi/i').first()).toBeVisible();
   });
 
   test('should show create meeting button', async ({ page }) => {
-    // Verify we're actually on absensi page (not redirected to signin)
-    await expect(page).toHaveURL(/.*absensi/, { timeout: 5000 });
+    // Verify we're actually on presensi page (not redirected to signin)
+    await expect(page).toHaveURL(/.*presensi/, { timeout: 5000 });
 
     // Should have create meeting button - wait generously for Supabase data to load
     const createButton = page.getByRole('button', { name: 'Buat Pertemuan Baru' });
@@ -32,8 +32,8 @@ test.describe('Attendance Management', () => {
   });
 
   test('should open create meeting modal', async ({ page }) => {
-    // Verify we're on absensi page
-    await expect(page).toHaveURL(/.*absensi/);
+    // Verify we're on presensi page
+    await expect(page).toHaveURL(/.*presensi/);
 
     // Wait for button to appear (Supabase data load) then click
     const createButton = page.getByRole('button', { name: 'Buat Pertemuan Baru' });
@@ -52,14 +52,14 @@ test.describe('Attendance Management', () => {
   });
 
   test('should navigate to meeting detail when clicked', async ({ page }) => {
-    // Wait for meeting cards to load (rendered as <Link href="/absensi/{id}">)
-    const meetingItem = page.locator('a[href^="/absensi/"]').first();
+    // Wait for meeting cards to load (rendered as <Link href="/presensi/{id}">)
+    const meetingItem = page.locator('a[href^="/presensi/"]').first();
     await expect(meetingItem).toBeVisible({ timeout: 20000 });
 
     await meetingItem.click();
 
     // Should navigate to meeting detail page
-    await expect(page).toHaveURL(/.*absensi\/[a-z0-9-]+/, { timeout: 15000 });
+    await expect(page).toHaveURL(/.*presensi\/[a-z0-9-]+/, { timeout: 15000 });
 
     // Should show student list or attendance form
     await expect(page.locator('text=/siswa|student|hadir|present/i').first()).toBeVisible({ timeout: 15000 });

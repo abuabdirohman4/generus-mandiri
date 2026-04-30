@@ -69,16 +69,16 @@ export async function logout(page: Page) {
 Problem: Quick actions not navigating correctly
 
 ```typescript
-test('should navigate to Absensi from quick action', async ({ page }) => {
-  // Find the Absensi quick action card
-  const absensiCard = page.locator('text="Absensi"').first();
-  await absensiCard.click();
+test('should navigate to Presensi from quick action', async ({ page }) => {
+  // Find the Presensi quick action card
+  const presensiCard = page.locator('text="Presensi"').first();
+  await presensiCard.click();
 
   // Wait for navigation with longer timeout
-  await page.waitForURL(/.*absensi/, { timeout: 10000 });
+  await page.waitForURL(/.*presensi/, { timeout: 10000 });
 
   // Verify we're on the right page
-  await expect(page).toHaveURL(/.*absensi/);
+  await expect(page).toHaveURL(/.*presensi/);
 });
 ```
 
@@ -121,15 +121,15 @@ test.describe('Student Management', () => {
 
 **File**: `tests/e2e/attendance.spec.ts`
 
-Problem: Timeout when navigating to /absensi
+Problem: Timeout when navigating to /presensi
 
 ```typescript
 test.describe('Attendance Management', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsSuperadmin(page);
 
-    // Navigate to absensi page with longer timeout
-    await page.goto('/absensi', {
+    // Navigate to presensi page with longer timeout
+    await page.goto('/presensi', {
       timeout: 60000,
       waitUntil: 'networkidle' // Wait for network to be idle
     });

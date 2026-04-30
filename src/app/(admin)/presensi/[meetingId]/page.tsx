@@ -15,7 +15,7 @@ import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId, shouldShowKelompokFilter } from '@/lib/userUtils'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { canUserEditMeetingAttendance } from '@/app/(admin)/absensi/actions/meetings/helpers.client'
+import { canUserEditMeetingAttendance } from '@/app/(admin)/presensi/actions/meetings/helpers.client'
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
@@ -112,10 +112,10 @@ export default function MeetingAttendancePage() {
       const result = await saveAttendanceForMeeting(meetingId, attendanceData)
 
       if (result.success) {
-        toast.success('Data absensi berhasil disimpan!')
+        toast.success('Data presensi berhasil disimpan!')
         mutate() // Refresh current page data
 
-        // Revalidate meetings cache for main absensi page
+        // Revalidate meetings cache for main presensi page
         const userId = await getCurrentUserId()
         if (userId) {
           // Get classId from meeting data to invalidate the correct cache
@@ -123,7 +123,7 @@ export default function MeetingAttendancePage() {
           await invalidateMeetingsCache(userId, classId)
         }
       } else {
-        toast.error('Gagal menyimpan data absensi: ' + result.error)
+        toast.error('Gagal menyimpan data presensi: ' + result.error)
       }
     } catch (error) {
       console.error('Error saving attendance:', error)
@@ -528,7 +528,7 @@ export default function MeetingAttendancePage() {
     userProfile ? shouldShowKelompokFilter(userProfile) : false
 
   const goBack = () => {
-    router.push('/absensi')
+    router.push('/presensi')
   }
 
   if (loading) {

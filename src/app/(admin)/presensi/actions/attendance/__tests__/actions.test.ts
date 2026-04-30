@@ -162,7 +162,7 @@ describe('Attendance Actions (Layer 3)', () => {
           })
         ])
       )
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
     it('should return error when upsert fails', async () => {
@@ -275,7 +275,7 @@ describe('Attendance Actions (Layer 3)', () => {
           })
         ])
       )
-      expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 
     it('should return error when upsert fails', async () => {

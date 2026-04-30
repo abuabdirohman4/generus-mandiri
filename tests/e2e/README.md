@@ -77,7 +77,7 @@ tests/e2e/
    - User profile display
 
 3. **Attendance Management** (`attendance.spec.ts`)
-   - Absensi page display
+   - Presensi page display
    - Create meeting button
    - Meeting filters
    - Meeting detail navigation

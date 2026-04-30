@@ -392,7 +392,7 @@ export async function createStudent(formData: FormData) {
         }
 
         revalidatePath('/users/siswa')
-        revalidatePath('/absensi')
+        revalidatePath('/presensi')
 
         if (newStudent?.id) {
             void logActivity({
@@ -659,7 +659,7 @@ export async function deleteStudent(
         }
 
         revalidatePath('/users/siswa')
-        revalidatePath('/absensi')
+        revalidatePath('/presensi')
 
         void logActivity({
             userId: user.id,

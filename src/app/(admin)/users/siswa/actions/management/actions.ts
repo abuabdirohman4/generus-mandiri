@@ -116,7 +116,7 @@ export async function archiveStudent(
         }
 
         revalidatePath('/users/siswa')
-        revalidatePath('/absensi')
+        revalidatePath('/presensi')
 
         void logActivity({
             userId: user.id,
@@ -181,7 +181,7 @@ export async function unarchiveStudent(
         }
 
         revalidatePath('/users/siswa')
-        revalidatePath('/absensi')
+        revalidatePath('/presensi')
 
         void logActivity({
             userId: user.id,

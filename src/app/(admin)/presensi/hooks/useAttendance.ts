@@ -84,11 +84,11 @@ export function useAttendance() {
       const result = await saveAttendance(attendanceData)
       
       if (result.success) {
-        toast.success('Data absensi berhasil disimpan!')
+        toast.success('Data presensi berhasil disimpan!')
         // Invalidate SWR cache to refetch fresh data
         mutateAttendance()
       } else {
-        toast.error('Gagal menyimpan data absensi: ' + result.error)
+        toast.error('Gagal menyimpan data presensi: ' + result.error)
       }
     } catch (error) {
       console.error('Error saving attendance:', error)

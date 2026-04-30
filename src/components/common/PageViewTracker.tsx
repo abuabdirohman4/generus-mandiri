@@ -8,7 +8,7 @@ import { trackPageView } from '@/app/(admin)/tracking/trackPageView'
 const TRACKED_PATHS = [
   '/home',
   '/dashboard',
-  '/absensi',
+  '/presensi',
   '/laporan',
   '/users/siswa',
   '/users/guru',

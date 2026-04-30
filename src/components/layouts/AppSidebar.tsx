@@ -50,8 +50,8 @@ const allNavItems: NavItem[] = [
   },
   {
     icon: <CheckCircleIcon className="w-6 h-6" />,
-    name: "Absensi",
-    path: "/absensi",
+    name: "Presensi",
+    path: "/presensi",
   },
   {
     icon: <ReportIcon className="w-6 h-6" />,

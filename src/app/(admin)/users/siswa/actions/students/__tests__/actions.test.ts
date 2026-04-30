@@ -318,7 +318,7 @@ describe('createStudent', () => {
         expect(result.success).toBe(true)
         expect(result.student).toEqual(newStudent)
         expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
-        expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+        expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 })
 
@@ -393,6 +393,6 @@ describe('deleteStudent', () => {
         const result = await deleteStudent('s1', false)
         expect(result.success).toBe(true)
         expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
-        expect(revalidatePath).toHaveBeenCalledWith('/absensi')
+        expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 })
