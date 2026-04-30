@@ -23,6 +23,62 @@ export async function getHafalanCategories(): Promise<any[]> {
     return data || [];
 }
 
+export async function getTeacherRestrictions(): Promise<string[] | null> {
+    const supabase = await createAdminClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+        .from('teacher_class_masters')
+        .select('class_master_id')
+        .eq('teacher_id', user.id);
+
+    if (error) {
+        console.error('Error fetching teacher restrictions:', error);
+        return null;
+    }
+
+    if (!data || data.length === 0) return null;
+    return data.map(d => d.class_master_id);
+}
+
+export async function getTeacherAllowedClassesAction(): Promise<string[] | null> {
+    const { getTeacherAllowedClassIds, getCurrentUserProfile } = await import('@/lib/accessControlServer');
+    const profile = await getCurrentUserProfile();
+    if (!profile) return null;
+
+    const allowedSet = await getTeacherAllowedClassIds(profile.id, profile);
+    return allowedSet ? Array.from(allowedSet) : null;
+}
+
+export async function getAllowedCategories(classMasterIds: string[]): Promise<string[]> {
+    const supabase = await createAdminClient();
+
+    const { data, error } = await supabase
+        .from('material_monthly_targets')
+        .select(`
+            material_item:material_items(
+                material_type:material_types(
+                    material_category_id
+                )
+            )
+        `)
+        .in('class_master_id', classMasterIds);
+
+    if (error) {
+        console.error('Error fetching allowed categories:', error);
+        return [];
+    }
+
+    const categoryIds = new Set<string>();
+    data?.forEach((row: any) => {
+        const catId = row.material_item?.material_type?.material_category_id;
+        if (catId) categoryIds.add(catId);
+    });
+
+    return Array.from(categoryIds);
+}
+
 
 export async function getStudentProgress(
     studentId: string,
@@ -52,6 +108,11 @@ export async function getClassProgress(
     academicYearId: string,
     semester: number
 ): Promise<any> {
+    if (!classId || !academicYearId) {
+        console.error('[getClassProgress] Missing required params:', { classId, academicYearId });
+        return { students: [], progress: [] };
+    }
+
     const supabase = await createAdminClient();
 
     // Get students in class via student_enrollments
@@ -66,12 +127,12 @@ export async function getClassProgress(
         .eq('status', 'active');
 
     if (enrollError) {
-        console.error('Error fetching enrollments:', enrollError);
+        console.error('[getClassProgress] Error fetching enrollments:', enrollError);
         throw new Error(enrollError.message);
     }
 
     if (!enrollments || enrollments.length === 0) {
-        console.log('No enrollments found for:', { classId, academicYearId, semester });
+        console.log('[getClassProgress] No enrollments found for:', { classId, academicYearId, semester });
         return {
             students: [],
             progress: []

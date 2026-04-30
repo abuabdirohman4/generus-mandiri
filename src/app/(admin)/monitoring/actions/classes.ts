@@ -15,6 +15,7 @@ export async function getClasses(): Promise<any[]> {
       kelompok:kelompok(id, name),
       class_master_mappings(
         class_master:class_masters(
+          sort_order,
           category:categories(
             code,
             name
@@ -31,13 +32,32 @@ export async function getClasses(): Promise<any[]> {
 
   if (!classes) return [];
 
-  // Return clean class objects with kelompok data
-  return classes.map(cls => ({
-    id: cls.id,
-    name: cls.name,
-    kelompok_id: cls.kelompok_id,
-    kelompok: cls.kelompok  // Include kelompok object
-  }));
+  // Return clean class objects with kelompok data and master mapping IDs
+  const mappedClasses = classes.map(cls => {
+    // Calculate minimum sort order from all mapped class masters
+    const sortOrders = (cls.class_master_mappings || [])
+      .map((m: any) => m.class_master?.sort_order)
+      .filter((s: any) => s !== null && s !== undefined);
+    
+    const minSortOrder = sortOrders.length > 0 ? Math.min(...sortOrders) : 999;
+
+    return {
+      id: cls.id,
+      name: cls.name,
+      kelompok_id: cls.kelompok_id,
+      kelompok: cls.kelompok,
+      class_master_ids: (cls.class_master_mappings || []).map((m: any) => m.class_master_id),
+      min_sort_order: minSortOrder
+    };
+  });
+
+  // Sort by min_sort_order first, then by name
+  return mappedClasses.sort((a, b) => {
+    if (a.min_sort_order !== b.min_sort_order) {
+      return a.min_sort_order - b.min_sort_order;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 export async function getClassesByTeacher(teacherId: string): Promise<any[]> {

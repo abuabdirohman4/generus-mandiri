@@ -1,17 +1,31 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getClassProgress, getMaterialsByClassAndSemester, bulkUpdateProgress, getHafalanCategories, getMonthlyTargetProgress, getCrossClassHistory, getClassMonthlyTargetSummary } from './actions/monitoring';
+import { 
+    getClassProgress, 
+    getMaterialsByClassAndSemester, 
+    bulkUpdateProgress, 
+    getHafalanCategories, 
+    getMonthlyTargetProgress,
+    getCrossClassHistory,
+    getClassMonthlyTargetSummary,
+    getTeacherRestrictions,
+    getAllowedCategories
+} from './actions/monitoring';
 import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types';
 import type { Semester, Month } from '@/app/(admin)/materi/types';
-import { getClasses } from './actions/classes';
+import { getAllClasses } from '@/app/(admin)/users/siswa/actions/classes/actions';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { getAllDaerah } from '@/app/(admin)/organisasi/actions/daerah';
 import { getAllDesa } from '@/app/(admin)/organisasi/actions/desa';
 import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok';
 import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
-import { shouldShowDaerahFilter, shouldShowDesaFilter, shouldShowKelompokFilter } from '@/lib/accessControl';
+import { 
+    shouldShowDaerahFilter, 
+    modalShouldShowDesaFilter, 
+    modalShouldShowKelompokFilter 
+} from '@/lib/accessControl';
 import type { Daerah, Desa, Kelompok } from '@/types/organization';
 import InputFilter from '@/components/form/input/InputFilter';
 import { toast } from 'sonner';
@@ -189,33 +203,40 @@ export default function MonitoringPage() {
                 setSelectedYearId(activeYear.id);
             }
 
-            // Load org data and categories in parallel
-            const [daerahData, desaData, allKelompokData, categoriesData, classesData] = await Promise.all([
+            // Load org data, categories, and classes in parallel
+            // getAllClasses() sudah handle filter berdasarkan role (teacher_classes, hierarchical, admin)
+            const [daerahData, desaData, allKelompokData, categoriesData, classesData, cmRestrictions] = await Promise.all([
                 getAllDaerah(),
                 getAllDesa(),
                 getAllKelompok(),
                 getHafalanCategories(),
-                getClasses()
+                getAllClasses(),
+                getTeacherRestrictions()
             ]);
 
             setDaerahList(daerahData);
             setDesaList(desaData);
             setKelompokList(allKelompokData);
-            setHafalanCategories(categoriesData);
+            setClasses(classesData as any[]);
 
-            // Filter classes based on user role
-            let filteredClasses = classesData;
-            if (userProfile?.role === 'teacher' && userProfile?.classes) {
-                // For teachers, only show classes they are assigned to
-                const teacherClassIds = userProfile.classes.map(c => c.id);
-                filteredClasses = classesData.filter(cls => teacherClassIds.includes(cls.id));
+            // Filter categories by class master restriction
+            let finalCategories = categoriesData;
+            if (cmRestrictions && cmRestrictions.length > 0) {
+                const allowedCategoryIds = await getAllowedCategories(cmRestrictions);
+                finalCategories = categoriesData.filter(cat => allowedCategoryIds.includes(cat.id));
+            }
+            setHafalanCategories(finalCategories);
+
+            // Auto-select org filters from user profile
+            if (userProfile) {
+                if (userProfile.daerah_id && !selectedDaerahId) setSelectedDaerahId(userProfile.daerah_id);
+                if (userProfile.desa_id && !selectedDesaId) setSelectedDesaId(userProfile.desa_id);
+                if (userProfile.kelompok_id && !selectedKelompokId) setSelectedKelompokId(userProfile.kelompok_id);
             }
 
-            setClasses(filteredClasses);
-
             // Auto-select first category
-            if (categoriesData.length > 0 && !selectedCategoryId) {
-                setSelectedCategoryId(categoriesData[0].id);
+            if (finalCategories.length > 0 && !selectedCategoryId) {
+                setSelectedCategoryId(finalCategories[0].id);
             }
         } catch (error: any) {
             toast.error(error.message || 'Gagal memuat data awal');
@@ -226,6 +247,11 @@ export default function MonitoringPage() {
     };
 
     const loadClassData = async () => {
+        if (!selectedYearId) {
+            console.error('selectedYearId kosong saat loadClassData dipanggil');
+            return;
+        }
+
         try {
             setLoading(true);
 
@@ -325,7 +351,34 @@ export default function MonitoringPage() {
         return desaList.filter(d => d.daerah_id === selectedDaerahId);
     }, [desaList, selectedDaerahId]);
 
+    // Kelompok yang bisa dipilih: untuk teacher, derive dari kelas yang di-fetch (sudah difilter per akses)
+    // Untuk admin/hierarchical, gunakan kelompokList global dengan filter org
+    const accessibleKelompokList = useMemo(() => {
+        const isTeacher = userProfile?.role === 'teacher';
+        if (isTeacher && classes.length > 0) {
+            // Ambil unique kelompok dari classes yang accessible
+            const kelompokMap = new Map<string, Kelompok>();
+            classes.forEach((cls: any) => {
+                if (cls.kelompok_id && cls.kelompok?.name && !kelompokMap.has(cls.kelompok_id)) {
+                    kelompokMap.set(cls.kelompok_id, {
+                        id: cls.kelompok_id,
+                        name: cls.kelompok.name,
+                        desa_id: cls.kelompok.desa_id || '',
+                    } as Kelompok);
+                }
+            });
+            return Array.from(kelompokMap.values());
+        }
+        return kelompokList;
+    }, [classes, kelompokList, userProfile?.role]);
+
     const filteredKelompokList = useMemo(() => {
+        const isTeacher = userProfile?.role === 'teacher';
+        if (isTeacher) {
+            // Guru: gunakan accessibleKelompokList (sudah scope ke kelas accessible)
+            return accessibleKelompokList;
+        }
+        // Admin/hierarchical: filter berdasarkan org selection
         if (!selectedDesaId) {
             if (selectedDaerahId) {
                 const desaIdsInDaerah = desaList
@@ -336,7 +389,7 @@ export default function MonitoringPage() {
             return kelompokList;
         }
         return kelompokList.filter(k => k.desa_id === selectedDesaId);
-    }, [kelompokList, desaList, selectedDaerahId, selectedDesaId]);
+    }, [accessibleKelompokList, kelompokList, desaList, selectedDaerahId, selectedDesaId, userProfile?.role]);
 
     // Kelas yang ditampilkan di dropdown difilter oleh kelompok terpilih
     const filteredClasses = useMemo(() => {
@@ -418,9 +471,9 @@ export default function MonitoringPage() {
 
     // Calculate student completion percentage (average nilai)
     const getStudentCompletion = (studentId: string): number => {
-        if (filteredMaterials.length === 0) return 0;
+        if (displayedMaterials.length === 0) return 0;
 
-        const studentProgress = filteredMaterials
+        const studentProgress = displayedMaterials
             .map(m => {
                 const key = `${studentId}-${m.id}`;
                 return progressMap.get(key);
@@ -438,63 +491,55 @@ export default function MonitoringPage() {
         m => m.material_type?.material_category?.id === selectedCategoryId
     );
 
-    // Format class options with kelompok name for duplicates (from CreateMeetingModal pattern)
+    // Filter materials by month — jika bulan dipilih, hanya tampilkan materi yang ada di target bulan itu
+    // Jika monthlyTargetItemIds kosong (tidak ada target), hasilnya memang kosong (bukan fallback ke semua)
+    const displayedMaterials = useMemo(() => {
+        if (!selectedMonth) return filteredMaterials;
+        return filteredMaterials.filter(m => monthlyTargetItemIds.has(m.id));
+    }, [filteredMaterials, selectedMonth, monthlyTargetItemIds]);
+
+    // Format class options:
+    // - Jika kelompok SUDAH dipilih (filtered): cukup tampilkan nama kelas saja
+    // - Jika kelompok BELUM dipilih (semua kelas): tampilkan "(NamaKelompok)" jika ada nama duplikat
     const classOptions = useMemo(() => {
         if (!filteredClasses.length) return [];
 
-        let options: { value: string; label: string }[] = [];
+        let options: { value: string; label: string }[];
 
-        // If multiple classes exist, check for duplicate names and add kelompok suffix
-        if (filteredClasses.length > 1) {
-            // Create mapping kelompok_id -> kelompok name directly from classes data
-            // as filteredClasses already includes joined kelompok info
-            const kelompokMap = new Map();
-            filteredClasses.forEach((cls: any) => {
-                if (cls.kelompok_id && cls.kelompok?.name) {
-                    kelompokMap.set(cls.kelompok_id, cls.kelompok.name);
-                }
-            });
-
-            // Check for duplicate class names (trim for accuracy)
-            const nameCounts = filteredClasses.reduce((acc, cls: any) => {
+        if (selectedKelompokId) {
+            // Kelompok sudah dipilih — tidak perlu label kelompok di nama kelas
+            options = filteredClasses.map((cls: any) => ({
+                value: cls.id,
+                label: cls.name
+            }));
+        } else {
+            // Belum pilih kelompok — cek duplikat nama di semua classes accessible
+            const nameCounts = classes.reduce((acc, cls: any) => {
                 const normalizedName = (cls.name || '').trim();
                 acc[normalizedName] = (acc[normalizedName] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>);
 
-            // Format labels
             options = filteredClasses.map((cls: any) => {
                 const normalizedName = (cls.name || '').trim();
                 const hasDuplicate = nameCounts[normalizedName] > 1;
-                const kelompokName = cls.kelompok_id ? kelompokMap.get(cls.kelompok_id) : null;
-                
+                const kelompokName = cls.kelompok?.name;
+
                 const label = (hasDuplicate && kelompokName)
                     ? `${cls.name} (${kelompokName})`
                     : cls.name;
 
-                return {
-                    value: cls.id,
-                    label
-                };
+                return { value: cls.id, label };
             });
-        } else {
-            // For non-teacher or single class, just use simple mapping
-            options = filteredClasses.map((c: any) => ({
-                value: c.id,
-                label: c.name
-            }));
         }
 
-        // Add "Pilih Semua" option at the beginning if there are multiple classes
+        // Add "Semua Kelas" option if there are multiple classes
         if (filteredClasses.length > 1) {
-            options.unshift({
-                value: 'ALL',
-                label: 'Semua Kelas'
-            });
+            options.unshift({ value: 'ALL', label: 'Semua Kelas' });
         }
 
         return options;
-    }, [filteredClasses, kelompokList, userProfile?.role]);
+    }, [filteredClasses, classes, selectedKelompokId]);
 
     const currentStudent = selectedStudentId
         ? students.find(s => s.id === selectedStudentId)
@@ -521,7 +566,7 @@ export default function MonitoringPage() {
                     selectedStudentId={selectedStudentId}
                     onStudentSelect={setSelectedStudentId}
                     progressData={progressMap}
-                    materials={filteredMaterials}
+                    materials={displayedMaterials}
                     isOpen={sidebarOpen}
                     onToggle={() => setSidebarOpen(!sidebarOpen)}
                     isLoading={loading}
@@ -624,45 +669,75 @@ export default function MonitoringPage() {
                                             />
                                         </div>
 
-                                        {userProfile && shouldShowDaerahFilter(userProfile) && daerahList.length > 1 && (
-                                            <InputFilter
-                                                id="daerah-filter"
-                                                label="Daerah"
-                                                value={selectedDaerahId}
-                                                onChange={handleDaerahChange}
-                                                options={daerahList.map(d => ({ value: d.id, label: d.name }))}
-                                                allOptionLabel="Semua Daerah"
-                                                variant="modal"
-                                                compact
-                                            />
+                                        {/* Daerah Filter */}
+                                        {userProfile && shouldShowDaerahFilter(userProfile) && (
+                                            <div>
+                                                {filterLoading ? (
+                                                    <div className="animate-pulse">
+                                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                    </div>
+                                                ) : (
+                                                    <InputFilter
+                                                        id="daerah-filter"
+                                                        label="Daerah"
+                                                        value={selectedDaerahId}
+                                                        onChange={handleDaerahChange}
+                                                        options={daerahList.map(d => ({ value: d.id, label: d.name }))}
+                                                        allOptionLabel="Semua Daerah"
+                                                        variant="modal"
+                                                        compact
+                                                    />
+                                                )}
+                                            </div>
                                         )}
 
-                                        {userProfile && shouldShowDesaFilter(userProfile) && filteredDesaList.length > 1 && (
-                                            <InputFilter
-                                                id="desa-filter"
-                                                label="Desa"
-                                                value={selectedDesaId}
-                                                onChange={handleDesaChange}
-                                                options={filteredDesaList.map(d => ({ value: d.id, label: d.name }))}
-                                                allOptionLabel="Semua Desa"
-                                                variant="modal"
-                                                compact
-                                                disabled={userProfile && shouldShowDaerahFilter(userProfile) && !selectedDaerahId}
-                                            />
+                                        {/* Desa Filter */}
+                                        {userProfile && modalShouldShowDesaFilter(userProfile) && (
+                                            <div>
+                                                {filterLoading ? (
+                                                    <div className="animate-pulse">
+                                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                    </div>
+                                                ) : filteredDesaList.length > 0 && (
+                                                    <InputFilter
+                                                        id="desa-filter"
+                                                        label="Desa"
+                                                        value={selectedDesaId}
+                                                        onChange={handleDesaChange}
+                                                        options={filteredDesaList.map(d => ({ value: d.id, label: d.name }))}
+                                                        allOptionLabel="Semua Desa"
+                                                        variant="modal"
+                                                        compact
+                                                        disabled={userProfile && shouldShowDaerahFilter(userProfile) && !selectedDaerahId}
+                                                    />
+                                                )}
+                                            </div>
                                         )}
 
-                                        {userProfile && shouldShowKelompokFilter(userProfile) && filteredKelompokList.length > 1 && (
-                                            <InputFilter
-                                                id="kelompok-filter"
-                                                label="Kelompok"
-                                                value={selectedKelompokId}
-                                                onChange={handleKelompokChange}
-                                                options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
-                                                allOptionLabel="Semua Kelompok"
-                                                variant="modal"
-                                                compact
-                                                disabled={userProfile && shouldShowDesaFilter(userProfile) && !selectedDesaId}
-                                            />
+                                        {/* Kelompok Filter — tampil untuk admin/guru daerah/desa DAN guru multi-kelompok */}
+                                        {userProfile && (modalShouldShowKelompokFilter(userProfile) || filteredKelompokList.length > 1) && (
+                                            <div>
+                                                {filterLoading ? (
+                                                    <div className="animate-pulse">
+                                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                    </div>
+                                                ) : filteredKelompokList.length > 0 && (
+                                                    <InputFilter
+                                                        id="kelompok-filter"
+                                                        label="Kelompok"
+                                                        value={selectedKelompokId}
+                                                        onChange={handleKelompokChange}
+                                                        options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
+                                                        allOptionLabel="Semua Kelompok"
+                                                        variant="modal"
+                                                        compact
+                                                        disabled={userProfile && modalShouldShowDesaFilter(userProfile) && !selectedDesaId}
+                                                    />
+                                                )}
+                                            </div>
                                         )}
 
                                         {/* Kelas with Skeleton */}
@@ -935,22 +1010,23 @@ export default function MonitoringPage() {
 
 
                                 {/* Progress Display - Split by Category */}
-                                {filteredMaterials.length === 0 ? (
+                                {displayedMaterials.length === 0 ? (
                                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Tidak ada materi untuk kategori ini
+                                            {selectedMonth ? 'Tidak ada target materi untuk bulan ini' : 'Tidak ada materi untuk kategori ini'}
                                         </p>
                                     </div>
                                 ) : (
                                     <>
                                         {/* Group materials by hafalan type (Doa/Surat) */}
                                         {(() => {
-                                            const grouped = filteredMaterials.reduce((acc, material) => {
+                                            const grouped = displayedMaterials.reduce((acc, material) => {
                                                 const typeName = material.material_type?.name || 'Lainnya';
                                                 if (!acc[typeName]) acc[typeName] = [];
                                                 acc[typeName].push(material);
                                                 return acc;
-                                            }, {} as Record<string, typeof filteredMaterials>);
+                                            }, {} as Record<string, typeof displayedMaterials>);
+
 
                                             return Object.entries(grouped).map(([typeName, materials]) => (
                                                 <div key={typeName} className="mb-6 last:mb-0">
