@@ -385,3 +385,137 @@ Uses `forceShowAllMeetingTypes={isAdmin(userProfile)}` prop on DataFilter compon
   - Teachers can only filter by types they're allowed to create
 
 **Implementation**: `src/components/shared/DataFilter.tsx` + `src/app/(admin)/laporan/components/FilterSection.tsx`
+
+---
+
+## Student Enrollment — CRITICAL GAP
+
+### Two Separate Tables for Student-Class Relationship
+
+The system has TWO distinct ways a student is linked to a class:
+
+| Table | Purpose | Auto-created? |
+|-------|---------|---------------|
+| `student_classes` | Many-to-many junction, simple class membership | ✅ Yes, on student create |
+| `student_enrollments` | Academic-year-aware enrollment with status & semester | ❌ NO — must be done separately |
+
+### student_enrollments is NOT auto-populated on student create
+
+**`createStudent()` in `src/app/(admin)/users/siswa/actions/students/actions.ts`:**
+- Inserts into `students` table ✅
+- Inserts into `student_classes` junction table ✅
+- Does NOT insert into `student_enrollments` ❌
+
+**Consequence**: Features that rely on `student_enrollments` (monitoring/progress, rapot, any academic-year-scoped queries) will show 0 students for kelompok whose students were added but never enrolled.
+
+**As of 2026-05-01**: Only 340 out of 1636 students have enrollment records. Kelompok with 0 enrollments include Soreang 1, Soreang 2, and others.
+
+### student_enrollments Schema
+
+```typescript
+{
+  student_id: string;
+  class_id: string;
+  academic_year_id: string;   // e.g., "2025/2026"
+  semester: 1 | 2;
+  status: 'active' | 'graduated' | 'transferred' | 'dropped';
+  enrollment_date: string;
+}
+```
+
+### Enrollment Actions (already exist but not called automatically)
+
+**File:** `src/app/(admin)/tahun-ajaran/actions/enrollments.ts`
+- `enrollStudent(input)` — single enrollment
+- `bulkEnrollStudents(studentIds, classId, academicYearId, semester)` — bulk enrollment
+
+### Required Fix (OPEN TODO)
+
+`createStudent()` must auto-insert into `student_enrollments` using the active academic year and current semester. A bulk backfill is also needed for existing students.
+
+### Class Filter for Teachers with Multiple Kelompok
+
+**Monitoring page** (`src/app/(admin)/monitoring/page.tsx`) uses `getAllClasses()` from `src/app/(admin)/users/siswa/actions/classes/actions.ts` to get classes filtered by teacher access. This correctly handles teachers with `teacher_classes` records across multiple kelompok.
+
+The kelompok filter in monitoring derives from `classes` state (already scoped to teacher access), not from the global `kelompokList`. This ensures only accessible kelompok appear.
+
+---
+
+## Activity Types & Levels
+
+### Who Can Create/Edit/Delete
+
+| Role | Activity Types | Activity Levels |
+|------|---------------|-----------------|
+| Superadmin | Create, Edit, Delete | Edit name only |
+| Admin Daerah | Create, Edit, Delete | No access |
+| Admin Desa/Kelompok | No access | No access |
+| Teacher | View only (assigned types) | No access |
+
+### Assignment Rules
+
+- Teachers are assigned specific activity types by admin via `/users/guru` → SettingsModal
+- A teacher can have 0 or more assigned activity types
+- When creating a meeting, teacher sees only their assigned activity types
+- Admin sees all active activity types when creating meetings
+
+### Deletion Constraint
+
+- Activity type CANNOT be deleted if it has associated meetings (FK protection)
+- Error returned: "Tipe kegiatan ini sudah digunakan dalam pertemuan"
+- Deactivate (`is_active = false`) as alternative to deletion
+
+### Code Format
+
+- Activity type codes are auto-uppercased on create/update
+- Codes must be unique across all activity types
+
+---
+
+## Monthly Curriculum Targets
+
+Targets define what material items should be taught in a given month (and optionally week/day).
+
+### Hierarchy
+
+```
+Class Master → Month → (optional) Week → (optional) Day of Week
+```
+
+- **Month-only**: Target applies to entire month
+- **Month + Week**: Target for specific week within month
+- **Month + Week + Day**: Target for specific day of week in a week
+
+### Who Manages Targets
+
+- **Superadmin & Admin**: Can create/edit/update monthly targets for all classes
+- **Teachers**: View only (cannot edit monthly targets directly)
+- Targets are managed via the `/materi` page (requires `can_manage_materials` permission or admin role)
+
+### Bulk Synchronization
+
+Bulk upsert logic syncs monthly targets across class masters without month-based filtering:
+- Uses `class_master_id + academic_year_id + material_item_id` as composite key
+- Handles display_order updates for reordering
+- File: `src/app/(admin)/materi/actions/monthly-targets/`
+
+### Schema
+
+```typescript
+// src/types/material.ts
+interface MonthlyTarget {
+  id: string
+  class_master_id: string
+  academic_year_id: string
+  semester: 1 | 2
+  month: 1-12 | null
+  week?: 1-4 | null
+  day_of_week?: 1-6 | null          // 1=Sunday, 6=Friday
+  material_item_id: string
+  display_order: number
+  created_by?: string | null
+  created_at: string
+  updated_at: string
+  material_item?: MaterialItem
+}
+```

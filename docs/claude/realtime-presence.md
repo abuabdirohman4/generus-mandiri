@@ -26,4 +26,4 @@ Seluruh logika Realtime Presence harus melalui **`usePresenceStore`**.
 ## Struktur File Terkait
 - `src/stores/usePresenceStore.ts`: Otak utama (Networking & State).
 - `src/hooks/usePresence.ts`: Jembatan Navigasi (Event Trigger).
-- `src/app/(admin)/audit/components/OnlinePresence.tsx`: Komponen Penampil (UI).
+- `src/app/(admin)/tracking/components/OnlinePresence.tsx`: Komponen Penampil (UI).

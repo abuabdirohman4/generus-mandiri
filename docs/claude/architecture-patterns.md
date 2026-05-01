@@ -645,3 +645,90 @@ export interface ClassMaster { id, name, sort_order, ... }
 ```
 
 ---
+
+## Material Management Permissions (sm-*)
+
+Teachers can be granted material management permission via `profiles.permissions` JSONB field.
+
+### Permission Field
+
+```typescript
+// src/types/user.ts — UserProfile.permissions
+{
+  can_manage_materials?: boolean   // NEW: grant material CRUD to teacher
+  // ... other permission fields
+}
+```
+
+### Access Rules
+
+- **Superadmin & Admin**: Always have full material management access (hardcoded)
+- **Teachers**: No access by default — must be granted via `/users/guru` → SettingsModal
+- **Sidebar**: Hides `/materi` route if user lacks permission
+
+### Check Function
+
+```typescript
+import { canManageMaterials } from '@/lib/accessControl'
+
+// Returns true for superadmin/admin, or teacher with can_manage_materials=true
+if (!canManageMaterials(profile)) return { success: false, error: 'Permission denied' }
+```
+
+### Configuration Flow
+
+1. Admin goes to `/users/guru` → click gear icon on teacher row → SettingsModal
+2. Toggle "Izin Kelola Materi" checkbox
+3. Saves to `profiles.permissions.can_manage_materials`
+
+**Reference Implementation**: `src/app/(admin)/users/guru/components/SettingsModal.tsx`
+
+---
+
+## Activity Types System — DB-driven Meeting Types (sm-5fh)
+
+Replaces hardcoded `MEETING_TYPES` enum with database-driven system.
+
+### Tables
+
+| Table | Purpose |
+|-------|---------|
+| `activity_types` | Meeting type definitions (`code`, `name`, `is_active`, `sort_order`) |
+| `activity_levels` | Activity level classification (`code`, `name`, `sort_order`) |
+| `teacher_activity_types` | Junction: teacher → assigned activity types |
+
+### Access Rules (Kegiatan Page `/kegiatan`)
+
+- **Superadmin**: Full access — create/update/delete types + manage levels
+- **Admin Daerah**: Create/update/delete activity types only (no level management)
+- **Others**: Redirected to `/home`
+
+### Teacher Activity Type Assignment
+
+```typescript
+// Teachers see only their assigned types
+const myTypes = await getMyActivityTypes()   // role-aware: admin=all, teacher=assigned only
+
+// Assign/remove via SettingsModal in /users/guru
+await assignActivityTypeToTeacher(teacherId, activityTypeId)
+await removeActivityTypeFromTeacher(teacherId, activityTypeId)
+```
+
+### FK Constraint
+
+Cannot delete an activity type if it has associated meetings:
+```typescript
+// deleteActivityType() checks for meetings before deletion
+// Returns error: 'Tipe kegiatan ini sudah digunakan dalam pertemuan'
+```
+
+### Types
+
+```typescript
+// src/types/activityType.ts
+interface ActivityType { id, code, name, description, is_active, sort_order }
+interface ActivityLevel { id, code, name, sort_order, is_active }
+interface TeacherActivityType { teacher_id, activity_type_id, activity_type?: ActivityType }
+```
+
+**Reference**: `src/app/(admin)/kegiatan/actions.ts`, `src/hooks/useActivityTypes.ts`

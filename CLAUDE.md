@@ -206,11 +206,11 @@ npm run test:e2e:debug   # Run E2E tests (debug mode)
 
 ### App Router Structure
 
-Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
 
 ### Database & Supabase
 
-**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`.
+**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`.
 
 **Supabase Clients**: `createClient()` from `client` (browser) or `server` (server actions with cookies), `createAdminClient()` from `server` (bypass RLS).
 
@@ -225,7 +225,7 @@ Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected 
 
 ### State Management
 
-**Zustand Stores** (some persisted to localStorage): `userProfileStore`, `sidebarStore`, `themeStore`, `languageStore`, `attendanceStore`, `absensiUIStore`, `siswaStore`, `kelasStore`, `guruStore`, `adminStore`, `laporanStore`, `organisasiStore`, `presenceStore`.
+**Zustand Stores** (some persisted to localStorage): `userProfileStore`, `sidebarStore`, `themeStore`, `languageStore`, `attendanceStore`, `absensiUIStore`, `siswaStore`, `kelasStore`, `guruStore`, `adminStore`, `laporanStore`, `organisasiStore`, `presenceStore` (realtime presence — use `usePresenceStore`, NEVER create Supabase channel directly).
 
 **CRITICAL**: NEVER hardcode dates/months — always use `new Date()`. Default values should use helper functions. SWR keys centralized in `@/lib/swr.ts`. Cache cleared on login/logout via `clearUserCache()`.
 
@@ -289,3 +289,4 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
 - **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
 - **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
+- **Activity Logging**: [`docs/claude/activity-logging.md`](docs/claude/activity-logging.md)
