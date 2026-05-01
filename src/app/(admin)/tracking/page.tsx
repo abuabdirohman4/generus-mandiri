@@ -160,7 +160,7 @@ export default function TrackingPage() {
               <AuditTable logs={logs} />
               
               {/* Pagination */}
-              {totalPages > 1 && (
+              {/* {totalPages > 1 && (
                 <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{logs.length}</span> dari <span className="font-semibold text-gray-900 dark:text-white">{total}</span> log
@@ -208,7 +208,7 @@ export default function TrackingPage() {
                     </button>
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </>
