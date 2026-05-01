@@ -163,7 +163,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-rose-100 dark:bg-rose-900',
       iconColor: 'text-rose-600 dark:text-rose-400',
       adminOnly: false,
-      disabled: isAdminUser || userCanManageMaterials ? false : true
+      disabled: isAdminUser ? false : true
     },
     {
       id: 'guru',
@@ -226,7 +226,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: false
     },
     {
-      id: 'audit',
+      id: 'tracking',
       name: 'Tracking',
       description: 'Tracking',
       href: '/tracking',
