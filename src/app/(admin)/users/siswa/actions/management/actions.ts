@@ -115,6 +115,14 @@ export async function archiveStudent(
             return { success: false, error: 'Gagal mengarsipkan siswa' }
         }
 
+        // Sync enrollment status on archive (Layer 2 — student_enrollments)
+        const enrollmentStatus = input.status === 'graduated' ? 'graduated' : 'dropped'
+        await adminClient
+            .from('student_enrollments')
+            .update({ status: enrollmentStatus })
+            .eq('student_id', input.studentId)
+            .eq('status', 'active')
+
         revalidatePath('/users/siswa')
         revalidatePath('/presensi')
 

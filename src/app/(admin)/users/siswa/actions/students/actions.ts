@@ -39,9 +39,55 @@ import {
     validateStudentData,
     buildStudentHierarchy,
 } from './logic'
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
 // Re-export centralized type for consistency
 export type Student = StudentWithClasses
+
+/**
+ * Auto-detect current semester based on month
+ * Semester 1: July (7) - December (12)
+ * Semester 2: January (1) - June (6)
+ */
+function getCurrentSemester(): 1 | 2 {
+    const month = new Date().getMonth() + 1
+    return month >= 7 ? 1 : 2
+}
+
+/**
+ * Auto-enroll student to active academic year.
+ * Upserts enrollment — safe to call on create or update.
+ * Never throws — enrollment failure must not block student create/update.
+ */
+async function autoEnrollStudent(studentId: string, classId: string): Promise<void> {
+    try {
+        const adminClient = await createAdminClient()
+        const activeYear = await getActiveAcademicYear()
+        if (!activeYear) {
+            console.warn('[autoEnrollStudent] No active academic year, skipping enrollment')
+            return
+        }
+        const semester = getCurrentSemester()
+        const { error } = await adminClient
+            .from('student_enrollments')
+            .upsert(
+                {
+                    student_id: studentId,
+                    class_id: classId,
+                    academic_year_id: activeYear.id,
+                    semester,
+                    status: 'active',
+                    enrollment_date: new Date().toISOString(),
+                },
+                { onConflict: 'student_id,academic_year_id,semester' }
+            )
+        if (error) {
+            console.error('[autoEnrollStudent] Failed:', error.message)
+        }
+    } catch (err) {
+        console.error('[autoEnrollStudent] Unexpected error:', err)
+    }
+}
 
 /**
  * Mendapatkan profile user saat ini
@@ -391,6 +437,11 @@ export async function createStudent(formData: FormData) {
             }
         }
 
+        // Auto-enroll to active academic year (Layer 2 — student_enrollments)
+        if (newStudent?.id && classId) {
+            await autoEnrollStudent(newStudent.id, classId)
+        }
+
         revalidatePath('/users/siswa')
         revalidatePath('/presensi')
 
@@ -541,6 +592,11 @@ export async function updateStudent(studentId: string, formData: FormData) {
                     console.error('Error inserting to junction table:', insertError)
                 }
             }
+        }
+
+        // Sync enrollment with updated primary class (Layer 2 — student_enrollments)
+        if (updatedStudent?.id && primaryClassId) {
+            await autoEnrollStudent(updatedStudent.id, primaryClassId)
         }
 
         revalidatePath('/users/siswa')
@@ -830,6 +886,11 @@ export async function createStudentsBatch(
             const { error: junctionError } = await insertStudentClassesBatch(adminClient, junctionInserts)
             if (junctionError && junctionError.code !== '23505') {
                 console.error('Error inserting to junction table:', junctionError)
+            }
+
+            // Auto-enroll all inserted students to active academic year
+            for (const student of insertedStudents) {
+                await autoEnrollStudent(student.id, classId)
             }
         }
 
