@@ -31,6 +31,7 @@ export function useGuruPage() {
     closeResetPasswordModal,
     openDeleteConfirm,
     closeDeleteConfirm,
+    setDeleteImpact,
     openFormSettingsModal,
     closeFormSettingsModal,
     setFilters
@@ -60,6 +61,21 @@ export function useGuruPage() {
     
     return result
   }, [teachers, filters])
+
+  // Fetch impact data before confirming delete
+  const handleOpenDeleteConfirm = useCallback(async (guru: any) => {
+    // Buka modal dulu dengan loading state
+    openDeleteConfirm(guru)
+    setDeleteImpact(null, true)
+
+    try {
+      const { getTeacherDeleteImpact } = await import('../actions')
+      const result = await getTeacherDeleteImpact(guru.id)
+      setDeleteImpact(result, false)
+    } catch {
+      setDeleteImpact(null, false)
+    }
+  }, [openDeleteConfirm, setDeleteImpact])
 
   // Delete mutation
   const { trigger: deleteGuruMutation } = useSWRMutation(
@@ -106,7 +122,7 @@ export function useGuruPage() {
     closeModal,
     openResetPasswordModal,
     closeResetPasswordModal,
-    openDeleteConfirm,
+    openDeleteConfirm: handleOpenDeleteConfirm,
     closeDeleteConfirm,
     openFormSettingsModal,
     closeFormSettingsModal,

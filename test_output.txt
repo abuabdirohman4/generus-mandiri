@@ -1,0 +1,378 @@
+
+> generus-mandiri@1.13.1 test:run
+> vitest run
+
+
+ RUN  v2.1.9 /Users/abuabdirohman/Documents/Programs/OpenSource/school-management
+
+ ✓ src/app/(admin)/laporan/actions/reports/__tests__/logic.test.ts (38 tests) 11ms
+ ✓ src/app/(admin)/users/guru/actions/teachers/__tests__/actions.test.ts (28 tests) 47ms
+ ✓ src/app/(admin)/users/admin/actions/admin/__tests__/actions.test.ts (27 tests) 72ms
+ ✓ src/app/(admin)/presensi/actions/meetings/__tests__/actions.test.ts (29 tests) 65ms
+ ✓ src/app/(admin)/users/siswa/actions/management/__tests__/actions.test.ts (26 tests) 63ms
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getReportTemplates > returns templates on happy path
+getReportTemplates result: {
+  dataLength: 1,
+  error: null,
+  classId: undefined,
+  academicYearId: undefined
+}
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getReportTemplates > returns empty array when no templates found
+getReportTemplates result: {
+  dataLength: undefined,
+  error: null,
+  classId: undefined,
+  academicYearId: undefined
+}
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getReportTemplates > passes filters correctly to fetchReportTemplates
+getReportTemplates result: {
+  dataLength: 0,
+  error: null,
+  classId: 'class-1',
+  academicYearId: 'year-1'
+}
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getReportTemplates > throws when fetchReportTemplates fails
+getReportTemplates result: {
+  dataLength: undefined,
+  error: Error: DB error
+      at /Users/abuabdirohman/Documents/Programs/OpenSource/school-management/src/app/(admin)/rapot/actions/__tests__/actions.test.ts:525:16
+      at file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:146:14
+      at file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:533:11
+      at runWithTimeout (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:39:7)
+      at runTest (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:1056:17)
+      at processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at runSuite (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runSuite (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:1205:15)
+      at runFiles (file:///Users/abuabdirohman/Documents/Programs/OpenSource/school-management/node_modules/@vitest/runner/dist/index.js:1262:5),
+  classId: undefined,
+  academicYearId: undefined
+}
+
+ ❯ src/app/(admin)/materi/actions/items/__tests__/actions.test.ts (58 tests | 3 failed) 130ms
+   × Materi Items Actions (Layer 3) > getMaterialItem > returns item with class mappings on happy path 4ms
+     → expected { id: 'item-1', name: 'Item A', …(1) } to deeply equal { id: 'item-1', name: 'Item A', …(1) }
+   × Materi Items Actions (Layer 3) > deleteMaterialItem > throws error when dependency check fails 9ms
+     → expected [Function] to throw error including 'Gagal memeriksa dependensi' but got 'Cannot destructure property \'error\'…'
+   × Materi Items Actions (Layer 3) > deleteMaterialItem > throws error when item has dependencies 1ms
+     → expected [Function] to throw error including 'Tidak dapat menghapus item' but got 'Cannot destructure property \'error\'…'
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getClassReportsSummary > returns empty array when no enrollments found
+getClassReportsSummary Params: { classId: 'class-1', academicYearId: 'year-1', semester: 1 }
+Enrollments found: 0
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getClassReportsSummary > returns empty array when all enrollments have null students
+getClassReportsSummary Params: { classId: 'class-1', academicYearId: 'year-1', semester: 1 }
+Enrollments found: 2
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getClassReportsSummary > returns empty array when no valid student IDs can be extracted
+getClassReportsSummary Params: { classId: 'class-1', academicYearId: 'year-1', semester: 1 }
+Enrollments found: 1
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getClassReportsSummary > returns summary on happy path
+getClassReportsSummary Params: { classId: 'class-1', academicYearId: 'year-1', semester: 1 }
+Enrollments found: 1
+
+stdout | src/app/(admin)/rapot/actions/__tests__/actions.test.ts > Rapot Actions (Layer 3) > getClassReportsSummary > returns empty array when enrollments is null/undefined
+getClassReportsSummary Params: { classId: 'class-1', academicYearId: 'year-1', semester: 1 }
+Enrollments found: undefined
+
+ ❯ src/app/(admin)/rapot/actions/__tests__/actions.test.ts (59 tests | 14 failed) 123ms
+   × Rapot Actions (Layer 3) > bulkUpsertSectionGrades > returns success on happy path 3ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > updateGrade > saves grade on happy path 4ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+   × Rapot Actions (Layer 3) > updateGrade > calls prepareGradeData with input and timestamp 0ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > bulkUpdateGrades > saves all grades on happy path 1ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+   × Rapot Actions (Layer 3) > bulkUpdateGrades > handles empty updates array 2ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+   × Rapot Actions (Layer 3) > updateCharacterAssessment > saves assessment on happy path 1ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+   × Rapot Actions (Layer 3) > createReportTemplate > creates template on happy path without subjects 0ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > createReportTemplate > creates template and adds subjects when subject_ids provided 0ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > createReportTemplate > continues even when insertTemplateSubjects fails (non-fatal) 7ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > updateReportTemplate > updates template on happy path 1ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+   × Rapot Actions (Layer 3) > updateReportTemplate > calls updateTemplateSubjects when subject_ids provided 0ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > generateReport > generates and returns report on happy path 0ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > generateReport > handles grades with null scores when calculating average 1ms
+     → Cannot read properties of undefined (reading 'auth')
+   × Rapot Actions (Layer 3) > publishReport > publishes report on happy path 6ms
+     → promise rejected "TypeError: Cannot read properties of unde…" instead of resolving
+ ✓ src/app/(admin)/materi/actions/types/__tests__/actions.test.ts (23 tests) 78ms
+ ✓ src/app/(admin)/presensi/actions/attendance/__tests__/actions.test.ts (22 tests) 70ms
+ ✓ src/app/(admin)/laporan/actions/reports/__tests__/actions.test.ts (23 tests) 93ms
+ ✓ src/app/(admin)/users/guru/actions/classes/__tests__/actions.test.ts (19 tests) 51ms
+ ✓ src/app/(admin)/rapot/actions/__tests__/queries.test.ts (18 tests) 16ms
+ ✓ src/app/(admin)/rapot/actions/__tests__/logic.test.ts (52 tests) 17ms
+ ✓ src/app/(admin)/users/siswa/actions/students/__tests__/actions.test.ts (20 tests) 22ms
+ ✓ src/components/shared/__tests__/dataFilterHelpers.test.ts (30 tests) 13ms
+ ✓ src/app/(admin)/materi/actions/categories/__tests__/actions.test.ts (20 tests) 33ms
+ ✓ src/app/(admin)/users/guru/actions/settings/__tests__/actions.test.ts (16 tests) 28ms
+ ✓ src/app/(admin)/users/admin/actions/admin/__tests__/logic.test.ts (28 tests) 15ms
+ ✓ src/app/(admin)/materi/actions/items/__tests__/queries.test.ts (16 tests) 13ms
+ ❯ src/app/(admin)/materi/actions/items/__tests__/logic.test.ts (27 tests | 1 failed) 27ms
+   × mapClassMappingsToItems > includes semester in class info 7ms
+     → expected undefined to be 2 // Object.is equality
+ ✓ src/app/(admin)/users/siswa/actions/students/__tests__/queries.test.ts (9 tests) 14ms
+ ✓ src/app/(admin)/users/siswa/actions/students/__tests__/permissions.test.ts (25 tests) 7ms
+ ✓ src/app/(admin)/users/guru/actions/teachers/__tests__/logic.test.ts (21 tests) 12ms
+ ✓ src/app/(admin)/users/guru/actions/teachers/__tests__/queries.test.ts (14 tests) 31ms
+ ✓ src/app/(admin)/rapot/templates/actions/templates/__tests__/queries.test.ts (10 tests) 12ms
+ ✓ src/app/(admin)/rapot/templates/actions/sections/__tests__/queries.test.ts (10 tests) 15ms
+ ✓ src/app/(admin)/rapot/templates/actions/resolution/__tests__/logic.test.ts (23 tests) 10ms
+ ✓ src/lib/utils/__tests__/classHelpers.test.ts (15 tests) 19ms
+ ✓ src/app/(admin)/users/siswa/actions/students/__tests__/logic.test.ts (19 tests) 5ms
+ ✓ src/app/(admin)/laporan/actions/reports/__tests__/queries.test.ts (12 tests) 13ms
+ ✓ src/app/(admin)/dashboard/actions/monitoring/__tests__/logic.test.ts (21 tests) 30ms
+ ✓ src/app/(admin)/materi/actions/types/__tests__/queries.test.ts (9 tests) 11ms
+ ✓ src/app/(admin)/users/siswa/actions/management/__tests__/queries.test.ts (8 tests) 32ms
+ ✓ src/app/(admin)/rapot/templates/actions/templates/__tests__/logic.test.ts (19 tests) 10ms
+ ✓ src/app/(admin)/users/siswa/actions/management/__tests__/logic.test.ts (19 tests) 8ms
+ ✓ src/app/(admin)/presensi/actions/attendance/__tests__/logic.test.ts (10 tests) 19ms
+ ✓ src/app/(admin)/users/admin/actions/admin/__tests__/queries.test.ts (7 tests) 14ms
+ ❯ src/lib/__tests__/userUtils.test.ts (8 tests | 3 failed) 86ms
+   × userUtils > Cache Clearing > clearUserCache should remove all known storages and reload by default 39ms
+     → expected "spy" to be called with arguments: [ 'presensi-ui-store' ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "swr-cache",
+  ]
+
+  2nd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "user-profile-storage",
+  ]
+
+  3rd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "siswa-storage",
+  ]
+
+  4th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "laporan-storage",
+  ]
+
+  5th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "attendance-storage",
+  ]
+
+  6th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "absensi-ui-store",
+  ]
+
+  7th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "dashboard-storage",
+  ]
+
+  8th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "materi-storage",
+  ]
+
+
+Number of calls: 8
+
+   × userUtils > Cache Clearing > clearUserCache(true) should remove all storages and reload 10ms
+     → expected "spy" to be called with arguments: [ 'presensi-ui-store' ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "swr-cache",
+  ]
+
+  2nd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "user-profile-storage",
+  ]
+
+  3rd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "siswa-storage",
+  ]
+
+  4th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "laporan-storage",
+  ]
+
+  5th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "attendance-storage",
+  ]
+
+  6th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "absensi-ui-store",
+  ]
+
+  7th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "dashboard-storage",
+  ]
+
+  8th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "materi-storage",
+  ]
+
+
+Number of calls: 8
+
+   × userUtils > Cache Clearing > clearUserCache(false) should remove all storages WITHOUT reload 1ms
+     → expected "spy" to be called with arguments: [ 'presensi-ui-store' ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "swr-cache",
+  ]
+
+  2nd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "user-profile-storage",
+  ]
+
+  3rd spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "siswa-storage",
+  ]
+
+  4th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "laporan-storage",
+  ]
+
+  5th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "attendance-storage",
+  ]
+
+  6th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "absensi-ui-store",
+  ]
+
+  7th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "dashboard-storage",
+  ]
+
+  8th spy call:
+
+  Array [
+-   "presensi-ui-store",
++   "materi-storage",
+  ]
+
+
+Number of calls: 8
+
+ ✓ src/app/(admin)/materi/actions/categories/__tests__/queries.test.ts (8 tests) 293ms
+ ✓ src/lib/__tests__/teacherAccessControl.test.ts (23 tests) 25ms
+ ✓ src/lib/utils/__tests__/attendanceCalculation.test.ts (12 tests) 36ms
+ ✓ src/app/(admin)/rapot/templates/actions/resolution/__tests__/queries.test.ts (8 tests) 63ms
+ ✓ src/app/(admin)/dashboard/actions/monitoring/__tests__/queries.test.ts (8 tests) 6ms
+ ✓ src/app/(admin)/rapot/templates/actions/sections/__tests__/logic.test.ts (19 tests) 7ms
+ ✓ src/lib/utils/__tests__/batchFetching.test.ts (6 tests) 8ms
+ ❯ src/app/(admin)/settings/security/__tests__/actions.test.ts (10 tests | 1 failed) 10ms
+   × changePassword > return { success: true } pada happy path 6ms
+     → expected { Object (error) } to deeply equal { success: true }
+ ✓ src/app/(admin)/dashboard/actions/overview/__tests__/queries.test.ts (9 tests) 8ms
+ ✓ src/app/(admin)/users/siswa/actions/classes/__tests__/queries.test.ts (6 tests) 6ms
+ ✓ src/app/(admin)/users/siswa/actions/classes/__tests__/actions.test.ts (5 tests) 72ms
+ ✓ src/lib/__tests__/accessControlServer.test.ts (16 tests) 18ms
+ ✓ src/app/(admin)/users/guru/actions/classes/__tests__/logic.test.ts (12 tests) 4ms
+ ✓ src/app/(admin)/users/guru/actions/settings/__tests__/queries.test.ts (6 tests) 8ms
+ ✓ src/app/(admin)/presensi/actions/meetings/__tests__/logic.test.ts (10 tests) 7ms
+ ✓ src/app/(admin)/dashboard/actions/overview/__tests__/logic.test.ts (15 tests) 67ms
+ ✓ src/app/(admin)/users/guru/actions/classes/__tests__/queries.test.ts (5 tests) 9ms
+ ✓ src/lib/__tests__/accessControl.test.ts (14 tests) 7ms
+ ✓ src/app/(admin)/users/siswa/actions/sebaran/__tests__/logic.test.ts (11 tests) 3ms
+ ✓ src/lib/__tests__/teacherPermissions.test.ts (8 tests) 2ms
+ ✓ src/app/(admin)/materi/actions/types/__tests__/logic.test.ts (13 tests) 3ms
+ ✓ src/app/(admin)/users/siswa/actions/sebaran/__tests__/actions.test.ts (4 tests) 5ms
+ ✓ src/app/(admin)/users/siswa/actions/classes/__tests__/logic.test.ts (6 tests) 18ms
+ ✓ src/app/(admin)/dashboard/__tests__/dashboardHelpers.test.ts (5 tests) 4ms
+ ✓ src/lib/__tests__/appSettings.test.ts (4 tests) 25ms
+ ✓ src/app/(admin)/users/siswa/actions/sebaran/__tests__/queries.test.ts (4 tests) 17ms
+ ✓ src/lib/__tests__/utils.test.ts (8 tests) 21ms
+ ✓ src/app/(admin)/settings/security/__tests__/logic.test.ts (8 tests) 10ms
+ ✓ src/app/(admin)/presensi/actions/meetings/__tests__/queries.test.ts (2 tests) 15ms
+ ✓ src/app/(admin)/presensi/actions/attendance/__tests__/queries.test.ts (3 tests) 19ms
+ ✓ src/app/(admin)/materi/actions/categories/__tests__/logic.test.ts (11 tests) 11ms
+ ✓ src/lib/__tests__/activityLogger.test.ts (2 tests) 7ms
+ ✓ src/app/(admin)/users/guru/actions/settings/__tests__/logic.test.ts (5 tests) 4ms
+ ✓ src/app/(admin)/users/guru/actions/teacher-class-masters/__tests__/logic.test.ts (5 tests) 4ms
+ ✓ src/app/(admin)/presensi/actions/meetings/__tests__/helpers.client.test.ts (6 tests) 2ms
+
+ Test Files  5 failed | 68 passed (73)
+      Tests  22 failed | 1113 passed (1135)
+   Start at  04:35:35
+   Duration  17.70s (transform 4.90s, setup 19.28s, collect 7.36s, tests 2.16s, environment 58.74s, prepare 7.15s)
+

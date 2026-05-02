@@ -1,11 +1,12 @@
 import { create } from 'zustand'
+import type { TeacherDeleteImpact } from '../actions/teachers/queries'
 
 interface GuruState {
   // Modal states
   isModalOpen: boolean
   editingGuru: any | null
   resetPasswordModal: { isOpen: boolean; guru: any }
-  deleteConfirm: { isOpen: boolean; guru: any }
+  deleteConfirm: { isOpen: boolean; guru: any; impact: TeacherDeleteImpact | null; isLoadingImpact: boolean }
   formSettingsModal: { isOpen: boolean; guru: any }
   
   // Filter states
@@ -23,7 +24,8 @@ interface GuruState {
   closeModal: () => void
   openResetPasswordModal: (guru: any) => void
   closeResetPasswordModal: () => void
-  openDeleteConfirm: (guru: any) => void
+  openDeleteConfirm: (guru: any, impact?: TeacherDeleteImpact | null) => void
+  setDeleteImpact: (impact: TeacherDeleteImpact | null, isLoadingImpact?: boolean) => void
   closeDeleteConfirm: () => void
   openFormSettingsModal: (guru: any) => void
   closeFormSettingsModal: () => void
@@ -36,7 +38,7 @@ export const useGuruStore = create<GuruState>((set) => ({
   isModalOpen: false,
   editingGuru: null,
   resetPasswordModal: { isOpen: false, guru: null },
-  deleteConfirm: { isOpen: false, guru: null },
+  deleteConfirm: { isOpen: false, guru: null, impact: null, isLoadingImpact: false },
   formSettingsModal: { isOpen: false, guru: null },
   filters: { daerah: [], desa: [], kelompok: [], kelas: [], search: '' },
   
@@ -46,8 +48,9 @@ export const useGuruStore = create<GuruState>((set) => ({
   closeModal: () => set({ isModalOpen: false, editingGuru: null }),
   openResetPasswordModal: (guru) => set({ resetPasswordModal: { isOpen: true, guru } }),
   closeResetPasswordModal: () => set({ resetPasswordModal: { isOpen: false, guru: null } }),
-  openDeleteConfirm: (guru) => set({ deleteConfirm: { isOpen: true, guru } }),
-  closeDeleteConfirm: () => set({ deleteConfirm: { isOpen: false, guru: null } }),
+  openDeleteConfirm: (guru, impact = null) => set({ deleteConfirm: { isOpen: true, guru, impact, isLoadingImpact: false } }),
+  setDeleteImpact: (impact, isLoadingImpact = false) => set((state) => ({ deleteConfirm: { ...state.deleteConfirm, impact, isLoadingImpact } })),
+  closeDeleteConfirm: () => set({ deleteConfirm: { isOpen: false, guru: null, impact: null, isLoadingImpact: false } }),
   openFormSettingsModal: (guru) => set({ formSettingsModal: { isOpen: true, guru } }),
   closeFormSettingsModal: () => set({ formSettingsModal: { isOpen: false, guru: null } }),
   setFilters: (newFilters) => set((state) => ({ 

@@ -13,6 +13,7 @@ import {
     fetchClassesByIds,
     fetchClassesByIdsFlat,
     fetchKelompokByIds,
+    fetchTeacherDeleteImpact,
 } from './queries'
 import {
     validateCreateTeacherData,
@@ -152,6 +153,29 @@ export async function deleteTeacher(id: string) {
         const { data: { user } } = await supabase.auth.getUser()
         
         const adminClient = await createAdminClient()
+
+        // 1. Nullify NO ACTION FK references (SET NULL workaround — these columns allow NULL)
+        // classes.teacher_id, meetings.teacher_id, student_material_progress.teacher_id,
+        // student_reports.teacher_id, attendance_logs.recorded_by perlu di-NULL dulu
+        // sebelum profiles row bisa dihapus oleh auth.admin.deleteUser
+        await Promise.allSettled([
+            adminClient.from('classes').update({ teacher_id: null }).eq('teacher_id', id),
+            adminClient.from('meetings').update({ teacher_id: null }).eq('teacher_id', id),
+            adminClient.from('student_material_progress').update({ teacher_id: null }).eq('teacher_id', id),
+            adminClient.from('student_reports').update({ teacher_id: null }).eq('teacher_id', id),
+            adminClient.from('attendance_logs').update({ recorded_by: null }).eq('recorded_by', id),
+            adminClient.from('material_monthly_targets').update({ created_by: null }).eq('created_by', id),
+        ])
+
+        // 2. Hapus junction rows yang CASCADE (teacher_classes, teacher_class_masters, teacher_activity_types)
+        // sudah punya delete_rule CASCADE di DB, tapi kita hapus eksplisit untuk keamanan
+        await Promise.allSettled([
+            adminClient.from('teacher_classes').delete().eq('teacher_id', id),
+            adminClient.from('teacher_class_masters').delete().eq('teacher_id', id),
+            adminClient.from('teacher_activity_types').delete().eq('teacher_id', id)
+        ])
+
+        // 3. Hapus user dari Supabase Auth (cascade ke profiles melalui auth trigger)
         const { error } = await adminClient.auth.admin.deleteUser(id)
         if (error) throw error
 
@@ -169,6 +193,19 @@ export async function deleteTeacher(id: string) {
     } catch (error) {
         console.error('Error deleting teacher:', error)
         throw handleApiError(error, 'menghapus data', 'Gagal menghapus guru')
+    }
+}
+
+/**
+ * Get impact summary before deleting a teacher
+ */
+export async function getTeacherDeleteImpact(id: string) {
+    try {
+        const supabase = await createAdminClient()
+        return await fetchTeacherDeleteImpact(supabase, id)
+    } catch (error) {
+        console.error('Error fetching teacher delete impact:', error)
+        throw handleApiError(error, 'memuat data', 'Gagal memuat dampak penghapusan guru')
     }
 }
 

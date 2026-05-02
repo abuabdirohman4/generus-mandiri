@@ -1,8 +1,9 @@
-// ─── Teachers CRUD + getAllTeachers + kelompok assignment ──────────────────────
+// ─── Teachers CRUD + getAllTeachers + kelompok assignment + delete impact ──────
 export {
     createTeacher,
     updateTeacher,
     deleteTeacher,
+    getTeacherDeleteImpact,
     resetTeacherPassword,
     getAllTeachers,
     assignTeacherToKelompok,

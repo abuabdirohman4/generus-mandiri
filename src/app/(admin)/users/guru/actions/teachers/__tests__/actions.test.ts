@@ -388,31 +388,40 @@ describe('Teacher Actions (Layer 3)', () => {
 
   describe('resetTeacherPassword', () => {
     it('throws when auth.admin.updateUserById fails', async () => {
-      const supabase = makeSupabase()
-      supabase.auth.admin.updateUserById = vi.fn().mockResolvedValue({
+      const adminClient = makeAdminSupabase()
+      adminClient.auth.admin.updateUserById = vi.fn().mockResolvedValue({
         error: new Error('Password reset failed'),
       })
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
+
+      const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       await expect(resetTeacherPassword('teacher-1', 'newpass')).rejects.toThrow()
     })
 
     it('returns success on happy path', async () => {
+      const adminClient = makeAdminSupabase()
+      adminClient.auth.admin.updateUserById = vi.fn().mockResolvedValue({ error: null })
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
+
       const supabase = makeSupabase()
-      supabase.auth.admin.updateUserById = vi.fn().mockResolvedValue({ error: null })
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       const result = await resetTeacherPassword('teacher-1', 'newpass123')
 
       expect(result.success).toBe(true)
-      expect(supabase.auth.admin.updateUserById).toHaveBeenCalledWith('teacher-1', {
+      expect(adminClient.auth.admin.updateUserById).toHaveBeenCalledWith('teacher-1', {
         password: 'newpass123',
       })
     })
 
     it('does not call revalidatePath after password reset', async () => {
+      const adminClient = makeAdminSupabase()
+      adminClient.auth.admin.updateUserById = vi.fn().mockResolvedValue({ error: null })
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
+
       const supabase = makeSupabase()
-      supabase.auth.admin.updateUserById = vi.fn().mockResolvedValue({ error: null })
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       await resetTeacherPassword('teacher-1', 'newpass123')

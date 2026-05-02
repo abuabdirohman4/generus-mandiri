@@ -143,7 +143,31 @@ export default function GuruManagementPage() {
           onClose={closeDeleteConfirm}
           onConfirm={handleDelete}
           title="Hapus Guru?"
-          message={`Apakah Anda yakin ingin menghapus guru <br> "${deleteConfirm.guru?.username}"?`}
+          message={(() => {
+            const { guru, impact, isLoadingImpact } = deleteConfirm
+            const baseName = `Apakah Anda yakin ingin menghapus guru <br> <strong>"${guru?.full_name || guru?.username}"</strong>?`
+
+            if (isLoadingImpact) {
+              return `${baseName}<br/><br/><span class="text-gray-400 text-xs">Mengecek dampak penghapusan...</span>`
+            }
+
+            if (!impact) return baseName
+
+            const warnings: string[] = []
+            if (impact.classes_count > 0)
+              warnings.push(`${impact.classes_count} kelas akan kehilangan guru`)
+            if (impact.meetings_count > 0)
+              warnings.push(`${impact.meetings_count} pertemuan akan kehilangan referensi guru`)
+            if (impact.material_progress_count > 0)
+              warnings.push(`${impact.material_progress_count} catatan progress materi akan kehilangan referensi guru`)
+            if (impact.student_reports_count > 0)
+              warnings.push(`${impact.student_reports_count} laporan siswa akan kehilangan referensi guru`)
+
+            if (warnings.length === 0) return baseName
+
+            const warningHtml = warnings.map(w => `• ${w}`).join('<br/>')
+            return `${baseName}<br/><br/><span class="text-amber-600 dark:text-amber-400 font-medium">⚠️ Dampak penghapusan:</span><br/><span class="text-gray-600 dark:text-gray-400">${warningHtml}</span>`
+          })()}
           confirmText="Hapus"
           cancelText="Batal"
           isDestructive={true}

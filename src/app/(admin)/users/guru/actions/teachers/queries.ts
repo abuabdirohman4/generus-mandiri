@@ -152,3 +152,29 @@ export async function fetchKelompokByIds(supabase: SupabaseClient, kelompokIds: 
         .select('id, name')
         .in('id', kelompokIds)
 }
+
+export interface TeacherDeleteImpact {
+    classes_count: number
+    meetings_count: number
+    material_progress_count: number
+    student_reports_count: number
+}
+
+export async function fetchTeacherDeleteImpact(
+    supabase: any,
+    teacherId: string
+): Promise<TeacherDeleteImpact> {
+    const [classesRes, meetingsRes, progressRes, reportsRes] = await Promise.all([
+        supabase.from('classes').select('id', { count: 'exact', head: true }).eq('teacher_id', teacherId),
+        supabase.from('meetings').select('id', { count: 'exact', head: true }).eq('teacher_id', teacherId),
+        supabase.from('student_material_progress').select('id', { count: 'exact', head: true }).eq('teacher_id', teacherId),
+        supabase.from('student_reports').select('id', { count: 'exact', head: true }).eq('teacher_id', teacherId),
+    ])
+
+    return {
+        classes_count: classesRes.count ?? 0,
+        meetings_count: meetingsRes.count ?? 0,
+        material_progress_count: progressRes.count ?? 0,
+        student_reports_count: reportsRes.count ?? 0,
+    }
+}
