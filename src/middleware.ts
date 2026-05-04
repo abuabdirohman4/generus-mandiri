@@ -24,6 +24,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    // Skip middleware for docs pages — static content, no auth required
+    if (pathname.startsWith('/docs')) {
+      return NextResponse.next()
+    }
+
     const { supabase, response } = createClient(request)
     
     // Get session with timeout to prevent hanging
@@ -107,6 +112,6 @@ export const config = {
      * - sw-custom.js (custom service worker)
      * - workbox-*.js (workbox files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|images/|manifest\.json|sw\.js|sw-dev\.js|sw-custom\.js|workbox-).*)',
+    '/((?!_next/static|_next/image|favicon.ico|images/|manifest\.json|sw\.js|sw-dev\.js|sw-custom\.js|workbox-|docs).*)',
   ],
 } 

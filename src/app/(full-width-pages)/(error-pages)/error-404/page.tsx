@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+export const dynamic = 'force-static';
+
 import GridShape from "@/components/common/GridShape";
 
 export const metadata: Metadata = {

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const dynamic = 'force-static';
 // Icons will be inline SVGs
 
 export const metadata: Metadata = {
