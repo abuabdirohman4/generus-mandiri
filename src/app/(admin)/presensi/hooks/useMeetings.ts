@@ -173,8 +173,8 @@ export function useMeetings(classId?: string) {
     {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // 2 seconds
-      revalidateIfStale: true,
+      dedupingInterval: 30000,    // 30 seconds — avoid duplicate fetches
+      revalidateIfStale: false,   // Don't auto-refetch stale data
       revalidateOnMount: true,
       refreshInterval: 0,
       shouldRetryOnError: true, // Retry on error
