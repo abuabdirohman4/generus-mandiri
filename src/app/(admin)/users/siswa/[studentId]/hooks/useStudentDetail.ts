@@ -34,7 +34,7 @@ export function useStudentDetail(
     {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000,
+      dedupingInterval: 30000,       // 30 seconds — prevent spam refetch on tab-switch
     }
   )
 

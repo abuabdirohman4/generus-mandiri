@@ -168,11 +168,11 @@ export function useMeetingAttendance(meetingId: string) {
     meetingId ? `/api/meeting-attendance/${meetingId}` : null,
     fetcher,
     {
-      revalidateOnFocus: true,       // Fetch when window gains focus
+      revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000,        // Reduce from 30000 to 2000ms
-      revalidateOnMount: true,      // Always fetch on page load
-      revalidateIfStale: true,       // Fetch if data is stale
+      dedupingInterval: 30000,       // 30 seconds — prevent spam refetch on tab-switch
+      revalidateOnMount: true,
+      revalidateIfStale: true,
       onError: (error) => {
         console.error('Error fetching meeting attendance:', error)
       }
