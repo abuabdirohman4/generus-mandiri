@@ -118,26 +118,33 @@ export async function fetchMateriReport(
     // Step 5: Get progress for all students × all material items
     const { data: progress } = await supabase
         .from('student_material_progress')
-        .select('student_id, material_item_id, nilai')
+        .select('student_id, material_item_id, nilai, hafal')
         .in('student_id', studentIds)
         .in('material_item_id', materialItemIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
     // Step 6: Aggregate per material_item
-    const progressByMaterial = new Map<string, number[]>()
+    const progressByMaterial = new Map<string, any[]>()
     ;(progress || []).forEach((p: any) => {
-        if (p.nilai !== null && p.nilai !== undefined) {
-            if (!progressByMaterial.has(p.material_item_id)) {
-                progressByMaterial.set(p.material_item_id, [])
-            }
-            progressByMaterial.get(p.material_item_id)!.push(p.nilai)
+        if (!progressByMaterial.has(p.material_item_id)) {
+            progressByMaterial.set(p.material_item_id, [])
         }
+        progressByMaterial.get(p.material_item_id)!.push(p)
     })
 
     const rows: MateriReportRow[] = materialItems.map((item: any) => {
-        const nilaiList = progressByMaterial.get(item.id) || []
-        const tuntasCount = nilaiList.filter(n => n >= 70).length
+        const studentProgressList = progressByMaterial.get(item.id) || []
+        
+        // Tuntas if Nilai >= 70 OR marked as Hafal
+        const tuntasCount = studentProgressList.filter(p => 
+            (p.nilai !== null && p.nilai >= 70) || p.hafal === true
+        ).length
+
+        const nilaiList = studentProgressList
+            .map(p => p.nilai)
+            .filter(n => n !== null && n !== undefined)
+
         const avgNilai = nilaiList.length > 0
             ? Math.round(nilaiList.reduce((a, b) => a + b, 0) / nilaiList.length)
             : 0

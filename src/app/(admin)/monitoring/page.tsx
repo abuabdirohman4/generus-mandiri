@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
     getClassProgress, 
     getMaterialsByClassAndSemester, 
@@ -472,22 +472,6 @@ export default function MonitoringPage() {
         }
     };
 
-    // Calculate student completion percentage (average nilai)
-    const getStudentCompletion = (studentId: string): number => {
-        if (displayedMaterials.length === 0) return 0;
-
-        const studentProgress = displayedMaterials
-            .map(m => {
-                const key = `${studentId}-${m.id}`;
-                return progressMap.get(key);
-            })
-            .filter(p => p?.nilai !== undefined && p.nilai > 0); // Only count scored materials
-
-        if (studentProgress.length === 0) return 0;
-
-        const totalNilai = studentProgress.reduce((sum, p) => sum + (p!.nilai || 0), 0);
-        return Math.round(totalNilai / studentProgress.length);
-    };
 
     // Selected default to hafalan
     // const filteredMaterials = materials.filter(
@@ -506,6 +490,28 @@ export default function MonitoringPage() {
         if (!selectedMonth) return filteredMaterials;
         return filteredMaterials.filter(m => monthlyTargetItemIds.has(m.id));
     }, [filteredMaterials, selectedMonth, monthlyTargetItemIds]);
+
+    // Calculate student metrics (completion rate & average nilai)
+    const getStudentMetrics = useCallback((studentId: string) => {
+        if (displayedMaterials.length === 0) return { completion: 0, avgNilai: 0 };
+
+        const studentProgress = displayedMaterials.map(m => {
+            const key = `${studentId}-${m.id}`;
+            return progressMap.get(key);
+        });
+
+        // 1. Completion: materials that are "Tuntas" (Pass KKM 70 or marked as Hafal)
+        const tuntasCount = studentProgress.filter(p => (p?.nilai !== undefined && p.nilai >= 70) || p?.hafal).length;
+        const completion = Math.round((tuntasCount / displayedMaterials.length) * 100);
+
+        // 2. Average Nilai: only from filled materials
+        const scoredProgress = studentProgress.filter(p => p?.nilai !== undefined && p.nilai > 0);
+        const totalNilai = scoredProgress.reduce((sum, p) => sum + (p!.nilai || 0), 0);
+        const avgNilai = scoredProgress.length > 0 ? Math.round(totalNilai / scoredProgress.length) : 0;
+
+        return { completion, avgNilai };
+    }, [displayedMaterials, progressMap]);
+
 
     // Format class options:
     // - Jika kelompok SUDAH dipilih (filtered): cukup tampilkan nama kelas saja
@@ -564,39 +570,30 @@ export default function MonitoringPage() {
         : (classOptions.find(opt => opt.value === selectedClassId)?.label || selectedClass?.name || '');
 
     // Get current student completion
-    const currentStudentCompletion = currentStudent ? getStudentCompletion(currentStudent.id) : 0;
+    // Get current student completion
+    const { completion: currentStudentCompletion } = currentStudent ? getStudentMetrics(currentStudent.id) : { completion: 0 };
 
     const classMetrics = useMemo(() => {
         if (!students.length) return null
 
-        // Avg nilai: rata-rata nilai semua siswa yang ada progress
+        let totalProgress = 0
         let totalNilai = 0
-        let nilaiCount = 0
+        let countWithNilai = 0
+
         students.forEach(s => {
-            const studentProgress = [...progressMap.values()].filter(
-                p => p.student_id === s.id && (p.nilai ?? 0) > 0
-            )
-            if (studentProgress.length > 0) {
-                const avg = studentProgress.reduce((sum, p) => sum + (p.nilai ?? 0), 0) / studentProgress.length
-                totalNilai += avg
-                nilaiCount++
+            const { completion, avgNilai } = getStudentMetrics(s.id)
+            totalProgress += completion
+            if (avgNilai > 0) {
+                totalNilai += avgNilai
+                countWithNilai++
             }
         })
-        const avgNilai = nilaiCount > 0 ? Math.round(totalNilai / nilaiCount) : 0
 
-        // % capai target bulan ini (dari monthlyPercentages Map yang sudah ada)
-        const monthlyArr = [...monthlyPercentages.values()]
-        const avgMonthly = monthlyArr.length > 0
-            ? Math.round(monthlyArr.reduce((a, b) => a + b, 0) / monthlyArr.length)
-            : null
+        const avgProgress = Math.round(totalProgress / students.length)
+        const avgNilai = countWithNilai > 0 ? Math.round(totalNilai / countWithNilai) : 0
 
-        // Siswa aktif: ada nilai > 0
-        const activeCount = students.filter(s =>
-            [...progressMap.values()].some(p => p.student_id === s.id && (p.nilai ?? 0) > 0)
-        ).length
-
-        return { avgNilai, avgMonthly, activeCount, totalCount: students.length }
-    }, [students, progressMap, monthlyPercentages])
+        return { avgProgress, avgNilai, totalCount: students.length }
+    }, [students, getStudentMetrics])
 
     return (
         <div className="flex h-[calc(100vh-8rem)] relative">
@@ -1090,7 +1087,7 @@ export default function MonitoringPage() {
                                                                         Nilai
                                                                     </th>
                                                                     <th className="px-3 md:px-4 py-2 md:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-16 md:w-32">
-                                                                        Grade
+                                                                        Predikat
                                                                     </th>
                                                                 </tr>
                                                             </thead>
@@ -1199,7 +1196,7 @@ export default function MonitoringPage() {
 
 
                                 {/* Grading Legend */}
-                                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
+                                <div className="dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                                         <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import DataTable from '@/components/table/Table'
 import type { MateriReportRow } from '../actions/reports/materiQueries'
+import { getGrade } from '@/lib/percentages'
 
 interface MateriDataTableProps {
     rows: MateriReportRow[]
@@ -31,20 +32,14 @@ export default function MateriDataTable({ rows, isLoading }: MateriDataTableProp
             className: 'hidden sm:table-cell',
         },
         {
-            key: 'tuntas_count',
-            label: 'Progress',
-            sortable: true,
-            align: 'center' as const,
-        },
-        {
             key: 'percentage',
-            label: '%',
+            label: 'Tercapai',
             sortable: true,
             align: 'center' as const,
         },
         {
             key: 'avg_nilai',
-            label: 'Avg Nilai',
+            label: 'Nilai',
             sortable: true,
             align: 'center' as const,
             className: 'hidden md:table-cell',
@@ -59,25 +54,32 @@ export default function MateriDataTable({ rows, isLoading }: MateriDataTableProp
             case 'material_type_name':
                 return <span className="text-gray-500 dark:text-gray-400">{row.material_type_name}</span>
             
-            case 'tuntas_count':
-                return (
-                    <span className="text-gray-600 dark:text-gray-300">
-                        {row.tuntas_count}/{row.total_students}
-                    </span>
-                )
-            
             case 'percentage':
+                const colorClass = getCompletionColor(row.percentage)
                 return (
-                    <span className={`font-semibold ${getCompletionColor(row.percentage)}`}>
-                        {row.percentage}%
-                    </span>
+                    <div className="flex items-center justify-center gap-1.5 font-semibold">
+                        <span className={colorClass}>
+                            {row.percentage}%
+                        </span>
+                        <span className="text-gray-400">
+                            ({row.tuntas_count}/{row.total_students})
+                        </span>
+                    </div>
                 )
             
             case 'avg_nilai':
+                if (row.avg_nilai <= 0) return <span className="text-gray-400">—</span>;
+                const { grade, color: gradeColor } = getGrade(row.avg_nilai);
+                const textColor = gradeColor.split(' ')[0];
                 return (
-                    <span className="text-gray-500 dark:text-gray-400">
-                        {row.avg_nilai > 0 ? row.avg_nilai : '—'}
-                    </span>
+                    <div className="flex items-center justify-center gap-2 font-semibold">
+                        <span className="text-gray-700 dark:text-gray-300">
+                            {row.avg_nilai}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeColor}`}>
+                            {grade}
+                        </span>
+                    </div>
                 )
             
             default:

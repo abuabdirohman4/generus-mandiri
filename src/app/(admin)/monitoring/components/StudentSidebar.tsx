@@ -1,6 +1,6 @@
 'use client';
 
-import { getProgressColor } from '@/lib/percentages';
+import { getProgressColor, getGrade, getStatusColor, getStatusBgColor } from '@/lib/percentages';
 import { useState, useMemo } from 'react';
 
 interface Student {
@@ -14,6 +14,7 @@ interface Progress {
     material_item_id: string;
     nilai?: number;
     notes?: string;
+    hafal?: boolean;
 }
 
 interface Material {
@@ -22,9 +23,8 @@ interface Material {
 }
 
 interface ClassMetrics {
+    avgProgress: number
     avgNilai: number
-    avgMonthly: number | null
-    activeCount: number
     totalCount: number
 }
 
@@ -57,21 +57,25 @@ export default function StudentSidebar({
 }: StudentSidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Calculate completion percentage for a student (average nilai)
-    const getStudentCompletion = (studentId: string): number => {
-        if (materials.length === 0) return 0;
+    // Calculate metrics for a student
+    const getStudentMetrics = (studentId: string) => {
+        if (materials.length === 0) return { completion: 0, avgNilai: 0, grade: '-' };
 
-        const studentProgress = materials
-            .map(m => {
-                const key = `${studentId}-${m.id}`;
-                return progressData.get(key);
-            })
-            .filter(p => p?.nilai !== undefined && p.nilai > 0); // Only count scored materials
+        const studentProgress = materials.map(m => {
+            const key = `${studentId}-${m.id}`;
+            return progressData.get(key);
+        });
 
-        if (studentProgress.length === 0) return 0;
+        // 1. Completion: materials that are "Tuntas" (Pass KKM 70 or marked as Hafal)
+        const tuntasCount = studentProgress.filter(p => (p?.nilai !== undefined && p.nilai >= 70) || p?.hafal).length;
+        const completion = Math.round((tuntasCount / materials.length) * 100);
 
-        const totalNilai = studentProgress.reduce((sum, p) => sum + (p!.nilai || 0), 0);
-        return Math.round(totalNilai / studentProgress.length);
+        // 2. Average Nilai: only from filled materials
+        const scoredProgress = studentProgress.filter(p => p?.nilai !== undefined && p.nilai > 0);
+        const totalNilai = scoredProgress.reduce((sum, p) => sum + (p!.nilai || 0), 0);
+        const avgNilai = scoredProgress.length > 0 ? Math.round(totalNilai / scoredProgress.length) : 0;
+
+        return { completion, avgNilai };
     };
 
     // Filter students by search query
@@ -129,25 +133,32 @@ export default function StudentSidebar({
 
                 {/* Class Summary Panel */}
                 {classMetrics && (
-                    <div className="px-4 pb-3 pt-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="px-4 pb-4 pt-3 border-b border-gray-100 dark:border-gray-800">
                         <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">
+                            <div className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-transparent`}>
+                                <div className={`text-lg font-bold mt-1 ${getStatusColor(classMetrics.avgProgress)}`}>
+                                    {classMetrics.avgProgress}%
+                                </div>
+                                <div className={`text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-1`}>Pencapaian</div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-gray-100 dark:border-gray-700/50">
+                                <div className="text-lg font-bold mt-1 text-gray-900 dark:text-white">
                                     {classMetrics.avgNilai > 0 ? classMetrics.avgNilai : '—'}
                                 </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Avg Nilai</div>
+                                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-1">Nilai</div>
                             </div>
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">
-                                    {classMetrics.avgMonthly !== null ? `${classMetrics.avgMonthly}%` : '—'}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Target</div>
-                            </div>
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
-                                <div className="text-base font-bold text-gray-900 dark:text-white">
-                                    {classMetrics.activeCount}/{classMetrics.totalCount}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aktif</div>
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-gray-100 dark:border-gray-700/50 flex flex-col items-center justify-center">
+                                {(() => {
+                                    const { grade, color } = getGrade(classMetrics.avgNilai);
+                                    return (
+                                        <>
+                                            <div className={`text-lg font-black px-2 py-0.5 rounded-lg mb-1 ${grade !== '-' ? color : 'text-gray-400'}`}>
+                                                {grade}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Predikat</div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -204,8 +215,9 @@ export default function StudentSidebar({
                             {filteredStudents
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(student => {
-                                    const completion = getStudentCompletion(student.id);
+                                    const { completion, avgNilai } = getStudentMetrics(student.id);
                                     const progressColor = getProgressColor(completion);
+                                    const { grade, color: gradeColor } = getGrade(avgNilai);
                                     const isSelected = student.id === selectedStudentId;
                                     const initial = student.name.charAt(0).toUpperCase();
                                     const monthlyTarget = monthlyPercentages?.get(student.id);
@@ -222,22 +234,22 @@ export default function StudentSidebar({
                                                 }
                                             }}
                                             className={`
-                                                w-full text-left p-3 rounded-lg transition-colors
+                                                w-full text-left p-3 rounded-xl transition-all duration-200
                                                 ${isSelected
-                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
-                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-transparent'
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500 shadow-sm'
+                                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent'
                                                 }
                                             `}
                                         >
-                                            <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-3 mb-3">
                                                 <div className={`
-                                                    w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold
-                                                    ${isSelected ? 'bg-blue-600' : 'bg-gray-400'}
+                                                    w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm
+                                                    ${isSelected ? 'bg-blue-600' : 'bg-gray-400 dark:bg-gray-600'}
                                                 `}>
                                                     {initial}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
+                                                    <div className="font-semibold text-gray-900 dark:text-white truncate flex items-center gap-2">
                                                         <span className="truncate">{student.name}</span>
                                                         {hasCompletedMonthly && (
                                                             <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -245,27 +257,36 @@ export default function StudentSidebar({
                                                             </svg>
                                                         )}
                                                     </div>
-                                                    {/* Commented until NIS ready 
-                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                        NIS: {student.nis || '-'}
-                                                    </div>
-                                                    */}
                                                 </div>
                                             </div>
 
-                                            {/* Progress Bar */}
-                                            <div className="space-y-1">
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="text-gray-600 dark:text-gray-400">
-                                                        Progress
-                                                    </span>
-                                                    <span className="font-medium text-gray-900 dark:text-white">
-                                                        {completion}%
-                                                    </span>
+                                            {/* Metrics Row */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                                            Progress
+                                                        </span>
+                                                        <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                                            {completion}%
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {avgNilai > 0 && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                                                                {avgNilai}
+                                                            </span>
+                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${gradeColor}`}>
+                                                                {grade}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+
+                                                <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                                     <div
-                                                        className={`h-full ${progressColor} transition-all duration-300`}
+                                                        className={`h-full ${progressColor} transition-all duration-500 ease-out`}
                                                         style={{ width: `${completion}%` }}
                                                     />
                                                 </div>
