@@ -21,6 +21,13 @@ interface Material {
     name: string;
 }
 
+interface ClassMetrics {
+    avgNilai: number
+    avgMonthly: number | null
+    activeCount: number
+    totalCount: number
+}
+
 interface StudentSidebarProps {
     students: Student[];
     selectedStudentId: string;
@@ -32,6 +39,7 @@ interface StudentSidebarProps {
     isLoading?: boolean;
     selectedClassName?: string;
     monthlyPercentages?: Map<string, number>;
+    classMetrics?: ClassMetrics | null;
 }
 
 export default function StudentSidebar({
@@ -44,7 +52,8 @@ export default function StudentSidebar({
     onToggle,
     isLoading = false,
     selectedClassName = '',
-    monthlyPercentages
+    monthlyPercentages,
+    classMetrics
 }: StudentSidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -117,6 +126,32 @@ export default function StudentSidebar({
                         </svg>
                     </button>
                 </div>
+
+                {/* Class Summary Panel */}
+                {classMetrics && (
+                    <div className="px-4 pb-3 pt-3 border-b border-gray-100 dark:border-gray-800">
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
+                                <div className="text-base font-bold text-gray-900 dark:text-white">
+                                    {classMetrics.avgNilai > 0 ? classMetrics.avgNilai : '—'}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Avg Nilai</div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
+                                <div className="text-base font-bold text-gray-900 dark:text-white">
+                                    {classMetrics.avgMonthly !== null ? `${classMetrics.avgMonthly}%` : '—'}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Target</div>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2 text-center">
+                                <div className="text-base font-bold text-gray-900 dark:text-white">
+                                    {classMetrics.activeCount}/{classMetrics.totalCount}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Aktif</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Search */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -205,7 +240,7 @@ export default function StudentSidebar({
                                                     <div className="font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
                                                         <span className="truncate">{student.name}</span>
                                                         {hasCompletedMonthly && (
-                                                            <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                                             </svg>
                                                         )}

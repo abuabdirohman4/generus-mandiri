@@ -4,6 +4,13 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { useLaporanPage } from './hooks'
 import { FilterSection, SummaryCards, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
+import MateriFilterSection from './components/MateriFilterSection'
+import MateriStatsCards from './components/MateriStatsCards'
+import MateriDataTable from './components/MateriDataTable'
+import { useMateriReportData } from './hooks/useMateriReportData'
+import { useState, useEffect } from 'react'
+import useSWR from 'swr'
+import { createClient } from '@/lib/supabase/client'
 import DataFilter from '@/components/shared/DataFilter'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
@@ -41,6 +48,70 @@ export default function LaporanPage() {
   } = useLaporanPage()
 
   const { activityTypes: myActivityTypes } = useMyActivityTypes()
+
+  const [laporanTab, setLaporanTab] = useState<'presensi' | 'materi'>('presensi')
+
+  const [materiFilters, setMateriFilters] = useState({
+      classId: '',
+      daerahId: '',
+      desaId: '',
+      kelompokId: '',
+      academicYearId: '',
+      semester: 1 as 1 | 2,
+      categoryId: '',
+      month: undefined as number | undefined,
+  })
+
+  // Initialize filters from user profile and fetch active academic year
+  useEffect(() => {
+    const initializeFilters = async () => {
+      const supabase = createClient()
+      
+      // Fetch active year if not already set
+      if (!materiFilters.academicYearId) {
+        const { data: activeYear } = await supabase
+          .from('academic_years')
+          .select('id')
+          .eq('is_active', true)
+          .single()
+        
+        if (activeYear) {
+          setMateriFilters(prev => ({ ...prev, academicYearId: activeYear.id }))
+        }
+      }
+
+      // Set org filters from profile
+      if (userProfile && !materiFilters.daerahId && !materiFilters.desaId && !materiFilters.kelompokId) {
+        setMateriFilters(prev => ({
+          ...prev,
+          daerahId: userProfile.daerah_id || '',
+          desaId: userProfile.desa_id || '',
+          kelompokId: userProfile.kelompok_id || '',
+        }))
+      }
+    }
+
+    initializeFilters()
+  }, [userProfile])
+
+  const { data: categories = [] } = useSWR('material-categories-options', async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('material_categories')
+        .select('id, name')
+        .ilike('name', '%Hafalan%')
+        .order('name');
+      return (data || []).map(c => ({ value: c.id, label: c.name }))
+  })
+
+  const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
+      filters: materiFilters,
+      enabled: laporanTab === 'materi'
+  })
+
+  const handleMateriFilterChange = (key: keyof typeof materiFilters, value: any) => {
+      setMateriFilters(prev => ({ ...prev, [key]: value }))
+  }
 
   if (hasError) {
     return (
@@ -89,83 +160,132 @@ export default function LaporanPage() {
           </div>
         )}
 
-        {/* Filter Section */}
-        <div className="space-y-4">
-          <FilterSection
-            filters={filters}
-            periodOptions={periodOptions}
-            classOptions={classOptions}
-            onFilterChange={handleFilterChange}
-            onDateChange={handleDateChange}
-            onWeekChange={handleWeekChange}
-            onResetFilters={handleResetFilters}
-            hasActiveFilters={hasActiveFilters}
-            filterCount={filterCount}
-            // NEW: Add these props
-            userProfile={userProfile}
-            daerahList={daerah || []}
-            desaList={desa || []}
-            kelompokList={kelompok || []}
-            classList={classes || []}
-            organisasiFilters={{
-              ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
-              gender: filters.gender || '',
-              activityType: filters.activityType || [],
-              activityLevel: filters.activityLevel || []
-            }}
-            onOrganisasiFilterChange={handleOrganisasiFilterChange}
-            activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
-          />
+        {/* Tab Selector */}
+        <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+            <button
+                onClick={() => setLaporanTab('presensi')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    laporanTab === 'presensi'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                }`}
+            >
+                Presensi
+            </button>
+            <button
+                onClick={() => setLaporanTab('materi')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    laporanTab === 'materi'
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                }`}
+            >
+                Materi
+            </button>
         </div>
 
-        {loading ? (
-          <LaporanSkeleton />
-        ) : hasData ? (
+        {laporanTab === 'presensi' && (
           <>
-            {/* Summary Cards */}
-            {/* <SummaryCards summary={reportData!.summary} /> */}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              {/* Stats Cards */}
-              <StatsCards
-                summaryStats={summaryStats}
-                period={filters.period}
-                viewMode={filters.viewMode}
+            {/* Filter Section */}
+            <div className="space-y-4">
+              <FilterSection
                 filters={filters}
-              />
-
-              {/* Chart */}
-              <ReportChart
-                key={`report-chart-${filters.period}-${filters.viewMode}`}
-                chartData={chartData}
-                summaryStats={summaryStats}
+                periodOptions={periodOptions}
+                classOptions={classOptions}
+                onFilterChange={handleFilterChange}
+                onDateChange={handleDateChange}
+                onWeekChange={handleWeekChange}
+                onResetFilters={handleResetFilters}
+                hasActiveFilters={hasActiveFilters}
+                filterCount={filterCount}
+                userProfile={userProfile}
+                daerahList={daerah || []}
+                desaList={desa || []}
+                kelompokList={kelompok || []}
+                classList={classes || []}
+                organisasiFilters={{
+                  ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
+                  gender: filters.gender || '',
+                  activityType: filters.activityType || [],
+                  activityLevel: filters.activityLevel || []
+                }}
+                onOrganisasiFilterChange={handleOrganisasiFilterChange}
+                activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
               />
             </div>
 
-            {/* Attendance Trend Chart */}
-            <AttendanceTrendChart
-              key={`trend-chart-${filters.period}-${filters.viewMode}`}
-              chartData={trendChartData}
-              isLoading={loading}
-              period={filters.period}
-              viewMode={filters.viewMode}
-            />
+            {loading ? (
+              <LaporanSkeleton />
+            ) : hasData ? (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                  {/* Stats Cards */}
+                  <StatsCards
+                    summaryStats={summaryStats}
+                    period={filters.period}
+                    viewMode={filters.viewMode}
+                    filters={filters}
+                  />
 
-            {/* Data Table */}
-            <DataTable tableData={tableData} userProfile={userProfile} />
+                  {/* Chart */}
+                  <ReportChart
+                    key={`report-chart-${filters.period}-${filters.viewMode}`}
+                    chartData={chartData}
+                    summaryStats={summaryStats}
+                  />
+                </div>
+
+                {/* Attendance Trend Chart */}
+                <AttendanceTrendChart
+                  key={`trend-chart-${filters.period}-${filters.viewMode}`}
+                  chartData={trendChartData}
+                  isLoading={loading}
+                  period={filters.period}
+                  viewMode={filters.viewMode}
+                />
+
+                {/* Data Table */}
+                <DataTable tableData={tableData} userProfile={userProfile} />
+              </>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
+                <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Tidak ada data
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Tidak ada data laporan presensi yang tersedia.
+                </p>
+              </div>
+            )}
           </>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              Tidak ada data
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Tidak ada data laporan yang tersedia.
-            </p>
-          </div>
+        )}
+
+        {laporanTab === 'materi' && (
+          <>
+            <MateriFilterSection
+              filters={materiFilters}
+              categories={categories}
+              onFilterChange={handleMateriFilterChange}
+              userProfile={userProfile}
+              daerahList={daerah || []}
+              desaList={desa || []}
+              kelompokList={kelompok || []}
+              classList={classes || []}
+            />
+            
+            <MateriStatsCards 
+              data={materiData} 
+              isLoading={isLoadingMateri} 
+            />
+            
+            <MateriDataTable 
+              rows={materiData?.rows || []} 
+              isLoading={isLoadingMateri} 
+            />
+          </>
         )}
       </div>
     </div>

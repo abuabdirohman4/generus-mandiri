@@ -559,6 +559,38 @@ export default function MonitoringPage() {
     // Get current student completion
     const currentStudentCompletion = currentStudent ? getStudentCompletion(currentStudent.id) : 0;
 
+    const classMetrics = useMemo(() => {
+        if (!students.length) return null
+
+        // Avg nilai: rata-rata nilai semua siswa yang ada progress
+        let totalNilai = 0
+        let nilaiCount = 0
+        students.forEach(s => {
+            const studentProgress = [...progressMap.values()].filter(
+                p => p.student_id === s.id && (p.nilai ?? 0) > 0
+            )
+            if (studentProgress.length > 0) {
+                const avg = studentProgress.reduce((sum, p) => sum + (p.nilai ?? 0), 0) / studentProgress.length
+                totalNilai += avg
+                nilaiCount++
+            }
+        })
+        const avgNilai = nilaiCount > 0 ? Math.round(totalNilai / nilaiCount) : 0
+
+        // % capai target bulan ini (dari monthlyPercentages Map yang sudah ada)
+        const monthlyArr = [...monthlyPercentages.values()]
+        const avgMonthly = monthlyArr.length > 0
+            ? Math.round(monthlyArr.reduce((a, b) => a + b, 0) / monthlyArr.length)
+            : null
+
+        // Siswa aktif: ada nilai > 0
+        const activeCount = students.filter(s =>
+            [...progressMap.values()].some(p => p.student_id === s.id && (p.nilai ?? 0) > 0)
+        ).length
+
+        return { avgNilai, avgMonthly, activeCount, totalCount: students.length }
+    }, [students, progressMap, monthlyPercentages])
+
     return (
         <div className="flex h-[calc(100vh-8rem)] relative">
             {/* Student Sidebar */}
@@ -574,6 +606,7 @@ export default function MonitoringPage() {
                     isLoading={loading}
                     selectedClassName={selectedClassName}
                     monthlyPercentages={monthlyPercentages}
+                    classMetrics={classMetrics}
                 />
             )}
 

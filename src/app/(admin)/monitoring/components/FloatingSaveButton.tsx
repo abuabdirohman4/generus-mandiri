@@ -18,7 +18,7 @@ export default function FloatingSaveButton({
             onClick={onSave}
             disabled={disabled || saving}
             className="
-                fixed md:hidden bottom-[70px] md:bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50
+                fixed md:hidden bottom-17.5 md:bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50
             "
             title="Simpan Progress"
         >
