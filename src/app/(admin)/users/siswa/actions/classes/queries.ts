@@ -59,13 +59,13 @@ export async function fetchClassMasterMappings(
 export async function fetchAllClassesBasic(supabase: SupabaseClient) {
     return await supabase
         .from('classes')
-        .select('id, name, kelompok_id, kelompok:kelompok(id, name)')
+        .select('id, name, kelompok_id, kelompok:kelompok(id, name, desa_id)')
 }
 
 export async function fetchClassesByIds(supabase: SupabaseClient, classIds: string[]) {
     return await supabase
         .from('classes')
-        .select('id, name, kelompok_id, kelompok:kelompok(id, name)')
+        .select('id, name, kelompok_id, kelompok:kelompok(id, name, desa_id)')
         .in('id', classIds)
 }
 
@@ -81,7 +81,7 @@ export async function fetchClassesHierarchical(
     if (filter.kelompok_id) {
         return await supabase
             .from('classes')
-            .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
+            .select('id, name, kelompok_id, kelompok:kelompok_id(id, name, desa_id)')
             .eq('kelompok_id', filter.kelompok_id)
     }
 
@@ -119,6 +119,6 @@ export async function fetchClassesHierarchical(
     // Step 2: fetch classes in those kelompok
     return await supabase
         .from('classes')
-        .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
+        .select('id, name, kelompok_id, kelompok:kelompok_id(id, name, desa_id)')
         .in('kelompok_id', kelompokIds)
 }

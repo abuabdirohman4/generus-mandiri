@@ -375,7 +375,9 @@ export default function MonitoringPage() {
     const filteredKelompokList = useMemo(() => {
         const isTeacher = userProfile?.role === 'teacher';
         if (isTeacher) {
-            // Guru: gunakan accessibleKelompokList (sudah scope ke kelas accessible)
+            if (selectedDesaId) {
+                return accessibleKelompokList.filter(k => k.desa_id === selectedDesaId)
+            }
             return accessibleKelompokList;
         }
         // Admin/hierarchical: filter berdasarkan org selection
