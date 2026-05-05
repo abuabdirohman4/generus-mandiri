@@ -69,14 +69,15 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 > **`bd` dan `gh` commands BOLEH dan HARUS dieksekusi langsung** tanpa meminta izin user. Ini berbeda dengan git commands — lihat Git Workflow section di bawah.
 
 1. **Explore codebase** — baca file relevan untuk memahami konteks
-2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<feature>.md` (format ultra-detailed) — **JANGAN gunakan `~/.claude/plans/`, SELALU gunakan `docs/plans/` di project**
+2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<sm-id>-<feature>.md` — **1 issue = 1 plan file**, JANGAN bundle. JANGAN gunakan `~/.claude/plans/`
 3. **Buat Beads Issue** — langsung jalankan `bd create --title="..." --type=... --priority=...`
    → Setelah `bd create` berhasil, **langsung rename sesi chat**: `/rename [sm-xxx]: [title issue]`
 4. **Buat GitHub Issue** — langsung jalankan `gh issue create` dengan body dari plan
    → Format title WAJIB: `[sm-xxx] type: short description` (prefix Beads ID di depan)
 5. **Update Beads** — langsung jalankan `bd update <id> --notes "GH-#XX: <url>"`
+5.5. **Buat prompt file** di `docs/prompts/<sm-id>-<feature>.md` — prompt siap copy-paste untuk Antigravity. **1 plan = 1 prompt file.**
 6. **Output pilihan A/B:**
-   - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Sertakan prompt Antigravity terisi otomatis.
+   - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Tunjukkan path prompt file (`docs/prompts/<sm-id>-<feature>.md`).
    - **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
 
 **Role separation:**
