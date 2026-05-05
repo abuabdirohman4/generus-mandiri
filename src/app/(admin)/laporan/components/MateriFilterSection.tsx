@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import InputFilter from '@/components/form/input/InputFilter'
-import AcademicYearSelector from '@/components/shared/AcademicYearSelector'
-import { 
-    shouldShowDaerahFilter, 
-    modalShouldShowDesaFilter, 
-    modalShouldShowKelompokFilter 
+import { getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
+import {
+    shouldShowDaerahFilter,
+    modalShouldShowDesaFilter,
+    modalShouldShowKelompokFilter
 } from '@/lib/accessControl'
 import type { UserProfile } from '@/types/user'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
@@ -52,6 +52,14 @@ export default function MateriFilterSection({
     kelompokList,
     classList
 }: MateriFilterSectionProps) {
+    const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
+
+    useEffect(() => {
+        getAcademicYears().then(years =>
+            setAcademicYears(years.map(y => ({ value: y.id, label: y.name })))
+        ).catch(() => {})
+    }, [])
+
     // Logic for filtering dropdown options
     const filteredDesaList = useMemo(() => {
         if (!filters.daerahId) return desaList;
@@ -84,14 +92,28 @@ export default function MateriFilterSection({
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                {/* Tahun Ajaran & Semester */}
-                <AcademicYearSelector
-                    selectedYearId={filters.academicYearId}
-                    selectedSemester={filters.semester}
-                    onYearChange={(val) => onFilterChange('academicYearId', val)}
-                    onSemesterChange={(val) => onFilterChange('semester', val)}
-                    className="md:col-span-2"
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                {/* Tahun Ajaran */}
+                <InputFilter
+                    id="academic-year-filter"
+                    label="Tahun Ajaran"
+                    value={filters.academicYearId}
+                    onChange={(val) => onFilterChange('academicYearId', val)}
+                    options={academicYears}
+                    placeholder="Pilih Tahun"
+                    compact
+                />
+
+                {/* Semester */}
+                <InputFilter
+                    id="semester-filter"
+                    label="Semester"
+                    value={String(filters.semester)}
+                    onChange={(val) => onFilterChange('semester', Number(val) as 1 | 2)}
+                    options={[
+                        { value: '1', label: 'Semester 1' },
+                        { value: '2', label: 'Semester 2' },
+                    ]}
                     compact
                 />
 

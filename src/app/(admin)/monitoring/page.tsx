@@ -16,11 +16,10 @@ import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types';
 import type { Semester, Month } from '@/app/(admin)/materi/types';
 import { getAllClasses } from '@/app/(admin)/users/siswa/actions/classes/actions';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import { getActiveAcademicYear, getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { getAllDaerah } from '@/app/(admin)/organisasi/actions/daerah';
 import { getAllDesa } from '@/app/(admin)/organisasi/actions/desa';
 import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok';
-import AcademicYearSelector from '@/app/(admin)/tahun-ajaran/components/AcademicYearSelector';
 import { 
     shouldShowDaerahFilter, 
     modalShouldShowDesaFilter, 
@@ -72,6 +71,7 @@ export default function MonitoringPage() {
 
     const [selectedYearId, setSelectedYearId] = useState<string>('');
     const [selectedSemester, setSelectedSemester] = useState<1 | 2>(1);
+    const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
@@ -205,14 +205,17 @@ export default function MonitoringPage() {
 
             // Load org data, categories, and classes in parallel
             // getAllClasses() sudah handle filter berdasarkan role (teacher_classes, hierarchical, admin)
-            const [daerahData, desaData, allKelompokData, categoriesData, classesData, cmRestrictions] = await Promise.all([
+            const [daerahData, desaData, allKelompokData, categoriesData, classesData, cmRestrictions, yearsData] = await Promise.all([
                 getAllDaerah(),
                 getAllDesa(),
                 getAllKelompok(),
                 getHafalanCategories(),
                 getAllClasses(),
-                getTeacherRestrictions()
+                getTeacherRestrictions(),
+                getAcademicYears()
             ]);
+
+            setAcademicYears(yearsData.map(y => ({ value: y.id, label: y.name })));
 
             setDaerahList(daerahData);
             setDesaList(desaData);
@@ -693,20 +696,35 @@ export default function MonitoringPage() {
                             {/* Collapsible Content */}
                             <div className={`overflow-hidden transition-all duration-300 ${isFilterCollapsed ? 'max-h-0 md:max-h-none' : 'max-h-96'}`}>
                                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                                        {/* Academic Year & Semester */}
-                                        <div className="md:col-span-2">
-                                            <AcademicYearSelector
-                                                selectedYearId={selectedYearId}
-                                                selectedSemester={selectedSemester}
-                                                onYearChange={setSelectedYearId}
-                                                onSemesterChange={(semester) => {
-                                                    setSelectedSemester(semester);
-                                                    setSelectedMonth(null); // Reset month when semester changes
-                                                }}
-                                                showSemester={true}
-                                            />
-                                        </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                                        {/* Tahun Ajaran */}
+                                        <InputFilter
+                                            id="academic-year-filter"
+                                            label="Tahun Ajaran"
+                                            value={selectedYearId}
+                                            onChange={setSelectedYearId}
+                                            options={academicYears}
+                                            placeholder="Pilih Tahun"
+                                            variant="modal"
+                                            compact
+                                        />
+
+                                        {/* Semester */}
+                                        <InputFilter
+                                            id="semester-filter"
+                                            label="Semester"
+                                            value={String(selectedSemester)}
+                                            onChange={(val) => {
+                                                setSelectedSemester(Number(val) as 1 | 2);
+                                                setSelectedMonth(null);
+                                            }}
+                                            options={[
+                                                { value: '1', label: 'Semester 1' },
+                                                { value: '2', label: 'Semester 2' },
+                                            ]}
+                                            variant="modal"
+                                            compact
+                                        />
 
                                         {/* Daerah Filter */}
                                         {userProfile && shouldShowDaerahFilter(userProfile) && (
