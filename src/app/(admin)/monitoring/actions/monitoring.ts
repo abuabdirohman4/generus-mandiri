@@ -16,7 +16,7 @@ export async function getHafalanCategories(): Promise<any[]> {
     const { data, error } = await supabase
         .from('material_categories')
         .select('id, name')
-        .ilike('name', '%Hafalan%')
+        // .ilike('name', '%Hafalan%')
         .order('name');
 
     if (error) throw new Error(error.message);

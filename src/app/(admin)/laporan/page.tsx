@@ -99,10 +99,19 @@ export default function LaporanPage() {
       const { data } = await supabase
         .from('material_categories')
         .select('id, name')
-        .ilike('name', '%Hafalan%')
+        // .ilike('name', '%Hafalan%')
         .order('name');
       return (data || []).map(c => ({ value: c.id, label: c.name }))
   })
+
+  // Auto-select "Hafalan" category by default when loaded
+  useEffect(() => {
+    if (categories.length > 0 && !materiFilters.categoryId) {
+      const hafalanCategory = categories.find(c => c.label.toLowerCase() === 'hafalan')
+      const defaultId = hafalanCategory ? hafalanCategory.value : categories[0].value
+      setMateriFilters(prev => ({ ...prev, categoryId: defaultId }))
+    }
+  }, [categories])
 
   const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
       filters: materiFilters,

@@ -159,14 +159,13 @@ export default function MateriFilterSection({
                     compact
                 />
 
-                {/* Kategori (opsional) */}
+                {/* Kategori */}
                 <InputFilter
                     id="category-filter"
                     label="Kategori"
                     value={filters.categoryId}
                     onChange={(val) => onFilterChange('categoryId', val)}
                     options={categories}
-                    allOptionLabel="Semua Kategori"
                     compact
                 />
 

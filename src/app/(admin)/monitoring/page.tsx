@@ -234,9 +234,10 @@ export default function MonitoringPage() {
                 if (userProfile.kelompok_id && !selectedKelompokId) setSelectedKelompokId(userProfile.kelompok_id);
             }
 
-            // Auto-select first category
+            // Auto-select "Hafalan" category or fallback to first
             if (finalCategories.length > 0 && !selectedCategoryId) {
-                setSelectedCategoryId(finalCategories[0].id);
+                const hafalanCategory = finalCategories.find(cat => cat.name.toLowerCase() === 'hafalan');
+                setSelectedCategoryId(hafalanCategory ? hafalanCategory.id : finalCategories[0].id);
             }
         } catch (error: any) {
             toast.error(error.message || 'Gagal memuat data awal');
@@ -488,10 +489,16 @@ export default function MonitoringPage() {
         return Math.round(totalNilai / studentProgress.length);
     };
 
+    // Selected default to hafalan
+    // const filteredMaterials = materials.filter(
+    //     m => m.material_type?.material_category?.id === selectedCategoryId
+    // );
+
     // Filter materials by selected category
-    const filteredMaterials = materials.filter(
-        m => m.material_type?.material_category?.id === selectedCategoryId
-    );
+    const filteredMaterials = materials.filter(m => {
+        if (!selectedCategoryId) return true;
+        return m.material_type?.material_category?.id === selectedCategoryId;
+    });
 
     // Filter materials by month — jika bulan dipilih, hanya tampilkan materi yang ada di target bulan itu
     // Jika monthlyTargetItemIds kosong (tidak ada target), hasilnya memang kosong (bukan fallback ke semua)
@@ -810,6 +817,7 @@ export default function MonitoringPage() {
                                                     value={selectedCategoryId}
                                                     onChange={setSelectedCategoryId}
                                                     options={hafalanCategories.map(c => ({ value: c.id, label: c.name }))}
+                                                    allOptionLabel="Semua Kategori"
                                                     variant="modal"
                                                     compact
                                                 />

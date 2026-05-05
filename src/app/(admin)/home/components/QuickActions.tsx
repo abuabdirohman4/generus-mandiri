@@ -118,7 +118,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
       adminOnly: false,
-      disabled: isAdminUser || userCanManageMaterials ? false : true
+      // disabled: isAdminUser || userCanManageMaterials ? false : true
+      disabled: false
     },
     {
       id: 'tahun-ajaran',
@@ -148,7 +149,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
       iconColor: 'text-emerald-600 dark:text-econst emerald-400',
       adminOnly: false,
-      disabled: isAdminUser || userCanManageMaterials ? false : true
+      // disabled: isAdminUser || userCanManageMaterials ? false : true
+      disabled: false
     },
     {
       id: 'rapot',
