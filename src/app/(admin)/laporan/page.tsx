@@ -8,12 +8,14 @@ import MateriFilterSection from './components/MateriFilterSection'
 import MateriStatsCards from './components/MateriStatsCards'
 import MateriDataTable from './components/MateriDataTable'
 import { useMateriReportData } from './hooks/useMateriReportData'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import DataFilter from '@/components/shared/DataFilter'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
+import { canManageMaterials } from '@/lib/accessControl'
+import LaporanTabHeader from './components/LaporanTabHeader'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -49,7 +51,19 @@ export default function LaporanPage() {
 
   const { activityTypes: myActivityTypes } = useMyActivityTypes()
 
+  const hasMateriAccess = useMemo(() => {
+    if (!userProfile) return false
+    return canManageMaterials(userProfile)
+  }, [userProfile])
+
   const [laporanTab, setLaporanTab] = useState<'presensi' | 'materi'>('presensi')
+
+  // Reset tab ke presensi jika tidak ada akses
+  useEffect(() => {
+    if (!hasMateriAccess && laporanTab === 'materi') {
+      setLaporanTab('presensi')
+    }
+  }, [hasMateriAccess, laporanTab])
 
   const [materiFilters, setMateriFilters] = useState({
       classId: '',
@@ -169,29 +183,13 @@ export default function LaporanPage() {
           </div>
         )}
 
-        {/* Tab Selector */}
-        <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
-            <button
-                onClick={() => setLaporanTab('presensi')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    laporanTab === 'presensi'
-                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-                }`}
-            >
-                Presensi
-            </button>
-            <button
-                onClick={() => setLaporanTab('materi')}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    laporanTab === 'materi'
-                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-                }`}
-            >
-                Materi
-            </button>
-        </div>
+        {/* Tab header — hanya tampil jika user punya akses materi */}
+        {hasMateriAccess && (
+          <LaporanTabHeader
+            activeTab={laporanTab}
+            onTabChange={setLaporanTab}
+          />
+        )}
 
         {laporanTab === 'presensi' && (
           <>

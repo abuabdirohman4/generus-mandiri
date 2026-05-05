@@ -2,7 +2,7 @@
 
 import type { MateriReportData } from '../actions/reports/materiQueries'
 import { PieChartIcon, BookOpenIcon, BuildingIcon } from '@/lib/icons'
-import { getProgressColor } from '@/lib/percentages'
+import { getProgressColor, getProgressTextColor, getProgressLightBgColor } from '@/lib/percentages'
 
 interface MateriStatsCardsProps {
     data: MateriReportData | undefined
@@ -12,10 +12,10 @@ interface MateriStatsCardsProps {
 export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsProps) {
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-6 animate-pulse h-32 shadow-sm border border-gray-100 dark:border-gray-700" />
-                ))}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <div className="col-span-2 md:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-6 animate-pulse h-32 shadow-sm border border-gray-100 dark:border-gray-700" />
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 animate-pulse h-32 shadow-sm border border-gray-100 dark:border-gray-700" />
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 animate-pulse h-32 shadow-sm border border-gray-100 dark:border-gray-700" />
             </div>
         )
     }
@@ -24,9 +24,9 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
     if (!summary) return null
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* Rata-rata Pencapaian */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            {/* Rata-rata Pencapaian - Full width on mobile, 1/3 on desktop */}
+            <div className="col-span-2 md:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
                 <div className="flex justify-between items-start">
                     <div>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Persentase Pencapaian</p>
@@ -34,8 +34,8 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
                             {summary.avg_completion_rate}%
                         </h3>
                     </div>
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-full">
-                        <PieChartIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className={`p-3 ${getProgressLightBgColor(summary.avg_completion_rate)} rounded-full`}>
+                        <PieChartIcon className={`w-6 h-6 ${getProgressTextColor(summary.avg_completion_rate)}`} />
                     </div>
                 </div>
                 
@@ -51,8 +51,26 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
                 </div>
             </div>
 
+            {/* Kelas */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Kelas</p>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[150px] lg:max-w-[200px]">
+                            {summary.class_name || '—'}
+                        </h3>
+                    </div>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-full">
+                        <BuildingIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                </div>
+                <div className="mt-8">
+                    <p className="text-xs text-gray-400">yang dievaluasi</p>
+                </div>
+            </div>
+
             {/* Total Materi */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
                 <div className="flex justify-between items-start">
                     <div>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Materi</p>
@@ -66,24 +84,6 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
                 </div>
                 <div className="mt-8">
                     <p className="text-xs text-gray-400">item materi dievaluasi</p>
-                </div>
-            </div>
-
-            {/* Kelas */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Kelas</p>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[180px]">
-                            {summary.class_name || '—'}
-                        </h3>
-                    </div>
-                    <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-full">
-                        <BuildingIcon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                    </div>
-                </div>
-                <div className="mt-8">
-                    <p className="text-xs text-gray-400">yang dievaluasi</p>
                 </div>
             </div>
         </div>

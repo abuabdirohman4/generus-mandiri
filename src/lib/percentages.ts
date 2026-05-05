@@ -27,3 +27,19 @@ export const getProgressColor = (completion: number): string => {
     if (completion >= 70) return 'bg-yellow-500';
     return 'bg-red-500';
 };
+
+// Get text color based on progress thresholds
+export const getProgressTextColor = (completion: number): string => {
+    if (completion >= 90) return 'text-green-600 dark:text-green-400';
+    if (completion >= 80) return 'text-blue-600 dark:text-blue-400';
+    if (completion >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+};
+
+// Get light background color based on progress thresholds
+export const getProgressLightBgColor = (completion: number): string => {
+    if (completion >= 90) return 'bg-green-50 dark:bg-green-900/30';
+    if (completion >= 80) return 'bg-blue-50 dark:bg-blue-900/30';
+    if (completion >= 70) return 'bg-yellow-50 dark:bg-yellow-900/30';
+    return 'bg-red-50 dark:bg-red-900/30';
+};
