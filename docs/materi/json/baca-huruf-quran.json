@@ -1,0 +1,23 @@
+[
+  {"kelas": "Kelas Paud", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas Paud", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas Paud", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah Dan sekolah"},
+  {"kelas": "Kelas 1", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 1", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 1", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"},
+  {"kelas": "Kelas 2", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 2", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 2", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"},
+  {"kelas": "Kelas 3", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 3", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 3", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"},
+  {"kelas": "Kelas 4", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 4", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 4", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"},
+  {"kelas": "Kelas 5", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 5", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 5", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"},
+  {"kelas": "Kelas 6", "kategori": "Mandiri", "target_bulan": "Juli - September", "materi": "Kemandirian pribadi"},
+  {"kelas": "Kelas 6", "kategori": "Mandiri", "target_bulan": "Oktober - Desember", "materi": "Kemandirian dalam keluarga"},
+  {"kelas": "Kelas 6", "kategori": "Mandiri", "target_bulan": "Januari - Juni", "materi": "Kemandirian dalam lingkungan Jama'ah dan sekolah"}
+]

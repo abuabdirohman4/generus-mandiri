@@ -1,0 +1,17 @@
+[
+  {"kelas": "Kelas Paud", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Menulis Huruf tunggal Hijaiyah"},
+  {"kelas": "Kelas Paud", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Menulis Angka Arab"},
+  {"kelas": "Kelas 1", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - September", "materi": "Menulis huruf tunggal fathah"},
+  {"kelas": "Kelas 1", "kategori": "Tulis Huruf Arab", "target_bulan": "Oktober - Desember", "materi": "Menulis angka arab"},
+  {"kelas": "Kelas 1", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Menulis huruf sambung (depan, tengah, belakang)"},
+  {"kelas": "Kelas 2", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Menulis rangkaian kata"},
+  {"kelas": "Kelas 2", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Menulis kata arab baku/ potongan ayat"},
+  {"kelas": "Kelas 3", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Menulis rangkaian kata"},
+  {"kelas": "Kelas 3", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Menulis kata arab baku/ potongan ayat"},
+  {"kelas": "Kelas 4", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Latihan makna pegon"},
+  {"kelas": "Kelas 4", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Latihan makna pegon dan kode- kodenya"},
+  {"kelas": "Kelas 5", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Terampil menulis arab"},
+  {"kelas": "Kelas 5", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Terampil menulis makna pegon"},
+  {"kelas": "Kelas 6", "kategori": "Tulis Huruf Arab", "target_bulan": "Juli - Desember", "materi": "Terampil menulis arab"},
+  {"kelas": "Kelas 6", "kategori": "Tulis Huruf Arab", "target_bulan": "Januari - Juni", "materi": "Terampil menulis makna pegon"}
+]
