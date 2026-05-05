@@ -232,7 +232,7 @@ describe('deleteItemClassMappings', () => {
 // ─── upsertDayAssignment ──────────────────────────────────────────────────────
 
 describe('upsertDayAssignment', () => {
-    it('upserts into day_material_assignments with correct fields', async () => {
+    it('upserts into material_day_assignments with correct fields', async () => {
         const assignment = { id: 'a1' }
         const supa = makeSupa({ data: assignment, error: null })
 
@@ -245,7 +245,7 @@ describe('upsertDayAssignment', () => {
             material_type_id: 't1',
         })
 
-        expect(supa.from).toHaveBeenCalledWith('day_material_assignments')
+        expect(supa.from).toHaveBeenCalledWith('material_day_assignments')
         expect(supa._chain.upsert).toHaveBeenCalledWith(
             expect.objectContaining({
                 class_master_id: 'c1',
@@ -271,7 +271,7 @@ describe('deleteDayAssignmentById', () => {
 
         await deleteDayAssignmentById(supa, 'a1')
 
-        expect(supa.from).toHaveBeenCalledWith('day_material_assignments')
+        expect(supa.from).toHaveBeenCalledWith('material_day_assignments')
         expect(supa._chain.delete).toHaveBeenCalled()
         expect(supa._chain.eq).toHaveBeenCalledWith('id', 'a1')
     })

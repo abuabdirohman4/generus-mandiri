@@ -362,7 +362,7 @@ export async function upsertDayAssignment(
     }
 ) {
     return await supabase
-        .from('day_material_assignments')
+        .from('material_day_assignments')
         .upsert(
             {
                 class_master_id: data.class_master_id,
@@ -421,7 +421,7 @@ export async function fetchDayAssignments(
     }
 ) {
     return await supabase
-        .from('day_material_assignments')
+        .from('material_day_assignments')
         .select(`
       *,
       material_type:material_types(
@@ -449,7 +449,7 @@ export async function fetchDayAssignments(
  */
 export async function deleteDayAssignmentById(supabase: SupabaseClient, assignmentId: string) {
     return await supabase
-        .from('day_material_assignments')
+        .from('material_day_assignments')
         .delete()
         .eq('id', assignmentId)
 }

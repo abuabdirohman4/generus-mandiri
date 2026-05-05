@@ -74,11 +74,11 @@ describe('fetchItemsForType', () => {
 // ─── fetchAssignmentsForType ──────────────────────────────────────────────────
 
 describe('fetchAssignmentsForType', () => {
-    it('queries day_material_assignments with correct type filter', async () => {
+    it('queries material_day_assignments with correct type filter', async () => {
         const supabase = makeMockSupabase({ data: [], error: null })
         await fetchAssignmentsForType(supabase, 'type-1')
 
-        expect(supabase.from).toHaveBeenCalledWith('day_material_assignments')
+        expect(supabase.from).toHaveBeenCalledWith('material_day_assignments')
         expect(supabase._chain.eq).toHaveBeenCalledWith('material_type_id', 'type-1')
         expect(supabase._chain.limit).toHaveBeenCalledWith(1)
     })

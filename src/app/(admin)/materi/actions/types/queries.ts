@@ -38,11 +38,11 @@ export async function fetchItemsForType(supabase: SupabaseClient, typeId: string
 }
 
 /**
- * Check if any day_material_assignments use this type
+ * Check if any material_day_assignments use this type
  */
 export async function fetchAssignmentsForType(supabase: SupabaseClient, typeId: string) {
     return await supabase
-        .from('day_material_assignments')
+        .from('material_day_assignments')
         .select('id')
         .eq('material_type_id', typeId)
         .limit(1)
