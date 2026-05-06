@@ -183,8 +183,9 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             result.sort((a, b) => a.class_name.localeCompare(b.class_name))
         }
 
-        // Filter out classes with no students or no meetings
-        return result.filter(item => (item.student_count ?? 0) > 0 && item.has_meeting === true)
+        // Show classes with students regardless of meeting status.
+        // Classes with no meetings render orange in ClassMonitoringTable.
+        return result.filter(item => (item.student_count ?? 0) > 0)
     } catch (error) {
         console.error('Error fetching class monitoring:', error)
         throw handleApiError(error, 'memuat data', 'Failed to fetch class monitoring')
