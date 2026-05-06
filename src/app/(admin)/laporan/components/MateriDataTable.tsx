@@ -2,14 +2,13 @@
 
 import { useMemo } from 'react'
 import DataTable from '@/components/table/Table'
+import { useLaporanStore } from '@/stores/laporanStore'
 import type { MateriReportRow, MateriSiswaRow } from '../actions/reports/materiQueries'
 import { getGrade } from '@/lib/percentages'
 
 interface MateriDataTableProps {
     rows: MateriReportRow[]
     siswaRows?: MateriSiswaRow[]
-    viewMode: 'per_materi' | 'per_siswa'
-    onViewModeChange: (mode: 'per_materi' | 'per_siswa') => void
     isLoading: boolean
 }
 
@@ -19,7 +18,8 @@ function getCompletionColor(percentage: number) {
     return 'text-red-600 dark:text-red-400'
 }
 
-export default function MateriDataTable({ rows, siswaRows = [], viewMode, onViewModeChange, isLoading }: MateriDataTableProps) {
+export default function MateriDataTable({ rows, siswaRows = [], isLoading }: MateriDataTableProps) {
+    const { materiViewMode: viewMode, setMateriViewMode: onViewModeChange } = useLaporanStore()
     const columns = useMemo(() => {
         if (viewMode === 'per_siswa') {
             return [

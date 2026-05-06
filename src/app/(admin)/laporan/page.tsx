@@ -11,7 +11,7 @@ import { useMateriReportData } from './hooks/useMateriReportData'
 import { useState, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
-import DataFilter from '@/components/shared/DataFilter'
+import { useLaporanStore } from '@/stores/laporanStore'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { canManageMaterials, canAccessMonitoring } from '@/lib/accessControl'
@@ -49,6 +49,15 @@ export default function LaporanPage() {
     periodOptions
   } = useLaporanPage()
 
+  const {
+    activeTab: laporanTab,
+    setActiveTab: setLaporanTab,
+    materiFilters,
+    setMateriFilters,
+    materiViewMode,
+    setMateriViewMode
+  } = useLaporanStore()
+
   const { activityTypes: myActivityTypes } = useMyActivityTypes()
 
   const hasMateriAccess = useMemo(() => {
@@ -56,27 +65,12 @@ export default function LaporanPage() {
     return canAccessMonitoring(userProfile)
   }, [userProfile])
 
-  const [laporanTab, setLaporanTab] = useState<'presensi' | 'materi'>('presensi')
-
   // Reset tab ke presensi jika tidak ada akses
   useEffect(() => {
     if (!hasMateriAccess && laporanTab === 'materi') {
       setLaporanTab('presensi')
     }
-  }, [hasMateriAccess, laporanTab])
-
-  const [materiFilters, setMateriFilters] = useState({
-      classId: '',
-      daerahId: '',
-      desaId: '',
-      kelompokId: '',
-      academicYearId: '',
-      semester: 1 as 1 | 2,
-      categoryId: '',
-      month: undefined as number | undefined,
-  })
-
-  const [materiViewMode, setMateriViewMode] = useState<'per_materi' | 'per_siswa'>('per_siswa')
+  }, [hasMateriAccess, laporanTab, setLaporanTab])
 
   // Initialize filters from user profile and fetch active academic year
   useEffect(() => {
@@ -92,30 +86,28 @@ export default function LaporanPage() {
           .single()
         
         if (activeYear) {
-          setMateriFilters(prev => ({ ...prev, academicYearId: activeYear.id }))
+          setMateriFilters({ academicYearId: activeYear.id })
         }
       }
 
       // Set org filters from profile
       if (userProfile && !materiFilters.daerahId && !materiFilters.desaId && !materiFilters.kelompokId) {
-        setMateriFilters(prev => ({
-          ...prev,
+        setMateriFilters({
           daerahId: userProfile.daerah_id || '',
           desaId: userProfile.desa_id || '',
           kelompokId: userProfile.kelompok_id || '',
-        }))
+        })
       }
     }
 
     initializeFilters()
-  }, [userProfile])
+  }, [userProfile]) // Only depend on userProfile to avoid infinite loop
 
   const { data: categories = [] } = useSWR('material-categories-options', async () => {
       const supabase = createClient()
       const { data } = await supabase
         .from('material_categories')
         .select('id, name')
-        // .ilike('name', '%Hafalan%')
         .order('name');
       return (data || []).map(c => ({ value: c.id, label: c.name }))
   })
@@ -125,9 +117,9 @@ export default function LaporanPage() {
     if (categories.length > 0 && !materiFilters.categoryId) {
       const hafalanCategory = categories.find(c => c.label.toLowerCase() === 'hafalan')
       const defaultId = hafalanCategory ? hafalanCategory.value : categories[0].value
-      setMateriFilters(prev => ({ ...prev, categoryId: defaultId }))
+      setMateriFilters({ categoryId: defaultId })
     }
-  }, [categories])
+  }, [categories, materiFilters.categoryId, setMateriFilters])
 
   const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
       filters: materiFilters,
@@ -135,8 +127,8 @@ export default function LaporanPage() {
       viewMode: materiViewMode
   })
 
-  const handleMateriFilterChange = (key: keyof typeof materiFilters, value: any) => {
-      setMateriFilters(prev => ({ ...prev, [key]: value }))
+  const handleMateriFilterChange = (key: string, value: any) => {
+      setMateriFilters({ [key]: value })
   }
 
   if (hasError) {
@@ -290,16 +282,12 @@ export default function LaporanPage() {
         {laporanTab === 'materi' && (
           <>
             <MateriFilterSection
-              filters={materiFilters}
               categories={categories}
-              onFilterChange={handleMateriFilterChange}
               userProfile={userProfile}
               daerahList={daerah || []}
               desaList={desa || []}
               kelompokList={kelompok || []}
               classList={classes || []}
-              viewMode={materiViewMode}
-              onViewModeChange={setMateriViewMode}
             />
             
             <MateriStatsCards 
@@ -310,8 +298,6 @@ export default function LaporanPage() {
             <MateriDataTable 
               rows={materiData?.rows || []} 
               isLoading={isLoadingMateri} 
-              viewMode={materiViewMode}
-              onViewModeChange={setMateriViewMode}
               siswaRows={materiData?.siswaRows || []}
             />
           </>

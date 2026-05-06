@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
+import { useLaporanStore } from '@/stores/laporanStore'
 import { getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import {
     shouldShowDaerahFilter,
@@ -30,9 +31,7 @@ interface YearOption { value: string; label: string }
 interface CategoryOption { value: string; label: string }
 
 interface MateriFilterSectionProps {
-    filters: MateriFilters
     categories: CategoryOption[]
-    onFilterChange: (key: keyof MateriFilters, value: any) => void
     
     // Org data
     userProfile: UserProfile | null | undefined
@@ -40,21 +39,16 @@ interface MateriFilterSectionProps {
     desaList: DesaBase[]
     kelompokList: KelompokBase[]
     classList: Class[]
-    viewMode: 'per_materi' | 'per_siswa'
-    onViewModeChange: (mode: 'per_materi' | 'per_siswa') => void
 }
 export default function MateriFilterSection({
-    filters,
     categories,
-    onFilterChange,
     userProfile,
     daerahList,
     desaList,
     kelompokList,
-    classList,
-    viewMode,
-    onViewModeChange
+    classList
 }: MateriFilterSectionProps) {
+    const { materiFilters: filters, setMateriFilters: onFilterChange } = useLaporanStore()
     const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
 
     useEffect(() => {
@@ -115,7 +109,7 @@ export default function MateriFilterSection({
                     id="academic-year-filter"
                     label="Tahun Ajaran"
                     value={filters.academicYearId}
-                    onChange={(val) => onFilterChange('academicYearId', val)}
+                    onChange={(val) => onFilterChange({ academicYearId: val })}
                     options={academicYears}
                     placeholder="Pilih Tahun"
                     compact
@@ -126,7 +120,7 @@ export default function MateriFilterSection({
                     id="semester-filter"
                     label="Semester"
                     value={String(filters.semester)}
-                    onChange={(val) => onFilterChange('semester', Number(val) as 1 | 2)}
+                    onChange={(val) => onFilterChange({ semester: Number(val) as 1 | 2 })}
                     options={[
                         { value: '1', label: 'Semester 1' },
                         { value: '2', label: 'Semester 2' },
@@ -141,10 +135,12 @@ export default function MateriFilterSection({
                         label="Daerah"
                         value={filters.daerahId}
                         onChange={(val) => {
-                            onFilterChange('daerahId', val);
-                            onFilterChange('desaId', '');
-                            onFilterChange('kelompokId', '');
-                            onFilterChange('classId', '');
+                            onFilterChange({
+                                daerahId: val,
+                                desaId: '',
+                                kelompokId: '',
+                                classId: '',
+                            });
                         }}
                         options={daerahList.map(d => ({ value: d.id, label: d.name }))}
                         allOptionLabel="Semua Daerah"
@@ -159,9 +155,11 @@ export default function MateriFilterSection({
                         label="Desa"
                         value={filters.desaId}
                         onChange={(val) => {
-                            onFilterChange('desaId', val);
-                            onFilterChange('kelompokId', '');
-                            onFilterChange('classId', '');
+                            onFilterChange({
+                                desaId: val,
+                                kelompokId: '',
+                                classId: '',
+                            });
                         }}
                         options={filteredDesaList.map(d => ({ value: d.id, label: d.name }))}
                         allOptionLabel="Semua Desa"
@@ -177,8 +175,10 @@ export default function MateriFilterSection({
                         label="Kelompok"
                         value={filters.kelompokId}
                         onChange={(val) => {
-                            onFilterChange('kelompokId', val);
-                            onFilterChange('classId', '');
+                            onFilterChange({
+                                kelompokId: val,
+                                classId: '',
+                            });
                         }}
                         options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
                         allOptionLabel="Semua Kelompok"
@@ -192,7 +192,7 @@ export default function MateriFilterSection({
                     id="class-filter"
                     label="Kelas"
                     value={filters.classId}
-                    onChange={(val) => onFilterChange('classId', val)}
+                    onChange={(val) => onFilterChange({ classId: val })}
                     options={filteredClasses}
                     allOptionLabel="Pilih Kelas"
                     compact
@@ -203,7 +203,7 @@ export default function MateriFilterSection({
                     id="category-filter"
                     label="Kategori"
                     value={filters.categoryId}
-                    onChange={(val) => onFilterChange('categoryId', val)}
+                    onChange={(val) => onFilterChange({ categoryId: val })}
                     options={categories}
                     compact
                 />
@@ -213,7 +213,7 @@ export default function MateriFilterSection({
                     id="month-filter"
                     label="Bulan"
                     value={filters.month !== undefined ? String(filters.month) : ''}
-                    onChange={(val) => onFilterChange('month', val ? Number(val) : undefined)}
+                    onChange={(val) => onFilterChange({ month: val ? Number(val) : undefined })}
                     options={getSemesterMonths(filters.semester as Semester).map(m => ({ 
                         value: String(m), 
                         label: getMonthName(m as Month) 
