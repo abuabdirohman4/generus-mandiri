@@ -97,7 +97,9 @@ export function canAccessMonitoring(profile: UserProfile | null): boolean {
 
 export function canAccessOverview(profile: UserProfile | null): boolean {
   if (!profile) return false
-  return profile.role === 'superadmin' || profile.role === 'admin' || profile.role === 'teacher'
+  return profile.role === 'superadmin' 
+    || profile.role === 'admin' 
+    // || profile.role === 'teacher'
 }
 
 // Filter visibility utilities (for modal forms)
