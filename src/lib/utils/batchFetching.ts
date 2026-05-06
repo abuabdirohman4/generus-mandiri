@@ -1,4 +1,49 @@
 /**
+ * Fetch students in batches to avoid URL length limits with large ID arrays.
+ * PostgREST encodes .in() as a query string — 773 UUIDs (~28KB) exceeds the limit.
+ */
+export async function fetchStudentsInBatches(
+    supabaseClient: any,
+    studentIds: string[],
+    selectQuery: string
+): Promise<{ data: any[] | null; error: any }> {
+    if (!studentIds || studentIds.length === 0) {
+        return { data: [], error: null }
+    }
+
+    const chunkSize = 100
+    const chunks: string[][] = []
+    for (let i = 0; i < studentIds.length; i += chunkSize) {
+        chunks.push(studentIds.slice(i, i + chunkSize))
+    }
+
+    try {
+        const results = await Promise.all(
+            chunks.map(chunk =>
+                supabaseClient
+                    .from('students')
+                    .select(selectQuery)
+                    .in('id', chunk)
+            )
+        )
+
+        const allData: any[] = []
+        for (const result of results) {
+            if (result.error) {
+                return { data: null, error: result.error }
+            }
+            if (result.data) {
+                allData.push(...result.data)
+            }
+        }
+
+        return { data: allData, error: null }
+    } catch (error: any) {
+        return { data: null, error: error }
+    }
+}
+
+/**
  * Fetch attendance logs in batches to avoid database query limits
  * 
  * Supabase/PostgREST has default row limits and URL length constraints.

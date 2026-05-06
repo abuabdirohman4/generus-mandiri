@@ -7,7 +7,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
+import { fetchAttendanceLogsInBatches, fetchStudentsInBatches } from '@/lib/utils/batchFetching'
 
 /**
  * Fetch user profile with teacher classes and organizational hierarchy
@@ -125,9 +125,7 @@ export async function fetchStudentDetails(
         return { data: [], error: null }
     }
 
-    return await supabase
-        .from('students')
-        .select(`
+    return fetchStudentsInBatches(supabase, studentIds, `
       id,
       name,
       gender,
@@ -135,7 +133,7 @@ export async function fetchStudentDetails(
       kelompok_id,
       desa_id,
       daerah_id,
-      classes(
+      classes:class_id (
         id,
         name
       ),
@@ -164,7 +162,6 @@ export async function fetchStudentDetails(
         name
       )
     `)
-        .in('id', studentIds)
 }
 
 /**

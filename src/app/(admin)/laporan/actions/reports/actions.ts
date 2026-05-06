@@ -62,12 +62,13 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         const adminClient = await createAdminClient()
 
         // 6. Fetch meetings for date range (Layer 1)
-        const { data: meetingsForFilter } = await fetchMeetingsForDateRange(
+        const { data: meetingsForFilter, error: meetingsError } = await fetchMeetingsForDateRange(
             adminClient,
             dateFilter,
             filters.activityType,
             filters.activityLevel
         )
+        if (meetingsError) throw meetingsError
 
         // 7. Collect all class IDs from meetings
         const allClassIdsFromMeetings = new Set<string>()
@@ -79,10 +80,11 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             })
 
         // 8. Fetch class hierarchy maps (Layer 1)
-        const { data: classesForMapping } = await fetchClassHierarchyMaps(
+        const { data: classesForMapping, error: hierarchyError } = await fetchClassHierarchyMaps(
             adminClient,
             Array.from(allClassIdsFromMeetings)
         )
+        if (hierarchyError) throw hierarchyError
         const maps = buildClassHierarchyMaps(classesForMapping || [])
 
         // 9. Filter meetings by role (Layer 2)
@@ -122,12 +124,13 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         )
 
         // 15. Fetch full meeting details (for final assembly + trend chart)
-        const { data: meetings } = await fetchMeetingsWithFullDetails(
+        const { data: meetings, error: fullMeetingsError } = await fetchMeetingsWithFullDetails(
             adminClient,
             dateFilter,
             filters.activityType,
             filters.activityLevel
         )
+        if (fullMeetingsError) throw fullMeetingsError
 
         // 16. Enrich classKelompokMap from full meetings
         if (meetings) {
@@ -157,10 +160,11 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
                     meeting.class_ids.forEach((id: string) => allClassIdsSet.add(id))
                 }
             })
-        const { data: studentClassesData } = await fetchStudentClassesForEnrollment(
+        const { data: studentClassesData, error: enrollmentError } = await fetchStudentClassesForEnrollment(
             adminClient,
             Array.from(allClassIdsSet)
         )
+        if (enrollmentError) throw enrollmentError
         const enrollmentMap = buildEnrollmentMap(studentClassesData || [])
 
         // 19. Apply filters (Layer 2)
