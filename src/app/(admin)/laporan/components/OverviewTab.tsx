@@ -220,8 +220,6 @@ export default function OverviewTab() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        <StatCard title="Total Siswa" value={stats?.siswa || 0} icon="👨‍🎓" color="blue" />
-        <StatCard title="Total Kelas" value={stats?.kelas || 0} icon="📚" color="purple" />
         <StatCard
           title={attendanceLabel}
           value={
@@ -234,6 +232,8 @@ export default function OverviewTab() {
           color="emerald"
           tooltip={attendanceTooltip}
         />
+        <StatCard title="Total Siswa" value={stats?.siswa || 0} icon="👨‍🎓" color="blue" />
+        <StatCard title="Total Kelas" value={stats?.kelas || 0} icon="📚" color="purple" />
       </div>
 
       <PeriodTabs

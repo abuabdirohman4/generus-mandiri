@@ -28,7 +28,7 @@ interface DashboardState {
   resetFilters: () => void
 }
 const defaultFilters: DashboardFilters = {
-  period: 'today',
+  period: 'month',
   customDateRange: undefined,
   daerah: [],
   desa: [],

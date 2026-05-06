@@ -89,10 +89,9 @@ export default function PeriodTabs({
     }, [customDateRange]);
 
     const tabs: { value: PeriodType; label: string }[] = [
-        { value: 'today', label: 'Hari Ini' },
-        { value: 'week', label: 'Minggu Ini' },
         { value: 'month', label: 'Bulan Ini' },
-        // { value: 'custom', label: 'Custom' }
+        { value: 'week', label: 'Minggu Ini' },
+        { value: 'today', label: 'Hari Ini' },
     ];
 
     const handleTabClick = (value: PeriodType) => {

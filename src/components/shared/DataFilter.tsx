@@ -718,7 +718,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {classViewMode !== undefined && !isAdminKelompok && onClassViewModeChange && (
+      {classViewMode !== undefined && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange && (
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"

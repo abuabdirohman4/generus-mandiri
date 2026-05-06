@@ -316,18 +316,6 @@ export default function AdminDashboard() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           <StatCard
-            title="Total Siswa"
-            value={stats?.siswa || 0}
-            icon="👨‍🎓"
-            color="blue"
-          />
-          <StatCard
-            title="Total Kelas"
-            value={stats?.kelas || 0}
-            icon="📚"
-            color="purple"
-          />
-          <StatCard
             title={attendanceLabel}
             value={
               monitoringLoading ? (
@@ -340,6 +328,18 @@ export default function AdminDashboard() {
             className="col-span-2 md:col-span-1"
             color="emerald"
             tooltip={attendanceTooltip}
+          />
+          <StatCard
+            title="Total Siswa"
+            value={stats?.siswa || 0}
+            icon="👨‍🎓"
+            color="blue"
+          />
+          <StatCard
+            title="Total Kelas"
+            value={stats?.kelas || 0}
+            icon="📚"
+            color="purple"
           />
         </div>
 
