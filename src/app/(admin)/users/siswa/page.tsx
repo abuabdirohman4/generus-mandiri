@@ -294,64 +294,62 @@ export default function SiswaPage() {
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                {userProfile?.role === 'teacher' && userProfile.classes?.length === 1 && userProfile.classes[0]?.name ? (
-                  <> {userProfile.classes[0].name}</>
-                ) : (
-                  'Siswa'
-                )}
-              </h1>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Kelola data siswa
-              </p>
-            </div>
-            <div className="flex flex-col md:flex-row gap-2">
-              {isAdmin ? (
-                <>
-                  <Button
-                    onClick={openCreateModal}
-                    className="px-4 py-2 w-full"
-                  >
-                    Tambah
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={openBatchModal}
-                      variant="outline"
-                      className="px-4 py-2 flex-1"
-                    >
-                      Batch
-                    </Button>
-                    <Button
-                      onClick={openAssignModal}
-                      variant="outline"
-                      className="px-4 py-2 flex-1"
-                    >
-                      Assign
-                    </Button>
-                  </div>
-                </>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {userProfile?.role === 'teacher' && userProfile.classes?.length === 1 && userProfile.classes[0]?.name ? (
+                <> {userProfile.classes[0].name}</>
               ) : (
+                'Siswa'
+              )}
+            </h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Kelola data siswa
+            </p>
+          </div>
+          <div className="flex flex-col md:flex-row gap-2">
+            {isAdmin ? (
+              <>
+                <Button
+                  onClick={openCreateModal}
+                  className="px-4 py-2 w-full"
+                >
+                  Tambah
+                </Button>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={openCreateModal}
-                    className="px-4 py-2"
-                  >
-                    Tambah
-                  </Button>
                   <Button
                     onClick={openBatchModal}
                     variant="outline"
-                    className="px-4 py-2"
+                    className="px-4 py-2 flex-1"
                   >
                     Batch
                   </Button>
+                  <Button
+                    onClick={openAssignModal}
+                    variant="outline"
+                    className="px-4 py-2 flex-1"
+                  >
+                    Assign
+                  </Button>
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  onClick={openCreateModal}
+                  className="px-4 py-2"
+                >
+                  Tambah
+                </Button>
+                <Button
+                  onClick={openBatchModal}
+                  variant="outline"
+                  className="px-4 py-2"
+                >
+                  Batch
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

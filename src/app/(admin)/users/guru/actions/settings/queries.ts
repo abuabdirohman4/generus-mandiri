@@ -75,7 +75,11 @@ export async function updateTeacherPermissionsQuery(
 export async function updateTeacherMaterialPermissionsQuery(
     supabase: SupabaseClient,
     userId: string,
-    data: { can_manage_materials: boolean }
+    data: { 
+        can_manage_materials: boolean
+        can_access_materials: boolean
+        can_access_monitoring: boolean
+    }
 ) {
     // Fetch existing permissions first, then merge
     const { data: profile } = await supabase
@@ -85,7 +89,12 @@ export async function updateTeacherMaterialPermissionsQuery(
         .single()
 
     const existing = (profile?.permissions as Record<string, unknown>) || {}
-    const merged = { ...existing, can_manage_materials: data.can_manage_materials }
+    const merged = { 
+        ...existing, 
+        can_manage_materials: data.can_manage_materials,
+        can_access_materials: data.can_access_materials,
+        can_access_monitoring: data.can_access_monitoring,
+    }
 
     return await supabase
         .from('profiles')

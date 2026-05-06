@@ -3,10 +3,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
-import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon } from '@/lib/icons';
+import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon, PresensiIcon, MonitoringIcon, TahunAjaranIcon, RapotIcon, SettingsIcon } from '@/lib/icons';
 import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
-import { canManageMaterials } from '@/lib/accessControl';
+import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from '@/lib/accessControl';
 import type { UserProfile } from '@/types/user'
 
 type Profile = UserProfile
@@ -40,6 +40,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
   const isPPG = isAdminUser || isTeacherDesa || isTeacherDaerah
   const userCanManageMaterials = canManageMaterials(profile)
+  const userCanAccessMaterials = canAccessMaterials(profile)
+  const userCanAccessMonitoring = canAccessMonitoring(profile)
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -78,11 +80,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       name: 'Presensi',
       description: 'Kelola kehadiran siswa',
       href: '/presensi',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
+      icon: <PresensiIcon className="w-6 h-6" />,
       bgColor: 'bg-blue-100 dark:bg-blue-900',
       iconColor: 'text-blue-600 dark:text-blue-400',
       disabled: false
@@ -118,19 +116,14 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-yellow-100 dark:bg-yellow-900',
       iconColor: 'text-yellow-600 dark:text-yellow-400',
       adminOnly: false,
-      // disabled: isAdminUser || userCanManageMaterials ? false : true
-      disabled: false
+      disabled: !userCanAccessMaterials
     },
     {
       id: 'tahun-ajaran',
       name: 'Tahun Ajaran',
       description: 'Kelola tahun ajaran',
       href: '/tahun-ajaran',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      ),
+      icon: <TahunAjaranIcon className="w-6 h-6" />,
       bgColor: 'bg-cyan-100 dark:bg-cyan-900',
       iconColor: 'text-cyan-600 dark:text-cyan-400',
       adminOnly: true,
@@ -141,27 +134,18 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       name: 'Monitoring',
       description: 'Monitoring siswa',
       href: '/monitoring',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
+      icon: <MonitoringIcon className="w-6 h-6" />,
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
-      iconColor: 'text-emerald-600 dark:text-econst emerald-400',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
       adminOnly: false,
-      // disabled: isAdminUser || userCanManageMaterials ? false : true
-      disabled: false
+      disabled: !userCanAccessMonitoring
     },
     {
       id: 'rapot',
       name: 'Rapot',
       description: 'Rapot akademik siswa',
       href: '/rapot',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
+      icon: <RapotIcon className="w-6 h-6" />,
       bgColor: 'bg-rose-100 dark:bg-rose-900',
       iconColor: 'text-rose-600 dark:text-rose-400',
       adminOnly: false,
@@ -244,12 +228,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       name: 'Pengaturan',
       description: 'Kelola pengaturan aplikasi',
       href: '/settings',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
+      icon: <SettingsIcon className="w-6 h-6" />,
       bgColor: 'bg-gray-100 dark:bg-gray-900',
       iconColor: 'text-gray-600 dark:text-gray-400',
       disabled: false

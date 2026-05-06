@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   modalShouldShowDesaFilter,
   modalShouldShowKelompokFilter,
+  canAccessMaterials,
+  canAccessMonitoring,
   type UserProfile
 } from '@/lib/accessControl'
 
@@ -92,4 +94,43 @@ describe('modalShouldShowKelompokFilter', () => {
   it('returns false for teacherKelompok', () => {
     expect(modalShouldShowKelompokFilter(makeTeacherKelompok())).toBe(false)
   })
+})
+
+describe('canAccessMaterials', () => {
+    it('returns true for superadmin', () => {
+        expect(canAccessMaterials({ role: 'superadmin' } as any)).toBe(true)
+    })
+    it('returns true for admin', () => {
+        expect(canAccessMaterials({ role: 'admin' } as any)).toBe(true)
+    })
+    it('returns true if can_manage_materials is true (superset)', () => {
+        expect(canAccessMaterials({
+            role: 'teacher',
+            permissions: { can_manage_materials: true }
+        } as any)).toBe(true)
+    })
+    it('returns true if can_access_materials is true', () => {
+        expect(canAccessMaterials({
+            role: 'teacher',
+            permissions: { can_access_materials: true }
+        } as any)).toBe(true)
+    })
+    it('returns false if teacher has no permissions', () => {
+        expect(canAccessMaterials({ role: 'teacher', permissions: {} } as any)).toBe(false)
+    })
+})
+
+describe('canAccessMonitoring', () => {
+    it('returns true for superadmin', () => {
+        expect(canAccessMonitoring({ role: 'superadmin' } as any)).toBe(true)
+    })
+    it('returns true if can_access_monitoring is true', () => {
+        expect(canAccessMonitoring({
+            role: 'teacher',
+            permissions: { can_access_monitoring: true }
+        } as any)).toBe(true)
+    })
+    it('returns false if teacher has no permissions', () => {
+        expect(canAccessMonitoring({ role: 'teacher', permissions: {} } as any)).toBe(false)
+    })
 })

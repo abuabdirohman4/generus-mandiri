@@ -56,7 +56,7 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
                 <div className="flex justify-between items-start">
                     <div>
                         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Kelas</p>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[150px] lg:max-w-[200px]">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1 truncate max-w-37.5 lg:max-w-50">
                             {summary.class_name || '—'}
                         </h3>
                     </div>

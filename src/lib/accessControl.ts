@@ -79,6 +79,22 @@ export function canManageMaterials(profile: UserProfile | null): boolean {
   return profile.permissions?.can_manage_materials === true
 }
 
+export function canAccessMaterials(profile: UserProfile | null): boolean {
+  if (!profile) return false
+  if (profile.role === 'superadmin') return true
+  if (profile.role === 'admin') return true
+  // can_manage_materials adalah superset dari can_access_materials
+  if (profile.permissions?.can_manage_materials === true) return true
+  return profile.permissions?.can_access_materials === true
+}
+
+export function canAccessMonitoring(profile: UserProfile | null): boolean {
+  if (!profile) return false
+  if (profile.role === 'superadmin') return true
+  if (profile.role === 'admin') return true
+  return profile.permissions?.can_access_monitoring === true
+}
+
 // Filter visibility utilities (for modal forms)
 export function shouldShowDaerahFilter(profile: UserProfile): boolean {
   return isSuperAdmin(profile)

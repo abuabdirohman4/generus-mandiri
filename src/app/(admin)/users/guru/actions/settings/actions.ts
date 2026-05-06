@@ -22,15 +22,28 @@ export type { MeetingFormSettings }
  */
 export async function getTeacherMaterialPermissions(
     userId: string
-): Promise<{ can_manage_materials: boolean }> {
+): Promise<{ 
+    can_manage_materials: boolean
+    can_access_materials: boolean
+    can_access_monitoring: boolean
+}> {
     try {
         const supabase = await createClient()
         const { data, error } = await fetchTeacherMaterialPermissions(supabase, userId)
         if (error) throw error
-        return { can_manage_materials: (data?.permissions as any)?.can_manage_materials ?? false }
+        const perms = (data?.permissions as any) || {}
+        return { 
+            can_manage_materials: perms.can_manage_materials ?? false,
+            can_access_materials: perms.can_access_materials ?? false,
+            can_access_monitoring: perms.can_access_monitoring ?? false,
+        }
     } catch (error) {
         console.error('Error getting material permissions:', error)
-        return { can_manage_materials: false }
+        return { 
+            can_manage_materials: false,
+            can_access_materials: false,
+            can_access_monitoring: false,
+        }
     }
 }
 
@@ -147,7 +160,11 @@ export async function updateTeacherPermissions(
  */
 export async function updateTeacherMaterialPermissions(
     userId: string,
-    data: { can_manage_materials: boolean }
+    data: { 
+        can_manage_materials: boolean
+        can_access_materials: boolean
+        can_access_monitoring: boolean
+    }
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const supabase = await createClient()

@@ -4,7 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 import LaporanPage from '../page'
 import { useLaporanPage } from '../hooks'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
-import { canManageMaterials } from '@/lib/accessControl'
+import { canManageMaterials, canAccessMonitoring } from '@/lib/accessControl'
 
 // Mock components that might fail in JSDOM
 vi.mock('../components', () => ({
@@ -42,7 +42,8 @@ vi.mock('@/hooks/useMyActivityTypes', () => ({
 }))
 
 vi.mock('@/lib/accessControl', () => ({
-    canManageMaterials: vi.fn()
+    canManageMaterials: vi.fn(),
+    canAccessMonitoring: vi.fn()
 }))
 
 // Mock Supabase client
@@ -88,8 +89,8 @@ describe('LaporanPage Access Control', () => {
         })
     })
 
-    it('should NOT show tab header for users without material management permission', () => {
-        ;(canManageMaterials as any).mockReturnValue(false)
+    it('should NOT show tab header for users without material access permission', () => {
+        ;(canAccessMonitoring as any).mockReturnValue(false)
 
         render(<LaporanPage />)
 
@@ -101,8 +102,8 @@ describe('LaporanPage Access Control', () => {
         expect(screen.getByTestId('filter-section')).toBeDefined()
     })
 
-    it('should show Materi tab for users with material management permission', () => {
-        ;(canManageMaterials as any).mockReturnValue(true)
+    it('should show Materi tab for users with material access permission', () => {
+        ;(canAccessMonitoring as any).mockReturnValue(true)
 
         render(<LaporanPage />)
 
@@ -113,9 +114,9 @@ describe('LaporanPage Access Control', () => {
 
     it('should reset tab to presensi if user loses access to materi', () => {
         // Initial render with access and tab set to materi
-        ;(canManageMaterials as any).mockReturnValue(true)
+        ;(canAccessMonitoring as any).mockReturnValue(true)
         ;(useLaporanPage as any).mockReturnValue({
-            userProfile: { ...mockUserProfile, permissions: { can_manage_materials: true } },
+            userProfile: { ...mockUserProfile, permissions: { can_access_monitoring: true } },
             filters: { period: 'daily' },
             loading: false,
             hasData: true,
@@ -126,7 +127,7 @@ describe('LaporanPage Access Control', () => {
         const { rerender } = render(<LaporanPage />)
         
         // Simulating access loss
-        ;(canManageMaterials as any).mockReturnValue(false)
+        ;(canAccessMonitoring as any).mockReturnValue(false)
         ;(useLaporanPage as any).mockReturnValue({
             userProfile: { ...mockUserProfile, permissions: { can_manage_materials: false } },
             filters: { period: 'daily' },

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { canAccessFeature, getDataFilter, canManageMaterials, isMaterialCoordinator } from '../accessControlServer'
+import { canAccessFeature, getDataFilter, canManageMaterials, canAccessMaterials, canAccessMonitoring, isMaterialCoordinator } from '../accessControlServer'
 
 describe('accessControlServer', () => {
     describe('canAccessFeature', () => {
@@ -91,18 +91,70 @@ describe('accessControlServer', () => {
     })
 
     describe('canManageMaterials', () => {
+        it('should return true for superadmin', () => {
+            const profile = { id: '1', role: 'superadmin', full_name: 'Super' }
+            expect(canManageMaterials(profile)).toBe(true)
+        })
+
+        it('should return true for admin', () => {
+            const profile = { id: '2', role: 'admin', full_name: 'Admin' }
+            expect(canManageMaterials(profile)).toBe(true)
+        })
+
         it('should return true if can_manage_materials is true', () => {
-            const profile = { id: '1', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: true } }
+            const profile = { id: '3', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: true } }
             expect(canManageMaterials(profile)).toBe(true)
         })
 
         it('should return false if can_manage_materials is false', () => {
-            const profile = { id: '1', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: false } }
+            const profile = { id: '3', full_name: 'User', role: 'teacher', permissions: { can_manage_materials: false } }
             expect(canManageMaterials(profile)).toBe(false)
         })
 
         it('should return false if profile is null', () => {
             expect(canManageMaterials(null)).toBe(false)
+        })
+    })
+
+    describe('canAccessMaterials', () => {
+        it('should return true for superadmin', () => {
+            expect(canAccessMaterials({ role: 'superadmin' } as any)).toBe(true)
+        })
+        it('should return true for admin', () => {
+            expect(canAccessMaterials({ role: 'admin' } as any)).toBe(true)
+        })
+        it('should return true if can_manage_materials is true (superset)', () => {
+            expect(canAccessMaterials({
+                role: 'teacher',
+                permissions: { can_manage_materials: true }
+            } as any)).toBe(true)
+        })
+        it('should return true if can_access_materials is true', () => {
+            expect(canAccessMaterials({
+                role: 'teacher',
+                permissions: { can_access_materials: true }
+            } as any)).toBe(true)
+        })
+        it('should return false if teacher has no permissions', () => {
+            expect(canAccessMaterials({ role: 'teacher', permissions: {} } as any)).toBe(false)
+        })
+    })
+
+    describe('canAccessMonitoring', () => {
+        it('should return true for superadmin', () => {
+            expect(canAccessMonitoring({ role: 'superadmin' } as any)).toBe(true)
+        })
+        it('should return true for admin', () => {
+            expect(canAccessMonitoring({ role: 'admin' } as any)).toBe(true)
+        })
+        it('should return true if can_access_monitoring is true', () => {
+            expect(canAccessMonitoring({
+                role: 'teacher',
+                permissions: { can_access_monitoring: true }
+            } as any)).toBe(true)
+        })
+        it('should return false if teacher has no permissions', () => {
+            expect(canAccessMonitoring({ role: 'teacher', permissions: {} } as any)).toBe(false)
         })
     })
 

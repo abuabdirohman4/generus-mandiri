@@ -78,26 +78,9 @@ export default function FilterSection({
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-          Filter Laporan
-        </h2>
-        {/* {hasActiveFilters && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {filterCount} filter aktif
-            </span>
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          </div>
-        )} */}
-      </div>
-
       {/* Mode Toggle */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
-          {/* <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Mode Laporan:
-          </span> */}
           <div className="flex w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => onFilterChange('viewMode', 'general')}

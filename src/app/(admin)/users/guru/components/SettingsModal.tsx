@@ -70,6 +70,8 @@ export default function SettingsModal({
   const [settings, setSettings] = useState<MeetingFormSettings>(DEFAULT_SETTINGS)
   const [permissions, setPermissions] = useState<TeacherPermissions>(DEFAULT_PERMISSIONS)
   const [canManageMaterials, setCanManageMaterials] = useState(false)
+  const [canAccessMaterials, setCanAccessMaterials] = useState(false)
+  const [canAccessMonitoring, setCanAccessMonitoring] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -102,6 +104,8 @@ export default function SettingsModal({
 
       setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
       setCanManageMaterials(materialPerms.can_manage_materials)
+      setCanAccessMaterials(materialPerms.can_access_materials)
+      setCanAccessMonitoring(materialPerms.can_access_monitoring)
       setAllActivityTypes(types || [])
       setAssignedActivityTypeIds(new Set(assigned.map(a => a.activity_type_id)))
     } catch (error) {
@@ -153,7 +157,11 @@ export default function SettingsModal({
         return
       }
 
-      const materialResult = await updateTeacherMaterialPermissions(userId, { can_manage_materials: canManageMaterials })
+      const materialResult = await updateTeacherMaterialPermissions(userId, { 
+        can_manage_materials: canManageMaterials,
+        can_access_materials: canAccessMaterials,
+        can_access_monitoring: canAccessMonitoring,
+      })
       if (!materialResult.success) {
         toast.error('Gagal menyimpan hak akses materi: ' + materialResult.error)
         setIsSaving(false)
@@ -380,8 +388,8 @@ export default function SettingsModal({
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Berikan akses kepada guru untuk mengelola konten materi pembelajaran
               </p>
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={canManageMaterials}
@@ -389,10 +397,42 @@ export default function SettingsModal({
                     className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     disabled={isSaving}
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                     Kelola Materi
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Tambah, edit, hapus item materi, assign ke kelas, dan set target bulanan
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
+                      Tambah, edit, hapus item materi, assign ke kelas, dan set target bulanan (Superset dari Akses Materi)
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={canAccessMaterials || canManageMaterials}
+                    onChange={(e) => setCanAccessMaterials(e.target.checked)}
+                    disabled={isSaving || canManageMaterials}
+                    className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                  />
+                  <span className={`text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors ${canManageMaterials ? 'opacity-50' : ''}`}>
+                    Akses Materi
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
+                      Dapat melihat halaman materi dan laporan materi
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={canAccessMonitoring}
+                    onChange={(e) => setCanAccessMonitoring(e.target.checked)}
+                    className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    disabled={isSaving}
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                    Akses Monitoring & Laporan Materi
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
+                      Dapat mengisi penilaian di monitoring dan melihat laporan pencapaian materi
                     </span>
                   </span>
                 </label>

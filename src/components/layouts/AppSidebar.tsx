@@ -16,12 +16,14 @@ import {
   BookOpenIcon,
   DashboardIcon,
   SettingsIcon,
+  MonitoringIcon,
+  PresensiIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { isSuperAdmin, isAdminKelompok, isAdminDesa } from "@/lib/userUtils";
-import { canManageMaterials } from "@/lib/accessControl";
+import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from "@/lib/accessControl";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -32,6 +34,8 @@ type NavItem = {
   subItems?: SubNavItem[];
   adminOnly?: boolean;
   requireCanManageMaterials?: boolean;
+  requireCanAccessMaterials?: boolean;
+  requireCanAccessMonitoring?: boolean;
   excludeAdminKelompok?: boolean;
   excludeAdminDesa?: boolean;
 };
@@ -49,7 +53,7 @@ const allNavItems: NavItem[] = [
     adminOnly: true,
   },
   {
-    icon: <CheckCircleIcon className="w-6 h-6" />,
+    icon: <PresensiIcon className="w-6 h-6" />,
     name: "Presensi",
     path: "/presensi",
   },
@@ -59,15 +63,21 @@ const allNavItems: NavItem[] = [
     path: "/laporan",
   },
   {
-    icon: <BookOpenIcon className="w-6 h-6" />,
-    name: "Materi",
-    path: "/materi",
-    requireCanManageMaterials: true,
-  },
-  {
     icon: <GroupIcon className="w-6 h-6" />,
     name: "Siswa",
     path: "/users/siswa",
+  },
+  {
+    icon: <BookOpenIcon className="w-6 h-6" />,
+    name: "Materi",
+    path: "/materi",
+    requireCanAccessMaterials: true,
+  },
+  {
+    icon: <MonitoringIcon className="w-6 h-6" />,
+    name: "Monitoring",
+    path: "/monitoring",
+    requireCanAccessMonitoring: true,
   },
   {
     icon: <GroupIcon className="w-6 h-6" />,
@@ -420,13 +430,15 @@ function SidebarContent({
   const isSuperAdminUser = profile ? isSuperAdmin(profile) : false;
   const isAdminUser = profile?.role === 'admin' || isSuperAdminUser;
   const userCanManageMaterials = profile ? canManageMaterials(profile) : false;
+  const userCanAccessMaterials = profile ? canAccessMaterials(profile) : false;
+  const userCanAccessMonitoring = profile ? canAccessMonitoring(profile) : false;
 
   // Filter navigation items based on admin status and role-specific exclusions
   const visibleNavItems = allNavItems.filter(item => {
-    // Items that require can_manage_materials: show for admin OR guru with permission
-    if (item.requireCanManageMaterials && !userCanManageMaterials) {
-      return false
-    }
+    // Items that require permissions: show for admin OR guru with permission
+    if (item.requireCanManageMaterials && !userCanManageMaterials) return false
+    if (item.requireCanAccessMaterials && !userCanAccessMaterials) return false
+    if (item.requireCanAccessMonitoring && !userCanAccessMonitoring) return false
 
     // Filter out admin-only items for non-admins
     if (item.adminOnly && !isAdminUser) {
@@ -502,23 +514,6 @@ function SidebarContent({
             isLoading={isLoading}
             onNavigate={onNavigate}
           />
-          <ul className="flex flex-col gap-4">
-            <li>
-              <a
-                href="/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`menu-item group menu-item-inactive ${!isExpanded && !isHovered && !isMobileOpen ? "lg:justify-center" : "lg:justify-start"}`}
-              >
-                <span className="w-6 h-6 flex items-center justify-center menu-item-icon-inactive">
-                  <BookOpenIcon className="w-6 h-6" />
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">Dokumentasi</span>
-                )}
-              </a>
-            </li>
-          </ul>
         </nav>
       </div>
     </aside>

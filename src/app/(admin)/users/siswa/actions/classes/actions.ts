@@ -76,7 +76,6 @@ export async function getAllClasses(): Promise<Class[]> {
 
                 // Filter by class master restriction if applicable
                 const allowedClassIds = await getTeacherAllowedClassIds(user.id, profile)
-                console.log('allowedClassIds', allowedClassIds);
                 let finalClasses = classes || []
                 if (allowedClassIds) {
                     finalClasses = finalClasses.filter(c => allowedClassIds.has(c.id))

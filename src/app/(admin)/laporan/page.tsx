@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import DataFilter from '@/components/shared/DataFilter'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
-import { canManageMaterials } from '@/lib/accessControl'
+import { canManageMaterials, canAccessMonitoring } from '@/lib/accessControl'
 import LaporanTabHeader from './components/LaporanTabHeader'
 
 // Set Indonesian locale
@@ -53,7 +53,7 @@ export default function LaporanPage() {
 
   const hasMateriAccess = useMemo(() => {
     if (!userProfile) return false
-    return canManageMaterials(userProfile)
+    return canAccessMonitoring(userProfile)
   }, [userProfile])
 
   const [laporanTab, setLaporanTab] = useState<'presensi' | 'materi'>('presensi')
@@ -165,6 +165,18 @@ export default function LaporanPage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Laporan
+            </h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Kelola data laporan
+            </p>
+          </div>
+        </div>
+
         {/* Dummy Data Indicator */}
         {process.env.NEXT_PUBLIC_USE_DUMMY_DATA === 'true' && (
           <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">

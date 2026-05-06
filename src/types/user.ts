@@ -58,6 +58,8 @@ export interface UserProfile extends UserProfileWithOrg {
     can_soft_delete_students?: boolean
     can_hard_delete_students?: boolean
     can_manage_materials?: boolean
+    can_access_materials?: boolean
+    can_access_monitoring?: boolean
   }
   last_seen_at?: string | null
 }
