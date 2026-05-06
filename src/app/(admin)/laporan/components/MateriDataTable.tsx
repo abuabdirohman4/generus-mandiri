@@ -2,11 +2,13 @@
 
 import { useMemo } from 'react'
 import DataTable from '@/components/table/Table'
-import type { MateriReportRow } from '../actions/reports/materiQueries'
+import type { MateriReportRow, MateriSiswaRow } from '../actions/reports/materiQueries'
 import { getGrade } from '@/lib/percentages'
 
 interface MateriDataTableProps {
     rows: MateriReportRow[]
+    siswaRows?: MateriSiswaRow[]
+    viewMode: 'per_materi' | 'per_siswa'
     isLoading: boolean
 }
 
@@ -16,37 +18,72 @@ function getCompletionColor(percentage: number) {
     return 'text-red-600 dark:text-red-400'
 }
 
-export default function MateriDataTable({ rows, isLoading }: MateriDataTableProps) {
-    const columns = useMemo(() => [
-        {
-            key: 'material_name',
-            label: 'Materi',
-            sortable: true,
-            align: 'left' as const,
-        },
-        {
-            key: 'material_type_name',
-            label: 'Tipe',
-            sortable: true,
-            align: 'left' as const,
-            className: 'hidden sm:table-cell',
-        },
-        {
-            key: 'percentage',
-            label: 'Tercapai',
-            sortable: true,
-            align: 'center' as const,
-        },
-        {
-            key: 'avg_nilai',
-            label: 'Nilai',
-            sortable: true,
-            align: 'center' as const,
-            className: 'hidden md:table-cell',
+export default function MateriDataTable({ rows, siswaRows = [], viewMode, isLoading }: MateriDataTableProps) {
+    const columns = useMemo(() => {
+        if (viewMode === 'per_siswa') {
+            return [
+                { key: 'student_name', label: 'Siswa', sortable: true, align: 'left' as const },
+                { key: 'percentage', label: 'Tercapai', sortable: true, align: 'center' as const },
+                { key: 'avg_nilai', label: 'Nilai', sortable: true, align: 'center' as const, className: 'hidden md:table-cell' },
+            ]
         }
-    ], [])
+        return [
+            {
+                key: 'material_name',
+                label: 'Materi',
+                sortable: true,
+                align: 'left' as const,
+            },
+            {
+                key: 'material_type_name',
+                label: 'Tipe',
+                sortable: true,
+                align: 'left' as const,
+                className: 'hidden sm:table-cell',
+            },
+            {
+                key: 'percentage',
+                label: 'Tercapai',
+                sortable: true,
+                align: 'center' as const,
+            },
+            {
+                key: 'avg_nilai',
+                label: 'Nilai',
+                sortable: true,
+                align: 'center' as const,
+                className: 'hidden md:table-cell',
+            }
+        ]
+    }, [viewMode])
 
-    const renderCell = (column: any, row: MateriReportRow) => {
+    const renderCell = (column: any, row: any) => {
+        if (viewMode === 'per_siswa') {
+            switch (column.key) {
+                case 'student_name':
+                    return <span className="font-medium text-gray-900 dark:text-white">{row.student_name}</span>
+                case 'percentage':
+                    return (
+                        <div className="flex items-center justify-center gap-1.5 font-semibold">
+                            <span className={getCompletionColor(row.percentage)}>{row.percentage}%</span>
+                            <span className="text-gray-400">({row.tuntas_count}/{row.total_materials})</span>
+                        </div>
+                    )
+                case 'avg_nilai':
+                    if (row.avg_nilai <= 0) return <span className="text-gray-400">—</span>
+                    const { grade, color: gradeColor } = getGrade(row.avg_nilai)
+                    return (
+                        <div className="flex items-center justify-center gap-2 font-semibold">
+                            <span className="text-gray-700 dark:text-gray-300">{row.avg_nilai}</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeColor}`}>{grade}</span>
+                        </div>
+                    )
+                default:
+                    return (row as any)[column.key]
+            }
+        }
+
+        // Default per_materi view
         switch (column.key) {
             case 'material_name':
                 return <span className="font-medium text-gray-900 dark:text-white">{row.material_name}</span>
@@ -70,7 +107,6 @@ export default function MateriDataTable({ rows, isLoading }: MateriDataTableProp
             case 'avg_nilai':
                 if (row.avg_nilai <= 0) return <span className="text-gray-400">—</span>;
                 const { grade, color: gradeColor } = getGrade(row.avg_nilai);
-                const textColor = gradeColor.split(' ')[0];
                 return (
                     <div className="flex items-center justify-center gap-2 font-semibold">
                         <span className="text-gray-700 dark:text-gray-300">
@@ -102,19 +138,19 @@ export default function MateriDataTable({ rows, isLoading }: MateriDataTableProp
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Detail Pencapaian per Materi
+                {viewMode === 'per_siswa' ? 'Detail Pencapaian per Siswa' : 'Detail Pencapaian per Materi'}
             </h3>
             <DataTable
                 columns={columns}
-                data={rows}
+                data={viewMode === 'per_siswa' ? siswaRows : rows}
                 renderCell={renderCell}
                 pagination={true}
                 searchable={true}
-                searchPlaceholder="Cari materi..."
+                searchPlaceholder={viewMode === 'per_siswa' ? 'Cari siswa...' : 'Cari materi...'}
                 defaultItemsPerPage={10}
                 className="border-none shadow-none"
-                getRowId={(row) => row.material_item_id}
-                defaultSortColumn="material_type_name"
+                getRowId={viewMode === 'per_siswa' ? (row: any) => row.student_id : (row: any) => row.material_item_id}
+                defaultSortColumn={viewMode === 'per_siswa' ? 'percentage' : 'material_type_name'}
                 defaultSortDirection="desc"
             />
         </div>

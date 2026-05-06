@@ -6,9 +6,10 @@ import type { MateriReportFilters, MateriReportData } from '../actions/reports/m
 interface UseMateriReportDataOptions {
     filters: MateriReportFilters
     enabled?: boolean
+    viewMode?: 'per_materi' | 'per_siswa'
 }
 
-export function useMateriReportData({ filters, enabled = true }: UseMateriReportDataOptions) {
+export function useMateriReportData({ filters, enabled = true, viewMode = 'per_materi' }: UseMateriReportDataOptions) {
     const shouldFetch = enabled && !!filters.classId && !!filters.academicYearId
 
     const swrKey = shouldFetch

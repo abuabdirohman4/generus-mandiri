@@ -39,9 +39,9 @@ interface MateriFilterSectionProps {
     desaList: DesaBase[]
     kelompokList: KelompokBase[]
     classList: Class[]
+    viewMode: 'per_materi' | 'per_siswa'
+    onViewModeChange: (mode: 'per_materi' | 'per_siswa') => void
 }
-
-
 export default function MateriFilterSection({
     filters,
     categories,
@@ -50,7 +50,9 @@ export default function MateriFilterSection({
     daerahList,
     desaList,
     kelompokList,
-    classList
+    classList,
+    viewMode,
+    onViewModeChange
 }: MateriFilterSectionProps) {
     const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
 
@@ -92,7 +94,7 @@ export default function MateriFilterSection({
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-4">
                 {/* Tahun Ajaran */}
                 <InputFilter
                     id="academic-year-filter"
@@ -202,6 +204,19 @@ export default function MateriFilterSection({
                         label: getMonthName(m as Month) 
                     }))}
                     allOptionLabel="Semua Bulan"
+                    compact
+                />
+
+                {/* View Mode */}
+                <InputFilter
+                    id="view-mode-filter"
+                    label="Tampilkan"
+                    value={viewMode}
+                    onChange={(val) => onViewModeChange(val as 'per_materi' | 'per_siswa')}
+                    options={[
+                        { value: 'per_materi', label: 'Per Materi' },
+                        { value: 'per_siswa', label: 'Per Siswa' }
+                    ]}
                     compact
                 />
             </div>

@@ -498,7 +498,7 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
                 </div>
 
                 {/* Floating Save Button */}
-                <div className="fixed z-50 bottom-[80px] md:bottom-6 right-6">
+                <div className="fixed z-50 bottom-20 md:bottom-6 right-6">
                     <button
                         onClick={handleSaveAll}
                         disabled={saving}

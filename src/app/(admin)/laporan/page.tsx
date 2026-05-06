@@ -76,6 +76,8 @@ export default function LaporanPage() {
       month: undefined as number | undefined,
   })
 
+  const [materiViewMode, setMateriViewMode] = useState<'per_materi' | 'per_siswa'>('per_materi')
+
   // Initialize filters from user profile and fetch active academic year
   useEffect(() => {
     const initializeFilters = async () => {
@@ -129,7 +131,8 @@ export default function LaporanPage() {
 
   const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
       filters: materiFilters,
-      enabled: laporanTab === 'materi'
+      enabled: laporanTab === 'materi',
+      viewMode: materiViewMode
   })
 
   const handleMateriFilterChange = (key: keyof typeof materiFilters, value: any) => {
@@ -264,7 +267,9 @@ export default function LaporanPage() {
                 />
 
                 {/* Data Table */}
-                <DataTable tableData={tableData} userProfile={userProfile} />
+                <div className='mt-4'>
+                  <DataTable tableData={tableData} userProfile={userProfile} />
+                </div>
               </>
             ) : (
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
@@ -293,6 +298,8 @@ export default function LaporanPage() {
               desaList={desa || []}
               kelompokList={kelompok || []}
               classList={classes || []}
+              viewMode={materiViewMode}
+              onViewModeChange={setMateriViewMode}
             />
             
             <MateriStatsCards 
@@ -303,6 +310,8 @@ export default function LaporanPage() {
             <MateriDataTable 
               rows={materiData?.rows || []} 
               isLoading={isLoadingMateri} 
+              viewMode={materiViewMode}
+              siswaRows={materiData?.siswaRows || []}
             />
           </>
         )}
