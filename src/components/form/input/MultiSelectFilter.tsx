@@ -251,7 +251,7 @@ export default function MultiSelectFilter({
                   "w-4 h-4 border border-gray-300 rounded flex items-center justify-center",
                   allSelected && "bg-blue-500 border-blue-500"
                 )}>
-                  {allSelected && <CheckLineIcon className="h-4 w-4 -translate-x-0.25 text-white" />}
+                  {allSelected && <CheckLineIcon className="h-4 w-4 -translate-x-px text-white" />}
                 </div>
                 <span className="text-sm">{allOptionLabel}</span>
               </button>
@@ -281,7 +281,7 @@ export default function MultiSelectFilter({
                       "w-4 h-4 border border-gray-300 rounded flex items-center justify-center",
                       isSelected && "bg-blue-500 border-blue-500"
                     )}>
-                      {isSelected && <CheckLineIcon className="h-4 w-4 -translate-x-0.25 text-white" />}
+                      {isSelected && <CheckLineIcon className="h-4 w-4 -translate-x-px text-white" />}
                     </div>
                     <span className="text-sm">{option.label}</span>
                   </button>

@@ -115,10 +115,10 @@ export async function buildFilterConditions(
     rlsFilter?: RLSFilter | null
 ): Promise<FilterConditions> {
     const hasFilters = !!(
-        uiFilters?.classId ||
-        uiFilters?.kelompokId ||
-        uiFilters?.desaId ||
-        uiFilters?.daerahId ||
+        (uiFilters?.classId && uiFilters.classId.length > 0) ||
+        (uiFilters?.kelompokId && uiFilters.kelompokId.length > 0) ||
+        (uiFilters?.desaId && uiFilters.desaId.length > 0) ||
+        (uiFilters?.daerahId && uiFilters.daerahId.length > 0) ||
         uiFilters?.gender ||
         rlsFilter?.kelompok_id ||
         rlsFilter?.desa_id ||
@@ -129,10 +129,16 @@ export async function buildFilterConditions(
         return { classIds: [], studentIds: [], hasFilters: false };
     }
 
-    const [classIds, studentIds] = await Promise.all([
+    let [classIds, studentIds] = await Promise.all([
         getValidClassIds(supabase, uiFilters, rlsFilter),
         getValidStudentIds(supabase, uiFilters, rlsFilter)
     ]);
+
+    // Workaround for RPC OR logic bug: if classId is explicitly requested, strictly filter the result
+    if (uiFilters?.classId && uiFilters.classId.length > 0) {
+        const explicitClassIds = new Set(normalizeIds(uiFilters.classId));
+        classIds = classIds.filter(id => explicitClassIds.has(id));
+    }
 
     return { classIds, studentIds, hasFilters: true };
 }

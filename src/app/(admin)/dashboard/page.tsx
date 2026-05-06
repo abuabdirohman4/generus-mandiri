@@ -17,12 +17,19 @@ import { useClasses } from '@/hooks/useClasses';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { getClassMonitoring } from './actions';
 import { useDashboardStore } from './stores/dashboardStore';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Set locale global ke Indonesia
 dayjs.locale('id');
 
 export default function AdminDashboard() {
   const { filters, setFilters, setFilter } = useDashboardStore();
+
+  // Debounce only for the SWR cache key — limits server requests while user is
+  // still interacting with filters. The fetcher always reads from raw `filters`
+  // so data is always up-to-date when a fetch actually fires.
+  const debouncedFiltersForKey = useDebounce(filters, 500);
+
   // Derived values
   const selectedPeriod = filters.period;
   const customDateRange = filters.customDateRange;
@@ -44,12 +51,12 @@ export default function AdminDashboard() {
 
   // Dashboard stats (Total Siswa, Total Kelas)
   const dashboardFilters = useMemo(() => ({
-    daerahId: filters.daerah,
-    desaId: filters.desa,
-    kelompokId: filters.kelompok,
-    classId: filters.kelas,
-    gender: filters.gender
-  }), [filters.daerah, filters.desa, filters.kelompok, filters.kelas, filters.gender]);
+    daerahId: debouncedFiltersForKey.daerah,
+    desaId: debouncedFiltersForKey.desa,
+    kelompokId: debouncedFiltersForKey.kelompok,
+    classId: debouncedFiltersForKey.kelas,
+    gender: debouncedFiltersForKey.gender
+  }), [debouncedFiltersForKey.daerah, debouncedFiltersForKey.desa, debouncedFiltersForKey.kelompok, debouncedFiltersForKey.kelas, debouncedFiltersForKey.gender]);
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters);
 
@@ -74,23 +81,25 @@ export default function AdminDashboard() {
 
   // Build stable cache key
   const monitoringCacheKey = useMemo(() => {
-    const key = {
-      period: filters.period,
-      dateRange: filters.customDateRange,
-      daerah: filters.daerah.sort().join(','),
-      desa: filters.desa.sort().join(','),
-      kelompok: filters.kelompok.sort().join(','),
-      kelas: filters.kelas.sort().join(','),
-      gender: filters.gender || '',
-      viewMode: filters.classViewMode,
-      comparisonLevel: filters.comparisonLevel, // ADDED: Include comparison level in cache key
+    // Use debouncedFiltersForKey so the SWR key (and therefore the fetch)
+    // only changes after the user stops interacting for 500ms.
+    // Spread [...arr] before .sort() to avoid mutating Zustand state in-place.
+    return JSON.stringify({
+      period: debouncedFiltersForKey.period,
+      dateRange: debouncedFiltersForKey.customDateRange,
+      daerah: [...debouncedFiltersForKey.daerah].sort().join(','),
+      desa: [...debouncedFiltersForKey.desa].sort().join(','),
+      kelompok: [...debouncedFiltersForKey.kelompok].sort().join(','),
+      kelas: [...debouncedFiltersForKey.kelas].sort().join(','),
+      gender: debouncedFiltersForKey.gender || '',
+      viewMode: debouncedFiltersForKey.classViewMode,
+      comparisonLevel: debouncedFiltersForKey.comparisonLevel,
       // Dynamic date selectors
       selectedDate,
       selectedWeekOffset,
       selectedMonth
-    };
-    return JSON.stringify(key);
-  }, [filters, selectedDate, selectedWeekOffset, selectedMonth]);
+    });
+  }, [debouncedFiltersForKey, selectedDate, selectedWeekOffset, selectedMonth]);
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
     ['class-monitoring', monitoringCacheKey],
     monitoringFetcher,
