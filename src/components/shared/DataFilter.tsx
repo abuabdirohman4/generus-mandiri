@@ -148,10 +148,19 @@ export default function DataFilter({
   }, [isTeacher, userProfile?.classes])
 
   // Determine which filters to show (use override props if provided, otherwise use role-based logic)
-  const shouldShowDaerah = showDaerah !== undefined ? showDaerah : (isSuperAdmin || isTeacherDaerah)
-  const shouldShowDesa = showDesa !== undefined ? showDesa : (isSuperAdmin || isAdminDaerah || isTeacherDaerah || isTeacherDesa)
-  const shouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa || isTeacherKelompok || teacherHasMultipleKelompok)
-  const showKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses || isTeacherDaerah || isTeacherDesa)
+  const baseShouldShowDaerah = showDaerah !== undefined ? showDaerah : (isSuperAdmin || isTeacherDaerah)
+  const baseShouldShowDesa = showDesa !== undefined ? showDesa : (isSuperAdmin || isAdminDaerah || isTeacherDaerah || isTeacherDesa)
+  const baseShouldShowKelompok = showKelompok !== undefined ? showKelompok : (isSuperAdmin || isAdminDaerah || isAdminDesa || isTeacherDaerah || isTeacherDesa || isTeacherKelompok || teacherHasMultipleKelompok)
+  const baseShowKelasFilter = showKelas && (isSuperAdmin || isAdminDaerah || isAdminDesa || isAdminKelompok || teacherHasMultipleClasses || isTeacherDaerah || isTeacherDesa)
+
+  // Apply Comparison Level restrictions (Hide child filters if comparing at a higher level)
+  const shouldShowDaerah = baseShouldShowDaerah;
+  const shouldShowDesa = baseShouldShowDesa && (!showComparisonLevel || comparisonLevel !== 'daerah')
+  const shouldShowKelompok = baseShouldShowKelompok && (!showComparisonLevel || (comparisonLevel !== 'daerah' && comparisonLevel !== 'desa'))
+  const showKelasFilter = baseShowKelasFilter && (!showComparisonLevel || comparisonLevel === 'class')
+
+  // Force single-select for grouping levels when comparing classes to prevent massive data loads
+  const forceSingleSelectGroupings = showComparisonLevel && comparisonLevel === 'class'
 
   // Filter options based on cascading logic (declare these before counting)
   const filteredDesaList = useMemo(() => {
@@ -602,7 +611,7 @@ export default function DataFilter({
 
       {effectiveShouldShowDesa && (
         <div className={getFilterClass(getFilterIndex('desa'))}>
-          {variant === 'page' ? (
+          {variant === 'page' && !forceSingleSelectGroupings ? (
             <MultiSelectFilter
               id="desaFilter"
               label="Desa"
@@ -624,8 +633,8 @@ export default function DataFilter({
               value={filters?.desa[0] || ''}
               onChange={(value) => handleDesaChange(value ? [value] : [])}
               options={filteredDesaList.map(desa => ({ value: desa.id, label: desa.name }))}
-              allOptionLabel={hideAllOption ? undefined : "Semua Desa"}
-              placeholder={hideAllOption ? "Pilih Desa" : undefined}
+              allOptionLabel={(hideAllOption || forceSingleSelectGroupings) ? undefined : "Semua Desa"}
+              placeholder={(hideAllOption || forceSingleSelectGroupings) ? "Pilih Desa" : undefined}
               widthClassName="!max-w-full"
               variant={variant}
               compact={compact}
@@ -640,7 +649,7 @@ export default function DataFilter({
 
       {effectiveShouldShowKelompok && (
         <div className={getFilterClass(getFilterIndex('kelompok'))}>
-          {variant === 'page' ? (
+          {variant === 'page' && !forceSingleSelectGroupings ? (
             <MultiSelectFilter
               id="kelompokFilter"
               label="Kelompok"
@@ -662,8 +671,8 @@ export default function DataFilter({
               value={filters?.kelompok[0] || ''}
               onChange={(value) => handleKelompokChange(value ? [value] : [])}
               options={filteredKelompokList.map(kelompok => ({ value: kelompok.id, label: kelompok.name }))}
-              allOptionLabel={hideAllOption ? undefined : "Semua Kelompok"}
-              placeholder={hideAllOption ? "Pilih Kelompok" : undefined}
+              allOptionLabel={(hideAllOption || forceSingleSelectGroupings) ? undefined : "Semua Kelompok"}
+              placeholder={(hideAllOption || forceSingleSelectGroupings) ? "Pilih Kelompok" : undefined}
               widthClassName="!max-w-full"
               variant={variant}
               compact={compact}

@@ -5,7 +5,7 @@ import DataTable from '@/components/table/Table';
 import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/userUtils';
 import { getStatusBgColor, getStatusColor } from '@/lib/percentages';
 import { useDashboardStore } from '../stores/dashboardStore';
 import ComparisonChart from './ComparisonChart';
@@ -272,6 +272,16 @@ export default function ClassMonitoringTable({
                comparisonLevel === 'desa' ? 'Cari desa...' : 'Cari daerah...';
     }, [filters.comparisonLevel]);
 
+    // Check if user needs to select exactly 1 kelompok to view class comparison
+    const needsKelompokSelection = useMemo(() => {
+        if (!profile || filters.comparisonLevel !== 'class') return false;
+        
+        const isHigherLevelAdmin = isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile) || isTeacherDaerah(profile) || isTeacherDesa(profile);
+        const hasSelectedExactlyOneKelompok = filters.kelompok && filters.kelompok.length === 1;
+        
+        return isHigherLevelAdmin && !hasSelectedExactlyOneKelompok;
+    }, [profile, filters.comparisonLevel, filters.kelompok]);
+
     if (isLoading) {
         // Calculate dynamic column count based on comparison level
         const comparisonLevel = filters.comparisonLevel;
@@ -312,6 +322,31 @@ export default function ClassMonitoringTable({
                 <div className="mt-4 flex items-center gap-2">
                     <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                     <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (needsKelompokSelection) {
+        return (
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Monitoring Kehadiran
+                </h3>
+                <div className="h-64 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                        <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-4">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                            Pilih 1 Kelompok Terlebih Dahulu
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            Untuk melihat perbandingan antar kelas, silakan pilih tepat 1 Kelompok pada filter di atas agar data dapat ditampilkan dengan optimal.
+                        </p>
+                    </div>
                 </div>
             </div>
         );

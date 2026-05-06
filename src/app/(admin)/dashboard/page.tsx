@@ -18,6 +18,7 @@ import { useUserProfile } from '@/stores/userProfileStore';
 import { getClassMonitoring } from './actions';
 import { useDashboardStore } from './stores/dashboardStore';
 import { useDebounce } from '@/hooks/useDebounce';
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isTeacherDaerah, isTeacherDesa } from '@/lib/userUtils';
 
 // Set locale global ke Indonesia
 dayjs.locale('id');
@@ -100,8 +101,29 @@ export default function AdminDashboard() {
       selectedMonth
     });
   }, [debouncedFiltersForKey, selectedDate, selectedWeekOffset, selectedMonth]);
+  // Logic to prevent heavy initial load when switching to 'class' comparison
+  const shouldFetchMonitoring = useMemo(() => {
+    if (filters.comparisonLevel === 'class') {
+      // Option A: Strictly require at least one specific class to be selected.
+      const hasSpecificSelection = filters.kelas.length > 0;
+      
+      // Higher level admins (Super, Daerah, Desa, and Teachers with wide access) 
+      // must provide a specific selection.
+      const isHighLevelAdmin = userProfile && (
+        isSuperAdmin(userProfile) || 
+        isAdminDaerah(userProfile) || 
+        isAdminDesa(userProfile) || 
+        isTeacherDaerah(userProfile) || 
+        isTeacherDesa(userProfile)
+      );
+      
+      if (isHighLevelAdmin) return !!hasSpecificSelection;
+    }
+    return true;
+  }, [filters.comparisonLevel, filters.kelas, userProfile]);
+
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
-    ['class-monitoring', monitoringCacheKey],
+    shouldFetchMonitoring ? ['class-monitoring', monitoringCacheKey] : null,
     monitoringFetcher,
     {
       revalidateOnFocus: false,
