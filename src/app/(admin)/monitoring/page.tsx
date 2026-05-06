@@ -34,6 +34,7 @@ import { getGrade } from '@/lib/percentages';
 import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
 import { isMobile } from '@/lib/utils';
+import { MonitoringContentSkeleton } from './components/MonitoringSkeleton';
 
 interface Student {
     id: string;
@@ -238,10 +239,12 @@ export default function MonitoringPage() {
             }
 
             // Auto-select "Hafalan" category or fallback to first
+            /*
             if (finalCategories.length > 0 && !selectedCategoryId) {
                 const hafalanCategory = finalCategories.find(cat => cat.name.toLowerCase() === 'hafalan');
                 setSelectedCategoryId(hafalanCategory ? hafalanCategory.id : finalCategories[0].id);
             }
+            */
         } catch (error: any) {
             toast.error(error.message || 'Gagal memuat data awal');
             console.error('Failed to load initial data:', error);
@@ -698,33 +701,47 @@ export default function MonitoringPage() {
                                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                                         {/* Tahun Ajaran */}
-                                        <InputFilter
-                                            id="academic-year-filter"
-                                            label="Tahun Ajaran"
-                                            value={selectedYearId}
-                                            onChange={setSelectedYearId}
-                                            options={academicYears}
-                                            placeholder="Pilih Tahun"
-                                            variant="modal"
-                                            compact
-                                        />
+                                        {filterLoading ? (
+                                            <div className="animate-pulse">
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                            </div>
+                                        ) : (
+                                            <InputFilter
+                                                id="academic-year-filter"
+                                                label="Tahun Ajaran"
+                                                value={selectedYearId}
+                                                onChange={setSelectedYearId}
+                                                options={academicYears}
+                                                placeholder="Pilih Tahun"
+                                                variant="modal"
+                                                compact
+                                            />
+                                        )}
 
                                         {/* Semester */}
-                                        <InputFilter
-                                            id="semester-filter"
-                                            label="Semester"
-                                            value={String(selectedSemester)}
-                                            onChange={(val) => {
-                                                setSelectedSemester(Number(val) as 1 | 2);
-                                                setSelectedMonth(null);
-                                            }}
-                                            options={[
-                                                { value: '1', label: 'Semester 1' },
-                                                { value: '2', label: 'Semester 2' },
-                                            ]}
-                                            variant="modal"
-                                            compact
-                                        />
+                                        {filterLoading ? (
+                                            <div className="animate-pulse">
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+                                                <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                            </div>
+                                        ) : (
+                                            <InputFilter
+                                                id="semester-filter"
+                                                label="Semester"
+                                                value={String(selectedSemester)}
+                                                onChange={(val) => {
+                                                    setSelectedSemester(Number(val) as 1 | 2);
+                                                    setSelectedMonth(null);
+                                                }}
+                                                options={[
+                                                    { value: '1', label: 'Semester 1' },
+                                                    { value: '2', label: 'Semester 2' },
+                                                ]}
+                                                variant="modal"
+                                                compact
+                                            />
+                                        )}
 
                                         {/* Daerah Filter */}
                                         {userProfile && shouldShowDaerahFilter(userProfile) && (
@@ -741,7 +758,7 @@ export default function MonitoringPage() {
                                                         value={selectedDaerahId}
                                                         onChange={handleDaerahChange}
                                                         options={daerahList.map(d => ({ value: d.id, label: d.name }))}
-                                                        allOptionLabel="Semua Daerah"
+                                                        allOptionLabel="Pilih Daerah"
                                                         variant="modal"
                                                         compact
                                                     />
@@ -764,7 +781,7 @@ export default function MonitoringPage() {
                                                         value={selectedDesaId}
                                                         onChange={handleDesaChange}
                                                         options={filteredDesaList.map(d => ({ value: d.id, label: d.name }))}
-                                                        allOptionLabel="Semua Desa"
+                                                        allOptionLabel="Pilih Desa"
                                                         variant="modal"
                                                         compact
                                                         disabled={userProfile && shouldShowDaerahFilter(userProfile) && !selectedDaerahId}
@@ -788,7 +805,7 @@ export default function MonitoringPage() {
                                                         value={selectedKelompokId}
                                                         onChange={handleKelompokChange}
                                                         options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
-                                                        allOptionLabel="Semua Kelompok"
+                                                        allOptionLabel="Pilih Kelompok"
                                                         variant="modal"
                                                         compact
                                                         disabled={userProfile && modalShouldShowDesaFilter(userProfile) && !selectedDesaId}
@@ -814,6 +831,7 @@ export default function MonitoringPage() {
                                                     placeholder="Pilih Kelas"
                                                     variant="modal"
                                                     compact
+                                                    disabled={!selectedKelompokId}
                                                 />
                                             )}
                                         </div>
@@ -873,10 +891,7 @@ export default function MonitoringPage() {
                                 </p>
                             </div>
                         ) : loading ? (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Memuat data...</p>
-                            </div>
+                            <MonitoringContentSkeleton />
                         ) : !currentStudent ? (
                             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                 <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada siswa di kelas ini</p>
@@ -1041,7 +1056,7 @@ export default function MonitoringPage() {
                                     </div>
 
                                     {/* Monthly Target Progress Card */}
-                                    {selectedMonth && monthlyTargetProgress && monthlyTargetProgress.total_targets > 0 && (
+                                    {/* {selectedMonth && monthlyTargetProgress && monthlyTargetProgress.total_targets > 0 && (
                                         <div className="mt-4 p-4 md:mx-4 md:mb-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
                                             <div className="flex justify-between items-end mb-2">
                                                 <p className="text-sm font-medium text-indigo-700 dark:text-indigo-400">
@@ -1063,7 +1078,7 @@ export default function MonitoringPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
 
 
@@ -1119,11 +1134,11 @@ export default function MonitoringPage() {
                                                                         <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
                                                                             <td className="px-3 md:px-4 py-2 md:py-3 text-sm text-gray-900 dark:text-white">
                                                                                 {material.name}
-                                                                                {selectedMonth && monthlyTargetItemIds.has(material.id) && (
+                                                                                {/* {selectedMonth && monthlyTargetItemIds.has(material.id) && (
                                                                                     <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
                                                                                         Target
                                                                                     </span>
-                                                                                )}
+                                                                                )} */}
                                                                             </td>
                                                                             <td className="px-3 md:px-4 py-2 md:py-3 text-center">
                                                                                 <input

@@ -23,7 +23,7 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
     const columns = useMemo(() => {
         if (viewMode === 'per_siswa') {
             return [
-                { key: 'student_name', label: 'Siswa', sortable: true, align: 'left' as const },
+                { key: 'student_name', label: 'Nama Siswa', sortable: true, align: 'left' as const },
                 { key: 'percentage', label: 'Tercapai', sortable: true, align: 'center' as const },
                 { key: 'avg_nilai', label: 'Nilai', sortable: true, align: 'center' as const, className: 'hidden md:table-cell' },
             ]

@@ -116,7 +116,7 @@ export default function LaporanPage() {
   const visibleTabs = useMemo(() => {
     const tabs: { id: LaporanTab; label: string }[] = [{ id: 'presensi' as const, label: 'Presensi' }]
     if (hasMateriAccess) tabs.push({ id: 'materi' as const, label: 'Materi' })
-    if (hasOverviewAccess) tabs.push({ id: 'overview' as const, label: 'Overview' })
+    if (hasOverviewAccess) tabs.push({ id: 'overview' as const, label: 'Semua' })
     return tabs
   }, [hasMateriAccess, hasOverviewAccess])
 
@@ -130,6 +130,7 @@ export default function LaporanPage() {
   })
 
   // Auto-select "Hafalan" category by default when loaded
+  /*
   useEffect(() => {
     if (categories.length > 0 && !materiFilters.categoryId) {
       const hafalanCategory = categories.find(c => c.label.toLowerCase() === 'hafalan')
@@ -137,6 +138,7 @@ export default function LaporanPage() {
       setMateriFilters({ categoryId: defaultId })
     }
   }, [categories, materiFilters.categoryId, setMateriFilters])
+  */
 
   const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
       filters: materiFilters,

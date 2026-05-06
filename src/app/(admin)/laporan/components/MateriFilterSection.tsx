@@ -8,7 +8,8 @@ import { getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-ye
 import {
     shouldShowDaerahFilter,
     modalShouldShowDesaFilter,
-    modalShouldShowKelompokFilter
+    modalShouldShowKelompokFilter,
+    isTeacher
 } from '@/lib/accessControl'
 import type { UserProfile } from '@/types/user'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
@@ -57,6 +58,16 @@ export default function MateriFilterSection({
         ).catch(() => {})
     }, [])
 
+    // Detect regular teachers whose classes span multiple kelompok
+    const teacherHasMultipleKelompok = useMemo(() => {
+        if (!userProfile || !isTeacher(userProfile) || !userProfile.classes || userProfile.classes.length <= 1) return false;
+        const kelompokIds = new Set<string>();
+        userProfile.classes.forEach(cls => {
+            if (cls.kelompok_id) kelompokIds.add(cls.kelompok_id);
+        });
+        return kelompokIds.size > 1;
+    }, [userProfile]);
+
     // Logic for filtering dropdown options
     const filteredDesaList = useMemo(() => {
         if (!filters.daerahId) return desaList;
@@ -64,13 +75,24 @@ export default function MateriFilterSection({
     }, [desaList, filters.daerahId]);
 
     const filteredKelompokList = useMemo(() => {
-        const baseList = filters.desaId ? kelompokList.filter(k => k.desa_id === filters.desaId) : kelompokList;
+        let baseList = kelompokList;
+        
+        // If teacher has specific classes, restrict kelompok list to those classes' kelompok
+        if (userProfile && isTeacher(userProfile) && userProfile.classes && userProfile.classes.length > 0) {
+            const teacherKelompokIds = new Set(userProfile.classes.map(cls => cls.kelompok_id).filter(Boolean));
+            baseList = kelompokList.filter(k => teacherKelompokIds.has(k.id));
+        }
+
+        if (filters.desaId) {
+            baseList = baseList.filter(k => k.desa_id === filters.desaId);
+        }
+        
         if (filters.daerahId && !filters.desaId) {
             const desaIds = desaList.filter(d => d.daerah_id === filters.daerahId).map(d => d.id);
-            return kelompokList.filter(k => desaIds.includes(k.desa_id || ''));
+            return baseList.filter(k => desaIds.includes(k.desa_id || ''));
         }
         return baseList;
-    }, [kelompokList, filters.desaId, filters.daerahId, desaList]);
+    }, [kelompokList, filters.desaId, filters.daerahId, desaList, userProfile]);
 
     const filteredClasses = useMemo(() => {
         let filtered = classList;
@@ -84,6 +106,28 @@ export default function MateriFilterSection({
             const kelompokIds = kelompokList.filter(k => desaIds.includes(k.desa_id || '')).map(k => k.id);
             filtered = filtered.filter(c => kelompokIds.includes(c.kelompok_id || ''));
         }
+
+        // Format labels: show kelompok name in parentheses if no specific kelompok is selected
+        if (!filters.kelompokId) {
+            // Check for duplicate class names to decide whether to show kelompok name
+            const nameCounts = filtered.reduce((acc, cls) => {
+                const name = (cls.name || '').trim();
+                acc[name] = (acc[name] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            return filtered.map(c => {
+                const hasDuplicate = nameCounts[(c.name || '').trim()] > 1;
+                const kelompokName = kelompokList.find(k => k.id === c.kelompok_id)?.name;
+                
+                const label = (hasDuplicate && kelompokName)
+                    ? `${c.name} (${kelompokName})`
+                    : c.name;
+                
+                return { value: c.id, label };
+            });
+        }
+
         return filtered.map(c => ({ value: c.id, label: c.name }));
     }, [classList, filters.kelompokId, filters.desaId, filters.daerahId, desaList, kelompokList]);
 
@@ -91,9 +135,9 @@ export default function MateriFilterSection({
         let count = 5; // Tahun Ajaran, Semester, Kelas, Kategori, Bulan
         if (userProfile && shouldShowDaerahFilter(userProfile)) count++;
         if (userProfile && modalShouldShowDesaFilter(userProfile)) count++;
-        if (userProfile && modalShouldShowKelompokFilter(userProfile)) count++;
+        if (userProfile && (modalShouldShowKelompokFilter(userProfile) || teacherHasMultipleKelompok)) count++;
         return count;
-    }, [userProfile]);
+    }, [userProfile, teacherHasMultipleKelompok]);
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
@@ -169,7 +213,7 @@ export default function MateriFilterSection({
                 )}
 
                 {/* Kelompok */}
-                {userProfile && modalShouldShowKelompokFilter(userProfile) && (
+                {userProfile && (modalShouldShowKelompokFilter(userProfile) || teacherHasMultipleKelompok) && (
                     <InputFilter
                         id="kelompok-filter"
                         label="Kelompok"
@@ -181,7 +225,7 @@ export default function MateriFilterSection({
                             });
                         }}
                         options={filteredKelompokList.map(k => ({ value: k.id, label: k.name }))}
-                        allOptionLabel="Semua Kelompok"
+                        allOptionLabel="Pilih Kelompok"
                         compact
                         disabled={userProfile && modalShouldShowDesaFilter(userProfile) && !filters.desaId}
                     />
@@ -196,6 +240,7 @@ export default function MateriFilterSection({
                     options={filteredClasses}
                     allOptionLabel="Pilih Kelas"
                     compact
+                    // disabled={!filters.kelompokId}
                 />
 
                 {/* Kategori */}
@@ -205,6 +250,7 @@ export default function MateriFilterSection({
                     value={filters.categoryId}
                     onChange={(val) => onFilterChange({ categoryId: val })}
                     options={categories}
+                    allOptionLabel="Semua Kategori"
                     compact
                 />
 
