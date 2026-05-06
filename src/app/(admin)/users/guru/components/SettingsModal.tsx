@@ -383,10 +383,10 @@ export default function SettingsModal({
             {/* Material Access Section */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
-                Hak Akses Materi
+                Hak Akses Fitur
               </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Berikan akses kepada guru untuk mengelola konten materi pembelajaran
+                Berikan akses kepada guru untuk mengelola fitur-fitur aplikasi
               </p>
               <div className="space-y-4">
                 <label className="flex items-start gap-3 cursor-pointer group">
