@@ -241,12 +241,12 @@ export default function OverviewTab() {
               : `${attendanceMetrics.simpleAverage}%`
           }
           icon="✅"
-          className="col-span-2 md:col-span-1"
+          className="col-span-3"
           color="emerald"
           tooltip={attendanceTooltip}
         />
-        <StatCard title="Total Siswa" value={stats?.siswa || 0} icon="👨‍🎓" color="blue" />
-        <StatCard title="Total Kelas" value={stats?.kelas || 0} icon="📚" color="purple" />
+        {/* <StatCard title="Total Siswa" value={stats?.siswa || 0} icon="👨‍🎓" color="blue" />
+        <StatCard title="Total Kelas" value={stats?.kelas || 0} icon="📚" color="purple" /> */}
       </div>
 
       <PeriodTabs
