@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type LaporanTab = 'presensi' | 'materi'
+export type LaporanTab = 'presensi' | 'materi' | 'overview'
 
 interface MateriFilters {
   classId: string

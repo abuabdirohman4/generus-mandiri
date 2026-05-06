@@ -46,12 +46,12 @@ const allNavItems: NavItem[] = [
     name: "Beranda",
     path: "/home",
   },
-  {
-    icon: <DashboardIcon className="w-6 h-6" />,
-    name: "Dashboard",
-    path: "/dashboard",
-    adminOnly: true,
-  },
+  // {
+  //   icon: <DashboardIcon className="w-6 h-6" />,
+  //   name: "Dashboard",
+  //   path: "/dashboard",
+  //   adminOnly: true,
+  // },
   {
     icon: <PresensiIcon className="w-6 h-6" />,
     name: "Presensi",

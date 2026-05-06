@@ -552,7 +552,7 @@ export default function DataFilter({
         <div className={getFilterClass(getFilterIndex('comparisonLevel'))}>
           <InputFilter
             id="comparisonLevelFilter"
-            label="Bandingkan Berdasarkan"
+            label="Bandingkan"
             value={comparisonLevel}
             onChange={(value) => onComparisonLevelChange?.(value as 'class' | 'kelompok' | 'desa' | 'daerah')}
             options={availableComparisonLevels}
@@ -722,12 +722,12 @@ export default function DataFilter({
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"
-            label="Mode Tampilan"
+            label="Data Kelas Yang Sama"
             value={classViewMode}
             onChange={handleClassViewModeChange}
             options={[
               { value: 'separated', label: 'Terpisah' },
-              { value: 'combined', label: 'Gabungan' }
+              { value: 'combined', label: 'Digabung' }
             ]}
             widthClassName="!max-w-full"
             variant={variant}

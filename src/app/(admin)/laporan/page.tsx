@@ -11,11 +11,12 @@ import { useMateriReportData } from './hooks/useMateriReportData'
 import { useState, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
-import { useLaporanStore } from '@/stores/laporanStore'
+import { useLaporanStore, type LaporanTab } from '@/stores/laporanStore'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
-import { canManageMaterials, canAccessMonitoring } from '@/lib/accessControl'
+import { canManageMaterials, canAccessMonitoring, canAccessOverview } from '@/lib/accessControl'
 import LaporanTabHeader from './components/LaporanTabHeader'
+import OverviewTab from './components/OverviewTab'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -65,12 +66,20 @@ export default function LaporanPage() {
     return canAccessMonitoring(userProfile)
   }, [userProfile])
 
+  const hasOverviewAccess = useMemo(() => {
+    if (!userProfile) return false
+    return canAccessOverview(userProfile)
+  }, [userProfile])
+
   // Reset tab ke presensi jika tidak ada akses
   useEffect(() => {
     if (!hasMateriAccess && laporanTab === 'materi') {
       setLaporanTab('presensi')
     }
-  }, [hasMateriAccess, laporanTab, setLaporanTab])
+    if (!hasOverviewAccess && laporanTab === 'overview') {
+      setLaporanTab('presensi')
+    }
+  }, [hasMateriAccess, hasOverviewAccess, laporanTab, setLaporanTab])
 
   // Initialize filters from user profile and fetch active academic year
   useEffect(() => {
@@ -102,6 +111,13 @@ export default function LaporanPage() {
 
     initializeFilters()
   }, [userProfile]) // Only depend on userProfile to avoid infinite loop
+
+  const visibleTabs = useMemo(() => {
+    const tabs: { id: LaporanTab; label: string }[] = [{ id: 'presensi' as const, label: 'Presensi' }]
+    if (hasMateriAccess) tabs.push({ id: 'materi' as const, label: 'Materi' })
+    if (hasOverviewAccess) tabs.push({ id: 'overview' as const, label: 'Overview' })
+    return tabs
+  }, [hasMateriAccess, hasOverviewAccess])
 
   const { data: categories = [] } = useSWR('material-categories-options', async () => {
       const supabase = createClient()
@@ -190,11 +206,12 @@ export default function LaporanPage() {
           </div>
         )}
 
-        {/* Tab header — hanya tampil jika user punya akses materi */}
-        {hasMateriAccess && (
+        {/* Tab header — hanya tampil jika user punya akses ke lebih dari satu tab */}
+        {visibleTabs.length > 1 && (
           <LaporanTabHeader
             activeTab={laporanTab}
             onTabChange={setLaporanTab}
+            tabs={visibleTabs}
           />
         )}
 
@@ -301,6 +318,10 @@ export default function LaporanPage() {
               siswaRows={materiData?.siswaRows || []}
             />
           </>
+        )}
+
+        {laporanTab === 'overview' && hasOverviewAccess && (
+          <OverviewTab />
         )}
       </div>
     </div>

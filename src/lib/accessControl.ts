@@ -95,6 +95,11 @@ export function canAccessMonitoring(profile: UserProfile | null): boolean {
   return profile.permissions?.can_access_monitoring === true
 }
 
+export function canAccessOverview(profile: UserProfile | null): boolean {
+  if (!profile) return false
+  return profile.role === 'superadmin' || profile.role === 'admin' || profile.role === 'teacher'
+}
+
 // Filter visibility utilities (for modal forms)
 export function shouldShowDaerahFilter(profile: UserProfile): boolean {
   return isSuperAdmin(profile)

@@ -4,6 +4,7 @@ import {
   modalShouldShowKelompokFilter,
   canAccessMaterials,
   canAccessMonitoring,
+  canAccessOverview,
   type UserProfile
 } from '@/lib/accessControl'
 
@@ -133,4 +134,22 @@ describe('canAccessMonitoring', () => {
     it('returns false if teacher has no permissions', () => {
         expect(canAccessMonitoring({ role: 'teacher', permissions: {} } as any)).toBe(false)
     })
+})
+
+describe('canAccessOverview', () => {
+  it('returns true for superadmin', () => {
+    expect(canAccessOverview({ role: 'superadmin' } as UserProfile)).toBe(true)
+  })
+  it('returns true for admin', () => {
+    expect(canAccessOverview({ role: 'admin' } as UserProfile)).toBe(true)
+  })
+  it('returns true for teacher', () => {
+    expect(canAccessOverview({ role: 'teacher' } as UserProfile)).toBe(true)
+  })
+  it('returns false for null profile', () => {
+    expect(canAccessOverview(null)).toBe(false)
+  })
+  it('returns false for student role', () => {
+    expect(canAccessOverview({ role: 'student' } as UserProfile)).toBe(false)
+  })
 })

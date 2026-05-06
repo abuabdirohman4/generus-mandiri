@@ -34,12 +34,11 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
   const isAdminUser = profile.role === 'superadmin' || profile.role === 'admin'
-  const isKelas6Warlob = isTeacher(profile) && profile.id === '88888888-8888-8888-8888-888888888888'
-  const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
-  const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
-  const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
-  const isPPG = isAdminUser || isTeacherDesa || isTeacherDaerah
-  const userCanManageMaterials = canManageMaterials(profile)
+  // const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
+  // const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
+  // const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
+  // const isPPG = isAdminUser || isTeacherDesa || isTeacherDaerah
+  // const userCanManageMaterials = canManageMaterials(profile)
   const userCanAccessMaterials = canAccessMaterials(profile)
   const userCanAccessMonitoring = canAccessMonitoring(profile)
 
@@ -64,17 +63,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   }, []);
 
   const quickActions: QuickActionItem[] = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard',
-      description: 'Overview sistem',
-      href: '/dashboard',
-      icon: <DashboardIcon className="w-6 h-6" />,
-      bgColor: 'bg-indigo-100 dark:bg-indigo-900',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
-      adminOnly: isPPG ? false : true,
-      disabled: false
-    },
+    // {
+    //   id: 'dashboard',
+    //   name: 'Dashboard',
+    //   description: 'Overview sistem',
+    //   href: '/dashboard',
+    //   icon: <DashboardIcon className="w-6 h-6" />,
+    //   bgColor: 'bg-indigo-100 dark:bg-indigo-900',
+    //   iconColor: 'text-indigo-600 dark:text-indigo-400',
+    //   adminOnly: isPPG ? false : true,
+    //   disabled: false
+    // },
     {
       id: 'presensi',
       name: 'Presensi',
@@ -88,7 +87,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     {
       id: 'laporan',
       name: 'Laporan',
-      description: 'Laporan presensi',
+      description: 'Laporan aktivitas siswa',
       href: '/laporan',
       icon: <ReportIcon className="w-6 h-6" />,
       bgColor: 'bg-red-100 dark:bg-red-900',
