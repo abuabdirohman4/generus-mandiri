@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
 import { getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import {
@@ -92,9 +93,23 @@ export default function MateriFilterSection({
         return filtered.map(c => ({ value: c.id, label: c.name }));
     }, [classList, filters.kelompokId, filters.desaId, filters.daerahId, desaList, kelompokList]);
 
+    const visibleCount = useMemo(() => {
+        let count = 5; // Tahun Ajaran, Semester, Kelas, Kategori, Bulan
+        if (userProfile && shouldShowDaerahFilter(userProfile)) count++;
+        if (userProfile && modalShouldShowDesaFilter(userProfile)) count++;
+        if (userProfile && modalShouldShowKelompokFilter(userProfile)) count++;
+        return count;
+    }, [userProfile]);
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-4">
+            <div className={cn(
+                "grid gap-4",
+                visibleCount === 5 && "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+                visibleCount === 6 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
+                visibleCount === 7 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7",
+                visibleCount === 8 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8"
+            )}>
                 {/* Tahun Ajaran */}
                 <InputFilter
                     id="academic-year-filter"
@@ -204,19 +219,6 @@ export default function MateriFilterSection({
                         label: getMonthName(m as Month) 
                     }))}
                     allOptionLabel="Semua Bulan"
-                    compact
-                />
-
-                {/* View Mode */}
-                <InputFilter
-                    id="view-mode-filter"
-                    label="Tampilkan"
-                    value={viewMode}
-                    onChange={(val) => onViewModeChange(val as 'per_materi' | 'per_siswa')}
-                    options={[
-                        { value: 'per_materi', label: 'Per Materi' },
-                        { value: 'per_siswa', label: 'Per Siswa' }
-                    ]}
                     compact
                 />
             </div>

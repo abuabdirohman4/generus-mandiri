@@ -76,7 +76,7 @@ export default function LaporanPage() {
       month: undefined as number | undefined,
   })
 
-  const [materiViewMode, setMateriViewMode] = useState<'per_materi' | 'per_siswa'>('per_materi')
+  const [materiViewMode, setMateriViewMode] = useState<'per_materi' | 'per_siswa'>('per_siswa')
 
   // Initialize filters from user profile and fetch active academic year
   useEffect(() => {
@@ -311,6 +311,7 @@ export default function LaporanPage() {
               rows={materiData?.rows || []} 
               isLoading={isLoadingMateri} 
               viewMode={materiViewMode}
+              onViewModeChange={setMateriViewMode}
               siswaRows={materiData?.siswaRows || []}
             />
           </>

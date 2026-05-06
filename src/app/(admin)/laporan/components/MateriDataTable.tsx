@@ -9,6 +9,7 @@ interface MateriDataTableProps {
     rows: MateriReportRow[]
     siswaRows?: MateriSiswaRow[]
     viewMode: 'per_materi' | 'per_siswa'
+    onViewModeChange: (mode: 'per_materi' | 'per_siswa') => void
     isLoading: boolean
 }
 
@@ -18,7 +19,7 @@ function getCompletionColor(percentage: number) {
     return 'text-red-600 dark:text-red-400'
 }
 
-export default function MateriDataTable({ rows, siswaRows = [], viewMode, isLoading }: MateriDataTableProps) {
+export default function MateriDataTable({ rows, siswaRows = [], viewMode, onViewModeChange, isLoading }: MateriDataTableProps) {
     const columns = useMemo(() => {
         if (viewMode === 'per_siswa') {
             return [
@@ -137,9 +138,34 @@ export default function MateriDataTable({ rows, siswaRows = [], viewMode, isLoad
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                {viewMode === 'per_siswa' ? 'Detail Pencapaian per Siswa' : 'Detail Pencapaian per Materi'}
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {viewMode === 'per_siswa' ? 'Detail Pencapaian per Siswa' : 'Detail Pencapaian per Materi'}
+                </h3>
+                
+                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-full sm:w-auto">
+                    <button
+                        onClick={() => onViewModeChange('per_siswa')}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                            viewMode === 'per_siswa'
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Per Siswa
+                    </button>
+                    <button
+                        onClick={() => onViewModeChange('per_materi')}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
+                            viewMode === 'per_materi'
+                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                    >
+                        Per Materi
+                    </button>
+                </div>
+            </div>
             <DataTable
                 columns={columns}
                 data={viewMode === 'per_siswa' ? siswaRows : rows}
