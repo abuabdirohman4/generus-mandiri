@@ -13,9 +13,19 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export async function countStudents(
     supabase: SupabaseClient,
     studentIds?: string[],
-    classIds?: string[]
+    classIds?: string[],
+    status?: string
 ): Promise<number> {
     if (studentIds !== undefined && studentIds.length === 0) return 0
+
+    let query = supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .is('deleted_at', null)
+
+    if (status && status !== 'all') {
+        query = query.eq('status', status)
+    }
 
     if (studentIds && studentIds.length > 0) {
         const CHUNK_SIZE = 200 // Safe limit to avoid 16KB HTTP header overflow
@@ -23,9 +33,7 @@ export async function countStudents(
 
         for (let i = 0; i < studentIds.length; i += CHUNK_SIZE) {
             const chunk = studentIds.slice(i, i + CHUNK_SIZE)
-            const { count, error } = await supabase
-                .from('students')
-                .select('*', { count: 'exact', head: true })
+            const { count, error } = await query
                 .in('id', chunk)
 
             if (error) {
@@ -39,6 +47,7 @@ export async function countStudents(
 
     if (classIds && classIds.length > 0) {
         // Count students in specific classes (junction table check)
+        // Note: junction table doesn't have status/deleted_at, so we join or get IDs first
         const { data, error } = await supabase
             .from('student_classes')
             .select('student_id')
@@ -49,14 +58,22 @@ export async function countStudents(
             throw error
         }
         
-        const uniqueIds = new Set((data || []).map(sc => sc.student_id))
-        return uniqueIds.size
+        const studentIdsFromClasses = (data || []).map(sc => sc.student_id)
+        if (studentIdsFromClasses.length === 0) return 0
+
+        // Use the query builder to apply status/deleted_at filters to these IDs
+        const CHUNK_SIZE = 200
+        let totalCount = 0
+        for (let i = 0; i < studentIdsFromClasses.length; i += CHUNK_SIZE) {
+            const chunk = studentIdsFromClasses.slice(i, i + CHUNK_SIZE)
+            const { count } = await query.in('id', chunk)
+            totalCount += count || 0
+        }
+        return totalCount
     }
 
-    // No filter - count all
-    const { count } = await supabase
-        .from('students')
-        .select('*', { count: 'exact', head: true })
+    // No ID filter - use the base query (which already has deleted_at and status filters)
+    const { count } = await query
     return count || 0
 }
 
@@ -69,24 +86,25 @@ export async function countClasses(
 ): Promise<number> {
     if (classIds !== undefined && classIds.length === 0) return 0
 
+    let query = supabase
+        .from('classes')
+        .select('*', { count: 'exact', head: true })
+        .is('deleted_at', null)
+
     if (classIds && classIds.length > 0) {
         const CHUNK_SIZE = 100
         let totalCount = 0
 
         for (let i = 0; i < classIds.length; i += CHUNK_SIZE) {
             const chunk = classIds.slice(i, i + CHUNK_SIZE)
-            const { count } = await supabase
-                .from('classes')
-                .select('*', { count: 'exact', head: true })
+            const { count } = await query
                 .in('id', chunk)
             totalCount += count || 0
         }
         return totalCount
     }
 
-    const { count } = await supabase
-        .from('classes')
-        .select('*', { count: 'exact', head: true })
+    const { count } = await query
     return count || 0
 }
 

@@ -13,6 +13,7 @@ export interface DashboardFilters {
 
   // Student filters
   gender?: string
+  status?: string
 
   // View mode for class monitoring
   classViewMode: 'separated' | 'combined'
@@ -35,6 +36,7 @@ const defaultFilters: DashboardFilters = {
   desa: [],
   kelompok: [],
   kelas: [],
+  status: 'active',
   classViewMode: 'separated',
   comparisonViewMode: 'table',
   comparisonLevel: 'class'
@@ -72,6 +74,7 @@ export const useDashboardStore = create<DashboardState>()(
           kelompok: state.filters.kelompok,
           kelas: state.filters.kelas,
           gender: state.filters.gender,
+          status: state.filters.status,
           classViewMode: state.filters.classViewMode,
           comparisonViewMode: state.filters.comparisonViewMode,
           comparisonLevel: state.filters.comparisonLevel,

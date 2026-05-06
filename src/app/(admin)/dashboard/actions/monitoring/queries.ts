@@ -100,8 +100,14 @@ export async function fetchEnrollments(
         const chunk = classIds.slice(i, i + CHUNK_SIZE)
         const { data, error } = await supabase
             .from('student_classes')
-            .select('student_id, class_id')
+            .select(`
+                student_id, 
+                class_id,
+                students!inner(status, deleted_at)
+            `)
             .in('class_id', chunk)
+            .eq('students.status', 'active')
+            .is('students.deleted_at', null)
 
         if (error) {
             console.error('[getClassMonitoring] Enrollment chunk error:', error)

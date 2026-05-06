@@ -16,6 +16,7 @@ export interface DashboardFilters {
     kelompokId?: string | string[];
     classId?: string | string[];
     gender?: string;
+    status?: string;
     day?: string;
     week?: string | string[];
     month?: string

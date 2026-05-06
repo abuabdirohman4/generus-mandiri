@@ -39,17 +39,16 @@ export function getDataFilter(profile: UserProfile | null): {
 
   // Teacher filtering
   if (profile.role === 'teacher') {
-    // Teacher Kelompok
-    if (profile.kelompok_id) {
-      return { kelompok_id: profile.kelompok_id }
-    }
-    // Teacher Desa
-    if (profile.desa_id && !profile.kelompok_id) {
-      return { desa_id: profile.desa_id }
-    }
-    // Teacher Daerah
+    // For teachers, we prioritize the broadest scope available to support multi-kelompok assignments.
+    // Their specific access is further refined by getTeacherAllowedClassIds in the actions.
     if (profile.daerah_id && !profile.desa_id && !profile.kelompok_id) {
       return { daerah_id: profile.daerah_id }
+    }
+    if (profile.desa_id) {
+      return { desa_id: profile.desa_id }
+    }
+    if (profile.kelompok_id) {
+      return { kelompok_id: profile.kelompok_id }
     }
   }
 
@@ -121,44 +120,57 @@ export async function getTeacherAllowedClassIds(
   const { createAdminClient } = await import('@/lib/supabase/server');
   const adminClient = await createAdminClient();
 
-  // 1. Check if this teacher has any class master restrictions
+  // 1. Get classes from teacher_classes (direct assignments)
+  const { data: tcData } = await adminClient
+    .from('teacher_classes')
+    .select('class_id')
+    .eq('teacher_id', userId);
+  
+  const assignedClassIds = (tcData || []).map((t: any) => t.class_id);
+
+  // 2. Check if this teacher has any class master restrictions (hierarchical assignments)
   const { data: tcmData } = await adminClient
     .from('teacher_class_masters')
     .select('class_master_id')
     .eq('teacher_id', userId);
-  // No restrictions → null means "no filter, see everything"
-  if (!tcmData || tcmData.length === 0) return null;
+  
+  // If no assignments at all → null means "no filter, see everything in my scope"
+  // but wait, usually teachers MUST have at least one assignment to see anything.
+  // For now, if both are empty, we return null to maintain backward compatibility 
+  // where Guru Kelompok with no teacher_classes saw everything in their kelompok.
+  if ((!tcData || tcData.length === 0) && (!tcmData || tcmData.length === 0)) return null;
 
-  const cmIds = tcmData.map((t: any) => t.class_master_id);
+  const cmIds = tcmData ? tcmData.map((t: any) => t.class_master_id) : [];
 
-  // 2. Get class IDs that map to these class masters
-  const { data: mappingData, error: mappingError } = await adminClient
-    .from('class_master_mappings')
-    .select('class_id')
-    .in('class_master_id', cmIds);
+  // 3. Get class IDs that map to these class masters
+  let classMasterAllowedIds: string[] = [];
+  if (cmIds.length > 0) {
+    const { data: mappingData, error: mappingError } = await adminClient
+      .from('class_master_mappings')
+      .select('class_id')
+      .in('class_master_id', cmIds);
 
-  if (mappingError) {
-    console.error('[getTeacherAllowedClassIds] Error fetching mappingData:', mappingError);
-    return null;
+    if (mappingError) {
+      console.error('[getTeacherAllowedClassIds] Error fetching mappingData:', mappingError);
+    } else {
+      classMasterAllowedIds = (mappingData || []).map((m: any) => m.class_id);
+    }
   }
 
-  const allAllowedClassIds = (mappingData || []).map((m: any) => m.class_id);
+  const allAllowedClassIds = [...new Set([...assignedClassIds, ...classMasterAllowedIds])];
   if (allAllowedClassIds.length === 0) return new Set();
 
-  // 3. Intersect with org scope using two-query pattern.
+  // 4. Intersect with org scope using two-query pattern.
   // PostgREST nested join filters (e.g. classes.kelompok.desa_id) silently fail — NEVER use them.
   if (!profile) return new Set(allAllowedClassIds);
 
-  if (profile.kelompok_id) {
-    // Direct filter: classes in this kelompok — intersect in-memory to avoid large .in() URL
-    const { data: classes } = await adminClient
-      .from('classes')
-      .select('id')
-      .eq('kelompok_id', profile.kelompok_id);
+  // 5. Intersect with org scope using two-query pattern.
+  // PostgREST nested join filters (e.g. classes.kelompok.desa_id) silently fail — NEVER use them.
+  if (!profile) return new Set(allAllowedClassIds);
 
-    const allowedSet = new Set(allAllowedClassIds);
-    return new Set((classes || []).filter((c: any) => allowedSet.has(c.id)).map((c: any) => c.id));
-  }
+  // We skip the kelompok_id intersection here because teachers often have assignments 
+  // spanning multiple kelompok even if their primary profile.kelompok_id is set.
+  // Hierarchical restrictions (desa/daerah) are still applied below.
 
   if (profile.desa_id) {
     // Two-query: kelompok in this desa → classes in those kelompok

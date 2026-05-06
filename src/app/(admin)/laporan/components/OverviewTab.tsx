@@ -50,8 +50,9 @@ export default function OverviewTab() {
     desaId: debouncedFiltersForKey.desa,
     kelompokId: debouncedFiltersForKey.kelompok,
     classId: debouncedFiltersForKey.kelas,
-    gender: debouncedFiltersForKey.gender
-  }), [debouncedFiltersForKey.daerah, debouncedFiltersForKey.desa, debouncedFiltersForKey.kelompok, debouncedFiltersForKey.kelas, debouncedFiltersForKey.gender])
+    gender: debouncedFiltersForKey.gender,
+    status: debouncedFiltersForKey.status
+  }), [debouncedFiltersForKey.daerah, debouncedFiltersForKey.desa, debouncedFiltersForKey.kelompok, debouncedFiltersForKey.kelas, debouncedFiltersForKey.gender, debouncedFiltersForKey.status])
 
   const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters)
 
@@ -65,6 +66,7 @@ export default function OverviewTab() {
       kelompokId: filters.kelompok,
       classId: filters.kelas,
       gender: filters.gender,
+      status: filters.status,
       classViewMode,
       specificDate: selectedDate,
       weekOffset: selectedWeekOffset,
