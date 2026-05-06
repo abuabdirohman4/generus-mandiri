@@ -720,7 +720,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {classViewMode !== undefined && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange && (
+      {/* {classViewMode !== undefined && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange && (
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"
@@ -736,7 +736,7 @@ export default function DataFilter({
             compact={compact}
           />
         </div>
-      )}
+      )} */}
 
       {showGender && (
         <div className={getFilterClass(getFilterIndex('gender'))}>
