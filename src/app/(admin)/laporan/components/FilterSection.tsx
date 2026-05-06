@@ -32,6 +32,7 @@ interface FilterSectionProps {
   organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }
   onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }) => void
   activityTypeOptions?: { value: string; label: string }[]
+  isLoading?: boolean
 }
 
 export default function FilterSection({
@@ -52,7 +53,8 @@ export default function FilterSection({
   classList,
   organisasiFilters,
   onOrganisasiFilterChange,
-  activityTypeOptions
+  activityTypeOptions,
+  isLoading = false
 }: FilterSectionProps) {
 
   const monthOptions = [
@@ -121,6 +123,7 @@ export default function FilterSection({
             showActivityType={true}
             showActivityLevel={true}
             activityTypeOptions={activityTypeOptions}
+            isLoading={isLoading}
             // cascadeFilters={false}
           />
 
@@ -162,6 +165,7 @@ export default function FilterSection({
             showActivityType={true}
             showActivityLevel={true}
             activityTypeOptions={activityTypeOptions}
+            isLoading={isLoading}
             cascadeFilters={false}
           />
 

@@ -40,10 +40,11 @@ export default function OverviewTab() {
   )
 
   const { profile: userProfile } = useUserProfile()
-  const { daerah } = useDaerah()
-  const { desa } = useDesa()
-  const { kelompok } = useKelompok()
-  const { classes } = useClasses()
+  const { daerah, isLoading: isLoadingDaerah } = useDaerah()
+  const { desa, isLoading: isLoadingDesa } = useDesa()
+  const { kelompok, isLoading: isLoadingKelompok } = useKelompok()
+  const { classes, isLoading: isLoadingClasses } = useClasses()
+  const orgLoading = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
 
   const dashboardFilters = useMemo(() => ({
     daerahId: debouncedFiltersForKey.daerah,
@@ -219,6 +220,7 @@ export default function OverviewTab() {
           kelompokList={kelompok || []}
           classList={classes || []}
           showKelas={true}
+          isLoading={orgLoading}
           showMeetingType={false}
           showGender={true}
           cascadeFilters={true}

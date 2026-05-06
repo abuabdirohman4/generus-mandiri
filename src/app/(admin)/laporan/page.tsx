@@ -46,6 +46,7 @@ export default function LaporanPage() {
     handleWeekChange,
     handleResetFilters,
     handleOrganisasiFilterChange,
+    isLoadingOrgs,
     classOptions,
     periodOptions
   } = useLaporanPage()
@@ -242,6 +243,7 @@ export default function LaporanPage() {
                 }}
                 onOrganisasiFilterChange={handleOrganisasiFilterChange}
                 activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
+                isLoading={isLoadingOrgs}
               />
             </div>
 

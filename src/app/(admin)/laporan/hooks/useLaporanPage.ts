@@ -21,9 +21,9 @@ export function useLaporanPage() {
   const { profile: userProfile } = useUserProfile()
   
   // Organisasi data
-  const { daerah } = useDaerah()
-  const { desa } = useDesa()
-  const { kelompok } = useKelompok()
+  const { daerah, isLoading: isLoadingDaerah } = useDaerah()
+  const { desa, isLoading: isLoadingDesa } = useDesa()
+  const { kelompok, isLoading: isLoadingKelompok } = useKelompok()
   
   // SWR hooks
   const { data: reportData, error, isLoading, mutate } = useReportData({ 
@@ -238,7 +238,8 @@ export function useLaporanPage() {
   }, [setFilter])
 
   // Loading states
-  const loading = isLoading || isLoadingClasses
+  const isLoadingOrgs = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
+  const loading = isLoading || isLoadingOrgs
   const hasError = !!error
   const hasData = !!reportData
 
@@ -271,6 +272,7 @@ export function useLaporanPage() {
     handleResetFilters,
     handleOrganisasiFilterChange,
     mutate,
+    isLoadingOrgs,
     
     // Computed
     classOptions: classes.map(cls => ({ value: cls.id, label: cls.name })),

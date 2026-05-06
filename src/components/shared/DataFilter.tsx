@@ -29,6 +29,7 @@ interface DataFilterProps {
   showActivityLevel?: boolean
   /** Override the activity type options shown in the filter (e.g. pass user's allowed types only) */
   activityTypeOptions?: { value: string; label: string }[]
+  isLoading?: boolean
   /** @deprecated use showActivityType instead */
   showMeetingType?: boolean
   showDaerah?: boolean // Override role-based visibility
@@ -102,6 +103,7 @@ export default function DataFilter({
   showActivityLevel = false,
   activityTypeOptions,
   showMeetingType = false, // deprecated
+  isLoading = false,
   showDaerah,
   showDesa,
   showKelompok,
@@ -179,9 +181,9 @@ export default function DataFilter({
   // Exception: if the parent explicitly passes showDaerah/showDesa/showKelompok as an override prop,
   // skip the list-count gate so the selector still renders while data is loading (count = 0)
   // or when the org list legitimately has 1 item and the user still needs to see/confirm their scope.
-  const effectiveShouldShowDaerah = shouldShowDaerah && (showDaerah !== undefined || daerahListCount > 1)
-  const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || desaListCount > 1)
-  const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || kelompokListCount > 1)
+  const effectiveShouldShowDaerah = shouldShowDaerah && (showDaerah !== undefined || isLoading || daerahListCount > 1)
+  const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || isLoading || desaListCount > 1)
+  const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || isLoading || kelompokListCount > 1)
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
   const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType
@@ -722,11 +724,11 @@ export default function DataFilter({
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"
-            label="Data Kelas Yang Sama"
+            label="Kelas Sama"
             value={classViewMode}
             onChange={handleClassViewModeChange}
             options={[
-              { value: 'separated', label: 'Terpisah' },
+              { value: 'separated', label: 'Dipisah' },
               { value: 'combined', label: 'Digabung' }
             ]}
             widthClassName="!max-w-full"

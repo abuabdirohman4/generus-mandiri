@@ -131,7 +131,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     {
       id: 'monitoring',
       name: 'Monitoring',
-      description: 'Monitoring siswa',
+      description: 'Pencapaian Kompetensi Siswa',
       href: '/monitoring',
       icon: <MonitoringIcon className="w-6 h-6" />,
       bgColor: 'bg-emerald-100 dark:bg-emerald-900',
