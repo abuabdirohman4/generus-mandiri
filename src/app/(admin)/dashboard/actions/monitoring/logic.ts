@@ -140,6 +140,22 @@ export function extractOrgNames(cls: any): { kelompok_name?: string; desa_name?:
 }
 
 /**
+ * Get minimum sort_order from class_master_mappings
+ */
+function getSortOrder(cls: any): number {
+    if (!cls.class_master_mappings || cls.class_master_mappings.length === 0) {
+        return 9999
+    }
+
+    const sortOrders = cls.class_master_mappings
+        .map((mapping: any) => mapping.class_master?.sort_order)
+        .filter((order: any) => typeof order === 'number')
+
+    if (sortOrders.length === 0) return 9999
+    return Math.min(...sortOrders)
+}
+
+/**
  * Build ClassMonitoringData for a single class in separated mode
  */
 export function buildClassResult(
@@ -164,6 +180,7 @@ export function buildClassResult(
             attendance_rate: 0,
             student_count: studentCount,
             meeting_ids: [],
+            sort_order: getSortOrder(cls),
         }
     }
 
@@ -180,6 +197,7 @@ export function buildClassResult(
         attendance_rate: attendanceRate,
         student_count: studentCount,
         meeting_ids: Array.from(meetingsWithLogs),
+        sort_order: getSortOrder(cls),
     }
 }
 

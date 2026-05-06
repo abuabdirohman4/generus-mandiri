@@ -19,6 +19,7 @@ export interface ClassMonitoringData {
     attendance_rate: number
     student_count?: number
     meeting_ids?: string[]
+    sort_order?: number
 }
 
 /** Legacy interface - kept for backward compatibility */

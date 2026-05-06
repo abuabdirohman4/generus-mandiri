@@ -320,12 +320,13 @@ export default function ClassMonitoringTable({
     return (
         <>
             {/* View Mode Toggle */}
-            <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm dark:border-gray-700 p-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Monitoring Kehadiran
-                    </h3>
-                    <div className="flex items-center gap-2">
+            {tableData.length > 1 && (
+                <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm dark:border-gray-700 p-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            Monitoring Kehadiran
+                        </h3>
+                        <div className="flex items-center gap-2">
                         <button
                             onClick={() => setFilter('comparisonViewMode', 'table')}
                             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
@@ -355,6 +356,7 @@ export default function ClassMonitoringTable({
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Table View */}
             {viewMode === 'table' && (

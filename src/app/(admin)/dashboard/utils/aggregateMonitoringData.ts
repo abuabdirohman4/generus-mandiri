@@ -6,6 +6,7 @@ export interface AggregatedData {
   meeting_count: number
   student_count: number
   meeting_ids?: string[] // For debugging/verification
+  sort_order?: number
 }
 
 /**
@@ -60,8 +61,14 @@ export function aggregateMonitoringData(
           totalPotential: 0,
           meetingCount: 0,
           studentCount: 0,
-          meetingIds: new Set<string>() // Track unique meeting IDs for deduplication
+          meetingIds: new Set<string>(), // Track unique meeting IDs for deduplication
+          sort_order: 9999
         }
+      }
+
+      // Track minimum sort_order for the group
+      if (typeof item.sort_order === 'number' && item.sort_order < acc[entityName].sort_order) {
+        acc[entityName].sort_order = item.sort_order
       }
 
       // Add meeting IDs to deduplicate multi-class meetings
@@ -89,11 +96,12 @@ export function aggregateMonitoringData(
         : 0,
       meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
       student_count: g.studentCount,
-      meeting_ids: Array.from(g.meetingIds) as string[] // For debugging
+      meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
+      sort_order: g.sort_order
     }))
 
-    // Sort by attendance rate descending
-    return result.sort((a, b) => b.attendance_rate - a.attendance_rate)
+    // Sort by name ascending initially (will be overridden by UI sorting)
+    return result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   // Step 3: For organizational levels (kelompok/desa/daerah)
@@ -143,9 +151,10 @@ export function aggregateMonitoringData(
       : 0,
     meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
     student_count: g.studentCount,
-    meeting_ids: Array.from(g.meetingIds) as string[] // For debugging
+    meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
+    sort_order: 9999 // Not used for higher levels
   }))
 
-  // Sort by name descending
+  // Sort by name ascending initially (will be overridden by UI sorting)
   return result.sort((a, b) => a.name.localeCompare(b.name))
 }

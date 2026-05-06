@@ -21,6 +21,13 @@ const CLASS_ORG_SELECT = `
         name
       )
     )
+  ),
+  class_master_mappings:class_master_mappings(
+    class_master:class_master_id(
+      id,
+      name,
+      sort_order
+    )
   )
 `
 

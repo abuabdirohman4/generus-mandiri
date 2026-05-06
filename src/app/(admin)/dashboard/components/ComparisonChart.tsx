@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts'
 import type { ClassMonitoringData } from '../actions'
 import { aggregateMonitoringData, type AggregatedData } from '../utils/aggregateMonitoringData'
@@ -82,12 +82,31 @@ export default function ComparisonChart({
   isLoading = false
 }: ComparisonChartProps) {
   const isMobileView: boolean = isMobile();
+  const [sortBy, setSortBy] = useState<'default' | 'attendance'>('default')
 
   // Prepare chart data using shared utility
   const chartData = useMemo(() => {
     if (!monitoringData || monitoringData.length === 0) return []
-    return aggregateMonitoringData(monitoringData, comparisonLevel, filters)
-  }, [monitoringData, comparisonLevel, filters])
+    const aggregated = aggregateMonitoringData(monitoringData, comparisonLevel, filters)
+
+    // Apply sorting
+    return [...aggregated].sort((a, b) => {
+      if (sortBy === 'attendance') {
+        return b.attendance_rate - a.attendance_rate || a.name.localeCompare(b.name)
+      }
+      
+      // Default sorting:
+      // For class level: use sort_order
+      if (comparisonLevel === 'class' && typeof a.sort_order === 'number' && typeof b.sort_order === 'number') {
+        if (a.sort_order !== b.sort_order) {
+          return a.sort_order - b.sort_order
+        }
+      }
+
+      // For others or if sort_order is same: use name
+      return a.name.localeCompare(b.name)
+    })
+  }, [monitoringData, comparisonLevel, filters, sortBy])
 
   // Get level label for display
   const levelLabel = comparisonLevel === 'class' ? 'Kelas' :
@@ -162,7 +181,7 @@ export default function ComparisonChart({
   const selectedEntityIds = comparisonLevel === 'class' ? filters.kelas :
                             comparisonLevel === 'kelompok' ? filters.kelompok :
                             comparisonLevel === 'desa' ? filters.desa : filters.daerah
-  const showWarning = (selectedEntityIds?.length || 0) > 15
+  const showWarning = (selectedEntityIds?.length || 0) > 17
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -173,8 +192,42 @@ export default function ComparisonChart({
       {showWarning && (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            💡 Terlalu banyak {levelLabel.toLowerCase()} dipilih. Pilih maksimal 15 untuk perbandingan yang optimal.
+            💡 Terlalu banyak {levelLabel.toLowerCase()} dipilih. Pilih maksimal 17 untuk perbandingan yang optimal.
           </p>
+        </div>
+      )}
+
+      {/* Sorting UI */}
+      {chartData.length > 1 && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Urutkan:</span>
+            <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+              <button
+                onClick={() => setSortBy('default')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                  sortBy === 'default'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                {comparisonLevel === 'class' ? 'Urutan Kelas' : 'Nama'}
+              </button>
+              <button
+                onClick={() => setSortBy('attendance')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                  sortBy === 'attendance'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                Kehadiran Tertinggi
+              </button>
+            </div>
+          </div>
+          <div className="text-xs text-gray-400 dark:text-gray-500">
+            Menampilkan {chartData.length} {levelLabel.toLowerCase()}
+          </div>
         </div>
       )}
 
@@ -197,7 +250,7 @@ export default function ComparisonChart({
               dataKey="name"
               tick={{ fontSize: 12 }}
               tickLine={{ stroke: '#6B7280' }}
-              angle={chartData.length > 6 || isMobileView ? -45 : 0}
+              angle={chartData.length > 5 || isMobileView ? -45 : 0}
               textAnchor={chartData.length > 5 ? 'end' : 'middle'}
               height={chartData.length > 5 ? 80 : 30}
             />
