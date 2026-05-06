@@ -26,6 +26,7 @@ interface DashboardState {
   setFilters: (filters: Partial<DashboardFilters>) => void
   setFilter: (key: keyof DashboardFilters, value: any) => void
   resetFilters: () => void
+  clearStore: () => void
 }
 const defaultFilters: DashboardFilters = {
   period: 'month',
@@ -51,7 +52,14 @@ export const useDashboardStore = create<DashboardState>()(
         filters: { ...state.filters, [key]: value }
       })),
       
-      resetFilters: () => set({ filters: defaultFilters })
+      resetFilters: () => set({ filters: defaultFilters }),
+      
+      clearStore: () => {
+        set({ filters: defaultFilters })
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('dashboard-storage')
+        }
+      }
     }),
     {
       name: 'dashboard-storage',

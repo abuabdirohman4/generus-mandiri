@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { isAdminLegacy } from '@/lib/userUtils';
+import { isAdminLegacy, clearUserCache } from '@/lib/userUtils';
+import { useDashboardStore } from '@/app/(admin)/dashboard/stores/dashboardStore';
+import { useLaporanStore } from '@/stores/laporanStore';
 
 export default function HomePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -13,6 +15,13 @@ export default function HomePage() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
+      // Clear all stores and cache before redirecting
+      clearUserCache(false);
+      
+      // Explicitly clear in-memory stores
+      useDashboardStore.getState().clearStore();
+      useLaporanStore.getState().clearStore();
+      
       await signOut();
     } catch (error) {
       console.error('Logout error:', error);

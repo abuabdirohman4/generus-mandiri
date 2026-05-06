@@ -9,6 +9,8 @@ import { clearUserCache } from '@/lib/userUtils';
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 import Spinner from "@/components/ui/spinner/Spinner";
+import { useDashboardStore } from "@/app/(admin)/dashboard/stores/dashboardStore";
+import { useLaporanStore } from "@/stores/laporanStore";
 
 // Dropdown Menu Items Component
 function DropdownMenuItems({ onClose, profile }: { onClose: () => void; profile: { full_name: string; email?: string } | null }) {
@@ -20,6 +22,10 @@ function DropdownMenuItems({ onClose, profile }: { onClose: () => void; profile:
       // LAYER 1: Clear cache WITHOUT reload first (synchronous)
       // This prevents race condition by clearing stale filters before redirect
       clearUserCache(false);
+      
+      // LAYER 2: Explicitly clear in-memory stores
+      useDashboardStore.getState().clearStore();
+      useLaporanStore.getState().clearStore();
 
       // Then signOut (which redirects to /signin)
       await signOut();

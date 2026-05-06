@@ -23,6 +23,7 @@ interface LaporanState {
   setMateriFilters: (filters: Partial<MateriFilters>) => void
   setMateriViewMode: (mode: 'per_materi' | 'per_siswa') => void
   resetMateriFilters: () => void
+  clearStore: () => void
 }
 
 const initialMateriFilters: MateriFilters = {
@@ -65,4 +66,10 @@ export const useLaporanStore = create<LaporanState>((set) => ({
   setMateriViewMode: (mode) => set({ materiViewMode: mode }),
 
   resetMateriFilters: () => set({ materiFilters: initialMateriFilters }),
+  
+  clearStore: () => set({ 
+    activeTab: 'presensi',
+    materiFilters: initialMateriFilters,
+    materiViewMode: 'per_siswa'
+  }),
 }))
