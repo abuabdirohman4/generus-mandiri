@@ -10,6 +10,15 @@ import type { ReportFilters } from '@/types/report'
 
 // ─── Date Helpers ─────────────────────────────────────────────────────────────
 
+// Format a local Date to YYYY-MM-DD without UTC conversion.
+// Using .toISOString() on a local Date shifts the date when offset is behind UTC (e.g. UTC+7).
+function toDateStr(date: Date): string {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+}
+
 /**
  * Helper function to get week start date
  */
@@ -18,12 +27,11 @@ export function getWeekStartDate(year: number, month: number, weekNumber: number
     const firstWeekDays = 7 - firstDay.getDay() + 1 // Days in first week
 
     if (weekNumber === 1) {
-        return firstDay.toISOString().split('T')[0]
+        return toDateStr(firstDay)
     }
 
     const startDay = firstWeekDays + (weekNumber - 2) * 7
-    const startDate = new Date(year, month - 1, startDay)
-    return startDate.toISOString().split('T')[0]
+    return toDateStr(new Date(year, month - 1, startDay))
 }
 
 /**
@@ -34,15 +42,12 @@ export function getWeekEndDate(year: number, month: number, weekNumber: number):
     const firstWeekDays = 7 - firstDay.getDay() + 1 // Days in first week
 
     if (weekNumber === 1) {
-        const endDay = firstWeekDays
-        const endDate = new Date(year, month - 1, endDay)
-        return endDate.toISOString().split('T')[0]
+        return toDateStr(new Date(year, month - 1, firstWeekDays))
     }
 
     const startDay = firstWeekDays + (weekNumber - 2) * 7
     const endDay = Math.min(startDay + 6, new Date(year, month, 0).getDate())
-    const endDate = new Date(year, month - 1, endDay)
-    return endDate.toISOString().split('T')[0]
+    return toDateStr(new Date(year, month - 1, endDay))
 }
 
 /**
@@ -85,12 +90,10 @@ export function buildDateFilter(
     } = {}
 
     if (filters.viewMode === 'general' && filters.month && filters.year) {
-        const startDate = new Date(filters.year, filters.month - 1, 1)
-        const endDate = new Date(filters.year, filters.month, 0) // Last day of the month
         dateFilter = {
             date: {
-                gte: startDate.toISOString().split('T')[0],
-                lte: endDate.toISOString().split('T')[0]
+                gte: toDateStr(new Date(filters.year, filters.month - 1, 1)),
+                lte: toDateStr(new Date(filters.year, filters.month, 0)),
             }
         }
     } else {
@@ -101,7 +104,7 @@ export function buildDateFilter(
                         date: { gte: filters.startDate, lte: filters.endDate }
                     }
                 } else {
-                    dateFilter = { date: { eq: now.toISOString().split('T')[0] } }
+                    dateFilter = { date: { eq: toDateStr(now) } }
                 }
                 break
 
@@ -114,8 +117,8 @@ export function buildDateFilter(
                     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
                     dateFilter = {
                         date: {
-                            gte: weekAgo.toISOString().split('T')[0],
-                            lte: now.toISOString().split('T')[0]
+                            gte: toDateStr(weekAgo),
+                            lte: toDateStr(now),
                         }
                     }
                 }
@@ -123,23 +126,19 @@ export function buildDateFilter(
 
             case 'monthly':
                 if (filters.monthYear && filters.startMonth && filters.endMonth) {
-                    const startDate = new Date(filters.monthYear, filters.startMonth - 1, 1)
-                    const endDate = new Date(filters.monthYear, filters.endMonth, 0) // Last day of end month
                     dateFilter = {
                         date: {
-                            gte: startDate.toISOString().split('T')[0],
-                            lte: endDate.toISOString().split('T')[0]
+                            gte: toDateStr(new Date(filters.monthYear, filters.startMonth - 1, 1)),
+                            lte: toDateStr(new Date(filters.monthYear, filters.endMonth, 0)),
                         }
                     }
                 } else {
                     const currentMonth = now.getMonth() + 1
                     const currentYear = now.getFullYear()
-                    const startDate = new Date(currentYear, currentMonth - 1, 1)
-                    const endDate = new Date(currentYear, currentMonth, 0)
                     dateFilter = {
                         date: {
-                            gte: startDate.toISOString().split('T')[0],
-                            lte: endDate.toISOString().split('T')[0]
+                            gte: toDateStr(new Date(currentYear, currentMonth - 1, 1)),
+                            lte: toDateStr(new Date(currentYear, currentMonth, 0)),
                         }
                     }
                 }
@@ -147,20 +146,18 @@ export function buildDateFilter(
 
             case 'yearly':
                 if (filters.startYear && filters.endYear) {
-                    const startDate = new Date(filters.startYear, 0, 1)
-                    const endDate = new Date(filters.endYear, 11, 31)
                     dateFilter = {
                         date: {
-                            gte: startDate.toISOString().split('T')[0],
-                            lte: endDate.toISOString().split('T')[0]
+                            gte: `${filters.startYear}-01-01`,
+                            lte: `${filters.endYear}-12-31`,
                         }
                     }
                 } else {
                     const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
                     dateFilter = {
                         date: {
-                            gte: yearAgo.toISOString().split('T')[0],
-                            lte: now.toISOString().split('T')[0]
+                            gte: toDateStr(yearAgo),
+                            lte: toDateStr(now),
                         }
                     }
                 }

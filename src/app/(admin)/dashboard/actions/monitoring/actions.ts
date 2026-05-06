@@ -42,12 +42,17 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             filters.monthString
         )
 
-        const filterConditions = await buildFilterConditions(supabase, filters, rlsFilter)
+        // For teachers, bypass RLS filter in buildFilterConditions — class access is controlled
+        // entirely by getTeacherAllowedClassIds (teacher_class_masters). Using rlsFilter here
+        // would restrict to a single kelompok_id from the profile, missing multi-kelompok access.
+        const effectiveRlsFilter = profile?.role === 'teacher' ? null : rlsFilter
+        const filterConditions = await buildFilterConditions(supabase, filters, effectiveRlsFilter)
         const { classIds, studentIds, hasFilters } = filterConditions
 
-        // Apply class master restriction for Guru Desa/Daerah
+        // Apply class master restriction for all teachers (including Guru Kelompok with multi-kelompok access).
+        // getTeacherAllowedClassIds returns null if teacher has no class master restrictions — no filter needed.
         let effectiveClassIds = classIds
-        if (profile?.role === 'teacher' && (profile.desa_id || profile.daerah_id) && !profile.kelompok_id) {
+        if (profile?.role === 'teacher') {
             const allowedClassIdsSet = await getTeacherAllowedClassIds(profile.id, profile)
             if (allowedClassIdsSet) {
                 if (hasFilters) {
@@ -58,17 +63,34 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             }
         }
 
+        console.log('[DEBUG monitoring] effectiveClassIds:', effectiveClassIds)
+
         // Fetch classes with org hierarchy
         const classes = await fetchClassesWithOrg(supabase, (hasFilters || (profile?.role === 'teacher' && effectiveClassIds.length > 0)) ? effectiveClassIds : undefined)
+        console.log('[DEBUG monitoring] classes found:', classes?.length, classes?.map((c: any) => c.name))
         if (!classes || classes.length === 0) return []
 
         const allClassIds = classes.map((c: any) => c.id)
 
         // Fetch meetings in date range via admin client (bypass RLS timeout)
         const { data: allMeetings } = await fetchMeetingsForMonitoring(adminClient, startDate, endDate)
+        console.log('[DEBUG monitoring] allMeetings in range:', allMeetings?.length)
+
+        console.log('[DEBUG monitoring] allClassIds used for meeting filter:', allClassIds)
+
+        // Cross-check: which meetings have class_ids that overlap with allClassIds?
+        const allClassIdSet = new Set(allClassIds)
+        ;(allMeetings || []).forEach(m => {
+            const ids = [m.class_id, ...(m.class_ids || [])].filter(Boolean)
+            const overlap = ids.filter(id => allClassIdSet.has(id))
+            if (overlap.length > 0) {
+                console.log('[DEBUG monitoring] MATCH meeting:', m.id, 'overlap:', overlap)
+            }
+        })
 
         // Filter only meetings involving our classes
         const meetings = filterMeetingsForClasses(allMeetings || [], allClassIds)
+        console.log('[DEBUG monitoring] meetings after filter:', meetings.length)
 
         // Group meetings by class
         const meetingsByClass = buildMeetingsByClass(meetings, allClassIds)
