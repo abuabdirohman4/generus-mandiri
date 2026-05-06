@@ -153,8 +153,13 @@ export function filterKelompokList({ kelompokList, desaList, filters, userProfil
         .map(d => d.id)
       return kelompokList.filter(k => validDesaIds.includes(k.desa_id))
     }
-    if (isTeacher && teacherHasMultipleKelompok) {
-      return buildFromClasses()
+    if (isTeacher) {
+      if (teacherHasMultipleKelompok) {
+        return buildFromClasses()
+      }
+      if (userProfile?.kelompok_id) {
+        return kelompokList.filter(k => k.id === userProfile.kelompok_id)
+      }
     }
     return kelompokList
   }
@@ -186,8 +191,15 @@ export function filterKelompokList({ kelompokList, desaList, filters, userProfil
     return kelompokList.filter(k => validDesaIds.includes(k.desa_id))
   }
 
-  if (isTeacher && teacherHasMultipleKelompok) {
-    return buildFromClasses()
+  if (isTeacher) {
+    if (teacherHasMultipleKelompok) {
+      return buildFromClasses()
+    }
+    if (userProfile?.kelompok_id) {
+      return kelompokList.filter(k => k.id === userProfile.kelompok_id)
+    }
+    // If a teacher has no kelompok_id and no multi-kelompok assignments, 
+    // they might be a Desa/Daerah teacher, handled below.
   }
 
   return kelompokList
