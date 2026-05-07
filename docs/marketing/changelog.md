@@ -1,6 +1,29 @@
 
 # Changelog
 
+## [1.14.0] — 2026-05-07
+
+### Added
+- **Overview Tab di Laporan**: Tab ringkasan baru di halaman Laporan menampilkan grafik dan statistik kehadiran terintegrasi dari dashboard
+- **Laporan Materi**: Modul laporan materi baru dengan tab terpisah, filter kategori/kelas, statistik progress hafalan & nilai, dan tabel data
+- **Auto-Enrollment Siswa**: Siswa baru otomatis terdaftar di tahun ajaran aktif saat dibuat atau diupdate kelas
+- **Scoring Fleksibel Materi**: Mode penilaian per kategori — hafalan (checkbox) dan nilai (skor 0–100) kini bisa dikonfigurasi
+- **Permission Granular Materi & Monitoring**: Akses halaman Materi dan Monitoring dikontrol per guru via SettingsModal
+- **View Mode Switcher di Laporan**: Toggle tampilan tabel/grid pada halaman laporan
+- **Filter Status Siswa di Dashboard**: Filter tambahan berdasarkan status siswa (aktif/lulus) di overview dan monitoring
+
+### Fixed
+- **Timezone Laporan**: Bug tanggal off-by-one di filter laporan akibat konversi UTC → WIB yang tidak tepat
+- **Batch Fetch Siswa**: Fix Bad Request saat dataset siswa besar di halaman laporan (ganti ke batch fetching)
+- **Filter Desa→Kelompok Guru**: Filter kelompok untuk guru tidak berfungsi di halaman monitoring — sudah diperbaiki
+- **Hapus Guru**: AuthApiError saat menghapus guru yang memiliki records terkait
+
+### Improved
+- **Sorting Interaktif Chart Dashboard**: Chart monitoring kini bisa diurutkan interaktif dengan custom sort order
+- **Loading States Filter Organisasi**: Skeleton loading pada filter daerah/desa/kelompok di halaman laporan
+- **Quick Actions Berbasis Permission**: Tombol aksi cepat di halaman Home muncul sesuai permission user
+- **Label Filter Multi-Kelompok Guru**: Deduplication dan label lebih jelas untuk guru dengan banyak kelompok
+
 ## [1.13.1] — 2026-04-30
 
 ### Improved

@@ -1,3 +1,35 @@
+*Update v1.14.0 — Reports & Materials Upgrade*
+
+🇮🇩 *Laporan & Materi Makin Lengkap*
+
+Fitur Baru 🆕
+- Tab Overview baru di halaman Laporan — ringkasan statistik langsung dari dashboard
+- Laporan Materi — pantau progress hafalan & nilai per kelas dalam satu halaman
+- Siswa baru otomatis terdaftar tahun ajaran aktif saat ditambahkan
+- Mode penilaian fleksibel: hafalan (✓/✗) atau nilai (0–100) per kategori materi
+- Akses Materi & Monitoring sekarang bisa dikonfigurasi per guru
+
+Perbaikan 🔧
+- Bug tanggal laporan off-by-one sudah diperbaiki
+- Tampilan data laporan lebih cepat untuk kelompok besar
+- Filter guru di monitoring kini berjalan dengan benar
+
+🇬🇧 *Reports & Materials Upgrade*
+
+New Features 🆕
+- New Overview tab in Reports — attendance stats integrated from dashboard
+- Materials Report — track memorization & score progress per class
+- New students auto-enrolled in active academic year on creation
+- Flexible scoring per material category: checkbox (hafalan) or score (0–100)
+- Granular access control for Materi & Monitoring pages per teacher
+
+Fixes 🔧
+- Date filter off-by-one bug in Reports page fixed
+- Large student dataset batch fetch issue resolved
+- Teacher kelompok filter in monitoring now works correctly
+
+---
+
 *Update v1.13.1 — Terminology Fix: Absensi → Presensi*
 
 🇮🇩 *Koreksi Istilah: Absensi → Presensi*
