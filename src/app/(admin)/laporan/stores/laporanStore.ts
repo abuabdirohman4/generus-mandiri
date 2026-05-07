@@ -53,6 +53,9 @@ interface LaporanState {
   resetFilters: () => void
   setFilter: (key: keyof LaporanFilters, value: any) => void
   resetMonthlyFilters: () => void
+  sharedMonth: number
+  sharedYear: number
+  setSharedTime: (month: number, year: number) => void
 }
 
 const getCurrentMonth = () => new Date().getMonth() + 1 // 1-12 (getMonth returns 0-11)
@@ -112,7 +115,16 @@ export const useLaporanStore = create<LaporanState>()(
   persist(
     (set, get) => ({
       filters: defaultFilters,
+      sharedMonth: getCurrentMonth(),
+      sharedYear: getCurrentYear(),
       
+      setSharedTime: (month, year) => set({ 
+        sharedMonth: month, 
+        sharedYear: year,
+        // Also sync with existing filters.month/year for Presensi tab compatibility
+        filters: { ...get().filters, month, year }
+      }),
+
       setFilters: (newFilters) => set((state) => ({
         filters: { ...state.filters, ...newFilters }
       })),
@@ -184,7 +196,9 @@ export const useLaporanStore = create<LaporanState>()(
           // Don't persist dates as they should be fresh on each visit
           startDate: null,
           endDate: null
-        }
+        },
+        sharedMonth: state.sharedMonth,
+        sharedYear: state.sharedYear
       })
     }
   )

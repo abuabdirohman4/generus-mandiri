@@ -15,7 +15,10 @@ import { Dayjs } from 'dayjs'
  */
 export function useLaporanPage() {
   // Store state
-  const { filters, setFilters, resetFilters, setFilter, hasActiveFilters, filterCount } = useLaporan()
+  const { 
+    filters, setFilters, resetFilters, setFilter, hasActiveFilters, filterCount,
+    sharedMonth, sharedYear, setSharedTime 
+  } = useLaporan()
   
   // User profile for class filtering
   const { profile: userProfile } = useUserProfile()
@@ -281,7 +284,10 @@ export function useLaporanPage() {
       // { value: 'weekly', label: 'Mingguan' },
       { value: 'monthly', label: 'Bulanan' },
       // { value: 'yearly', label: 'Tahunan' }
-    ]
+    ],
+    sharedMonth,
+    sharedYear,
+    setSharedTime
   }
 }
 

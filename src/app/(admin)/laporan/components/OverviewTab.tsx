@@ -16,9 +16,11 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { getClassMonitoring } from '@/app/(admin)/dashboard/actions'
 import { useDashboardStore } from '@/app/(admin)/dashboard/stores/dashboardStore'
 import { useDebounce } from '@/hooks/useDebounce'
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
+import { useLaporanStore } from '../stores/laporanStore'
+import LaporanTimeFilter from './LaporanTimeFilter'
 import { canAccessMaterials } from '@/lib/userUtils'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
 dayjs.locale('id')
 
@@ -34,10 +36,11 @@ export default function OverviewTab() {
   const customDateRange = filters.customDateRange
   const classViewMode = filters.classViewMode
 
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
-  const [selectedWeekOffset, setSelectedWeekOffset] = useState<number>(0)
-  const [selectedMonth, setSelectedMonth] = useState<string>(
-    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  const { sharedMonth, sharedYear, setSharedTime } = useLaporanStore()
+  
+  const selectedMonth = useMemo(() => 
+    `${sharedYear}-${String(sharedMonth).padStart(2, '0')}`,
+    [sharedMonth, sharedYear]
   )
 
   const { profile: userProfile } = useUserProfile()
@@ -91,9 +94,8 @@ export default function OverviewTab() {
   // Derive semester from selectedMonth vs academic year convention:
   // Semester 1 = July–December, Semester 2 = January–June
   const materiSemester = useMemo((): 1 | 2 => {
-    const month = parseInt(selectedMonth.split('-')[1], 10)
-    return month >= 7 ? 1 : 2
-  }, [selectedMonth])
+    return sharedMonth >= 7 ? 1 : 2
+  }, [sharedMonth])
 
   const { data: materiDashboardData = [], isLoading: materiLoading } = useMateriDashboard(
     {
@@ -108,7 +110,7 @@ export default function OverviewTab() {
 
   const monitoringFetcher = async () => {
     return await getClassMonitoring({
-      period: selectedPeriod,
+      period: 'month',
       startDate: customDateRange?.start,
       endDate: customDateRange?.end,
       daerahId: filters.daerah,
@@ -118,8 +120,6 @@ export default function OverviewTab() {
       gender: filters.gender,
       status: filters.status,
       classViewMode,
-      specificDate: selectedDate,
-      weekOffset: selectedWeekOffset,
       monthString: selectedMonth
     })
   }
@@ -138,11 +138,10 @@ export default function OverviewTab() {
       gender: debouncedFiltersForKey.gender || '',
       viewMode: debouncedFiltersForKey.classViewMode,
       comparisonLevel: debouncedFiltersForKey.comparisonLevel,
-      selectedDate,
-      selectedWeekOffset,
-      selectedMonth
+      sharedMonth: sharedMonth,
+      sharedYear: sharedYear
     })
-  }, [debouncedFiltersForKey, selectedDate, selectedWeekOffset, selectedMonth])
+  }, [debouncedFiltersForKey, selectedMonth, sharedMonth, sharedYear])
 
   // Pass null key when no filter selected → SWR will not fetch
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
@@ -215,29 +214,9 @@ export default function OverviewTab() {
   }, [filters.comparisonLevel])
 
   const attendanceLabel = useMemo(() => {
-    if (selectedPeriod === 'today') {
-      const isToday = dayjs(selectedDate).isSame(dayjs(), 'day')
-      const isYesterday = dayjs(selectedDate).isSame(dayjs().subtract(1, 'day'), 'day')
-      if (isToday) return 'Kehadiran Hari Ini'
-      if (isYesterday) return 'Kehadiran Kemarin'
-      return `Kehadiran ${dayjs(selectedDate).format('D MMMM')}`
-    }
-    if (selectedPeriod === 'week') {
-      if (selectedWeekOffset === 0) return 'Kehadiran Minggu Ini'
-      if (selectedWeekOffset === 1) return 'Kehadiran Minggu Lalu'
-      const startOfWeek = dayjs().subtract(selectedWeekOffset, 'week').startOf('week').add(1, 'day')
-      const endOfWeek = dayjs().subtract(selectedWeekOffset, 'week').endOf('week').add(1, 'day')
-      return `Minggu (${startOfWeek.format('D MMM')} - ${endOfWeek.format('D MMM')})`
-    }
-    if (selectedPeriod === 'month') {
-      if (dayjs(selectedMonth).isSame(dayjs(), 'month')) return 'Kehadiran Bulan Ini'
-      return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`
-    }
-    if (selectedPeriod === 'custom' && customDateRange) {
-      return `Kehadiran (${dayjs(customDateRange.start).format('D MMM')} - ${dayjs(customDateRange.end).format('D MMM')})`
-    }
-    return 'Kehadiran Periode Ini'
-  }, [selectedPeriod, selectedDate, selectedWeekOffset, selectedMonth, customDateRange])
+    if (dayjs(selectedMonth).isSame(dayjs(), 'month')) return 'Kehadiran Bulan Ini'
+    return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`
+  }, [selectedMonth])
 
   const attendanceTooltip = useMemo(() => {
     if (!attendanceMetrics || attendanceMetrics.entityCount === 0) return ''
@@ -247,7 +226,7 @@ export default function OverviewTab() {
 
   return (
     <div>
-      <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700 mb-6">
         <DataFilter
           filters={{ daerah: filters.daerah, desa: filters.desa, kelompok: filters.kelompok, kelas: filters.kelas, gender: filters.gender }}
           onFilterChange={handleFilterChange}
@@ -267,6 +246,15 @@ export default function OverviewTab() {
           comparisonLevel={filters.comparisonLevel}
           onComparisonLevelChange={handleComparisonLevelChange}
         />
+        {/* Bulan & Tahun — dalam grid 2-kolom di dalam card */}
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <LaporanTimeFilter
+            month={sharedMonth}
+            year={sharedYear}
+            onMonthChange={(m) => setSharedTime(m, sharedYear)}
+            onYearChange={(y) => setSharedTime(sharedMonth, y)}
+          />
+        </div>
       </div>
 
       {!hasActiveFilter ? (
@@ -297,18 +285,23 @@ export default function OverviewTab() {
         </div>
       )}
 
-      <PeriodTabs
-        selected={selectedPeriod}
-        onChange={handlePeriodChange}
-        customDateRange={customDateRange}
-        onCustomDateChange={handleCustomDateChange}
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        selectedWeekOffset={selectedWeekOffset}
-        onWeekOffsetChange={setSelectedWeekOffset}
-        selectedMonth={selectedMonth}
-        onMonthChange={setSelectedMonth}
-      />
+      {/* Period Tabs & Month Picker - Hidden for unified filter */}
+      {/* 
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <PeriodTabs
+          activePeriod={selectedPeriod}
+          onPeriodChange={(period) => setFilter('period', period)}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          selectedWeekOffset={selectedWeekOffset}
+          onWeekChange={setSelectedWeekOffset}
+          selectedMonth={sharedMonth}
+          onMonthChange={setSharedMonth}
+          customDateRange={customDateRange}
+          onCustomDateRangeChange={(range) => setFilter('customDateRange', range)}
+        />
+      </div>
+      */}
 
       <div className="mb-6">
         <ClassMonitoringTable

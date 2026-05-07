@@ -1,10 +1,9 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import InputFilter from '@/components/form/input/InputFilter'
 import { useLaporanStore } from '@/stores/laporanStore'
-import { getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import {
     shouldShowDaerahFilter,
     modalShouldShowDesaFilter,
@@ -14,8 +13,7 @@ import {
 import type { UserProfile } from '@/types/user'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
 import type { Class } from '@/types/class'
-import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types'
-import type { Semester, Month } from '@/app/(admin)/materi/types'
+import LaporanTimeFilter from './LaporanTimeFilter'
 
 interface MateriFilters {
     classId: string
@@ -40,6 +38,11 @@ interface MateriFilterSectionProps {
     desaList: DesaBase[]
     kelompokList: KelompokBase[]
     classList: Class[]
+    // Shared time filter
+    sharedMonth: number
+    sharedYear: number
+    onMonthChange: (month: number) => void
+    onYearChange: (year: number) => void
 }
 export default function MateriFilterSection({
     categories,
@@ -47,16 +50,13 @@ export default function MateriFilterSection({
     daerahList,
     desaList,
     kelompokList,
-    classList
+    classList,
+    sharedMonth,
+    sharedYear,
+    onMonthChange,
+    onYearChange
 }: MateriFilterSectionProps) {
     const { materiFilters: filters, setMateriFilters: onFilterChange } = useLaporanStore()
-    const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
-
-    useEffect(() => {
-        getAcademicYears().then(years =>
-            setAcademicYears(years.map(y => ({ value: y.id, label: y.name })))
-        ).catch(() => {})
-    }, [])
 
     // Detect regular teachers whose classes span multiple kelompok
     const teacherHasMultipleKelompok = useMemo(() => {
@@ -142,36 +142,8 @@ export default function MateriFilterSection({
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
             <div className={cn(
-                "grid gap-4",
-                visibleCount === 5 && "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
-                visibleCount === 6 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
-                visibleCount === 7 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7",
-                visibleCount === 8 && "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8"
+                "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4"
             )}>
-                {/* Tahun Ajaran */}
-                <InputFilter
-                    id="academic-year-filter"
-                    label="Tahun Ajaran"
-                    value={filters.academicYearId}
-                    onChange={(val) => onFilterChange({ academicYearId: val })}
-                    options={academicYears}
-                    placeholder="Pilih Tahun"
-                    compact
-                />
-
-                {/* Semester */}
-                <InputFilter
-                    id="semester-filter"
-                    label="Semester"
-                    value={String(filters.semester)}
-                    onChange={(val) => onFilterChange({ semester: Number(val) as 1 | 2 })}
-                    options={[
-                        { value: '1', label: 'Semester 1' },
-                        { value: '2', label: 'Semester 2' },
-                    ]}
-                    compact
-                />
-
                 {/* Daerah */}
                 {userProfile && shouldShowDaerahFilter(userProfile) && (
                     <InputFilter
@@ -253,19 +225,14 @@ export default function MateriFilterSection({
                     allOptionLabel="Semua Kategori"
                     compact
                 />
-
-                {/* Bulan (opsional) */}
-                <InputFilter
-                    id="month-filter"
-                    label="Bulan"
-                    value={filters.month !== undefined ? String(filters.month) : ''}
-                    onChange={(val) => onFilterChange({ month: val ? Number(val) : undefined })}
-                    options={getSemesterMonths(filters.semester as Semester).map(m => ({ 
-                        value: String(m), 
-                        label: getMonthName(m as Month) 
-                    }))}
-                    allOptionLabel="Semua Bulan"
-                    compact
+            </div>
+            {/* Bulan & Tahun — sebagai grid cell */}
+            <div className="grid grid-cols-2 gap-4 mt-2">
+                <LaporanTimeFilter
+                    month={sharedMonth}
+                    year={sharedYear}
+                    onMonthChange={onMonthChange}
+                    onYearChange={onYearChange}
                 />
             </div>
         </div>

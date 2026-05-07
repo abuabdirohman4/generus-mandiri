@@ -3,7 +3,7 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { useLaporanPage } from './hooks'
-import { FilterSection, SummaryCards, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
+import { FilterSection, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
 import MateriFilterSection from './components/MateriFilterSection'
 import MateriStatsCards from './components/MateriStatsCards'
 import MateriDataTable from './components/MateriDataTable'
@@ -14,9 +14,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useLaporanStore, type LaporanTab } from '@/stores/laporanStore'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
-import { canManageMaterials, canAccessMonitoring, canAccessOverview } from '@/lib/accessControl'
+import { canAccessMonitoring, canAccessOverview } from '@/lib/accessControl'
 import LaporanTabHeader from './components/LaporanTabHeader'
 import OverviewTab from './components/OverviewTab'
+import LaporanTimeFilter from './components/LaporanTimeFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -48,7 +49,10 @@ export default function LaporanPage() {
     handleOrganisasiFilterChange,
     isLoadingOrgs,
     classOptions,
-    periodOptions
+    periodOptions,
+    sharedMonth,
+    sharedYear,
+    setSharedTime
   } = useLaporanPage()
 
   const {
@@ -82,6 +86,27 @@ export default function LaporanPage() {
     }
   }, [hasMateriAccess, hasOverviewAccess, laporanTab, setLaporanTab])
 
+  // Calculate active semester and year derived from sharedMonth/sharedYear
+  const activeSemester = useMemo(() => (sharedMonth >= 7 ? 1 : 2), [sharedMonth])
+  const activeStartYear = useMemo(() => (sharedMonth >= 7 ? sharedYear : sharedYear - 1), [sharedMonth, sharedYear])
+  const [activeAcademicYearId, setActiveAcademicYearId] = useState<string>('')
+
+  // Sync academic year ID from derived start year
+  useEffect(() => {
+    const fetchYearId = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('academic_years')
+        .select('id')
+        .eq('start_year', activeStartYear)
+      
+      if (data && data.length > 0) {
+        setActiveAcademicYearId(data[0].id)
+      }
+    }
+    fetchYearId()
+  }, [activeStartYear])
+
   // Initialize filters from user profile and fetch active academic year
   useEffect(() => {
     const initializeFilters = async () => {
@@ -112,6 +137,15 @@ export default function LaporanPage() {
 
     initializeFilters()
   }, [userProfile]) // Only depend on userProfile to avoid infinite loop
+
+  // Sync materi filters with shared time
+  useEffect(() => {
+    setMateriFilters({
+      month: sharedMonth,
+      semester: activeSemester,
+      academicYearId: activeAcademicYearId || materiFilters.academicYearId // Fallback to existing if not found
+    })
+  }, [sharedMonth, activeSemester, activeAcademicYearId, setMateriFilters])
 
   const visibleTabs = useMemo(() => {
     const tabs: { id: LaporanTab; label: string }[] = [{ id: 'presensi' as const, label: 'Presensi' }]
@@ -221,33 +255,35 @@ export default function LaporanPage() {
         {laporanTab === 'presensi' && (
           <>
             {/* Filter Section */}
-            <div className="space-y-4">
-              <FilterSection
-                filters={filters}
-                periodOptions={periodOptions}
-                classOptions={classOptions}
-                onFilterChange={handleFilterChange}
-                onDateChange={handleDateChange}
-                onWeekChange={handleWeekChange}
-                onResetFilters={handleResetFilters}
-                hasActiveFilters={hasActiveFilters}
-                filterCount={filterCount}
-                userProfile={userProfile}
-                daerahList={daerah || []}
-                desaList={desa || []}
-                kelompokList={kelompok || []}
-                classList={classes || []}
-                organisasiFilters={{
-                  ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
-                  gender: filters.gender || '',
-                  activityType: filters.activityType || [],
-                  activityLevel: filters.activityLevel || []
-                }}
-                onOrganisasiFilterChange={handleOrganisasiFilterChange}
-                activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
-                isLoading={isLoadingOrgs}
-              />
-            </div>
+            <FilterSection
+              filters={filters}
+              periodOptions={periodOptions}
+              classOptions={classOptions}
+              onFilterChange={handleFilterChange}
+              onDateChange={handleDateChange}
+              onWeekChange={handleWeekChange}
+              onResetFilters={handleResetFilters}
+              hasActiveFilters={hasActiveFilters}
+              filterCount={filterCount}
+              userProfile={userProfile}
+              daerahList={daerah || []}
+              desaList={desa || []}
+              kelompokList={kelompok || []}
+              classList={classes || []}
+              organisasiFilters={{
+                ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
+                gender: filters.gender || '',
+                activityType: filters.activityType || [],
+                activityLevel: filters.activityLevel || []
+              }}
+              onOrganisasiFilterChange={handleOrganisasiFilterChange}
+              activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
+              isLoading={isLoadingOrgs}
+              sharedMonth={sharedMonth}
+              sharedYear={sharedYear}
+              onMonthChange={(m) => setSharedTime(m, sharedYear)}
+              onYearChange={(y) => setSharedTime(sharedMonth, y)}
+            />
 
             {loading ? (
               <LaporanSkeleton />
@@ -309,6 +345,10 @@ export default function LaporanPage() {
               desaList={desa || []}
               kelompokList={kelompok || []}
               classList={classes || []}
+              sharedMonth={sharedMonth}
+              sharedYear={sharedYear}
+              onMonthChange={(m) => setSharedTime(m, sharedYear)}
+              onYearChange={(y) => setSharedTime(sharedMonth, y)}
             />
             
             <MateriStatsCards 

@@ -7,6 +7,7 @@ import WeekPicker from '@/components/form/input/WeekPicker'
 import Button from '@/components/ui/button/Button'
 import DataFilter from '@/components/shared/DataFilter'
 import { LaporanFilters } from '../stores/laporanStore'
+import LaporanTimeFilter from './LaporanTimeFilter'
 
 interface FilterOption {
   value: string
@@ -23,7 +24,6 @@ interface FilterSectionProps {
   onResetFilters: () => void
   hasActiveFilters: boolean
   filterCount: number
-  // NEW: Add these props
   userProfile: any
   daerahList: any[]
   desaList: any[]
@@ -33,6 +33,11 @@ interface FilterSectionProps {
   onOrganisasiFilterChange: (filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; activityType?: string[]; activityLevel?: string[] }) => void
   activityTypeOptions?: { value: string; label: string }[]
   isLoading?: boolean
+  // Shared time filter
+  sharedMonth: number
+  sharedYear: number
+  onMonthChange: (month: number) => void
+  onYearChange: (year: number) => void
 }
 
 export default function FilterSection({
@@ -45,7 +50,6 @@ export default function FilterSection({
   onResetFilters,
   hasActiveFilters,
   filterCount,
-  // NEW: Add these props
   userProfile,
   daerahList,
   desaList,
@@ -54,7 +58,11 @@ export default function FilterSection({
   organisasiFilters,
   onOrganisasiFilterChange,
   activityTypeOptions,
-  isLoading = false
+  isLoading = false,
+  sharedMonth,
+  sharedYear,
+  onMonthChange,
+  onYearChange
 }: FilterSectionProps) {
 
   const monthOptions = [
@@ -127,24 +135,13 @@ export default function FilterSection({
             // cascadeFilters={false}
           />
 
-          {/* Month and Year Filter */}
-          <div className="grid grid-cols-2 lg:grid-cols-2 gap-x-4">
-            <InputFilter
-              id="month"
-              label="Bulan"
-              value={filters.month.toString()}
-              onChange={(value) => onFilterChange('month', value)}
-              options={monthOptions}
-              widthClassName='!max-w-full'
-            />
-
-            <InputFilter
-              id="year"
-              label="Tahun"
-              value={filters.year.toString()}
-              onChange={(value) => onFilterChange('year', value)}
-              options={yearOptions}
-              widthClassName='!max-w-full'
+          {/* Bulan & Tahun — dalam grid 2-kolom setelah DataFilter */}
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <LaporanTimeFilter
+              month={sharedMonth}
+              year={sharedYear}
+              onMonthChange={onMonthChange}
+              onYearChange={onYearChange}
             />
           </div>
         </>
