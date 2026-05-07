@@ -10,6 +10,7 @@ import { getStatusBgColor, getStatusColor } from '@/lib/percentages';
 import { useDashboardStore } from '../stores/dashboardStore';
 import ComparisonChart from './ComparisonChart';
 import { aggregateMonitoringData } from '../utils/aggregateMonitoringData';
+import type { ClassMateriSummary } from '../actions/materiMonitoring';
 
 interface ClassMonitoringTableProps {
     data: ClassMonitoringData[];
@@ -17,6 +18,8 @@ interface ClassMonitoringTableProps {
     period: PeriodType;
     customDateRange?: { start: string; end: string };
     classViewMode: 'separated' | 'combined';
+    materiData?: ClassMateriSummary[];
+    materiLoading?: boolean;
 }
 
 // Date formatting helper functions
@@ -54,11 +57,22 @@ export default function ClassMonitoringTable({
     isLoading,
     period,
     customDateRange,
-    classViewMode
+    classViewMode,
+    materiData,
+    materiLoading = false,
 }: ClassMonitoringTableProps) {
     const { profile } = useUserProfile();
     const { filters, setFilter } = useDashboardStore();
     const viewMode = filters.comparisonViewMode || 'table';
+    console.log('materiData', materiData);
+
+    // Build a lookup map: class_id → materi summary for O(1) access in renderCell
+    const materiMap = useMemo(() => {
+        if (!materiData?.length) return new Map<string, ClassMateriSummary>()
+        return new Map(materiData.map(m => [m.class_id, m]))
+    }, [materiData])
+
+    const showMateriColumn = materiData && filters.comparisonLevel === 'class'
 
     // Calculate date range display based on period
     const dateRangeDisplay = useMemo(() => {
@@ -145,7 +159,13 @@ export default function ClassMonitoringTable({
                     label: 'Kehadiran',
                     sortable: true,
                     align: 'center' as const
-                }
+                },
+                ...(showMateriColumn ? [{
+                    key: 'materi_completion',
+                    label: 'Pencapaian Materi',
+                    sortable: false,
+                    align: 'center' as const
+                }] : [])
             ];
 
             // Add organization columns based on user level
@@ -182,7 +202,7 @@ export default function ClassMonitoringTable({
                 }
             ];
         }
-    }, [filters.comparisonLevel, getOrganizationColumns]);
+    }, [filters.comparisonLevel, getOrganizationColumns, showMateriColumn]);
 
     // Transform data based on comparison level
     const tableData = useMemo(() => {
@@ -243,6 +263,25 @@ export default function ClassMonitoringTable({
             );
         }
 
+        // Handle materi completion column
+        if (column.key === 'materi_completion') {
+            if (materiLoading) {
+                return <span className="inline-block h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            }
+            const materi = materiMap.get(item.class_id)
+            if (!materi || materi.total_materials === 0) {
+                return <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
+            }
+            const color = materi.avg_completion_rate >= 80 ? 'text-green-600 dark:text-green-400' :
+                          materi.avg_completion_rate >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
+                          'text-red-600 dark:text-red-400'
+            return (
+                <span className={`text-sm font-semibold ${color}`}>
+                    {materi.avg_completion_rate}%
+                </span>
+            )
+        }
+
         // Handle attendance rate with color coding
         if (column.key === 'attendance_rate') {
             // Show "Tidak ada siswa" for classes with no students (only for class-level)
@@ -286,7 +325,7 @@ export default function ClassMonitoringTable({
         // Calculate dynamic column count based on comparison level
         const comparisonLevel = filters.comparisonLevel;
         const columnCount = comparisonLevel === 'class'
-            ? 3 + getOrganizationColumns.length  // Class + Pertemuan + Kehadiran + Org columns
+            ? 3 + getOrganizationColumns.length + (showMateriColumn ? 1 : 0)
             : 4;  // Entity name + Pertemuan + Peserta + Kehadiran
 
         return (

@@ -220,7 +220,7 @@ Table shows "Pertemuan" and "Siswa" columns:
 - Enables manual verification and deeper analysis
 
 ### Files
-- **Implementation**: `src/app/(admin)/dashboard/page.tsx` - `attendanceMetrics` useMemo
+- **Implementation**: `src/app/(admin)/laporan/components/OverviewTab.tsx` - `attendanceMetrics` useMemo
 - **Detailed Documentation**: READ [`docs/claude/dashboard-attendance-calculation-id.md`](dashboard-attendance-calculation-id.md)
 - **Related Issues**: sm-nol (dashboard comparison charts)
 
@@ -244,7 +244,7 @@ Use `meeting_ids` array + Set for deduplication:
 ### Files
 - `src/app/(admin)/dashboard/actions.ts` - Returns `meeting_ids` in monitoring data
 - `src/app/(admin)/dashboard/utils/aggregateMonitoringData.ts` - Deduplication logic
-- `src/app/(admin)/dashboard/page.tsx` - Tracks `meetingIds` in aggregation
+- `src/app/(admin)/laporan/components/OverviewTab.tsx` - Tracks `meetingIds` in aggregation
 
 ### Impact
 - Per Kelompok: Multi-class meetings counted once (was N times)

@@ -341,7 +341,7 @@ export default function DataFilter({
   // Comparison feature logic
   const availableComparisonLevels = useMemo(() => {
     const hasAccessToDesa = isSuperAdmin || isAdminDaerah || isTeacherDaerah;
-    const hasAccessToKelompok = hasAccessToDesa || isAdminDesa || isTeacherDesa;
+    const hasAccessToKelompok = hasAccessToDesa || isAdminDesa || isTeacherDesa || teacherHasMultipleKelompok;
                       
     const levels = [{ value: 'class', label: 'Per Kelas' }];
 
