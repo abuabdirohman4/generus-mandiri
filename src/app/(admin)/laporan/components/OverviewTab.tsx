@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
@@ -43,6 +43,22 @@ export default function OverviewTab() {
   const { kelompok, isLoading: isLoadingKelompok } = useKelompok()
   const { classes, isLoading: isLoadingClasses } = useClasses()
   const orgLoading = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
+
+  // Set default comparisonLevel based on user's org scope on first mount.
+  // Only override if the current value is 'class' (the generic default) —
+  // if the user has already changed it explicitly, we keep their choice.
+  useEffect(() => {
+    if (!userProfile) return
+    const current = filters.comparisonLevel
+    let suggested: typeof current = 'class'
+    if (userProfile.role === 'superadmin') suggested = 'daerah'
+    else if (!userProfile.kelompok_id && !userProfile.desa_id && userProfile.daerah_id) suggested = 'desa'
+    else if (!userProfile.kelompok_id && userProfile.desa_id) suggested = 'kelompok'
+    if (current === 'class' && suggested !== 'class') {
+      setFilter('comparisonLevel', suggested)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile?.id])
 
   // Only fetch when at least one org/class filter is selected to avoid
   // loading all data for large-scope accounts (daerah level) on tab open.
