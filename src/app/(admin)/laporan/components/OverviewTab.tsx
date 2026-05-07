@@ -16,6 +16,9 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { getClassMonitoring } from '@/app/(admin)/dashboard/actions'
 import { useDashboardStore } from '@/app/(admin)/dashboard/stores/dashboardStore'
 import { useDebounce } from '@/hooks/useDebounce'
+import { canAccessMaterials } from '@/lib/userUtils'
+import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
 dayjs.locale('id')
 
@@ -44,6 +47,11 @@ export default function OverviewTab() {
   const { classes, isLoading: isLoadingClasses } = useClasses()
   const orgLoading = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
 
+  const hasMateriAccess = useMemo(() => {
+    if (!userProfile) return false
+    return canAccessMaterials(userProfile)
+  }, [userProfile])
+
   // Set default comparisonLevel based on user's org scope on first mount.
   // Only override if the current value is 'class' (the generic default) —
   // if the user has already changed it explicitly, we keep their choice.
@@ -67,6 +75,35 @@ export default function OverviewTab() {
     filters.desa.length > 0 ||
     filters.kelompok.length > 0 ||
     filters.kelas.length > 0
+  )
+
+  const [activeYearId, setActiveYearId] = useState('')
+
+  // Fetch active academic year once on mount
+  useEffect(() => {
+    if (!hasMateriAccess) return
+    getActiveAcademicYear().then(year => {
+      if (year) setActiveYearId(year.id)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMateriAccess])
+
+  // Derive semester from selectedMonth vs academic year convention:
+  // Semester 1 = July–December, Semester 2 = January–June
+  const materiSemester = useMemo((): 1 | 2 => {
+    const month = parseInt(selectedMonth.split('-')[1], 10)
+    return month >= 7 ? 1 : 2
+  }, [selectedMonth])
+
+  const { data: materiDashboardData = [], isLoading: materiLoading } = useMateriDashboard(
+    {
+      academicYearId: activeYearId,
+      semester: materiSemester,
+      daerahId: filters.daerah?.join(','),
+      desaId: filters.desa?.join(','),
+      kelompokId: filters.kelompok?.join(','),
+    },
+    hasMateriAccess && !!activeYearId && hasActiveFilter && filters.comparisonLevel === 'class'
   )
 
   const monitoringFetcher = async () => {
@@ -280,6 +317,8 @@ export default function OverviewTab() {
           period={selectedPeriod}
           customDateRange={customDateRange}
           classViewMode={classViewMode}
+          materiData={hasMateriAccess ? materiDashboardData : undefined}
+          materiLoading={hasMateriAccess ? materiLoading : false}
         />
       </div>
     </div>

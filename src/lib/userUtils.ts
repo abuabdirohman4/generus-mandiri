@@ -27,6 +27,7 @@ export {
   isAdmin,
   isMaterialCoordinator,
   canManageMaterials,
+  canAccessMaterials,
   shouldShowDaerahFilter,
   shouldShowDesaFilter,
   shouldShowKelompokFilter,
