@@ -4,8 +4,6 @@ import { useState, useMemo } from 'react'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
-import { useDashboard } from '@/hooks/useDashboard'
-import DashboardSkeleton from '@/components/ui/skeleton/DashboardSkeleton'
 import StatCard from '@/app/(admin)/dashboard/components/StatCard'
 import PeriodTabs, { type PeriodType } from '@/app/(admin)/dashboard/components/PeriodTabs'
 import ClassMonitoringTable from '@/app/(admin)/dashboard/components/ClassMonitoringTable'
@@ -46,16 +44,14 @@ export default function OverviewTab() {
   const { classes, isLoading: isLoadingClasses } = useClasses()
   const orgLoading = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
 
-  const dashboardFilters = useMemo(() => ({
-    daerahId: debouncedFiltersForKey.daerah,
-    desaId: debouncedFiltersForKey.desa,
-    kelompokId: debouncedFiltersForKey.kelompok,
-    classId: debouncedFiltersForKey.kelas,
-    gender: debouncedFiltersForKey.gender,
-    status: debouncedFiltersForKey.status
-  }), [debouncedFiltersForKey.daerah, debouncedFiltersForKey.desa, debouncedFiltersForKey.kelompok, debouncedFiltersForKey.kelas, debouncedFiltersForKey.gender, debouncedFiltersForKey.status])
-
-  const { stats, isLoading: statsLoading, error: statsError } = useDashboard(dashboardFilters)
+  // Only fetch when at least one org/class filter is selected to avoid
+  // loading all data for large-scope accounts (daerah level) on tab open.
+  const hasActiveFilter = (
+    filters.daerah.length > 0 ||
+    filters.desa.length > 0 ||
+    filters.kelompok.length > 0 ||
+    filters.kelas.length > 0
+  )
 
   const monitoringFetcher = async () => {
     return await getClassMonitoring({
@@ -95,8 +91,9 @@ export default function OverviewTab() {
     })
   }, [debouncedFiltersForKey, selectedDate, selectedWeekOffset, selectedMonth])
 
+  // Pass null key when no filter selected → SWR will not fetch
   const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
-    ['class-monitoring-overview', monitoringCacheKey],
+    hasActiveFilter ? ['class-monitoring-overview', monitoringCacheKey] : null,
     monitoringFetcher,
     { revalidateOnFocus: false, dedupingInterval: 60000, keepPreviousData: true }
   )
@@ -195,19 +192,6 @@ export default function OverviewTab() {
     return `Rata-rata ${entityCount} ${entityLabel.toLowerCase()}: ${simpleAverage}%\n\nTotal siswa hadir: ${weightedAverage}% (${totalPresent.toLocaleString('id-ID')} dari ${totalPotential.toLocaleString('id-ID')} kehadiran)`
   }, [attendanceMetrics, entityLabel])
 
-  if (statsLoading && !stats) return <DashboardSkeleton />
-
-  if (statsError) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="text-red-500 text-lg font-semibold">Error loading overview</div>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">{statsError}</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div>
       <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700">
@@ -232,22 +216,33 @@ export default function OverviewTab() {
         />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        <StatCard
-          title={attendanceLabel}
-          value={
-            monitoringLoading
-              ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              : `${attendanceMetrics.simpleAverage}%`
-          }
-          icon="✅"
-          className="col-span-3"
-          color="emerald"
-          tooltip={attendanceTooltip}
-        />
-        {/* <StatCard title="Total Siswa" value={stats?.siswa || 0} icon="👨‍🎓" color="blue" />
-        <StatCard title="Total Kelas" value={stats?.kelas || 0} icon="📚" color="purple" /> */}
-      </div>
+      {!hasActiveFilter ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+          <StatCard
+            title={attendanceLabel}
+            value={`${0}%`}
+            icon="✅"
+            className="col-span-3"
+            color="emerald"
+            tooltip={attendanceTooltip}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+          <StatCard
+            title={attendanceLabel}
+            value={
+              monitoringLoading
+                ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                : `${attendanceMetrics.simpleAverage}%`
+            }
+            icon="✅"
+            className="col-span-3"
+            color="emerald"
+            tooltip={attendanceTooltip}
+          />
+        </div>
+      )}
 
       <PeriodTabs
         selected={selectedPeriod}
