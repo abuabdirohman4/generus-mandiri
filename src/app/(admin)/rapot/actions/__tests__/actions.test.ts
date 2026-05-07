@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock modules BEFORE imports
 vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
+  createClient: vi.fn().mockResolvedValue({
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
+  }),
   createAdminClient: vi.fn(),
 }))
+vi.mock('@/lib/activityLogger', () => ({ logActivity: vi.fn() }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('../queries', () => ({
   fetchStudentGrades: vi.fn(),

@@ -8,6 +8,12 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('../logic', () => ({
   validatePasswordChangeInput: vi.fn(),
 }))
+vi.mock('@/lib/accessControlServer', () => ({
+  getCurrentUserProfile: vi.fn().mockResolvedValue({ id: 'user-1' }),
+}))
+vi.mock('@/lib/activityLogger', () => ({
+  logActivity: vi.fn(),
+}))
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'

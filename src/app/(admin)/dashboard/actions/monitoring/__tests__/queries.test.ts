@@ -12,6 +12,8 @@ function makeChain(returnValue: any = { data: [], error: null }) {
     const chain: any = {}
     chain.select = vi.fn().mockReturnValue(chain)
     chain.in = vi.fn().mockReturnValue(chain)
+    chain.eq = vi.fn().mockReturnValue(chain)
+    chain.is = vi.fn().mockReturnValue(chain)
     chain.gte = vi.fn().mockReturnValue(chain)
     chain.lte = vi.fn().mockReturnValue(chain)
     chain.then = (resolve: (v: any) => any, reject?: (e: any) => any) =>

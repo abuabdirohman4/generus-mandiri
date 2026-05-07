@@ -14,6 +14,7 @@ function makeChain(returnCount: number | null = 0, returnData: any[] | null = []
     chain.from = vi.fn().mockReturnValue(chain)
     chain.eq = vi.fn().mockReturnValue(chain)
     chain.in = vi.fn().mockReturnValue(chain)
+    chain.is = vi.fn().mockReturnValue(chain)
     chain.gte = vi.fn().mockReturnValue(chain)
     chain.order = vi.fn().mockReturnValue(chain)
     chain.then = (resolve: (v: any) => any, reject?: (e: any) => any) =>

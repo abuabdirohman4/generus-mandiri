@@ -113,11 +113,11 @@ describe('mapClassMappingsToItems', () => {
         expect((result[0] as any).classes).toHaveLength(0)
     })
 
-    it('includes semester in class info', () => {
+    it('maps class_master into classes (semester removed from schema)', () => {
         const items = [{ id: 'i1' }]
-        const mappings = [{ material_item_id: 'i1', semester: 2, class_master: { id: 'c1' } }]
+        const mappings = [{ material_item_id: 'i1', class_master: { id: 'c1', name: 'Kelas 1' } }]
         const result = mapClassMappingsToItems(items, mappings)
-        expect((result[0] as any).classes[0].semester).toBe(2)
+        expect((result[0] as any).classes[0].id).toBe('c1')
     })
 })
 

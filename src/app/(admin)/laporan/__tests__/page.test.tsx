@@ -43,7 +43,8 @@ vi.mock('@/hooks/useMyActivityTypes', () => ({
 
 vi.mock('@/lib/accessControl', () => ({
     canManageMaterials: vi.fn(),
-    canAccessMonitoring: vi.fn()
+    canAccessMonitoring: vi.fn(),
+    canAccessOverview: vi.fn(),
 }))
 
 // Mock Supabase client

@@ -345,7 +345,7 @@ describe('Materi Items Actions (Layer 3)', () => {
     it('returns item with class mappings on happy path', async () => {
       const item = { id: 'item-1', name: 'Item A' }
       const mappings = [
-        { class_master: { id: 'cm-1', name: 'Kelas 1' }, semester: 1 },
+        { class_master: { id: 'cm-1', name: 'Kelas 1' } },
       ]
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
@@ -356,7 +356,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       expect(result).toEqual({
         ...item,
-        classes: [{ id: 'cm-1', name: 'Kelas 1', semester: 1 }],
+        classes: [{ id: 'cm-1', name: 'Kelas 1' }],
       })
     })
 
@@ -630,34 +630,11 @@ describe('Materi Items Actions (Layer 3)', () => {
       await expect(deleteMaterialItem('item-1')).rejects.toThrow('Unauthorized')
     })
 
-    it('throws error when dependency check fails', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
-      vi.mocked(canManageMaterials).mockReturnValue(true)
-      const supabase = makeSupabase()
-      vi.mocked(createClient).mockResolvedValue(supabase)
-      vi.mocked(fetchDayItemsForItem).mockResolvedValue({ data: null, error: new Error('DB error') } as any)
-
-      await expect(deleteMaterialItem('item-1')).rejects.toThrow('Gagal memeriksa dependensi')
-    })
-
-    it('throws error when item has dependencies', async () => {
-      vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
-      vi.mocked(canManageMaterials).mockReturnValue(true)
-      const supabase = makeSupabase()
-      vi.mocked(createClient).mockResolvedValue(supabase)
-      vi.mocked(fetchDayItemsForItem).mockResolvedValue({ data: [{ id: 'dep-1' }], error: null } as any)
-      vi.mocked(itemHasDependencies).mockReturnValue(true)
-
-      await expect(deleteMaterialItem('item-1')).rejects.toThrow('Tidak dapat menghapus item')
-    })
-
     it('deletes item and revalidates path on happy path', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', permissions: { can_manage_materials: true } } as any)
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
-      vi.mocked(fetchDayItemsForItem).mockResolvedValue({ data: [], error: null } as any)
-      vi.mocked(itemHasDependencies).mockReturnValue(false)
       vi.mocked(deleteItemById).mockResolvedValue({ data: null, error: null } as any)
 
       const result = await deleteMaterialItem('item-1')
@@ -671,8 +648,6 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(canManageMaterials).mockReturnValue(true)
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
-      vi.mocked(fetchDayItemsForItem).mockResolvedValue({ data: [], error: null } as any)
-      vi.mocked(itemHasDependencies).mockReturnValue(false)
       vi.mocked(deleteItemById).mockResolvedValue({ data: null, error: new Error('Delete failed') } as any)
 
       await expect(deleteMaterialItem('item-1')).rejects.toThrow('Gagal menghapus item materi')
