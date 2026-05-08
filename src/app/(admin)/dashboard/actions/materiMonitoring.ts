@@ -29,7 +29,7 @@ export async function getMateriDashboardSummary(
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
 
-    if (!profile || !canManageMaterials(profile)) return []
+    if (!profile) return []
     if (!filters.academicYearId) return []
 
     // Step 1: Tentukan kelas yang accessible

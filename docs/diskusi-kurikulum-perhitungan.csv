@@ -1,0 +1,12 @@
+Bulan,Materi Kumulatif (unik),Materi Ada Nilai,Materi Belum Ada Nilai,% Formula Saat Ini (naik-turun),Catatan
+Januari,8,8,0,100%,"Semua materi Jan sudah ada nilai"
+Februari,10,8,2,80%,"Tambah 2 materi baru (Praktik mensucikan + Tata krama pengajian) — belum ada nilai"
+Maret,14,8,6,57%,"Tambah 4 materi baru (Do'a pagi + Humazah + Tata krama ling + Thoharoh) — belum ada nilai"
+April,18,10,8,54%,"Tambah 4 materi baru. 2 ada nilai (Lingkungan alam + Praktik Sholat). 2 belum (Do'a masjid + Tata krama tidur)"
+Mei,21,13,8,60%,"Tambah 3 materi baru — semua ada nilai (Do'a pakaian + Puasa + Surat Al Asr)"
+Juni,24,13,11,53%,"Tambah 3 materi baru — belum ada nilai (Do'a buka + Praktik doa + Tata krama bersin)"
+
+Pertanyaan Kunci,Opsi A,Opsi B,Opsi C
+Materi yang muncul di banyak bulan artinya apa?,"Butuh beberapa bulan untuk dikuasai (target berulang sampai tuntas)","Diajarkan ulang setiap bulan dan dinilai ulang tiap bulan","Artinya lain?"
+Materi belum ada nilai artinya?,"Guru belum sempat input nilai (administrasi tertinggal)","Memang belum diajarkan ke siswa","Di-skip / tidak relevan"
+Kapan materi boleh dihitung dalam persentase?,"Sejak bulan pertama ditargetkan (formula saat ini)","Sejak guru sudah input nilai (grafik pasti naik)","Sejak bulan terakhir target (deadline)"

@@ -40,15 +40,6 @@ describe('getMateriDashboardSummary', () => {
         expect(result).toEqual([])
     })
 
-    it('returns empty array if user cannot manage materials', async () => {
-        const { getCurrentUserProfile, canManageMaterials } = await import('@/lib/accessControlServer')
-        vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'u1', role: 'teacher' } as any)
-        vi.mocked(canManageMaterials).mockReturnValue(false)
-
-        const result = await getMateriDashboardSummary({ academicYearId: 'year-1', semester: 1 })
-        expect(result).toEqual([])
-    })
-
     it('returns empty array if academicYearId is missing', async () => {
         const { getCurrentUserProfile, canManageMaterials } = await import('@/lib/accessControlServer')
         vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'u1', role: 'admin' } as any)

@@ -6,10 +6,10 @@ import { useLaporanPage } from './hooks'
 import { FilterSection, StatsCards, ReportChart, AttendanceTrendChart, DataTable } from './components'
 import MateriFilterSection from './components/MateriFilterSection'
 import MateriStatsCards from './components/MateriStatsCards'
+import LaporanEmptyState from './components/LaporanEmptyState'
 import MateriDataTable from './components/MateriDataTable'
 import { useMateriReportData } from './hooks/useMateriReportData'
 import { useState, useEffect, useMemo } from 'react'
-import { cn } from '@/lib/utils'
 import MateriTrendChart from './components/MateriTrendChart'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
@@ -19,7 +19,6 @@ import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { canAccessMonitoring, canAccessOverview } from '@/lib/accessControl'
 import LaporanTabHeader from './components/LaporanTabHeader'
 import OverviewTab from './components/OverviewTab'
-import LaporanTimeFilter from './components/LaporanTimeFilter'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -328,17 +327,9 @@ export default function LaporanPage() {
                 </div>
               </>
             ) : (
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-                <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                  Tidak ada data
-                </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Tidak ada data laporan presensi yang tersedia.
-                </p>
-              </div>
+              <LaporanEmptyState 
+                description="Pilih filter yang tersedia untuk melihat laporan presensi."
+              />
             )}
           </>
         )}
@@ -358,56 +349,40 @@ export default function LaporanPage() {
               onYearChange={(y) => setSharedTime(sharedMonth, y)}
               semester={activeSemester}
               academicYear={`${activeStartYear}/${activeStartYear + 1}`}
+              reportMode={materiReportMode}
+              onModeChange={setMateriReportMode}
             />
-
-            <MateriStatsCards 
-              data={materiData} 
-              isLoading={isLoadingMateri} 
-              mode={materiReportMode}
-            />
-
-            {/* Mode Selector */}
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-4">
-              <button
-                onClick={() => setMateriReportMode('cumulative')}
-                className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                  materiReportMode === 'cumulative'
-                    ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                )}
-              >
-                Kumulatif
-              </button>
-              <button
-                onClick={() => setMateriReportMode('monthly')}
-                className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                  materiReportMode === 'monthly'
-                    ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                )}
-              >
-                Bulan Ini
-              </button>
-            </div>
-
-            {/* Trend Chart - Cumulative Only */}
-            {materiReportMode === 'cumulative' && (
-              <div className="mb-6">
-                <MateriTrendChart
-                  data={materiTrendData}
-                  isLoading={isLoadingMateri}
-                  semester={activeSemester}
+            {materiData ? (
+              <>
+                <MateriStatsCards 
+                  data={materiData} 
+                  isLoading={isLoadingMateri} 
+                  mode={materiReportMode}
                 />
-              </div>
+
+                {/* Trend Chart - Cumulative Only */}
+                {materiReportMode === 'cumulative' && (
+                  <div className="mb-6">
+                    <MateriTrendChart
+                      data={materiTrendData}
+                      isLoading={isLoadingMateri}
+                      semester={activeSemester}
+                      viewMode={materiViewMode}
+                    />
+                  </div>
+                )}
+                
+                <MateriDataTable 
+                  rows={materiData?.rows || []} 
+                  isLoading={isLoadingMateri} 
+                  siswaRows={materiData?.siswaRows || []}
+                />
+              </>
+            ) : !isLoadingMateri && (
+              <LaporanEmptyState 
+                description="Pilih filter yang tersedia untuk melihat laporan materi."
+              />
             )}
-            
-            <MateriDataTable 
-              rows={materiData?.rows || []} 
-              isLoading={isLoadingMateri} 
-              siswaRows={materiData?.siswaRows || []}
-            />
           </>
         )}
 

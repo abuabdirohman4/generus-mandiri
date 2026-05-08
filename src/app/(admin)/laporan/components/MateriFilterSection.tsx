@@ -15,20 +15,7 @@ import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
 import type { Class } from '@/types/class'
 import LaporanTimeFilter from './LaporanTimeFilter'
 
-interface MateriFilters {
-    classId: string
-    daerahId: string
-    desaId: string
-    kelompokId: string
-    academicYearId: string
-    semester: 1 | 2
-    categoryId: string
-    month: number | undefined
-}
-
-interface YearOption { value: string; label: string }
 interface CategoryOption { value: string; label: string }
-
 interface MateriFilterSectionProps {
     categories: CategoryOption[]
     
@@ -45,7 +32,11 @@ interface MateriFilterSectionProps {
     onYearChange: (year: number) => void
     semester?: 1 | 2
     academicYear?: string
+    // Mode toggle
+    reportMode: 'monthly' | 'cumulative'
+    onModeChange: (mode: 'monthly' | 'cumulative') => void
 }
+
 export default function MateriFilterSection({
     categories,
     userProfile,
@@ -58,7 +49,9 @@ export default function MateriFilterSection({
     onMonthChange,
     onYearChange,
     semester,
-    academicYear
+    academicYear,
+    reportMode,
+    onModeChange
 }: MateriFilterSectionProps) {
     const { materiFilters: filters, setMateriFilters: onFilterChange } = useLaporanStore()
 
@@ -135,8 +128,8 @@ export default function MateriFilterSection({
         return filtered.map(c => ({ value: c.id, label: c.name }));
     }, [classList, filters.kelompokId, filters.desaId, filters.daerahId, desaList, kelompokList]);
 
-    const visibleCount = useMemo(() => {
-        let count = 5; // Tahun Ajaran, Semester, Kelas, Kategori, Bulan
+    const filterCount = useMemo(() => {
+        let count = 2; // Kelas & Kategori selalu ada
         if (userProfile && shouldShowDaerahFilter(userProfile)) count++;
         if (userProfile && modalShouldShowDesaFilter(userProfile)) count++;
         if (userProfile && (modalShouldShowKelompokFilter(userProfile) || teacherHasMultipleKelompok)) count++;
@@ -144,9 +137,40 @@ export default function MateriFilterSection({
     }, [userProfile, teacherHasMultipleKelompok]);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
+            {/* Mode Toggle */}
+            <div className="mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                  <button
+                    onClick={() => onModeChange('cumulative')}
+                    className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${reportMode === 'cumulative'
+                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                  >
+                    Kumulatif
+                  </button>
+                  <button
+                    onClick={() => onModeChange('monthly')}
+                    className={`w-full px-4 py-2 text-sm rounded-md transition-colors ${reportMode === 'monthly'
+                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                  >
+                    Bulanan
+                  </button>
+                </div>
+              </div>
+            </div>
+            
             <div className={cn(
-                "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                "grid gap-4",
+                filterCount === 2 && "grid-cols-2 md:grid-cols-2",
+                filterCount === 3 && "grid-cols-2 md:grid-cols-4",
+                filterCount === 4 && "grid-cols-2 md:grid-cols-4",
+                filterCount === 5 && "grid-cols-2 md:grid-cols-5",
+                filterCount === 6 && "grid-cols-2 md:grid-cols-6"
             )}>
                 {/* Daerah */}
                 {userProfile && shouldShowDaerahFilter(userProfile) && (
@@ -215,6 +239,7 @@ export default function MateriFilterSection({
                     onChange={(val) => onFilterChange({ classId: val })}
                     options={filteredClasses}
                     allOptionLabel="Pilih Kelas"
+                    widthClassName="!max-w-full"
                     compact
                     // disabled={!filters.kelompokId}
                 />
@@ -227,6 +252,7 @@ export default function MateriFilterSection({
                     onChange={(val) => onFilterChange({ categoryId: val })}
                     options={categories}
                     allOptionLabel="Semua Kategori"
+                    widthClassName="!max-w-full"
                     compact
                 />
             </div>

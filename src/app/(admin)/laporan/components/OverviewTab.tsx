@@ -21,6 +21,7 @@ import { useLaporanStore } from '../stores/laporanStore'
 import LaporanTimeFilter from './LaporanTimeFilter'
 import { canAccessMaterials, canAccessMonitoring } from '@/lib/userUtils'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
+import LaporanEmptyState from './LaporanEmptyState'
 
 dayjs.locale('id')
 
@@ -248,7 +249,7 @@ export default function OverviewTab() {
 
   return (
     <div>
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm dark:border-gray-700 mb-6">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-4">
         <DataFilter
           filters={{ daerah: filters.daerah, desa: filters.desa, kelompok: filters.kelompok, kelas: filters.kelas, gender: filters.gender }}
           onFilterChange={handleFilterChange}
@@ -282,62 +283,50 @@ export default function OverviewTab() {
       </div>
 
       {!hasActiveFilter ? (
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
-          <StatCard
-            title={attendanceLabel}
-            value={`${0}%`}
-            icon="✅"
-            color="emerald"
-            className={!hasPencapaianAccess ? 'col-span-2' : ''}
-          />
-          {hasPencapaianAccess && (
-            <StatCard
-              title={materiLabel}
-              value={`${0}%`}
-              icon="📚"
-              color="blue"
-            />
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
-          <StatCard
-            title={attendanceLabel}
-            value={
-              monitoringLoading
-                ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                : `${attendanceMetrics.simpleAverage}%`
-            }
-            icon="✅"
-            color="emerald"
-            className={!hasPencapaianAccess ? 'col-span-2' : ''}
-          />
-          {hasPencapaianAccess && (
-            <StatCard
-              title={materiLabel}
-              value={
-                materiLoading
-                  ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  : `${materiMetrics.avg}%`
-              }
-              icon="📚"
-              color="blue"
-            />
-          )}
-        </div>
-      )}
-
-      <div className="mb-6">
-        <ClassMonitoringTable
-          data={monitoringData || []}
-          isLoading={monitoringLoading}
-          period={selectedPeriod}
-          customDateRange={customDateRange}
-          classViewMode={classViewMode}
-          materiData={hasPencapaianAccess ? materiDashboardData : undefined}
-          materiLoading={hasPencapaianAccess ? materiLoading : false}
+        <LaporanEmptyState 
+          description="Pilih filter yang tersedia untuk melihat laporan gabungan."
         />
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
+            <StatCard
+              title={attendanceLabel}
+              value={
+                monitoringLoading
+                  ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  : `${attendanceMetrics.simpleAverage}%`
+              }
+              icon="✅"
+              color="emerald"
+              className={!hasPencapaianAccess ? 'col-span-2' : ''}
+            />
+            {hasPencapaianAccess && (
+              <StatCard
+                title={materiLabel}
+                value={
+                  materiLoading
+                    ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    : `${materiMetrics.avg}%`
+                }
+                icon="📚"
+                color="blue"
+              />
+            )}
+          </div>
+
+          <div className="mb-6">
+            <ClassMonitoringTable
+              data={monitoringData || []}
+              isLoading={monitoringLoading}
+              period={selectedPeriod}
+              customDateRange={customDateRange}
+              classViewMode={classViewMode}
+              materiData={hasPencapaianAccess ? materiDashboardData : undefined}
+              materiLoading={hasPencapaianAccess ? materiLoading : false}
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }

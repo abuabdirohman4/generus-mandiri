@@ -49,7 +49,7 @@ export default function MateriStatsCards({ data, isLoading, mode }: MateriStatsC
                         />
                     </div>
                     <p className="text-xs text-gray-400 mt-2">
-                        {mode === 'cumulative' ? 'kumulatif s.d. bulan ini' : 'di bulan ini'}
+                        {mode === 'cumulative' ? 'rata-rata per siswa, kumulatif s.d. bulan ini' : 'di bulan ini'}
                     </p>
                 </div>
             </div>

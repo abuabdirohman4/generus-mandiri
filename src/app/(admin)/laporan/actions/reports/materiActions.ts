@@ -26,6 +26,7 @@ export async function getMateriTrendData(params: {
     academicYearId: string
     semester: 1 | 2
     upToMonth: number
+    viewMode: 'per_materi' | 'per_siswa'
 }): Promise<MateriMonthlyPoint[]> {
     const supabase = await createAdminClient()
     return getMateriCumulativeProgress(supabase, params)

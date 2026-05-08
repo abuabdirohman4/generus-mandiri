@@ -19,7 +19,7 @@ export function useMateriReportData({
     const shouldFetch = enabled && !!filters.classId && !!filters.academicYearId
 
     const swrKey = shouldFetch
-        ? ['materi-report', filters.classId, filters.academicYearId, filters.semester, filters.categoryId, filters.month, reportMode]
+        ? ['materi-report', filters.classId, filters.academicYearId, filters.semester, filters.categoryId, filters.month, reportMode, viewMode]
         : null
 
     const { data, error, isLoading, mutate } = useSWR<{ report: MateriReportData, trend: MateriMonthlyPoint[] }>(
@@ -29,13 +29,14 @@ export function useMateriReportData({
             
             // Fetch both report data and trend data in parallel
             const [reportData, trendData] = await Promise.all([
-                getMateriReport({ ...filters, reportMode }),
+                getMateriReport({ ...filters, reportMode, viewMode: viewMode ?? 'per_siswa' }),
                 reportMode === 'cumulative' && filters.month
                     ? getMateriTrendData({
                         classId: filters.classId,
                         academicYearId: filters.academicYearId,
                         semester: filters.semester,
-                        upToMonth: filters.month
+                        upToMonth: filters.month,
+                        viewMode: viewMode ?? 'per_siswa'
                     })
                     : Promise.resolve([])
             ])

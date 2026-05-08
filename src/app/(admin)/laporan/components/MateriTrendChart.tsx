@@ -10,37 +10,42 @@ interface MateriTrendChartProps {
     isLoading?: boolean
     className?: string
     semester: 1 | 2
+    viewMode: 'per_materi' | 'per_siswa'
 }
 
 const MateriTrendChart = memo(function MateriTrendChart({
     data,
     isLoading = false,
     className = '',
-    semester
+    semester,
+    viewMode
 }: MateriTrendChartProps) {
     // Transform data to TrendChart format
     const transformedData = data.map(point => {
-        const totalPossible = point.tercapai ? Number(point.tercapai.split('/')[1]) : 0
-        const siswaCount = point.target_count > 0 && totalPossible > 0
-            ? Math.round(totalPossible / point.target_count)
-            : 0
-        const avgPerSiswa = siswaCount > 0
-            ? Math.round(point.tuntas_count / siswaCount)
-            : 0
-
+        const detailLine = point.target_count === 0
+            ? 'Belum ada target'
+            : viewMode === 'per_materi'
+                ? `${point.tuntas_count} dari ${point.target_count} materi tuntas (semua siswa)`
+                : `Rata-rata ${point.tuntas_count} dari ${point.target_count} materi per siswa`
 
         return {
             date: point.month_label,
-            fullDate: getMonthName(point.month as any),
+            fullDate: `${getMonthName(point.month as any)}`,
             percentage: point.percentage,
             details: {
-                targetLabel: `${point.target_count} materi ditargetkan`,
-                achievementLabel: siswaCount > 0 
-                    ? `Rata-rata ${avgPerSiswa} dari ${point.target_count} materi dikuasai per siswa`
+                targetLabel: point.target_count > 0 
+                    ? `${point.target_count} materi ditargetkan`
+                    : 'Belum ada target',
+                achievementLabel: point.target_count > 0
+                    ? viewMode === 'per_materi'
+                        ? `${point.tuntas_count} dari ${point.target_count} materi tuntas (semua siswa)`
+                        : `Rata-rata ${point.tuntas_count} dari ${point.target_count} materi dikuasai per siswa`
                     : undefined
             }
         }
     })
+
+    const unit = viewMode === 'per_materi' ? 'materi tuntas (semua siswa)' : 'rata-rata per siswa'
 
     return (
         <TrendChart
@@ -48,7 +53,7 @@ const MateriTrendChart = memo(function MateriTrendChart({
             title="Trend Pencapaian Materi (Kumulatif)"
             isLoading={isLoading}
             className={className}
-            unit="rata-rata per siswa"
+            unit={unit}
             emptyMessage="Pilih kelas untuk melihat trend pencapaian"
         />
     )
