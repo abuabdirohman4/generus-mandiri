@@ -202,7 +202,7 @@ export async function fetchMateriReport(
         rows,
         siswaRows,
         summary: {
-            total_materials: rows.length,
+            total_materials: totalUnikSemester,
             avg_completion_rate: avgCompletionRate,
             class_name: className,
         }
@@ -292,6 +292,16 @@ export async function fetchMateriReportBySiswa(
     const materialItemIds = await getMaterialItemIds(supabase, filters)
     if (!materialItemIds.length) return []
 
+    // Hitung totalUnikSemester (denominator fixed = semua materi semester ini)
+    const classMasterIds = await getClassMasterIds(supabase, filters.classId)
+    const { data: allTargets } = await supabase
+        .from('material_monthly_targets')
+        .select('material_item_id')
+        .in('class_master_id', classMasterIds)
+        .eq('academic_year_id', filters.academicYearId)
+        .eq('semester', filters.semester)
+    const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
+
     // Step 3: Get progress per student
     const { data: progressList } = await supabase
         .from('student_material_progress')
@@ -330,8 +340,8 @@ export async function fetchMateriReportBySiswa(
             student_id: studentId,
             student_name: studentMap.get(studentId) || '',
             tuntas_count: tuntasCount,
-            total_materials: materialItemIds.length,
-            percentage: Math.round((tuntasCount / materialItemIds.length) * 100),
+            total_materials: totalUnikSemester,
+            percentage: totalUnikSemester > 0 ? Math.round((tuntasCount / totalUnikSemester) * 100) : 0,
             avg_nilai: avgNilai,
         }
     }).sort((a, b) => a.student_name.localeCompare(b.student_name))

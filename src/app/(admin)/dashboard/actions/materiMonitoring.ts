@@ -192,27 +192,43 @@ export async function getMateriDashboardSummary(
         // 2c: progress
         const { data: progressList } = await supabase
             .from('student_material_progress')
-            .select('student_id, material_item_id, nilai')
+            .select('student_id, material_item_id, nilai, hafal')
             .in('student_id', studentIds)
             .in('material_item_id', materialItemIds)
             .eq('academic_year_id', filters.academicYearId)
             .eq('semester', filters.semester)
 
-        // 2d: aggregate per material, then average
-        let totalCompletionRate = 0
+        // Hitung totalUnikSemester (denominator fixed, tanpa filter month)
+        const { data: allTargets } = await supabase
+            .from('material_monthly_targets')
+            .select('material_item_id')
+            .in('class_master_id', classMasterIds)
+            .eq('academic_year_id', filters.academicYearId)
+            .eq('semester', filters.semester)
+        const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
+
+        // 2d: Formula Per Siswa dengan denominator fixed
+        let totalPctSum = 0
+        for (const studentId of studentIds) {
+            const siswaCount = (progressList || []).filter((p: any) =>
+                p.student_id === studentId &&
+                materialItemIds.includes(p.material_item_id) &&
+                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+            ).length
+            totalPctSum += totalUnikSemester > 0 ? (siswaCount / totalUnikSemester) * 100 : 0
+        }
+        const avgCompletionRate = studentIds.length > 0
+            ? Math.round(totalPctSum / studentIds.length)
+            : 0
+
+        // Pertahankan kalkulasi avg_nilai
         let totalNilaiSum = 0
         let nilaiCount = 0
-
         for (const materialId of materialItemIds) {
-            const matProgress = (progressList || []).filter(p => p.material_item_id === materialId)
-            const tuntasCount = matProgress.filter(p => (p.nilai ?? 0) >= 70).length
-            totalCompletionRate += studentIds.length > 0
-                ? (tuntasCount / studentIds.length) * 100
-                : 0
-            
-            const scored = matProgress.filter(p => (p.nilai ?? 0) > 0)
+            const matProgress = (progressList || []).filter((p: any) => p.material_item_id === materialId)
+            const scored = matProgress.filter((p: any) => (p.nilai ?? 0) > 0)
             if (scored.length) {
-                totalNilaiSum += scored.reduce((s, p) => s + (p.nilai ?? 0), 0) / scored.length
+                totalNilaiSum += scored.reduce((s: number, p: any) => s + (p.nilai ?? 0), 0) / scored.length
                 nilaiCount++
             }
         }
@@ -220,13 +236,11 @@ export async function getMateriDashboardSummary(
         results.push({
             class_id: cls.id,
             class_name: cls.name,
-            kelompok_name: Array.isArray(cls.kelompok) 
-                ? (cls.kelompok[0] as any)?.name || '' 
+            kelompok_name: Array.isArray(cls.kelompok)
+                ? (cls.kelompok[0] as any)?.name || ''
                 : (cls.kelompok as any)?.name || '',
-            total_materials: materialItemIds.length,
-            avg_completion_rate: materialItemIds.length > 0
-                ? Math.round(totalCompletionRate / materialItemIds.length)
-                : 0,
+            total_materials: totalUnikSemester,
+            avg_completion_rate: avgCompletionRate,
             avg_nilai: nilaiCount > 0 ? Math.round(totalNilaiSum / nilaiCount) : 0,
         })
     }
