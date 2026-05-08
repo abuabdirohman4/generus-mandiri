@@ -352,7 +352,10 @@ export default function LaporanPage() {
               reportMode={materiReportMode}
               onModeChange={setMateriReportMode}
             />
-            {materiData ? (
+
+            {isLoadingMateri ? (
+              <LaporanSkeleton />
+            ) : materiData ? (
               <>
                 <MateriStatsCards 
                   data={materiData} 

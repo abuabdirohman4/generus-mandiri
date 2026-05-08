@@ -22,6 +22,7 @@ import LaporanTimeFilter from './LaporanTimeFilter'
 import { canAccessMaterials, canAccessMonitoring } from '@/lib/userUtils'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
 import LaporanEmptyState from './LaporanEmptyState'
+import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 
 dayjs.locale('id')
 
@@ -286,16 +287,14 @@ export default function OverviewTab() {
         <LaporanEmptyState 
           description="Pilih filter yang tersedia untuk melihat laporan gabungan."
         />
+      ) : (monitoringLoading || (materiEnabled && materiLoading)) ? (
+        <LaporanSkeleton />
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
             <StatCard
               title={attendanceLabel}
-              value={
-                monitoringLoading
-                  ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  : `${attendanceMetrics.simpleAverage}%`
-              }
+              value={`${attendanceMetrics.simpleAverage}%`}
               icon="✅"
               color="emerald"
               className={!hasPencapaianAccess ? 'col-span-2' : ''}
@@ -303,11 +302,7 @@ export default function OverviewTab() {
             {hasPencapaianAccess && (
               <StatCard
                 title={materiLabel}
-                value={
-                  materiLoading
-                    ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                    : `${materiMetrics.avg}%`
-                }
+                value={`${materiMetrics.avg}%`}
                 icon="📚"
                 color="blue"
               />
