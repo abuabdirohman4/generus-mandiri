@@ -70,8 +70,9 @@ interface HafalanCategory {
 export default function MonitoringPage() {
     const { profile: userProfile } = useUserProfile();
 
+    const getCurrentSemester = (): 1 | 2 => new Date().getMonth() + 1 >= 7 ? 1 : 2;
     const [selectedYearId, setSelectedYearId] = useState<string>('');
-    const [selectedSemester, setSelectedSemester] = useState<1 | 2>(1);
+    const [selectedSemester, setSelectedSemester] = useState<1 | 2>(getCurrentSemester);
     const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -98,7 +99,7 @@ export default function MonitoringPage() {
     const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
     // New states for Monthly Curriculum Targets
-    const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
     const [monthlyTargetProgress, setMonthlyTargetProgress] = useState<{
         total_targets: number;
         completed: number;
@@ -577,7 +578,7 @@ export default function MonitoringPage() {
 
     // Get current student completion
     // Get current student completion
-    const { completion: currentStudentCompletion } = currentStudent ? getStudentMetrics(currentStudent.id) : { completion: 0 };
+    const { completion: currentStudentCompletion, avgNilai: currentStudentAvgNilai } = currentStudent ? getStudentMetrics(currentStudent.id) : { completion: 0, avgNilai: 0 };
 
     const classMetrics = useMemo(() => {
         if (!students.length) return null
@@ -1005,11 +1006,11 @@ export default function MonitoringPage() {
                                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                                                     Total Nilai
                                                 </div>
-                                                <div className={`text-3xl text-center font-bold ${currentStudentCompletion >= 90 ? 'text-green-500' :
-                                                    currentStudentCompletion >= 80 ? 'text-blue-500' :
-                                                        currentStudentCompletion >= 70 ? 'text-yellow-500' :
+                                                <div className={`text-3xl text-center font-bold ${currentStudentAvgNilai >= 90 ? 'text-green-500' :
+                                                    currentStudentAvgNilai >= 80 ? 'text-blue-500' :
+                                                        currentStudentAvgNilai >= 70 ? 'text-yellow-500' :
                                                             'text-red-500'}`}>
-                                                    {currentStudentCompletion}
+                                                    {currentStudentAvgNilai}
                                                 </div>
                                             </div>
                                             <div className="relative inline-flex items-center justify-center">
@@ -1032,24 +1033,24 @@ export default function MonitoringPage() {
                                                         stroke="currentColor"
                                                         strokeWidth="5"
                                                         fill="transparent"
-                                                        strokeDasharray={`${(currentStudentCompletion / 100) * 163.36} 163.36`}
+                                                        strokeDasharray={`${(currentStudentAvgNilai / 100) * 163.36} 163.36`}
                                                         className={`
                                                             transition-all duration-500
-                                                            ${currentStudentCompletion >= 90 ? 'text-green-500' :
-                                                                currentStudentCompletion >= 80 ? 'text-blue-500' :
-                                                                    currentStudentCompletion >= 70 ? 'text-yellow-500' :
+                                                            ${currentStudentAvgNilai >= 90 ? 'text-green-500' :
+                                                                currentStudentAvgNilai >= 80 ? 'text-blue-500' :
+                                                                    currentStudentAvgNilai >= 70 ? 'text-yellow-500' :
                                                                         'text-red-500'}
                                                         `}
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
                                                 {/* Grade Text (inside circle) */}
-                                                <span className={`absolute text-xl font-bold ${currentStudentCompletion >= 90 ? 'text-green-600 dark:text-green-400' :
-                                                    currentStudentCompletion >= 80 ? 'text-blue-600 dark:text-blue-400' :
-                                                        currentStudentCompletion >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
+                                                <span className={`absolute text-xl font-bold ${currentStudentAvgNilai >= 90 ? 'text-green-600 dark:text-green-400' :
+                                                    currentStudentAvgNilai >= 80 ? 'text-blue-600 dark:text-blue-400' :
+                                                        currentStudentAvgNilai >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
                                                             'text-red-600 dark:text-red-400'
                                                     }`}>
-                                                    {getGrade(currentStudentCompletion).grade}
+                                                    {currentStudentAvgNilai}
                                                 </span>
                                             </div>
                                         </div>

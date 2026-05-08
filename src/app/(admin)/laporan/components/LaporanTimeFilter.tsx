@@ -7,6 +7,8 @@ interface LaporanTimeFilterProps {
   year: number         // e.g. 2026
   onMonthChange: (month: number) => void
   onYearChange: (year: number) => void
+  semester?: 1 | 2
+  academicYear?: string
 }
 
 const MONTHS = [
@@ -26,7 +28,7 @@ function getYearOptions() {
   }))
 }
 
-export default function LaporanTimeFilter({ month, year, onMonthChange, onYearChange }: LaporanTimeFilterProps) {
+export default function LaporanTimeFilter({ month, year, onMonthChange, onYearChange, semester, academicYear }: LaporanTimeFilterProps) {
   return (
     <>
       <InputFilter
@@ -47,6 +49,13 @@ export default function LaporanTimeFilter({ month, year, onMonthChange, onYearCh
         widthClassName="!max-w-full"
         compact
       />
+      {(semester !== undefined || academicYear) && (
+        <span className="col-span-2 text-xs text-gray-500 dark:text-gray-400 -mt-1 font-medium">
+          {semester !== undefined ? `Semester ${semester}` : ''}
+          {semester !== undefined && academicYear ? ' • ' : ''}
+          {academicYear ? `Tahun Ajaran ${academicYear}` : ''}
+        </span>
+      )}
     </>
   )
 }

@@ -28,6 +28,8 @@ export {
   isMaterialCoordinator,
   canManageMaterials,
   canAccessMaterials,
+  canAccessMonitoring,
+  canAccessOverview,
   shouldShowDaerahFilter,
   shouldShowDesaFilter,
   shouldShowKelompokFilter,

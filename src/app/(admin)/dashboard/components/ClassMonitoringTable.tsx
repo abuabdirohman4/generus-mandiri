@@ -6,7 +6,7 @@ import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/userUtils';
-import { getStatusBgColor, getStatusColor } from '@/lib/percentages';
+import { getStatusBgColor, getStatusColor, getProgressTextColor, getProgressLightBgColor } from '@/lib/percentages';
 import { useDashboardStore } from '../stores/dashboardStore';
 import ComparisonChart from './ComparisonChart';
 import { aggregateMonitoringData } from '../utils/aggregateMonitoringData';
@@ -64,7 +64,6 @@ export default function ClassMonitoringTable({
     const { profile } = useUserProfile();
     const { filters, setFilter } = useDashboardStore();
     const viewMode = filters.comparisonViewMode || 'table';
-    console.log('materiData', materiData);
 
     // Build a lookup map: class_id → materi summary for O(1) access in renderCell
     const materiMap = useMemo(() => {
@@ -269,15 +268,9 @@ export default function ClassMonitoringTable({
                 return <span className="inline-block h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
             }
             const materi = materiMap.get(item.class_id)
-            if (!materi || materi.total_materials === 0) {
-                return <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
-            }
-            const color = materi.avg_completion_rate >= 80 ? 'text-green-600 dark:text-green-400' :
-                          materi.avg_completion_rate >= 60 ? 'text-yellow-600 dark:text-yellow-400' :
-                          'text-red-600 dark:text-red-400'
             return (
-                <span className={`text-sm font-semibold ${color}`}>
-                    {materi.avg_completion_rate}%
+                <span className={`px-3 py-1 rounded-full font-medium ${getStatusColor(materi?.avg_completion_rate ?? 0)} ${getStatusBgColor(materi?.avg_completion_rate ?? 0)}`}>
+                    {materi?.avg_completion_rate ?? 0}%
                 </span>
             )
         }

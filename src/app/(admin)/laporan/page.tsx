@@ -9,6 +9,8 @@ import MateriStatsCards from './components/MateriStatsCards'
 import MateriDataTable from './components/MateriDataTable'
 import { useMateriReportData } from './hooks/useMateriReportData'
 import { useState, useEffect, useMemo } from 'react'
+import { cn } from '@/lib/utils'
+import MateriTrendChart from './components/MateriTrendChart'
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import { useLaporanStore, type LaporanTab } from '@/stores/laporanStore'
@@ -63,6 +65,8 @@ export default function LaporanPage() {
     materiViewMode,
     setMateriViewMode
   } = useLaporanStore()
+  
+  const [materiReportMode, setMateriReportMode] = useState<'monthly' | 'cumulative'>('cumulative')
 
   const { activityTypes: myActivityTypes } = useMyActivityTypes()
 
@@ -174,10 +178,11 @@ export default function LaporanPage() {
   }, [categories, materiFilters.categoryId, setMateriFilters])
   */
 
-  const { data: materiData, isLoading: isLoadingMateri } = useMateriReportData({
+  const { data: materiData, trendData: materiTrendData, isLoading: isLoadingMateri } = useMateriReportData({
       filters: materiFilters,
       enabled: laporanTab === 'materi',
-      viewMode: materiViewMode
+      viewMode: materiViewMode,
+      reportMode: materiReportMode
   })
 
   const handleMateriFilterChange = (key: string, value: any) => {
@@ -283,6 +288,8 @@ export default function LaporanPage() {
               sharedYear={sharedYear}
               onMonthChange={(m) => setSharedTime(m, sharedYear)}
               onYearChange={(y) => setSharedTime(sharedMonth, y)}
+              semester={activeSemester}
+              academicYear={`${activeStartYear}/${activeStartYear + 1}`}
             />
 
             {loading ? (
@@ -349,12 +356,52 @@ export default function LaporanPage() {
               sharedYear={sharedYear}
               onMonthChange={(m) => setSharedTime(m, sharedYear)}
               onYearChange={(y) => setSharedTime(sharedMonth, y)}
+              semester={activeSemester}
+              academicYear={`${activeStartYear}/${activeStartYear + 1}`}
             />
-            
+
             <MateriStatsCards 
               data={materiData} 
               isLoading={isLoadingMateri} 
+              mode={materiReportMode}
             />
+
+            {/* Mode Selector */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-4">
+              <button
+                onClick={() => setMateriReportMode('cumulative')}
+                className={cn(
+                  "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                  materiReportMode === 'cumulative'
+                    ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                )}
+              >
+                Kumulatif
+              </button>
+              <button
+                onClick={() => setMateriReportMode('monthly')}
+                className={cn(
+                  "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                  materiReportMode === 'monthly'
+                    ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                )}
+              >
+                Bulan Ini
+              </button>
+            </div>
+
+            {/* Trend Chart - Cumulative Only */}
+            {materiReportMode === 'cumulative' && (
+              <div className="mb-6">
+                <MateriTrendChart
+                  data={materiTrendData}
+                  isLoading={isLoadingMateri}
+                  semester={activeSemester}
+                />
+              </div>
+            )}
             
             <MateriDataTable 
               rows={materiData?.rows || []} 

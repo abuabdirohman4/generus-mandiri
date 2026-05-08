@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export type LaporanTab = 'presensi' | 'materi' | 'overview'
 
@@ -37,39 +38,47 @@ const initialMateriFilters: MateriFilters = {
   month: undefined,
 }
 
-export const useLaporanStore = create<LaporanState>((set) => ({
-  activeTab: 'presensi',
-  materiFilters: initialMateriFilters,
-  materiViewMode: 'per_siswa',
+export const useLaporanStore = create<LaporanState>()(
+  persist(
+    (set) => ({
+      activeTab: 'presensi',
+      materiFilters: initialMateriFilters,
+      materiViewMode: 'per_siswa',
 
-  setActiveTab: (tab) => set({ activeTab: tab }),
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
-  setMateriFilters: (newFilters) => 
-    set((state) => {
-      const updatedFilters = { ...state.materiFilters, ...newFilters }
+      setMateriFilters: (newFilters) => 
+        set((state) => {
+          const updatedFilters = { ...state.materiFilters, ...newFilters }
+          
+          // Cascade resets
+          if ('daerahId' in newFilters) {
+            updatedFilters.desaId = ''
+            updatedFilters.kelompokId = ''
+            updatedFilters.classId = ''
+          } else if ('desaId' in newFilters) {
+            updatedFilters.kelompokId = ''
+            updatedFilters.classId = ''
+          } else if ('kelompokId' in newFilters) {
+            updatedFilters.classId = ''
+          }
+
+          return { materiFilters: updatedFilters }
+        }),
+
+      setMateriViewMode: (mode) => set({ materiViewMode: mode }),
+
+      resetMateriFilters: () => set({ materiFilters: initialMateriFilters }),
       
-      // Cascade resets
-      if ('daerahId' in newFilters) {
-        updatedFilters.desaId = ''
-        updatedFilters.kelompokId = ''
-        updatedFilters.classId = ''
-      } else if ('desaId' in newFilters) {
-        updatedFilters.kelompokId = ''
-        updatedFilters.classId = ''
-      } else if ('kelompokId' in newFilters) {
-        updatedFilters.classId = ''
-      }
-
-      return { materiFilters: updatedFilters }
+      clearStore: () => set({ 
+        activeTab: 'presensi',
+        materiFilters: initialMateriFilters,
+        materiViewMode: 'per_siswa'
+      }),
     }),
-
-  setMateriViewMode: (mode) => set({ materiViewMode: mode }),
-
-  resetMateriFilters: () => set({ materiFilters: initialMateriFilters }),
-  
-  clearStore: () => set({ 
-    activeTab: 'presensi',
-    materiFilters: initialMateriFilters,
-    materiViewMode: 'per_siswa'
-  }),
-}))
+    {
+      name: 'laporan-materi-storage',
+      partialize: (state) => ({ materiFilters: state.materiFilters }),
+    }
+  )
+)

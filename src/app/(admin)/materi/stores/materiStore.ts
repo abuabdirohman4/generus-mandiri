@@ -27,13 +27,16 @@ interface MateriState {
     setColumnVisibility: (visibility: Partial<MateriColumnVisibility>) => void
 }
 
+const getCurrentMonth = () => new Date().getMonth() + 1  // 1-12
+const getCurrentSemester = (): 1 | 2 => getCurrentMonth() >= 7 ? 1 : 2
+
 const defaultFilters: MateriFilters = {
     viewMode: 'by_material',
     selectedCategoryId: null,
     selectedTypeId: null,
     selectedClassId: null,
-    selectedSemester: null,
-    selectedMonth: null,
+    selectedSemester: getCurrentSemester(),
+    selectedMonth: getCurrentMonth(),
     searchQuery: '',
     sidebarCollapsed: false
 }
@@ -70,12 +73,12 @@ export const useMateriStore = create<MateriState>()(
                 filters: {
                     viewMode: state.filters.viewMode,
                     sidebarCollapsed: state.filters.sidebarCollapsed,
+                    selectedSemester: state.filters.selectedSemester,
+                    selectedMonth: state.filters.selectedMonth,
                     // Don't persist selections (fresh on reload)
                     selectedCategoryId: null,
                     selectedTypeId: null,
                     selectedClassId: null,
-                    selectedSemester: null,
-                    selectedMonth: null,
                     searchQuery: ''
                 },
                 columnVisibility: state.columnVisibility,

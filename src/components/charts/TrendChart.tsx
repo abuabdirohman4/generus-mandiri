@@ -8,12 +8,14 @@ interface TrendChartData {
   fullDate: string
   percentage: number
   details?: {
-    present: number
-    absent: number
-    excused: number
-    sick: number
-    total: number
-    meetings: number
+    present?: number
+    absent?: number
+    excused?: number
+    sick?: number
+    total?: number
+    meetings?: number
+    targetLabel?: string
+    achievementLabel?: string
   }
 }
 
@@ -22,6 +24,8 @@ interface TrendChartProps {
   title?: string
   isLoading?: boolean
   className?: string
+  unit?: string // New prop to customize "kehadiran" label
+  emptyMessage?: string
 }
 
 type ChartType = 'line' | 'bar'
@@ -30,7 +34,9 @@ export default function TrendChart({
   data, 
   title = "Tren Kehadiran",
   isLoading = false,
-  className = ''
+  className = '',
+  unit = "kehadiran",
+  emptyMessage = "Tidak ada data kehadiran untuk periode yang dipilih."
 }: TrendChartProps) {
   const [chartType, setChartType] = useState<ChartType>('line')
   const [isMobile, setIsMobile] = useState(false)
@@ -84,22 +90,40 @@ export default function TrendChart({
             <p className="text-sm">
               <span className="font-medium text-blue-600 dark:text-blue-400">
                 {data.percentage}%
-              </span> kehadiran
+              </span> {unit}
             </p>
             {data.details && (
               <>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {data.details.meetings} Pertemuan
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {data.details.total} Peserta
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {data.details.present} hadir, {data.details.absent} alfa
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {data.details.excused} izin, {data.details.sick} sakit
-                </p>
+                {data.details.meetings !== undefined && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.meetings} Pertemuan
+                  </p>
+                )}
+                {data.details.total !== undefined && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.total} Peserta
+                  </p>
+                )}
+                {data.details.present !== undefined && data.details.absent !== undefined && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.present} hadir, {data.details.absent} alfa
+                  </p>
+                )}
+                {data.details.excused !== undefined && data.details.sick !== undefined && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.excused} izin, {data.details.sick} sakit
+                  </p>
+                )}
+                {data.details.targetLabel && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.targetLabel}
+                  </p>
+                )}
+                {data.details.achievementLabel && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {data.details.achievementLabel}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -137,7 +161,7 @@ export default function TrendChart({
               Tidak ada data
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Tidak ada data kehadiran untuk periode yang dipilih.
+              {emptyMessage}
             </p>
           </div>
         </div>
@@ -192,7 +216,7 @@ export default function TrendChart({
                 tick={{ fontSize: 12 }}
                 tickLine={{ stroke: '#6B7280' }}
                 label={!isMobile ? { 
-                  value: 'Persentase Kehadiran (%)', 
+                  value: unit === 'kehadiran' ? 'Persentase Kehadiran (%)' : `Persentase (${unit}) (%)`, 
                   angle: -90, 
                   position: 'insideLeft' 
                 } : undefined}
@@ -224,7 +248,7 @@ export default function TrendChart({
                 tick={{ fontSize: 12 }}
                 tickLine={{ stroke: '#6B7280' }}
                 label={!isMobile ? { 
-                  value: 'Persentase Kehadiran (%)', 
+                  value: unit === 'kehadiran' ? 'Persentase Kehadiran (%)' : `Persentase (${unit}) (%)`, 
                   angle: -90, 
                   position: 'insideLeft' 
                 } : undefined}

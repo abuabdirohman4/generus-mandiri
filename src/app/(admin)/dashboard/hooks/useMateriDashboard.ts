@@ -6,7 +6,6 @@ export function useMateriDashboard(
     filters: MateriDashboardFilters,
     enabled: boolean
 ) {
-    console.log('filters', filters)
     const swrKey = enabled && filters.academicYearId
         ? ['materi-dashboard', JSON.stringify(filters)]
         : null

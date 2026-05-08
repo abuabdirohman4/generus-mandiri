@@ -19,7 +19,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import { useLaporanStore } from '../stores/laporanStore'
 import LaporanTimeFilter from './LaporanTimeFilter'
-import { canAccessMaterials } from '@/lib/userUtils'
+import { canAccessMaterials, canAccessMonitoring } from '@/lib/userUtils'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
 
 dayjs.locale('id')
@@ -50,9 +50,9 @@ export default function OverviewTab() {
   const { classes, isLoading: isLoadingClasses } = useClasses()
   const orgLoading = isLoadingDaerah || isLoadingDesa || isLoadingKelompok || isLoadingClasses
 
-  const hasMateriAccess = useMemo(() => {
+  const hasPencapaianAccess = useMemo(() => {
     if (!userProfile) return false
-    return canAccessMaterials(userProfile)
+    return canAccessMaterials(userProfile) && canAccessMonitoring(userProfile)
   }, [userProfile])
 
   // Set default comparisonLevel based on user's org scope on first mount.
@@ -84,28 +84,38 @@ export default function OverviewTab() {
 
   // Fetch active academic year once on mount
   useEffect(() => {
-    if (!hasMateriAccess) return
+    if (!hasPencapaianAccess) return
     getActiveAcademicYear().then(year => {
       if (year) setActiveYearId(year.id)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMateriAccess])
+  }, [hasPencapaianAccess])
 
   // Derive semester from selectedMonth vs academic year convention:
   // Semester 1 = July–December, Semester 2 = January–June
-  const materiSemester = useMemo((): 1 | 2 => {
+  const activeSemester = useMemo((): 1 | 2 => {
     return sharedMonth >= 7 ? 1 : 2
   }, [sharedMonth])
 
+  const activeStartYear = useMemo(() => sharedMonth >= 7 ? sharedYear : sharedYear - 1, [sharedMonth, sharedYear])
+  const academicYearLabel = `${activeStartYear}/${activeStartYear + 1}`
+
+  const materiFilters = {
+    academicYearId: activeYearId,
+    semester: activeSemester,
+    daerahId: filters.daerah?.join(','),
+    desaId: filters.desa?.join(','),
+    kelompokId: filters.kelompok?.join(','),
+    classIds: filters.kelas?.length
+      ? filters.kelas.flatMap(v => v.split(','))
+      : undefined,
+    month: sharedMonth,
+  }
+  const materiEnabled = hasPencapaianAccess && !!activeYearId && hasActiveFilter && filters.comparisonLevel === 'class'
+
   const { data: materiDashboardData = [], isLoading: materiLoading } = useMateriDashboard(
-    {
-      academicYearId: activeYearId,
-      semester: materiSemester,
-      daerahId: filters.daerah?.join(','),
-      desaId: filters.desa?.join(','),
-      kelompokId: filters.kelompok?.join(','),
-    },
-    hasMateriAccess && !!activeYearId && hasActiveFilter && filters.comparisonLevel === 'class'
+    materiFilters,
+    materiEnabled
   )
 
   const monitoringFetcher = async () => {
@@ -205,6 +215,12 @@ export default function OverviewTab() {
     return { simpleAverage, weightedAverage, totalPresent: Math.round(totalPresent), totalPotential: Math.round(totalPotential), entityCount }
   }, [monitoringData, filters.comparisonLevel])
 
+  const materiMetrics = useMemo(() => {
+    if (!materiDashboardData || materiDashboardData.length === 0) return { avg: 0 }
+    const avg = Math.round(materiDashboardData.reduce((sum, item) => sum + item.avg_completion_rate, 0) / materiDashboardData.length)
+    return { avg }
+  }, [materiDashboardData])
+
   const entityLabel = useMemo(() => {
     const level = filters.comparisonLevel
     if (level === 'class') return 'Kelas'
@@ -214,8 +230,9 @@ export default function OverviewTab() {
   }, [filters.comparisonLevel])
 
   const attendanceLabel = useMemo(() => {
-    if (dayjs(selectedMonth).isSame(dayjs(), 'month')) return 'Kehadiran Bulan Ini'
-    return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`
+    return `Kehadiran`
+    // if (dayjs(selectedMonth).isSame(dayjs(), 'month')) return 'Kehadiran Bulan Ini'
+    // return `Kehadiran ${dayjs(selectedMonth).format('MMMM YYYY')}`
   }, [selectedMonth])
 
   const attendanceTooltip = useMemo(() => {
@@ -223,6 +240,11 @@ export default function OverviewTab() {
     const { simpleAverage, weightedAverage, totalPresent, totalPotential, entityCount } = attendanceMetrics
     return `Rata-rata ${entityCount} ${entityLabel.toLowerCase()}: ${simpleAverage}%\n\nTotal siswa hadir: ${weightedAverage}% (${totalPresent.toLocaleString('id-ID')} dari ${totalPotential.toLocaleString('id-ID')} kehadiran)`
   }, [attendanceMetrics, entityLabel])
+
+  const materiLabel = useMemo(() => {
+    // return `Pencapaian Materi s.d. ${dayjs(selectedMonth).format('MMMM YYYY')}`
+    return `Pencapaian`
+  }, [selectedMonth])
 
   return (
     <div>
@@ -253,23 +275,32 @@ export default function OverviewTab() {
             year={sharedYear}
             onMonthChange={(m) => setSharedTime(m, sharedYear)}
             onYearChange={(y) => setSharedTime(sharedMonth, y)}
+            semester={activeSemester}
+            academicYear={academicYearLabel}
           />
         </div>
       </div>
 
       {!hasActiveFilter ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
           <StatCard
             title={attendanceLabel}
             value={`${0}%`}
             icon="✅"
-            className="col-span-3"
             color="emerald"
-            tooltip={attendanceTooltip}
+            className={!hasPencapaianAccess ? 'col-span-2' : ''}
           />
+          {hasPencapaianAccess && (
+            <StatCard
+              title={materiLabel}
+              value={`${0}%`}
+              icon="📚"
+              color="blue"
+            />
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 mb-6">
           <StatCard
             title={attendanceLabel}
             value={
@@ -278,30 +309,23 @@ export default function OverviewTab() {
                 : `${attendanceMetrics.simpleAverage}%`
             }
             icon="✅"
-            className="col-span-3"
             color="emerald"
-            tooltip={attendanceTooltip}
+            className={!hasPencapaianAccess ? 'col-span-2' : ''}
           />
+          {hasPencapaianAccess && (
+            <StatCard
+              title={materiLabel}
+              value={
+                materiLoading
+                  ? <span className="inline-block h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  : `${materiMetrics.avg}%`
+              }
+              icon="📚"
+              color="blue"
+            />
+          )}
         </div>
       )}
-
-      {/* Period Tabs & Month Picker - Hidden for unified filter */}
-      {/* 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <PeriodTabs
-          activePeriod={selectedPeriod}
-          onPeriodChange={(period) => setFilter('period', period)}
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          selectedWeekOffset={selectedWeekOffset}
-          onWeekChange={setSelectedWeekOffset}
-          selectedMonth={sharedMonth}
-          onMonthChange={setSharedMonth}
-          customDateRange={customDateRange}
-          onCustomDateRangeChange={(range) => setFilter('customDateRange', range)}
-        />
-      </div>
-      */}
 
       <div className="mb-6">
         <ClassMonitoringTable
@@ -310,8 +334,8 @@ export default function OverviewTab() {
           period={selectedPeriod}
           customDateRange={customDateRange}
           classViewMode={classViewMode}
-          materiData={hasMateriAccess ? materiDashboardData : undefined}
-          materiLoading={hasMateriAccess ? materiLoading : false}
+          materiData={hasPencapaianAccess ? materiDashboardData : undefined}
+          materiLoading={hasPencapaianAccess ? materiLoading : false}
         />
       </div>
     </div>

@@ -43,6 +43,8 @@ interface MateriFilterSectionProps {
     sharedYear: number
     onMonthChange: (month: number) => void
     onYearChange: (year: number) => void
+    semester?: 1 | 2
+    academicYear?: string
 }
 export default function MateriFilterSection({
     categories,
@@ -54,7 +56,9 @@ export default function MateriFilterSection({
     sharedMonth,
     sharedYear,
     onMonthChange,
-    onYearChange
+    onYearChange,
+    semester,
+    academicYear
 }: MateriFilterSectionProps) {
     const { materiFilters: filters, setMateriFilters: onFilterChange } = useLaporanStore()
 
@@ -233,6 +237,8 @@ export default function MateriFilterSection({
                     year={sharedYear}
                     onMonthChange={onMonthChange}
                     onYearChange={onYearChange}
+                    semester={semester}
+                    academicYear={academicYear}
                 />
             </div>
         </div>

@@ -1,26 +1,46 @@
 'use client'
 
 import useSWR from 'swr'
-import type { MateriReportFilters, MateriReportData } from '../actions/reports/materiQueries'
+import type { MateriReportFilters, MateriReportData, MateriMonthlyPoint } from '../actions/reports/materiQueries'
 
 interface UseMateriReportDataOptions {
     filters: MateriReportFilters
     enabled?: boolean
     viewMode?: 'per_materi' | 'per_siswa'
+    reportMode?: 'monthly' | 'cumulative'
 }
 
-export function useMateriReportData({ filters, enabled = true, viewMode = 'per_materi' }: UseMateriReportDataOptions) {
+export function useMateriReportData({ 
+    filters, 
+    enabled = true, 
+    viewMode = 'per_materi',
+    reportMode = 'cumulative'
+}: UseMateriReportDataOptions) {
     const shouldFetch = enabled && !!filters.classId && !!filters.academicYearId
 
     const swrKey = shouldFetch
-        ? ['materi-report', filters.classId, filters.academicYearId, filters.semester, filters.categoryId, filters.month]
+        ? ['materi-report', filters.classId, filters.academicYearId, filters.semester, filters.categoryId, filters.month, reportMode]
         : null
 
-    const { data, error, isLoading, mutate } = useSWR<MateriReportData>(
+    const { data, error, isLoading, mutate } = useSWR<{ report: MateriReportData, trend: MateriMonthlyPoint[] }>(
         swrKey,
         async () => {
-            const { getMateriReport } = await import('../actions/reports/materiActions')
-            return getMateriReport(filters)
+            const { getMateriReport, getMateriTrendData } = await import('../actions/reports/materiActions')
+            
+            // Fetch both report data and trend data in parallel
+            const [reportData, trendData] = await Promise.all([
+                getMateriReport({ ...filters, reportMode }),
+                reportMode === 'cumulative' && filters.month
+                    ? getMateriTrendData({
+                        classId: filters.classId,
+                        academicYearId: filters.academicYearId,
+                        semester: filters.semester,
+                        upToMonth: filters.month
+                    })
+                    : Promise.resolve([])
+            ])
+            
+            return { report: reportData, trend: trendData }
         },
         {
             revalidateOnFocus: false,
@@ -30,10 +50,11 @@ export function useMateriReportData({ filters, enabled = true, viewMode = 'per_m
     )
 
     return {
-        data,
+        data: data?.report,
+        trendData: data?.trend || [],
         error,
         isLoading: shouldFetch ? isLoading : false,
         mutate,
-        hasData: !!data && data.rows.length > 0,
+        hasData: !!data?.report && data.report.rows.length > 0,
     }
 }

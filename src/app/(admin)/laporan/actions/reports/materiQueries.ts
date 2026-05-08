@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getMonthName } from '@/app/(admin)/materi/types'
 
 export interface MateriReportFilters {
     classId: string
@@ -6,6 +7,7 @@ export interface MateriReportFilters {
     semester: 1 | 2
     categoryId?: string
     month?: number
+    reportMode?: 'monthly' | 'cumulative'
 }
 
 export interface MateriReportRow {
@@ -17,6 +19,15 @@ export interface MateriReportRow {
     total_students: number
     percentage: number
     avg_nilai: number
+}
+
+export interface MateriMonthlyPoint {
+    month: number          // 1-12
+    month_label: string    // "Jul", "Agu", dst
+    target_count: number   // jumlah materi yang ditargetkan s.d. bulan ini
+    tuntas_count: number   // jumlah siswa×materi yang tuntas s.d. bulan ini
+    percentage: number     // tuntas / (total_students × target) * 100
+    tercapai: string       // Format "X/Y" untuk detail tooltip
 }
 
 export interface MateriSiswaRow {
@@ -186,7 +197,11 @@ async function getMaterialItemIds(
         .eq('semester', semester)
 
     if (month) {
-        targetQuery = targetQuery.eq('month', month)
+        if (filters.reportMode === 'cumulative') {
+            targetQuery = targetQuery.lte('month', month)
+        } else {
+            targetQuery = targetQuery.eq('month', month)
+        }
     }
 
     const { data: targets } = await targetQuery
@@ -280,4 +295,98 @@ export async function fetchMateriReportBySiswa(
             avg_nilai: avgNilai,
         }
     }).sort((a, b) => a.student_name.localeCompare(b.student_name))
+}
+
+
+export async function getMateriCumulativeProgress(
+    supabase: SupabaseClient,
+    params: {
+        classId: string
+        academicYearId: string
+        semester: 1 | 2
+        upToMonth: number
+    }
+): Promise<MateriMonthlyPoint[]> {
+    const { classId, academicYearId, semester, upToMonth } = params
+
+    // 1. Get class_master_ids for this class
+    const { data: mappings } = await supabase
+        .from('class_master_mappings')
+        .select('class_master_id')
+        .eq('class_id', classId)
+    const classMasterIds = (mappings || []).map((m: any) => m.class_master_id)
+    if (classMasterIds.length === 0) return []
+
+    // 2. Get all material items targeted for this class + academic_year + semester
+    const { data: targets } = await supabase
+        .from('material_monthly_targets')
+        .select('month, material_item_id')
+        .in('class_master_id', classMasterIds)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester)
+    
+    if (!targets || targets.length === 0) return []
+
+    // 3. Get total students
+    const { data: enrollments } = await supabase
+        .from('student_enrollments')
+        .select('student_id')
+        .eq('class_id', classId)
+        .eq('academic_year_id', academicYearId)
+        .eq('status', 'active')
+    const totalStudents = enrollments?.length || 0
+    if (totalStudents === 0) return []
+    const studentIds = enrollments!.map(e => e.student_id)
+
+    // 4. Get all progress for this semester (without filtering by month)
+    const { data: progress } = await supabase
+        .from('student_material_progress')
+        .select('student_id, material_item_id, nilai, hafal')
+        .in('student_id', studentIds)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester)
+
+    // 5. Define month range for the semester
+    const semesterMonths = semester === 1 ? [7, 8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6]
+    
+    // Filter months up to upToMonth
+    const relevantMonths = semesterMonths.filter(m => {
+        // For Semester 1 (7-12), upToMonth could be 8 (July, August)
+        if (semester === 1) return m <= upToMonth
+        // For Semester 2 (1-6), upToMonth could be 3 (Jan, Feb, Mar)
+        return m <= upToMonth
+    })
+
+    // 6. Calculate cumulative progress per month
+    const result: MateriMonthlyPoint[] = []
+    const accumulatedMaterialIds = new Set<string>()
+
+    for (const m of relevantMonths) {
+        // Add new targets for this month to our cumulative set
+        targets
+            .filter(t => t.month === m)
+            .forEach(t => accumulatedMaterialIds.add(t.material_item_id))
+        
+        const currentTargetIds = Array.from(accumulatedMaterialIds)
+        const totalTargetPossible = totalStudents * currentTargetIds.length
+        
+        let tuntasCount = 0
+        if (totalTargetPossible > 0) {
+            tuntasCount = (progress || []).filter(p => 
+                accumulatedMaterialIds.has(p.material_item_id) && 
+                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+            ).length
+        }
+
+        result.push({
+            month: m,
+            month_label: getMonthName(m as any).substring(0, 3), // Short label Jul, Agu, etc.
+            target_count: currentTargetIds.length,
+            tuntas_count: tuntasCount,
+            percentage: totalTargetPossible > 0 ? Math.round((tuntasCount / totalTargetPossible) * 100) : 0,
+            tercapai: `${tuntasCount}/${totalTargetPossible}`
+        })
+    }
+
+    return result
 }

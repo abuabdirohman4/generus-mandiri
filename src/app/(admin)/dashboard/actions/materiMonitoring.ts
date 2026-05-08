@@ -1,8 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { canManageMaterials } from '@/lib/accessControlServer'
-import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
 
 export interface ClassMateriSummary {
     class_id: string
@@ -21,6 +20,7 @@ export interface MateriDashboardFilters {
     desaId?: string
     kelompokId?: string
     classIds?: string[]  // override — jika diisi, hanya kelas ini yang dihitung
+    month?: number
 }
 
 export async function getMateriDashboardSummary(
@@ -141,6 +141,10 @@ export async function getMateriDashboardSummary(
             .in('class_master_id', classMasterIds)
             .eq('academic_year_id', filters.academicYearId)
             .eq('semester', filters.semester)
+
+        if (filters.month) {
+            targetQuery = targetQuery.lte('month', filters.month)
+        }
 
         if (filters.categoryId) {
             // Filter by category via material_items → material_types → material_categories

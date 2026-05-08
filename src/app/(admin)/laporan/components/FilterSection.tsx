@@ -38,6 +38,8 @@ interface FilterSectionProps {
   sharedYear: number
   onMonthChange: (month: number) => void
   onYearChange: (year: number) => void
+  semester?: 1 | 2
+  academicYear?: string
 }
 
 export default function FilterSection({
@@ -62,7 +64,9 @@ export default function FilterSection({
   sharedMonth,
   sharedYear,
   onMonthChange,
-  onYearChange
+  onYearChange,
+  semester,
+  academicYear
 }: FilterSectionProps) {
 
   const monthOptions = [
@@ -142,6 +146,8 @@ export default function FilterSection({
               year={sharedYear}
               onMonthChange={onMonthChange}
               onYearChange={onYearChange}
+              semester={semester}
+              academicYear={academicYear}
             />
           </div>
         </>

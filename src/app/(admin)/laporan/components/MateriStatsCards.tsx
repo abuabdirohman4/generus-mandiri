@@ -7,9 +7,10 @@ import { getProgressColor, getProgressTextColor, getProgressLightBgColor } from 
 interface MateriStatsCardsProps {
     data: MateriReportData | undefined
     isLoading: boolean
+    mode?: 'cumulative' | 'monthly'
 }
 
-export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsProps) {
+export default function MateriStatsCards({ data, isLoading, mode }: MateriStatsCardsProps) {
     if (isLoading) {
         return (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -47,7 +48,9 @@ export default function MateriStatsCards({ data, isLoading }: MateriStatsCardsPr
                             style={{ width: `${summary.avg_completion_rate}%` }}
                         />
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">siswa capai target</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                        {mode === 'cumulative' ? 'kumulatif s.d. bulan ini' : 'di bulan ini'}
+                    </p>
                 </div>
             </div>
 
