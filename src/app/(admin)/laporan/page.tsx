@@ -363,14 +363,15 @@ export default function LaporanPage() {
                   mode={materiReportMode}
                 />
 
-                {/* Trend Chart - Cumulative Only */}
-                {materiReportMode === 'cumulative' && (
+                {/* Trend Chart - Cumulative and Monthly */}
+                {(materiReportMode === 'cumulative' || materiReportMode === 'monthly') && (
                   <div className="mb-6">
                     <MateriTrendChart
                       data={materiTrendData}
                       isLoading={isLoadingMateri}
                       semester={activeSemester}
                       viewMode={materiViewMode}
+                      reportMode={materiReportMode}
                     />
                   </div>
                 )}

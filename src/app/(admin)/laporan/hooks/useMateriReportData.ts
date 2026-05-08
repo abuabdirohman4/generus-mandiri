@@ -25,7 +25,7 @@ export function useMateriReportData({
     const { data, error, isLoading, mutate } = useSWR<{ report: MateriReportData, trend: MateriMonthlyPoint[] }>(
         swrKey,
         async () => {
-            const { getMateriReport, getMateriTrendData } = await import('../actions/reports/materiActions')
+            const { getMateriReport, getMateriTrendData, getMateriMonthlyChartData } = await import('../actions/reports/materiActions')
             
             // Fetch both report data and trend data in parallel
             const [reportData, trendData] = await Promise.all([
@@ -38,7 +38,13 @@ export function useMateriReportData({
                         upToMonth: filters.month,
                         viewMode: viewMode ?? 'per_siswa'
                     })
-                    : Promise.resolve([])
+                    : reportMode === 'monthly' && filters.classId && filters.academicYearId
+                        ? getMateriMonthlyChartData({
+                            classId: filters.classId,
+                            academicYearId: filters.academicYearId,
+                            semester: filters.semester,
+                          })
+                        : Promise.resolve([])
             ])
             
             return { report: reportData, trend: trendData }

@@ -202,7 +202,10 @@ export async function fetchMateriReport(
         rows,
         siswaRows,
         summary: {
-            total_materials: totalUnikSemester,
+            total_materials: filters.reportMode === 'cumulative'
+                ? totalUnikSemester
+                : materialItemIds.length,
+
             avg_completion_rate: avgCompletionRate,
             class_name: className,
         }
@@ -302,6 +305,11 @@ export async function fetchMateriReportBySiswa(
         .eq('semester', filters.semester)
     const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
 
+    // Denominator: cumulative = fixed semester total, monthly = only this month's targets
+    const denominator = filters.reportMode === 'cumulative'
+        ? totalUnikSemester
+        : materialItemIds.length
+
     // Step 3: Get progress per student
     const { data: progressList } = await supabase
         .from('student_material_progress')
@@ -340,8 +348,8 @@ export async function fetchMateriReportBySiswa(
             student_id: studentId,
             student_name: studentMap.get(studentId) || '',
             tuntas_count: tuntasCount,
-            total_materials: totalUnikSemester,
-            percentage: totalUnikSemester > 0 ? Math.round((tuntasCount / totalUnikSemester) * 100) : 0,
+            total_materials: denominator,
+            percentage: denominator > 0 ? Math.round((tuntasCount / denominator) * 100) : 0,
             avg_nilai: avgNilai,
         }
     }).sort((a, b) => a.student_name.localeCompare(b.student_name))
@@ -452,6 +460,85 @@ export async function getMateriCumulativeProgress(
             tuntas_count: tuntasCount,
             percentage,
             tercapai: `${tuntasCount}/${totalUnikSemester}`
+        })
+    }
+
+    return result
+}
+
+export async function getMateriMonthlyChart(
+    supabase: SupabaseClient,
+    params: {
+        classId: string
+        academicYearId: string
+        semester: 1 | 2
+    }
+): Promise<MateriMonthlyPoint[]> {
+    const { classId, academicYearId, semester } = params
+
+    const classMasterIds = await getClassMasterIds(supabase, classId)
+    if (classMasterIds.length === 0) return []
+
+    // Fetch semua targets semester ini (semua bulan)
+    const { data: targets } = await supabase
+        .from('material_monthly_targets')
+        .select('month, material_item_id')
+        .in('class_master_id', classMasterIds)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester)
+
+    if (!targets || targets.length === 0) return []
+
+    // Get students
+    const { data: enrollments } = await supabase
+        .from('student_enrollments')
+        .select('student_id')
+        .eq('class_id', classId)
+        .eq('academic_year_id', academicYearId)
+        .eq('status', 'active')
+    const totalStudents = enrollments?.length || 0
+    if (totalStudents === 0) return []
+    const studentIds = enrollments!.map((e: any) => e.student_id)
+
+    // Get all progress semester ini
+    const { data: progress } = await supabase
+        .from('student_material_progress')
+        .select('student_id, material_item_id, nilai, hafal')
+        .in('student_id', studentIds)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester)
+
+    const semesterMonths = semester === 1 ? [7, 8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6]
+    const result: MateriMonthlyPoint[] = []
+
+    for (const m of semesterMonths) {
+        const monthTargets = targets.filter((t: any) => t.month === m)
+        const monthMaterialIds = [...new Set(monthTargets.map((t: any) => t.material_item_id))]
+
+        let totalPctSum = 0
+        for (const studentId of studentIds) {
+            const siswaCount = (progress || []).filter((p: any) =>
+                p.student_id === studentId &&
+                monthMaterialIds.includes(p.material_item_id) &&
+                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+            ).length
+            totalPctSum += monthMaterialIds.length > 0
+                ? (siswaCount / monthMaterialIds.length) * 100
+                : 0
+        }
+
+        const percentage = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
+        const avgTuntas = totalStudents > 0
+            ? Math.round((totalPctSum / totalStudents / 100) * monthMaterialIds.length)
+            : 0
+
+        result.push({
+            month: m,
+            month_label: getMonthName(m as any).substring(0, 3),
+            target_count: monthMaterialIds.length,
+            tuntas_count: avgTuntas,
+            percentage,
+            tercapai: `${avgTuntas}/${monthMaterialIds.length}`
         })
     }
 

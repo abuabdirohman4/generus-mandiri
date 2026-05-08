@@ -5,6 +5,7 @@ import {
     fetchMateriReport, 
     fetchMateriReportBySiswa, 
     getMateriCumulativeProgress,
+    getMateriMonthlyChart,
     type MateriReportFilters, 
     type MateriReportData, 
     type MateriSiswaRow,
@@ -30,4 +31,13 @@ export async function getMateriTrendData(params: {
 }): Promise<MateriMonthlyPoint[]> {
     const supabase = await createAdminClient()
     return getMateriCumulativeProgress(supabase, params)
+}
+
+export async function getMateriMonthlyChartData(params: {
+    classId: string
+    academicYearId: string
+    semester: 1 | 2
+}): Promise<MateriMonthlyPoint[]> {
+    const supabase = await createAdminClient()
+    return getMateriMonthlyChart(supabase, params)
 }
