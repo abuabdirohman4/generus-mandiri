@@ -542,6 +542,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
+    console.log('filterType', filterType)
     const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
@@ -549,6 +550,9 @@ export default function DataFilter({
 
   // For 3 filters: last filter (lowest level) spans 2 columns on mobile
   const getFilterClass = (index: number) => {
+    console.log('variant', variant)
+    console.log('filterCount', filterCount)
+    console.log('index', index)
     if (variant === 'page' && filterCount === 3 && index === 2) {
       return "col-span-2 md:col-span-1 sm:max-w-xs" // Last filter full width on mobile but limited width
     }
