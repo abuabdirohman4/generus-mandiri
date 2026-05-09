@@ -113,6 +113,7 @@ export function shouldShowDesaFilter(profile: UserProfile): boolean {
 
 export function shouldShowKelompokFilter(profile: UserProfile): boolean {
   return isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile)
+    || isTeacherDaerah(profile) || isTeacherDesa(profile)
 }
 
 export function modalShouldShowDesaFilter(profile: UserProfile): boolean {
