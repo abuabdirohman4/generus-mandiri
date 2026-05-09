@@ -11,6 +11,8 @@ interface Student {
   class_name: string
   class_id: string
   classes?: Array<{ id: string; name: string }> // Add all classes array for multi-class students
+  kelompok_name?: string
+  desa_name?: string
 }
 
 interface AttendanceRecord {
@@ -91,6 +93,14 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
       // Get primary class (first class) for display (backward compatibility)
       const primaryClass = allClasses[0] || null
       
+      const kelompokName = (studentData?.kelompok as any)?.name
+        || studentData?.student_classes?.[0]?.classes?.kelompok?.name
+        || undefined
+
+      const desaName = (studentData?.kelompok as any)?.desa?.name
+        || studentData?.student_classes?.[0]?.classes?.kelompok?.desa?.name
+        || undefined
+      
       // Only add if we have a valid student ID or can generate one
       if (studentId && studentId !== '') {
         students.push({
@@ -99,7 +109,9 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
           gender: studentData?.gender || 'L', // Default to 'L' for Laki-laki
           class_name: primaryClass?.name || 'Unknown Class',
           class_id: primaryClass?.id || '',
-          classes: allClasses // Add all classes array for multi-class support
+          classes: allClasses, // Add all classes array for multi-class support
+          kelompok_name: kelompokName,
+          desa_name: desaName
         })
       }
     })

@@ -12,10 +12,12 @@ import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
-import { getCurrentUserId, shouldShowKelompokFilter } from '@/lib/userUtils'
+import { getCurrentUserId, shouldShowKelompokFilter, shouldShowDesaFilter, isSuperAdmin } from '@/lib/userUtils'
 import { invalidateMeetingsCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/presensi/actions/meetings/helpers.client'
+import { usePresensiAttendanceStore } from '../stores/presensiAttendanceStore'
+import ColumnToggle from '@/components/table/ColumnToggle'
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
@@ -50,6 +52,7 @@ export default function MeetingAttendancePage() {
   const { classes: classesData } = useClasses()
   const { kelompok: kelompokData } = useKelompok()
   const { activityLevels } = useActivityLevels()
+  const { columnVisibility, setColumnVisibility } = usePresensiAttendanceStore()
 
   // DataFilter state
   const [filters, setFilters] = useState<{
@@ -97,6 +100,16 @@ export default function MeetingAttendancePage() {
     setSelectedStudent(null)
   }
 
+  const isDirty = useMemo(() => {
+    const keys = Object.keys(localAttendance)
+    if (keys.length !== Object.keys(attendance).length) return true
+    return keys.some(id => {
+      const local = localAttendance[id]
+      const orig = attendance[id]
+      return !orig || local.status !== orig.status || local.reason !== orig.reason
+    })
+  }, [localAttendance, attendance])
+
   const handleSave = async () => {
     if (!meeting) return
 
@@ -113,6 +126,7 @@ export default function MeetingAttendancePage() {
 
       if (result.success) {
         toast.success('Data presensi berhasil disimpan!')
+        hasInitialized.current = false
         mutate() // Refresh current page data
 
         // Revalidate meetings cache for main presensi page
@@ -531,6 +545,17 @@ export default function MeetingAttendancePage() {
     router.push('/presensi')
   }
 
+  const availableColumns = useMemo(() => {
+    if (!userProfile) return { kelompok: false, desa: false }
+    
+    return { 
+      kelompok: shouldShowKelompokFilter(userProfile),
+      desa: shouldShowDesaFilter(userProfile)
+      // kelompok: true,
+      // desa: true
+    }
+  }, [userProfile])
+
   if (loading) {
     return <LoadingState />
   }
@@ -562,6 +587,18 @@ export default function MeetingAttendancePage() {
       </div>
     )
   }
+
+  const showKelompokColumn = availableColumns.kelompok && columnVisibility.showKelompokColumn
+  const showDesaColumn = availableColumns.desa && columnVisibility.showDesaColumn
+
+  const toggleableColumns = [
+    availableColumns.kelompok && { key: 'showKelompokColumn' as const, label: 'Kelompok' },
+    availableColumns.desa && { key: 'showDesaColumn' as const, label: 'Desa' },
+  ].filter(Boolean) as Array<{ key: keyof typeof columnVisibility; label: string }>
+
+  const columnToggleElement = toggleableColumns.length > 0
+    ? <ColumnToggle columns={toggleableColumns} visibility={columnVisibility} onChange={setColumnVisibility} />
+    : undefined
 
   const localStats = calculateLocalStats()
   const localAttendancePercentage = calculateLocalAttendancePercentage()
@@ -633,11 +670,11 @@ export default function MeetingAttendancePage() {
           desaList={[]}
           kelompokList={kelompokListForFilter}
           classList={classListForFilter}
-          showGender={true}
-          showKelas={showClassFilter}
           showDaerah={false}
           showDesa={false}
           showKelompok={showKelompokFilter}
+          showKelas={showClassFilter}
+          showGender={true}
           variant="page"
           cascadeFilters={false}
         />
@@ -649,6 +686,9 @@ export default function MeetingAttendancePage() {
             attendance={localAttendance}
             onStatusChange={handleStatusChange}
             canEditStudent={canEditStudent}
+            showKelompokColumn={showKelompokColumn}
+            showDesaColumn={showDesaColumn}
+            columnToggle={columnToggleElement}
           />
         </div>
 
@@ -656,7 +696,7 @@ export default function MeetingAttendancePage() {
         <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
           <Button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !isDirty}
             variant="primary"
             className="w-full md:w-auto"
             loading={saving}

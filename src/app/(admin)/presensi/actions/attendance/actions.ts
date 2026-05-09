@@ -288,7 +288,9 @@ export async function getStudentsFromSnapshot(studentIds: string[]) {
         gender: student.gender || 'L',
         class_name: allClasses[0]?.name || 'Unknown Class',
         class_id: allClasses[0]?.id || student.class_id || '',
-        classes: allClasses // Add all classes array
+        classes: allClasses, // Add all classes array
+        kelompok_name: (student?.kelompok as any)?.name || undefined,
+        desa_name: (student?.kelompok as any)?.desa?.name || undefined,
       }
     })
 

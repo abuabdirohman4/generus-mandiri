@@ -78,6 +78,7 @@ export async function fetchAttendanceByMeeting(
         gender,
         class_id,
         kelompok_id,
+        kelompok:kelompok_id (id, name, desa:desa_id (id, name)),
         classes (
           id,
           name
@@ -115,6 +116,7 @@ export async function fetchStudentsByIds(
       gender,
       class_id,
       kelompok_id,
+      kelompok:kelompok_id (id, name, desa:desa_id (id, name)),
       classes (
         id,
         name
