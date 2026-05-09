@@ -512,12 +512,12 @@ export default function DataFilter({
 
   const visibleFilters = [
     showComparisonLevel && 'comparisonLevel',
-    showGender && 'gender',
-    showStatus && 'status',
     effectiveShouldShowDaerah && 'daerah',
     effectiveShouldShowDesa && 'desa',
     effectiveShouldShowKelompok && 'kelompok',
     showKelasFilter && 'kelas',
+    showGender && 'gender',
+    showStatus && 'status',
     (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode',
     showActivityType && 'activityType',
     showActivityLevel && 'activityLevel',
@@ -531,9 +531,7 @@ export default function DataFilter({
       ? (compact ? "space-y-6" : "space-y-4")
       : "grid gap-x-4",
     variant === 'page' && filterCount === 1 && "grid-cols-1 md:grid-cols-4",
-    variant === 'page' && filterCount === 2 && "grid-cols-2 md:grid-cols-4",
-    variant === 'page' && filterCount === 3 && "grid-cols-2 md:grid-cols-4",
-    variant === 'page' && filterCount === 4 && "grid-cols-2 md:grid-cols-4",
+    variant === 'page' && filterCount >= 2 && filterCount <= 4 && "grid-cols-2 md:grid-cols-4",
     variant === 'page' && filterCount === 5 && "grid-cols-2 md:grid-cols-5",
     variant === 'page' && filterCount === 6 && "grid-cols-2 md:grid-cols-6",
     variant === 'modal' && filterCount >= 1 && filterCount <= 6 && "grid-cols-1",
@@ -542,7 +540,7 @@ export default function DataFilter({
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    console.log('filterType', filterType)
+    // console.log('filterType', filterType)
     const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
@@ -550,11 +548,10 @@ export default function DataFilter({
 
   // For 3 filters: last filter (lowest level) spans 2 columns on mobile
   const getFilterClass = (index: number) => {
-    console.log('variant', variant)
-    console.log('filterCount', filterCount)
-    console.log('index', index)
+    // console.log('filterCount', filterCount)
+    // console.log('index', index)
     if (variant === 'page' && filterCount === 3 && index === 2) {
-      return "col-span-2 md:col-span-1 sm:max-w-xs" // Last filter full width on mobile but limited width
+      return "col-span-2 md:col-span-1" // Last filter full width on mobile
     }
     // if (variant === 'modal' && filterCount === 3 && index === 2) {
     //   return "md:col-span-2" // Last filter spans 2 columns in modal
