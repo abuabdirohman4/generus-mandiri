@@ -139,7 +139,7 @@ export default function StudentSidebar({
                                 <div className={`text-lg font-bold mt-1 ${getStatusColor(classMetrics.avgProgress)}`}>
                                     {classMetrics.avgProgress}%
                                 </div>
-                                <div className={`text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-1`}>Progress</div>
+                                <div className={`text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-1`}>Pencapaian</div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-gray-100 dark:border-gray-700/50">
                                 <div className="text-lg font-bold mt-1 text-gray-900 dark:text-white">
@@ -265,7 +265,7 @@ export default function StudentSidebar({
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                                                            Progress
+                                                            Pencapaian
                                                         </span>
                                                         <span className="text-xs font-bold text-gray-900 dark:text-white">
                                                             {completion}%

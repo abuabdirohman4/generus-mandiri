@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-    getClassProgress, 
+    getClassProgress,
     getMaterialsByClassAndSemester, 
     bulkUpdateProgress, 
     getHafalanCategories, 
@@ -30,7 +30,7 @@ import InputFilter from '@/components/form/input/InputFilter';
 import { toast } from 'sonner';
 import Button from '@/components/ui/button/Button';
 import { ProgressInput } from './types';
-import { getGrade } from '@/lib/percentages';
+import { getGrade, getProgressColor, getProgressTextColor } from '@/lib/percentages';
 import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
 import { isMobile } from '@/lib/utils';
@@ -926,13 +926,10 @@ export default function MonitoringPage() {
                                         <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 flex items-center justify-evenly md:justify-between">
                                             <div>
                                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-                                                    Total Nilai
+                                                    Rata-rata Nilai
                                                 </div>
-                                                <div className={`text-4xl text-center font-bold ${currentStudentCompletion >= 90 ? 'text-green-500' :
-                                                    currentStudentCompletion >= 80 ? 'text-blue-500' :
-                                                        currentStudentCompletion >= 70 ? 'text-yellow-500' :
-                                                            'text-red-500'}`}>
-                                                    {currentStudentCompletion}
+                                                <div className={`text-4xl text-center font-bold ${getProgressTextColor(currentStudentAvgNilai)}`}>
+                                                    {currentStudentAvgNilai}
                                                 </div>
                                             </div>
                                             <div className="relative inline-flex items-center justify-center">
@@ -955,25 +952,20 @@ export default function MonitoringPage() {
                                                         stroke="currentColor"
                                                         strokeWidth="6"
                                                         fill="transparent"
-                                                        strokeDasharray={`${(currentStudentCompletion / 100) * 200.96} 200.96`}
-                                                        className={`
-                                                            transition-all duration-500
-                                                            ${currentStudentCompletion >= 90 ? 'text-green-500' :
-                                                                currentStudentCompletion >= 80 ? 'text-blue-500' :
-                                                                    currentStudentCompletion >= 70 ? 'text-yellow-500' :
-                                                                        'text-red-500'}
-                                                        `}
+                                                        strokeDasharray={`${(currentStudentAvgNilai / 100) * 200.96} 200.96`}
+                                                        className={`transition-all duration-500 ${getProgressTextColor(currentStudentAvgNilai)}`}
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
                                                 {/* Grade Text (inside circle) */}
-                                                <span className={`absolute text-2xl font-bold ${currentStudentCompletion >= 90 ? 'text-green-600 dark:text-green-400' :
-                                                    currentStudentCompletion >= 80 ? 'text-blue-600 dark:text-blue-400' :
-                                                        currentStudentCompletion >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
-                                                            'text-red-600 dark:text-red-400'
-                                                    }`}>
-                                                    {getGrade(currentStudentCompletion).grade}
-                                                </span>
+                                                {(() => {
+                                                    const gradeInfo = getGrade(currentStudentAvgNilai);
+                                                    return (
+                                                        <span className={`absolute text-2xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.color.split(' ')[0] : 'text-gray-400'}`}>
+                                                            {gradeInfo.grade}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -1004,12 +996,9 @@ export default function MonitoringPage() {
                                         <div className="flex items-center gap-4">
                                             <div className="text-right">
                                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                                                    Total Nilai
+                                                    Rata-rata Nilai
                                                 </div>
-                                                <div className={`text-3xl text-center font-bold ${currentStudentAvgNilai >= 90 ? 'text-green-500' :
-                                                    currentStudentAvgNilai >= 80 ? 'text-blue-500' :
-                                                        currentStudentAvgNilai >= 70 ? 'text-yellow-500' :
-                                                            'text-red-500'}`}>
+                                                <div className={`text-3xl text-center font-bold ${getProgressTextColor(currentStudentAvgNilai)}`}>
                                                     {currentStudentAvgNilai}
                                                 </div>
                                             </div>
@@ -1034,24 +1023,19 @@ export default function MonitoringPage() {
                                                         strokeWidth="5"
                                                         fill="transparent"
                                                         strokeDasharray={`${(currentStudentAvgNilai / 100) * 163.36} 163.36`}
-                                                        className={`
-                                                            transition-all duration-500
-                                                            ${currentStudentAvgNilai >= 90 ? 'text-green-500' :
-                                                                currentStudentAvgNilai >= 80 ? 'text-blue-500' :
-                                                                    currentStudentAvgNilai >= 70 ? 'text-yellow-500' :
-                                                                        'text-red-500'}
-                                                        `}
+                                                        className={`transition-all duration-500 ${getProgressTextColor(currentStudentAvgNilai)}`}
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
                                                 {/* Grade Text (inside circle) */}
-                                                <span className={`absolute text-xl font-bold ${currentStudentAvgNilai >= 90 ? 'text-green-600 dark:text-green-400' :
-                                                    currentStudentAvgNilai >= 80 ? 'text-blue-600 dark:text-blue-400' :
-                                                        currentStudentAvgNilai >= 70 ? 'text-yellow-600 dark:text-yellow-400' :
-                                                            'text-red-600 dark:text-red-400'
-                                                    }`}>
-                                                    {currentStudentAvgNilai}
-                                                </span>
+                                                {(() => {
+                                                    const gradeInfo = getGrade(currentStudentAvgNilai);
+                                                    return (
+                                                        <span className={`absolute text-xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.color.split(' ')[0] : 'text-gray-400'}`}>
+                                                            {gradeInfo.grade}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -1147,7 +1131,11 @@ export default function MonitoringPage() {
                                                                                     min="0"
                                                                                     max="100"
                                                                                     value={progress?.nilai || ''}
-                                                                                    onChange={(e) => handleProgressChange(material.id, 'nilai', parseInt(e.target.value) || 0)}
+                                                                                    onChange={(e) => {
+                                                                                        const val = parseInt(e.target.value) || 0;
+                                                                                        const clamped = Math.max(0, Math.min(100, val));
+                                                                                        handleProgressChange(material.id, 'nilai', clamped);
+                                                                                    }}
                                                                                     placeholder="0"
                                                                                     className="w-16 md:w-24 px-2 md:px-3 py-1 md:py-2 text-sm text-center border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                                                                                 />
