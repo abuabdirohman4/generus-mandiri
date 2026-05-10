@@ -1,14 +1,21 @@
-import { Metadata } from 'next'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Detail Siswa | Generus Mandiri',
-  description: 'Lihat riwayat kehadiran dan detail siswa',
-}
+import { use } from 'react'
+import StudentTabHeader from './components/StudentTabHeader'
 
 export default function StudentDetailLayout({
-  children,
+    children,
+    params,
 }: {
-  children: React.ReactNode
+    children: React.ReactNode
+    params: Promise<{ studentId: string }>
 }) {
-  return children
+    const { studentId } = use(params)
+
+    return (
+        <div>
+            <StudentTabHeader studentId={studentId} />
+            {children}
+        </div>
+    )
 }

@@ -322,11 +322,11 @@ export default function StudentsTable({
 
       return (
         <div className="flex gap-4 justify-center items-center">
-          {/* View Attendance - Link to student detail */}
+          {/* View Detail - Link to student detail root (Ikhtisar) */}
           <Link
             href={`/users/siswa/${student.id}`}
             className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 transition-colors"
-            title="Lihat Absensi"
+            title="Lihat Detail"
             onClick={() => handleStudentClick(student.id, 'actions')}
           >
             <ReportIcon className="w-6 h-6" />

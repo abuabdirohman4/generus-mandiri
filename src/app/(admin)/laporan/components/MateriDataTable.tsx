@@ -4,7 +4,9 @@ import { useMemo } from 'react'
 import DataTable from '@/components/table/Table'
 import { useLaporanStore } from '@/stores/laporanStore'
 import type { MateriReportRow, MateriSiswaRow } from '../actions/reports/materiQueries'
-import { getGrade } from '@/lib/percentages'
+import { getCompletionColor, getGrade } from '@/lib/percentages'
+import Link from 'next/link'
+import { ReportIcon } from '@/lib/icons'
 
 interface MateriDataTableProps {
     rows: MateriReportRow[]
@@ -12,17 +14,12 @@ interface MateriDataTableProps {
     isLoading: boolean
 }
 
-function getCompletionColor(percentage: number) {
-    if (percentage >= 80) return 'text-green-600 dark:text-green-400'
-    if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400'
-    return 'text-red-600 dark:text-red-400'
-}
-
 export default function MateriDataTable({ rows, siswaRows = [], isLoading }: MateriDataTableProps) {
     const { materiViewMode: viewMode, setMateriViewMode: onViewModeChange } = useLaporanStore()
     const columns = useMemo(() => {
         if (viewMode === 'per_siswa') {
             return [
+                { key: 'actions', label: 'Detail', align: 'center' as const, width: '24' },
                 { key: 'student_name', label: 'Nama Siswa', sortable: true, align: 'left' as const },
                 { key: 'percentage', label: 'Tercapai', sortable: true, align: 'center' as const },
                 { key: 'avg_nilai', label: 'Nilai', sortable: true, align: 'center' as const, className: 'hidden md:table-cell' },
@@ -61,6 +58,16 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
     const renderCell = (column: any, row: any) => {
         if (viewMode === 'per_siswa') {
             switch (column.key) {
+                case 'actions':
+                    return (
+                        <Link
+                            href={`/users/siswa/${row.student_id}/materi`}
+                            className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 block"
+                            title="Lihat Pencapaian Materi"
+                        >
+                            <ReportIcon className="w-6 h-6 mx-auto" />
+                        </Link>
+                    )
                 case 'student_name':
                     return <span className="font-medium text-gray-900 dark:text-white">{row.student_name}</span>
                 case 'percentage':

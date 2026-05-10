@@ -39,6 +39,7 @@ interface DataTableProps {
   columnToggle?: ReactNode
   expandable?: boolean
   renderExpandedRow?: (item: any, index: number) => ReactNode
+  emptyMessage?: string
 }
 
 export default function DataTable({
@@ -62,7 +63,8 @@ export default function DataTable({
   defaultSortDirection = 'asc',
   columnToggle,
   expandable = false,
-  renderExpandedRow
+  renderExpandedRow,
+  emptyMessage
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
@@ -449,7 +451,7 @@ export default function DataTable({
             ) : (
                 <tr>
                   <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    {searchQuery ? 'No matching records found' : 'No data available'}
+                    {searchQuery ? 'No matching records found' : (emptyMessage || 'No data available')}
                   </td>
                 </tr>
               )}

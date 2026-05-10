@@ -123,7 +123,7 @@ export default function DataTableComponent({ tableData, userProfile }: DataTable
     if (column.key === 'student_name') {
       return (
         <Link 
-          href={`/users/siswa/${item.student_id}?month=${filters.month}&year=${filters.year}&from=laporan`}
+          href={`/users/siswa/${item.student_id}/presensi?month=${filters.month}&year=${filters.year}&from=laporan`}
           className="hover:text-blue-600 hover:underline"
           onClick={() => handleStudentClick(item.student_id, 'student_name')}
         >
@@ -135,7 +135,7 @@ export default function DataTableComponent({ tableData, userProfile }: DataTable
     if (column.key === 'actions') {
       return (
         <Link 
-          href={`/users/siswa/${item.student_id}?month=${filters.month}&year=${filters.year}&from=laporan`}
+          href={`/users/siswa/${item.student_id}/presensi?month=${filters.month}&year=${filters.year}&from=laporan`}
           className="text-yellow-600 hover:text-yellow-800 block"
           onClick={() => handleStudentClick(item.student_id, 'actions')}
         >
