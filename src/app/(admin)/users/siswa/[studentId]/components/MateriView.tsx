@@ -7,6 +7,7 @@ import DataTable from '@/components/table/Table'
 import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import { getMaterialCategories } from '@/app/(admin)/materi/actions/categories/actions'
 import { getStudentMateriProgress, type StudentMateriProgressItem } from '../actions/materi'
+import { getRateGrade } from '@/lib/percentages'
 
 interface MateriViewProps {
     studentId: string
@@ -87,18 +88,22 @@ export default function MateriView({ studentId }: MateriViewProps) {
                 )
             case 'type_name':
                 return <span className="text-gray-400 dark:text-gray-500 text-xs uppercase">{row.type_name}</span>
-            case 'nilai':
+            case 'nilai': {
                 if (row.nilai === null || row.nilai <= 0) return <span className="text-gray-400">—</span>
+                const gradeInfo = getRateGrade(row.nilai)
                 return (
                     <div className="flex items-center justify-center gap-2 font-semibold">
-                        <span className={`text-base ${row.colorClass}`}>
+                       <span className="text-gray-700 dark:text-gray-300">
+                        {/* <span className={`text-base ${row.colorClass}`}> */}
+                        {/* <span className="text-base text-gray-900 dark:text-white"> */}
                             {row.nilai}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${row.colorClass.replace('text-', 'bg-').replace('-500', '-100 text-')}`}>
-                            {row.grade}
+                        <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeInfo.bg} ${gradeInfo.color}`}>
+                            {gradeInfo.grade}
                         </span>
                     </div>
                 )
+            }
             default:
                 return (row as any)[column.key]
         }
@@ -158,7 +163,7 @@ export default function MateriView({ studentId }: MateriViewProps) {
                     </h3>
                     {items.length > 0 && (
                          <div className="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800">
-                            {items.filter(i => i.nilai !== null && i.nilai >= 70).length}/{items.length} tuntas
+                            {items.filter(i => i.nilai !== null && i.nilai >= 70).length}/{items.length} tercapai
                         </div>
                     )}
                 </div>

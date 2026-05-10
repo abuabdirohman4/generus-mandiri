@@ -30,7 +30,7 @@ import InputFilter from '@/components/form/input/InputFilter';
 import { toast } from 'sonner';
 import Button from '@/components/ui/button/Button';
 import { ProgressInput } from './types';
-import { getGrade, getProgressColor, getProgressTextColor } from '@/lib/percentages';
+import { getRateGrade, getRateStyle } from '@/lib/percentages';
 import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
 import { isMobile } from '@/lib/utils';
@@ -928,7 +928,7 @@ export default function MonitoringPage() {
                                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
                                                     Rata-rata Nilai
                                                 </div>
-                                                <div className={`text-4xl text-center font-bold ${getProgressTextColor(currentStudentAvgNilai)}`}>
+                                                <div className={`text-4xl text-center font-bold ${getRateStyle(currentStudentAvgNilai, 'text-pure')}`}>
                                                     {currentStudentAvgNilai}
                                                 </div>
                                             </div>
@@ -953,15 +953,15 @@ export default function MonitoringPage() {
                                                         strokeWidth="6"
                                                         fill="transparent"
                                                         strokeDasharray={`${(currentStudentAvgNilai / 100) * 200.96} 200.96`}
-                                                        className={`transition-all duration-500 ${getProgressTextColor(currentStudentAvgNilai)}`}
+                                                        className={`transition-all duration-500 ${getRateStyle(currentStudentAvgNilai, 'text-pure')}`}
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
                                                 {/* Grade Text (inside circle) */}
                                                 {(() => {
-                                                    const gradeInfo = getGrade(currentStudentAvgNilai);
+                                                    const gradeInfo = getRateGrade(currentStudentAvgNilai);
                                                     return (
-                                                        <span className={`absolute text-2xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.color.split(' ')[0] : 'text-gray-400'}`}>
+                                                        <span className={`absolute text-2xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.text : 'text-gray-400'}`}>
                                                             {gradeInfo.grade}
                                                         </span>
                                                     );
@@ -998,7 +998,7 @@ export default function MonitoringPage() {
                                                 <div className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                                                     Rata-rata Nilai
                                                 </div>
-                                                <div className={`text-3xl text-center font-bold ${getProgressTextColor(currentStudentAvgNilai)}`}>
+                                                <div className={`text-3xl text-center font-bold ${getRateStyle(currentStudentAvgNilai, 'text-pure')}`}>
                                                     {currentStudentAvgNilai}
                                                 </div>
                                             </div>
@@ -1023,15 +1023,15 @@ export default function MonitoringPage() {
                                                         strokeWidth="5"
                                                         fill="transparent"
                                                         strokeDasharray={`${(currentStudentAvgNilai / 100) * 163.36} 163.36`}
-                                                        className={`transition-all duration-500 ${getProgressTextColor(currentStudentAvgNilai)}`}
+                                                        className={`transition-all duration-500 ${getRateStyle(currentStudentAvgNilai, 'text-pure')}`}
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
                                                 {/* Grade Text (inside circle) */}
                                                 {(() => {
-                                                    const gradeInfo = getGrade(currentStudentAvgNilai);
+                                                    const gradeInfo = getRateGrade(currentStudentAvgNilai);
                                                     return (
-                                                        <span className={`absolute text-xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.color.split(' ')[0] : 'text-gray-400'}`}>
+                                                        <span className={`absolute text-xl font-bold ${gradeInfo.grade !== '-' ? gradeInfo.text : 'text-gray-400'}`}>
                                                             {gradeInfo.grade}
                                                         </span>
                                                     );
@@ -1113,7 +1113,8 @@ export default function MonitoringPage() {
                                                                 {materials.map((material) => {
                                                                     const key = `${selectedStudentId}-${material.id}`;
                                                                     const progress = progressMap.get(key);
-                                                                    const gradeInfo = getGrade(progress?.nilai);
+                                                                    const gradeInfo = getRateGrade(progress?.nilai);
+                                                                    console.log('gradeInfo', gradeInfo)
 
                                                                     return (
                                                                         <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
@@ -1141,7 +1142,7 @@ export default function MonitoringPage() {
                                                                                 />
                                                                             </td>
                                                                             <td className="px-3 md:px-4 py-2 md:py-3 text-center">
-                                                                                <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded md:rounded-full text-xs md:text-sm font-bold md:font-medium ${gradeInfo.color}`}>
+                                                                                <span className={`inline-flex items-center px-2 md:px-3 py-1 rounded md:rounded-full text-xs md:text-sm font-bold md:font-medium ${gradeInfo.bg} ${gradeInfo.color}`}>
                                                                                     {gradeInfo.grade}
                                                                                 </span>
                                                                             </td>
@@ -1186,8 +1187,8 @@ export default function MonitoringPage() {
                                                             <div className="flex items-center gap-3">
                                                                 <div className="text-center">
                                                                     <div className="text-[10px] text-gray-500 uppercase">Nilai Akhir</div>
-                                                                    <div className={`text-sm font-bold ${getGrade(item.nilai).color}`}>
-                                                                        {item.nilai} ({getGrade(item.nilai).grade})
+                                                                    <div className={`text-sm font-bold ${getRateGrade(item.nilai).color}`}>
+                                                                        {item.nilai} ({getRateGrade(item.nilai).grade})
                                                                     </div>
                                                                 </div>
                                                                 <Button

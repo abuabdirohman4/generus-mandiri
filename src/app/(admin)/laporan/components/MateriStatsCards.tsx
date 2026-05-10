@@ -2,7 +2,7 @@
 
 import type { MateriReportData } from '../actions/reports/materiQueries'
 import { PieChartIcon, BookOpenIcon, BuildingIcon } from '@/lib/icons'
-import { getProgressColor, getProgressTextColor, getProgressLightBgColor } from '@/lib/percentages'
+import { getRateStyle } from '@/lib/percentages'
 
 interface MateriStatsCardsProps {
     data: MateriReportData | undefined
@@ -35,8 +35,8 @@ export default function MateriStatsCards({ data, isLoading, mode }: MateriStatsC
                             {summary.avg_completion_rate}%
                         </h3>
                     </div>
-                    <div className={`p-3 ${getProgressLightBgColor(summary.avg_completion_rate)} rounded-full`}>
-                        <PieChartIcon className={`w-6 h-6 ${getProgressTextColor(summary.avg_completion_rate)}`} />
+                    <div className={`p-3 ${getRateStyle(summary.avg_completion_rate, 'bg-light')} rounded-full`}>
+                        <PieChartIcon className={`w-6 h-6 ${getRateStyle(summary.avg_completion_rate, 'text-pure')}`} />
                     </div>
                 </div>
                 
@@ -44,7 +44,7 @@ export default function MateriStatsCards({ data, isLoading, mode }: MateriStatsC
                 <div className="mt-4">
                     <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
                         <div 
-                            className={`${getProgressColor(summary.avg_completion_rate)} h-1.5 rounded-full transition-all duration-1000 ease-out`} 
+                            className={`${getRateStyle(summary.avg_completion_rate, 'bar')} h-1.5 rounded-full transition-all duration-1000 ease-out`} 
                             style={{ width: `${summary.avg_completion_rate}%` }}
                         />
                     </div>

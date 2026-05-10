@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
-import { getGrade, getProgressTextColor } from '@/lib/percentages'
+import { getRateGrade, getRateStyle } from '@/lib/percentages'
 
 export interface StudentMateriProgressItem {
     material_item_id: string
@@ -69,8 +69,8 @@ export async function getStudentMateriProgress(
     const items: StudentMateriProgressItem[] = progressData.map(p => {
         const info = itemMap.get(p.material_item_id)
         const nilai = p.nilai ?? null
-        const gradeInfo = getGrade(nilai ?? 0)
-        const colorClass = getProgressTextColor(nilai ?? 0)
+        const gradeInfo = getRateGrade(nilai ?? 0)
+        const colorClass = getRateStyle(nilai ?? 0, 'text-pure')
 
         return {
             material_item_id: p.material_item_id,

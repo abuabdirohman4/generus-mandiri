@@ -11,7 +11,7 @@ import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
 import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
-import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
+import { getRateStyle } from '@/lib/percentages'
 import MeetingSkeleton from '@/components/ui/skeleton/MeetingSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/accessControl'
@@ -612,7 +612,7 @@ export default function MeetingList({
                             }
                           </h4>
                           <div className="flex items-center gap-2 ml-4 shrink-0">
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBgColor(meeting.attendancePercentage)} ${getStatusColor(meeting.attendancePercentage)}`}>
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${getRateStyle(meeting.attendancePercentage, 'bg')} ${getRateStyle(meeting.attendancePercentage, 'text')}`}>
                               {meeting.attendancePercentage}%
                             </div>
                             {canEditOrDeleteMeeting(meeting, userProfile) ? (

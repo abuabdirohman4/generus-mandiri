@@ -50,7 +50,7 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
           </h3>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors translate-x-[1rem] -translate-y-[1rem] hover:bg-gray-200 hover:text-gray-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors translate-x-4 -translate-y-4 hover:bg-gray-200 hover:text-gray-700"
             title="Tutup"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export default function AttendanceList({ date, meetings, onMeetingClick, onClose
         </h3>
         <button
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors translate-x-[1rem] -translate-y-[1rem] hover:bg-gray-200 hover:text-gray-700"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors translate-x-4 -translate-y-4 hover:bg-gray-200 hover:text-gray-700"
           title="Tutup"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

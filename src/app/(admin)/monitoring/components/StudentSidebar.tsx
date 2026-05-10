@@ -1,6 +1,6 @@
 'use client';
 
-import { getProgressColor, getGrade, getStatusColor, getStatusBgColor } from '@/lib/percentages';
+import { getRateGrade, getRateStyle } from '@/lib/percentages';
 import { useState, useMemo } from 'react';
 
 interface Student {
@@ -136,7 +136,7 @@ export default function StudentSidebar({
                     <div className="px-4 pb-4 pt-3 border-b border-gray-100 dark:border-gray-800">
                         <div className="grid grid-cols-3 gap-2">
                             <div className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-transparent`}>
-                                <div className={`text-lg font-bold mt-1 ${getStatusColor(classMetrics.avgProgress)}`}>
+                                <div className={`text-lg font-bold mt-1 ${getRateStyle(classMetrics.avgProgress, 'text')}`}>
                                     {classMetrics.avgProgress}%
                                 </div>
                                 <div className={`text-[10px] font-bold text-gray-500 uppercase tracking-tight mt-1`}>Pencapaian</div>
@@ -149,10 +149,10 @@ export default function StudentSidebar({
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 text-center border border-gray-100 dark:border-gray-700/50 flex flex-col items-center justify-center">
                                 {(() => {
-                                    const { grade, color } = getGrade(classMetrics.avgNilai);
+                                    const { grade, style } = getRateGrade(classMetrics.avgNilai);
                                     return (
                                         <>
-                                            <div className={`text-lg font-black px-2 py-0.5 rounded-lg mb-1 ${grade !== '-' ? color : 'text-gray-400'}`}>
+                                            <div className={`text-lg font-black px-2 py-0.5 rounded-lg mb-1 ${grade !== '-' ? style : 'text-gray-400'}`}>
                                                 {grade}
                                             </div>
                                             <div className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Predikat</div>
@@ -216,8 +216,8 @@ export default function StudentSidebar({
                                 .sort((a, b) => a.name.localeCompare(b.name))
                                 .map(student => {
                                     const { completion, avgNilai } = getStudentMetrics(student.id);
-                                    const progressColor = getProgressColor(completion);
-                                    const { grade, color: gradeColor } = getGrade(avgNilai);
+                                    const progressColor = getRateStyle(completion, 'bar');
+                                    const { grade, style: gradeStyle } = getRateGrade(avgNilai);
                                     const isSelected = student.id === selectedStudentId;
                                     const initial = student.name.charAt(0).toUpperCase();
                                     const monthlyTarget = monthlyPercentages?.get(student.id);
@@ -277,7 +277,7 @@ export default function StudentSidebar({
                                                             <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                                                 {avgNilai}
                                                             </span>
-                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${gradeColor}`}>
+                                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${gradeStyle}`}>
                                                                 {grade}
                                                             </span>
                                                         </div>

@@ -74,7 +74,7 @@ describe('getStudentMateriProgress', () => {
         expect(result.totalTuntas).toBe(1) // Only 85 >= 70
         expect(result.grouped['Kategori X']).toHaveLength(1)
         expect(result.grouped['Kategori X'][0].material_name).toBe('Materi 1')
-        expect(result.grouped['Kategori X'][0].grade).toBe('B') // 85 is B in getGrade
+        expect(result.grouped['Kategori X'][0].grade).toBe('B') // 85 is B in getRateGrade
         expect(result.grouped['Kategori Y']).toHaveLength(1)
         expect(result.grouped['Kategori Y'][0].nilai).toBe(65)
     })

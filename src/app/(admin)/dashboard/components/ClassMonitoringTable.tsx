@@ -6,7 +6,7 @@ import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/userUtils';
-import { getStatusBgColor, getStatusColor, getProgressTextColor, getProgressLightBgColor } from '@/lib/percentages';
+import { getRateStyle } from '@/lib/percentages';
 import { useDashboardStore } from '../stores/dashboardStore';
 import ComparisonChart from './ComparisonChart';
 import { aggregateMonitoringData } from '../utils/aggregateMonitoringData';
@@ -269,7 +269,7 @@ export default function ClassMonitoringTable({
             }
             const materi = materiMap.get(item.class_id)
             return (
-                <span className={`px-3 py-1 rounded-full font-medium ${getStatusColor(materi?.avg_completion_rate ?? 0)} ${getStatusBgColor(materi?.avg_completion_rate ?? 0)}`}>
+                <span className={`px-3 py-1 rounded-full font-medium ${getRateStyle(materi?.avg_completion_rate ?? 0, 'text')} ${getRateStyle(materi?.avg_completion_rate ?? 0, 'bg')}`}>
                     {materi?.avg_completion_rate ?? 0}%
                 </span>
             )
@@ -287,7 +287,7 @@ export default function ClassMonitoringTable({
             }
 
             return (
-                <span className={`px-3 py-1 rounded-full font-medium ${getStatusColor(item.attendance_rate)} ${getStatusBgColor(item.attendance_rate)}`}>
+                <span className={`px-3 py-1 rounded-full font-medium ${getRateStyle(item.attendance_rate, 'text')} ${getRateStyle(item.attendance_rate, 'bg')}`}>
                     {item.attendance_rate}%
                 </span>
             );

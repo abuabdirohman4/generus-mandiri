@@ -12,7 +12,7 @@ import DropdownMenu from '@/components/ui/dropdown/DropdownMenu'
 import CreateMeetingModal from './CreateMeetingModal'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { ATTENDANCE_COLORS } from '@/lib/constants/colors'
-import { getStatusBgColor, getStatusColor } from '@/lib/percentages'
+import { getRateStyle } from '@/lib/percentages'
 import MeetingCardSkeleton from '@/components/ui/skeleton/MeetingCardSkeleton'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/accessControl'
@@ -711,7 +711,7 @@ export default function MeetingCards({
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
                       {meeting.attendancePercentage}%
                     </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBgColor(meeting.attendancePercentage)} ${getStatusColor(meeting.attendancePercentage)}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRateStyle(meeting.attendancePercentage, 'bg')} ${getRateStyle(meeting.attendancePercentage, 'text')}`}>
                       Kehadiran
                     </span>
                   </div>

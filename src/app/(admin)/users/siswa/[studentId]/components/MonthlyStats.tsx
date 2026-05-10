@@ -1,7 +1,7 @@
 'use client'
 
 import { ATTENDANCE_COLORS } from "@/lib/constants/colors"
-import { getStatusBgColor, getStatusColor } from "@/lib/percentages"
+import { getRateStyle } from "@/lib/percentages"
 
 interface MonthlyStatsProps {
   stats: {
@@ -53,7 +53,7 @@ export default function MonthlyStats({ stats }: MonthlyStatsProps) {
         {attendancePercentage !== undefined && (
           <div className="text-center">
             <div className="text-sm">Kehadiran</div>
-            <div className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusBgColor(attendancePercentage)} ${getStatusColor(attendancePercentage)}`}>
+            <div className={`px-3 py-1 rounded-full text-sm font-bold ${getRateStyle(attendancePercentage, 'bg')} ${getRateStyle(attendancePercentage, 'text')}`}>
               {attendancePercentage}%
             </div>
           </div>

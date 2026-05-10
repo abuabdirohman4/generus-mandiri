@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import DataTable from '@/components/table/Table'
 import { useLaporanStore } from '@/stores/laporanStore'
 import type { MateriReportRow, MateriSiswaRow } from '../actions/reports/materiQueries'
-import { getCompletionColor, getGrade } from '@/lib/percentages'
+import { getRateGrade, getRateStyle } from '@/lib/percentages'
 import Link from 'next/link'
 import { ReportIcon } from '@/lib/icons'
 
@@ -73,17 +73,17 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
                 case 'percentage':
                     return (
                         <div className="flex items-center justify-center gap-1.5 font-semibold">
-                            <span className={getCompletionColor(row.percentage)}>{row.percentage}%</span>
+                            <span className={getRateStyle(row.percentage)}>{row.percentage}%</span>
                             <span className="text-gray-400">({row.tuntas_count}/{row.total_materials})</span>
                         </div>
                     )
                 case 'avg_nilai':
                     if (row.avg_nilai <= 0) return <span className="text-gray-400">—</span>
-                    const { grade, color: gradeColor } = getGrade(row.avg_nilai)
+                    const { grade, style: gradeStyle } = getRateGrade(row.avg_nilai)
                     return (
                         <div className="flex items-center justify-center gap-2 font-semibold">
                             <span className="text-gray-700 dark:text-gray-300">{row.avg_nilai}</span>
-                            <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeColor}`}>{grade}</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeStyle}`}>{grade}</span>
                         </div>
                     )
                 default:
@@ -100,7 +100,7 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
                 return <span className="text-gray-500 dark:text-gray-400">{row.material_type_name}</span>
             
             case 'percentage':
-                const colorClass = getCompletionColor(row.percentage)
+                const colorClass = getRateStyle(row.percentage)
                 return (
                     <div className="flex items-center justify-center gap-1.5 font-semibold">
                         <span className={colorClass}>
@@ -114,13 +114,13 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
             
             case 'avg_nilai':
                 if (row.avg_nilai <= 0) return <span className="text-gray-400">—</span>;
-                const { grade, color: gradeColor } = getGrade(row.avg_nilai);
+                const { grade, style: gradeStyle } = getRateGrade(row.avg_nilai);
                 return (
                     <div className="flex items-center justify-center gap-2 font-semibold">
                         <span className="text-gray-700 dark:text-gray-300">
                             {row.avg_nilai}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeColor}`}>
+                        <span className={`px-2 py-0.5 rounded text-xs font-black ${gradeStyle}`}>
                             {grade}
                         </span>
                     </div>
