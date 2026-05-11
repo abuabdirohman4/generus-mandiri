@@ -93,10 +93,11 @@ export async function getMateriDashboardSummary(
         // 2a: enrolled students
         const { data: enrollments } = await supabase
             .from('student_enrollments')
-            .select('student_id')
+            .select('student_id, students!inner(status)')
             .eq('class_id', cls.id)
             .eq('academic_year_id', filters.academicYearId)
             .eq('status', 'active')
+            .eq('students.status', 'active')
 
         if (!enrollments?.length) {
             results.push({

@@ -82,13 +82,44 @@ export async function fetchMateriReport(
     const className = classData?.name || ''
 
     // Step 3: Resolve material items
+    // For cumulative mode: materialItemIds for avgCompletionRate (filtered s.d. month)
+    // For rows/table: always use all-semester IDs so table shows 24, not 21
     let materialItemIds = await getMaterialItemIds(supabase, filters)
 
     if (materialItemIds.length === 0) {
         return { rows: [], siswaRows: [], summary: { total_materials: 0, avg_completion_rate: 0, class_name: className } }
     }
 
-    // Step 4: Get material item details with type + category
+    // Hitung totalUnikSemester (semua materi semester, tanpa filter bulan)
+    const classMasterIdsForAll = await getClassMasterIds(supabase, classId)
+    const { data: allTargets } = await supabase
+        .from('material_monthly_targets')
+        .select('material_item_id')
+        .in('class_master_id', classMasterIdsForAll)
+        .eq('academic_year_id', academicYearId)
+        .eq('semester', semester)
+    const allSemesterItemIds = [...new Set((allTargets || []).map((t: any) => t.material_item_id as string))]
+    const totalUnikSemester = allSemesterItemIds.length
+
+    // IDs untuk tabel rows: cumulative → semua semester, monthly → s.d. bulan ini
+    const tableItemIds = filters.reportMode === 'cumulative' ? allSemesterItemIds : materialItemIds
+
+    // Apply category filter to tableItemIds if needed
+    let filteredTableItemIds = tableItemIds
+    if (filters.categoryId && tableItemIds.length > 0) {
+        const { data: catItems } = await supabase
+            .from('material_items')
+            .select('id, material_types!inner(material_categories!inner(id))')
+            .in('id', tableItemIds)
+            .eq('material_types.material_categories.id', filters.categoryId)
+        filteredTableItemIds = (catItems || []).map((m: any) => m.id)
+    }
+
+    if (filteredTableItemIds.length === 0) {
+        return { rows: [], siswaRows: [], summary: { total_materials: 0, avg_completion_rate: 0, class_name: className } }
+    }
+
+    // Step 4: Get material item details with type + category (for table)
     const { data: materialItems } = await supabase
         .from('material_items')
         .select(`
@@ -99,21 +130,18 @@ export async function fetchMateriReport(
                 material_categories!inner(id, name)
             )
         `)
-        .in('id', materialItemIds)
+        .in('id', filteredTableItemIds)
 
     if (!materialItems || materialItems.length === 0) {
         return { rows: [], siswaRows: [], summary: { total_materials: 0, avg_completion_rate: 0, class_name: className } }
     }
 
-    // Re-scope materialItemIds to filtered result
-    materialItemIds = materialItems.map((m: any) => m.id)
-
-    // Step 5: Get progress for all students × all material items
+    // Step 5: Get progress for all students × all table material items
     const { data: progress } = await supabase
         .from('student_material_progress')
         .select('student_id, material_item_id, nilai, hafal')
         .in('student_id', studentIds)
-        .in('material_item_id', materialItemIds)
+        .in('material_item_id', filteredTableItemIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
@@ -128,9 +156,9 @@ export async function fetchMateriReport(
 
     const rows: MateriReportRow[] = materialItems.map((item: any) => {
         const studentProgressList = progressByMaterial.get(item.id) || []
-        
+
         // Tuntas if Nilai >= 70 OR marked as Hafal
-        const tuntasCount = studentProgressList.filter(p => 
+        const tuntasCount = studentProgressList.filter(p =>
             (p.nilai !== null && p.nilai >= 70) || p.hafal === true
         ).length
 
@@ -157,39 +185,19 @@ export async function fetchMateriReport(
         }
     })
 
-    // Hitung totalUnikSemester untuk denominator fixed
-    const { data: allTargets } = await supabase
-        .from('material_monthly_targets')
-        .select('material_item_id')
-        .in('class_master_id', await getClassMasterIds(supabase, classId))
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
-    const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
-
     let avgCompletionRate: number
     if (filters.reportMode === 'cumulative' && filters.month && totalUnikSemester > 0) {
-        if (filters.viewMode === 'per_materi') {
-            const tuntasCount = materialItemIds.filter(materialId =>
-                studentIds.every(studentId => {
-                    const p = (progress || []).find((p: any) =>
-                        p.student_id === studentId && p.material_item_id === materialId
-                    )
-                    return p && ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
-                })
+        // Selalu pakai rata-rata per siswa — konsisten dengan per_siswa dan Tab Semua
+        let totalPctSum = 0
+        for (const studentId of studentIds) {
+            const siswaCount = (progress || []).filter((p: any) =>
+                p.student_id === studentId &&
+                materialItemIds.includes(p.material_item_id) &&
+                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
             ).length
-            avgCompletionRate = Math.round((tuntasCount / totalUnikSemester) * 100)
-        } else {
-            let totalPctSum = 0
-            for (const studentId of studentIds) {
-                const siswaCount = (progress || []).filter((p: any) =>
-                    p.student_id === studentId &&
-                    materialItemIds.includes(p.material_item_id) &&
-                    ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
-                ).length
-                totalPctSum += (siswaCount / totalUnikSemester) * 100
-            }
-            avgCompletionRate = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
+            totalPctSum += (siswaCount / totalUnikSemester) * 100
         }
+        avgCompletionRate = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
     } else {
         avgCompletionRate = rows.length > 0
             ? Math.round(rows.reduce((sum, r) => sum + r.percentage, 0) / rows.length)
@@ -203,9 +211,7 @@ export async function fetchMateriReport(
         rows,
         siswaRows,
         summary: {
-            total_materials: filters.reportMode === 'cumulative'
-                ? totalUnikSemester
-                : materialItemIds.length,
+            total_materials: totalUnikSemester,
 
             avg_completion_rate: avgCompletionRate,
             class_name: className,
@@ -422,38 +428,23 @@ export async function getMateriCumulativeProgress(
         let percentage = 0
         let tuntasCount = 0
 
-        if (viewMode === 'per_materi') {
-            // Materi yang SEMUA siswa tuntas (nilai ≥70 atau hafal)
-            tuntasCount = currentIds.filter(materialId =>
-                studentIds.every(studentId => {
-                    const p = (progress || []).find((p: any) =>
-                        p.student_id === studentId && p.material_item_id === materialId
-                    )
-                    return p && ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
-                })
-            ).length
-            percentage = totalUnikSemester > 0
-                ? Math.round((tuntasCount / totalUnikSemester) * 100)
-                : 0
-        } else {
-            // Per siswa: rata-rata dari totalUnikSemester
-            let totalPctSum = 0
-            for (const studentId of studentIds) {
-                const siswaCount = currentIds.filter(materialId => {
-                    const p = (progress || []).find((p: any) =>
-                        p.student_id === studentId && p.material_item_id === materialId
-                    )
-                    return p && ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
-                }).length
-                totalPctSum += totalUnikSemester > 0
-                    ? (siswaCount / totalUnikSemester) * 100
-                    : 0
-            }
-            percentage = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
-            tuntasCount = totalStudents > 0
-                ? Math.round((totalPctSum / totalStudents / 100) * totalUnikSemester)
+        // Rata-rata per siswa untuk semua viewMode (per_materi dan per_siswa konsisten)
+        let totalPctSum = 0
+        for (const studentId of studentIds) {
+            const siswaCount = currentIds.filter(materialId => {
+                const p = (progress || []).find((p: any) =>
+                    p.student_id === studentId && p.material_item_id === materialId
+                )
+                return p && ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+            }).length
+            totalPctSum += totalUnikSemester > 0
+                ? (siswaCount / totalUnikSemester) * 100
                 : 0
         }
+        percentage = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
+        tuntasCount = totalStudents > 0
+            ? Math.round((totalPctSum / totalStudents / 100) * totalUnikSemester)
+            : 0
 
         result.push({
             month: m,
