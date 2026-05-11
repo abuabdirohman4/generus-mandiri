@@ -47,10 +47,26 @@ export function getTeacherScope(profile: UserProfile): 'kelompok' | 'desa' | 'da
 // Check if teacher can access a student based on their scope
 export function canTeacherAccessStudent(
   profile: UserProfile,
-  student: { daerah_id?: string | null; desa_id?: string | null; kelompok_id?: string | null }
+  student: {
+    daerah_id?: string | null
+    desa_id?: string | null
+    kelompok_id?: string | null
+    classes?: Array<{ id: string }> | null
+    class_id?: string | null
+  }
 ): boolean {
   if (!isTeacher(profile)) return false
 
+  // Priority 1: Specific Classes (Multi-Kelompok)
+  // Jika guru punya daftar classes, akses dibatasi HANYA ke kelas tersebut
+  if (profile.classes && profile.classes.length > 0) {
+    const teacherClassIds = new Set(profile.classes.map(c => c.id))
+    if (student.class_id && teacherClassIds.has(student.class_id)) return true
+    if (student.classes && student.classes.some(c => teacherClassIds.has(c.id))) return true
+    return false
+  }
+
+  // Priority 2: Broad Scopes
   if (isTeacherDaerah(profile)) {
     return student.daerah_id === profile.daerah_id
   }

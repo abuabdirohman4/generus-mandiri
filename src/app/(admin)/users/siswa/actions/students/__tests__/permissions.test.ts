@@ -68,6 +68,25 @@ const teacher: UserProfile = {
     },
 }
 
+const teacherMultiKelompok: UserProfile = {
+    id: 'tmt1',
+    full_name: 'Guru Multi Kelompok',
+    role: 'teacher',
+    daerah_id: 'da1',
+    desa_id: 'd1',
+    kelompok_id: null,
+    classes: [
+        { id: 'class-in-k1', name: 'Kelas 1 Kelompok 1' },
+        { id: 'class-in-k2', name: 'Kelas 1 Kelompok 2' },
+    ],
+    permissions: {
+        can_archive_students: true,
+        can_transfer_students: false,
+        can_soft_delete_students: false,
+        can_hard_delete_students: false,
+    },
+}
+
 const studentInK1 = {
     id: 's1',
     name: 'Student K1',
@@ -122,6 +141,24 @@ describe('canArchiveStudent', () => {
 
     it('allows adminDesa to archive students in their desa', () => {
         expect(canArchiveStudent(adminDesa, studentInK1 as any)).toBe(true)
+    })
+
+    it('teacher multi-kelompok can archive student whose class is in their classes list', () => {
+        const studentInTeacherClass = {
+            ...studentInK1,
+            kelompok_id: 'k_other',
+            classes: [{ id: 'class-in-k1', name: 'Kelas 1 Kelompok 1' }],
+        }
+        expect(canArchiveStudent(teacherMultiKelompok, studentInTeacherClass as any)).toBe(true)
+    })
+
+    it('teacher multi-kelompok cannot archive student from unrelated class', () => {
+        const studentNotInTeacherClass = {
+            ...studentInK1,
+            kelompok_id: 'k_other',
+            classes: [{ id: 'class-unrelated', name: 'Kelas 2' }],
+        }
+        expect(canArchiveStudent(teacherMultiKelompok, studentNotInTeacherClass as any)).toBe(false)
     })
 })
 

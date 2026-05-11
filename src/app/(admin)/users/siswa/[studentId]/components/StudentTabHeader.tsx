@@ -42,7 +42,7 @@ export default function StudentTabHeader({ studentId }: StudentTabHeaderProps) {
         if (isActive(tab)) return
         e.preventDefault()
         setLoadingHref(tab.href)
-        router.push(tab.href)
+        router.replace(tab.href)
     }
 
     return (

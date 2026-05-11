@@ -5,6 +5,7 @@ import {
   canAccessMaterials,
   canAccessMonitoring,
   canAccessOverview,
+  canTeacherAccessStudent,
   type UserProfile
 } from '@/lib/accessControl'
 
@@ -152,4 +153,50 @@ describe('canAccessOverview', () => {
   it('returns false for student role', () => {
     expect(canAccessOverview({ role: 'student' } as UserProfile)).toBe(false)
   })
+})
+
+describe('canTeacherAccessStudent — multi-kelompok teacher', () => {
+    const multiKelompokTeacher: UserProfile = {
+        id: 'mt1',
+        full_name: 'Guru Multi Kelompok',
+        role: 'teacher',
+        daerah_id: 'da1',
+        desa_id: 'd1',
+        kelompok_id: null, // null karena lintas kelompok
+        classes: [
+            { id: 'class-k1', name: 'Kelas 1 Kelompok A' },
+            { id: 'class-k2', name: 'Kelas 1 Kelompok B' },
+        ],
+        permissions: { can_archive_students: true },
+    }
+
+    it('returns true for student in one of teacher classes (via classes[])', () => {
+        const student = {
+            daerah_id: 'da1',
+            desa_id: 'd1',
+            kelompok_id: 'kA',
+            classes: [{ id: 'class-k1' }],
+        }
+        expect(canTeacherAccessStudent(multiKelompokTeacher, student)).toBe(true)
+    })
+
+    it('returns false for student not in any of teacher classes', () => {
+        const student = {
+            daerah_id: 'da1',
+            desa_id: 'd1',
+            kelompok_id: 'kC',
+            classes: [{ id: 'class-k3' }],
+        }
+        expect(canTeacherAccessStudent(multiKelompokTeacher, student)).toBe(false)
+    })
+
+    it('returns true for student with matching class_id', () => {
+        const student = {
+            daerah_id: 'da1',
+            desa_id: 'd1',
+            kelompok_id: 'kA',
+            class_id: 'class-k1',
+        }
+        expect(canTeacherAccessStudent(multiKelompokTeacher, student)).toBe(true)
+    })
 })
