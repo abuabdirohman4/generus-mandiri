@@ -6,12 +6,12 @@ CRITICAL: Baca @CLAUDE.md untuk SEMUA coding rules, patterns, dan constraints.
 TASK:
 Eksekusi implementation plan di @docs/plans/2026-05-11-sm-452-monitoring-enrollment-sync.md
 
-ISSUE: sm-452 / GH-#70
-STATUS: Bug fix — siswa inactive muncul di monitoring (code fix saja, data migration sudah selesai via MCP)
+ISSUE: sm-1me / GH-#71
+STATUS: Bug fix — siswa inactive muncul di monitoring + tab Materi laporan (code fix; data migration sudah selesai via MCP)
 
 REQUIREMENTS:
-1. Ikuti plan Task 1 saja (Task 2 sudah selesai)
-2. Jalankan test setelah task: npm run test:run
+1. Ikuti plan Task 1 dan Task 2 (Task 3 sudah selesai)
+2. Jalankan test setelah setiap task: npm run test:run
 3. Jangan lanjut jika ada test FAIL
 4. Setelah semua task: npm run type-check
 5. Output per task: "✅ Task N complete: [ringkasan]"
@@ -20,6 +20,7 @@ REQUIREMENTS:
 REFERENCE FILES:
 - Plan: @docs/plans/2026-05-11-sm-452-monitoring-enrollment-sync.md
 - Rules: @CLAUDE.md
-- Fix target: @src/app/(admin)/monitoring/actions/monitoring.ts (line 119-127 dan 476-482)
+- Fix target 1: @src/app/(admin)/monitoring/actions/monitoring.ts (line 119-127 dan 476-482)
+- Fix target 2: @src/app/(admin)/laporan/actions/reports/materiQueries.ts (line 60-65 dan 280-285)
 
 Mulai dari Task 1.

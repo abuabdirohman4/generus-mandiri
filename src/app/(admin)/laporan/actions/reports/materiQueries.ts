@@ -59,10 +59,11 @@ export async function fetchMateriReport(
     // Step 1: Get enrolled students
     const { data: enrollments, error: enrollError } = await supabase
         .from('student_enrollments')
-        .select('student_id')
+        .select('student_id, students!inner(status)')
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
         .eq('status', 'active')
+        .eq('students.status', 'active')
 
     if (enrollError) throw new Error(enrollError.message)
     const studentIds = (enrollments || []).map((e: any) => e.student_id)
@@ -279,10 +280,11 @@ export async function fetchMateriReportBySiswa(
     // Step 1: Get enrolled students
     const { data: enrollments } = await supabase
         .from('student_enrollments')
-        .select('student_id, students(id, name)')
+        .select('student_id, students!inner(id, name, status)')
         .eq('class_id', filters.classId)
         .eq('academic_year_id', filters.academicYearId)
         .eq('status', 'active')
+        .eq('students.status', 'active')
 
     if (!enrollments?.length) return []
 

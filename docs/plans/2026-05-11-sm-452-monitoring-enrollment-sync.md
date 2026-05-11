@@ -15,6 +15,7 @@ Dua bug ditemukan di halaman monitoring:
 | File | Action |
 |------|--------|
 | `src/app/(admin)/monitoring/actions/monitoring.ts` | B1: tambah filter `students.status='active'` di 2 fungsi |
+| `src/app/(admin)/laporan/actions/reports/materiQueries.ts` | B3: tambah filter `students.status='active'` di 2 fungsi |
 
 ---
 
@@ -82,7 +83,65 @@ const { data: enrollments } = await supabase
 
 ---
 
-## TASK 2 — B2: Data Migration (SUDAH SELESAI via MCP)
+## TASK 2 — B3: Filter siswa inactive di materiQueries.ts (laporan)
+
+### File: `src/app/(admin)/laporan/actions/reports/materiQueries.ts`
+
+Tab Materi di laporan juga tidak filter `students.status`. Tab Presensi dan Tab Semua sudah aman (Presensi fetch dari attendance_logs, Semua sudah pakai `!inner + students.status='active'`).
+
+#### Fungsi 1: `fetchMateriReport` (line 60-65)
+
+**SEBELUM:**
+```ts
+const { data: enrollments, error: enrollError } = await supabase
+    .from('student_enrollments')
+    .select('student_id')
+    .eq('class_id', classId)
+    .eq('academic_year_id', academicYearId)
+    .eq('status', 'active')
+```
+
+**SESUDAH:**
+```ts
+const { data: enrollments, error: enrollError } = await supabase
+    .from('student_enrollments')
+    .select('student_id, students!inner(status)')
+    .eq('class_id', classId)
+    .eq('academic_year_id', academicYearId)
+    .eq('status', 'active')
+    .eq('students.status', 'active')
+```
+
+#### Fungsi 2: `fetchMateriReportBySiswa` (line 280-285)
+
+**SEBELUM:**
+```ts
+const { data: enrollments } = await supabase
+    .from('student_enrollments')
+    .select('student_id, students(id, name)')
+    .eq('class_id', filters.classId)
+    .eq('academic_year_id', filters.academicYearId)
+    .eq('status', 'active')
+```
+
+**SESUDAH:**
+```ts
+const { data: enrollments } = await supabase
+    .from('student_enrollments')
+    .select('student_id, students!inner(id, name, status)')
+    .eq('class_id', filters.classId)
+    .eq('academic_year_id', filters.academicYearId)
+    .eq('status', 'active')
+    .eq('students.status', 'active')
+```
+
+### Jalankan test
+
+`npm run test:run` → PASS. `npm run type-check` → bersih.
+
+---
+
+## TASK 3 — B2: Data Migration (SUDAH SELESAI via MCP)
 
 Data migration sudah dieksekusi langsung oleh Claude Code via MCP Supabase. Hasil verifikasi: `remaining_stale = 0`. Tidak ada action di sini.
 
@@ -105,6 +164,7 @@ WHERE student_enrollments.student_id = s.id
 ## Verification
 
 - [ ] Mahveen (inactive) tidak muncul di monitoring
+- [ ] Mahveen (inactive) tidak muncul di tab Materi laporan
 - [ ] Haisha dan siswa lain muncul di kelas yang benar di monitoring
 - [ ] `npm run test:run` → pass
 - [ ] `npm run type-check` → bersih
@@ -114,12 +174,13 @@ WHERE student_enrollments.student_id = s.id
 ## Commit Message Template
 
 ```
-fix(monitoring): filter siswa inactive + data migration enrollment class_id stale
+fix(monitoring,laporan): filter siswa inactive + data migration enrollment class_id stale
 
 - monitoring.ts: tambah filter students.status='active' di getClassProgress + getMonthlyProgressSummary
+- materiQueries.ts: tambah filter students.status='active' di fetchMateriReport + fetchMateriReportBySiswa
 - DB: bulk UPDATE 72 enrollment records dengan class_id stale ke class_id terkini (via MCP, selesai)
 
-fixes #70
+fixes #71
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
