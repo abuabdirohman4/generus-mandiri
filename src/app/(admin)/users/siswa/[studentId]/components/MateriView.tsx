@@ -8,6 +8,7 @@ import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-aja
 import { getMaterialCategories } from '@/app/(admin)/materi/actions/categories/actions'
 import { getStudentMateriProgress, type StudentMateriProgressItem } from '../actions/materi'
 import { getRateGrade } from '@/lib/percentages'
+import { getMonthName, getSemesterMonths } from '@/app/(admin)/materi/types'
 
 interface MateriViewProps {
     studentId: string
@@ -17,8 +18,16 @@ export default function MateriView({ studentId }: MateriViewProps) {
     const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
     const [allCategories, setAllCategories] = useState<{ value: string; label: string }[]>([])
     const [selectedYearId, setSelectedYearId] = useState('')
-    const [selectedSemester, setSelectedSemester] = useState<'1' | '2'>('1')
+    const [selectedSemester, setSelectedSemester] = useState<'1' | '2'>(() => {
+        const month = new Date().getMonth() // 0-11
+        return month >= 6 ? '1' : '2' // Jul-Dec is Semester 1, Jan-Jun is Semester 2
+    })
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
+    const [selectedMonth, setSelectedMonth] = useState<string>('all')
+
+    useEffect(() => {
+        setSelectedMonth('all')
+    }, [selectedSemester])
 
     useEffect(() => {
         Promise.all([
@@ -28,7 +37,9 @@ export default function MateriView({ studentId }: MateriViewProps) {
         ]).then(([years, activeYear, categories]) => {
             setAcademicYears(years.map(y => ({ value: y.id, label: y.name })))
             setAllCategories(categories.map(c => ({ value: c.name, label: c.name })))
-            if (activeYear) setSelectedYearId(activeYear.id)
+            if (activeYear) {
+                setSelectedYearId(activeYear.id)
+            }
         })
     }, [])
 
@@ -46,32 +57,64 @@ export default function MateriView({ studentId }: MateriViewProps) {
         }
     )
 
-    // Flatten data
-    const items = useMemo(() => {
-        const grouped = data?.grouped ?? {}
-        const allItems: StudentMateriProgressItem[] = []
-
-        Object.values(grouped).forEach((catItems) => {
-            allItems.push(...catItems)
-        })
-
-        return allItems
-    }, [data])
-
     const categoryOptions = useMemo(() => {
         return [{ value: 'all', label: 'Semua Kategori' }, ...allCategories]
     }, [allCategories])
 
+    const monthOptions = useMemo(() => {
+        const months = getSemesterMonths(Number(selectedSemester) as any)
+        return [
+            { value: 'all', label: 'Semua Bulan' },
+            ...months.map(m => ({ value: m.toString(), label: getMonthName(m as any) }))
+        ]
+    }, [selectedSemester])
+
+    // Filter items based on month first
+    const monthFilteredItems = useMemo(() => {
+        const allProgress = data?.allProgress ?? []
+        if (selectedMonth === 'all') return allProgress
+        const monthNum = Number(selectedMonth)
+        return allProgress.filter(item => item.months.includes(monthNum))
+    }, [data, selectedMonth])
+
     // Filter items based on selected category
     const filteredItems = useMemo(() => {
-        if (selectedCategory === 'all') return items
-        return items.filter(item => item.category_name === selectedCategory)
-    }, [items, selectedCategory])
+        if (selectedCategory === 'all') return monthFilteredItems
+        return monthFilteredItems.filter(item => item.category_name === selectedCategory)
+    }, [monthFilteredItems, selectedCategory])
+
+    // Calculate Stats based on monthFilteredItems (or filteredItems?)
+    // User said "nilainya tergantung filter bulan nya"
+    const stats = useMemo(() => {
+        const targetItems = filteredItems
+        if (targetItems.length === 0) return null
+
+        const scoredItems = targetItems.filter(i => i.nilai !== null && i.nilai > 0)
+        const totalNilai = scoredItems.reduce((acc, curr) => acc + (curr.nilai || 0), 0)
+        const avgNilai = scoredItems.length > 0 ? Math.round(totalNilai / scoredItems.length) : 0
+        const gradeInfo = getRateGrade(avgNilai)
+        
+        const tuntasCount = targetItems.filter(i => i.nilai !== null && i.nilai >= 70).length
+        const belumTuntasCount = targetItems.length - tuntasCount
+        const pencapaian = (tuntasCount / targetItems.length) * 100
+
+        return {
+            totalNilai,
+            avgNilai,
+            grade: gradeInfo.grade,
+            gradeColor: gradeInfo.color,
+            gradeBg: gradeInfo.bg,
+            tuntasCount,
+            belumTuntasCount,
+            totalCount: targetItems.length,
+            pencapaian: Math.round(pencapaian)
+        }
+    }, [filteredItems])
 
     const columns = [
         { key: 'category_name', label: 'Kategori', sortable: true, align: 'left' as const, className: 'hidden sm:table-cell' },
-        { key: 'material_name', label: 'Materi', sortable: true, align: 'left' as const },
-        { key: 'type_name', label: 'Tipe', sortable: true, align: 'left' as const, className: 'hidden md:table-cell' },
+        { key: 'type_name', label: 'Materi', sortable: true, align: 'left' as const, className: 'hidden md:table-cell' },
+        { key: 'material_name', label: 'Sub Materi', sortable: true, align: 'left' as const },
         { key: 'nilai', label: 'Nilai', sortable: true, align: 'center' as const },
     ]
 
@@ -109,7 +152,7 @@ export default function MateriView({ studentId }: MateriViewProps) {
         }
     }
 
-    if (isLoading && items.length === 0) {
+    if (isLoading && (data?.allProgress ?? []).length === 0) {
         return (
             <div className="space-y-4 animate-pulse">
                 <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
@@ -119,7 +162,7 @@ export default function MateriView({ studentId }: MateriViewProps) {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
             {/* Filter Section */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -152,8 +195,49 @@ export default function MateriView({ studentId }: MateriViewProps) {
                         placeholder="Semua Kategori"
                         compact
                     />
+                    <InputFilter
+                        id="month-filter"
+                        label="Bulan"
+                        value={selectedMonth}
+                        onChange={setSelectedMonth}
+                        options={monthOptions}
+                        placeholder="Semua Bulan"
+                        compact
+                    />
                 </div>
             </div>
+
+            {/* Stats Summary */}
+            {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Nilai</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.avgNilai}</div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Predikat</div>
+                        <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-lg font-black ${stats.gradeBg} ${stats.gradeColor}`}>
+                                {stats.grade}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pencapaian</div>
+                        <div className="flex items-end gap-1">
+                            <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.pencapaian}%</span>
+                            <span className="text-xs text-gray-400 mb-1"></span>
+                        </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tercapai</div>
+                        <div className="flex items-end gap-1">
+                            <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.tuntasCount}/{stats.totalCount}</span>
+                            <span className="text-xs text-gray-400 mb-1">materi</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Content Table */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden p-6">
@@ -161,9 +245,9 @@ export default function MateriView({ studentId }: MateriViewProps) {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Daftar Pencapaian Materi
                     </h3>
-                    {items.length > 0 && (
+                    {monthFilteredItems.length > 0 && (
                          <div className="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800">
-                            {items.filter(i => i.nilai !== null && i.nilai >= 70).length}/{items.length} tercapai
+                            {monthFilteredItems.filter(i => i.nilai !== null && i.nilai >= 70).length}/{monthFilteredItems.length} tercapai
                         </div>
                     )}
                 </div>

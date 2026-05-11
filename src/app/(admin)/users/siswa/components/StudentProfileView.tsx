@@ -36,7 +36,7 @@ export function StudentProfileView({ student, onEdit }: StudentProfileViewProps)
             onClick={onEdit}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Edit Biodata
+            Edit
           </button>
         )}
       </div>
