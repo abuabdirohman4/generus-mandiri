@@ -46,10 +46,10 @@ export async function getStudentMateriProgress(
         .select(`
             id,
             name,
-            material_types (
+            material_types!inner (
                 id,
                 name,
-                material_categories ( id, name )
+                material_categories!inner ( id, name )
             )
         `)
         .in('id', materialItemIds)
