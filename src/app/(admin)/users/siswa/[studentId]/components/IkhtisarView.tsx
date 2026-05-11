@@ -14,6 +14,8 @@ import {
     ChevronDownIcon,
     ShootingStarIcon
 } from '@/lib/icons'
+import { useUserProfile } from '@/stores/userProfileStore'
+import { canAccessMonitoring } from '@/lib/accessControl'
 
 interface IkhtisarViewProps {
     studentId: string
@@ -22,6 +24,8 @@ interface IkhtisarViewProps {
 export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
     const [viewMode, setViewMode] = useState<'semester' | 'monthly'>('semester')
     const [selectedMonth, setSelectedMonth] = useState<number>(dayjs().month() + 1)
+    const { profile } = useUserProfile()
+    const canSeeMateri = canAccessMonitoring(profile)
     
     const { data, isLoading, error } = useSWR(
         studentId ? `overview-${studentId}-${dayjs().format('YYYY-MM')}` : null,
@@ -139,7 +143,7 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className={`grid grid-cols-1 ${canSeeMateri ? 'lg:grid-cols-2' : ''} gap-6`}>
                 {/* Ringkasan Presensi */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
@@ -173,61 +177,63 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                 </div>
 
                 {/* Ringkasan Pencapaian Materi */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400">
-                                <BookOpenIcon className="w-5 h-5" />
+                {canSeeMateri && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 shadow-sm">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                                    <BookOpenIcon className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Pencapaian Materi</h3>
+                                    <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Progres Kurikulum</p>
+                                </div>
                             </div>
+                            <div className="text-right">
+                                <div className={`text-2xl font-black leading-none ${getRateStyle(currentMateri.percentage)}`}>
+                                    {currentMateri.percentage}%
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Progress Bar */}
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Pencapaian Materi</h3>
-                                <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Progres Kurikulum</p>
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                                    <span>Tercapai</span>
+                                    <span>{currentMateri.tuntas} dari {currentMateri.total} materi</span>
+                                </div>
+                                <div className="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
+                                    <div 
+                                        className={`h-full transition-all duration-1000 ease-out ${getRateStyle(currentMateri.percentage, 'bar')}`}
+                                        style={{ width: `${currentMateri.percentage}%` }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="text-right">
-                             <div className={`text-2xl font-black leading-none ${getRateStyle(currentMateri.percentage)}`}>
-                                {currentMateri.percentage}%
-                             </div>
-                        </div>
-                    </div>
 
-                    <div className="space-y-6">
-                        {/* Progress Bar */}
-                        <div>
-                            <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                                <span>Tercapai</span>
-                                <span>{currentMateri.tuntas} dari {currentMateri.total} materi</span>
-                            </div>
-                            <div className="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
-                                <div 
-                                    className={`h-full transition-all duration-1000 ease-out ${getRateStyle(currentMateri.percentage, 'bar')}`}
-                                    style={{ width: `${currentMateri.percentage}%` }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
-                                <div className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center justify-center gap-1.5 w-full">
-                                    <CheckCircleIcon className="w-3 h-3 text-green-500" />
-                                    Nilai
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
+                                    <div className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center justify-center gap-1.5 w-full">
+                                        <CheckCircleIcon className="w-3 h-3 text-green-500" />
+                                        Nilai
+                                    </div>
+                                    <div className="text-2xl font-black text-gray-900 dark:text-white">
+                                        {currentMateri.avgNilai}
+                                    </div>
                                 </div>
-                                <div className="text-2xl font-black text-gray-900 dark:text-white">
-                                    {currentMateri.avgNilai}
-                                </div>
-                            </div>
-                            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
-                                <div className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center justify-center gap-1.5 w-full">
-                                    <TimeIcon className="w-3 h-3 text-blue-500" />
-                                    Predikat
-                                </div>
-                                <div className={`text-2xl font-black ${getRateGrade(currentMateri.avgNilai).color}`}>
-                                    {getRateGrade(currentMateri.avgNilai).grade}
+                                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center text-center">
+                                    <div className="text-[10px] font-black text-gray-400 uppercase mb-1 flex items-center justify-center gap-1.5 w-full">
+                                        <TimeIcon className="w-3 h-3 text-blue-500" />
+                                        Predikat
+                                    </div>
+                                    <div className={`text-2xl font-black ${getRateGrade(currentMateri.avgNilai).color}`}>
+                                        {getRateGrade(currentMateri.avgNilai).grade}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     )

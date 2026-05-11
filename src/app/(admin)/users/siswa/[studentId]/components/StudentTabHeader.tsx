@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
+import { useUserProfile } from '@/stores/userProfileStore'
+import { canAccessMonitoring } from '@/lib/accessControl'
+
 interface StudentTabHeaderProps {
     studentId: string
 }
@@ -18,16 +21,19 @@ export default function StudentTabHeader({ studentId }: StudentTabHeaderProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [loadingHref, setLoadingHref] = useState<string | null>(null)
+    const { profile } = useUserProfile()
 
     // Clear loading state when route actually changes (new page mounted)
     useEffect(() => {
         setLoadingHref(null)
     }, [pathname])
 
+    const canSeeMateri = canAccessMonitoring(profile)
+
     const tabs: TabItem[] = [
         { label: 'Profil', href: `/users/siswa/${studentId}`, match: `/${studentId}` },
         { label: 'Presensi', href: `/users/siswa/${studentId}/presensi`, match: '/presensi' },
-        { label: 'Materi', href: `/users/siswa/${studentId}/materi`, match: '/materi' },
+        ...(canSeeMateri ? [{ label: 'Materi', href: `/users/siswa/${studentId}/materi`, match: '/materi' }] : []),
         { label: 'Biodata', href: `/users/siswa/${studentId}/biodata`, match: '/biodata' },
     ]
 
