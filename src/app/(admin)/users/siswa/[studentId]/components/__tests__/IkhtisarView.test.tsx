@@ -2,11 +2,26 @@ import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import IkhtisarView from '../IkhtisarView'
-import { useStudentDetail } from '../../hooks/useStudentDetail'
+import useSWR from 'swr'
 
-// Mock useStudentDetail hook
-vi.mock('../../hooks/useStudentDetail', () => ({
-    useStudentDetail: vi.fn(),
+// Mock useSWR
+vi.mock('swr', () => ({
+    default: vi.fn(),
+}))
+
+// Mock overview action
+vi.mock('../../actions/overview', () => ({
+    getStudentOverview: vi.fn(),
+}))
+
+// Mock icons to avoid SVG issues in Vitest
+vi.mock('@/lib/icons', () => ({
+    CalenderIcon: () => <div data-testid="calendar-icon" />,
+    BookOpenIcon: () => <div data-testid="book-icon" />,
+    CheckCircleIcon: () => <div data-testid="check-icon" />,
+    TimeIcon: () => <div data-testid="time-icon" />,
+    ChevronDownIcon: () => <div data-testid="chevron-icon" />,
+    ShootingStarIcon: () => <div data-testid="star-icon" />,
 }))
 
 describe('IkhtisarView', () => {
@@ -17,56 +32,60 @@ describe('IkhtisarView', () => {
     })
 
     it('renders skeleton when loading', () => {
-        ;(useStudentDetail as any).mockReturnValue({
+        ;(useSWR as any).mockReturnValue({
             isLoading: true,
-            student: null,
-            stats: null,
+            data: null,
+            error: null,
         })
 
         render(<IkhtisarView studentId={studentId} />)
 
-        // Find skeleton elements (animate-pulse)
         const skeleton = document.querySelector('.animate-pulse')
         expect(skeleton).toBeDefined()
     })
 
-    it('renders student info and stats correctly', () => {
-        const mockStudent = {
-            id: studentId,
-            name: 'John Doe',
-            classes: [{ id: 'c1', name: 'Kelas A' }],
-        }
-        const mockStats = {
-            hadir: 10,
-            absen: 2,
-            izin: 1,
-            sakit: 0,
+    it('renders student info, attendance and materi correctly', () => {
+        const mockData = {
+            student: {
+                id: studentId,
+                name: 'John Doe',
+                classes: [{ id: 'c1', name: 'Kelas A' }],
+                gender: 'Laki-laki'
+            },
+            attendance: {
+                semester: { hadir: 10, absen: 2, izin: 1, sakit: 0, total: 13 },
+                monthly: { hadir: 5, absen: 0, izin: 0, sakit: 0, total: 5 }
+            },
+            materi: {
+                semester: { tuntas: 5, total: 10, percentage: 50, avgNilai: 85 },
+                monthly: { tuntas: 2, total: 2, percentage: 100, avgNilai: 90 }
+            }
         }
 
-        ;(useStudentDetail as any).mockReturnValue({
+        ;(useSWR as any).mockReturnValue({
             isLoading: false,
-            student: mockStudent,
-            stats: mockStats,
+            data: mockData,
+            error: null,
         })
 
         render(<IkhtisarView studentId={studentId} />)
 
         expect(screen.getByText('John Doe')).toBeDefined()
         expect(screen.getByText('Kelas A')).toBeDefined()
-        expect(screen.getByText('10')).toBeDefined() // Present count
-        expect(screen.getByText('2')).toBeDefined()  // Absent count
-        expect(screen.getByText('1')).toBeDefined()  // Excused count
+        expect(screen.getByText('10')).toBeDefined() // Present count (semester default)
+        expect(screen.getByText('50%')).toBeDefined() // Materi percentage
+        expect(screen.getByText('85')).toBeDefined() // Avg Nilai
     })
 
-    it('handles missing student name with fallback', () => {
-        ;(useStudentDetail as any).mockReturnValue({
+    it('handles missing data with error state', () => {
+        ;(useSWR as any).mockReturnValue({
             isLoading: false,
-            student: { id: studentId },
-            stats: null,
+            data: null,
+            error: new Error('Gagal'),
         })
 
         render(<IkhtisarView studentId={studentId} />)
 
-        expect(screen.getAllByText('—').length).toBeGreaterThan(0) // Fallback for name/class
+        expect(screen.getByText('Gagal memuat data overview')).toBeDefined()
     })
 })

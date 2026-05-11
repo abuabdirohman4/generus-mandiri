@@ -79,7 +79,7 @@ export default function StudentBiodataPage() {
   }
 
   return (
-    <div className="space-y-6 mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
+    <div className="space-y-6 mx-auto px-0 pb-28 md:pb-0">
       {/* Student Profile View */}
       <StudentProfileView student={student} onEdit={() => setIsModalOpen(true)} />
 

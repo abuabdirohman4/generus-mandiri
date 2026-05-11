@@ -4,19 +4,16 @@ import { useState, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import InputFilter from '@/components/form/input/InputFilter'
 import DataTable from '@/components/table/Table'
-import { getAcademicYears, getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
-import { getMaterialCategories } from '@/app/(admin)/materi/actions/categories/actions'
 import { getStudentMateriProgress, type StudentMateriProgressItem } from '../actions/materi'
 import { getRateGrade } from '@/lib/percentages'
 import { getMonthName, getSemesterMonths } from '@/app/(admin)/materi/types'
+import { useMateriMetadata } from '../../hooks/useMateriMetadata'
 
 interface MateriViewProps {
     studentId: string
 }
 
 export default function MateriView({ studentId }: MateriViewProps) {
-    const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([])
-    const [allCategories, setAllCategories] = useState<{ value: string; label: string }[]>([])
     const [selectedYearId, setSelectedYearId] = useState('')
     const [selectedSemester, setSelectedSemester] = useState<'1' | '2'>(() => {
         const month = new Date().getMonth() // 0-11
@@ -28,20 +25,13 @@ export default function MateriView({ studentId }: MateriViewProps) {
     useEffect(() => {
         setSelectedMonth('all')
     }, [selectedSemester])
+    const { academicYears, allCategories, activeYear, isLoading: isLoadingMetadata } = useMateriMetadata()
 
     useEffect(() => {
-        Promise.all([
-            getAcademicYears(),
-            getActiveAcademicYear(),
-            getMaterialCategories(),
-        ]).then(([years, activeYear, categories]) => {
-            setAcademicYears(years.map(y => ({ value: y.id, label: y.name })))
-            setAllCategories(categories.map(c => ({ value: c.name, label: c.name })))
-            if (activeYear) {
-                setSelectedYearId(activeYear.id)
-            }
-        })
-    }, [])
+        if (activeYear && !selectedYearId) {
+            setSelectedYearId(activeYear.id)
+        }
+    }, [activeYear, selectedYearId])
 
     const swrKey = selectedYearId
         ? `student-materi-${studentId}-${selectedYearId}-${selectedSemester}`
@@ -96,7 +86,8 @@ export default function MateriView({ studentId }: MateriViewProps) {
         
         const tuntasCount = targetItems.filter(i => i.nilai !== null && i.nilai >= 70).length
         const belumTuntasCount = targetItems.length - tuntasCount
-        const pencapaian = (tuntasCount / targetItems.length) * 100
+        const pencapaian = Math.round((tuntasCount / targetItems.length) * 100)
+        const pencapaianInfo = getRateGrade(pencapaian)
 
         return {
             totalNilai,
@@ -107,7 +98,8 @@ export default function MateriView({ studentId }: MateriViewProps) {
             tuntasCount,
             belumTuntasCount,
             totalCount: targetItems.length,
-            pencapaian: Math.round(pencapaian)
+            pencapaian,
+            pencapaianColor: pencapaianInfo.color
         }
     }, [filteredItems])
 
@@ -152,17 +144,24 @@ export default function MateriView({ studentId }: MateriViewProps) {
         }
     }
 
-    if (isLoading && (data?.allProgress ?? []).length === 0) {
+    const isInitializing = academicYears.length === 0 || allCategories.length === 0 || !selectedYearId || isLoadingMetadata
+
+    if (isInitializing || (isLoading && (data?.allProgress ?? []).length === 0)) {
         return (
-            <div className="space-y-4 animate-pulse">
-                <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
-                <div className="h-80 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+            <div className="space-y-4 animate-pulse mx-auto px-0 pb-28 md:pb-0">
+                <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                    ))}
+                </div>
+                <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-xl" />
             </div>
         )
     }
 
     return (
-        <div className="space-y-4 mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
+        <div className="space-y-4 mx-auto px-0 pb-28 md:pb-0">
             {/* Filter Section */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -225,15 +224,15 @@ export default function MateriView({ studentId }: MateriViewProps) {
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pencapaian</div>
                         <div className="flex items-end gap-1">
-                            <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.pencapaian}%</span>
+                            <span className={`text-2xl font-bold ${stats.pencapaianColor}`}>{stats.pencapaian}%</span>
                             <span className="text-xs text-gray-400 mb-1"></span>
                         </div>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tercapai</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Materi</div>
                         <div className="flex items-end gap-1">
                             <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.tuntasCount}/{stats.totalCount}</span>
-                            <span className="text-xs text-gray-400 mb-1">materi</span>
+                            <span className="text-xs text-gray-400 mb-1">tercapai</span>
                         </div>
                     </div>
                 </div>
@@ -245,11 +244,6 @@ export default function MateriView({ studentId }: MateriViewProps) {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Daftar Pencapaian Materi
                     </h3>
-                    {monthFilteredItems.length > 0 && (
-                         <div className="text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-800">
-                            {monthFilteredItems.filter(i => i.nilai !== null && i.nilai >= 70).length}/{monthFilteredItems.length} tercapai
-                        </div>
-                    )}
                 </div>
 
                 <DataTable
