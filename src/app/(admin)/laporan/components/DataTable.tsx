@@ -6,6 +6,7 @@ import DataTable from '@/components/table/Table'
 import { useLaporan } from '../stores/laporanStore'
 import { ReportIcon } from '@/lib/icons'
 import type { UserProfile } from '@/stores/userProfileStore'
+import { isMultiKelompokTeacher } from '@/lib/accessControl'
 
 interface TableData {
   no: number
@@ -94,18 +95,20 @@ export default function DataTableComponent({ tableData, userProfile }: DataTable
     const isTeacherDaerah = userProfile?.role === 'teacher' && userProfile?.daerah_id && !userProfile?.desa_id && !userProfile?.kelompok_id
     const isTeacherDesa = userProfile?.role === 'teacher' && userProfile?.desa_id && !userProfile?.kelompok_id
 
+    const isMultiKelompok = isMultiKelompokTeacher(userProfile as any)
+
     if (isSuperAdmin) {
       orgColumns.push(
-        { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
+        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
         { key: 'desa_name', label: 'Desa', align: 'center' as const },
-        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
+        { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
       )
     } else if (isAdminDaerah || isTeacherDaerah) {
       orgColumns.push(
+        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
         { key: 'desa_name', label: 'Desa', align: 'center' as const },
-        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
       )
-    } else if (isAdminDesa || isTeacherDesa) {
+    } else if (isAdminDesa || isTeacherDesa || isMultiKelompok) {
       orgColumns.push(
         { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
       )

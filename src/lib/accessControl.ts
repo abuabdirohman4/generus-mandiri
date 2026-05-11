@@ -22,6 +22,14 @@ export function isTeacher(profile: UserProfile): boolean {
   return profile.role === 'teacher'
 }
 
+/**
+ * Mengecek apakah user adalah guru tingkat kelompok yang memiliki akses ke lebih dari 1 kelompok (multi-kelompok)
+ */
+export function isMultiKelompokTeacher(profile: UserProfile | null | undefined): boolean {
+  if (!profile || profile.role !== 'teacher') return false
+  return !!profile.classes && profile.classes.length > 0
+}
+
 // Teacher level detection utilities
 export function isTeacherKelompok(profile: UserProfile): boolean {
   return profile.role === 'teacher' && !!profile.kelompok_id

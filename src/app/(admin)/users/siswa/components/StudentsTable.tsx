@@ -14,6 +14,7 @@ import {
   canSoftDeleteStudent,
   canHardDeleteStudent
 } from '../actions/students/permissions'
+import { isMultiKelompokTeacher } from '@/lib/accessControl'
 
 interface StudentsTableProps {
   students: Student[]
@@ -156,25 +157,25 @@ export default function StudentsTable({
       // Superadmin sees all
       if (userProfile?.role === 'superadmin') {
         orgColumns.push(
-          { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const },
           { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
         );
       }
       // Admin Daerah
       else if (isAdminDaerah(userProfile)) {
         orgColumns.push(
-          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const },
           { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+          { key: 'desa_name', label: 'Desa', align: 'center' as const },
         );
       }
       // Admin Desa
       else if (isAdminDesa(userProfile)) {
         orgColumns.push(
+          { key: 'class_name', label: 'Kelas', align: 'center' as const },
           { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
         );
       }
       // Admin Kelompok - only Kelas
@@ -194,15 +195,15 @@ export default function StudentsTable({
       if (isTeacherDaerah) {
         // Guru Daerah: show Desa + Kelompok + Class
         orgColumns.push(
+          { key: 'class_name', label: 'Kelas', align: 'center' as const },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
           { key: 'desa_name', label: 'Desa', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
         )
-      } else if (isTeacherDesa) {
-        // Guru Desa: show Kelompok + Class
+      } else if (isTeacherDesa || isMultiKelompokTeacher(userProfile)) {
+        // Guru Desa atau Guru Multi-Kelompok: show Kelompok + Class
         orgColumns.push(
+          { key: 'class_name', label: 'Kelas', align: 'center' as const },
           { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
         )
       } else if (isTeacherKelompok && userProfile.classes && userProfile.classes.length > 1) {
         // Guru Kelompok with multiple classes: show Class only
