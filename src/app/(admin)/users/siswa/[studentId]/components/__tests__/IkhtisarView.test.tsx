@@ -14,6 +14,17 @@ vi.mock('../../actions/overview', () => ({
     getStudentOverview: vi.fn(),
 }))
 
+vi.mock('@/stores/userProfileStore', () => ({
+    useUserProfile: vi.fn(() => ({
+        profile: { role: 'superadmin' },
+        isInitialized: true
+    }))
+}))
+
+vi.mock('@/lib/accessControl', () => ({
+    canAccessMonitoring: vi.fn(() => true)
+}))
+
 // Mock icons to avoid SVG issues in Vitest
 vi.mock('@/lib/icons', () => ({
     CalenderIcon: () => <div data-testid="calendar-icon" />,
