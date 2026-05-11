@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 // Mock next/navigation
 const mockRouter = {
     push: vi.fn(),
+    replace: vi.fn(),
 }
 
 vi.mock('next/navigation', () => ({
@@ -83,7 +84,7 @@ describe('StudentTabHeader', () => {
         const { fireEvent } = require('@testing-library/react')
         fireEvent.click(presensiLink)
 
-        expect(mockRouter.push).toHaveBeenCalledWith(`/users/siswa/${studentId}/presensi`)
+        expect(mockRouter.replace).toHaveBeenCalledWith(`/users/siswa/${studentId}/presensi`)
         const spinner = document.querySelector('.animate-spin')
         expect(spinner).not.toBeNull()
     })

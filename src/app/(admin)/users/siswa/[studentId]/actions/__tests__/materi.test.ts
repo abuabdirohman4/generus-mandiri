@@ -11,6 +11,7 @@ function makeQueryBuilder(resolvedValue: any = { data: null, error: null }) {
     b.select = vi.fn().mockReturnValue(b)
     b.eq = vi.fn().mockReturnValue(b)
     b.in = vi.fn().mockReturnValue(b)
+    b.single = vi.fn().mockReturnValue(b)
     b.then = (resolve: any) => Promise.resolve(resolvedValue).then(resolve)
     return b
 }

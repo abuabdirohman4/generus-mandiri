@@ -120,11 +120,12 @@ export async function getClassProgress(
         .from('student_enrollments')
         .select(`
       student_id,
-      students!inner(id, name)
+      students!inner(id, name, status)
     `)
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('students.status', 'active');
 
     if (enrollError) {
         console.error('[getClassProgress] Error fetching enrollments:', enrollError);
@@ -475,10 +476,11 @@ export async function getClassMonthlyTargetSummary(params: {
   // Get enrolled students
   const { data: enrollments } = await supabase
     .from('student_enrollments')
-    .select('student_id, students!inner(id, name)')
+    .select('student_id, students!inner(id, name, status)')
     .eq('class_id', params.classId)
     .eq('academic_year_id', params.academicYearId)
     .eq('status', 'active')
+    .eq('students.status', 'active')
 
   if (!enrollments || enrollments.length === 0) return []
 

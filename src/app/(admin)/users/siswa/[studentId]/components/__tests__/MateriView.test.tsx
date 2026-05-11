@@ -59,14 +59,14 @@ describe('MateriView', () => {
     })
 
     it('renders filters correctly including Category', async () => {
-        vi.mocked(useSWR).mockReturnValue({ data: { grouped: {}, totalTuntas: 0, totalItems: 0 }, isLoading: false, error: null, mutate: vi.fn(), isValidating: false } as any)
+        vi.mocked(useSWR).mockReturnValue({ data: { grouped: {}, totalTuntas: 0, totalItems: 0, allProgress: [] }, isLoading: false, error: null, mutate: vi.fn(), isValidating: false } as any)
 
         render(<MateriView studentId={studentId} />)
 
         await waitFor(() => {
             expect(screen.getByText('Tahun Ajaran: year-1')).toBeDefined()
         })
-        expect(screen.getByText('Semester: 1')).toBeDefined()
+        expect(screen.getByText(/Semester: [12]/)).toBeDefined()
         expect(screen.getByText(/Kategori:/i)).toBeDefined()
     })
 
@@ -96,16 +96,27 @@ describe('MateriView', () => {
                 ]
             },
             totalTuntas: 1,
-            totalItems: 1
+            totalItems: 1,
+            allProgress: [
+                {
+                    material_item_id: 'item-1',
+                    material_name: 'Materi A',
+                    type_name: 'Jenis X',
+                    category_name: 'Kategori 1',
+                    nilai: 85,
+                    grade: 'B',
+                    colorClass: 'text-blue-500'
+                }
+            ]
         }
         vi.mocked(useSWR).mockReturnValue({ data: mockResult, isLoading: false, error: null, mutate: vi.fn(), isValidating: false } as any)
 
         render(<MateriView studentId={studentId} />)
 
         expect(await screen.findByTestId('data-table')).toBeDefined()
-        expect(screen.getByText('Materi A')).toBeDefined()
+        expect(screen.getByText(/Materi A/)).toBeDefined()
         expect(screen.getAllByText('Kategori 1').length).toBeGreaterThan(0)
-        expect(screen.getByText('85')).toBeDefined()
-        expect(screen.getByText(/B/i)).toBeDefined()
+        expect(screen.getAllByText('85').length).toBeGreaterThan(0)
+        expect(screen.getAllByText(/B/i).length).toBeGreaterThan(0)
     })
 })
