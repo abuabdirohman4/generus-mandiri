@@ -55,9 +55,6 @@ export function canArchiveStudent(
 ): boolean {
   if (!user) return false
 
-  // Check if user has the permission
-  if (!user.permissions?.can_archive_students) return false
-
   // Superadmin can archive any student
   if (user.role === 'superadmin') return true
 
@@ -70,6 +67,9 @@ export function canArchiveStudent(
   if (user.role === 'teacher') {
     return canTeacherAccessStudent(user, student)
   }
+
+  // Check if user has the permission
+  if (!user.permissions?.can_archive_students) return false
 
   // Student role has no permissions
   return false
