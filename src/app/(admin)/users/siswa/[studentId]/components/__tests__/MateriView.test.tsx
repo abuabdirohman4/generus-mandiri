@@ -19,6 +19,18 @@ vi.mock('@/app/(admin)/materi/actions/categories/actions', () => ({
     ])),
 }))
 
+vi.mock('../../../hooks/useMateriMetadata', () => ({
+    useMateriMetadata: vi.fn(() => ({
+        academicYears: [{ id: 'year-1', name: '2024/2025' }],
+        allCategories: [
+            { id: 'cat-1', name: 'Kategori 1', display_order: 1 },
+            { id: 'cat-2', name: 'Kategori 2', display_order: 2 },
+        ],
+        activeYear: { id: 'year-1', name: '2024/2025' },
+        isLoading: false
+    }))
+}))
+
 vi.mock('@/components/form/input/InputFilter', () => ({
     default: ({ label, value }: any) => <div data-testid="input-filter">{label}: {value}</div>
 }))

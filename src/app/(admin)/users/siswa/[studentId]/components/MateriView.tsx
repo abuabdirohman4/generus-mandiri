@@ -144,6 +144,7 @@ export default function MateriView({ studentId }: MateriViewProps) {
         }
     }
 
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
     const isInitializing = academicYears.length === 0 || allCategories.length === 0 || !selectedYearId || isLoadingMetadata
 
     if (isInitializing || (isLoading && (data?.allProgress ?? []).length === 0)) {
@@ -163,46 +164,68 @@ export default function MateriView({ studentId }: MateriViewProps) {
     return (
         <div className="space-y-4 mx-auto px-0 pb-28 md:pb-0">
             {/* Filter Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <InputFilter
-                        id="year-filter"
-                        label="Tahun Ajaran"
-                        value={selectedYearId}
-                        onChange={setSelectedYearId}
-                        options={academicYears}
-                        placeholder="Pilih Tahun"
-                        compact
-                    />
-                    <InputFilter
-                        id="semester-filter"
-                        label="Semester"
-                        value={selectedSemester}
-                        onChange={(v) => setSelectedSemester(v as '1' | '2')}
-                        options={[
-                            { value: '1', label: 'Semester 1' },
-                            { value: '2', label: 'Semester 2' },
-                        ]}
-                        compact
-                    />
-                    <InputFilter
-                        id="category-filter"
-                        label="Kategori"
-                        value={selectedCategory}
-                        onChange={setSelectedCategory}
-                        options={categoryOptions}
-                        placeholder="Semua Kategori"
-                        compact
-                    />
-                    <InputFilter
-                        id="month-filter"
-                        label="Bulan"
-                        value={selectedMonth}
-                        onChange={setSelectedMonth}
-                        options={monthOptions}
-                        placeholder="Semua Bulan"
-                        compact
-                    />
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                <button
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                    <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter Materi</span>
+                    </div>
+                    <svg
+                        className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'max-h-125 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                    <div className="p-4 border-t border-gray-50 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <InputFilter
+                            id="year-filter"
+                            label="Tahun Ajaran"
+                            value={selectedYearId}
+                            onChange={setSelectedYearId}
+                            options={academicYears}
+                            placeholder="Pilih Tahun"
+                            compact
+                        />
+                        <InputFilter
+                            id="semester-filter"
+                            label="Semester"
+                            value={selectedSemester}
+                            onChange={(v) => setSelectedSemester(v as '1' | '2')}
+                            options={[
+                                { value: '1', label: 'Semester 1' },
+                                { value: '2', label: 'Semester 2' },
+                            ]}
+                            compact
+                        />
+                        <InputFilter
+                            id="category-filter"
+                            label="Kategori"
+                            value={selectedCategory}
+                            onChange={setSelectedCategory}
+                            options={categoryOptions}
+                            placeholder="Semua Kategori"
+                            compact
+                        />
+                        <InputFilter
+                            id="month-filter"
+                            label="Bulan"
+                            value={selectedMonth}
+                            onChange={setSelectedMonth}
+                            options={monthOptions}
+                            placeholder="Semua Bulan"
+                            compact
+                        />
+                    </div>
                 </div>
             </div>
 

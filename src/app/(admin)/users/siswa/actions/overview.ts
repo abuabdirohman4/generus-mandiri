@@ -24,6 +24,7 @@ export interface StudentOverviewData {
         semester: PeriodStats
         monthly: PeriodStats
     }
+    academicYearName?: string
 }
 
 export async function getStudentOverview(
@@ -34,11 +35,12 @@ export async function getStudentOverview(
     const year = d.year()
     const month = d.month() + 1
     const semester = month >= 7 ? 1 : 2
+    const activeYear = await getActiveAcademicYear()
+    const academicYearId = activeYear?.id || ''
+    const academicYearName = activeYear?.name || ''
 
     // 1. Get Student Info
     const student = await getStudentInfo(studentId)
-    const activeYear = await getActiveAcademicYear()
-    const academicYearId = activeYear?.id || ''
 
     // 2. Attendance Stats
     // Monthly
@@ -103,6 +105,7 @@ export async function getStudentOverview(
         materi: {
             semester: semesterMateri,
             monthly: monthlyMateri
-        }
+        },
+        academicYearName
     }
 }

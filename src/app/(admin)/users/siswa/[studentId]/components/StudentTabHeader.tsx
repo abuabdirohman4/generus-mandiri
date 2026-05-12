@@ -9,6 +9,7 @@ import { canAccessMonitoring } from '@/lib/accessControl'
 
 interface StudentTabHeaderProps {
     studentId: string
+    onSidebarToggle?: () => void
 }
 
 type TabItem = {
@@ -17,7 +18,7 @@ type TabItem = {
     match: string
 }
 
-export default function StudentTabHeader({ studentId }: StudentTabHeaderProps) {
+export default function StudentTabHeader({ studentId, onSidebarToggle }: StudentTabHeaderProps) {
     const pathname = usePathname()
     const router = useRouter()
     const [loadingHref, setLoadingHref] = useState<string | null>(null)
@@ -52,8 +53,20 @@ export default function StudentTabHeader({ studentId }: StudentTabHeaderProps) {
     }
 
     return (
-        <div className="flex gap-0 border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto no-scrollbar">
-            {tabs.map((tab) => {
+        <div className="flex items-center gap-0 border-b border-gray-200 dark:border-gray-700 mb-6">
+            {onSidebarToggle && (
+                <button
+                    onClick={onSidebarToggle}
+                    className="lg:hidden ml-1 mr-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    aria-label="Buka daftar siswa"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            )}
+            <div className="flex-1 flex gap-0 overflow-x-auto no-scrollbar">
+                {tabs.map((tab) => {
                 const active = isActive(tab)
                 const loading = loadingHref === tab.href
 
@@ -77,6 +90,7 @@ export default function StudentTabHeader({ studentId }: StudentTabHeaderProps) {
                     </Link>
                 )
             })}
+            </div>
         </div>
     )
 }

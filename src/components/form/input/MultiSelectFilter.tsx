@@ -55,9 +55,7 @@ export default function MultiSelectFilter({
 
 
   // Determine styling based on variant and compact mode
-  const containerClass = variant === 'modal' 
-    ? (compact ? 'mb-0' : 'mb-4')
-    : 'mb-6'
+  const containerClass = compact ? 'mb-0' : (variant === 'modal' ? 'mb-4' : 'mb-6')
   
   // Wrapper class for the container
   const wrapperClass = variant === 'modal'
@@ -198,7 +196,7 @@ export default function MultiSelectFilter({
   return (
     <div ref={containerRef} className={`relative ${containerClass} ${className}`}>
       <div className={wrapperClass}>
-        <Label htmlFor={id}>
+        <Label htmlFor={id} className={compact ? "mb-0.5 text-xs" : ""}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </Label>

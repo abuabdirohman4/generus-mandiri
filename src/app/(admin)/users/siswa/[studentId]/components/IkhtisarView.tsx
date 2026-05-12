@@ -40,7 +40,7 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
     if (error) return <div className="p-8 text-center text-red-500">Gagal memuat data overview</div>
     if (!data) return null
 
-    const { student, attendance, materi } = data
+    const { student, attendance, materi, academicYearName } = data
     
     // Choose stats based on mode
     const currentAttendance = viewMode === 'semester' ? attendance.semester : attendance.monthly
@@ -48,6 +48,25 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
     
     const semester = (dayjs().month() + 1) >= 7 ? 1 : 2
     const semesterMonths = getSemesterMonths(semester as 1 | 2)
+
+    const getDisplayedClasses = () => {
+        if (!student?.classes || student.classes.length === 0) return []
+        
+        // If admin, show all classes
+        if (profile?.role === 'admin' || profile?.role === 'superadmin') {
+            return student.classes
+        }
+
+        // If teacher, filter to only classes they teach
+        if (profile?.role === 'teacher' && profile.classes) {
+            const teacherClassIds = profile.classes.map((c: any) => c.id)
+            return student.classes.filter((c: any) => teacherClassIds.includes(c.id))
+        }
+
+        return student.classes
+    }
+
+    const displayedClasses = getDisplayedClasses()
 
     return (
         <div className="space-y-6 mx-auto px-0 pb-28 md:pb-0">
@@ -57,63 +76,45 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                     <ShootingStarIcon className="w-32 h-32" />
                 </div>
                 
-                <div className="flex flex-col md:flex-row md:items-center gap-6 relative z-10">
-                    <div className="w-24 h-24 mx-auto rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-4xl font-black text-brand-600 dark:text-brand-400 shadow-inner">
-                        {student?.name?.charAt(0) ?? '?'}
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-3 mb-2">
-                            <h2 className="text-3xl mx-auto md:mx-0 font-bold text-gray-900 dark:text-white leading-none">
-                                {student?.name ?? '—'}
-                            </h2>
-                            {/* {student?.gender && (
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    student.gender === 'Laki-laki' 
-                                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                                        : 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400'
-                                } border border-current opacity-70`}>
-                                    {student.gender}
-                                </span>
-                            )} */}
+                <div className='md:flex md:justify-between'>
+                    <div className="flex flex-col md:flex-row md:items-center gap-6 relative">
+                        <div className="w-24 h-24 mx-auto rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-4xl font-black text-brand-600 dark:text-brand-400 shadow-inner">
+                            {student?.name?.charAt(0) ?? '?'}
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                             {student?.classes && student.classes.length > 0 ? (
-                                student.classes.map((cls: any) => (
-                                    <span key={cls.id} className="inline-flex items-center gap-1.5 px-3 py-1 mx-auto md:mx-0 rounded-lg text-sm font-medium bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-600">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                                        {cls.name}
+                        <div className="flex-1">
+                            <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                                <h2 className="text-3xl mx-auto text-center md:mx-0 font-bold text-gray-900 dark:text-white leading-none">
+                                    {student?.name ?? '—'}
+                                </h2>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {displayedClasses.length > 0 ? (
+                                    displayedClasses.map((cls: any) => (
+                                        <span key={cls.id} className="inline-flex items-center gap-1.5 px-3 py-1 mx-auto md:mx-0 rounded-lg text-sm font-medium bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-600">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                                            {cls.name}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-sm mx-auto md:mx-0 text-gray-500 dark:text-gray-400 italic text-center md:text-left">
+                                        Belum terdaftar di kelas manapun
                                     </span>
-                                ))
-                             ) : (
-                                <span className="text-sm mx-auto md:mx-auto text-gray-500 dark:text-gray-400 italic">
-                                    Belum terdaftar di kelas manapun
-                                </span>
-                             )}
+                                )}
+                            </div>
                         </div>
                     </div>
-                    
-                    {/* <div className="flex bg-gray-100 dark:bg-gray-900 rounded-xl p-1 self-start md:self-center border border-gray-200 dark:border-gray-700">
-                        <button
-                            onClick={() => setViewMode('semester')}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
-                                viewMode === 'semester'
-                                    ? 'bg-white dark:bg-gray-700 text-brand-600 dark:text-brand-400 shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-                            }`}
-                        >
-                            Semester {semester}
-                        </button>
-                        <button
-                            onClick={() => setViewMode('monthly')}
-                            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
-                                viewMode === 'monthly'
-                                    ? 'bg-white dark:bg-gray-700 text-brand-600 dark:text-brand-400 shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-                            }`}
-                        >
-                            Bulan Ini
-                        </button>
-                    </div> */}
+                    <div className='hidden md:block'>
+                        {viewMode === 'monthly' && (
+                            <div className="text-[10px] text-center font-black uppercase bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2 py-1 rounded tracking-tighter">
+                            {getMonthName(selectedMonth as any)}
+                            </div>
+                        )}
+                        {viewMode === 'semester' && (
+                            <div className="text-[10px] text-center font-black uppercase bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2 py-1 rounded tracking-tighter">
+                               Semester {semester} <span className="mx-1">•</span> {academicYearName}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -128,7 +129,7 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                   >
-                    Semester Ini
+                    Semester
                   </button>
                   <button
                     onClick={() => setViewMode('monthly')}
@@ -137,7 +138,7 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                   >
-                    Bulan Ini
+                    Bulan
                   </button>
                 </div>
               </div>
@@ -156,11 +157,18 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                                 <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Kehadiran Siswa</p>
                             </div>
                         </div>
-                        {viewMode === 'monthly' && (
-                             <div className="text-[10px] font-black uppercase bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-gray-400 tracking-tighter">
-                                {getMonthName(selectedMonth as any)}
-                             </div>
-                        )}
+                        <div className='block md:hidden'>
+                            {viewMode === 'monthly' && (
+                                <div className="text-[10px] text-center font-black uppercase bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2 py-1 rounded tracking-tighter">
+                                    {getMonthName(selectedMonth as any)}
+                                </div>
+                            )}
+                            {viewMode === 'semester' && (
+                                <div className="text-[10px] text-center font-black uppercase bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2 py-1 rounded tracking-tighter">
+                                    Semester {semester} <br /> {academicYearName}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

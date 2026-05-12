@@ -15,6 +15,17 @@ vi.mock('next/navigation', () => ({
     useRouter: vi.fn(() => mockRouter),
 }))
 
+vi.mock('@/stores/userProfileStore', () => ({
+    useUserProfile: vi.fn(() => ({
+        profile: { role: 'superadmin' },
+        isInitialized: true
+    }))
+}))
+
+vi.mock('@/lib/accessControl', () => ({
+    canAccessMonitoring: vi.fn(() => true)
+}))
+
 describe('StudentTabHeader', () => {
     const studentId = 'student-123'
 
