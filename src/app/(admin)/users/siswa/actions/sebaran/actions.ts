@@ -44,6 +44,69 @@ async function getProfileWithClasses(): Promise<UserProfile | null> {
   return { ...profile, classes } as UserProfile
 }
 
+function filterSebaranData(data: SebaranSiswaData, allowedIds: Set<string>): SebaranSiswaData {
+  if (data.level === 'kelas') {
+    const filtered = data.data.filter((k) => allowedIds.has(k.id))
+    return { level: 'kelas', data: filtered }
+  }
+
+  if (data.level === 'kelompok') {
+    const filtered = data.data
+      .map((klp) => {
+        const filteredKelas = klp.kelas.filter((k) => allowedIds.has(k.id))
+        const total_students = filteredKelas.reduce((sum, k) => sum + k.total_students, 0)
+        return { ...klp, kelas: filteredKelas, total_students }
+      })
+      .filter((klp) => klp.kelas.length > 0)
+    return { level: 'kelompok', data: filtered }
+  }
+
+  if (data.level === 'desa') {
+    const filtered = data.data
+      .map((d) => {
+        const filteredKelompok = d.kelompok
+          .map((klp) => {
+            const filteredKelas = klp.kelas.filter((k) => allowedIds.has(k.id))
+            const total_students = filteredKelas.reduce((sum, k) => sum + k.total_students, 0)
+            return { ...klp, kelas: filteredKelas, total_students }
+          })
+          .filter((klp) => klp.kelas.length > 0)
+
+        const total_students = filteredKelompok.reduce((sum, k) => sum + k.total_students, 0)
+        return { ...d, kelompok: filteredKelompok, total_students }
+      })
+      .filter((d) => d.kelompok.length > 0)
+    return { level: 'desa', data: filtered }
+  }
+
+  if (data.level === 'daerah') {
+    const filtered = data.data
+      .map((da) => {
+        const filteredDesa = da.desa
+          .map((d) => {
+            const filteredKelompok = d.kelompok
+              .map((klp) => {
+                const filteredKelas = klp.kelas.filter((k) => allowedIds.has(k.id))
+                const total_students = filteredKelas.reduce((sum, k) => sum + k.total_students, 0)
+                return { ...klp, kelas: filteredKelas, total_students }
+              })
+              .filter((klp) => klp.kelas.length > 0)
+
+            const total_students = filteredKelompok.reduce((sum, k) => sum + k.total_students, 0)
+            return { ...d, kelompok: filteredKelompok, total_students }
+          })
+          .filter((d) => d.kelompok.length > 0)
+
+        const total_students = filteredDesa.reduce((sum, d) => sum + d.total_students, 0)
+        return { ...da, desa: filteredDesa, total_students }
+      })
+      .filter((da) => da.desa.length > 0)
+    return { level: 'daerah', data: filtered }
+  }
+
+  return data
+}
+
 export async function getSebaranSiswa(): Promise<{
   data?: SebaranSiswaData
   stats?: SebaranSiswaStats
@@ -96,6 +159,15 @@ export async function getSebaranSiswa(): Promise<{
         // Admin kelompok: tampil semua kelas di kelompok
         const result = await fetchKelasWithStudentCount(supabase, profile.kelompok_id!)
         data = { level: 'kelas', data: result }
+      }
+    }
+
+    // Apply teacher class restrictions filter
+    if (profile.role === 'teacher') {
+      const { getTeacherAllowedClassIds } = await import('@/lib/accessControlServer')
+      const allowedClassIds = await getTeacherAllowedClassIds(profile.id, profile)
+      if (allowedClassIds instanceof Set && allowedClassIds.size > 0) {
+        data = filterSebaranData(data, allowedClassIds)
       }
     }
 
