@@ -392,22 +392,26 @@ export async function getMateriCumulativeProgress(
 
     const totalUnikSemester = new Set(targets.map((t: any) => t.material_item_id)).size
 
-    // 3. Get total students
+    // 3. Get total students (active enrollment AND active student status)
     const { data: enrollments } = await supabase
         .from('student_enrollments')
-        .select('student_id')
+        .select('student_id, students!inner(status)')
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
         .eq('status', 'active')
+        .eq('students.status', 'active')
     const totalStudents = enrollments?.length || 0
     if (totalStudents === 0) return []
     const studentIds = enrollments!.map(e => e.student_id)
 
-    // 4. Get all progress for this semester (without filtering by month)
+    // 4. Get progress for this semester, filtered to only semester material IDs
+    // (prevents counting progress from other semesters/materials from inflating the chart)
+    const allSemesterMaterialIds = [...new Set(targets.map((t: any) => t.material_item_id as string))]
     const { data: progress } = await supabase
         .from('student_material_progress')
         .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
+        .in('material_item_id', allSemesterMaterialIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
@@ -482,22 +486,25 @@ export async function getMateriMonthlyChart(
 
     if (!targets || targets.length === 0) return []
 
-    // Get students
+    // Get students (active enrollment AND active student status)
     const { data: enrollments } = await supabase
         .from('student_enrollments')
-        .select('student_id')
+        .select('student_id, students!inner(status)')
         .eq('class_id', classId)
         .eq('academic_year_id', academicYearId)
         .eq('status', 'active')
+        .eq('students.status', 'active')
     const totalStudents = enrollments?.length || 0
     if (totalStudents === 0) return []
     const studentIds = enrollments!.map((e: any) => e.student_id)
 
-    // Get all progress semester ini
+    // Get progress for this semester, filtered to only targeted material IDs
+    const allTargetedMaterialIds = [...new Set(targets.map((t: any) => t.material_item_id as string))]
     const { data: progress } = await supabase
         .from('student_material_progress')
         .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
+        .in('material_item_id', allTargetedMaterialIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
@@ -506,23 +513,24 @@ export async function getMateriMonthlyChart(
 
     for (const m of semesterMonths) {
         const monthTargets = targets.filter((t: any) => t.month === m)
-        const monthMaterialIds = [...new Set(monthTargets.map((t: any) => t.material_item_id))]
+        const monthMaterialIds = [...new Set(monthTargets.map((t: any) => t.material_item_id as string))]
 
+        // Rata-rata per-materi (konsisten dengan card dan tabel)
+        // Per materi: berapa persen siswa yang tuntas, lalu dirata-rata antar materi
         let totalPctSum = 0
-        for (const studentId of studentIds) {
-            const siswaCount = (progress || []).filter((p: any) =>
-                p.student_id === studentId &&
-                monthMaterialIds.includes(p.material_item_id) &&
+        let tuntasTotal = 0
+        for (const materialId of monthMaterialIds) {
+            const tuntasCount = (progress || []).filter((p: any) =>
+                p.material_item_id === materialId &&
                 ((p.nilai !== null && p.nilai >= 70) || p.done === true)
             ).length
-            totalPctSum += monthMaterialIds.length > 0
-                ? (siswaCount / monthMaterialIds.length) * 100
-                : 0
+            totalPctSum += totalStudents > 0 ? (tuntasCount / totalStudents) * 100 : 0
+            tuntasTotal += tuntasCount
         }
 
-        const percentage = totalStudents > 0 ? Math.round(totalPctSum / totalStudents) : 0
-        const avgTuntas = totalStudents > 0
-            ? Math.round((totalPctSum / totalStudents / 100) * monthMaterialIds.length)
+        const percentage = monthMaterialIds.length > 0 ? Math.round(totalPctSum / monthMaterialIds.length) : 0
+        const avgTuntas = monthMaterialIds.length > 0 && totalStudents > 0
+            ? Math.round(tuntasTotal / monthMaterialIds.length)
             : 0
 
         result.push({
