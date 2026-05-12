@@ -48,29 +48,24 @@ Cleanup ini mencakup:
 
 ## Task-by-Task Implementation
 
-### Task 1: Buat DB Migration
+### ~~Task 1: DB Migration~~ ✅ SUDAH SELESAI
 
-**TDD**: Tidak ada unit test untuk migration — verifikasi manual dengan `npm run type-check` setelah.
+**Dikerjakan oleh Claude Code via MCP pada 2026-05-12.**
 
-**File**: `supabase/migrations/<timestamp>_remove_meeting_type_code.sql`
+Yang sudah dijalankan:
+1. **Backfill data** — 21 meetings yang belum punya `activity_type_id`:
+   - Semua di-set `activity_type_id = Pengajian (0379597a-e098-4fc3-beef-62327a41a714)`
+   - Semua di-set `activity_level_id = KELOMPOK (8d92b89a-c727-41da-9007-db3904a5eba2)`
+   - 3 meetings dengan `kelompok_ids = NULL` di-populate dari class_ids mereka:
+     - `955d8711` → `kelompok_ids = [Dayeuhkolot (72bfb6b4)]`
+     - `13f80f6f`, `b4866977` → `kelompok_ids = [Barujati (777ba993)]`
+2. **Drop kolom** — `ALTER TABLE meetings DROP COLUMN meeting_type_code`
 
-```bash
-# Cek format timestamp migration yang ada
-ls supabase/migrations/ | tail -5
-```
+Verifikasi konfirmasi:
+- `meeting_type_code`: sudah tidak ada ✅
+- 1866 meetings: semua punya `activity_type_id` dan `activity_level_id` ✅
 
-**Isi migration**:
-```sql
--- Remove legacy meeting_type_code column
--- Activity type is now managed via activity_type_id FK to activity_types table
-ALTER TABLE meetings DROP COLUMN IF EXISTS meeting_type_code;
-```
-
-**Verifikasi**:
-```bash
-# Cek migration file ada
-ls supabase/migrations/ | grep "remove_meeting_type_code"
-```
+**SKIP Task 1 — langsung ke Task 2.**
 
 ---
 

@@ -16,11 +16,9 @@ import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { useMeetingTypes } from '../hooks/useMeetingTypes'
 import Modal from '@/components/ui/modal'
 import { invalidateAllMeetingsCache } from '../utils/cache'
 import { isTeacherClass } from '@/lib/utils/classHelpers'
-import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
 import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
@@ -55,7 +53,6 @@ export default function CreateMeetingModal({
   // For hierarchical teachers (Guru Desa/Daerah): user picks deduplicated class names,
   // selectedClassIds is auto-derived from selectedClassNames × selectedKelompokIds
   const [selectedClassNames, setSelectedClassNames] = useState<string[]>([])
-  const [meetingType, setMeetingType] = useState<string>('')
   const [activityTypeId, setActivityTypeId] = useState<string | null>(null)
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
@@ -73,7 +70,6 @@ export default function CreateMeetingModal({
   const { classes, isLoading: classesLoading } = useClasses()
   const { kelompok } = useKelompok()
   const { profile: userProfile } = useUserProfile()
-  const { availableTypes, isLoading: typesLoading } = useMeetingTypes(userProfile)
   const { settings: formSettings, isLoading: isLoadingSettings } = useMeetingFormSettings(userProfile?.id)
   const { activityTypes: myActivityTypes, isLoading: activityTypesLoading } = useMyActivityTypes()
   const { activityLevels } = useActivityLevels()
@@ -81,7 +77,7 @@ export default function CreateMeetingModal({
 
   // Tambahkan useMemo untuk menambahkan PEMBINAAN jika kelas Pengajar dipilih
   const finalAvailableTypes = useMemo(() => {
-    if (!availableTypes) return availableTypes
+    if (activityTypesLoading) return []
 
     // Check if any selected class is Pengajar
     const hasPengajarClass = selectedClassIds.some(classId => {
@@ -89,16 +85,11 @@ export default function CreateMeetingModal({
       return selectedClass && isTeacherClass(selectedClass)
     })
 
-    // If Pengajar class is selected, ensure PEMBINAAN is always available
-    if (hasPengajarClass && !availableTypes.PEMBINAAN) {
-      return {
-        ...availableTypes,
-        PEMBINAAN: MEETING_TYPES.PEMBINAAN
-      }
-    }
-
-    return availableTypes
-  }, [availableTypes, selectedClassIds, classes])
+    // If Pengajar class is selected, and PEMBINAAN is not in myActivityTypes,
+    // we could potentially add it, but business logic now assumes teacher_activity_types
+    // is the source of truth for teachers. For now, just use myActivityTypes.
+    return myActivityTypes
+  }, [myActivityTypes, activityTypesLoading, selectedClassIds, classes])
 
   // Sort classes by minimum class_master sort_order
   const sortClassesByMasterOrder = (classList: any[]) => {
@@ -462,7 +453,6 @@ export default function CreateMeetingModal({
         topic: meeting.topic || '',
         description: meeting.description || ''
       })
-      setMeetingType(meeting.meeting_type_code || '')
       setActivityTypeId(meeting.activity_type_id || null)
     }
   }, [meeting])
@@ -602,18 +592,17 @@ export default function CreateMeetingModal({
 
   // Determine if meeting type input should be shown
   const shouldShowMeetingTypeInput = useMemo(() => {
-    if (typesLoading || Object.keys(finalAvailableTypes).length === 0) {
+    if (activityTypesLoading || finalAvailableTypes.length === 0) {
       return true // Show by default while loading
     }
 
-    // If only PEMBINAAN is available, all classes are non-sambung
-    const typeKeys = Object.keys(finalAvailableTypes)
-    if (typeKeys.length === 1 && typeKeys[0] === 'PEMBINAAN') {
+    // If only 1 type available and it's PEMBINAAN, could potentially hide
+    if (finalAvailableTypes.length === 1 && finalAvailableTypes[0].code === 'PEMBINAAN') {
       return false
     }
 
     return true
-  }, [finalAvailableTypes, typesLoading])
+  }, [finalAvailableTypes, activityTypesLoading])
 
   // Auto-initialize activityTypeId when DB activity types load (create mode only)
   useEffect(() => {
@@ -623,53 +612,37 @@ export default function CreateMeetingModal({
     if (activityTypeId) return // already set
     const first = myActivityTypes[0]
     setActivityTypeId(first.id)
-    setMeetingType(first.code)
   }, [isOpen, activityTypesLoading, myActivityTypes.length, myActivityTypes[0]?.id])
 
-  // Auto-select meeting type based on available options
+  // Auto-select activity type based on available options
   useEffect(() => {
-    // Don't auto-select in edit mode (meeting type is already set)
-    if (meeting) {
-      return
-    }
+    if (meeting || !isOpen || activityTypesLoading) return
 
-    // Wait for modal to be open and types to be loaded
-    if (!isOpen || typesLoading) {
-      return
-    }
-
-    // If input is hidden, force PEMBINAAN
     if (!shouldShowMeetingTypeInput) {
-      if (meetingType !== 'PEMBINAAN') {
-        setMeetingType('PEMBINAAN')
+      const pembinaan = finalAvailableTypes.find(t => t.code === 'PEMBINAAN')
+      if (pembinaan && activityTypeId !== pembinaan.id) {
+        setActivityTypeId(pembinaan.id)
       }
       return
     }
 
-    // Auto-select logic for when input is shown (only if meetingType is empty)
-    if (!meetingType && Object.keys(finalAvailableTypes).length > 0) {
-      const typeValues = Object.values(finalAvailableTypes)
-
+    if (!activityTypeId && finalAvailableTypes.length > 0) {
       // If only 1 option, auto-select it
-      if (typeValues.length === 1) {
-        setMeetingType(typeValues[0].code)
+      if (finalAvailableTypes.length === 1) {
+        setActivityTypeId(finalAvailableTypes[0].id)
       }
-      // If multiple options and PEMBINAAN exists, default to PEMBINAAN
-      else if (typeValues.length > 1) {
-        const hasPembinaan = typeValues.some(t => t.code === 'PEMBINAAN')
-        const hasAsad = typeValues.some(t => t.code === 'ASAD')
-        const warlob = typeValues.length == 2 && hasAsad && hasPembinaan
-        if (warlob) {
-          setMeetingType('PEMBINAAN')
-        } else if (hasPembinaan) {
-          setMeetingType('SAMBUNG_KELOMPOK')
-        } else {
-          // No PEMBINAAN means Sambung classes, default to SAMBUNG_KELOMPOK
-          setMeetingType('SAMBUNG_KELOMPOK')
+      // Default selection logic
+      else if (finalAvailableTypes.length > 1) {
+        const pembinaan = finalAvailableTypes.find(t => t.code === 'PEMBINAAN')
+        const sambungKelompok = finalAvailableTypes.find(t => t.code === 'SAMBUNG_KELOMPOK')
+        
+        if (pembinaan) {
+          // Default to SAMBUNG_KELOMPOK if available, else PEMBINAAN
+          setActivityTypeId(sambungKelompok?.id || pembinaan.id)
         }
       }
     }
-  }, [isOpen, finalAvailableTypes, typesLoading, shouldShowMeetingTypeInput, meetingType, meeting])
+  }, [isOpen, finalAvailableTypes, activityTypesLoading, shouldShowMeetingTypeInput, activityTypeId, meeting])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -684,13 +657,8 @@ export default function CreateMeetingModal({
       return
     }
 
-    // Validate meeting type (use DB activity type if available, else legacy)
-    if (myActivityTypes.length > 0 && !activityTypeId) {
+    if (!activityTypeId) {
       toast.error('Pilih tipe kegiatan terlebih dahulu')
-      return
-    }
-    if (myActivityTypes.length === 0 && !meetingType) {
-      toast.error('Pilih tipe pertemuan terlebih dahulu')
       return
     }
 
@@ -704,7 +672,6 @@ export default function CreateMeetingModal({
           title: formData.title,
           topic: formData.topic || undefined,
           description: formData.description || undefined,
-          meetingTypeCode: meetingType,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
           studentIds: selectedStudentIds
@@ -741,7 +708,6 @@ export default function CreateMeetingModal({
           title: formData.title,
           topic: formData.topic || undefined,
           description: formData.description || undefined,
-          meetingTypeCode: meetingType,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
           studentIds: selectedStudentIds
@@ -772,7 +738,6 @@ export default function CreateMeetingModal({
       topic: '',
       description: ''
     })
-    setMeetingType('')
     setActivityTypeId(null)
     setSelectedStudentIds([])
     setSelectedGender(null)
@@ -916,9 +881,6 @@ export default function CreateMeetingModal({
                     value={activityTypeId || ''}
                     onChange={(val) => {
                       setActivityTypeId(val || null)
-                      // Sync meetingTypeCode for backward compat
-                      const selected = myActivityTypes.find((t: any) => t.id === val)
-                      if (selected) setMeetingType(selected.code)
                     }}
                     options={myActivityTypes.map((t: any) => ({
                       value: t.id,
@@ -931,24 +893,6 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
-              {/* Meeting Type Selector (legacy, hidden when DB activity types available) */}
-              {formSettings.showMeetingType && myActivityTypes.length === 0 && (
-                <div className="mb-4">
-                  <InputFilter
-                    id="meetingType"
-                    label="Tipe Pertemuan"
-                    value={meetingType}
-                    onChange={setMeetingType}
-                    options={Object.values(finalAvailableTypes).map(type => ({
-                      value: type.code,
-                      label: type.label
-                    }))}
-                    disabled={isSubmitting || typesLoading || Object.keys(finalAvailableTypes).length === 0}
-                    widthClassName="!max-w-full"
-                    className='mb-0!'
-                  />
-                </div>
-              )}
 
               {/* Title Field */}
               {formSettings.showTitle && (

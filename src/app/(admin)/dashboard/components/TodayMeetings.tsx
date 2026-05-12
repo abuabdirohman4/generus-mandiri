@@ -51,9 +51,9 @@ export default function TodayMeetings({ meetings }: TodayMeetingsProps) {
                                     {meeting.title}
                                 </p>
                             </div>
-                            {(meeting.activity_type?.name || meeting.meeting_type_code) && (
+                            {meeting.activity_type?.name && (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    {meeting.activity_type?.name || meeting.meeting_type_code}
+                                    {meeting.activity_type?.name}
                                 </span>
                             )}
                         </div>

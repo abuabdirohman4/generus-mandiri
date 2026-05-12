@@ -47,7 +47,6 @@ describe('Meeting Queries', () => {
         topic: 'Test Topic',
         description: 'Test Description',
         studentIds: ['student-1'],
-        meetingTypeCode: 'regular'
       }
 
       const result = await insertMeeting(mockSupabase, meetingData, 'user-123')
@@ -63,7 +62,6 @@ describe('Meeting Queries', () => {
         topic: 'Test Topic',
         description: 'Test Description',
         student_snapshot: ['student-1'],
-        meeting_type_code: 'regular',
         activity_type_id: null,
         activity_level_id: null
       })

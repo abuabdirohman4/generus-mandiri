@@ -15,7 +15,6 @@ describe('Meeting Validation Functions', () => {
         title: 'Pertemuan 1',
         topic: 'Introduction',
         description: 'First meeting',
-        meetingTypeCode: 'REGULAR',
         kelompokIds: [],
         studentIds: []
       }
@@ -33,7 +32,6 @@ describe('Meeting Validation Functions', () => {
         title: 'Pertemuan 1',
         topic: 'Introduction',
         description: 'First meeting',
-        meetingTypeCode: 'REGULAR',
         kelompokIds: [],
         studentIds: []
       }
@@ -51,7 +49,6 @@ describe('Meeting Validation Functions', () => {
         title: 'Pertemuan 1',
         topic: 'Introduction',
         description: 'First meeting',
-        meetingTypeCode: 'REGULAR',
         kelompokIds: [],
         studentIds: []
       }
@@ -69,7 +66,6 @@ describe('Meeting Validation Functions', () => {
         title: '   ',
         topic: 'Introduction',
         description: 'First meeting',
-        meetingTypeCode: 'REGULAR',
         kelompokIds: [],
         studentIds: []
       }

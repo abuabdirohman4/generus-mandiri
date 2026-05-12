@@ -6,7 +6,6 @@ export interface Meeting {
   description?: string
   class_ids: string[]
   kelompok_ids?: string[]
-  meeting_type_code?: string | null
   activity_type_id?: string | null
   activity_level_id?: string | null
   activity_type?: { id: string; code: string; name: string } | null
@@ -25,7 +24,6 @@ export interface CreateMeetingData {
   title?: string // Optional - UI label shows "Judul Pertemuan (Opsional)"
   topic?: string
   description?: string
-  meetingTypeCode?: string | null
   activityTypeId?: string | null
   activityLevelId?: string | null
   studentIds?: string[]

@@ -211,7 +211,7 @@ const listGroupedClasses = (meeting: any, userProfile: any, classesData: any[], 
     }
 
     // For SAMBUNG_DESA meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
-    if (meeting.meeting_type_code === 'SAMBUNG_DESA') {
+    if (meeting.activity_type?.code === 'SAMBUNG_DESA') {
       classDetails = classDetails.filter((classDetail: any) => {
         // Use rawClassData if available, otherwise use what we have
         const classDataForCheck = classDetail.rawClassData || {
@@ -407,7 +407,7 @@ interface Meeting {
   description?: string
   student_snapshot: string[]
   created_at: string
-  meeting_type_code?: string | null
+  meeting_type_code?: string | null // deprecated
   activity_type_id?: string | null
   activity_level_id?: string | null
   activity_type?: { id: string; code: string; name: string } | null

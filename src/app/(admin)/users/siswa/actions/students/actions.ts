@@ -965,7 +965,7 @@ export interface AttendanceLog {
         title: string
         topic: string | null
         description: string | null
-        meeting_type_code?: string | null
+        meeting_type_code?: string | null // deprecated
         activity_type_id?: string | null
         activity_type?: { id: string; code: string; name: string } | null
         classes?: {

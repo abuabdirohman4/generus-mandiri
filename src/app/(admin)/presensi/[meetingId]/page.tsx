@@ -417,7 +417,7 @@ export default function MeetingAttendancePage() {
       // For SAMBUNG_DESA / Desa-level meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
       const desaLevelId = activityLevels?.find((l: any) => l.code === 'DESA')?.id
       const isDesaLevelMeeting = (desaLevelId && meeting.activity_level_id === desaLevelId) ||
-        (!meeting.activity_level_id && meeting.meeting_type_code === 'SAMBUNG_DESA')
+        (!meeting.activity_level_id && meeting.activity_type?.code === 'SAMBUNG_DESA')
       if (isDesaLevelMeeting) {
         classDetails = classDetails.filter(cls => {
           const classData = classesData.find(c => c.id === cls.id) ||
@@ -472,7 +472,7 @@ export default function MeetingAttendancePage() {
     // For SAMBUNG_DESA / Desa-level meetings, filter to only show eligible classes (exclude Pengajar/PAUD/Caberawit)
     const desaLevelIdAdmin = activityLevels?.find((l: any) => l.code === 'DESA')?.id
     const isDesaLevelMeetingForAdmin = (desaLevelIdAdmin && meeting.activity_level_id === desaLevelIdAdmin) ||
-      (!meeting.activity_level_id && meeting.meeting_type_code === 'SAMBUNG_DESA')
+      (!meeting.activity_level_id && meeting.activity_type?.code === 'SAMBUNG_DESA')
     if (isDesaLevelMeetingForAdmin) {
       classDetails = classDetails.filter(cls => {
         const classData = classesData.find(c => c.id === cls.id) ||

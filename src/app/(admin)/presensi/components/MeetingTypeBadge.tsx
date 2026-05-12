@@ -1,10 +1,7 @@
 'use client'
 
-import { MEETING_TYPES } from '@/lib/constants/meetingTypes'
-
 interface MeetingTypeBadgeProps {
-  meetingTypeCode?: string | null
-  isSambungCapable?: boolean
+  activityType?: { id: string; code: string; name: string } | null
 }
 
 const MEETING_TYPE_COLORS = {
@@ -15,29 +12,15 @@ const MEETING_TYPE_COLORS = {
   SAMBUNG_PUSAT: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
 }
 
-export default function MeetingTypeBadge({ meetingTypeCode, isSambungCapable }: MeetingTypeBadgeProps) {
-  // Don't show if not sambung capable
-  // if (isSambungCapable === false && isHasMultipleClasses === false) {
-  //   return null
-  // }
-
-  // Don't show if no meeting type
-  if (!meetingTypeCode) {
+export default function MeetingTypeBadge({ activityType }: MeetingTypeBadgeProps) {
+  if (!activityType) {
     return null
   }
 
-  const meetingType = Object.values(MEETING_TYPES).find(t => t.code === meetingTypeCode)
-  if (!meetingType) {
-    return null
-  }
-
-  const colorClass = MEETING_TYPE_COLORS[meetingTypeCode as keyof typeof MEETING_TYPE_COLORS] || 
+  const colorClass = MEETING_TYPE_COLORS[activityType.code as keyof typeof MEETING_TYPE_COLORS] || 
     'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
 
   return (
-    // <span className={`inline-flex items-center px-2 py-1 my-2 rounded-full text-xs font-medium ${colorClass}`}>
-    //   {meetingType.label}
-    // </span>
-    <span>{meetingType.label}</span>
+    <span>{activityType.name}</span>
   )
 }

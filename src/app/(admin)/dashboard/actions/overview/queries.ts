@@ -121,7 +121,6 @@ export async function fetchMeetingsForOverview(
       title,
       date,
       class_id,
-      meeting_type_code,
       activity_type_id,
       activity_level_id,
       activity_type:activity_types(id, code, name),
