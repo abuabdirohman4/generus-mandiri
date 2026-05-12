@@ -5,6 +5,8 @@ export interface AggregatedData {
   attendance_rate: number
   meeting_count: number
   student_count: number
+  has_meeting: boolean
+  desa_name?: string // Added for kelompok level
   meeting_ids?: string[] // For debugging/verification
   sort_order?: number
 }
@@ -61,6 +63,7 @@ export function aggregateMonitoringData(
           totalPotential: 0,
           meetingCount: 0,
           studentCount: 0,
+          has_meeting: false,
           meetingIds: new Set<string>(), // Track unique meeting IDs for deduplication
           sort_order: 9999
         }
@@ -75,6 +78,8 @@ export function aggregateMonitoringData(
       if (item.meeting_ids && item.meeting_ids.length > 0) {
         item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
       }
+
+      if (item.has_meeting) acc[entityName].has_meeting = true
 
       // Weighted attendance calculation (use original meeting_count per class for potential)
       const potential = (item.student_count || 0) * item.meeting_count
@@ -96,6 +101,7 @@ export function aggregateMonitoringData(
         : 0,
       meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
       student_count: g.studentCount,
+      has_meeting: g.has_meeting,
       meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
       sort_order: g.sort_order
     }))
@@ -110,8 +116,9 @@ export function aggregateMonitoringData(
   const grouped = monitoringData.reduce((acc, item) => {
     const entityName = item[groupKey]
 
-    // Skip items without entity name or without meetings
-    if (!entityName || !item.has_meeting) {
+    // Skip items without entity name
+    // Allow items without meetings if they have students
+    if (!entityName) {
       return acc;
     }
 
@@ -122,6 +129,8 @@ export function aggregateMonitoringData(
         totalPotential: 0,
         meetingCount: 0,
         studentCount: 0,
+        has_meeting: false,
+        desa_name: comparisonLevel === 'kelompok' ? item.desa_name : undefined,
         meetingIds: new Set<string>() // Track unique meeting IDs for deduplication
       }
     }
@@ -130,6 +139,8 @@ export function aggregateMonitoringData(
     if (item.meeting_ids && item.meeting_ids.length > 0) {
       item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
     }
+
+    if (item.has_meeting) acc[entityName].has_meeting = true
 
     // Weighted attendance calculation (use original meeting_count per class for potential)
     const potential = (item.student_count || 0) * item.meeting_count
@@ -151,6 +162,8 @@ export function aggregateMonitoringData(
       : 0,
     meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
     student_count: g.studentCount,
+    has_meeting: g.has_meeting,
+    desa_name: g.desa_name,
     meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
     sort_order: 9999 // Not used for higher levels
   }))

@@ -172,15 +172,29 @@ export default function ClassMonitoringTable({
         } else {
             // For organizational levels: show entity name + meeting count + student count + kehadiran
             const entityLabel = comparisonLevel === 'kelompok' ? 'Kelompok' :
-                               comparisonLevel === 'desa' ? 'Desa' : 'Daerah';
+                                comparisonLevel === 'desa' ? 'Desa' : 'Daerah';
+
+            const baseOrgColumns = [];
+
+            // Add Desa column for Kelompok view if user is Admin Daerah or Superadmin
+            if (comparisonLevel === 'kelompok' && profile && (isAdminDaerah(profile) || isSuperAdmin(profile) || isTeacherDaerah(profile))) {
+                baseOrgColumns.push({
+                    key: 'desa_name',
+                    label: 'Desa',
+                    sortable: true,
+                    widthMobile: '120px'
+                });
+            }
+
+            baseOrgColumns.push({
+                key: 'name',
+                label: entityLabel,
+                sortable: true,
+                widthMobile: '150px'
+            });
 
             return [
-                {
-                    key: 'name',
-                    label: entityLabel,
-                    sortable: true,
-                    widthMobile: '150px'
-                },
+                ...baseOrgColumns,
                 {
                     key: 'meeting_count',
                     label: 'Pertemuan',
@@ -201,7 +215,7 @@ export default function ClassMonitoringTable({
                 }
             ];
         }
-    }, [filters.comparisonLevel, getOrganizationColumns, showMateriColumn]);
+    }, [filters.comparisonLevel, getOrganizationColumns, showMateriColumn, profile]);
 
     // Transform data based on comparison level
     const tableData = useMemo(() => {
@@ -457,23 +471,24 @@ export default function ClassMonitoringTable({
                                 defaultSortDirection="asc"
                                 searchPlaceholder={searchPlaceholder}
                                 rowClassName={(item) => {
-                                    // Only apply warning styling for class-level view
-                                    if (filters.comparisonLevel === 'class') {
-                                        return (!item.has_meeting || item.attendance_rate === 0)
-                                            ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500'
-                                            : '';
-                                    }
-                                    return '';
+                                    // Apply warning styling if no meetings or 0% attendance but has students
+                                    const hasWarning = (!item.has_meeting || item.attendance_rate === 0) && (item.student_count ?? 0) > 0;
+                                    
+                                    return hasWarning
+                                        ? 'bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500'
+                                        : '';
                                 }}
                             />
 
-                            {/* Legend - only show for class-level view */}
-                            {filters.comparisonLevel === 'class' && (
-                                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                                    <span className="inline-block w-3 h-3 bg-orange-50 border border-orange-200 rounded"></span>
-                                    <span>Kelas belum ada pertemuan atau tingkat kehadiran 0% di periode ini</span>
-                                </div>
-                            )}
+                            {/* Legend - show for all levels if there are warnings */}
+                            <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                                <span className="inline-block w-3 h-3 bg-orange-50 border border-orange-200 rounded"></span>
+                                <span>
+                                    {filters.comparisonLevel === 'class' ? 'Kelas' : 
+                                     filters.comparisonLevel === 'kelompok' ? 'Kelompok' :
+                                     filters.comparisonLevel === 'desa' ? 'Desa' : 'Daerah'} belum ada pertemuan atau tingkat kehadiran 0% di periode ini
+                                </span>
+                            </div>
                         </>
                     )}
                 </div>
