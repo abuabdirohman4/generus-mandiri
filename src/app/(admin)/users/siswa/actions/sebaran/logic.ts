@@ -62,3 +62,45 @@ export function computeStats(data: SebaranSiswaData): SebaranSiswaStats {
 
   return stats
 }
+
+export function sortSebaranData(data: SebaranSiswaData): SebaranSiswaData {
+  if (data.level === 'kelas') {
+    const sorted = [...data.data].sort((a, b) => a.name.localeCompare(b.name))
+    return { level: 'kelas', data: sorted }
+  }
+
+  if (data.level === 'kelompok') {
+    const sorted = [...data.data].map(klp => ({
+      ...klp,
+      kelas: [...klp.kelas].sort((a, b) => a.name.localeCompare(b.name))
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    return { level: 'kelompok', data: sorted }
+  }
+
+  if (data.level === 'desa') {
+    const sorted = [...data.data].map(d => ({
+      ...d,
+      kelompok: [...d.kelompok].map(klp => ({
+        ...klp,
+        kelas: [...klp.kelas].sort((a, b) => a.name.localeCompare(b.name))
+      })).sort((a, b) => a.name.localeCompare(b.name))
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    return { level: 'desa', data: sorted }
+  }
+
+  if (data.level === 'daerah') {
+    const sorted = [...data.data].map(da => ({
+      ...da,
+      desa: [...da.desa].map(d => ({
+        ...d,
+        kelompok: [...d.kelompok].map(klp => ({
+          ...klp,
+          kelas: [...klp.kelas].sort((a, b) => a.name.localeCompare(b.name))
+        })).sort((a, b) => a.name.localeCompare(b.name))
+      })).sort((a, b) => a.name.localeCompare(b.name))
+    })).sort((a, b) => a.name.localeCompare(b.name))
+    return { level: 'daerah', data: sorted }
+  }
+
+  return data
+}

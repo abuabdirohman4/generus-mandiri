@@ -10,7 +10,7 @@ import {
   fetchDaerahWithDesa,
   fetchKelompokByIds,
 } from './queries'
-import { getTopLevelForProfile, computeStats } from './logic'
+import { getTopLevelForProfile, computeStats, sortSebaranData } from './logic'
 import type { SebaranSiswaData, SebaranSiswaStats } from './types'
 import type { UserProfile } from '@/types/user'
 
@@ -171,6 +171,7 @@ export async function getSebaranSiswa(): Promise<{
       }
     }
 
+    data = sortSebaranData(data)
     const stats = computeStats(data)
     return { data, stats }
   } catch (err) {
