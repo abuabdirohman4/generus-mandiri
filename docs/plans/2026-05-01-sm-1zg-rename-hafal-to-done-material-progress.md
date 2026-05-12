@@ -7,7 +7,7 @@ Monitoring materi mencakup berbagai jenis konten (doa, surat, hadis, fiqih, dll)
 berbasis hafalan — ada yang selesai/tidak selesai berdasarkan kriteria lain. Rename ke `done` membuat
 kolom ini generik dan reusable untuk semua jenis materi, konsisten dengan intent boolean-nya.
 
-`student_material_progress` saat ini masih 0 row (belum ada data real) — ini waktu terbaik untuk rename.
+`student_material_progress` saat ini memiliki 53 rows — kolom sudah di-rename via MCP oleh Claude Code pada 2026-05-12. **Task 1 (DB migration) sudah selesai dikerjakan, mulai dari Task 2.**
 
 ---
 
@@ -29,20 +29,21 @@ kolom ini generik dan reusable untuk semua jenis materi, konsisten dengan intent
 
 ---
 
-## Task 1 — DB Migration
+## ~~Task 1 — DB Migration~~ ✅ SUDAH SELESAI
 
-Jalankan via `mcp__generus-mandiri-v2__apply_migration`:
+**Dikerjakan oleh Claude Code via MCP pada 2026-05-12.**
 
+Migration yang sudah dijalankan:
 ```sql
 ALTER TABLE student_material_progress RENAME COLUMN hafal TO done;
 ```
 
-Verifikasi:
-```sql
-SELECT column_name FROM information_schema.columns
-WHERE table_name = 'student_material_progress' AND column_name = 'done';
--- Expected: 1 row
-```
+Verifikasi konfirmasi:
+- Kolom `done`: `boolean`, default `false` ✅
+- Kolom `hafal`: sudah tidak ada ✅
+- 53 rows data tidak terdampak ✅
+
+**SKIP Task 1 — langsung ke Task 2.**
 
 ---
 

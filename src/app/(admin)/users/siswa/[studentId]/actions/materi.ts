@@ -72,14 +72,15 @@ export async function getStudentMateriProgress(
     // 2. Fetch progress records for this student
     const { data: progressData } = await supabase
         .from('student_material_progress')
-        .select('material_item_id, nilai')
+        .select('material_item_id, nilai, done')
         .eq('student_id', studentId)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
     const progressMap = new Map<string, number | null>()
     progressData?.forEach(p => {
-        progressMap.set(p.material_item_id, p.nilai)
+        const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
+        progressMap.set(p.material_item_id, score)
     })
 
     // 3. Combine unique material item IDs (Targets + Progress)

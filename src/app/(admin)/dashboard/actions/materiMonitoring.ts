@@ -193,7 +193,7 @@ export async function getMateriDashboardSummary(
         // 2c: progress
         const { data: progressList } = await supabase
             .from('student_material_progress')
-            .select('student_id, material_item_id, nilai, hafal')
+            .select('student_id, material_item_id, nilai, done')
             .in('student_id', studentIds)
             .in('material_item_id', materialItemIds)
             .eq('academic_year_id', filters.academicYearId)
@@ -214,7 +214,7 @@ export async function getMateriDashboardSummary(
             const siswaCount = (progressList || []).filter((p: any) =>
                 p.student_id === studentId &&
                 materialItemIds.includes(p.material_item_id) &&
-                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+                ((p.nilai !== null && p.nilai >= 70) || p.done === true)
             ).length
             totalPctSum += totalUnikSemester > 0 ? (siswaCount / totalUnikSemester) * 100 : 0
         }

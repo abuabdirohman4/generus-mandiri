@@ -6,9 +6,9 @@ export interface MaterialProgress {
     semester: 1 | 2;
 
     // FLEXIBLE SCORING:
-    hafal?: boolean;  // Quick checkbox mode
+    done?: boolean;   // Quick checkbox mode
     nilai?: number;   // Detailed score mode (0-100)
-    // Display logic: nilai takes priority, fallback to hafal
+    // Display logic: nilai takes priority, fallback to done
 
     notes?: string; // Kolom "Ket"
     completion_date?: string;
@@ -38,7 +38,7 @@ export interface ProgressInput {
     material_item_id: string;
     academic_year_id: string;
     semester: 1 | 2;
-    hafal?: boolean;  // For checkbox mode
+    done?: boolean;   // For checkbox mode
     nilai?: number;   // For score mode (0-100)
     notes?: string;
     completion_date?: string;
@@ -56,7 +56,7 @@ export interface ClassProgressSummary {
 export interface StudentProgressSummary {
     student_id: string;
     student_name: string;
-    total_hafal: number;
+    total_done: number;
     total_belum: number;
     average_score: number; // Average nilai
     percentage: number;
@@ -65,7 +65,7 @@ export interface StudentProgressSummary {
 export interface MaterialProgressSummary {
     material_id: string;
     material_name: string;
-    students_hafal: number;
+    students_done: number;
     students_belum: number;
     average_score: number;
     completion_rate: number;
@@ -77,7 +77,7 @@ export function getDisplayScore(progress: MaterialProgress): number {
     if (progress.nilai !== null && progress.nilai !== undefined) {
         return progress.nilai;
     }
-    return progress.hafal ? 100 : 0;
+    return progress.done ? 100 : 0;
 }
 
 // Helper function to get predikat for rapot

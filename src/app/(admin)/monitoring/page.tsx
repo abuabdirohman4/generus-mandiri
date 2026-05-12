@@ -57,7 +57,7 @@ interface Material {
 interface Progress {
     student_id: string;
     material_item_id: string;
-    hafal?: boolean;
+    done?: boolean;
     nilai?: number;
     notes?: string;
 }
@@ -157,7 +157,7 @@ export default function MonitoringPage() {
             setMonthlyTargetProgress({
                 total_targets: result.targets.length,
                 completed: result.progress.filter(p => {
-                    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.hafal ? 100 : 0);
+                    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0);
                     return score >= 70; // passing score default
                 }).length,
                 percentage: result.percentage
@@ -465,7 +465,7 @@ export default function MonitoringPage() {
                     material_item_id: p.material_item_id,
                     academic_year_id: selectedYearId,
                     semester: selectedSemester,
-                    hafal: p.hafal,
+                    done: p.done,
                     nilai: p.nilai,
                     notes: p.notes
                 }));
@@ -508,7 +508,7 @@ export default function MonitoringPage() {
         });
 
         // 1. Completion: materials that are "Tuntas" (Pass KKM 70 or marked as Hafal)
-        const tuntasCount = studentProgress.filter(p => (p?.nilai !== undefined && p.nilai >= 70) || p?.hafal).length;
+        const tuntasCount = studentProgress.filter(p => (p?.nilai !== undefined && p.nilai >= 70) || p?.done).length;
         const completion = Math.round((tuntasCount / displayedMaterials.length) * 100);
 
         // 2. Average Nilai: only from filled materials

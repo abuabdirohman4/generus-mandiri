@@ -396,7 +396,7 @@ export async function getMonthlyTargetProgress(params: {
   const completed = targetItemIds.filter((itemId: string) => {
     const p = progressMap.get(itemId)
     if (!p) return false
-    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.hafal ? 100 : 0)
+    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
     return score >= passingScore
   }).length
 
@@ -411,7 +411,7 @@ export async function getMonthlyTargetProgress(params: {
 
 /**
  * Get cross-class history: materi belum selesai dari tahun ajaran sebelumnya
- * "Belum selesai" = nilai IS NULL AND hafal = false, OR nilai < passing_score
+ * "Belum selesai" = nilai IS NULL AND done = false, OR nilai < passing_score
  */
 export async function getCrossClassHistory(
   studentId: string,
@@ -447,8 +447,8 @@ export async function getCrossClassHistory(
 
   // Filter: only incomplete (null/false AND below passing score)
   const incomplete = allProgress.filter((p: any) => {
-    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.hafal ? 100 : 0)
-    return (!p.hafal && p.nilai === null) || score < passingScore
+    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
+    return (!p.done && p.nilai === null) || score < passingScore
   })
 
   return incomplete.map((p: any) => ({
@@ -506,7 +506,7 @@ export async function getClassMonthlyTargetSummary(params: {
   // Get all progress for these students + target items
   const { data: progress } = await supabase
     .from('student_material_progress')
-    .select('student_id, material_item_id, nilai, hafal')
+    .select('student_id, material_item_id, nilai, done')
     .in('student_id', studentIds)
     .in('material_item_id', targetItemIds)
     .eq('academic_year_id', params.academicYearId)
@@ -521,7 +521,7 @@ export async function getClassMonthlyTargetSummary(params: {
     const completed = targetItemIds.filter((itemId: string) => {
       const p = progressMap.get(itemId)
       if (!p) return false
-      const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.hafal ? 100 : 0)
+      const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
       return score >= passingScore
     }).length
 

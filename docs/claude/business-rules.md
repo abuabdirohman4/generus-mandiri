@@ -257,6 +257,16 @@ const canHardDelete = userProfile?.role === 'superadmin' // ONLY superadmin
 
 **Testing**: All permission functions have 100% test coverage. See `src/lib/__tests__/studentPermissions.test.ts` for examples.
 
+## Material Progress Monitoring
+
+Monitoring progress for materials (student_material_progress table) supports flexible scoring:
+
+- **done (boolean)**: Quick completion flag for any material type (renamed from `hafal`)
+- **nilai (number)**: Detailed score (0-100)
+- **Flexible Scoring Logic**: `nilai` takes priority if available, otherwise falls back to `done` (100 if true, 0 if false).
+- **Passing Score**: Default is 70 for calculation purposes.
+- **Academic Context**: Progress is tracked per student, material item, academic year, and semester.
+
 ## Meeting Types & Class Eligibility
 
 ### Available Meeting Types

@@ -139,7 +139,7 @@ export async function fetchMateriReport(
     // Step 5: Get progress for all students × all table material items
     const { data: progress } = await supabase
         .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, hafal')
+        .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
         .in('material_item_id', filteredTableItemIds)
         .eq('academic_year_id', academicYearId)
@@ -159,7 +159,7 @@ export async function fetchMateriReport(
 
         // Tuntas if Nilai >= 70 OR marked as Hafal
         const tuntasCount = studentProgressList.filter(p =>
-            (p.nilai !== null && p.nilai >= 70) || p.hafal === true
+            (p.nilai !== null && p.nilai >= 70) || p.done === true
         ).length
 
         const nilaiList = studentProgressList
@@ -193,7 +193,7 @@ export async function fetchMateriReport(
             const siswaCount = (progress || []).filter((p: any) =>
                 p.student_id === studentId &&
                 materialItemIds.includes(p.material_item_id) &&
-                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+                ((p.nilai !== null && p.nilai >= 70) || p.done === true)
             ).length
             totalPctSum += (siswaCount / totalUnikSemester) * 100
         }
@@ -321,7 +321,7 @@ export async function fetchMateriReportBySiswa(
     // Step 3: Get progress per student
     const { data: progressList } = await supabase
         .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, hafal')
+        .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
         .in('material_item_id', materialItemIds)
         .eq('academic_year_id', filters.academicYearId)
@@ -341,7 +341,7 @@ export async function fetchMateriReportBySiswa(
         
         // Tuntas if Nilai >= 70 OR marked as Hafal
         const tuntasCount = studentProgress.filter(p => 
-            (p.nilai !== null && p.nilai >= 70) || p.hafal === true
+            (p.nilai !== null && p.nilai >= 70) || p.done === true
         ).length
 
         const nilaiList = studentProgress
@@ -406,7 +406,7 @@ export async function getMateriCumulativeProgress(
     // 4. Get all progress for this semester (without filtering by month)
     const { data: progress } = await supabase
         .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, hafal')
+        .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
@@ -435,7 +435,7 @@ export async function getMateriCumulativeProgress(
                 const p = (progress || []).find((p: any) =>
                     p.student_id === studentId && p.material_item_id === materialId
                 )
-                return p && ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+                return p && ((p.nilai !== null && p.nilai >= 70) || p.done === true)
             }).length
             totalPctSum += totalUnikSemester > 0
                 ? (siswaCount / totalUnikSemester) * 100
@@ -496,7 +496,7 @@ export async function getMateriMonthlyChart(
     // Get all progress semester ini
     const { data: progress } = await supabase
         .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, hafal')
+        .select('student_id, material_item_id, nilai, done')
         .in('student_id', studentIds)
         .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
@@ -513,7 +513,7 @@ export async function getMateriMonthlyChart(
             const siswaCount = (progress || []).filter((p: any) =>
                 p.student_id === studentId &&
                 monthMaterialIds.includes(p.material_item_id) &&
-                ((p.nilai !== null && p.nilai >= 70) || p.hafal === true)
+                ((p.nilai !== null && p.nilai >= 70) || p.done === true)
             ).length
             totalPctSum += monthMaterialIds.length > 0
                 ? (siswaCount / monthMaterialIds.length) * 100
