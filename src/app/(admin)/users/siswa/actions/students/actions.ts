@@ -309,8 +309,27 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             // When no classId filter: scope is already applied via daerah/desa/kelompok above.
             // Post-fetch filtering by allowedClassIdsSet is done below after the query.
 
-            const { data: students, error } = await studentsQuery
-            if (error) throw error
+            // Fetch in batches to bypass Supabase 1000 row limit
+            let allStudents: any[] = []
+            let page = 0
+            const PAGE_SIZE = 1000
+            let hasMore = true
+
+            while (hasMore) {
+                const { data, error: fetchError } = await studentsQuery
+                    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+                
+                if (fetchError) throw fetchError
+                if (!data || data.length === 0) {
+                    hasMore = false
+                } else {
+                    allStudents = [...allStudents, ...data]
+                    hasMore = data.length === PAGE_SIZE
+                    page++
+                }
+            }
+
+            const students = allStudents
 
             // Post-fetch: filter by class master restriction if no classId was provided
             // (when classId was provided, filtering was already applied above via .in())
