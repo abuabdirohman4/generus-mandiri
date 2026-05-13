@@ -25,7 +25,10 @@ export function useKelasPage() {
     closeKelompokModal,
     openDeleteKelompokConfirm,
     closeDeleteKelompokConfirm,
-    setFilters
+    setFilters,
+    isBatchStandardModalOpen,
+    openBatchStandardModal,
+    closeBatchStandardModal
   } = useKelasStore()
 
   // Filter classes based on selected organisasi
@@ -63,6 +66,9 @@ export function useKelasPage() {
     closeModal: closeKelompokModal,
     openDeleteConfirm: openDeleteKelompokConfirm,
     closeDeleteConfirm: closeDeleteKelompokConfirm,
-    setFilters
+    setFilters,
+    isBatchStandardModalOpen,
+    openBatchStandardModal,
+    closeBatchStandardModal
   }
 }

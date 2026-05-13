@@ -60,17 +60,6 @@ export default function ClassesKelompokTab() {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Kelas Kelompok
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Kelola implementasi kelas per kelompok
-          </p>
-        </div>
-      </div>
 
       {/* Data Filter - hidden for Admin Kelompok */}
       {userProfile && !isAdminKelompok(userProfile) && (
@@ -161,6 +150,7 @@ export default function ClassesKelompokTab() {
           onSuccess={mutate}
         />
       )}
+
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

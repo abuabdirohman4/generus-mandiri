@@ -13,6 +13,11 @@ interface KelasState {
   editingMaster: ClassMaster | null
   deleteMasterConfirm: { isOpen: boolean; master: ClassMaster | null }
   
+  // Batch standard modal
+  isBatchStandardModalOpen: boolean
+  openBatchStandardModal: () => void
+  closeBatchStandardModal: () => void
+  
   // Filter states
   filters: {
     daerah: string[]
@@ -49,6 +54,11 @@ export const useKelasStore = create<KelasState>((set) => ({
   isMasterModalOpen: false,
   editingMaster: null,
   deleteMasterConfirm: { isOpen: false, master: null },
+  
+  // Batch standard actions
+  isBatchStandardModalOpen: false,
+  openBatchStandardModal: () => set({ isBatchStandardModalOpen: true }),
+  closeBatchStandardModal: () => set({ isBatchStandardModalOpen: false }),
   
   filters: { daerah: [], desa: [], kelompok: [], kelas: [] },
   

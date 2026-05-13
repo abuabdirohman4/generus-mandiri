@@ -8,6 +8,8 @@ import ClassMastersTab from './components/ClassMastersTab';
 import ClassesKelompokTab from './components/ClassesKelompokTab';
 import Button from '@/components/ui/button/Button';
 import { useRouter } from 'next/navigation';
+import { useKelas } from '@/hooks/useKelas';
+import BatchStandardKelasModal from './components/BatchStandardKelasModal';
 
 type TabType = 'masters' | 'kelompok';
 
@@ -24,7 +26,14 @@ export default function KelasPage() {
   const [activeTab, setActiveTab] = useState<TabType>('kelompok');
   
   // Get store actions for buttons
-  const { openCreateKelompokModal, openCreateMasterModal } = useKelasStore();
+  const { 
+    openCreateKelompokModal, 
+    openCreateMasterModal, 
+    isBatchStandardModalOpen,
+    openBatchStandardModal,
+    closeBatchStandardModal
+  } = useKelasStore();
+  const { mutate } = useKelas();
   
   const tabs = [
     { id: 'kelompok', label: 'Kelas' },
@@ -75,14 +84,18 @@ export default function KelasPage() {
                 Kelola kelas di setiap kelompok
               </p>
             </div>
-            {canShowButton() && (
-              <Button
-                onClick={handleCreateClick}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {getButtonText()}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {canShowButton() && activeTab === 'kelompok' && (
+                <Button variant="outline" onClick={openBatchStandardModal}>
+                  Kelas Standar
+                </Button>
+              )}
+              {canShowButton() && (
+                <Button variant="primary" onClick={handleCreateClick}>
+                  {getButtonText()}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -108,6 +121,15 @@ export default function KelasPage() {
         {/* Content */}
         {activeTab === 'masters' && <ClassMastersTab />}
         {activeTab === 'kelompok' && <ClassesKelompokTab />}
+
+        {/* Batch Modal */}
+        {isBatchStandardModalOpen && (
+          <BatchStandardKelasModal
+            isOpen={isBatchStandardModalOpen}
+            onClose={() => { closeBatchStandardModal(); mutate() }}
+            onSuccess={mutate}
+          />
+        )}
       </div>
     </div>
   );
