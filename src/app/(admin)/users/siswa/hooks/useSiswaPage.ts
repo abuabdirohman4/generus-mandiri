@@ -84,35 +84,47 @@ export function useSiswaPage() {
   )
 
   // Handlers
-  const handleCreateStudent = useCallback(async (formData: FormData) => {
+  const handleCreateStudent = useCallback(async (formData: FormData): Promise<boolean> => {
     try {
       setSubmitting(true)
-      await createStudentMutation(formData)
-      await mutateStudents() // Await revalidation before closing
+      const result = await createStudentMutation(formData)
+      if (result && !result.success) {
+        toast.error(result.message || 'Gagal menambahkan siswa')
+        return false
+      }
+      await mutateStudents()
       toast.success('Siswa berhasil ditambahkan')
       closeModal()
+      return true
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
       toast.error(errorMessage)
       console.error('Error creating student:', error)
+      return false
     } finally {
       setSubmitting(false)
     }
   }, [createStudentMutation, mutateStudents, closeModal, setSubmitting])
 
-  const handleUpdateStudent = useCallback(async (formData: FormData) => {
-    if (!selectedStudent) return
+  const handleUpdateStudent = useCallback(async (formData: FormData): Promise<boolean> => {
+    if (!selectedStudent) return false
 
     try {
       setSubmitting(true)
-      await updateStudentMutation({ studentId: selectedStudent.id, formData })
-      await mutateStudents() // Await revalidation before closing
+      const result = await updateStudentMutation({ studentId: selectedStudent.id, formData })
+      if (result && !result.success) {
+        toast.error(result.message || 'Gagal mengupdate siswa')
+        return false
+      }
+      await mutateStudents()
       toast.success('Siswa berhasil diupdate')
       closeModal()
+      return true
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'
       toast.error(errorMessage)
       console.error('Error updating student:', error)
+      return false
     } finally {
       setSubmitting(false)
     }
@@ -143,11 +155,11 @@ export function useSiswaPage() {
     }
   }, [deleteStudentMutation, mutateStudents])
 
-  const handleSubmit = useCallback(async (formData: FormData) => {
+  const handleSubmit = useCallback(async (formData: FormData): Promise<boolean> => {
     if (modalMode === 'create') {
-      await handleCreateStudent(formData)
+      return handleCreateStudent(formData)
     } else {
-      await handleUpdateStudent(formData)
+      return handleUpdateStudent(formData)
     }
   }, [modalMode, handleCreateStudent, handleUpdateStudent])
 

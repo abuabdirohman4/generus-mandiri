@@ -39,7 +39,7 @@ interface StudentModalProps {
   daerah?: DaerahBase[]
   desa?: DesaBase[]
   kelompok?: KelompokWithNames[]
-  onSubmit: (formData: FormData) => Promise<void>
+  onSubmit: (formData: FormData) => Promise<boolean>
   submitting: boolean
 }
 
@@ -283,8 +283,8 @@ export default function StudentModal({
       formDataObj.append('classId', formData.classId)
     }
 
-    await onSubmit(formDataObj)
-    handleClose()
+    const success = await onSubmit(formDataObj)
+    if (success) handleClose()
   }
 
   return (

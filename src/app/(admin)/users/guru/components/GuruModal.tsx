@@ -517,22 +517,43 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
       };
 
       if (guru) {
-        await updateTeacher(guru.id, submitData);
-        await updateTeacherClasses(guru.id, formData.classIds);
-        
+        const updateResult = await updateTeacher(guru.id, submitData);
+        if (!updateResult.success) {
+          setGeneralError(updateResult.message || 'Gagal memperbarui guru');
+          return;
+        }
+        const classResult = await updateTeacherClasses(guru.id, formData.classIds);
+        if (!classResult.success) {
+          setGeneralError(classResult.message || 'Gagal memperbarui kelas guru');
+          return;
+        }
         if (teacherLevel === 'desa' || teacherLevel === 'daerah') {
-          await updateTeacherClassMasters(guru.id, formData.classMasterIds);
+          const masterResult = await updateTeacherClassMasters(guru.id, formData.classMasterIds);
+          if (!masterResult.success) {
+            setGeneralError(masterResult.message || 'Gagal memperbarui class master guru');
+            return;
+          }
         } else {
           await updateTeacherClassMasters(guru.id, []);
         }
       } else {
         const result = await createTeacher(submitData);
-        if (result.teacher?.id) {
-          if (formData.classIds.length > 0) {
-            await updateTeacherClasses(result.teacher.id, formData.classIds);
+        if (!result.success || !result.teacher?.id) {
+          setGeneralError(result.message || 'Gagal membuat guru');
+          return;
+        }
+        if (formData.classIds.length > 0) {
+          const classResult = await updateTeacherClasses(result.teacher.id, formData.classIds);
+          if (!classResult.success) {
+            setGeneralError(classResult.message || 'Gagal mengatur kelas guru');
+            return;
           }
-          if ((teacherLevel === 'desa' || teacherLevel === 'daerah') && formData.classMasterIds.length > 0) {
-            await updateTeacherClassMasters(result.teacher.id, formData.classMasterIds);
+        }
+        if ((teacherLevel === 'desa' || teacherLevel === 'daerah') && formData.classMasterIds.length > 0) {
+          const masterResult = await updateTeacherClassMasters(result.teacher.id, formData.classMasterIds);
+          if (!masterResult.success) {
+            setGeneralError(masterResult.message || 'Gagal mengatur class master guru');
+            return;
           }
         }
       }

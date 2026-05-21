@@ -499,7 +499,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
         const { data: profile } = await supabase
             .from('profiles')
-            .select('role, teacher_classes(class_id), desa_id, kelompok_id')
+            .select('role, teacher_classes(class_id), desa_id, kelompok_id, daerah_id')
             .eq('id', user.id)
             .single()
 
@@ -554,10 +554,12 @@ export async function updateStudent(studentId: string, formData: FormData) {
         }
 
         if (profile.role === 'teacher') {
-            const teacherClassIds = profile.teacher_classes?.map((tc: any) => tc.class_id) || []
-            const invalidClasses = classIds.filter(id => !teacherClassIds.includes(id))
-            if (invalidClasses.length > 0) {
-                throw new Error('Anda hanya dapat mengupdate siswa ke kelas yang Anda ajarkan')
+            const allowedClassIds = await getTeacherAllowedClassIds(user.id, profile)
+            if (allowedClassIds !== null) {
+                const invalidClasses = classIds.filter(id => !allowedClassIds.has(id))
+                if (invalidClasses.length > 0) {
+                    return { success: false, message: 'Anda hanya dapat mengupdate siswa ke kelas yang Anda ajarkan' }
+                }
             }
         }
 

@@ -10,13 +10,19 @@ import {
     updateStudentBiodata,
     createStudent,
     deleteStudent,
+    updateStudent,
 } from '../actions'
+import * as accessControlServer from '@/lib/accessControlServer'
 
 vi.mock('@/lib/supabase/server', () => ({
     createClient: vi.fn(),
     createAdminClient: vi.fn(),
 }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/lib/accessControlServer', () => ({
+    getTeacherAllowedClassIds: vi.fn(),
+    getCurrentUserProfile: vi.fn(),
+}))
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
@@ -395,5 +401,79 @@ describe('deleteStudent', () => {
         expect(result.success).toBe(true)
         expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
         expect(revalidatePath).toHaveBeenCalledWith('/presensi')
+    })
+})
+
+// ─── updateStudent — hierarchical teacher (guru desa) ────────────────────────
+
+describe('updateStudent — guru desa class permission', () => {
+    const getTeacherAllowedClassIds = vi.mocked(accessControlServer.getTeacherAllowedClassIds)
+
+    function makeGuruDesaSupabase() {
+        const profile = {
+            role: 'teacher',
+            teacher_classes: [], // no direct assignments — hierarchical teacher
+            desa_id: 'd1',
+            kelompok_id: null,
+            daerah_id: 'da1',
+        }
+        return {
+            auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'guru-1' } }, error: null }) },
+            from: vi.fn((table: string) => {
+                if (table === 'profiles') return makeQueryBuilder({ data: profile, error: null })
+                return makeQueryBuilder({ data: null, error: null })
+            }),
+        }
+    }
+
+    function makeFormData(classId: string) {
+        const fd = new FormData()
+        fd.append('name', 'Budi')
+        fd.append('gender', 'Laki-laki')
+        fd.append('classId', classId)
+        return fd
+    }
+
+    it('allows guru desa to update student in a class within their desa scope', async () => {
+        vi.mocked(getTeacherAllowedClassIds).mockResolvedValue(new Set(['c1', 'c2']))
+        const mockSupabase = makeGuruDesaSupabase()
+        const mockAdminClient = {
+            from: vi.fn((table: string) => {
+                if (table === 'students') return makeQueryBuilder({ data: { id: 's1', name: 'Budi', gender: 'Laki-laki', class_id: 'c1' }, error: null })
+                return makeQueryBuilder({ data: null, error: null })
+            }),
+        }
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+        vi.mocked(createAdminClient).mockResolvedValue(mockAdminClient as any)
+
+        const result = await updateStudent('s1', makeFormData('c1'))
+        expect(result.success).toBe(true)
+    })
+
+    it('blocks guru desa from updating student to a class outside their desa scope', async () => {
+        vi.mocked(getTeacherAllowedClassIds).mockResolvedValue(new Set(['c1', 'c2']))
+        const mockSupabase = makeGuruDesaSupabase()
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+        vi.mocked(createAdminClient).mockResolvedValue(mockSupabase as any)
+
+        const result = await updateStudent('s1', makeFormData('c-other'))
+        expect(result.success).toBe(false)
+        expect(result.message).toContain('kelas yang Anda ajarkan')
+    })
+
+    it('allows guru desa with null allowedClassIds (no class master restrictions) to update any class in scope', async () => {
+        vi.mocked(getTeacherAllowedClassIds).mockResolvedValue(null)
+        const mockSupabase = makeGuruDesaSupabase()
+        const mockAdminClient = {
+            from: vi.fn((table: string) => {
+                if (table === 'students') return makeQueryBuilder({ data: { id: 's1', name: 'Budi', gender: 'Laki-laki', class_id: 'c-any' }, error: null })
+                return makeQueryBuilder({ data: null, error: null })
+            }),
+        }
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+        vi.mocked(createAdminClient).mockResolvedValue(mockAdminClient as any)
+
+        const result = await updateStudent('s1', makeFormData('c-any'))
+        expect(result.success).toBe(true)
     })
 })
