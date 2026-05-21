@@ -878,11 +878,36 @@ export async function createStudentsBatch(
 
         const { data: classData, error: classError } = await supabase
             .from('classes')
-            .select('id, name')
+            .select('id, name, kelompok_id')
             .eq('id', classId)
             .single()
 
         if (classError || !classData) throw new Error('Kelas tidak ditemukan')
+
+        // Resolve kelompok hierarchy from selected class (needed for guru desa whose profile.kelompok_id is null)
+        let kelompokData: any = null
+        if (classData.kelompok_id) {
+            const { data: kData } = await supabase
+                .from('kelompok')
+                .select(`
+                    id,
+                    desa_id,
+                    desa:desa_id(
+                        id,
+                        daerah_id,
+                        daerah:daerah_id(id)
+                    )
+                `)
+                .eq('id', classData.kelompok_id)
+                .single()
+            kelompokData = kData
+        }
+
+        const hierarchy = buildStudentHierarchy(
+            { kelompok_id: profile.kelompok_id, desa_id: profile.desa_id, daerah_id: profile.daerah_id, role: profile.role },
+            classData.kelompok_id || undefined,
+            kelompokData || undefined
+        )
 
         const validStudents = students.filter(s => s.name.trim() !== '')
 
@@ -892,9 +917,9 @@ export async function createStudentsBatch(
             name: s.name.trim(),
             gender: s.gender,
             class_id: classId,
-            kelompok_id: profile.kelompok_id,
-            desa_id: profile.desa_id,
-            daerah_id: profile.daerah_id
+            kelompok_id: hierarchy.kelompok_id,
+            desa_id: hierarchy.desa_id,
+            daerah_id: hierarchy.daerah_id
         }))
 
         // Batch insert (Layer 1)

@@ -50,9 +50,9 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
     kelas: [] as string[]
   })
 
-  // Auto-select first class for teachers
+  // Auto-select only for teacher kelompok with exactly 1 assigned class
   useEffect(() => {
-    if (userProfile?.role === 'teacher' && userProfile.classes?.[0] && !selectedClassId) {
+    if (userProfile?.role === 'teacher' && userProfile.classes?.length === 1 && !selectedClassId) {
       setSelectedClassId(userProfile.classes[0].id)
     }
   }, [userProfile, selectedClassId, setSelectedClassId])
@@ -187,8 +187,9 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
           }))}
           allOptionLabel="Pilih kelas"
           widthClassName="!max-w-full"
+          disabled={!kelompokReady}
         />
-        {userProfile?.role === 'teacher' && (
+        {kelompokReady && userProfile?.role === 'teacher' && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Kelas otomatis dipilih sesuai akun Anda
           </p>
