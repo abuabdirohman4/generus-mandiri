@@ -14,7 +14,7 @@ describe('fetchMateriReportBySiswa', () => {
             academicYearId: 'yr-1',
             semester: 1
         })
-        expect(result).toEqual([])
+        expect(result).toEqual({ success: true, data: [] })
     })
 
     it('calculates percentage correctly', () => {
@@ -70,14 +70,14 @@ describe('getMateriCumulativeProgress', () => {
             viewMode: 'per_siswa'
         })
 
-        expect(result).toHaveLength(6)
+        expect((result as any).data).toHaveLength(6)
 
         // Month 7:
         // Targets: ['m1'] (akumulasi), Total Unik Semester: 2 (m1, m2)
         // s1: tuntas m1 (1/2 = 50%), s2: tuntas 0 (0/2 = 0%)
         // Average pct: (50 + 0) / 2 = 25%
         // Avg tuntas: round(25/100 * 2) = 0.5 -> 1
-        expect(result[0]).toMatchObject({
+        expect((result as any).data[0]).toMatchObject({
             month: 7,
             target_count: 2,
             tuntas_count: 1,

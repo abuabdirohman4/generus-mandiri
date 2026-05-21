@@ -50,12 +50,12 @@ describe('validateStudentData', () => {
 describe('transformStudentsData', () => {
     it('returns empty array for null input', async () => {
         const result = await transformStudentsData(null as any)
-        expect(result).toEqual([])
+        expect(result).toEqual({ success: true, data: [] })
     })
 
     it('returns empty array for non-array input', async () => {
         const result = await transformStudentsData('invalid' as any)
-        expect(result).toEqual([])
+        expect(result).toEqual({ success: true, data: [] })
     })
 
     it('filters out null/undefined entries', async () => {
@@ -66,7 +66,7 @@ describe('transformStudentsData', () => {
             { id: 's2', name: 'Siti', student_classes: [] },
         ]
         const result = await transformStudentsData(input as any)
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
         expect(result.map(s => s.id)).toEqual(['s1', 's2'])
     })
 

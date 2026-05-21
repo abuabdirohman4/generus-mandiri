@@ -176,11 +176,11 @@ describe('deduplicateLogsForCombined', () => {
     // Minimal mock setup - no actual DB calls since logic is pure
     it('returns empty array when no class IDs provided', () => {
         const result = deduplicateLogsForCombined([], new Map(), [], new Set())
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 
     it('returns empty array when no logs provided', () => {
         const result = deduplicateLogsForCombined([], new Map(), ['c1'], new Set(['s1']))
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 })

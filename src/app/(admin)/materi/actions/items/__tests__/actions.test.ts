@@ -180,7 +180,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAvailableClassMasters()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('throws error when fetch fails', async () => {
@@ -216,7 +216,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAllClasses()
 
-      expect(result).toHaveLength(2)
+      expect((result as any).data).toHaveLength(2)
       expect(result).toEqual(mappedClasses)
       expect(filterCaberawitClasses).toHaveBeenCalledWith(rawClasses)
     })
@@ -231,7 +231,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAllClasses()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('calls filterCaberawitClasses with empty array when data is null', async () => {
@@ -243,7 +243,7 @@ describe('Materi Items Actions (Layer 3)', () => {
       const result = await getAllClasses()
 
       expect(filterCaberawitClasses).toHaveBeenCalledWith([])
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
   })
 
@@ -300,7 +300,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getMaterialItems('type-1')
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('throws error when fetch fails', async () => {

@@ -105,7 +105,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
         }
       } else {
         // Load data for class view - all 17 classes + items with mappings
-        const [categoriesData, typesData, classesData, itemsData] = await Promise.all([
+        const [categoriesData, typesData, classesResult, itemsData] = await Promise.all([
           getMaterialCategories(),
           getMaterialTypes(),
           getAllClasses(),
@@ -113,7 +113,12 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
         ]);
         setCategories(categoriesData);
         setTypes(typesData);
-        setClasses(classesData);
+        if (classesResult.success) {
+          setClasses(classesResult.data);
+        } else {
+          toast.error(classesResult.message || 'Gagal memuat daftar kelas');
+          setClasses([]);
+        }
         setItems(itemsData);
         if (itemsData.length > 0) {
           const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));

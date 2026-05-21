@@ -23,14 +23,15 @@ import { logActivity } from '@/lib/activityLogger'
 /**
  * Get class assignments for a specific teacher
  */
-export async function getTeacherClasses(teacherId: string) {
+export async function getTeacherClasses(teacherId: string): Promise<{ success: boolean; data: any[]; message?: string }> {
     try {
         const supabase = await createClient()
         const { data, error } = await fetchTeacherClasses(supabase, teacherId)
         if (error) throw error
-        return mapTeacherClassesToResult(data || [])
+        return { success: true, data: mapTeacherClassesToResult(data || []) }
     } catch (error) {
-        throw handleApiError(error, 'memuat data', 'Gagal memuat kelas guru')
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat kelas guru')
+        return { success: false, message: errorInfo.message, data: [] }
     }
 }
 
@@ -88,7 +89,8 @@ export async function updateTeacherClasses(teacherId: string, classIds: string[]
 
         return { success: true }
     } catch (error) {
-        throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate kelas guru')
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate kelas guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -117,7 +119,7 @@ export async function assignTeacherToClass(teacherId: string, classId: string) {
 
         return { success: true }
     } catch (error) {
-        console.error('Error assigning teacher to class:', error)
-        throw handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelas')
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelas')
+        return { success: false, message: errorInfo.message }
     }
 }

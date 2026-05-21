@@ -82,8 +82,8 @@ export async function createActivityType(data: CreateActivityTypeData) {
 
     return { success: true }
   } catch (error) {
-    console.error('Error creating activity type:', error)
-    throw handleApiError(error, 'menyimpan data', 'Gagal membuat tipe kegiatan')
+    const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat tipe kegiatan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -124,8 +124,8 @@ export async function updateActivityType(id: string, data: UpdateActivityTypeDat
 
     return { success: true }
   } catch (error) {
-    console.error('Error updating activity type:', error)
-    throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate tipe kegiatan')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate tipe kegiatan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -173,8 +173,8 @@ export async function deleteActivityType(id: string) {
 
     return { success: true }
   } catch (error) {
-    console.error('Error deleting activity type:', error)
-    throw handleApiError(error, 'menghapus data', 'Gagal menghapus tipe kegiatan')
+    const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus tipe kegiatan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -233,8 +233,8 @@ export async function updateActivityLevel(id: string, data: { name: string }) {
 
     return { success: true }
   } catch (error) {
-    console.error('Error updating activity level:', error)
-    throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate tingkat kegiatan')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate tingkat kegiatan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -330,8 +330,8 @@ export async function assignActivityTypeToTeacher(teacherId: string, activityTyp
 
     return { success: true }
   } catch (error) {
-    console.error('Error assigning activity type to teacher:', error)
-    throw handleApiError(error, 'menyimpan data', 'Gagal menambahkan tipe kegiatan ke guru')
+    const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal menambahkan tipe kegiatan ke guru')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -368,7 +368,7 @@ export async function removeActivityTypeFromTeacher(teacherId: string, activityT
 
     return { success: true }
   } catch (error) {
-    console.error('Error removing activity type from teacher:', error)
-    throw handleApiError(error, 'menghapus data', 'Gagal menghapus tipe kegiatan dari guru')
+    const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus tipe kegiatan dari guru')
+    return { success: false, message: errorInfo.message }
   }
 }

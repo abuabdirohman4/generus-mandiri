@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses, getTeacherClassMasters, updateTeacherClassMasters } from '../actions';
+import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses, getTeacherClassMasters, updateTeacherClassMasters, getTeacherDeleteImpact } from '../actions';
 import { getAllClassMasters } from '@/app/(admin)/kelas/actions/masters';
 import { useKelas } from '@/hooks/useKelas';
 import { Modal } from '@/components/ui/modal';
@@ -206,14 +206,14 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
         // Load teacher's assigned classes
         try {
-          const teacherClasses = await getTeacherClasses(guru.id);
-          const classIds = teacherClasses.map(tc => tc.class_id);
+          const result = await getTeacherClasses(guru.id);
+          const classIds = result.success ? result.data.map((tc: any) => tc.class_id) : [];
 
           let classMasterIds: string[] = [];
           if (detectedLevel === 'desa' || detectedLevel === 'daerah') {
             try {
-              const cmData = await getTeacherClassMasters(guru.id);
-              classMasterIds = cmData.map(cm => cm.class_master_id);
+              const result = await getTeacherClassMasters(guru.id);
+              classMasterIds = result.success ? result.data.map((cm: any) => cm.class_master_id) : [];
             } catch (cmError) {
               console.error('Error loading class masters:', cmError);
             }

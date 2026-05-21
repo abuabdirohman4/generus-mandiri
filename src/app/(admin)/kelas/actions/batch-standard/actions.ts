@@ -21,6 +21,7 @@ export interface BatchStandardResult {
   totalCreated: number
   totalSkipped: number
   byKelompok: KelompokResult[]
+  message?: string
 }
 
 export async function createBatchStandardClasses(
@@ -108,7 +109,7 @@ export async function createBatchStandardClasses(
 
     return { success: totalCreated > 0, totalCreated, totalSkipped, byKelompok }
   } catch (error) {
-    handleApiError(error, 'membuat kelas', 'Gagal membuat kelas standar')
-    throw error
+    const errorInfo = handleApiError(error, 'membuat kelas', 'Gagal membuat batch kelas standar');
+    return { success: false, totalCreated: 0, totalSkipped: 0, byKelompok: [], message: errorInfo.message };
   }
 }

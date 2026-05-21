@@ -46,8 +46,12 @@ export default function BulkMappingUpdateModal({ isOpen, onClose, selectedItems,
     const loadData = async () => {
         try {
             setLoadingData(true);
-            const classesData = await getAllClasses();
-            setClasses(classesData);
+            const classesResult = await getAllClasses();
+            if (classesResult.success) {
+                setClasses(classesResult.data);
+            } else {
+                setGeneralError(classesResult.message || 'Gagal memuat data kelas');
+            }
             
             const activeYear = await getActiveAcademicYear();
             if (activeYear) {

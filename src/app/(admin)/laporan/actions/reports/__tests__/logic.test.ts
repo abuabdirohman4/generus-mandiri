@@ -173,7 +173,7 @@ describe('logic.ts – enrichAttendanceLogs', () => {
             ],
             studentMap, meetingMap
         )
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 })
 
@@ -182,13 +182,13 @@ describe('logic.ts – enrichAttendanceLogs', () => {
 describe('logic.ts – formatChartData', () => {
     it('formats summary into pie chart array', () => {
         const result = formatChartData({ total: 100, hadir: 80, izin: 10, sakit: 5, alpha: 5 })
-        expect(result).toHaveLength(4)
+        expect((result as any).data).toHaveLength(4)
         expect(result.find(i => i.name === 'Hadir')?.value).toBe(80)
     })
 
     it('excludes zero values', () => {
         const result = formatChartData({ total: 50, hadir: 50, izin: 0, sakit: 0, alpha: 0 })
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
         expect(result[0].name).toBe('Hadir')
     })
 })
@@ -224,7 +224,7 @@ describe('logic.ts – filterMeetingsByRole', () => {
     it('superadmin (no org restriction) sees all meetings', () => {
         const profile = { role: 'admin', kelompok_id: null, desa_id: null, daerah_id: null }
         const result = filterMeetingsByRole(meetings, profile, [], maps)
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
     })
 })
 
@@ -268,13 +268,13 @@ describe('logic.ts – filterAttendanceByClass', () => {
     it('keeps logs where student is enrolled in the class', () => {
         const logs = [{ meeting_id: 'm1', student_id: 's1', students: { id: 's1' } }]
         const result = filterAttendanceByClass(logs, 'c1', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('removes logs where student is not enrolled', () => {
         const logs = [{ meeting_id: 'm1', student_id: 's99', students: { id: 's99' } }]
         const result = filterAttendanceByClass(logs, 'c1', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 })
 
@@ -310,7 +310,7 @@ describe('sm-hov regression – filterAttendanceByClass multi-class filter', () 
         // Filter: both ClassA and ClassB selected
         const result = filterAttendanceByClass(logs, 'class-a,class-b', enrollmentMap, meetingMap)
         // Student is enrolled in ClassB, meeting covers ClassB → should be included
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('[sm-hov] multi-class filter result count >= single-class filter on ClassB', () => {
@@ -326,7 +326,7 @@ describe('sm-hov regression – filterAttendanceByClass multi-class filter', () 
     it('[sm-hov] excludes student not enrolled in any of the filtered classes', () => {
         const logs = [{ meeting_id: 'meeting-1', student_id: 'student-99', students: { id: 'student-99' } }]
         const result = filterAttendanceByClass(logs, 'class-a,class-b', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 })
 
@@ -364,7 +364,7 @@ describe('sm-0p4 – filterAttendanceByClass multi-class student (legacy class_i
         }]
 
         const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('[sm-0p4] student with class in student_classes array matches filter', () => {
@@ -385,7 +385,7 @@ describe('sm-0p4 – filterAttendanceByClass multi-class student (legacy class_i
 
         // Filter by c-pn1 — student has it in student_classes
         const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('[sm-0p4] student with 2 classes appears when either class is filtered', () => {
@@ -442,7 +442,7 @@ describe('sm-0p4 – filterAttendanceByClass multi-class student (legacy class_i
         }]
 
         const result = filterAttendanceByClass(logs, 'c-pn1', enrollmentMap, meetingMap)
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 })
 
@@ -457,13 +457,13 @@ describe('logic.ts – filterAttendanceByKelompok', () => {
     it('keeps logs from meetings belonging to selected kelompok', () => {
         const logs = [{ meeting_id: 'm1', students: { id: 's1' } }]
         const result = filterAttendanceByKelompok(logs, 'k1', maps, meetingMap)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('removes logs from meetings in other kelompok', () => {
         const logs = [{ meeting_id: 'm1', students: { id: 's1' } }]
         const result = filterAttendanceByKelompok(logs, 'k99', maps, meetingMap)
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
     })
 })
 
@@ -495,7 +495,7 @@ describe('logic.ts – aggregateStudentSummary', () => {
 
     it('counts hadir and alpha correctly', () => {
         const result = aggregateStudentSummary(logs, kelompokMap)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
         expect(result[0].hadir).toBe(1)
         expect(result[0].alpha).toBe(1)
         expect(result[0].total_days).toBe(2)

@@ -16,7 +16,7 @@ describe('mapJunctionToClassMasters', () => {
             { class_masters: { id: 'c1', name: 'Kelas A', categories: { code: 'CABERAWIT' } } },
         ]
         const result = mapJunctionToClassMasters(junction)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
         expect(result[0].id).toBe('c1')
         expect(result[0].categories.code).toBe('CABERAWIT')
     })
@@ -36,7 +36,7 @@ describe('mapJunctionToClassMasters', () => {
             { class_masters: { id: 'c1', name: 'K', categories: null } },
         ]
         const result = mapJunctionToClassMasters(junction)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('returns empty array for empty input', () => {
@@ -112,7 +112,7 @@ describe('buildTemplateUpdatePayload', () => {
 describe('buildTemplateClassEntries', () => {
     it('creates junction entries for each class master id', () => {
         const result = buildTemplateClassEntries('tpl-1', ['c1', 'c2', 'c3'])
-        expect(result).toHaveLength(3)
+        expect((result as any).data).toHaveLength(3)
         result.forEach(entry => expect(entry.template_id).toBe('tpl-1'))
         expect(result.map(e => e.class_master_id)).toEqual(['c1', 'c2', 'c3'])
     })

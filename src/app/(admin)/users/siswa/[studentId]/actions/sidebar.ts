@@ -22,9 +22,10 @@ export async function getStudentsForSidebar(): Promise<SidebarStudent[]> {
     if (!profile) return []
 
     // getAllStudents handles RLS and teacher scope filtering
-    const students = await getAllStudents()
+    const result = await getAllStudents()
+    if (!result.success || !result.data) return []
 
-    return students.map(s => ({
+    return result.data.map((s: any) => ({
         id: s.id,
         name: s.name,
         class_id: s.class_id || null,

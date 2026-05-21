@@ -14,12 +14,11 @@ interface UseStudentsOptions {
 const fetcher = async (classId?: string): Promise<Student[]> => {
   try {
     const result = await getAllStudents(classId)
-    // Ensure result is always an array
-    if (!Array.isArray(result)) {
-      console.error('getAllStudents returned non-array:', result)
+    if (!result.success) {
+      console.error('Gagal memuat siswa:', result.message)
       return []
     }
-    return result
+    return result.data as Student[]
   } catch (error) {
     console.error('Error fetching students:', error)
     // Return empty array instead of throwing to prevent app crash

@@ -151,17 +151,19 @@ export default function AssignStudentsModal({
     try {
       const result = await assignStudentsToClass(selectedStudentIds, selectedClassId)
       
-      if (result.success) {
-        if (result.skipped.length > 0) {
-          toast.warning(`${result.assigned} siswa berhasil diassign, ${result.skipped.length} siswa sudah ada di kelas ini`)
+      if (result.success && result.data) {
+        if (result.data.skipped.length > 0) {
+          toast.warning(`${result.data.assigned} siswa berhasil diassign, ${result.data.skipped.length} siswa sudah ada di kelas ini`)
         } else {
-          toast.success(`${result.assigned} siswa berhasil diassign ke kelas`)
+          toast.success(`${result.data.assigned} siswa berhasil diassign ke kelas`)
         }
         closeModal()
         // Trigger refresh dengan delay untuk memastikan data sudah diupdate
         setTimeout(() => {
           onSuccess?.()
         }, 500)
+      } else {
+        toast.error(result.message || 'Terjadi kesalahan')
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan'

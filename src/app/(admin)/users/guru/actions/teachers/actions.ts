@@ -96,8 +96,8 @@ export async function createTeacher(data: TeacherData) {
             },
         }
     } catch (error) {
-        console.error('Error creating teacher:', error)
-        throw handleApiError(error, 'menyimpan data', 'Gagal membuat guru')
+        const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -139,8 +139,8 @@ export async function updateTeacher(id: string, data: TeacherData) {
 
         return { success: true }
     } catch (error) {
-        console.error('Error updating teacher:', error)
-        throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate guru')
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -191,8 +191,8 @@ export async function deleteTeacher(id: string) {
 
         return { success: true }
     } catch (error) {
-        console.error('Error deleting teacher:', error)
-        throw handleApiError(error, 'menghapus data', 'Gagal menghapus guru')
+        const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -202,10 +202,11 @@ export async function deleteTeacher(id: string) {
 export async function getTeacherDeleteImpact(id: string) {
     try {
         const supabase = await createAdminClient()
-        return await fetchTeacherDeleteImpact(supabase, id)
+        const data = await fetchTeacherDeleteImpact(supabase, id)
+        return { success: true, data }
     } catch (error) {
-        console.error('Error fetching teacher delete impact:', error)
-        throw handleApiError(error, 'memuat data', 'Gagal memuat dampak penghapusan guru')
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat dampak penghapusan guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -231,15 +232,15 @@ export async function resetTeacherPassword(id: string, newPassword: string) {
 
         return { success: true }
     } catch (error) {
-        console.error('Error resetting teacher password:', error)
-        throw handleApiError(error, 'reset', 'Gagal mereset password guru')
+        const errorInfo = handleApiError(error, 'reset', 'Gagal mereset password guru')
+        return { success: false, message: errorInfo.message }
     }
 }
 
 /**
  * Get all teachers, filtered based on current user profile
  */
-export async function getAllTeachers() {
+export async function getAllTeachers(): Promise<{ success: boolean; data: any[]; message?: string }> {
     try {
         const adminSupabase = await createAdminClient()
         const profile = await getCurrentUserProfile()
@@ -320,10 +321,10 @@ export async function getAllTeachers() {
             }
         }
 
-        return (data || []).map(teacher => transformTeacher(teacher, classesMap))
+        return { success: true, data: (data || []).map(teacher => transformTeacher(teacher, classesMap)) }
     } catch (error) {
-        console.error('Error fetching teachers:', error)
-        throw handleApiError(error, 'memuat data', 'Gagal mengambil data guru')
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal mengambil data guru')
+        return { success: false, data: [], message: errorInfo.message }
     }
 }
 
@@ -349,7 +350,7 @@ export async function assignTeacherToKelompok(teacherId: string, kelompokId: str
 
         return { success: true }
     } catch (error) {
-        console.error('Error assigning teacher to kelompok:', error)
-        throw handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelompok')
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengassign guru ke kelompok')
+        return { success: false, message: errorInfo.message }
     }
 }

@@ -14,7 +14,7 @@ describe('fetchAllRecords', () => {
 
         const result = await fetchAllRecords(mockQuery, 1000)
 
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
         // Must only call .range() once — re-using query object across iterations
         // causes Supabase to accumulate duplicate range headers → 400 Bad Request
         expect(mockQuery.range).toHaveBeenCalledTimes(1)
@@ -38,7 +38,7 @@ describe('fetchAllRecords', () => {
 
         const result = await fetchAllRecords(mockQuery, 1000)
 
-        expect(result).toHaveLength(0)
+        expect((result as any).data).toHaveLength(0)
         expect(mockQuery.range).toHaveBeenCalledTimes(1)
     })
 
@@ -64,7 +64,7 @@ describe('fetchAllRecords', () => {
 
         const result = await fetchAllRecords(mockQuery, batchSize)
 
-        expect(result).toHaveLength(batchSize)
+        expect((result as any).data).toHaveLength(batchSize)
         // CRITICAL: must only call once — not trigger 2nd iteration
         expect(mockQuery.range).toHaveBeenCalledTimes(1)
     })

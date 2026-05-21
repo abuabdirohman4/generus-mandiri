@@ -579,7 +579,7 @@ describe('Admin Actions (Layer 3)', () => {
 
       const result = await getAllAdmins()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
       // transformAdminList should be called with empty array when data is null
       expect(transformAdminList).toHaveBeenCalledWith([])
     })

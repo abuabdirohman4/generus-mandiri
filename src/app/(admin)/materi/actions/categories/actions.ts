@@ -40,32 +40,37 @@ export async function createMaterialCategory(data: {
     name: string
     description?: string
     display_order: number
-}): Promise<MaterialCategory> {
-    const supabase = await createClient()
+}): Promise<{ success: boolean; data?: MaterialCategory; message?: string }> {
+    try {
+        const supabase = await createClient()
 
-    const { data: category, error } = await insertCategory(supabase, data)
+        const { data: category, error } = await insertCategory(supabase, data)
 
-    if (error) {
+        if (error) {
+            console.error('Error creating material category:', error)
+            return { success: false, message: mapCategoryErrorMessage(error.code, 'create') }
+        }
+
+        revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'create_material_category',
+                entityType: 'material_category',
+                entityId: category.id,
+                entityLabel: category.name,
+                pagePath: '/materi',
+                metadata: data
+            })
+        }
+
+        return { success: true, data: category }
+    } catch (error: any) {
         console.error('Error creating material category:', error)
-        throw new Error(mapCategoryErrorMessage(error.code, 'create'))
+        return { success: false, message: error.message || 'Gagal membuat kategori materi' }
     }
-
-    revalidatePath('/materi')
-
-    const profile = await getCurrentUserProfile()
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'create_material_category',
-            entityType: 'material_category',
-            entityId: category.id,
-            entityLabel: category.name,
-            pagePath: '/materi',
-            metadata: data
-        })
-    }
-
-    return category
 }
 
 /**
@@ -78,32 +83,37 @@ export async function updateMaterialCategory(
         description?: string
         display_order: number
     }
-): Promise<MaterialCategory> {
-    const supabase = await createClient()
+): Promise<{ success: boolean; data?: MaterialCategory; message?: string }> {
+    try {
+        const supabase = await createClient()
 
-    const { data: category, error } = await updateCategoryById(supabase, id, data)
+        const { data: category, error } = await updateCategoryById(supabase, id, data)
 
-    if (error) {
+        if (error) {
+            console.error('Error updating material category:', error)
+            return { success: false, message: mapCategoryErrorMessage(error.code, 'update') }
+        }
+
+        revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_material_category',
+                entityType: 'material_category',
+                entityId: id,
+                entityLabel: data.name,
+                pagePath: '/materi',
+                metadata: data
+            })
+        }
+
+        return { success: true, data: category }
+    } catch (error: any) {
         console.error('Error updating material category:', error)
-        throw new Error(mapCategoryErrorMessage(error.code, 'update'))
+        return { success: false, message: error.message || 'Gagal memperbarui kategori materi' }
     }
-
-    revalidatePath('/materi')
-
-    const profile = await getCurrentUserProfile()
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'update_material_category',
-            entityType: 'material_category',
-            entityId: id,
-            entityLabel: data.name,
-            pagePath: '/materi',
-            metadata: data
-        })
-    }
-
-    return category
 }
 
 /**

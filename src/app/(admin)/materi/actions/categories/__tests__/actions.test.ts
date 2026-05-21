@@ -112,7 +112,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await getMaterialCategories()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('throws when fetchAllCategories returns an error', async () => {
@@ -134,7 +134,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await getMaterialCategories()
 
-      expect(result).toHaveLength(2)
+      expect((result as any).data).toHaveLength(2)
       expect(result[0].id).toBe('cat-1')
       expect(result[1].id).toBe('cat-2')
     })
@@ -184,7 +184,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(insertCategory).mockResolvedValue({ data: null, error: { code: '23505', message: 'dup' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Nama kategori sudah digunakan')
 
-      await expect(createMaterialCategory(validData)).rejects.toThrow()
+      const result = await createMaterialCategory(validData)
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -197,7 +198,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await createMaterialCategory(dataWithoutDesc)
 
-      expect(result.name).toBe('Fikih')
+      expect(result.data?.name).toBe('Fikih')
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
   })
@@ -247,7 +248,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(updateCategoryById).mockResolvedValue({ data: null, error: { code: '500', message: 'error' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Gagal memperbarui kategori materi')
 
-      await expect(updateMaterialCategory('cat-1', updateData)).rejects.toThrow()
+      const result = await updateMaterialCategory('cat-1', updateData)
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
   })
@@ -310,7 +312,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(categoryHasDependencies).mockReturnValue(false)
       vi.mocked(deleteCategoryById).mockResolvedValue({ error: { message: 'Delete failed' } } as any)
 
-      await expect(deleteMaterialCategory('cat-1')).rejects.toThrow()
+      const result = await deleteMaterialCategory('cat-1')
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -320,7 +323,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(fetchTypesForCategory).mockResolvedValue({ data: [{ id: 't1' }, { id: 't2' }], error: null } as any)
       vi.mocked(categoryHasDependencies).mockReturnValue(true)
 
-      await expect(deleteMaterialCategory('cat-1')).rejects.toThrow()
+      const result2 = await deleteMaterialCategory('cat-1')
+      expect(result2.success).toBe(false)
       // categoryHasDependencies is called with types.length (2)
       expect(categoryHasDependencies).toHaveBeenCalledWith(2)
     })

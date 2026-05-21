@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
 import type { MaterialItem, DayMaterialAssignment, ClassMaster } from '../../types'
 import { logActivity } from '@/lib/activityLogger'
@@ -62,16 +63,18 @@ export async function getAvailableClassMasters() {
 /**
  * Get all classes (filtered to CABERAWIT/PAUD category only)
  */
-export async function getAllClasses(): Promise<ClassMaster[]> {
-    const supabase = await createClient()
-    const { data, error } = await fetchAllClassMastersWithCategory(supabase)
+export async function getAllClasses(): Promise<{ success: boolean; data: ClassMaster[]; message?: string }> {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await fetchAllClassMastersWithCategory(supabase)
 
-    if (error) {
-        console.error('Error fetching classes:', error)
-        return []
+        if (error) throw error
+
+        return { success: true, data: filterCaberawitClasses(data || []) }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
+        return { success: false, data: [], message: errorInfo.message }
     }
-
-    return filterCaberawitClasses(data || [])
 }
 
 /**
@@ -228,31 +231,36 @@ export async function createMaterialItem(data: {
     name: string
     description?: string
     content?: string
-}): Promise<MaterialItem> {
-    const profile = await getCurrentUserProfile()
-    if (!profile) throw new Error('Not authenticated')
-    if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
+}): Promise<{ success: boolean; data?: MaterialItem; message?: string }> {
+    try {
+        const profile = await getCurrentUserProfile()
+        if (!profile) throw new Error('Not authenticated')
+        if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
 
-    const supabase = await createClient()
-    const { data: item, error } = await insertItem(supabase, data)
+        const supabase = await createClient()
+        const { data: item, error } = await insertItem(supabase, data)
 
-    if (error) {
-        console.error('Error creating material item:', error)
-        throw new Error(mapItemErrorMessage(error.code, 'create'))
+        if (error) {
+            console.error('Error creating material item:', error)
+            throw new Error(mapItemErrorMessage(error.code, 'create'))
+        }
+
+        revalidatePath('/materi')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'create_material',
+            entityType: 'material_item',
+            entityId: item.id,
+            entityLabel: data.name,
+            pagePath: '/materi',
+        })
+
+        return { success: true, data: item }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat item materi')
+        return { success: false, message: errorInfo.message }
     }
-
-    revalidatePath('/materi')
-
-    void logActivity({
-        userId: profile.id,
-        action: 'create_material',
-        entityType: 'material_item',
-        entityId: item.id,
-        entityLabel: data.name,
-        pagePath: '/materi',
-    })
-
-    return item
 }
 
 /**
@@ -266,64 +274,74 @@ export async function updateMaterialItem(
         description?: string
         content?: string
     }
-): Promise<MaterialItem> {
-    const profile = await getCurrentUserProfile()
-    if (!profile) throw new Error('Not authenticated')
-    if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
+): Promise<{ success: boolean; data?: MaterialItem; message?: string }> {
+    try {
+        const profile = await getCurrentUserProfile()
+        if (!profile) throw new Error('Not authenticated')
+        if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
 
-    const supabase = await createClient()
-    const { data: item, error } = await updateItemById(supabase, id, data)
+        const supabase = await createClient()
+        const { data: item, error } = await updateItemById(supabase, id, data)
 
-    if (error) {
-        console.error('Error updating material item:', error)
-        if (error.code === '23505') throw new Error('Nama item materi sudah digunakan untuk jenis materi ini')
-        if (error.code === 'PGRST116') throw new Error('Item materi tidak ditemukan setelah update')
-        throw new Error('Gagal memperbarui item materi')
+        if (error) {
+            console.error('Error updating material item:', error)
+            if (error.code === '23505') throw new Error('Nama item materi sudah digunakan untuk jenis materi ini')
+            if (error.code === 'PGRST116') throw new Error('Item materi tidak ditemukan setelah update')
+            throw new Error('Gagal memperbarui item materi')
+        }
+
+        if (!item) throw new Error('Item materi tidak ditemukan setelah update')
+
+        revalidatePath('/materi')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'update_material',
+            entityType: 'material_item',
+            entityId: id,
+            entityLabel: data.name,
+            pagePath: '/materi',
+        })
+
+        return { success: true, data: item }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate item materi')
+        return { success: false, message: errorInfo.message }
     }
-
-    if (!item) throw new Error('Item materi tidak ditemukan setelah update')
-
-    revalidatePath('/materi')
-
-    void logActivity({
-        userId: profile.id,
-        action: 'update_material',
-        entityType: 'material_item',
-        entityId: id,
-        entityLabel: data.name,
-        pagePath: '/materi',
-    })
-
-    return item
 }
 
 /**
  * Delete a material item (requires canManageMaterials + dependency check)
  */
-export async function deleteMaterialItem(id: string): Promise<{ success: boolean }> {
-    const profile = await getCurrentUserProfile()
-    if (!profile) throw new Error('Not authenticated')
-    if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
+export async function deleteMaterialItem(id: string): Promise<{ success: boolean; message?: string }> {
+    try {
+        const profile = await getCurrentUserProfile()
+        if (!profile) throw new Error('Not authenticated')
+        if (!canManageMaterials(profile)) throw new Error('Unauthorized: Material management access required')
 
-    const supabase = await createClient()
+        const supabase = await createClient()
 
-    const { error } = await deleteItemById(supabase, id)
-    if (error) {
-        console.error('Error deleting material item:', error)
-        throw new Error('Gagal menghapus item materi')
+        const { error } = await deleteItemById(supabase, id)
+        if (error) {
+            console.error('Error deleting material item:', error)
+            throw new Error('Gagal menghapus item materi')
+        }
+
+        revalidatePath('/materi')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'delete_material',
+            entityType: 'material_item',
+            entityId: id,
+            pagePath: '/materi',
+        })
+
+        return { success: true }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus item materi')
+        return { success: false, message: errorInfo.message }
     }
-
-    revalidatePath('/materi')
-
-    void logActivity({
-        userId: profile.id,
-        action: 'delete_material',
-        entityType: 'material_item',
-        entityId: id,
-        pagePath: '/materi',
-    })
-
-    return { success: true }
 }
 
 // ─── Class Mappings ───────────────────────────────────────────────────────────
@@ -349,53 +367,58 @@ export async function getMaterialItemClassMappings(materialItemId: string) {
 export async function updateMaterialItemClassMappings(
     materialItemId: string,
     mappings: Array<{ class_master_id: string }>
-) {
-    const supabase = await createClient()
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const supabase = await createClient()
 
-    // Delete existing
-    const { error: deleteError } = await deleteItemClassMappings(supabase, materialItemId)
-    if (deleteError) {
-        console.error('Error deleting old mappings:', deleteError)
-        throw new Error('Gagal menghapus mapping lama')
-    }
-
-    // Insert new ones if any
-    if (mappings.length > 0) {
-        // Deduplicate by class_master_id to prevent constraint violations
-        const seen = new Set<string>()
-        const payload = mappings
-            .filter(m => {
-                if (seen.has(m.class_master_id)) return false
-                seen.add(m.class_master_id)
-                return true
-            })
-            .map(m => ({
-                material_item_id: materialItemId,
-                class_master_id: m.class_master_id,
-            }))
-
-        const { error: insertError } = await insertItemClassMappings(supabase, payload)
-        if (insertError) {
-            console.error('Error inserting new mappings:', insertError)
-            throw new Error('Gagal menyimpan mapping baru')
+        // Delete existing
+        const { error: deleteError } = await deleteItemClassMappings(supabase, materialItemId)
+        if (deleteError) {
+            console.error('Error deleting old mappings:', deleteError)
+            throw new Error('Gagal menghapus mapping lama')
         }
+
+        // Insert new ones if any
+        if (mappings.length > 0) {
+            // Deduplicate by class_master_id to prevent constraint violations
+            const seen = new Set<string>()
+            const payload = mappings
+                .filter(m => {
+                    if (seen.has(m.class_master_id)) return false
+                    seen.add(m.class_master_id)
+                    return true
+                })
+                .map(m => ({
+                    material_item_id: materialItemId,
+                    class_master_id: m.class_master_id,
+                }))
+
+            const { error: insertError } = await insertItemClassMappings(supabase, payload)
+            if (insertError) {
+                console.error('Error inserting new mappings:', insertError)
+                throw new Error('Gagal menyimpan mapping baru')
+            }
+        }
+
+        revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_material_mapping',
+                entityType: 'material_item',
+                entityId: materialItemId,
+                metadata: { class_count: mappings.length },
+                pagePath: '/materi',
+            })
+        }
+
+        return { success: true }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate mapping kelas')
+        return { success: false, message: errorInfo.message }
     }
-
-    revalidatePath('/materi')
-
-    const profile = await getCurrentUserProfile()
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'update_material_mapping',
-            entityType: 'material_item',
-            entityId: materialItemId,
-            metadata: { class_count: mappings.length },
-            pagePath: '/materi',
-        })
-    }
-
-    return { success: true }
 }
 
 /**
@@ -405,7 +428,7 @@ export async function bulkUpdateMaterialMapping(
     itemIds: string[],
     mappings: { class_master_id: string }[],
     mode: 'replace' | 'add'
-) {
+): Promise<{ success: boolean; message?: string }> {
     const supabase = await createClient()
 
     try {
@@ -446,8 +469,8 @@ export async function bulkUpdateMaterialMapping(
 
         return { success: true }
     } catch (error) {
-        console.error('Bulk update error:', error)
-        throw error
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate mapping massal')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -469,7 +492,7 @@ export async function saveDayMaterialAssignment(data: {
         display_order: number
         custom_content?: string
     }>
-}) {
+}): Promise<{ success: boolean; assignment_id?: string; message?: string }> {
     const supabase = await createClient()
 
     try {
@@ -509,8 +532,8 @@ export async function saveDayMaterialAssignment(data: {
 
         return { success: true, assignment_id: assignment.id }
     } catch (error) {
-        console.error('Error in saveDayMaterialAssignment:', error)
-        throw error
+        const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal menyimpan assignment materi')
+        return { success: false, message: errorInfo.message }
     }
 }
 

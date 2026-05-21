@@ -21,7 +21,7 @@ describe('filterCaberawitClasses', () => {
             { id: 'c2', name: 'Kelas B', category: { code: 'SMP' } },
         ]
         const result = filterCaberawitClasses(data)
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
         expect(result[0].id).toBe('c1')
         expect(result[1].id).toBe('c2')
     })
@@ -29,7 +29,7 @@ describe('filterCaberawitClasses', () => {
     it('handles array category format from Supabase', () => {
         const data: any[] = [{ id: 'c1', name: 'K', category: [{ code: 'CABERAWIT' }] }]
         const result = filterCaberawitClasses(data)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
         expect((result[0].category as any).code).toBe('CABERAWIT')
     })
 
@@ -44,7 +44,7 @@ describe('stripClassMasterJoinArtifact', () => {
     it('removes material_item_classes key', () => {
         const data = [{ id: 'c1', name: 'Kelas', material_item_classes: [{ id: 'x' }] }]
         const result = stripClassMasterJoinArtifact(data)
-        expect(result[0]).not.toHaveProperty('material_item_classes')
+        expect((result as any).data[0]).not.toHaveProperty('material_item_classes')
         expect(result[0].id).toBe('c1')
     })
 
@@ -54,7 +54,7 @@ describe('stripClassMasterJoinArtifact', () => {
             { id: 'c2', name: 'K2', material_item_classes: [] },
         ]
         const result = stripClassMasterJoinArtifact(data)
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
         result.forEach(r => expect(r).not.toHaveProperty('material_item_classes'))
     })
 })
@@ -68,7 +68,7 @@ describe('deduplicateMaterialItemsFromJunction', () => {
             { material_item: { id: 'i1', name: 'Item 1' }, class_master: { id: 'c2' } },
         ]
         const result = deduplicateMaterialItemsFromJunction(data)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('merges classes for duplicated items', () => {
@@ -86,7 +86,7 @@ describe('deduplicateMaterialItemsFromJunction', () => {
             { material_item: { id: 'i1', name: 'I' }, class_master: { id: 'c1' } },
         ]
         const result = deduplicateMaterialItemsFromJunction(data)
-        expect(result).toHaveLength(1)
+        expect((result as any).data).toHaveLength(1)
     })
 
     it('returns empty for empty input', () => {
@@ -170,7 +170,7 @@ describe('buildDayItemsPayload', () => {
         const result = buildDayItemsPayload('a1', [
             { material_item_id: 'i1', display_order: 1, custom_content: 'Custom' },
         ])
-        expect(result[0]).toEqual({
+        expect((result as any).data[0]).toEqual({
             assignment_id: 'a1',
             material_item_id: 'i1',
             display_order: 1,
@@ -188,7 +188,7 @@ describe('buildDayItemsPayload', () => {
             { material_item_id: 'i1', display_order: 1 },
             { material_item_id: 'i2', display_order: 2 },
         ])
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
     })
 })
 
@@ -200,8 +200,8 @@ describe('buildBulkMappingsPayload', () => {
             ['i1', 'i2'],
             [{ class_master_id: 'c1' }]
         )
-        expect(result).toHaveLength(2)
-        expect(result[0]).toEqual({ material_item_id: 'i1', class_master_id: 'c1' })
+        expect((result as any).data).toHaveLength(2)
+        expect((result as any).data[0]).toEqual({ material_item_id: 'i1', class_master_id: 'c1' })
         expect(result[1]).toEqual({ material_item_id: 'i2', class_master_id: 'c1' })
     })
 
@@ -213,7 +213,7 @@ describe('buildBulkMappingsPayload', () => {
                 { class_master_id: 'c2' },
             ]
         )
-        expect(result).toHaveLength(2)
+        expect((result as any).data).toHaveLength(2)
     })
 
     it('returns empty array for empty inputs', () => {

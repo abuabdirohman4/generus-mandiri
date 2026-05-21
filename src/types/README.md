@@ -11,6 +11,7 @@ Centralized type definitions for Generus Mandiri. All domain types MUST be impor
 | `class.ts` | Classes | `Class`, `ClassWithMaster`, `ClassMaster`, `ClassData` |
 | `organization.ts` | Org Hierarchy | `Daerah`, `Desa`, `Kelompok` (+ WithStats variants) |
 | `material.ts` | Materials | `MaterialCategory`, `MaterialType`, `MaterialItem`, `DayMaterialAssignment` |
+| `common.ts` | Shared | `ServerActionResult`, `BulkOperationResult` |
 
 ## Hierarchy Pattern
 

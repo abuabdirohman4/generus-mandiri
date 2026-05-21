@@ -77,7 +77,7 @@ describe('attendanceCalculation', () => {
             const filterClassIds = ['c1', 'c2']
             const result = filterAttendanceByMeetingClass(attendanceLogs, meetingMap, filterClassIds, enrollmentMap)
 
-            expect(result).toHaveLength(3)
+            expect((result as any).data).toHaveLength(3)
             expect(result.some(l => l.student_id === 's2' && l.meeting_id === 'm1')).toBe(false)
         })
 
@@ -85,7 +85,7 @@ describe('attendanceCalculation', () => {
             const filterClassIds = ['c1']
             const result = filterAttendanceByMeetingClass(attendanceLogs, meetingMap, filterClassIds, enrollmentMap)
 
-            expect(result).toHaveLength(2) // m1-s1, m_multi-s1
+            expect((result as any).data).toHaveLength(2) // m1-s1, m_multi-s1
             expect(result.every(l => l.student_id === 's1')).toBe(true)
         })
     })

@@ -413,7 +413,7 @@ describe('Admin Business Logic', () => {
 
       const result = transformAdminList(admins);
 
-      expect(result).toHaveLength(2);
+      expect((result as any).data).toHaveLength(2);
       expect(result[0].daerah_name).toBe('Daerah One');
       expect(result[0].desa_name).toBe('Desa One');
       expect(result[0].kelompok_name).toBe('');
@@ -424,7 +424,7 @@ describe('Admin Business Logic', () => {
     it('should handle empty list', () => {
       const result = transformAdminList([]);
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ success: true, data: [] });
     });
 
     it('should handle list with mixed formats', () => {

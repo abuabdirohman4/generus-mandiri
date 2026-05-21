@@ -180,7 +180,7 @@ describe('Meeting Actions (Layer 3)', () => {
       const result = await createMeeting({ ...validData, studentIds: [] } as any)
 
       expect(result.success).toBe(true)
-      expect((result as any).data).toEqual({ id: 'meeting-1' })
+      expect(result).toEqual({ id: 'meeting-1' })
       expect(revalidatePath).toHaveBeenCalledWith('/presensi')
     })
 

@@ -141,7 +141,7 @@ export async function getUserProfile() {
 /**
  * Mendapatkan daftar siswa dengan informasi kelas (mendukung multiple classes via junction table)
  */
-export async function getAllStudents(classId?: string): Promise<Student[]> {
+export async function getAllStudents(classId?: string): Promise<{ success: boolean; data: any[]; message?: string }> {
     try {
         const supabase = await createClient()
 
@@ -192,13 +192,13 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
             const studentIds = [...new Set([...studentIdsFromJunction, ...studentIdsFromClassId])]
 
             if (studentIds.length === 0) {
-                return []
+                return { success: true, data: [] }
             }
 
             if (classId) {
                 const classIds = classId.split(',')
                 const filteredClassIds = classIds.filter(id => teacherClassIds.includes(id))
-                if (filteredClassIds.length === 0) return []
+                if (filteredClassIds.length === 0) return { success: true, data: [] }
 
                 const filteredIdsFromJunction = new Set<string>()
                 const filteredIdsFromClassId = new Set<string>()
@@ -225,7 +225,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 const filteredStudentIds = [...new Set([...filteredIdsFromJunction, ...filteredIdsFromClassId])]
                 const finalStudentIds = studentIds.filter(id => filteredStudentIds.includes(id))
 
-                if (finalStudentIds.length === 0) return []
+                if (finalStudentIds.length === 0) return { success: true, data: [] }
 
                 const { data: students, error } = await fetchStudentsByIds(adminClient, finalStudentIds)
                 if (error) throw error
@@ -239,7 +239,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                     }
                 }
 
-                return transformStudentsData(students || [], classNameMap)
+                const result = await transformStudentsData(students || [], classNameMap)
+                return { success: true, data: result }
             }
 
             const { data: students, error: studentsError } = await fetchStudentsByIds(adminClient, studentIds)
@@ -254,7 +255,8 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 }
             }
 
-            return transformStudentsData(students || [], classNameMap)
+            const result = await transformStudentsData(students || [], classNameMap)
+            return { success: true, data: result }
 
         } else if (profile?.role === 'teacher' && (profile.kelompok_id || profile.desa_id || profile.daerah_id)) {
             // Teacher with hierarchical access (Guru Desa/Daerah)
@@ -300,7 +302,7 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 if (allowedClassIdsSet) {
                     // Intersect requested IDs with allowed class master IDs
                     const filtered = requestedIds.filter(id => allowedClassIdsSet.has(id))
-                    if (filtered.length === 0) return []
+                    if (filtered.length === 0) return { success: true, data: [] }
                     studentsQuery = studentsQuery.in('class_id', filtered)
                 } else {
                     studentsQuery = studentsQuery.in('class_id', requestedIds)
@@ -354,17 +356,20 @@ export async function getAllStudents(classId?: string): Promise<Student[]> {
                 }
             }
 
-            return transformStudentsData(filteredStudents, classNameMap)
+            return { success: true, data: await transformStudentsData(filteredStudents, classNameMap) }
         }
 
         // For non-teacher roles
         const { data: students, error } = await fetchAllStudents(supabase, classId)
-        if (error) throw error
+        if (error) {
+            const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
+            return { success: false, message: errorInfo.message, data: [] }
+        }
 
-        return transformStudentsData(students || [])
+        return { success: true, data: await transformStudentsData(students || []) }
     } catch (error) {
-        handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
-        throw error
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
+        return { success: false, message: errorInfo.message, data: [] }
     }
 }
 
@@ -477,8 +482,8 @@ export async function createStudent(formData: FormData) {
 
         return { success: true, student: newStudent }
     } catch (error) {
-        handleApiError(error, 'menyimpan data', 'Gagal membuat siswa')
-        throw error
+        const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat siswa')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -633,8 +638,8 @@ export async function updateStudent(studentId: string, formData: FormData) {
 
         return { success: true, student: updatedStudent }
     } catch (error) {
-        handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa')
-        throw error
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa')
+        return { success: false, message: errorInfo.message }
     }
 }
 
@@ -788,7 +793,7 @@ export async function getStudentClasses(studentId: string): Promise<Array<{ id: 
 export async function assignStudentsToClass(
     studentIds: string[],
     classId: string
-): Promise<{ success: boolean; assigned: number; skipped: string[] }> {
+): Promise<{ success: boolean; data: { assigned: number; skipped: string[] }; message?: string }> {
     try {
         const supabase = await createClient()
 
@@ -845,12 +850,14 @@ export async function assignStudentsToClass(
 
         return {
             success: true,
-            assigned: newStudentIds.length,
-            skipped: Array.from(existingStudentIds)
+            data: {
+                assigned: newStudentIds.length,
+                skipped: Array.from(existingStudentIds)
+            }
         }
     } catch (error) {
-        handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa ke kelas')
-        throw error
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate siswa ke kelas')
+        return { success: false, message: errorInfo.message, data: { assigned: 0, skipped: [] } }
     }
 }
 
@@ -934,8 +941,8 @@ export async function createStudentsBatch(
             errors: []
         }
     } catch (error) {
-        handleApiError(error, 'menyimpan data', 'Gagal mengimport siswa')
-        throw error
+        const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal mengimport siswa')
+        return { success: false, message: errorInfo.message }
     }
 }
 

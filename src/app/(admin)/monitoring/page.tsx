@@ -154,16 +154,23 @@ export default function MonitoringPage() {
             month: selectedMonth,
             studentId: selectedStudentId
         }).then(result => {
-            setMonthlyTargetProgress({
-                total_targets: result.targets.length,
-                completed: result.progress.filter(p => {
-                    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0);
-                    return score >= 70; // passing score default
-                }).length,
-                percentage: result.percentage
-            });
-            setMonthlyTargetItemIds(new Set(result.targets.map((t: any) => t.material_item_id)));
-        }).catch(console.error);
+            if (result.success) {
+                setMonthlyTargetProgress({
+                    total_targets: result.targets.length,
+                    completed: result.progress.filter(p => {
+                        const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0);
+                        return score >= 70; // passing score default
+                    }).length,
+                    percentage: result.percentage
+                });
+                setMonthlyTargetItemIds(new Set(result.targets.map((t: any) => t.material_item_id)));
+            } else {
+                toast.error(result.message || 'Gagal memuat progress target bulanan');
+            }
+        }).catch(err => {
+            console.error(err);
+            toast.error('Terjadi kesalahan saat memuat progress target bulanan');
+        });
     }, [selectedStudentId, selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]); // Re-run when progressMap changes to update live
 
     // Load cross-class history for selected student
@@ -171,8 +178,17 @@ export default function MonitoringPage() {
         if (selectedStudentId && selectedYearId) {
             setCrossClassLoading(true);
             getCrossClassHistory(selectedStudentId, selectedYearId)
-                .then(setCrossClassHistory)
-                .catch(console.error)
+                .then(result => {
+                    if (result.success) {
+                        setCrossClassHistory(result.data);
+                    } else {
+                        toast.error(result.message || 'Gagal memuat riwayat lintas kelas');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    toast.error('Terjadi kesalahan saat memuat riwayat lintas kelas');
+                })
                 .finally(() => setCrossClassLoading(false));
         } else {
             setCrossClassHistory([]);
@@ -191,9 +207,16 @@ export default function MonitoringPage() {
             academicYearId: selectedYearId,
             semester: selectedSemester,
             month: selectedMonth
-        }).then(summary => {
-            setMonthlyPercentages(new Map(summary.map(s => [s.student_id, s.percentage])));
-        }).catch(console.error);
+        }).then(result => {
+            if (result.success) {
+                setMonthlyPercentages(new Map(result.data.map(s => [s.student_id, s.percentage])));
+            } else {
+                toast.error(result.message || 'Gagal memuat ringkasan target bulanan');
+            }
+        }).catch(err => {
+            console.error(err);
+            toast.error('Terjadi kesalahan saat memuat ringkasan target bulanan');
+        });
     }, [selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]);
 
     const loadInitialData = async () => {
@@ -207,7 +230,7 @@ export default function MonitoringPage() {
 
             // Load org data, categories, and classes in parallel
             // getAllClasses() sudah handle filter berdasarkan role (teacher_classes, hierarchical, admin)
-            const [daerahData, desaData, allKelompokData, categoriesData, classesData, cmRestrictions, yearsData] = await Promise.all([
+            const [daerahData, desaData, allKelompokData, categoriesResult, classesResult, cmRestrictionsResult, yearsData] = await Promise.all([
                 getAllDaerah(),
                 getAllDesa(),
                 getAllKelompok(),
@@ -222,13 +245,24 @@ export default function MonitoringPage() {
             setDaerahList(daerahData);
             setDesaList(desaData);
             setKelompokList(allKelompokData);
-            setClasses(classesData as any[]);
+            
+            if (classesResult.success) {
+                setClasses(classesResult.data);
+            } else {
+                toast.error(classesResult.message || 'Gagal memuat daftar kelas');
+                setClasses([]);
+            }
 
             // Filter categories by class master restriction
-            let finalCategories = categoriesData;
+            let finalCategories = categoriesResult.success ? categoriesResult.data : [];
+            if (!categoriesResult.success) {
+                toast.error(categoriesResult.message || 'Gagal memuat kategori hafalan');
+            }
+
+            const cmRestrictions = cmRestrictionsResult.success ? cmRestrictionsResult.data : null;
             if (cmRestrictions && cmRestrictions.length > 0) {
                 const allowedCategoryIds = await getAllowedCategories(cmRestrictions);
-                finalCategories = categoriesData.filter(cat => allowedCategoryIds.includes(cat.id));
+                finalCategories = categoriesResult.data.filter((cat: any) => allowedCategoryIds.includes(cat.id));
             }
             setHafalanCategories(finalCategories);
 
@@ -272,15 +306,15 @@ export default function MonitoringPage() {
                 // Load data for each class
                 for (const classData of classes) {
                     try {
-                        const classProgress = await getClassProgress(
+                        const classProgressResult = await getClassProgress(
                             classData.id,
                             selectedYearId,
                             selectedSemester
                         );
 
-                        if (classProgress) {
+                        if (classProgressResult.success) {
                             // Add students with class info
-                            classProgress.students?.forEach((student: Student) => {
+                            classProgressResult.students?.forEach((student: Student) => {
                                 if (!allStudentsMap.has(student.id)) {
                                     allStudentsMap.set(student.id, {
                                         ...student,
@@ -290,21 +324,21 @@ export default function MonitoringPage() {
                             });
 
                             // Merge progress
-                            classProgress.progress?.forEach((p: any) => {
+                            classProgressResult.progress?.forEach((p: any) => {
                                 const key = `${p.student_id}-${p.material_item_id}`;
                                 allProgressMap.set(key, p);
                             });
                         }
 
                         // Load materials for this class
-                        const classMaterials = await getMaterialsByClassAndSemester(
+                        const classMaterialsResult = await getMaterialsByClassAndSemester(
                             classData.id,
                             selectedSemester
                         );
 
                         // Merge materials (avoid duplicates)
-                        if (classMaterials) {
-                            classMaterials.forEach((m: Material) => {
+                        if (classMaterialsResult.success) {
+                            classMaterialsResult.data.forEach((m: Material) => {
                                 if (!allMaterials.find(existing => existing.id === m.id)) {
                                     allMaterials.push(m);
                                 }
@@ -321,29 +355,35 @@ export default function MonitoringPage() {
             } else {
                 // Single class selection - original logic
                 // Load students and progress
-                const classData = await getClassProgress(
+                const classProgressResult = await getClassProgress(
                     selectedClassId,
                     selectedYearId,
                     selectedSemester
                 );
 
-                if (classData) {
-                    setStudents(classData.students || []);
+                if (classProgressResult.success) {
+                    setStudents(classProgressResult.students || []);
 
                     const map = new Map<string, Progress>();
-                    classData.progress?.forEach((p: any) => {
+                    classProgressResult.progress?.forEach((p: any) => {
                         const key = `${p.student_id}-${p.material_item_id}`;
                         map.set(key, p);
                     });
                     setProgressMap(map);
+                } else {
+                    toast.error(classProgressResult.message || 'Gagal memuat progress kelas');
                 }
 
                 // Load materials
-                const materialsData = await getMaterialsByClassAndSemester(
+                const materialsResult = await getMaterialsByClassAndSemester(
                     selectedClassId,
                     selectedSemester
                 );
-                setMaterials(materialsData || []);
+                if (materialsResult.success) {
+                    setMaterials(materialsResult.data || []);
+                } else {
+                    toast.error(materialsResult.message || 'Gagal memuat materi kelas');
+                }
             }
 
 
@@ -470,10 +510,14 @@ export default function MonitoringPage() {
                     notes: p.notes
                 }));
 
-            await bulkUpdateProgress(updates);
-            toast.success('Progress berhasil disimpan');
+            const result = await bulkUpdateProgress(updates);
+            if (result.success) {
+                toast.success('Progress berhasil disimpan');
+            } else {
+                toast.error(result.message || 'Gagal menyimpan progress');
+            }
         } catch (error: any) {
-            toast.error(error.message || 'Gagal menyimpan progress');
+            toast.error('Terjadi kesalahan saat menyimpan progress');
         } finally {
             setSaving(false);
         }

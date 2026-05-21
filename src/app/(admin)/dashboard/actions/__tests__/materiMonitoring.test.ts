@@ -37,7 +37,7 @@ describe('getMateriDashboardSummary', () => {
         vi.mocked(getCurrentUserProfile).mockResolvedValue(null)
 
         const result = await getMateriDashboardSummary({ academicYearId: 'year-1', semester: 1 })
-        expect(result).toEqual([])
+        expect(result).toEqual({ success: true, data: [] })
     })
 
     it('returns empty array if academicYearId is missing', async () => {
@@ -46,6 +46,6 @@ describe('getMateriDashboardSummary', () => {
         vi.mocked(canManageMaterials).mockReturnValue(true)
 
         const result = await getMateriDashboardSummary({ academicYearId: '', semester: 1 })
-        expect(result).toEqual([])
+        expect(result).toEqual({ success: true, data: [] })
     })
 })

@@ -89,7 +89,7 @@ describe('Meeting Validation Functions', () => {
       const result = buildStudentSnapshot(students, classIds)
 
       expect(result).toEqual(['student-1', 'student-2'])
-      expect(result).toHaveLength(2)
+      expect((result as any).data).toHaveLength(2)
     })
 
     test('should return empty array when no students match selected classes', () => {
@@ -101,8 +101,8 @@ describe('Meeting Validation Functions', () => {
 
       const result = buildStudentSnapshot(students, classIds)
 
-      expect(result).toEqual([])
-      expect(result).toHaveLength(0)
+      expect(result).toEqual({ success: true, data: [] })
+      expect((result as any).data).toHaveLength(0)
     })
 
     test('should handle empty students array', () => {
@@ -111,8 +111,8 @@ describe('Meeting Validation Functions', () => {
 
       const result = buildStudentSnapshot(students, classIds)
 
-      expect(result).toEqual([])
-      expect(result).toHaveLength(0)
+      expect(result).toEqual({ success: true, data: [] })
+      expect((result as any).data).toHaveLength(0)
     })
   })
 

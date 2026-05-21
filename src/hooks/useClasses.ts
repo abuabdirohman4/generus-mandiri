@@ -18,8 +18,9 @@ const fetcher = async (): Promise<Class[]> => {
   }
 
   try {
-    const result = await fetchWithTimeout(getAllClasses(), 30000) as Class[]
-    return result || []
+    const result = await fetchWithTimeout(getAllClasses(), 30000)
+    if (!result.success) throw new Error(result.message || 'Gagal memuat daftar kelas')
+    return result.data || []
   } catch (error: any) {
     console.error('useClasses - Fetch error:', error)
     console.error('Device:', {

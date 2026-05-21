@@ -4,7 +4,9 @@ import useSWR from 'swr';
 import { getAllAdmins } from '@/app/(admin)/users/admin/actions';
 
 const fetcher = async () => {
-  return await getAllAdmins();
+  const result = await getAllAdmins();
+  if (!result.success) throw new Error(result.message || 'Gagal memuat data admin');
+  return result.data;
 };
 
 export function useAdmins() {

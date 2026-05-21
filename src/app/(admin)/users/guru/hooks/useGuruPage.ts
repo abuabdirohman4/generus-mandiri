@@ -9,6 +9,8 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { useGuruStore } from '../stores/guruStore'
 import useSWRMutation from 'swr/mutation'
 import { toast } from 'sonner'
+import { deleteTeacher, getTeacherDeleteImpact } from '../actions'
+import { isAdminKelompok, isAdminDesa, isAdminDaerah } from '@/lib/userUtils'
 
 export function useGuruPage() {
   const { teachers, isLoading, error, mutate } = useTeachers()
@@ -39,7 +41,7 @@ export function useGuruPage() {
 
   // Filter teachers
   const filteredTeachers = useMemo(() => {
-    let result = teachers || []
+    let result = (teachers as any[]) || []
     
     if (filters.daerah.length > 0) {
       result = result.filter(t => t.daerah_id && filters.daerah.includes(t.daerah_id))
@@ -62,26 +64,10 @@ export function useGuruPage() {
     return result
   }, [teachers, filters])
 
-  // Fetch impact data before confirming delete
-  const handleOpenDeleteConfirm = useCallback(async (guru: any) => {
-    // Buka modal dulu dengan loading state
-    openDeleteConfirm(guru)
-    setDeleteImpact(null, true)
-
-    try {
-      const { getTeacherDeleteImpact } = await import('../actions')
-      const result = await getTeacherDeleteImpact(guru.id)
-      setDeleteImpact(result, false)
-    } catch {
-      setDeleteImpact(null, false)
-    }
-  }, [openDeleteConfirm, setDeleteImpact])
-
   // Delete mutation
-  const { trigger: deleteGuruMutation } = useSWRMutation(
+  const { trigger: deleteTeacherMutation } = useSWRMutation(
     '/api/guru',
     async (url, { arg }: { arg: string }) => {
-      const { deleteTeacher } = await import('../actions')
       return await deleteTeacher(arg)
     }
   )
@@ -90,14 +76,35 @@ export function useGuruPage() {
     if (!deleteConfirm.guru) return
     
     try {
-      await deleteGuruMutation(deleteConfirm.guru.id)
-      toast.success('Guru berhasil dihapus')
-      mutate()
-      closeDeleteConfirm()
+      const result = await deleteTeacherMutation(deleteConfirm.guru.id)
+      if (result.success) {
+        toast.success('Guru berhasil dihapus')
+        mutate()
+        closeDeleteConfirm()
+      } else {
+        toast.error(result.message || 'Gagal menghapus guru')
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal menghapus guru')
     }
-  }, [deleteConfirm.guru, deleteGuruMutation, mutate, closeDeleteConfirm])
+  }, [deleteConfirm.guru, deleteTeacherMutation, mutate, closeDeleteConfirm])
+
+  const handleShowDeleteConfirm = useCallback(async (guru: any) => {
+    openDeleteConfirm(guru)
+    setDeleteImpact(null, true)
+
+    try {
+      const result = await getTeacherDeleteImpact(guru.id)
+      if (result.success) {
+        setDeleteImpact(result.data || null, false)
+      } else {
+        toast.error(result.message || 'Gagal memuat dampak penghapusan')
+        setDeleteImpact(null, false)
+      }
+    } catch {
+      setDeleteImpact(null, false)
+    }
+  }, [openDeleteConfirm, setDeleteImpact])
 
   const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setFilters(organisasiFilters)
@@ -122,10 +129,11 @@ export function useGuruPage() {
     closeModal,
     openResetPasswordModal,
     closeResetPasswordModal,
-    openDeleteConfirm: handleOpenDeleteConfirm,
+    openDeleteConfirm,
     closeDeleteConfirm,
     openFormSettingsModal,
     closeFormSettingsModal,
+    handleShowDeleteConfirm,
     handleDelete,
     handleOrganisasiFilterChange,
     mutate

@@ -12,14 +12,15 @@ import {
 } from './queries'
 import { buildClassMasterMappings, mapTeacherClassMastersToResult } from './logic'
 
-export async function getTeacherClassMasters(teacherId: string) {
+export async function getTeacherClassMasters(teacherId: string): Promise<{ success: boolean; data: any[]; message?: string }> {
   try {
     const supabase = await createAdminClient()
     const { data, error } = await fetchTeacherClassMasters(supabase, teacherId)
     if (error) throw error
-    return mapTeacherClassMastersToResult(data || [])
+    return { success: true, data: mapTeacherClassMastersToResult(data || []) }
   } catch (error) {
-    throw handleApiError(error, 'memuat data', 'Gagal memuat tingkatan kelas guru')
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat tingkatan kelas guru')
+    return { success: false, message: errorInfo.message, data: [] }
   }
 }
 
@@ -56,6 +57,7 @@ export async function updateTeacherClassMasters(teacherId: string, classMasterId
 
     return { success: true }
   } catch (error) {
-    throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate tingkatan kelas guru')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate tingkatan kelas guru')
+    return { success: false, message: errorInfo.message }
   }
 }

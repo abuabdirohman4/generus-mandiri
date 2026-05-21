@@ -20,7 +20,7 @@ describe('filterStandardMasters', () => {
       makeMaster('d', 'Pengajar', 24),   // bukan standar
     ]
     const result = filterStandardMasters(allMasters)
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
     expect(result.map(m => m.name)).toEqual(['Kelas Paud', 'SMP 1'])
   })
 })

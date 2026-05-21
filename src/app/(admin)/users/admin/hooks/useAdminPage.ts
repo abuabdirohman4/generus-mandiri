@@ -9,6 +9,7 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { useAdminStore } from '../stores/adminStore'
 import useSWRMutation from 'swr/mutation'
 import { toast } from 'sonner'
+import { deleteAdmin } from '../actions'
 
 export function useAdminPage() {
   const { admins, isLoading, error, mutate } = useAdmins()
@@ -35,7 +36,7 @@ export function useAdminPage() {
 
   // Filter admins
   const filteredAdmins = useMemo(() => {
-    let result = admins || []
+    let result = (admins as any[]) || []
     
     if (filters.daerah.length > 0) {
       result = result.filter(a => a.daerah_id && filters.daerah.includes(a.daerah_id))
@@ -62,7 +63,6 @@ export function useAdminPage() {
   const { trigger: deleteAdminMutation } = useSWRMutation(
     '/api/admin',
     async (url, { arg }: { arg: string }) => {
-      const { deleteAdmin } = await import('../actions')
       return await deleteAdmin(arg)
     }
   )
@@ -71,10 +71,14 @@ export function useAdminPage() {
     if (!deleteConfirm.admin) return
     
     try {
-      await deleteAdminMutation(deleteConfirm.admin.id)
-      toast.success('Admin berhasil dihapus')
-      mutate()
-      closeDeleteConfirm()
+      const result = await deleteAdminMutation(deleteConfirm.admin.id)
+      if (result.success) {
+        toast.success('Admin berhasil dihapus')
+        mutate()
+        closeDeleteConfirm()
+      } else {
+        toast.error(result.message || 'Gagal menghapus admin')
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal menghapus admin')
     }

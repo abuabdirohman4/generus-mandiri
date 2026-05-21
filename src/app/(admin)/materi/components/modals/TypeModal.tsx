@@ -95,24 +95,29 @@ export default function TypeModal({ isOpen, onClose, type, defaultCategoryId, on
     setIsLoading(true);
 
     try {
+      let result;
       if (type) {
-        await updateMaterialType(type.id, {
+        result = await updateMaterialType(type.id, {
           category_id: formData.category_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           display_order: formData.display_order,
         });
-        toast.success('Jenis materi berhasil diperbarui');
       } else {
-        await createMaterialType({
+        result = await createMaterialType({
           category_id: formData.category_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           display_order: formData.display_order,
         });
-        toast.success('Jenis materi berhasil ditambahkan');
       }
-      
+
+      if (!result.success) {
+        setGeneralError(result.message || 'Gagal menyimpan jenis materi');
+        return;
+      }
+
+      toast.success(type ? 'Jenis materi berhasil diperbarui' : 'Jenis materi berhasil ditambahkan');
       onSuccess();
       onClose();
     } catch (error: any) {

@@ -162,7 +162,8 @@ describe('Teacher Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(createTeacher({ ...validTeacherData, username: '' })).rejects.toThrow()
+      const result = await createTeacher({ ...validTeacherData, username: '' })
+      expect(result.success).toBe(false)
     })
 
     it('throws when auth.admin.createUser fails', async () => {
@@ -176,7 +177,8 @@ describe('Teacher Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(createTeacher(validTeacherData)).rejects.toThrow()
+      const result = await createTeacher(validTeacherData)
+      expect(result.success).toBe(false)
     })
 
     it('throws when auth user is null (no user returned)', async () => {
@@ -190,7 +192,8 @@ describe('Teacher Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(createTeacher(validTeacherData)).rejects.toThrow()
+      const result = await createTeacher(validTeacherData)
+      expect(result.success).toBe(false)
     })
 
     it('deletes auth user and throws when insertTeacherProfile fails', async () => {
@@ -204,7 +207,8 @@ describe('Teacher Actions (Layer 3)', () => {
         error: new Error('Profile insert failed'),
       } as any)
 
-      await expect(createTeacher(validTeacherData)).rejects.toThrow()
+      const result = await createTeacher(validTeacherData)
+      expect(result.success).toBe(false)
       expect(adminClient.auth.admin.deleteUser).toHaveBeenCalledWith('new-user-id')
     })
 
@@ -240,7 +244,8 @@ describe('Teacher Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(createTeacher(validTeacherData)).rejects.toThrow()
+      const result = await createTeacher(validTeacherData)
+      expect(result.success).toBe(false)
       expect(insertTeacherProfile).not.toHaveBeenCalled()
     })
   })
@@ -259,7 +264,8 @@ describe('Teacher Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(updateTeacher('teacher-1', { ...validTeacherData, email: '' })).rejects.toThrow()
+      const result = await updateTeacher('teacher-1', { ...validTeacherData, email: '' })
+      expect(result.success).toBe(false)
     })
 
     it('throws when updateTeacherProfile fails', async () => {
@@ -273,7 +279,8 @@ describe('Teacher Actions (Layer 3)', () => {
         error: new Error('Profile update failed'),
       } as any)
 
-      await expect(updateTeacher('teacher-1', validTeacherData)).rejects.toThrow()
+      const result = await updateTeacher('teacher-1', validTeacherData)
+      expect(result.success).toBe(false)
     })
 
     it('updates password when password is provided', async () => {
@@ -340,7 +347,8 @@ describe('Teacher Actions (Layer 3)', () => {
       const dataWithoutPassword = { ...validTeacherData }
       delete dataWithoutPassword.password
 
-      await expect(updateTeacher('teacher-1', dataWithoutPassword)).rejects.toThrow()
+      const result = await updateTeacher('teacher-1', dataWithoutPassword)
+      expect(result.success).toBe(false)
     })
   })
 
@@ -356,7 +364,8 @@ describe('Teacher Actions (Layer 3)', () => {
       })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(deleteTeacher('teacher-1')).rejects.toThrow()
+      const result = await deleteTeacher('teacher-1')
+      expect(result.success).toBe(false)
     })
 
     it('returns success and revalidates path on happy path', async () => {
@@ -377,7 +386,8 @@ describe('Teacher Actions (Layer 3)', () => {
       })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(deleteTeacher('teacher-1')).rejects.toThrow()
+      const result = await deleteTeacher('teacher-1')
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
   })
@@ -397,7 +407,8 @@ describe('Teacher Actions (Layer 3)', () => {
       const supabase = makeSupabase()
       vi.mocked(createClient).mockResolvedValue(supabase)
 
-      await expect(resetTeacherPassword('teacher-1', 'newpass')).rejects.toThrow()
+      const result = await resetTeacherPassword('teacher-1', 'newpass')
+      expect(result.success).toBe(false)
     })
 
     it('returns success on happy path', async () => {
@@ -445,7 +456,7 @@ describe('Teacher Actions (Layer 3)', () => {
         error: new Error('DB error'),
       } as any)
 
-      await expect(getAllTeachers()).rejects.toThrow()
+      await expect((await getAllTeachers()).success).toBe(false)
     })
 
     it('returns empty array when fetchTeachers returns no data', async () => {
@@ -458,7 +469,7 @@ describe('Teacher Actions (Layer 3)', () => {
 
       const result = await getAllTeachers()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('returns transformed teachers for non-adminKelompok profile', async () => {
@@ -493,8 +504,8 @@ describe('Teacher Actions (Layer 3)', () => {
 
       const result = await getAllTeachers()
 
-      expect(result).toHaveLength(1)
-      expect(result[0].class_names).toBe('Kelas Al-Quran')
+      expect((result as any).data).toHaveLength(1)
+      expect((result as any).data[0].class_names).toBe('Kelas Al-Quran')
     })
 
     it('returns transformed teachers for adminKelompok profile using flat queries', async () => {
@@ -535,7 +546,7 @@ describe('Teacher Actions (Layer 3)', () => {
 
       const result = await getAllTeachers()
 
-      expect(result).toHaveLength(1)
+      expect((result as any).data).toHaveLength(1)
     })
 
     it('returns teachers with empty classesMap when no class IDs found', async () => {
@@ -550,8 +561,8 @@ describe('Teacher Actions (Layer 3)', () => {
 
       const result = await getAllTeachers()
 
-      expect(result).toHaveLength(1)
-      expect(result[0].class_names).toBe('-')
+      expect((result as any).data).toHaveLength(1)
+      expect((result as any).data[0].class_names).toBe('-')
       expect(fetchClassesByIds).not.toHaveBeenCalled()
     })
 
@@ -566,7 +577,7 @@ describe('Teacher Actions (Layer 3)', () => {
 
       const result = await getAllTeachers()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
       expect(fetchTeachers).toHaveBeenCalledWith(adminClient, undefined)
     })
   })
@@ -584,7 +595,8 @@ describe('Teacher Actions (Layer 3)', () => {
         error: new Error('Update failed'),
       } as any)
 
-      await expect(assignTeacherToKelompok('teacher-1', 'kelompok-1')).rejects.toThrow()
+      const result = await assignTeacherToKelompok('teacher-1', 'kelompok-1')
+      expect(result.success).toBe(false)
     })
 
     it('returns success and revalidates path on happy path', async () => {
@@ -616,7 +628,8 @@ describe('Teacher Actions (Layer 3)', () => {
         error: new Error('Constraint violation'),
       } as any)
 
-      await expect(assignTeacherToKelompok('teacher-1', 'kelompok-1')).rejects.toThrow()
+      const result = await assignTeacherToKelompok('teacher-1', 'kelompok-1')
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
   })

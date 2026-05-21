@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
 import { logActivity } from '@/lib/activityLogger'
 import type { MonthlyTarget, MonthlyTargetInput } from '../../types'
@@ -36,13 +37,13 @@ export async function getMonthlyTargets(params: {
   return data || []
 }
 
-export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<MonthlyTarget> {
-  const profile = await getCurrentUserProfile()
-  if (!profile) throw new Error('Not authenticated')
-  if (!canManageMaterials(profile)) throw new Error('Unauthorized: Curriculum management access required')
-
-  const supabase = await createClient()
+export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<{ success: boolean; data?: MonthlyTarget; message?: string }> {
   try {
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Not authenticated')
+    if (!canManageMaterials(profile)) throw new Error('Unauthorized: Curriculum management access required')
+
+    const supabase = await createClient()
     const { data, error } = await insertMonthlyTarget(supabase, {
       ...input,
       created_by: profile.id
@@ -64,20 +65,20 @@ export async function createMonthlyTarget(input: MonthlyTargetInput): Promise<Mo
       metadata: input as any
     })
 
-    return data
+    return { success: true, data }
   } catch (error) {
-    console.error('Error creating monthly target:', error)
-    throw new Error('Gagal membuat target bulanan')
+    const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat target bulanan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
-export async function deleteMonthlyTarget(id: string): Promise<{ success: boolean }> {
-  const profile = await getCurrentUserProfile()
-  if (!profile) throw new Error('Not authenticated')
-  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
-
-  const supabase = await createClient()
+export async function deleteMonthlyTarget(id: string): Promise<{ success: boolean; message?: string }> {
   try {
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Not authenticated')
+    if (!canManageMaterials(profile)) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
     const { error } = await deleteMonthlyTargetById(supabase, id)
     if (error) throw error
 
@@ -93,22 +94,22 @@ export async function deleteMonthlyTarget(id: string): Promise<{ success: boolea
 
     return { success: true }
   } catch (error) {
-    console.error('Error deleting monthly target:', error)
-    throw new Error('Gagal menghapus target bulanan')
+    const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus target bulanan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
 export async function bulkSetMonthlyTargets(
   params: { class_master_id: string; academic_year_id: string; semester: number; month: number },
   materialItemIds: string[]
-): Promise<{ success: boolean }> {
-  const profile = await getCurrentUserProfile()
-  if (!profile) throw new Error('Not authenticated')
-  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
-
-  const supabase = await createClient()
-
+): Promise<{ success: boolean; message?: string }> {
   try {
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Not authenticated')
+    if (!canManageMaterials(profile)) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
     // Delete semua target bulan ini dulu (replace strategy)
     await deleteMonthlyTargetsByMonth(supabase, params)
 
@@ -143,8 +144,8 @@ export async function bulkSetMonthlyTargets(
 
     return { success: true }
   } catch (error) {
-    console.error('Error bulk setting monthly targets:', error)
-    throw new Error('Gagal menyimpan target bulanan')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal menyimpan target bulanan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -193,17 +194,17 @@ export async function getMonthlyTargetsByItem(itemId: string): Promise<Array<{ c
 export async function syncItemMonthlyTargets(
   itemId: string,
   mappings: Array<{ class_master_id: string; semester: number; month: number | null }>
-): Promise<{ success: boolean }> {
-  const profile = await getCurrentUserProfile()
-  if (!profile) throw new Error('Not authenticated')
-  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
-
-  const activeYear = await getActiveAcademicYear()
-  if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
-
-  const supabase = await createClient()
-
+): Promise<{ success: boolean; message?: string }> {
   try {
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Not authenticated')
+    if (!canManageMaterials(profile)) throw new Error('Unauthorized')
+
+    const activeYear = await getActiveAcademicYear()
+    if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
+
+    const supabase = await createClient()
+
     // 1. Delete all existing monthly targets for THIS item in THIS academic year
     const { error: deleteError } = await deleteMonthlyTargetsByItem(supabase, {
       material_item_id: itemId,
@@ -242,8 +243,8 @@ export async function syncItemMonthlyTargets(
 
     return { success: true }
   } catch (error) {
-    console.error('Error syncing item monthly targets:', error)
-    throw new Error('Gagal memperbarui target bulanan')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal memperbarui target bulanan')
+    return { success: false, message: errorInfo.message }
   }
 }
 
@@ -251,17 +252,17 @@ export async function syncItemMonthlyTargetsBulk(
   itemIds: string[],
   mappings: Array<{ class_master_id: string; semester: number; month: number }>,
   mode: 'replace' | 'add'
-): Promise<{ success: boolean }> {
-  const profile = await getCurrentUserProfile()
-  if (!profile) throw new Error('Not authenticated')
-  if (!canManageMaterials(profile)) throw new Error('Unauthorized')
-
-  const activeYear = await getActiveAcademicYear()
-  if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
-
-  const supabase = await createClient()
-
+): Promise<{ success: boolean; message?: string }> {
   try {
+    const profile = await getCurrentUserProfile()
+    if (!profile) throw new Error('Not authenticated')
+    if (!canManageMaterials(profile)) throw new Error('Unauthorized')
+
+    const activeYear = await getActiveAcademicYear()
+    if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
+
+    const supabase = await createClient()
+
     // 1. Delete existing if replace mode
     if (mode === 'replace') {
       const { error: deleteError } = await deleteMonthlyTargetsByItemIds(supabase, {
@@ -307,8 +308,8 @@ export async function syncItemMonthlyTargetsBulk(
 
     return { success: true }
   } catch (error) {
-    console.error('Error syncing bulk item monthly targets:', error)
-    throw new Error('Gagal memperbarui target bulanan')
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal memperbarui target bulanan secara massal')
+    return { success: false, message: errorInfo.message }
   }
 }
 

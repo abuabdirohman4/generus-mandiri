@@ -23,7 +23,7 @@ export type { Dashboard, DashboardFilters, TodayMeeting, ClassPerformance, Meeti
 /**
  * Get dashboard overview statistics
  */
-export async function getDashboard(filters?: DashboardFilters): Promise<Dashboard> {
+export async function getDashboard(filters?: DashboardFilters) {
     try {
         const supabase = await createClient()
         const profile = await getCurrentUserProfile()
@@ -80,14 +80,17 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         // If no classes under filter, bail early
         if ((hasFilters || isTeacher) && effectiveClassIds.length === 0) {
             return {
-                siswa: siswaCount,
-                kelas: kelasCount,
-                meetingsToday: 0,
-                meetingsWeekly: 0,
-                meetingsMonthly: 0,
-                kehadiranHariIni: 0,
-                kehadiranMingguan: 0,
-                kehadiranBulanan: 0,
+                success: true,
+                data: {
+                    siswa: siswaCount,
+                    kelas: kelasCount,
+                    meetingsToday: 0,
+                    meetingsWeekly: 0,
+                    meetingsMonthly: 0,
+                    kehadiranHariIni: 0,
+                    kehadiranMingguan: 0,
+                    kehadiranBulanan: 0,
+                }
             }
         }
 
@@ -107,12 +110,15 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         // If no students under filter, bail early
         if ((hasFilters || isTeacher) && effectiveStudentIds.length === 0) {
             return {
-                siswa: siswaCount,
-                kelas: kelasCount,
-                ...meetingPeriods,
-                kehadiranHariIni: 0,
-                kehadiranMingguan: 0,
-                kehadiranBulanan: 0,
+                success: true,
+                data: {
+                    siswa: siswaCount,
+                    kelas: kelasCount,
+                    ...meetingPeriods,
+                    kehadiranHariIni: 0,
+                    kehadiranMingguan: 0,
+                    kehadiranBulanan: 0,
+                }
             }
         }
 
@@ -130,15 +136,18 @@ export async function getDashboard(filters?: DashboardFilters): Promise<Dashboar
         )
 
         return {
-            siswa: siswaCount,
-            kelas: kelasCount,
-            ...meetingPeriods,
-            kehadiranHariIni: calcAttendanceRate(todayLogs),
-            kehadiranMingguan: calcAttendanceRate(weekLogs),
-            kehadiranBulanan: calcAttendanceRate(monthLogs),
+            success: true,
+            data: {
+                siswa: siswaCount,
+                kelas: kelasCount,
+                ...meetingPeriods,
+                kehadiranHariIni: calcAttendanceRate(todayLogs),
+                kehadiranMingguan: calcAttendanceRate(weekLogs),
+                kehadiranBulanan: calcAttendanceRate(monthLogs),
+            }
         }
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error)
-        throw handleApiError(error, 'memuat data', 'Failed to fetch dashboard statistics')
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat statistik dashboard')
+        return { success: false, message: errorInfo.message }
     }
 }

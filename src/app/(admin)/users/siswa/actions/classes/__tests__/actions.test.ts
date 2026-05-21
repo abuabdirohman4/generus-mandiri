@@ -78,8 +78,11 @@ describe('getAllClasses', () => {
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
         const result = await getAllClasses()
-        expect(Array.isArray(result)).toBe(true)
-        expect(result.length).toBeGreaterThanOrEqual(0)
+        expect(result.success).toBe(true)
+        if (result.success) {
+            expect(Array.isArray(result.data)).toBe(true)
+            expect(result.data.length).toBeGreaterThanOrEqual(0)
+        }
     })
 
     it('returns empty array for teacher with no classes and no hierarchy', async () => {
@@ -98,7 +101,10 @@ describe('getAllClasses', () => {
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
         const result = await getAllClasses()
-        expect(result).toEqual([])
+        expect(result.success).toBe(true)
+        if (result.success) {
+            expect(result.data).toEqual([])
+        }
     })
 
     it('returns assigned classes for teacher with class assignments', async () => {
@@ -126,6 +132,9 @@ describe('getAllClasses', () => {
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
         const result = await getAllClasses()
-        expect(Array.isArray(result)).toBe(true)
+        expect(result.success).toBe(true)
+        if (result.success) {
+            expect(Array.isArray(result.data)).toBe(true)
+        }
     })
 })

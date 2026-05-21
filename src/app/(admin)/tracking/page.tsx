@@ -36,12 +36,15 @@ export default function TrackingPage() {
   const loadLogs = async (currentParams: GetLogsParams, showLoading = true) => {
     if (showLoading) setLoading(true)
     try {
-      const data = await getActivityLogs(currentParams)
-      setLogs(data.logs)
-      setTotal(data.total)
+      const result = await getActivityLogs(currentParams)
+      if (result.success) {
+        setLogs(result.logs)
+        setTotal(result.total)
+      } else {
+        toast.error(result.message || 'Gagal memuat log aktivitas')
+      }
     } catch (error) {
-      console.error(error)
-      // toast.error('Gagal memuat log aktivitas')
+      toast.error('Terjadi kesalahan sistem saat memuat log')
     } finally {
       if (showLoading) setLoading(false)
     }
@@ -50,11 +53,14 @@ export default function TrackingPage() {
   const loadSummary = async (showLoading = true) => {
     if (showLoading) setSummaryLoading(true)
     try {
-      const data = await getUserActivitySummary()
-      setUserSummaries(data)
+      const result = await getUserActivitySummary()
+      if (result.success) {
+        setUserSummaries(result.data)
+      } else {
+        toast.error(result.message || 'Gagal memuat ringkasan user')
+      }
     } catch (error) {
-      console.error(error)
-      // toast.error('Gagal memuat ringkasan user')
+      toast.error('Terjadi kesalahan sistem saat memuat ringkasan')
     } finally {
       if (showLoading) setSummaryLoading(false)
     }

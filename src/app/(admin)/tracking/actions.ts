@@ -61,14 +61,15 @@ export async function getActivityLogs(params: GetLogsParams) {
     if (error) throw error
 
     return {
+      success: true,
       logs: data as (ActivityLog & { profile: { full_name: string, username: string } })[],
       total: count || 0,
       page,
       limit
     }
   } catch (error) {
-    console.error('Error in getActivityLogs:', error)
-    throw handleApiError(error, 'memuat data', 'Gagal mengambil log aktivitas')
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal mengambil log aktivitas')
+    return { success: false, message: errorInfo.message, logs: [], total: 0, page: 1, limit: 50 }
   }
 }
 
@@ -150,9 +151,9 @@ export async function getUserActivitySummary() {
       })
     )
 
-    return summaries
+    return { success: true, data: summaries }
   } catch (error) {
-    console.error('Error in getUserActivitySummary:', error)
-    throw handleApiError(error, 'memuat data', 'Gagal memuat ringkasan aktivitas per user')
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat ringkasan aktivitas per user')
+    return { success: false, message: errorInfo.message, data: [] }
   }
 }

@@ -158,7 +158,7 @@ describe('filterDesaList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: true,
     })
-    expect(result).toHaveLength(3)
+    expect((result as any).data).toHaveLength(3)
   })
 
   it('filters desa by selected daerah for superadmin', () => {
@@ -169,7 +169,7 @@ describe('filterDesaList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: true,
     })
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
     expect(result.every(d => d.daerah_id === 'daerah-1')).toBe(true)
   })
 
@@ -192,7 +192,7 @@ describe('filterDesaList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: true,
     })
-    expect(result).toHaveLength(0)
+    expect((result as any).data).toHaveLength(0)
   })
 
   it('returns own daerah desa in independent mode for admin daerah', () => {
@@ -204,7 +204,7 @@ describe('filterDesaList', () => {
       cascadeFilters: false,
     })
     expect(result.every(d => d.daerah_id === 'daerah-1')).toBe(true)
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
   })
 })
 
@@ -220,7 +220,7 @@ describe('filterKelompokList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: true,
     })
-    expect(result).toHaveLength(3)
+    expect((result as any).data).toHaveLength(3)
   })
 
   it('filters kelompok by selected desa for superadmin', () => {
@@ -232,7 +232,7 @@ describe('filterKelompokList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: true,
     })
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
   })
 
   it('limits kelompok to own desa for admin desa', () => {
@@ -256,7 +256,7 @@ describe('filterKelompokList', () => {
       role: detectRole(mockUserSuperAdmin),
       cascadeFilters: false,
     })
-    expect(result).toHaveLength(3)
+    expect((result as any).data).toHaveLength(3)
   })
 
   it('filters kelompok by daerah cascade for superadmin', () => {
@@ -269,7 +269,7 @@ describe('filterKelompokList', () => {
       cascadeFilters: true,
     })
     // daerah-2 has desa-3, kelompok-3 is in desa-3
-    expect(result).toHaveLength(1)
+    expect((result as any).data).toHaveLength(1)
     expect(result[0].id).toBe('kelompok-3')
   })
 
@@ -321,7 +321,7 @@ describe('filterClassList', () => {
       cascadeFilters: true,
       ...defaultClassParams,
     })
-    expect(result).toHaveLength(0)
+    expect((result as any).data).toHaveLength(0)
   })
 
   it('returns all classes when shouldShowKelompok is false', () => {
@@ -349,7 +349,7 @@ describe('filterClassList', () => {
       ...defaultClassParams,
     })
     // kelompok-1 has cls-1 (Remaja) and cls-3 (Pemuda)
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
     expect(result.every(c => c.kelompok_id === 'kelompok-1')).toBe(true)
   })
 
@@ -364,7 +364,7 @@ describe('filterClassList', () => {
       cascadeFilters: true,
       ...defaultClassParams,
     })
-    expect(result).toHaveLength(3) // all 3 classes in kelompok-1 and kelompok-2
+    expect((result as any).data).toHaveLength(3) // all 3 classes in kelompok-1 and kelompok-2
   })
 
   it('restricts classes to own kelompok for admin kelompok', () => {
@@ -379,7 +379,7 @@ describe('filterClassList', () => {
     })
     // Admin kelompok-1 should see cls-1 and cls-3 (both in kelompok-1), not cls-2 (kelompok-2)
     expect(result.every(c => !c.kelompok_id || c.kelompok_id === 'kelompok-1')).toBe(true)
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
   })
 
   it('isTeacherDesa independent mode: returns classes in their desa kelompok only', () => {
@@ -422,7 +422,7 @@ describe('deduplicateClasses', () => {
       { id: 'cls-3', name: 'Pemuda', kelompok_id: 'kelompok-1' },
     ]
     const result = deduplicateClasses(classes, 1)
-    expect(result).toHaveLength(2)
+    expect((result as any).data).toHaveLength(2)
     expect(result[0].label).toBe('Remaja')
   })
 
@@ -436,7 +436,7 @@ describe('deduplicateClasses', () => {
 
   it('returns empty array for empty input', () => {
     const result = deduplicateClasses([], 0)
-    expect(result).toHaveLength(0)
+    expect((result as any).data).toHaveLength(0)
   })
 
   it('does not add suffix when all classes are from 1 kelompok even with 2 selected', () => {
@@ -457,7 +457,7 @@ describe('deduplicateClasses', () => {
       { id: 'cls-3', name: 'Pemuda', kelompok_id: 'kelompok-1' },
     ]
     const result = deduplicateClasses(duplicates, 1)
-    expect(result).toHaveLength(2) // Remaja deduplicated
+    expect((result as any).data).toHaveLength(2) // Remaja deduplicated
     const remajaOption = result.find(o => o.name === 'Remaja')
     expect(remajaOption?.ids).toHaveLength(1)
   })

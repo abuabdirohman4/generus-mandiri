@@ -134,7 +134,7 @@ describe('Material Type Actions (Layer 3)', () => {
 
       const result = await getMaterialTypes()
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('throws when fetchAllTypes returns an error', async () => {
@@ -156,7 +156,7 @@ describe('Material Type Actions (Layer 3)', () => {
 
       const result = await getMaterialTypes('cat-1')
 
-      expect(result).toHaveLength(2)
+      expect((result as any).data).toHaveLength(2)
       expect(result[0].id).toBe('type-1')
       expect(result[1].id).toBe('type-2')
     })
@@ -206,7 +206,8 @@ describe('Material Type Actions (Layer 3)', () => {
       vi.mocked(insertType).mockResolvedValue({ data: null, error: { code: '23505', message: 'dup' } } as any)
       vi.mocked(mapTypeErrorMessage).mockReturnValue('Nama jenis materi sudah digunakan untuk kategori ini')
 
-      await expect(createMaterialType(validData)).rejects.toThrow()
+      const result = await createMaterialType(validData)
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -219,7 +220,7 @@ describe('Material Type Actions (Layer 3)', () => {
 
       const result = await createMaterialType(dataWithoutDesc)
 
-      expect(result.name).toBe('Tajwid')
+      expect(result.data?.name).toBe('Tajwid')
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
   })
@@ -269,7 +270,8 @@ describe('Material Type Actions (Layer 3)', () => {
       vi.mocked(updateTypeById).mockResolvedValue({ data: null, error: { code: '500', message: 'error' } } as any)
       vi.mocked(mapTypeErrorMessage).mockReturnValue('Gagal memperbarui jenis materi')
 
-      await expect(updateMaterialType('type-1', updateData)).rejects.toThrow()
+      const result = await updateMaterialType('type-1', updateData)
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
   })
@@ -367,7 +369,8 @@ describe('Material Type Actions (Layer 3)', () => {
       vi.mocked(typeHasDependencies).mockReturnValue({ hasDeps: false })
       vi.mocked(deleteTypeById).mockResolvedValue({ error: { message: 'Delete failed' } } as any)
 
-      await expect(deleteMaterialType('type-1')).rejects.toThrow()
+      const result = await deleteMaterialType('type-1')
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -381,7 +384,8 @@ describe('Material Type Actions (Layer 3)', () => {
         reason: 'Tidak dapat menghapus jenis materi. Masih ada item materi yang menggunakan jenis ini.',
       })
 
-      await expect(deleteMaterialType('type-1')).rejects.toThrow()
+      const result2 = await deleteMaterialType('type-1')
+      expect(result2.success).toBe(false)
       expect(typeHasDependencies).toHaveBeenCalledWith(2, 1)
     })
 

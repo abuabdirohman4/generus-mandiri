@@ -88,14 +88,19 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
       setLoadingData(true);
 
       // Load types, classes, and active year in parallel
-      const [typesData, classesData, activeYear] = await Promise.all([
+      const [typesData, classesResult, activeYear] = await Promise.all([
         getMaterialTypes(),
         getAllClasses(),
         getActiveAcademicYear()
       ]);
 
       setTypes(typesData);
-      setClasses(classesData);
+      if (classesResult.success) {
+        setClasses(classesResult.data);
+      } else {
+        toast.error(classesResult.message || 'Gagal memuat daftar kelas');
+        setClasses([]);
+      }
       if (activeYear) setActiveAcademicYearId(activeYear.id);
 
       // If editing, load existing mappings
@@ -231,21 +236,35 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
       let itemId = item?.id;
 
       if (item) {
-        await updateMaterialItem(item.id, {
+        const result = await updateMaterialItem(item.id, {
           material_type_id: formData.material_type_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           content: formData.content.trim() || undefined,
         });
+        
+        if (!result.success) {
+          setGeneralError(result.message || 'Gagal memperbarui item materi');
+          setIsLoading(false);
+          return;
+        }
+        
         toast.success('Item materi berhasil diperbarui');
       } else {
-        const newItem = await createMaterialItem({
+        const result = await createMaterialItem({
           material_type_id: formData.material_type_id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           content: formData.content.trim() || undefined,
         });
-        itemId = newItem.id;
+
+        if (!result.success) {
+          setGeneralError(result.message || 'Gagal menambahkan item materi');
+          setIsLoading(false);
+          return;
+        }
+
+        itemId = result.data?.id;
         toast.success('Item materi berhasil ditambahkan');
       }
 
@@ -257,7 +276,10 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           mappingsToSave.push({ class_master_id: classId });
         });
 
-        await updateMaterialItemClassMappings(itemId, mappingsToSave);
+        const mappingResult = await updateMaterialItemClassMappings(itemId, mappingsToSave);
+        if (!mappingResult.success) {
+          toast.error(mappingResult.message || 'Gagal menyimpan mapping kelas');
+        }
 
         // Save monthly targets
         const monthlyMappingsToSave: Array<{ class_master_id: string; semester: number; month: number | null }> = [];
@@ -279,7 +301,10 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
           });
         });
 
-        await syncItemMonthlyTargets(itemId, monthlyMappingsToSave);
+        const syncResult = await syncItemMonthlyTargets(itemId, monthlyMappingsToSave);
+        if (syncResult && !syncResult.success) {
+          toast.error(syncResult.message || 'Gagal menyimpan target bulanan');
+        }
       }
 
       onSuccess(itemId);

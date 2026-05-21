@@ -91,8 +91,8 @@ export async function createAdmin(data: AdminData) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error creating admin:', error);
-    throw handleApiError(error, 'menyimpan data', 'Gagal membuat admin');
+    const errorInfo = handleApiError(error, 'menyimpan data', 'Gagal membuat admin');
+    return { success: false, message: errorInfo.message };
   }
 }
 
@@ -170,8 +170,8 @@ export async function updateAdmin(id: string, data: AdminData) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating admin:', error);
-    throw handleApiError(error, 'mengupdate data', 'Gagal mengupdate admin');
+    const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate admin');
+    return { success: false, message: errorInfo.message };
   }
 }
 
@@ -201,8 +201,8 @@ export async function deleteAdmin(id: string) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error deleting admin:', error);
-    throw handleApiError(error, 'menghapus data', 'Gagal menghapus admin');
+    const errorInfo = handleApiError(error, 'menghapus data', 'Gagal menghapus admin');
+    return { success: false, message: errorInfo.message };
   }
 }
 
@@ -233,12 +233,12 @@ export async function resetAdminPassword(id: string, newPassword: string) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error resetting admin password:', error);
-    throw handleApiError(error, 'reset', 'Gagal mereset password admin');
+    const errorInfo = handleApiError(error, 'reset', 'Gagal mereset password admin');
+    return { success: false, message: errorInfo.message };
   }
 }
 
-export async function getAllAdmins() {
+export async function getAllAdmins(): Promise<{ success: boolean; data: any[]; message?: string }> {
   try {
     const supabase = await createClient();
     const profile = await getCurrentUserProfile();
@@ -254,9 +254,9 @@ export async function getAllAdmins() {
     // Transform the data to flatten org names (Layer 2)
     const transformedData = transformAdminList(data || []);
 
-    return transformedData;
+    return { success: true, data: transformedData };
   } catch (error) {
-    console.error('Error fetching admins:', error);
-    throw handleApiError(error, 'memuat data', 'Gagal mengambil data admin');
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal mengambil data admin');
+    return { success: false, data: [], message: errorInfo.message };
   }
 }

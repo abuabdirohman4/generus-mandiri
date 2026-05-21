@@ -41,32 +41,37 @@ export async function createMaterialType(data: {
     name: string
     description?: string
     display_order: number
-}): Promise<MaterialType> {
-    const supabase = await createClient()
+}): Promise<{ success: boolean; data?: MaterialType; message?: string }> {
+    try {
+        const supabase = await createClient()
 
-    const { data: type, error } = await insertType(supabase, data)
+        const { data: type, error } = await insertType(supabase, data)
 
-    if (error) {
+        if (error) {
+            console.error('Error creating material type:', error)
+            return { success: false, message: mapTypeErrorMessage(error.code, 'create') }
+        }
+
+        revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'create_material_type',
+                entityType: 'material_type',
+                entityId: type.id,
+                entityLabel: type.name,
+                pagePath: '/materi',
+                metadata: data
+            })
+        }
+
+        return { success: true, data: type }
+    } catch (error: any) {
         console.error('Error creating material type:', error)
-        throw new Error(mapTypeErrorMessage(error.code, 'create'))
+        return { success: false, message: error.message || 'Gagal membuat jenis materi' }
     }
-
-    revalidatePath('/materi')
-
-    const profile = await getCurrentUserProfile()
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'create_material_type',
-            entityType: 'material_type',
-            entityId: type.id,
-            entityLabel: type.name,
-            pagePath: '/materi',
-            metadata: data
-        })
-    }
-
-    return type
 }
 
 /**
@@ -80,32 +85,37 @@ export async function updateMaterialType(
         description?: string
         display_order: number
     }
-): Promise<MaterialType> {
-    const supabase = await createClient()
+): Promise<{ success: boolean; data?: MaterialType; message?: string }> {
+    try {
+        const supabase = await createClient()
 
-    const { data: type, error } = await updateTypeById(supabase, id, data)
+        const { data: type, error } = await updateTypeById(supabase, id, data)
 
-    if (error) {
+        if (error) {
+            console.error('Error updating material type:', error)
+            return { success: false, message: mapTypeErrorMessage(error.code, 'update') }
+        }
+
+        revalidatePath('/materi')
+
+        const profile = await getCurrentUserProfile()
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_material_type',
+                entityType: 'material_type',
+                entityId: id,
+                entityLabel: data.name,
+                pagePath: '/materi',
+                metadata: data
+            })
+        }
+
+        return { success: true, data: type }
+    } catch (error: any) {
         console.error('Error updating material type:', error)
-        throw new Error(mapTypeErrorMessage(error.code, 'update'))
+        return { success: false, message: error.message || 'Gagal memperbarui jenis materi' }
     }
-
-    revalidatePath('/materi')
-
-    const profile = await getCurrentUserProfile()
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'update_material_type',
-            entityType: 'material_type',
-            entityId: id,
-            entityLabel: data.name,
-            pagePath: '/materi',
-            metadata: data
-        })
-    }
-
-    return type
 }
 
 /**

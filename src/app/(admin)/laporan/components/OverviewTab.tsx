@@ -1,5 +1,4 @@
-'use client'
-
+import { toast } from 'sonner'
 import { useState, useMemo, useEffect } from 'react'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
@@ -14,6 +13,7 @@ import { useKelompok } from '@/hooks/useKelompok'
 import { useClasses } from '@/hooks/useClasses'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { getClassMonitoring } from '@/app/(admin)/dashboard/actions'
+import type { ClassMonitoringData } from '@/app/(admin)/dashboard/actions/monitoring/actions'
 import { useDashboardStore } from '@/app/(admin)/dashboard/stores/dashboardStore'
 import { useDebounce } from '@/hooks/useDebounce'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
@@ -121,7 +121,7 @@ export default function OverviewTab() {
   )
 
   const monitoringFetcher = async () => {
-    return await getClassMonitoring({
+    const result = await getClassMonitoring({
       period: 'month',
       startDate: customDateRange?.start,
       endDate: customDateRange?.end,
@@ -134,6 +134,11 @@ export default function OverviewTab() {
       classViewMode,
       monthString: selectedMonth
     })
+
+    if (!result.success) {
+      throw new Error(result.message || 'Gagal memuat monitoring kelas')
+    }
+    return result.data
   }
 
   const monitoringCacheKey = useMemo(() => {
@@ -156,11 +161,17 @@ export default function OverviewTab() {
   }, [debouncedFiltersForKey, selectedMonth, sharedMonth, sharedYear])
 
   // Pass null key when no filter selected → SWR will not fetch
-  const { data: monitoringData, isLoading: monitoringLoading } = useSWR(
+  const { data: monitoringData, isLoading: monitoringLoading, error: monitoringError } = useSWR<ClassMonitoringData[]>(
     hasActiveFilter ? ['class-monitoring-overview', monitoringCacheKey] : null,
     monitoringFetcher,
     { revalidateOnFocus: false, dedupingInterval: 60000, keepPreviousData: true }
   )
+
+  useEffect(() => {
+    if (monitoringError) {
+      toast.error(monitoringError.message || 'Terjadi kesalahan saat memuat monitoring kelas')
+    }
+  }, [monitoringError])
 
   const handleFilterChange = (newFilters: any) => {
     setFilters({
@@ -181,7 +192,7 @@ export default function OverviewTab() {
       return { simpleAverage: 0, weightedAverage: 0, totalPresent: 0, totalPotential: 0, entityCount: 0 }
     }
     const comparisonLevel = filters.comparisonLevel
-    const grouped = monitoringData.reduce((acc, cls) => {
+    const grouped = (monitoringData as ClassMonitoringData[]).reduce((acc, cls) => {
       let entityKey: string | undefined
       if (comparisonLevel === 'class') entityKey = cls.class_name
       else if (comparisonLevel === 'kelompok') entityKey = cls.kelompok_name
@@ -209,9 +220,9 @@ export default function OverviewTab() {
     const entities = Object.values(grouped)
     const entityCount = entities.length
     const simpleAverage = entityCount > 0
-      ? Math.round(entities.reduce((sum, e) => sum + e.attendanceRate, 0) / entityCount) : 0
-    const totalPresent = entities.reduce((sum, e) => sum + e.totalPresent, 0)
-    const totalPotential = entities.reduce((sum, e) => sum + e.totalPotential, 0)
+      ? Math.round(entities.reduce((sum: number, e) => sum + e.attendanceRate, 0) / entityCount) : 0
+    const totalPresent = entities.reduce((sum: number, e) => sum + e.totalPresent, 0)
+    const totalPotential = entities.reduce((sum: number, e) => sum + e.totalPotential, 0)
     const weightedAverage = totalPotential > 0
       ? Math.round((totalPresent / totalPotential) * 100) : 0
     return { simpleAverage, weightedAverage, totalPresent: Math.round(totalPresent), totalPotential: Math.round(totalPotential), entityCount }

@@ -150,7 +150,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await getMeetingFormSettings('user-1')
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Gagal memuat pengaturan form')
+      expect(result.message).toBe('Gagal memuat pengaturan form')
     })
 
     it('returns error with custom message when fetchMeetingFormSettings throws', async () => {
@@ -161,7 +161,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await getMeetingFormSettings('user-1')
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.message).toBeDefined()
     })
   })
 
@@ -178,7 +178,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateMeetingFormSettings('user-1', DEFAULT_SETTINGS)
 
       expect(result.success).toBe(true)
-      expect(result.error).toBeUndefined()
+      expect(result.message).toBeUndefined()
       expect(updateMeetingFormSettingsQuery).toHaveBeenCalledWith(
         supabase,
         'user-1',
@@ -211,7 +211,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateMeetingFormSettings('user-1', DEFAULT_SETTINGS)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Gagal menyimpan pengaturan form')
+      expect(result.message).toBe('Gagal menyimpan pengaturan form')
       // Should NOT revalidate on error
       expect(revalidatePath).not.toHaveBeenCalled()
     })
@@ -224,7 +224,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateMeetingFormSettings('user-1', DEFAULT_SETTINGS)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.message).toBeDefined()
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -264,7 +264,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateTeacherPermissions('user-1', fullPermissions)
 
       expect(result.success).toBe(true)
-      expect(result.error).toBeUndefined()
+      expect(result.message).toBeUndefined()
       expect(updateTeacherPermissionsQuery).toHaveBeenCalledWith(supabase, 'user-1', fullPermissions)
       expect(revalidatePath).toHaveBeenCalledWith('/users/guru')
       expect(revalidatePath).toHaveBeenCalledWith('/users/siswa')
@@ -294,7 +294,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateTeacherPermissions('user-1', fullPermissions)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Gagal menyimpan hak akses')
+      expect(result.message).toBe('Gagal menyimpan hak akses')
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -306,7 +306,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
       const result = await updateTeacherPermissions('user-1', fullPermissions)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.message).toBeDefined()
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 

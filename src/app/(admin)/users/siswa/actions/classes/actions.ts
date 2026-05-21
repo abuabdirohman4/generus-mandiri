@@ -17,7 +17,7 @@ export type { Class }
 /**
  * Mendapatkan daftar kelas berdasarkan role user
  */
-export async function getAllClasses(): Promise<Class[]> {
+export async function getAllClasses() {
     try {
         const supabase = await createClient()
 
@@ -38,6 +38,8 @@ export async function getAllClasses(): Promise<Class[]> {
 
         if (!profile) throw new Error('User profile not found')
 
+        let finalClasses: any[] = []
+
         if (profile.role === 'admin' || profile.role === 'superadmin') {
             const { data: classes, error } = await fetchAllClassesBasic(supabase)
             if (error) throw error
@@ -45,7 +47,7 @@ export async function getAllClasses(): Promise<Class[]> {
             const classIds = (classes || []).map(c => c.id)
             const classMappings = await fetchClassMasterMappings(supabase, classIds)
             const transformed = attachClassMasterMappings(classes || [], classMappings)
-            return sortClassesByMasterOrder(transformed)
+            finalClasses = sortClassesByMasterOrder(transformed)
 
         } else if (profile.role === 'teacher') {
             if (profile.teacher_classes && profile.teacher_classes.length > 0) {
@@ -60,7 +62,7 @@ export async function getAllClasses(): Promise<Class[]> {
                 const classIds = (classes || []).map(c => c.id)
                 const classMappings = await fetchClassMasterMappings(supabase, classIds)
                 const transformed = attachClassMasterMappings(classes || [], classMappings)
-                return sortClassesByMasterOrder(transformed)
+                finalClasses = sortClassesByMasterOrder(transformed)
 
             } else if (profile.kelompok_id || profile.desa_id || profile.daerah_id) {
                 // Teacher with hierarchical access (Guru Desa/Daerah)
@@ -76,18 +78,18 @@ export async function getAllClasses(): Promise<Class[]> {
 
                 // Filter by class master restriction if applicable
                 const allowedClassIds = await getTeacherAllowedClassIds(user.id, profile)
-                let finalClasses = classes || []
+                let hierarchicalClasses = classes || []
                 if (allowedClassIds) {
-                    finalClasses = finalClasses.filter(c => allowedClassIds.has(c.id))
+                    hierarchicalClasses = hierarchicalClasses.filter(c => allowedClassIds.has(c.id))
                 }
 
-                const classIds = finalClasses.map(c => c.id)
+                const classIds = hierarchicalClasses.map(c => c.id)
                 const classMappings = await fetchClassMasterMappings(supabase, classIds)
-                const transformed = attachClassMasterMappings(finalClasses, classMappings)
-                return sortClassesByMasterOrder(transformed)
+                const transformed = attachClassMasterMappings(hierarchicalClasses, classMappings)
+                finalClasses = sortClassesByMasterOrder(transformed)
 
             } else {
-                return []
+                finalClasses = []
             }
         } else {
             const { data: classes, error } = await fetchAllClassesBasic(supabase)
@@ -96,10 +98,12 @@ export async function getAllClasses(): Promise<Class[]> {
             const classIds = (classes || []).map(c => c.id)
             const classMappings = await fetchClassMasterMappings(supabase, classIds)
             const transformed = attachClassMasterMappings(classes || [], classMappings)
-            return sortClassesByMasterOrder(transformed)
+            finalClasses = sortClassesByMasterOrder(transformed)
         }
+
+        return { success: true, data: finalClasses }
     } catch (error) {
-        handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
-        throw error
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar kelas')
+        return { success: false, message: errorInfo.message, data: [] }
     }
 }

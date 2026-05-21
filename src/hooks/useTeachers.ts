@@ -4,7 +4,9 @@ import useSWR from 'swr';
 import { getAllTeachers } from '@/app/(admin)/users/guru/actions';
 
 const fetcher = async () => {
-  return await getAllTeachers();
+  const result = await getAllTeachers();
+  if (!result.success) throw new Error(result.message || 'Gagal memuat data guru');
+  return result.data;
 };
 
 export function useTeachers() {

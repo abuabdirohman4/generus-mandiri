@@ -89,7 +89,7 @@ export default function MeetingFormSettingsModal({
         onSuccess?.()
         onClose()
       } else {
-        toast.error('Gagal menyimpan pengaturan: ' + result.error)
+        toast.error('Gagal menyimpan pengaturan: ' + result.message)
       }
     } catch (error) {
       console.error('Error saving settings:', error)

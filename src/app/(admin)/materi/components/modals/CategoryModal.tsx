@@ -71,22 +71,27 @@ export default function CategoryModal({ isOpen, onClose, category, onSuccess }: 
     setIsLoading(true);
 
     try {
+      let result;
       if (category) {
-        await updateMaterialCategory(category.id, {
+        result = await updateMaterialCategory(category.id, {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           display_order: formData.display_order,
         });
-        toast.success('Kategori berhasil diperbarui');
       } else {
-        await createMaterialCategory({
+        result = await createMaterialCategory({
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           display_order: formData.display_order,
         });
-        toast.success('Kategori berhasil ditambahkan');
       }
-      
+
+      if (!result.success) {
+        setGeneralError(result.message || 'Gagal menyimpan kategori');
+        return;
+      }
+
+      toast.success(category ? 'Kategori berhasil diperbarui' : 'Kategori berhasil ditambahkan');
       onSuccess();
       onClose();
     } catch (error: any) {

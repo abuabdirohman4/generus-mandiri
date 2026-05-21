@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { handleApiError } from '@/lib/errorUtils';
 import { MaterialProgress, ProgressInput } from '../types';
 import { logActivity } from '@/lib/activityLogger';
 import { getCurrentUserProfile } from '@/lib/accessControlServer';
@@ -10,36 +11,42 @@ import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academ
 /**
  * Get hafalan categories (categories with name containing "Hafalan")
  */
-export async function getHafalanCategories(): Promise<any[]> {
-    const supabase = await createAdminClient();
+export async function getHafalanCategories() {
+    try {
+        const supabase = await createAdminClient();
 
-    const { data, error } = await supabase
-        .from('material_categories')
-        .select('id, name')
-        // .ilike('name', '%Hafalan%')
-        .order('name');
+        const { data, error } = await supabase
+            .from('material_categories')
+            .select('id, name')
+            .order('name');
 
-    if (error) throw new Error(error.message);
-    return data || [];
+        if (error) throw error;
+        return { success: true, data: data || [] };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat kategori hafalan');
+        return { success: false, message: errorInfo.message, data: [] };
+    }
 }
 
-export async function getTeacherRestrictions(): Promise<string[] | null> {
-    const supabase = await createAdminClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+export async function getTeacherRestrictions() {
+    try {
+        const supabase = await createAdminClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: true, data: null };
 
-    const { data, error } = await supabase
-        .from('teacher_class_masters')
-        .select('class_master_id')
-        .eq('teacher_id', user.id);
+        const { data, error } = await supabase
+            .from('teacher_class_masters')
+            .select('class_master_id')
+            .eq('teacher_id', user.id);
 
-    if (error) {
+        if (error) throw error;
+
+        if (!data || data.length === 0) return { success: true, data: null };
+        return { success: true, data: data.map(d => d.class_master_id) };
+    } catch (error) {
         console.error('Error fetching teacher restrictions:', error);
-        return null;
+        return { success: false, message: 'Gagal memuat pembatasan pengajar', data: null };
     }
-
-    if (!data || data.length === 0) return null;
-    return data.map(d => d.class_master_id);
 }
 
 export async function getTeacherAllowedClassesAction(): Promise<string[] | null> {
@@ -84,148 +91,173 @@ export async function getStudentProgress(
     studentId: string,
     academicYearId: string,
     semester: number
-): Promise<MaterialProgress[]> {
-    const supabase = await createAdminClient();
+) {
+    try {
+        const supabase = await createAdminClient();
 
-    const { data, error } = await supabase
-        .from('student_material_progress')
-        .select(`
-      *,
-      material_item:material_items(*),
-      teacher:profiles(id, full_name)
-    `)
-        .eq('student_id', studentId)
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+            .from('student_material_progress')
+            .select(`
+          *,
+          material_item:material_items(*),
+          teacher:profiles(id, full_name)
+        `)
+            .eq('student_id', studentId)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester)
+            .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
-    return data || [];
+        if (error) throw error;
+        return { success: true, data: data || [] };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat progress siswa');
+        return { success: false, message: errorInfo.message, data: [] };
+    }
 }
 
 export async function getClassProgress(
     classId: string,
     academicYearId: string,
     semester: number
-): Promise<any> {
-    if (!classId || !academicYearId) {
-        console.error('[getClassProgress] Missing required params:', { classId, academicYearId });
-        return { students: [], progress: [] };
-    }
+) {
+    try {
+        if (!classId || !academicYearId) {
+            return { success: false, message: 'ID Kelas dan Tahun Ajaran diperlukan', students: [], progress: [] };
+        }
 
-    const supabase = await createAdminClient();
+        const supabase = await createAdminClient();
 
-    // Get students in class via student_enrollments
-    const { data: enrollments, error: enrollError } = await supabase
-        .from('student_enrollments')
-        .select(`
-      student_id,
-      students!inner(id, name, status)
-    `)
-        .eq('class_id', classId)
-        .eq('academic_year_id', academicYearId)
-        .eq('status', 'active')
-        .eq('students.status', 'active');
+        // Get students in class via student_enrollments
+        const { data: enrollments, error: enrollError } = await supabase
+            .from('student_enrollments')
+            .select(`
+          student_id,
+          students!inner(id, name, status)
+        `)
+            .eq('class_id', classId)
+            .eq('academic_year_id', academicYearId)
+            .eq('status', 'active')
+            .eq('students.status', 'active');
 
-    if (enrollError) {
-        console.error('[getClassProgress] Error fetching enrollments:', enrollError);
-        throw new Error(enrollError.message);
-    }
+        if (enrollError) throw enrollError;
 
-    if (!enrollments || enrollments.length === 0) {
-        console.log('[getClassProgress] No enrollments found for:', { classId, academicYearId, semester });
+        if (!enrollments || enrollments.length === 0) {
+            return {
+                success: true,
+                students: [],
+                progress: []
+            };
+        }
+
+        // Extract students from enrollments
+        const students = enrollments.map((e: any) => e.students).filter(Boolean);
+        const studentIds = students.map(s => s.id);
+
+        if (studentIds.length === 0) {
+            return {
+                success: true,
+                students: [],
+                progress: []
+            };
+        }
+
+        // Get all progress for these students
+        const { data: progress, error: progressError } = await supabase
+            .from('student_material_progress')
+            .select(`
+          *,
+          material_item:material_items(*)
+        `)
+            .in('student_id', studentIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester);
+
+        if (progressError) throw progressError;
+
         return {
-            students: [],
-            progress: []
+            success: true,
+            students,
+            progress: progress || []
         };
-    }
-
-    // Extract students from enrollments
-    const students = enrollments.map((e: any) => e.students).filter(Boolean);
-    const studentIds = students.map(s => s.id);
-
-    if (studentIds.length === 0) {
-        return {
-            students: [],
-            progress: []
-        };
-    }
-
-    // Get all progress for these students
-    const { data: progress } = await supabase
-        .from('student_material_progress')
-        .select(`
-      *,
-      material_item:material_items(*)
-    `)
-        .in('student_id', studentIds)
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester);
-
-    return {
-        students,
-        progress: progress || []
-    };
-}
-
-export async function updateMaterialProgress(input: ProgressInput): Promise<void> {
-    const supabase = await createAdminClient();
-
-    const { error } = await supabase
-        .from('student_material_progress')
-        .upsert({
-            ...input,
-            teacher_id: (await supabase.auth.getUser()).data.user?.id
-        }, {
-            onConflict: 'student_id,material_item_id,academic_year_id,semester'
-        });
-
-    if (error) throw new Error(error.message);
-
-    revalidatePath('/hafalan');
-
-    const profile = await getCurrentUserProfile();
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'update_monitoring_data',
-            entityType: 'student_progress',
-            entityId: input.student_id,
-            pagePath: '/monitoring',
-            metadata: input as any
-        });
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat progress kelas');
+        return { success: false, message: errorInfo.message, students: [], progress: [] };
     }
 }
 
-export async function bulkUpdateProgress(updates: ProgressInput[]): Promise<void> {
-    const supabase = await createAdminClient();
-    const userId = (await supabase.auth.getUser()).data.user?.id;
+export async function updateMaterialProgress(input: ProgressInput) {
+    try {
+        const supabase = await createAdminClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-    const records = updates.map(update => ({
-        ...update,
-        teacher_id: userId
-    }));
+        const { error } = await supabase
+            .from('student_material_progress')
+            .upsert({
+                ...input,
+                teacher_id: user?.id
+            }, {
+                onConflict: 'student_id,material_item_id,academic_year_id,semester'
+            });
 
-    const { error } = await supabase
-        .from('student_material_progress')
-        .upsert(records, {
-            onConflict: 'student_id,material_item_id,academic_year_id,semester'
-        });
+        if (error) throw error;
 
-    if (error) throw new Error(error.message);
+        revalidatePath('/hafalan');
 
-    revalidatePath('/hafalan');
+        const profile = await getCurrentUserProfile();
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_monitoring_data',
+                entityType: 'student_progress',
+                entityId: input.student_id,
+                pagePath: '/monitoring',
+                metadata: input as any
+            });
+        }
 
-    const profile = await getCurrentUserProfile();
-    if (profile) {
-        void logActivity({
-            userId: profile.id,
-            action: 'update_monitoring_data',
-            entityType: 'student_progress',
-            entityLabel: 'Bulk Update',
-            pagePath: '/monitoring',
-            metadata: { count: updates.length }
-        });
+        return { success: true };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal mengupdate progress materi');
+        return { success: false, message: errorInfo.message };
+    }
+}
+
+export async function bulkUpdateProgress(updates: ProgressInput[]) {
+    try {
+        const supabase = await createAdminClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const records = updates.map(update => ({
+            ...update,
+            teacher_id: user?.id
+        }));
+
+        const { error } = await supabase
+            .from('student_material_progress')
+            .upsert(records, {
+                onConflict: 'student_id,material_item_id,academic_year_id,semester'
+            });
+
+        if (error) throw error;
+
+        revalidatePath('/hafalan');
+
+        const profile = await getCurrentUserProfile();
+        if (profile) {
+            void logActivity({
+                userId: profile.id,
+                action: 'update_monitoring_data',
+                entityType: 'student_progress',
+                entityLabel: 'Bulk Update',
+                pagePath: '/monitoring',
+                metadata: { count: updates.length }
+            });
+        }
+
+        return { success: true };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal melakukan bulk update progress');
+        return { success: false, message: errorInfo.message };
     }
 }
 
@@ -252,92 +284,115 @@ async function getClassMasterIds(classId: string): Promise<string[]> {
 export async function getMaterialsByClassAndSemester(
     classId: string,
     semester: number
-): Promise<any[]> {
-    const supabase = await createAdminClient();
+): Promise<{ success: boolean; data: any[]; message?: string }> {
+    try {
+        const supabase = await createAdminClient();
 
-    const classMasterIds = await getClassMasterIds(classId);
-    if (classMasterIds.length === 0) return [];
+        const classMasterIds = await getClassMasterIds(classId);
+        if (classMasterIds.length === 0) return { success: true, data: [] };
 
-    const activeYear = await getActiveAcademicYear();
-    if (!activeYear) return [];
+        const activeYear = await getActiveAcademicYear();
+        if (!activeYear) return { success: true, data: [] };
 
-    const { data: targetRows, error: targetError } = await supabase
-        .from('material_monthly_targets')
-        .select('material_item_id')
-        .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', activeYear.id)
-        .eq('semester', semester);
+        const { data: targetRows, error: targetError } = await supabase
+            .from('material_monthly_targets')
+            .select('material_item_id')
+            .in('class_master_id', classMasterIds)
+            .eq('academic_year_id', activeYear.id)
+            .eq('semester', semester);
 
-    if (targetError) throw new Error(targetError.message);
-    if (!targetRows || targetRows.length === 0) return [];
+        if (targetError) throw targetError;
+        if (!targetRows || targetRows.length === 0) return { success: true, data: [] };
 
-    const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
+        const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
 
-    const { data, error } = await supabase
-        .from('material_items')
-        .select(`
-            id,
-            name,
-            description,
-            material_type:material_types(
+        const { data, error } = await supabase
+            .from('material_items')
+            .select(`
                 id,
                 name,
-                material_category:material_categories(
+                description,
+                material_type:material_types(
                     id,
-                    name
+                    name,
+                    material_category:material_categories(
+                        id,
+                        name
+                    )
                 )
-            )
-        `)
-        .in('id', itemIds);
+            `)
+            .in('id', itemIds);
 
-    if (error) throw new Error(error.message);
-    return data || [];
+        if (error) throw error;
+
+        // Flatten nested objects if they come back as arrays (Supabase quirks)
+        const formattedData = (data || []).map((item: any) => ({
+            ...item,
+            material_type: Array.isArray(item.material_type) ? item.material_type[0] : item.material_type,
+        })).map((item: any) => {
+            if (item.material_type && Array.isArray(item.material_type.material_category)) {
+                item.material_type.material_category = item.material_type.material_category[0];
+            }
+            return item;
+        });
+
+        return { success: true, data: formattedData };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar materi');
+        return { success: false, data: [], message: errorInfo.message };
+    }
 }
 
 export async function getMaterialsByCategory(
     categoryId: string,
     classId: string,
     semester: number
-): Promise<any[]> {
-    const supabase = await createAdminClient();
+) {
+    try {
+        const supabase = await createAdminClient();
 
-    const classMasterIds = await getClassMasterIds(classId);
-    if (classMasterIds.length === 0) return [];
+        const classMasterIds = await getClassMasterIds(classId);
+        if (classMasterIds.length === 0) return { success: true, data: [] };
 
-    const activeYear = await getActiveAcademicYear();
-    if (!activeYear) return [];
+        const activeYear = await getActiveAcademicYear();
+        if (!activeYear) return { success: true, data: [] };
 
-    const { data: targetRows, error: targetError } = await supabase
-        .from('material_monthly_targets')
-        .select('material_item_id')
-        .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', activeYear.id)
-        .eq('semester', semester);
+        const { data: targetRows, error: targetError } = await supabase
+            .from('material_monthly_targets')
+            .select('material_item_id')
+            .in('class_master_id', classMasterIds)
+            .eq('academic_year_id', activeYear.id)
+            .eq('semester', semester);
 
-    if (targetError) throw new Error(targetError.message);
-    if (!targetRows || targetRows.length === 0) return [];
+        if (targetError) throw targetError;
+        if (!targetRows || targetRows.length === 0) return { success: true, data: [] };
 
-    const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
+        const itemIds = Array.from(new Set(targetRows.map((r: any) => r.material_item_id)));
 
-    const { data, error } = await supabase
-        .from('material_items')
-        .select(`
-            *,
-            material_type:material_types!inner(
-                id,
-                name,
-                material_category_id,
-                material_category:material_categories(
+        const { data, error } = await supabase
+            .from('material_items')
+            .select(`
+                *,
+                material_type:material_types!inner(
                     id,
-                    name
+                    name,
+                    material_category_id,
+                    material_category:material_categories(
+                        id,
+                        name
+                    )
                 )
-            )
-        `)
-        .in('id', itemIds)
-        .eq('material_type.material_category_id', categoryId);
+            `)
+            .in('id', itemIds)
+            .eq('material_type.material_category_id', categoryId);
 
-    if (error) throw new Error(error.message);
-    return Array.from(new Map((data || []).map((m: any) => [m.id, m])).values());
+        if (error) throw error;
+        const uniqueMaterials = Array.from(new Map((data || []).map((m: any) => [m.id, m])).values());
+        return { success: true, data: uniqueMaterials };
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat materi berdasarkan kategori');
+        return { success: false, message: errorInfo.message, data: [] };
+    }
 }
 
 /**
@@ -350,62 +405,69 @@ export async function getMonthlyTargetProgress(params: {
   semester: number
   month: number
   studentId: string
-}): Promise<{
-  targets: any[]
-  progress: MaterialProgress[]
-  percentage: number
-}> {
-  const supabase = await createAdminClient()
+}) {
+  try {
+    const supabase = await createAdminClient()
 
-  // Get class_master_ids for this class
-  const classMasterIds = await getClassMasterIds(params.classId)
-  if (classMasterIds.length === 0) return { targets: [], progress: [], percentage: 0 }
+    // Get class_master_ids for this class
+    const classMasterIds = await getClassMasterIds(params.classId)
+    if (classMasterIds.length === 0) return { success: true, targets: [], progress: [], percentage: 0 }
 
-  // Get monthly targets
-  const { data: targets, error: targetsError } = await supabase
-    .from('material_monthly_targets')
-    .select(`
-      *,
-      material_item:material_items(
-        id, name,
-        material_type:material_types(id, name)
-      )
-    `)
-    .in('class_master_id', classMasterIds)
-    .eq('academic_year_id', params.academicYearId)
-    .eq('semester', params.semester)
-    .eq('month', params.month)
-    .order('display_order', { ascending: true })
+    // Get monthly targets
+    const { data: targets, error: targetsError } = await supabase
+      .from('material_monthly_targets')
+      .select(`
+        *,
+        material_item:material_items(
+          id, name,
+          material_type:material_types(id, name)
+        )
+      `)
+      .in('class_master_id', classMasterIds)
+      .eq('academic_year_id', params.academicYearId)
+      .eq('semester', params.semester)
+      .eq('month', params.month)
+      .order('display_order', { ascending: true })
 
-  if (targetsError) throw new Error(targetsError.message)
-  if (!targets || targets.length === 0) return { targets: [], progress: [], percentage: 0 }
+    if (targetsError) throw targetsError
 
-  // Get progress for student on these target items
-  const targetItemIds = targets.map((t: any) => t.material_item_id)
+    if (!targets || targets.length === 0) {
+      return { success: true, targets: [], progress: [], percentage: 0 }
+    }
 
-  const { data: progress } = await supabase
-    .from('student_material_progress')
-    .select('*')
-    .eq('student_id', params.studentId)
-    .eq('academic_year_id', params.academicYearId)
-    .eq('semester', params.semester)
-    .in('material_item_id', targetItemIds)
+    // Get progress for student on these target items
+    const targetItemIds = targets.map((t: any) => t.material_item_id)
 
-  const passingScore = 70
-  const progressMap = new Map((progress || []).map((p: MaterialProgress) => [p.material_item_id, p]))
-  const completed = targetItemIds.filter((itemId: string) => {
-    const p = progressMap.get(itemId)
-    if (!p) return false
-    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
-    return score >= passingScore
-  }).length
+    const { data: progress, error: progressError } = await supabase
+      .from('student_material_progress')
+      .select('*')
+      .eq('student_id', params.studentId)
+      .eq('academic_year_id', params.academicYearId)
+      .eq('semester', params.semester)
+      .in('material_item_id', targetItemIds)
 
-  const percentage = targets.length > 0 ? Math.round((completed / targets.length) * 100) : 0
+    if (progressError) throw progressError
 
-  return {
-    targets: targets || [],
-    progress: (progress || []) as MaterialProgress[],
-    percentage
+    const passingScore = 70
+    const progressMap = new Map((progress || []).map((p: MaterialProgress) => [p.material_item_id, p]))
+    const completed = targetItemIds.filter((itemId: string) => {
+      const p = progressMap.get(itemId)
+      if (!p) return false
+      const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
+      return score >= passingScore
+    }).length
+
+    const percentage = targets.length > 0 ? Math.round((completed / targets.length) * 100) : 0
+
+    return {
+      success: true,
+      targets: targets || [],
+      progress: (progress || []) as MaterialProgress[],
+      percentage
+    }
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat progress target bulanan')
+    return { success: false, message: errorInfo.message, targets: [], progress: [], percentage: 0 }
   }
 }
 
@@ -416,50 +478,59 @@ export async function getMonthlyTargetProgress(params: {
 export async function getCrossClassHistory(
   studentId: string,
   currentAcademicYearId: string
-): Promise<any[]> {
-  const supabase = await createAdminClient()
-  const passingScore = 70
+) {
+  try {
+    const supabase = await createAdminClient()
+    const passingScore = 70
 
-  // Get all progress for this student EXCLUDING current academic year
-  const { data: allProgress, error } = await supabase
-    .from('student_material_progress')
-    .select(`
-      *,
-      material_item:material_items(
-        id, name,
-        material_type:material_types(id, name)
-      )
-    `)
-    .eq('student_id', studentId)
-    .neq('academic_year_id', currentAcademicYearId)
+    // Get all progress for this student EXCLUDING current academic year
+    const { data: allProgress, error } = await supabase
+      .from('student_material_progress')
+      .select(`
+        *,
+        material_item:material_items(
+          id, name,
+          material_type:material_types(id, name)
+        )
+      `)
+      .eq('student_id', studentId)
+      .neq('academic_year_id', currentAcademicYearId)
 
-  if (error) throw new Error(error.message)
-  if (!allProgress || allProgress.length === 0) return []
+    if (error) throw error
+    if (!allProgress || allProgress.length === 0) return { success: true, data: [] }
 
-  // Get academic year names
-  const academicYearIds = [...new Set(allProgress.map((p: any) => p.academic_year_id))]
-  const { data: academicYears } = await supabase
-    .from('academic_years')
-    .select('id, name')
-    .in('id', academicYearIds)
+    // Get academic year names
+    const academicYearIds = [...new Set(allProgress.map((p: any) => p.academic_year_id))]
+    const { data: academicYears, error: yearsError } = await supabase
+      .from('academic_years')
+      .select('id, name')
+      .in('id', academicYearIds)
 
-  const yearMap = new Map((academicYears || []).map((y: any) => [y.id, y.name]))
+    if (yearsError) throw yearsError
 
-  // Filter: only incomplete (null/false AND below passing score)
-  const incomplete = allProgress.filter((p: any) => {
-    const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
-    return (!p.done && p.nilai === null) || score < passingScore
-  })
+    const yearMap = new Map((academicYears || []).map((y: any) => [y.id, y.name]))
 
-  return incomplete.map((p: any) => ({
-    progress: p,
-    material_item: p.material_item,
-    academic_year_name: yearMap.get(p.academic_year_id) || p.academic_year_id,
-    academic_year_id: p.academic_year_id,
-    semester: p.semester,
-    class_master_id: '',
-    class_master_name: '' // populate from class_master_mappings jika dibutuhkan
-  }))
+    // Filter: only incomplete (null/false AND below passing score)
+    const incomplete = allProgress.filter((p: any) => {
+      const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
+      return (!p.done && p.nilai === null) || score < passingScore
+    })
+
+    const result = incomplete.map((p: any) => ({
+      progress: p,
+      material_item: p.material_item,
+      academic_year_name: yearMap.get(p.academic_year_id) || p.academic_year_id,
+      academic_year_id: p.academic_year_id,
+      semester: p.semester,
+      class_master_id: '',
+      class_master_name: '' // populate from class_master_mappings jika dibutuhkan
+    }))
+
+    return { success: true, data: result }
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat riwayat lintas kelas');
+    return { success: false, message: errorInfo.message, data: [] }
+  }
 }
 
 /**
@@ -470,67 +541,79 @@ export async function getClassMonthlyTargetSummary(params: {
   academicYearId: string
   semester: number
   month: number
-}): Promise<Array<{ student_id: string; student_name: string; percentage: number }>> {
-  const supabase = await createAdminClient()
+}) {
+  try {
+    const supabase = await createAdminClient()
 
-  // Get enrolled students
-  const { data: enrollments } = await supabase
-    .from('student_enrollments')
-    .select('student_id, students!inner(id, name, status)')
-    .eq('class_id', params.classId)
-    .eq('academic_year_id', params.academicYearId)
-    .eq('status', 'active')
-    .eq('students.status', 'active')
+    // Get enrolled students
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('student_enrollments')
+      .select('student_id, students!inner(id, name, status)')
+      .eq('class_id', params.classId)
+      .eq('academic_year_id', params.academicYearId)
+      .eq('status', 'active')
+      .eq('students.status', 'active')
 
-  if (!enrollments || enrollments.length === 0) return []
+    if (enrollError) throw enrollError
 
-  // Get class_master_ids
-  const classMasterIds = await getClassMasterIds(params.classId)
-  if (classMasterIds.length === 0) return []
+    if (!enrollments || enrollments.length === 0) return { success: true, data: [] }
 
-  // Get targets for this month
-  const { data: targets } = await supabase
-    .from('material_monthly_targets')
-    .select('material_item_id')
-    .in('class_master_id', classMasterIds)
-    .eq('academic_year_id', params.academicYearId)
-    .eq('semester', params.semester)
-    .eq('month', params.month)
+    // Get class_master_ids
+    const classMasterIds = await getClassMasterIds(params.classId)
+    if (classMasterIds.length === 0) return { success: true, data: [] }
 
-  if (!targets || targets.length === 0) return []
+    // Get targets for this month
+    const { data: targets, error: targetsError } = await supabase
+      .from('material_monthly_targets')
+      .select('material_item_id')
+      .in('class_master_id', classMasterIds)
+      .eq('academic_year_id', params.academicYearId)
+      .eq('semester', params.semester)
+      .eq('month', params.month)
 
-  const targetItemIds = targets.map((t: any) => t.material_item_id)
-  const studentIds = enrollments.map((e: any) => e.student_id)
-  const passingScore = 70
+    if (targetsError) throw targetsError
+    if (!targets || targets.length === 0) return { success: true, data: [] }
 
-  // Get all progress for these students + target items
-  const { data: progress } = await supabase
-    .from('student_material_progress')
-    .select('student_id, material_item_id, nilai, done')
-    .in('student_id', studentIds)
-    .in('material_item_id', targetItemIds)
-    .eq('academic_year_id', params.academicYearId)
-    .eq('semester', params.semester)
+    const targetItemIds = targets.map((t: any) => t.material_item_id)
+    const studentIds = enrollments.map((e: any) => e.student_id)
+    const passingScore = 70
 
-  // Build summary per student
-  return enrollments.map((e: any) => {
-    const student = e.students
-    const studentProgress = (progress || []).filter((p: any) => p.student_id === student.id)
-    const progressMap = new Map(studentProgress.map((p: any) => [p.material_item_id, p]))
+    // Get all progress for these students + target items
+    const { data: progress, error: progressError } = await supabase
+      .from('student_material_progress')
+      .select('student_id, material_item_id, nilai, done')
+      .in('student_id', studentIds)
+      .in('material_item_id', targetItemIds)
+      .eq('academic_year_id', params.academicYearId)
+      .eq('semester', params.semester)
 
-    const completed = targetItemIds.filter((itemId: string) => {
-      const p = progressMap.get(itemId)
-      if (!p) return false
-      const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
-      return score >= passingScore
-    }).length
+    if (progressError) throw progressError
 
-    const percentage = Math.round((completed / targetItemIds.length) * 100)
+    // Build summary per student
+    const result = enrollments.map((e: any) => {
+      const student = e.students
+      const studentProgress = (progress || []).filter((p: any) => p.student_id === student.id)
+      const progressMap = new Map(studentProgress.map((p: any) => [p.material_item_id, p]))
 
-    return {
-      student_id: student.id,
-      student_name: student.name,
-      percentage
-    }
-  })
+      const completed = targetItemIds.filter((itemId: string) => {
+        const p = progressMap.get(itemId)
+        if (!p) return false
+        const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0)
+        return score >= passingScore
+      }).length
+
+      const percentage = Math.round((completed / targetItemIds.length) * 100)
+
+      return {
+        student_id: student.id,
+        student_name: student.name,
+        percentage
+      }
+    })
+
+    return { success: true, data: result }
+  } catch (error) {
+    const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat ringkasan target bulanan kelas');
+    return { success: false, message: errorInfo.message, data: [] }
+  }
 }

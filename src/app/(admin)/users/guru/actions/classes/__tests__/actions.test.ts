@@ -122,7 +122,7 @@ describe('Guru Classes Actions (Layer 3)', () => {
 
       const result = await getTeacherClasses('teacher-1')
 
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
 
     it('throws when fetchTeacherClasses returns an error', async () => {
@@ -147,7 +147,7 @@ describe('Guru Classes Actions (Layer 3)', () => {
       const result = await getTeacherClasses('teacher-1')
 
       expect(mapTeacherClassesToResult).toHaveBeenCalledWith([])
-      expect(result).toEqual([])
+      expect(result).toEqual({ success: true, data: [] })
     })
   })
 

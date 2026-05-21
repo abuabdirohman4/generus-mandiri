@@ -89,7 +89,7 @@ export default function SettingsModal({
   const loadData = async () => {
     setIsLoading(true)
     try {
-      const [settingsResult, types, assigned, materialPerms] = await Promise.all([
+      const [settingsResult, types, assigned, materialResult] = await Promise.all([
         getMeetingFormSettings(userId),
         getAllActivityTypes(),
         getTeacherActivityTypes(userId),
@@ -103,9 +103,17 @@ export default function SettingsModal({
       }
 
       setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
-      setCanManageMaterials(materialPerms.can_manage_materials)
-      setCanAccessMaterials(materialPerms.can_access_materials)
-      setCanAccessMonitoring(materialPerms.can_access_monitoring)
+      
+      if (materialResult.success && materialResult.data) {
+        setCanManageMaterials(materialResult.data.can_manage_materials)
+        setCanAccessMaterials(materialResult.data.can_access_materials)
+        setCanAccessMonitoring(materialResult.data.can_access_monitoring)
+      } else {
+        setCanManageMaterials(false)
+        setCanAccessMaterials(false)
+        setCanAccessMonitoring(false)
+      }
+
       setAllActivityTypes(types || [])
       setAssignedActivityTypeIds(new Set(assigned.map(a => a.activity_type_id)))
     } catch (error) {
@@ -145,14 +153,14 @@ export default function SettingsModal({
     try {
       const settingsResult = await updateMeetingFormSettings(userId, settings)
       if (!settingsResult.success) {
-        toast.error('Gagal menyimpan pengaturan form: ' + settingsResult.error)
+        toast.error('Gagal menyimpan pengaturan form: ' + (settingsResult.message || 'Unknown error'))
         setIsSaving(false)
         return
       }
 
       const permissionsResult = await updateTeacherPermissions(userId, permissions)
       if (!permissionsResult.success) {
-        toast.error('Gagal menyimpan hak akses: ' + permissionsResult.error)
+        toast.error('Gagal menyimpan hak akses: ' + (permissionsResult.message || 'Unknown error'))
         setIsSaving(false)
         return
       }
@@ -163,7 +171,7 @@ export default function SettingsModal({
         can_access_monitoring: canAccessMonitoring,
       })
       if (!materialResult.success) {
-        toast.error('Gagal menyimpan hak akses materi: ' + materialResult.error)
+        toast.error('Gagal menyimpan hak akses materi: ' + (materialResult.message || 'Unknown error'))
         setIsSaving(false)
         return
       }

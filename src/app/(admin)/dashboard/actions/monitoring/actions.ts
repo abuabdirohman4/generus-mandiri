@@ -27,7 +27,7 @@ export type { ClassMonitoringData, ClassMonitoringFilters } from '@/types/dashbo
 /**
  * Get class monitoring data for the given period and filters
  */
-export async function getClassMonitoring(filters: ClassMonitoringFilters): Promise<ClassMonitoringData[]> {
+export async function getClassMonitoring(filters: ClassMonitoringFilters) {
     try {
         const supabase = await createClient()
         const adminClient = await createAdminClient()
@@ -42,15 +42,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             filters.monthString
         )
 
-        // For teachers, bypass RLS filter in buildFilterConditions — class access is controlled
-        // entirely by getTeacherAllowedClassIds (teacher_class_masters). Using rlsFilter here
-        // would restrict to a single kelompok_id from the profile, missing multi-kelompok access.
         const effectiveRlsFilter = profile?.role === 'teacher' ? null : rlsFilter
         const filterConditions = await buildFilterConditions(supabase, filters, effectiveRlsFilter)
         const { classIds, studentIds, hasFilters } = filterConditions
 
-        // Apply class master restriction for all teachers (including Guru Kelompok with multi-kelompok access).
-        // getTeacherAllowedClassIds returns null if teacher has no class master restrictions — no filter needed.
         let effectiveClassIds = classIds
         if (profile?.role === 'teacher') {
             const allowedClassIdsSet = await getTeacherAllowedClassIds(profile.id, profile)
@@ -63,46 +58,28 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             }
         }
 
-        // Fetch classes with org hierarchy
         const classes = await fetchClassesWithOrg(supabase, (hasFilters || (profile?.role === 'teacher' && effectiveClassIds.length > 0)) ? effectiveClassIds : undefined)
-        if (!classes || classes.length === 0) return []
+        if (!classes || classes.length === 0) return { success: true, data: [] }
 
         const allClassIds = classes.map((c: any) => c.id)
 
-        // Fetch meetings in date range via admin client (bypass RLS timeout)
         const { data: allMeetings } = await fetchMeetingsForMonitoring(adminClient, startDate, endDate)
 
-        // Cross-check: which meetings have class_ids that overlap with allClassIds?
-        const allClassIdSet = new Set(allClassIds)
-        ;(allMeetings || []).forEach(m => {
-            const ids = [m.class_id, ...(m.class_ids || [])].filter(Boolean)
-            const overlap = ids.filter(id => allClassIdSet.has(id))
-        })
-
-        // Filter only meetings involving our classes
         const meetings = filterMeetingsForClasses(allMeetings || [], allClassIds)
-
-        // Group meetings by class
         const meetingsByClass = buildMeetingsByClass(meetings, allClassIds)
 
-        // Fetch attendance logs in batches
         const allMeetingIds = meetings.map(m => m.id)
         let attendanceLogs: AttendanceLog[] = []
 
         if (allMeetingIds.length > 0) {
             const { data: logsData, error: logsError } = await fetchAttendanceLogsInBatches(supabase, allMeetingIds)
-            if (logsError) {
-                console.error('[DASHBOARD] Error fetching attendance logs:', logsError)
-                throw logsError
-            }
+            if (logsError) throw logsError
             attendanceLogs = logsData || []
         }
 
-        // Build meeting map for attendance utility
         const meetingMap = new Map<string, Meeting>()
         meetings.forEach(m => meetingMap.set(m.id, m as unknown as Meeting))
 
-        // Fetch all enrollments
         const allEnrollments = await fetchEnrollments(
             supabase,
             allClassIds,
@@ -110,18 +87,15 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
         )
         const enrollmentsByClass = buildEnrollmentsByClass(allEnrollments)
 
-        // Build separated mode results
         let result: ClassMonitoringData[] = classes.map((cls: any) =>
             buildClassResult(cls, meetingsByClass, enrollmentsByClass, attendanceLogs, meetingMap)
         )
 
-        // Sort by class_name, then kelompok_name
         result.sort((a, b) => {
             const cmp = a.class_name.localeCompare(b.class_name)
             return cmp !== 0 ? cmp : (a.kelompok_name || '').localeCompare(b.kelompok_name || '')
         })
 
-        // Combined mode: aggregate by class_name
         if (filters.classViewMode === 'combined') {
             const combinedMap = new Map<string, {
                 classIds: string[]
@@ -153,7 +127,6 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             })
 
             result = Array.from(combinedMap.entries()).map(([className, data]) => {
-                // Reuse enrollmentsByClass already fetched above — no extra queries needed
                 const allEnrolledStudents = new Set<string>()
                 data.classIds.forEach(classId => {
                     const enrolled = enrollmentsByClass.get(classId)
@@ -173,11 +146,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters): Promi
             result.sort((a, b) => a.class_name.localeCompare(b.class_name))
         }
 
-        // Show classes with students regardless of meeting status.
-        // Classes with no meetings render orange in ClassMonitoringTable.
-        return result.filter(item => (item.student_count ?? 0) > 0)
+        const filteredResult = result.filter(item => (item.student_count ?? 0) > 0)
+        return { success: true, data: filteredResult }
     } catch (error) {
-        console.error('Error fetching class monitoring:', error)
-        throw handleApiError(error, 'memuat data', 'Failed to fetch class monitoring')
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat monitoring kelas')
+        return { success: false, message: errorInfo.message, data: [] }
     }
 }

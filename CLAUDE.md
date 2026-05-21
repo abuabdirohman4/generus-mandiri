@@ -234,6 +234,8 @@ Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected 
 
 Three patterns: (1) Server Action + SWR Hook for reads, (2) Direct Server Action for mutations with `mutate()` + `revalidatePath()`, (3) Custom SWR config with `revalidateOnFocus: false` and longer `dedupingInterval` for stable data.
 
+**Standardized Responses**: ALL Server Actions MUST return `{ success, data, message }`. READ [`docs/claude/server-actions-conventions.md`](docs/claude/server-actions-conventions.md)
+
 ### UI Components & Utilities
 
 **Components**: `components/ui/` (base), `components/form/input/`, `components/layouts/`, `components/charts/`, `components/shared/DataFilter.tsx` (centralized filter). Add to DataFilter only if reused across 2+ pages.
@@ -290,4 +292,5 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Antigravity Workflow**: [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)
 - **Superpowers Workflow**: [`docs/claude/superpowers-workflow.md`](docs/claude/superpowers-workflow.md)
 - **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
+- [x] Standardized Responses: [`docs/claude/server-actions-conventions.md`](docs/claude/server-actions-conventions.md)
 - **Activity Logging**: [`docs/claude/activity-logging.md`](docs/claude/activity-logging.md)

@@ -5,7 +5,9 @@ import { getDashboard, Dashboard, DashboardFilters } from '@/app/(admin)/dashboa
 
 export function useDashboard(filters?: DashboardFilters) {
   const fetcher = async (): Promise<Dashboard> => {
-    return await getDashboard(filters);
+    const result = await getDashboard(filters);
+    if (!result.success) throw new Error(result.message || 'Gagal memuat data dashboard');
+    return result.data!;
   };
 
   // Generate dynamic SWR key based on filters to invalidate cache when filters change

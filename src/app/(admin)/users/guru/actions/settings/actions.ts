@@ -23,26 +23,37 @@ export type { MeetingFormSettings }
 export async function getTeacherMaterialPermissions(
     userId: string
 ): Promise<{ 
-    can_manage_materials: boolean
-    can_access_materials: boolean
-    can_access_monitoring: boolean
+    success: boolean
+    data: {
+        can_manage_materials: boolean
+        can_access_materials: boolean
+        can_access_monitoring: boolean
+    }
+    message?: string
 }> {
     try {
         const supabase = await createClient()
         const { data, error } = await fetchTeacherMaterialPermissions(supabase, userId)
         if (error) throw error
         const perms = (data?.permissions as any) || {}
-        return { 
-            can_manage_materials: perms.can_manage_materials ?? false,
-            can_access_materials: perms.can_access_materials ?? false,
-            can_access_monitoring: perms.can_access_monitoring ?? false,
+        return {
+            success: true,
+            data: {
+                can_manage_materials: perms.can_manage_materials ?? false,
+                can_access_materials: perms.can_access_materials ?? false,
+                can_access_monitoring: perms.can_access_monitoring ?? false,
+            }
         }
     } catch (error) {
-        console.error('Error getting material permissions:', error)
-        return { 
-            can_manage_materials: false,
-            can_access_materials: false,
-            can_access_monitoring: false,
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat hak akses materi')
+        return {
+            success: false,
+            message: errorInfo.message,
+            data: {
+                can_manage_materials: false,
+                can_access_materials: false,
+                can_access_monitoring: false,
+            }
         }
     }
 }
@@ -52,24 +63,21 @@ export async function getTeacherMaterialPermissions(
  */
 export async function getMeetingFormSettings(
     userId: string
-): Promise<{ success: boolean; data?: MeetingFormSettings; error?: string }> {
+): Promise<{ success: boolean; data?: MeetingFormSettings; message?: string }> {
     try {
         const supabase = await createClient()
         const { data, error } = await fetchMeetingFormSettings(supabase, userId)
+        if (error) throw error
 
-        if (error) {
-            if (error.code === 'PGRST116') {
-                return { success: true, data: undefined }
-            }
-            throw error
+        return {
+            success: true,
+            data: extractMeetingFormSettings(data)
         }
-
-        return { success: true, data: extractMeetingFormSettings(data) }
     } catch (error) {
         console.error('Error getting meeting form settings:', error)
         return {
             success: false,
-            error: handleApiError(error, 'memuat data', 'Gagal memuat pengaturan form').message,
+            message: handleApiError(error, 'memuat data', 'Gagal memuat pengaturan form').message,
         }
     }
 }
@@ -80,7 +88,7 @@ export async function getMeetingFormSettings(
 export async function updateMeetingFormSettings(
     userId: string,
     settings: MeetingFormSettings
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; message?: string }> {
     try {
         const supabase = await createClient()
         const { error } = await updateMeetingFormSettingsQuery(supabase, userId, settings)
@@ -107,7 +115,7 @@ export async function updateMeetingFormSettings(
         console.error('Error updating meeting form settings:', error)
         return {
             success: false,
-            error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan pengaturan form').message,
+            message: handleApiError(error, 'menyimpan data', 'Gagal menyimpan pengaturan form').message,
         }
     }
 }
@@ -123,7 +131,7 @@ export async function updateTeacherPermissions(
         can_soft_delete_students?: boolean
         can_hard_delete_students?: boolean
     }
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; message?: string }> {
     try {
         const supabase = await createClient()
         const { error } = await updateTeacherPermissionsQuery(supabase, userId, permissions)
@@ -150,25 +158,29 @@ export async function updateTeacherPermissions(
         console.error('Error updating teacher permissions:', error)
         return {
             success: false,
-            error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses').message,
+            message: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses').message,
         }
     }
 }
 
 /**
- * Update material access permissions for a teacher (can_manage_materials)
+ * Update material permissions for a teacher
  */
 export async function updateTeacherMaterialPermissions(
     userId: string,
-    data: { 
-        can_manage_materials: boolean
-        can_access_materials: boolean
-        can_access_monitoring: boolean
+    permissions: {
+        can_manage_materials?: boolean
+        can_access_materials?: boolean
+        can_access_monitoring?: boolean
     }
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; message?: string }> {
     try {
         const supabase = await createClient()
-        const { error } = await updateTeacherMaterialPermissionsQuery(supabase, userId, data)
+        const { error } = await updateTeacherMaterialPermissionsQuery(supabase, userId, {
+            can_manage_materials: permissions.can_manage_materials ?? false,
+            can_access_materials: permissions.can_access_materials ?? false,
+            can_access_monitoring: permissions.can_access_monitoring ?? false,
+        })
         if (error) throw error
 
         revalidatePath('/users/guru')
@@ -183,7 +195,7 @@ export async function updateTeacherMaterialPermissions(
                 entityId: userId,
                 entityLabel: 'Update Material Permissions',
                 pagePath: '/users/guru',
-                metadata: data as any
+                metadata: permissions as any
             })
         }
 
@@ -192,7 +204,7 @@ export async function updateTeacherMaterialPermissions(
         console.error('Error updating material permissions:', error)
         return {
             success: false,
-            error: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses materi').message,
+            message: handleApiError(error, 'menyimpan data', 'Gagal menyimpan hak akses materi').message,
         }
     }
 }

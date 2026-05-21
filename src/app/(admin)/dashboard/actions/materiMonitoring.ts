@@ -25,140 +25,80 @@ export interface MateriDashboardFilters {
 
 export async function getMateriDashboardSummary(
     filters: MateriDashboardFilters
-): Promise<ClassMateriSummary[]> {
-    const supabase = await createClient()
-    const profile = await getCurrentUserProfile()
+) {
+    try {
+        const supabase = await createClient()
+        const profile = await getCurrentUserProfile()
 
-    if (!profile) return []
-    if (!filters.academicYearId) return []
+        if (!profile) return { success: true, data: [] }
+        if (!filters.academicYearId) return { success: true, data: [] }
 
-    // Step 1: Tentukan kelas yang accessible
-    let classQuery = supabase
-        .from('classes')
-        .select('id, name, kelompok:kelompok_id(id, name, desa_id)')
-    
-    if (filters.classIds?.length) {
-        classQuery = classQuery.in('id', filters.classIds)
-    } else if (profile.role === 'teacher' && profile.classes?.length) {
-        classQuery = classQuery.in('id', profile.classes.map(c => c.id))
-    }
-    
-    // Admin/Superadmin: filter by org scope
-    if (filters.kelompokId) {
-        classQuery = classQuery.eq('kelompok_id', filters.kelompokId)
-    } else if (filters.desaId) {
-        // Since we don't have direct desa_id in classes, we filter by kelompok's desa_id
-        const { data: kelompoks } = await supabase
-            .from('kelompok')
-            .select('id')
-            .eq('desa_id', filters.desaId)
+        // Step 1: Tentukan kelas yang accessible
+        let classQuery = supabase
+            .from('classes')
+            .select('id, name, kelompok:kelompok_id(id, name, desa_id)')
         
-        const kIds = (kelompoks || []).map(k => k.id)
-        if (kIds.length) {
-            classQuery = classQuery.in('kelompok_id', kIds)
-        } else {
-            return [] // No groups in this desa
+        if (filters.classIds?.length) {
+            classQuery = classQuery.in('id', filters.classIds)
+        } else if (profile.role === 'teacher' && profile.classes?.length) {
+            classQuery = classQuery.in('id', profile.classes.map(c => c.id))
         }
-    } else if (filters.daerahId) {
-        const { data: desas } = await supabase
-            .from('desa')
-            .select('id')
-            .eq('daerah_id', filters.daerahId)
         
-        const dIds = (desas || []).map(d => d.id)
-        if (dIds.length) {
+        // Admin/Superadmin: filter by org scope
+        if (filters.kelompokId) {
+            classQuery = classQuery.eq('kelompok_id', filters.kelompokId)
+        } else if (filters.desaId) {
             const { data: kelompoks } = await supabase
                 .from('kelompok')
                 .select('id')
-                .in('desa_id', dIds)
+                .eq('desa_id', filters.desaId)
             
             const kIds = (kelompoks || []).map(k => k.id)
             if (kIds.length) {
                 classQuery = classQuery.in('kelompok_id', kIds)
             } else {
-                return []
+                return { success: true, data: [] }
             }
-        } else {
-            return []
-        }
-    }
-
-    const { data: classes } = await classQuery
-    if (!classes?.length) return []
-
-    // Step 2: Untuk setiap kelas, hitung ringkasan materi
-    const results: ClassMateriSummary[] = []
-
-    for (const cls of classes) {
-        // 2a: enrolled students
-        const { data: enrollments } = await supabase
-            .from('student_enrollments')
-            .select('student_id, students!inner(status)')
-            .eq('class_id', cls.id)
-            .eq('academic_year_id', filters.academicYearId)
-            .eq('status', 'active')
-            .eq('students.status', 'active')
-
-        if (!enrollments?.length) {
-            results.push({
-                class_id: cls.id,
-                class_name: cls.name,
-                kelompok_name: Array.isArray(cls.kelompok) 
-                    ? (cls.kelompok[0] as any)?.name || '' 
-                    : (cls.kelompok as any)?.name || '',
-                total_materials: 0,
-                avg_completion_rate: 0,
-                avg_nilai: 0,
-            })
-            continue
-        }
-
-        const studentIds = enrollments.map(e => e.student_id)
-
-        // 2b: material item IDs via class_master_mappings → material_monthly_targets
-        const { data: mappings } = await supabase
-            .from('class_master_mappings')
-            .select('class_master_id')
-            .eq('class_id', cls.id)
-        
-        if (!mappings?.length) {
-             results.push({
-                class_id: cls.id,
-                class_name: cls.name,
-                kelompok_name: Array.isArray(cls.kelompok) 
-                    ? (cls.kelompok[0] as any)?.name || '' 
-                    : (cls.kelompok as any)?.name || '',
-                total_materials: 0,
-                avg_completion_rate: 0,
-                avg_nilai: 0,
-            })
-            continue
-        }
-        const classMasterIds = mappings.map(m => m.class_master_id)
-
-        let targetQuery = supabase
-            .from('material_monthly_targets')
-            .select('material_item_id')
-            .in('class_master_id', classMasterIds)
-            .eq('academic_year_id', filters.academicYearId)
-            .eq('semester', filters.semester)
-
-        if (filters.month) {
-            targetQuery = targetQuery.lte('month', filters.month)
-        }
-
-        if (filters.categoryId) {
-            // Filter by category via material_items → material_types → material_categories
-            const { data: itemsInCategory } = await supabase
-                .from('material_items')
-                .select('id, material_types!inner(material_category_id)')
-                .eq('material_types.material_category_id', filters.categoryId)
+        } else if (filters.daerahId) {
+            const { data: desas } = await supabase
+                .from('desa')
+                .select('id')
+                .eq('daerah_id', filters.daerahId)
             
-            const categoryItemIds = (itemsInCategory || []).map(i => i.id)
-            if (categoryItemIds.length) {
-                targetQuery = targetQuery.in('material_item_id', categoryItemIds)
+            const dIds = (desas || []).map(d => d.id)
+            if (dIds.length) {
+                const { data: kelompoks } = await supabase
+                    .from('kelompok')
+                    .select('id')
+                    .in('desa_id', dIds)
+                
+                const kIds = (kelompoks || []).map(k => k.id)
+                if (kIds.length) {
+                    classQuery = classQuery.in('kelompok_id', kIds)
+                } else {
+                    return { success: true, data: [] }
+                }
             } else {
-                // Category exists but has no items
+                return { success: true, data: [] }
+            }
+        }
+
+        const { data: classes } = await classQuery
+        if (!classes?.length) return { success: true, data: [] }
+
+        // Step 2: Untuk setiap kelas, hitung ringkasan materi
+        const results: ClassMateriSummary[] = []
+
+        for (const cls of classes) {
+            const { data: enrollments } = await supabase
+                .from('student_enrollments')
+                .select('student_id, students!inner(status)')
+                .eq('class_id', cls.id)
+                .eq('academic_year_id', filters.academicYearId)
+                .eq('status', 'active')
+                .eq('students.status', 'active')
+
+            if (!enrollments?.length) {
                 results.push({
                     class_id: cls.id,
                     class_name: cls.name,
@@ -171,80 +111,137 @@ export async function getMateriDashboardSummary(
                 })
                 continue
             }
-        }
 
-        const { data: targets } = await targetQuery
-        if (!targets?.length) {
-             results.push({
+            const studentIds = enrollments.map(e => e.student_id)
+
+            const { data: mappings } = await supabase
+                .from('class_master_mappings')
+                .select('class_master_id')
+                .eq('class_id', cls.id)
+            
+            if (!mappings?.length) {
+                 results.push({
+                    class_id: cls.id,
+                    class_name: cls.name,
+                    kelompok_name: Array.isArray(cls.kelompok) 
+                        ? (cls.kelompok[0] as any)?.name || '' 
+                        : (cls.kelompok as any)?.name || '',
+                    total_materials: 0,
+                    avg_completion_rate: 0,
+                    avg_nilai: 0,
+                })
+                continue
+            }
+            const classMasterIds = mappings.map(m => m.class_master_id)
+
+            let targetQuery = supabase
+                .from('material_monthly_targets')
+                .select('material_item_id')
+                .in('class_master_id', classMasterIds)
+                .eq('academic_year_id', filters.academicYearId)
+                .eq('semester', filters.semester)
+
+            if (filters.month) {
+                targetQuery = targetQuery.lte('month', filters.month)
+            }
+
+            if (filters.categoryId) {
+                const { data: itemsInCategory } = await supabase
+                    .from('material_items')
+                    .select('id, material_types!inner(material_category_id)')
+                    .eq('material_types.material_category_id', filters.categoryId)
+                
+                const categoryItemIds = (itemsInCategory || []).map(i => i.id)
+                if (categoryItemIds.length) {
+                    targetQuery = targetQuery.in('material_item_id', categoryItemIds)
+                } else {
+                    results.push({
+                        class_id: cls.id,
+                        class_name: cls.name,
+                        kelompok_name: Array.isArray(cls.kelompok) 
+                            ? (cls.kelompok[0] as any)?.name || '' 
+                            : (cls.kelompok as any)?.name || '',
+                        total_materials: 0,
+                        avg_completion_rate: 0,
+                        avg_nilai: 0,
+                    })
+                    continue
+                }
+            }
+
+            const { data: targets } = await targetQuery
+            if (!targets?.length) {
+                 results.push({
+                    class_id: cls.id,
+                    class_name: cls.name,
+                    kelompok_name: Array.isArray(cls.kelompok) 
+                        ? (cls.kelompok[0] as any)?.name || '' 
+                        : (cls.kelompok as any)?.name || '',
+                    total_materials: 0,
+                    avg_completion_rate: 0,
+                    avg_nilai: 0,
+                })
+                continue
+            }
+
+            const materialItemIds = [...new Set(targets.map(t => t.material_item_id))]
+
+            const { data: progressList } = await supabase
+                .from('student_material_progress')
+                .select('student_id, material_item_id, nilai, done')
+                .in('student_id', studentIds)
+                .in('material_item_id', materialItemIds)
+                .eq('academic_year_id', filters.academicYearId)
+                .eq('semester', filters.semester)
+
+            const { data: allTargets } = await supabase
+                .from('material_monthly_targets')
+                .select('material_item_id')
+                .in('class_master_id', classMasterIds)
+                .eq('academic_year_id', filters.academicYearId)
+                .eq('semester', filters.semester)
+            const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
+
+            let totalPctSum = 0
+            for (const studentId of studentIds) {
+                const siswaCount = (progressList || []).filter((p: any) =>
+                    p.student_id === studentId &&
+                    materialItemIds.includes(p.material_item_id) &&
+                    ((p.nilai !== null && p.nilai >= 70) || p.done === true)
+                ).length
+                totalPctSum += totalUnikSemester > 0 ? (siswaCount / totalUnikSemester) * 100 : 0
+            }
+            const avgCompletionRate = studentIds.length > 0
+                ? Math.round(totalPctSum / studentIds.length)
+                : 0
+
+            let totalNilaiSum = 0
+            let nilaiCount = 0
+            for (const materialId of materialItemIds) {
+                const matProgress = (progressList || []).filter((p: any) => p.material_item_id === materialId)
+                const scored = matProgress.filter((p: any) => (p.nilai ?? 0) > 0)
+                if (scored.length) {
+                    totalNilaiSum += scored.reduce((s: number, p: any) => s + (p.nilai ?? 0), 0) / scored.length
+                    nilaiCount++
+                }
+            }
+
+            results.push({
                 class_id: cls.id,
                 class_name: cls.name,
-                kelompok_name: Array.isArray(cls.kelompok) 
-                    ? (cls.kelompok[0] as any)?.name || '' 
+                kelompok_name: Array.isArray(cls.kelompok)
+                    ? (cls.kelompok[0] as any)?.name || ''
                     : (cls.kelompok as any)?.name || '',
-                total_materials: 0,
-                avg_completion_rate: 0,
-                avg_nilai: 0,
+                total_materials: totalUnikSemester,
+                avg_completion_rate: avgCompletionRate,
+                avg_nilai: nilaiCount > 0 ? Math.round(totalNilaiSum / nilaiCount) : 0,
             })
-            continue
         }
 
-        const materialItemIds = [...new Set(targets.map(t => t.material_item_id))]
-
-        // 2c: progress
-        const { data: progressList } = await supabase
-            .from('student_material_progress')
-            .select('student_id, material_item_id, nilai, done')
-            .in('student_id', studentIds)
-            .in('material_item_id', materialItemIds)
-            .eq('academic_year_id', filters.academicYearId)
-            .eq('semester', filters.semester)
-
-        // Hitung totalUnikSemester (denominator fixed, tanpa filter month)
-        const { data: allTargets } = await supabase
-            .from('material_monthly_targets')
-            .select('material_item_id')
-            .in('class_master_id', classMasterIds)
-            .eq('academic_year_id', filters.academicYearId)
-            .eq('semester', filters.semester)
-        const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
-
-        // 2d: Formula Per Siswa dengan denominator fixed
-        let totalPctSum = 0
-        for (const studentId of studentIds) {
-            const siswaCount = (progressList || []).filter((p: any) =>
-                p.student_id === studentId &&
-                materialItemIds.includes(p.material_item_id) &&
-                ((p.nilai !== null && p.nilai >= 70) || p.done === true)
-            ).length
-            totalPctSum += totalUnikSemester > 0 ? (siswaCount / totalUnikSemester) * 100 : 0
-        }
-        const avgCompletionRate = studentIds.length > 0
-            ? Math.round(totalPctSum / studentIds.length)
-            : 0
-
-        // Pertahankan kalkulasi avg_nilai
-        let totalNilaiSum = 0
-        let nilaiCount = 0
-        for (const materialId of materialItemIds) {
-            const matProgress = (progressList || []).filter((p: any) => p.material_item_id === materialId)
-            const scored = matProgress.filter((p: any) => (p.nilai ?? 0) > 0)
-            if (scored.length) {
-                totalNilaiSum += scored.reduce((s: number, p: any) => s + (p.nilai ?? 0), 0) / scored.length
-                nilaiCount++
-            }
-        }
-
-        results.push({
-            class_id: cls.id,
-            class_name: cls.name,
-            kelompok_name: Array.isArray(cls.kelompok)
-                ? (cls.kelompok[0] as any)?.name || ''
-                : (cls.kelompok as any)?.name || '',
-            total_materials: totalUnikSemester,
-            avg_completion_rate: avgCompletionRate,
-            avg_nilai: nilaiCount > 0 ? Math.round(totalNilaiSum / nilaiCount) : 0,
-        })
+        const sortedResults = results.sort((a, b) => b.avg_completion_rate - a.avg_completion_rate)
+        return { success: true, data: sortedResults }
+    } catch (error) {
+        console.error('Error fetching materi dashboard summary:', error)
+        return { success: false, message: 'Gagal memuat ringkasan materi dashboard', data: [] }
     }
-
-    return results.sort((a, b) => b.avg_completion_rate - a.avg_completion_rate)
 }

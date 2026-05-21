@@ -36,7 +36,10 @@ export default function StudentSidebar({
     const { data: daerahList = [] } = useSWR('daerah-list', () => getAllDaerah())
     const { data: desaList = [] } = useSWR('desa-list', () => getAllDesa())
     const { data: kelompokList = [] } = useSWR('kelompok-list', () => getAllKelompok())
-    const { data: classList = [] } = useSWR('class-list', () => getAllClasses())
+    const { data: classList = [] } = useSWR('class-list', async () => {
+        const result = await getAllClasses()
+        return result.success ? result.data : []
+    })
 
     const filtered = useMemo(() => {
         let list = students.filter(s => s.status === 'active')
