@@ -55,9 +55,17 @@ export default function DaerahModal({ isOpen, onClose, daerah, onSuccess }: Daer
 
     try {
       if (daerah) {
-        await updateDaerah(daerah.id, formData);
+        const result = await updateDaerah(daerah.id, formData);
+        if (!result.success) {
+          setError('Gagal memperbarui daerah');
+          return;
+        }
       } else {
-        await createDaerah(formData);
+        const result = await createDaerah(formData);
+        if (!result.success) {
+          setError('Gagal membuat daerah');
+          return;
+        }
       }
       onSuccess();
       onClose();

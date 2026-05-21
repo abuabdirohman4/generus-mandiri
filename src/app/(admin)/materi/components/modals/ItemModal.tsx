@@ -278,7 +278,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
         const mappingResult = await updateMaterialItemClassMappings(itemId, mappingsToSave);
         if (!mappingResult.success) {
-          toast.error(mappingResult.message || 'Gagal menyimpan mapping kelas');
+          setGeneralError(mappingResult.message || 'Gagal menyimpan mapping kelas');
+          return;
         }
 
         // Save monthly targets
@@ -303,7 +304,8 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
         const syncResult = await syncItemMonthlyTargets(itemId, monthlyMappingsToSave);
         if (syncResult && !syncResult.success) {
-          toast.error(syncResult.message || 'Gagal menyimpan target bulanan');
+          setGeneralError(syncResult.message || 'Gagal menyimpan target bulanan');
+          return;
         }
       }
 

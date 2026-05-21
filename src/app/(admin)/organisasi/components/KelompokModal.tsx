@@ -116,9 +116,17 @@ export default function KelompokModal({ isOpen, onClose, kelompok, desaList, onS
 
     try {
       if (kelompok) {
-        await updateKelompok(kelompok.id, formData);
+        const result = await updateKelompok(kelompok.id, formData);
+        if (!result.success) {
+          setError('Gagal memperbarui kelompok');
+          return;
+        }
       } else {
-        await createKelompok(formData);
+        const result = await createKelompok(formData);
+        if (!result.success) {
+          setError('Gagal membuat kelompok');
+          return;
+        }
       }
       onSuccess();
       onClose();

@@ -73,20 +73,28 @@ export default function ActivityTypeModal({
 
     try {
       if (activityType) {
-        await updateActivityType(activityType.id, {
+        const result = await updateActivityType(activityType.id, {
           name: formData.name,
           description: formData.description,
           sort_order: formData.sort_order,
           is_active: formData.is_active,
         })
+        if (!result.success) {
+          setError(result.message || 'Gagal memperbarui tipe kegiatan')
+          return
+        }
       } else {
-        await createActivityType({
+        const result = await createActivityType({
           code: formData.code,
           name: formData.name,
           description: formData.description,
           sort_order: formData.sort_order,
           is_active: formData.is_active,
         })
+        if (!result.success) {
+          setError(result.message || 'Gagal membuat tipe kegiatan')
+          return
+        }
       }
       onSuccess()
       onClose()

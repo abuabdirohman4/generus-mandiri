@@ -169,19 +169,27 @@ export default function ClassModal({ classItem, onClose, onSuccess }: ClassModal
 
     try {
       if (isEditing) {
-        await updateClass(classItem!.id, { 
+        const result = await updateClass(classItem!.id, {
           name: formData.name,
           masterIds: formData.masterIds
         });
+        if (!result.success) {
+          setErrors({ general: 'Gagal memperbarui kelas' });
+          return;
+        }
       } else {
         // Always use createClassFromMaster, allowing empty array for no templates
-        await createClassFromMaster(
+        const result = await createClassFromMaster(
           formData.kelompok_id,
           formData.masterIds,
           formData.name
         );
+        if (!result.success) {
+          setErrors({ general: 'Gagal membuat kelas' });
+          return;
+        }
       }
-      onSuccess?.(); // Call onSuccess callback to refresh data
+      onSuccess?.();
       onClose();
     } catch (error: any) {
       if (error.message) {

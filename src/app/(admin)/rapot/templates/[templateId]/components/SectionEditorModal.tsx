@@ -197,7 +197,11 @@ export function SectionEditorModal({
 
         // Delete old items
         if (section.items) {
-          await Promise.all(section.items.map(item => deleteSectionItem(item.id)))
+          const deleteResults = await Promise.all(section.items.map(item => deleteSectionItem(item.id)))
+          const deleteFailure = deleteResults.find(r => !r.success)
+          if (deleteFailure) {
+            throw new Error(deleteFailure.error || 'Failed to delete section items')
+          }
         }
       } else {
         // Create section
@@ -218,7 +222,7 @@ export function SectionEditorModal({
       }
 
       // Create new items
-      await Promise.all(
+      const createResults = await Promise.all(
         selectedItems.map((item, index) =>
           createSectionItem({
             section_id: sectionId,
@@ -232,6 +236,10 @@ export function SectionEditorModal({
           })
         )
       )
+      const createFailure = createResults.find(r => !r.success)
+      if (createFailure) {
+        throw new Error(createFailure.error || 'Failed to create section items')
+      }
 
       onSaved()
     } catch (error: any) {

@@ -42,7 +42,11 @@ export default function ActivityLevelModal({
     setError(undefined)
 
     try {
-      await updateActivityLevel(activityLevel.id, { name })
+      const result = await updateActivityLevel(activityLevel.id, { name })
+      if (!result.success) {
+        setError(result.message || 'Gagal memperbarui level kegiatan')
+        return
+      }
       onSuccess()
       onClose()
     } catch (err) {

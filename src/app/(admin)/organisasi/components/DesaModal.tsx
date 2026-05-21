@@ -77,9 +77,17 @@ export default function DesaModal({ isOpen, onClose, desa, daerahList, onSuccess
 
     try {
       if (desa) {
-        await updateDesa(desa.id, formData);
+        const result = await updateDesa(desa.id, formData);
+        if (!result.success) {
+          setError('Gagal memperbarui desa');
+          return;
+        }
       } else {
-        await createDesa(formData);
+        const result = await createDesa(formData);
+        if (!result.success) {
+          setError('Gagal membuat desa');
+          return;
+        }
       }
       onSuccess();
       onClose();

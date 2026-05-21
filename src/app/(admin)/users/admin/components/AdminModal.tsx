@@ -320,9 +320,17 @@ export default function AdminModal({ isOpen, onClose, admin, daerah, desa, kelom
       };
 
       if (admin) {
-        await updateAdmin(admin.id, submitData);
+        const result = await updateAdmin(admin.id, submitData);
+        if (!result.success) {
+          setGeneralError(result.message || 'Gagal memperbarui admin');
+          return;
+        }
       } else {
-        await createAdmin(submitData);
+        const result = await createAdmin(submitData);
+        if (!result.success) {
+          setGeneralError(result.message || 'Gagal membuat admin');
+          return;
+        }
       }
       onSuccess();
       onClose();
