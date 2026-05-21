@@ -84,9 +84,6 @@ export function canTransferStudent(
 ): boolean {
   if (!user) return false
 
-  // Check if user has the permission
-  if (!user.permissions?.can_transfer_students) return false
-
   // Superadmin can transfer any student
   if (user.role === 'superadmin') return true
 
@@ -100,6 +97,9 @@ export function canTransferStudent(
     return canTeacherAccessStudent(user, student)
   }
 
+  // Check if user has the permission
+  if (!user.permissions?.can_transfer_students) return false
+
   return false
 }
 
@@ -111,9 +111,6 @@ export function canSoftDeleteStudent(
   student: Student
 ): boolean {
   if (!user) return false
-
-  // Check if user has the permission
-  if (!user.permissions?.can_soft_delete_students) return false
 
   // Superadmin can soft delete any student
   if (user.role === 'superadmin') return true
@@ -127,6 +124,9 @@ export function canSoftDeleteStudent(
   if (user.role === 'teacher') {
     return canTeacherAccessStudent(user, student)
   }
+
+  // Check if user has the permission
+  if (!user.permissions?.can_soft_delete_students) return false
 
   return false
 }
