@@ -24,6 +24,9 @@ export interface DashboardFilters {
 
   // Category group filter for laporan
   categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
+
+  // Count meetings as unique days instead of raw records (daerah-level only)
+  uniqueDaysMode?: boolean
 }
 interface DashboardState {
   filters: DashboardFilters
@@ -42,7 +45,8 @@ const defaultFilters: DashboardFilters = {
   status: 'active',
   classViewMode: 'separated',
   comparisonViewMode: 'table',
-  comparisonLevel: 'class'
+  comparisonLevel: 'class',
+  uniqueDaysMode: false,
 }
 export const useDashboardStore = create<DashboardState>()(
   persist(
@@ -82,6 +86,7 @@ export const useDashboardStore = create<DashboardState>()(
           comparisonViewMode: state.filters.comparisonViewMode,
           comparisonLevel: state.filters.comparisonLevel,
           categoryGroup: state.filters.categoryGroup,
+          uniqueDaysMode: state.filters.uniqueDaysMode,
           // Don't persist custom date range (should be fresh)
           customDateRange: undefined
         }

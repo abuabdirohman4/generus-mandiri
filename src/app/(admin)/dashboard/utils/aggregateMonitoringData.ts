@@ -28,7 +28,8 @@ export function aggregateMonitoringData(
     kelas: string[]
     desa: string[]
     daerah: string[]
-  }
+  },
+  uniqueDaysMode?: boolean
 ): AggregatedData[] {
   // Step 1: Determine group key based on comparison level
   const groupKey = comparisonLevel === 'class' ? 'class_name' :
@@ -64,7 +65,8 @@ export function aggregateMonitoringData(
           meetingCount: 0,
           studentCount: 0,
           has_meeting: false,
-          meetingIds: new Set<string>(), // Track unique meeting IDs for deduplication
+          meetingIds: new Set<string>(),
+          meetingDates: new Set<string>(),
           sort_order: 9999
         }
       }
@@ -77,6 +79,10 @@ export function aggregateMonitoringData(
       // Add meeting IDs to deduplicate multi-class meetings
       if (item.meeting_ids && item.meeting_ids.length > 0) {
         item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
+      }
+      // Add meeting dates for uniqueDaysMode
+      if (item.meeting_dates && item.meeting_dates.length > 0) {
+        item.meeting_dates.forEach(d => acc[entityName].meetingDates.add(d))
       }
 
       if (item.has_meeting) acc[entityName].has_meeting = true
@@ -99,10 +105,10 @@ export function aggregateMonitoringData(
       attendance_rate: g.totalPotential > 0
         ? Math.round((g.totalPresent / g.totalPotential) * 100)
         : 0,
-      meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
+      meeting_count: uniqueDaysMode ? g.meetingDates.size : g.meetingIds.size,
       student_count: g.studentCount,
       has_meeting: g.has_meeting,
-      meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
+      meeting_ids: Array.from(g.meetingIds) as string[],
       sort_order: g.sort_order
     }))
 
@@ -131,13 +137,18 @@ export function aggregateMonitoringData(
         studentCount: 0,
         has_meeting: false,
         desa_name: comparisonLevel === 'kelompok' ? item.desa_name : undefined,
-        meetingIds: new Set<string>() // Track unique meeting IDs for deduplication
+        meetingIds: new Set<string>(),
+        meetingDates: new Set<string>(),
       }
     }
 
     // Add meeting IDs to deduplicate multi-class meetings
     if (item.meeting_ids && item.meeting_ids.length > 0) {
       item.meeting_ids.forEach(id => acc[entityName].meetingIds.add(id))
+    }
+    // Add meeting dates for uniqueDaysMode
+    if (item.meeting_dates && item.meeting_dates.length > 0) {
+      item.meeting_dates.forEach(d => acc[entityName].meetingDates.add(d))
     }
 
     if (item.has_meeting) acc[entityName].has_meeting = true
@@ -160,12 +171,12 @@ export function aggregateMonitoringData(
     attendance_rate: g.totalPotential > 0
       ? Math.round((g.totalPresent / g.totalPotential) * 100)
       : 0,
-    meeting_count: g.meetingIds.size, // CRITICAL FIX: Use deduplicated count
+    meeting_count: uniqueDaysMode ? g.meetingDates.size : g.meetingIds.size,
     student_count: g.studentCount,
     has_meeting: g.has_meeting,
     desa_name: g.desa_name,
-    meeting_ids: Array.from(g.meetingIds) as string[], // For debugging
-    sort_order: 9999 // Not used for higher levels
+    meeting_ids: Array.from(g.meetingIds) as string[],
+    sort_order: 9999
   }))
 
   // Sort by name ascending initially (will be overridden by UI sorting)

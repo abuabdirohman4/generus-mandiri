@@ -89,6 +89,9 @@ interface DataFilterProps {
   // Category group filter
   categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
   onCategoryGroupChange?: (group: 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined) => void
+  // Unique days mode toggle (daerah-level only)
+  uniqueDaysMode?: boolean
+  onUniqueDaysModeChange?: (val: boolean) => void
 }
 
 export default function DataFilter({
@@ -127,6 +130,9 @@ export default function DataFilter({
   // Category group filter
   categoryGroup,
   onCategoryGroupChange,
+  // Unique days mode
+  uniqueDaysMode,
+  onUniqueDaysModeChange,
 }: DataFilterProps) {
   // Role detection
   const role = useMemo(() => detectRole(userProfile ?? null), [userProfile])
@@ -201,8 +207,29 @@ export default function DataFilter({
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || isLoading || kelompokListCount > 1)
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
-  const showCategoryGroup = !!onCategoryGroupChange
-  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType && !showCategoryGroup
+  const showUniqueDaysMode = !!onUniqueDaysModeChange
+
+  // Compute accessible category groups from classList (via class_master_mappings.group_name)
+  const accessibleCategoryGroups = useMemo(() => {
+    if (!onCategoryGroupChange || !classList?.length) return []
+    const groups = new Set<string>()
+    classList.forEach(cls => {
+      cls.class_master_mappings?.forEach(mapping => {
+        const gn = mapping.class_master?.group_name
+        if (gn) groups.add(gn)
+      })
+    })
+    const ORDER = ['caberawit', 'muda_mudi', 'orang_tua'] as const
+    return ORDER.filter(g => groups.has(g))
+  }, [onCategoryGroupChange, classList])
+
+  // Mutual exclusive: hide kategori if kelas selected, hide kelas if kategori selected
+  const hasKelasSelected = (filters?.kelas?.length ?? 0) > 0
+  const hasCategorySelected = !!categoryGroup
+  const showCategoryGroup = !!onCategoryGroupChange && accessibleCategoryGroups.length > 1 && !hasKelasSelected && (!showComparisonLevel || comparisonLevel !== 'class')
+  const effectiveShowKelasFilter = showKelasFilter && !hasCategorySelected
+
+  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !effectiveShowKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType && !showCategoryGroup && !showUniqueDaysMode
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -519,16 +546,17 @@ export default function DataFilter({
 
   const visibleFilters = [
     showComparisonLevel && 'comparisonLevel',
+    showCategoryGroup && 'categoryGroup',
+    showUniqueDaysMode && 'uniqueDaysMode',
     effectiveShouldShowDaerah && 'daerah',
     effectiveShouldShowDesa && 'desa',
     effectiveShouldShowKelompok && 'kelompok',
-    showKelasFilter && 'kelas',
+    effectiveShowKelasFilter && 'kelas',
     showGender && 'gender',
     showStatus && 'status',
     (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode',
     showActivityType && 'activityType',
     showActivityLevel && 'activityLevel',
-    showCategoryGroup && 'categoryGroup',
   ].filter(Boolean)
 
   const filterCount = visibleFilters.length
@@ -542,28 +570,23 @@ export default function DataFilter({
     variant === 'page' && filterCount >= 2 && filterCount <= 4 && "grid-cols-2 md:grid-cols-4",
     variant === 'page' && filterCount === 5 && "grid-cols-2 md:grid-cols-5",
     variant === 'page' && filterCount === 6 && "grid-cols-2 md:grid-cols-6",
+    variant === 'page' && filterCount === 7 && "grid-cols-2 md:grid-cols-6",
     variant === 'modal' && filterCount >= 1 && filterCount <= 6 && "grid-cols-1",
     className
   )
 
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
-    // console.log('filterType', filterType)
-    const filterOrder = ['comparisonLevel', 'categoryGroup', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
+    const filterOrder = ['comparisonLevel', 'categoryGroup', 'uniqueDaysMode', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
 
   // For 3 filters: last filter (lowest level) spans 2 columns on mobile
   const getFilterClass = (index: number) => {
-    // console.log('filterCount', filterCount)
-    // console.log('index', index)
     if (variant === 'page' && filterCount === 3 && index === 2) {
       return "col-span-2 md:col-span-1" // Last filter full width on mobile
     }
-    // if (variant === 'modal' && filterCount === 3 && index === 2) {
-    //   return "md:col-span-2" // Last filter spans 2 columns in modal
-    // }
     return ""
   }
 
@@ -703,11 +726,10 @@ export default function DataFilter({
             label="Kategori"
             value={categoryGroup || ''}
             onChange={(value) => onCategoryGroupChange?.(value as 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined || undefined)}
-            options={[
-              { value: 'caberawit', label: 'Caberawit' },
-              { value: 'muda_mudi', label: 'Muda Mudi' },
-              { value: 'orang_tua', label: 'Orang Tua' },
-            ]}
+            options={accessibleCategoryGroups.map(g => ({
+              value: g,
+              label: g === 'caberawit' ? 'Caberawit' : g === 'muda_mudi' ? 'Muda Mudi' : 'Orang Tua'
+            }))}
             allOptionLabel="Semua Kategori"
             widthClassName="!max-w-full"
             variant={variant}
@@ -716,7 +738,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {showKelasFilter && (
+      {effectiveShowKelasFilter && (
         <div className={getFilterClass(getFilterIndex('kelas'))}>
           {variant === 'page' ? (
             <MultiSelectFilter
@@ -757,6 +779,24 @@ export default function DataFilter({
             // hint={errors.kelas || (isKelasInvalid ? "Pilihan Kelas tidak sesuai dengan Kelompok/Desa/Daerah" : undefined)}
             />
           )}
+        </div>
+      )}
+
+      {showUniqueDaysMode && (
+        <div className={getFilterClass(getFilterIndex('uniqueDaysMode'))}>
+          <InputFilter
+            id="uniqueDaysModeFilter"
+            label="Hitung Pertemuan"
+            value={uniqueDaysMode ? 'unique' : 'raw'}
+            onChange={(value) => onUniqueDaysModeChange?.(value === 'unique')}
+            options={[
+              { value: 'raw', label: 'Per Jumlah Pertemuan' },
+              { value: 'unique', label: 'Per Hari Pertemuan' },
+            ]}
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
         </div>
       )}
 

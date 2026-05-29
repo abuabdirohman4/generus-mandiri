@@ -32,16 +32,34 @@ export async function fetchClassMasterMappings(
     const relevantMappings = mappings.filter((m: any) => classIdSet.has(m.class_id))
     if (relevantMappings.length === 0) return classMappings
 
-    // Step 2: get class masters with sort_order (max 27 unique masters — safe for .in())
+    // Step 2: get class masters with sort_order + category_id
     const masterIds = [...new Set(relevantMappings.map((m: any) => m.class_master_id))]
     const { data: masters } = await supabase
         .from('class_masters')
-        .select('id, sort_order')
+        .select('id, sort_order, category_id')
         .in('id', masterIds)
 
     if (!masters) return classMappings
 
-    const mastersMap = new Map(masters.map((m: any) => [m.id, m]))
+    // Step 2b: get group_name from categories
+    const categoryIds = [...new Set(masters.map((m: any) => m.category_id).filter(Boolean))]
+    const categoryGroupMap = new Map<string, string>()
+    if (categoryIds.length > 0) {
+        const { data: categories } = await supabase
+            .from('categories')
+            .select('id, group_name')
+            .in('id', categoryIds)
+        if (categories) {
+            categories.forEach((c: any) => {
+                if (c.group_name) categoryGroupMap.set(c.id, c.group_name)
+            })
+        }
+    }
+
+    const mastersMap = new Map(masters.map((m: any) => [m.id, {
+        ...m,
+        group_name: m.category_id ? (categoryGroupMap.get(m.category_id) ?? null) : null,
+    }]))
 
     // Step 3: group by class_id
     relevantMappings.forEach((mapping: any) => {

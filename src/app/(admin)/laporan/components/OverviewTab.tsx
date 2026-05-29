@@ -19,7 +19,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import { useLaporanStore } from '../stores/laporanStore'
 import LaporanTimeFilter from './LaporanTimeFilter'
-import { canAccessMaterials, canAccessMonitoring } from '@/lib/userUtils'
+import { canAccessMaterials, canAccessMonitoring, isSuperAdmin, isAdminDaerah, isTeacherDaerah } from '@/lib/userUtils'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
 import LaporanEmptyState from './LaporanEmptyState'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
@@ -38,6 +38,7 @@ export default function OverviewTab() {
   const customDateRange = filters.customDateRange
   const classViewMode = filters.classViewMode
   const categoryGroup = filters.categoryGroup
+  const uniqueDaysMode = filters.uniqueDaysMode ?? false
 
   const { sharedMonth, sharedYear, setSharedTime } = useLaporanStore()
   
@@ -56,6 +57,11 @@ export default function OverviewTab() {
   const hasPencapaianAccess = useMemo(() => {
     if (!userProfile) return false
     return canAccessMaterials(userProfile) && canAccessMonitoring(userProfile)
+  }, [userProfile])
+
+  const isDaerahLevel = useMemo(() => {
+    if (!userProfile) return false
+    return isSuperAdmin(userProfile) || isAdminDaerah(userProfile) || isTeacherDaerah(userProfile)
   }, [userProfile])
 
   // Set default comparisonLevel based on user's org scope on first mount.
@@ -135,6 +141,7 @@ export default function OverviewTab() {
       classViewMode,
       monthString: selectedMonth,
       categoryGroup,
+      uniqueDaysMode,
     })
 
     if (!result.success) {
@@ -158,6 +165,7 @@ export default function OverviewTab() {
       viewMode: debouncedFiltersForKey.classViewMode,
       comparisonLevel: debouncedFiltersForKey.comparisonLevel,
       categoryGroup: debouncedFiltersForKey.categoryGroup || '',
+      uniqueDaysMode: debouncedFiltersForKey.uniqueDaysMode ?? false,
       sharedMonth: sharedMonth,
       sharedYear: sharedYear
     })
@@ -190,6 +198,7 @@ export default function OverviewTab() {
   const handleViewModeChange = (mode: 'separated' | 'combined') => setFilter('classViewMode', mode)
   const handleComparisonLevelChange = (level: 'class' | 'kelompok' | 'desa' | 'daerah') => setFilter('comparisonLevel', level)
   const handleCategoryGroupChange = (group: 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined) => setFilter('categoryGroup', group)
+  const handleUniqueDaysModeChange = (val: boolean) => setFilter('uniqueDaysMode', val)
 
   const attendanceMetrics = useMemo(() => {
     if (!monitoringData || monitoringData.length === 0) {
@@ -286,6 +295,8 @@ export default function OverviewTab() {
           onComparisonLevelChange={handleComparisonLevelChange}
           categoryGroup={categoryGroup}
           onCategoryGroupChange={handleCategoryGroupChange}
+          uniqueDaysMode={isDaerahLevel ? uniqueDaysMode : undefined}
+          onUniqueDaysModeChange={isDaerahLevel ? handleUniqueDaysModeChange : undefined}
         />
         {/* Bulan & Tahun — dalam grid 2-kolom di dalam card */}
         <div className="grid grid-cols-2 gap-4 mt-2">

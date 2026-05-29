@@ -163,7 +163,8 @@ export function buildClassResult(
     meetingsByClass: Map<string, Set<string>>,
     enrollmentsByClass: Map<string, Set<string>>,
     attendanceLogs: AttendanceLog[],
-    meetingMap: Map<string, Meeting>
+    meetingMap: Map<string, Meeting>,
+    uniqueDaysMode?: boolean
 ): ClassMonitoringData {
     const orgNames = extractOrgNames(cls)
     const classMeetingIdsSet = meetingsByClass.get(cls.id) || new Set<string>()
@@ -188,15 +189,42 @@ export function buildClassResult(
     const meetingsWithLogs = new Set(filteredLogs.map(log => log.meeting_id))
     const attendanceRate = calculateAttendanceRate(filteredLogs)
 
+    let meetingCount: number
+    if (uniqueDaysMode) {
+        const uniqueDays = new Set(
+            Array.from(meetingsWithLogs)
+                .map(id => {
+                    const date = meetingMap.get(id)?.date
+                    return date ? String(date).split('T')[0] : null
+                })
+                .filter((d): d is string => d !== null)
+        )
+        meetingCount = uniqueDays.size
+    } else {
+        meetingCount = meetingsWithLogs.size
+    }
+
+    // meeting_dates from ALL scheduled meetings (not just those with logs)
+    // so uniqueDaysMode aggregate works even when attendance is 0
+    const meetingDates = [...new Set(
+        Array.from(classMeetingIdsSet)
+            .map(id => {
+                const date = meetingMap.get(id)?.date
+                return date ? String(date).split('T')[0] : null
+            })
+            .filter((d): d is string => d !== null)
+    )]
+
     return {
         class_id: cls.id,
         class_name: cls.name,
         ...orgNames,
         has_meeting: true,
-        meeting_count: meetingsWithLogs.size,
+        meeting_count: meetingCount,
         attendance_rate: attendanceRate,
         student_count: studentCount,
         meeting_ids: Array.from(meetingsWithLogs),
+        meeting_dates: meetingDates,
         sort_order: getSortOrder(cls),
     }
 }
@@ -215,10 +243,46 @@ export function combinedAggregateResult(
         totalStudents: number
         hasMeeting: boolean
     },
-    filteredLogs: AttendanceLog[]
+    filteredLogs: AttendanceLog[],
+    meetingMap?: Map<string, Meeting>,
+    uniqueDaysMode?: boolean
 ): ClassMonitoringData {
     const meetingsWithLogs = new Set(filteredLogs.map(log => log.meeting_id))
     const attendanceRate = calculateAttendanceRate(filteredLogs)
+
+    let meetingCount: number
+    if (uniqueDaysMode && meetingMap) {
+        const uniqueDays = new Set(
+            Array.from(meetingsWithLogs)
+                .map(id => {
+                    const date = meetingMap.get(id)?.date
+                    return date ? String(date).split('T')[0] : null
+                })
+                .filter((d): d is string => d !== null)
+        )
+        meetingCount = uniqueDays.size
+    } else {
+        meetingCount = meetingsWithLogs.size
+    }
+
+    // Use all meeting IDs involved (from logs + any in meetingMap for the class IDs)
+    // so meeting_dates is populated even when attendance is 0
+    const allInvolvedMeetingIds = meetingMap
+        ? [...new Set([...meetingsWithLogs, ...Array.from(meetingMap.keys()).filter(id => {
+            const m = meetingMap.get(id)!
+            return data.classIds.some(cid =>
+                m.class_id === cid || (Array.isArray((m as any).class_ids) && (m as any).class_ids.includes(cid))
+            )
+        })])]
+        : Array.from(meetingsWithLogs)
+    const meetingDates = meetingMap ? [...new Set(
+        allInvolvedMeetingIds
+            .map(id => {
+                const date = meetingMap.get(id)?.date
+                return date ? String(date).split('T')[0] : null
+            })
+            .filter((d): d is string => d !== null)
+    )] : []
 
     return {
         class_id: data.classIds.join(','),
@@ -227,10 +291,11 @@ export function combinedAggregateResult(
         desa_name: Array.from(data.desaNames).sort().join(', '),
         daerah_name: Array.from(data.daerahNames).sort().join(', '),
         has_meeting: data.hasMeeting,
-        meeting_count: meetingsWithLogs.size,
+        meeting_count: meetingCount,
         attendance_rate: attendanceRate,
         student_count: data.totalStudents,
         meeting_ids: Array.from(meetingsWithLogs),
+        meeting_dates: meetingDates,
     }
 }
 

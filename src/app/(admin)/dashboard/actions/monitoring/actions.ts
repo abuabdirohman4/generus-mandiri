@@ -100,7 +100,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
         const enrollmentsByClass = buildEnrollmentsByClass(allEnrollments)
 
         let result: ClassMonitoringData[] = classes.map((cls: any) =>
-            buildClassResult(cls, meetingsByClass, enrollmentsByClass, attendanceLogs, meetingMap)
+            buildClassResult(cls, meetingsByClass, enrollmentsByClass, attendanceLogs, meetingMap, filters.uniqueDaysMode)
         )
 
         result.sort((a, b) => {
@@ -152,7 +152,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
                     allEnrolledStudents
                 )
 
-                return combinedAggregateResult(className, { ...data, totalStudents: allEnrolledStudents.size }, filteredLogs)
+                return combinedAggregateResult(className, { ...data, totalStudents: allEnrolledStudents.size }, filteredLogs, meetingMap, filters.uniqueDaysMode)
             })
 
             result.sort((a, b) => a.class_name.localeCompare(b.class_name))

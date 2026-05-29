@@ -234,7 +234,7 @@ export default function ClassMonitoringTable({
                 kelas: filters.kelas,
                 desa: filters.desa,
                 daerah: filters.daerah
-            });
+            }, filters.uniqueDaysMode);
             return aggregated;
         }
     }, [data, filters.comparisonLevel, filters.kelompok, filters.kelas, filters.desa, filters.daerah]);

@@ -19,6 +19,7 @@ export interface ClassMonitoringData {
     attendance_rate: number
     student_count?: number
     meeting_ids?: string[]
+    meeting_dates?: string[]  // unique dates (YYYY-MM-DD) for uniqueDaysMode
     sort_order?: number
 }
 
@@ -73,4 +74,5 @@ export interface ClassMonitoringFilters extends DashboardFilters {
     weekOffset?: number
     monthString?: string
     categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
+    uniqueDaysMode?: boolean
 }

@@ -59,6 +59,7 @@ export interface Class extends ClassBase {
       id: string
       sort_order: number
       name?: string
+      group_name?: string | null
     } | null
   }>
 }
