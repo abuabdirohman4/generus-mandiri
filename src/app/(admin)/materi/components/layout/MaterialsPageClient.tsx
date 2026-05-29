@@ -5,6 +5,7 @@ import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../..
 import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getAllClasses, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
 import { getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
 import MateriContentView from '../views/MateriContentView';
+import MateriKelasView from '../views/MateriKelasView';
 import MateriSidebar from './MateriSidebar';
 import { MateriContentSkeleton } from '@/components/ui/skeleton/MateriSkeleton';
 import ItemModal from '../modals/ItemModal';
@@ -71,7 +72,14 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
   const canManage = userProfile ? canManageMaterials(userProfile) : false;
 
   // Materi store
-  const { filters } = useMateriStore();
+  const { filters, setFilter } = useMateriStore();
+
+  // Force non-managers to kelas tab
+  useEffect(() => {
+    if (!canManage && filters.activeTab !== 'kelas') {
+      setFilter('activeTab', 'kelas')
+    }
+  }, [canManage])
 
   const selectedCategory = categories.find(c => c.id === filters.selectedCategoryId);
   const selectedType = types.find(t => t.id === filters.selectedTypeId);
@@ -82,48 +90,30 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
     if (activeTab === 'master') {
       loadSidebarData();
     }
-  }, [activeTab, filters.viewMode]);
+  }, [activeTab, filters.activeTab]);
 
   const loadSidebarData = async () => {
     try {
       setDataLoading(true);
 
-      if (filters.viewMode === 'by_material') {
-        // Load data for material view (with class mappings for KELAS column)
-        const [categoriesData, typesData, itemsData] = await Promise.all([
-          getMaterialCategories(),
-          getMaterialTypes(),
-          getMaterialItemsWithClassMappings()
-        ]);
-        setCategories(categoriesData);
-        setTypes(typesData);
-        setItems(itemsData);
-        setClasses([]); // Clear classes when in material mode
-        if (itemsData.length > 0) {
-          const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));
-          setMonthsByItemId(months);
-        }
+      const [categoriesData, typesData, classesResult, itemsData] = await Promise.all([
+        getMaterialCategories(),
+        getMaterialTypes(),
+        getAllClasses(),
+        getMaterialItemsWithClassMappings()
+      ]);
+      setCategories(categoriesData);
+      setTypes(typesData);
+      if (classesResult.success) {
+        setClasses(classesResult.data);
       } else {
-        // Load data for class view - all 17 classes + items with mappings
-        const [categoriesData, typesData, classesResult, itemsData] = await Promise.all([
-          getMaterialCategories(),
-          getMaterialTypes(),
-          getAllClasses(),
-          getMaterialItemsWithClassMappings()
-        ]);
-        setCategories(categoriesData);
-        setTypes(typesData);
-        if (classesResult.success) {
-          setClasses(classesResult.data);
-        } else {
-          toast.error(classesResult.message || 'Gagal memuat daftar kelas');
-          setClasses([]);
-        }
-        setItems(itemsData);
-        if (itemsData.length > 0) {
-          const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));
-          setMonthsByItemId(months);
-        }
+        toast.error(classesResult.message || 'Gagal memuat daftar kelas');
+        setClasses([]);
+      }
+      setItems(itemsData);
+      if (itemsData.length > 0) {
+        const months = await getMonthlyTargetsByItems(itemsData.map(i => i.id));
+        setMonthsByItemId(months);
       }
     } catch (error) {
       console.error('Error loading sidebar data:', error);
@@ -334,6 +324,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             onToggle={() => setSidebarOpen(!sidebarOpen)}
             isLoading={dataLoading}
             onDataChange={loadSidebarData}
+            canManage={canManage}
           />
 
           {/* Main Content */}
@@ -404,9 +395,19 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             </div>
 
             {/* Role-Based Content */}
-            <div className="pb-12 py-0 md:pb-0 md:px-6">
+            <div className="mt-5 pb-12 py-0 md:pb-0 md:px-6">
               {dataLoading ? (
                 <MateriContentSkeleton />
+              ) : filters.activeTab === 'kelas' ? (
+                <MateriKelasView
+                  categories={categories}
+                  types={types}
+                  items={items}
+                  classes={classes}
+                  monthsByItemId={monthsByItemId}
+                  onViewItem={handleViewContent}
+                  searchQuery={searchQuery}
+                />
               ) : (
                 <MateriContentView
                   categories={categories}
@@ -461,10 +462,10 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             setViewingItem(null);
           }}
           item={viewingItem}
-          onEdit={(item) => {
+          onEdit={canManage ? (item) => {
             setContentModalOpen(false);
             handleEditItem(item);
-          }}
+          } : undefined}
         />
 
         <BulkMappingUpdateModal

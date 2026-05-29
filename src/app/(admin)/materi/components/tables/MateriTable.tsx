@@ -241,14 +241,14 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
             data={tableData}
             renderCell={renderCell}
             searchable={false}
-            pagination={true}
-            defaultItemsPerPage={25}
-            itemsPerPageOptions={[10, 25, 50, 100]}
+            pagination={false}
+            // defaultItemsPerPage={25}
+            // itemsPerPageOptions={[10, 25, 50, 100]}
             defaultSortColumn="name"
             defaultSortDirection="asc"
             onRowClick={(item) => onView?.(item.itemData)}
             rowClassName="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-            columnToggle={columnToggle}
+            // columnToggle={columnToggle}
         />
     );
 }

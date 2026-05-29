@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export interface MateriFilters {
     viewMode: 'by_material' | 'by_class'
+    activeTab: 'kategori' | 'kelas'
     selectedCategoryId: string | null
     selectedTypeId: string | null
     selectedClassId: string | null
@@ -32,11 +33,12 @@ const getCurrentSemester = (): 1 | 2 => getCurrentMonth() >= 7 ? 1 : 2
 
 const defaultFilters: MateriFilters = {
     viewMode: 'by_material',
+    activeTab: 'kategori',
     selectedCategoryId: null,
     selectedTypeId: null,
     selectedClassId: null,
     selectedSemester: getCurrentSemester(),
-    selectedMonth: getCurrentMonth(),
+    selectedMonth: null,
     searchQuery: '',
     sidebarCollapsed: false
 }
@@ -72,6 +74,7 @@ export const useMateriStore = create<MateriState>()(
             partialize: (state) => ({
                 filters: {
                     viewMode: state.filters.viewMode,
+                    activeTab: state.filters.activeTab,
                     sidebarCollapsed: state.filters.sidebarCollapsed,
                     selectedSemester: state.filters.selectedSemester,
                     selectedMonth: state.filters.selectedMonth,

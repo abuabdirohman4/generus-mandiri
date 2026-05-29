@@ -59,66 +59,13 @@ export default function MateriContentView({
             getMonthlyTargetItemIds({
                 semester: filters.selectedSemester,
                 month: filters.selectedMonth,
-                class_master_id: filters.viewMode === 'by_class' && filters.selectedClassId ? filters.selectedClassId : undefined
+                class_master_id: filters.selectedClassId ?? undefined
             }).then(ids => setTargetItemIds(new Set(ids)));
         } else {
             setTargetItemIds(new Set());
         }
-    }, [filters.selectedSemester, filters.selectedMonth, filters.viewMode, filters.selectedClassId]);
+    }, [filters.selectedSemester, filters.selectedMonth, filters.selectedClassId]);
 
-    // Filter items for "by_class" mode - show items based on class + type selection
-    const filteredItemsForClassMode = useMemo(() => {
-        if (filters.viewMode !== 'by_class') return [];
-
-        let result = items;
-
-        // Teacher: Only show items from their classes
-        if (isTeacherUser && userProfile.classes) {
-            const teacherClassIds = userProfile.classes.map((c: any) => c.id);
-            result = result.filter(item =>
-                item.classes?.some(c => teacherClassIds.includes(c.id))
-            );
-        }
-
-        // Filter by selected class
-        if (filters.selectedClassId) {
-            result = result.filter(item =>
-                item.classes?.some(c => c.id === filters.selectedClassId)
-            );
-        }
-
-        // Filter by selected type (from sidebar)
-        if (filters.selectedTypeId) {
-            result = result.filter(i => i.material_type_id === filters.selectedTypeId);
-        }
-
-        // Filter by semester only (no month selected)
-        if (filters.selectedSemester && !filters.selectedMonth) {
-            result = result.filter(item => {
-                const targets = monthsByItemId[item.id] || [];
-                return targets.some(t =>
-                    t.semester === filters.selectedSemester &&
-                    (!filters.selectedClassId || t.class_master_id === filters.selectedClassId)
-                );
-            });
-        }
-
-        // Filter by semester + month targets
-        if (filters.selectedSemester && filters.selectedMonth) {
-            result = result.filter(item => targetItemIds.has(item.id));
-        }
-
-        // Filter by search query
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(item =>
-                item.name.toLowerCase().includes(query) ||
-                item.description?.toLowerCase().includes(query)
-            );
-        }
-
-        return result;
-    }, [items, filters.viewMode, filters.selectedClassId, filters.selectedTypeId, userProfile, isTeacherUser, searchQuery, filters.selectedSemester, filters.selectedMonth, targetItemIds, monthsByItemId]);
 
     // Get current type/category info for header
     const selectedType = useMemo(() => {
@@ -232,7 +179,23 @@ export default function MateriContentView({
                 )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 border-b border-gray-200 dark:border-gray-700">
+                    <InputFilter
+                        id="category-filter-content"
+                        label="Kategori"
+                        value={filters.selectedCategoryId || ''}
+                        onChange={(val) => {
+                            setFilter('selectedCategoryId', val || null);
+                            setFilter('selectedTypeId', null);
+                        }}
+                        allOptionLabel="Semua Kategori"
+                        options={categories
+                            .sort((a, b) => a.display_order - b.display_order)
+                            .map(c => ({ value: c.id, label: c.name }))}
+                        widthClassName="w-48"
+                        variant="modal"
+                        compact
+                    />
                     <InputFilter
                         id="semester-filter"
                         label="Semester"
@@ -266,90 +229,51 @@ export default function MateriContentView({
                         variant="modal"
                         compact
                     />
-                    {filters.viewMode === 'by_material' && (
-                        <InputFilter
-                            id="class-filter-content"
-                            label="Kelas"
-                            value={filters.selectedClassId || ''}
-                            onChange={(val) => setFilter('selectedClassId', val || null)}
-                            allOptionLabel="Semua Kelas"
-                            options={classMasters.map(cls => ({
-                                value: cls.id,
-                                label: cls.name
-                            }))}
-                            widthClassName="w-48"
-                            variant="modal"
-                            compact
-                        />
-                    )}
+                    <InputFilter
+                        id="class-filter-content"
+                        label="Kelas"
+                        value={filters.selectedClassId || ''}
+                        onChange={(val) => setFilter('selectedClassId', val || null)}
+                        allOptionLabel="Semua Kelas"
+                        options={classMasters.map(cls => ({
+                            value: cls.id,
+                            label: cls.name
+                        }))}
+                        widthClassName="w-48"
+                        variant="modal"
+                        compact
+                    />
                 </div>
 
-            {/* Conditional Rendering Based on View Mode */}
-            {filters.viewMode === 'by_material' ? (
-                <>
-                    {/* View by Material Mode */}
-                    {/* Table View (All Screens) */}
-                    <div className="mt-5 md:mt-0">
-                        <MateriTable
-                            items={filteredItems}
-                            onEdit={onEditItem}
-                            onDelete={onDeleteItem}
-                            onView={onViewItem}
-                            selectedIds={selectedIds}
-                            onToggleSelection={onToggleSelection}
-                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map((i: MaterialItem) => i.id))}
-                            showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
-                            selectedMonth={filters.selectedMonth}
-                            monthsByItemId={monthsByItemId}
-                            showClassColumn={columnVisibility.showClassColumn}
-                            showSemesterColumn={columnVisibility.showSemesterColumn}
-                            showMonthColumn={columnVisibility.showMonthColumn}
-                            columnToggle={
-                                <ColumnToggle
-                                    columns={[
-                                        { key: 'showClassColumn', label: 'Kelas' },
-                                        { key: 'showSemesterColumn', label: 'Semester' },
-                                        { key: 'showMonthColumn', label: 'Bulan' },
-                                    ]}
-                                    visibility={columnVisibility}
-                                    onChange={setColumnVisibility}
-                                />
-                            }
+            {/* Table View */}
+            <div className="mt-5 md:mt-0">
+                <MateriTable
+                    items={filteredItems}
+                    onEdit={onEditItem}
+                    onDelete={onDeleteItem}
+                    onView={onViewItem}
+                    selectedIds={selectedIds}
+                    onToggleSelection={onToggleSelection}
+                    onToggleAll={(selected) => onToggleAll?.(selected, filteredItems.map((i: MaterialItem) => i.id))}
+                    showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
+                    selectedMonth={filters.selectedMonth}
+                    monthsByItemId={monthsByItemId}
+                    showClassColumn={columnVisibility.showClassColumn}
+                    showSemesterColumn={columnVisibility.showSemesterColumn}
+                    showMonthColumn={columnVisibility.showMonthColumn}
+                    columnToggle={
+                        <ColumnToggle
+                            columns={[
+                                { key: 'showClassColumn', label: 'Kelas' },
+                                { key: 'showSemesterColumn', label: 'Semester' },
+                                { key: 'showMonthColumn', label: 'Bulan' },
+                            ]}
+                            visibility={columnVisibility}
+                            onChange={setColumnVisibility}
                         />
-                    </div>
-                </>
-            ) : (
-                <>
-                    {/* View by Class Mode - Show items in table/card format */}
-                    {/* Table View (All Screens) */}
-                    <div className="mt-5 md:mt-0">
-                        <MateriTable
-                            items={filteredItemsForClassMode}
-                            onEdit={onEditItem}
-                            onDelete={onDeleteItem}
-                            onView={onViewItem}
-                            selectedIds={selectedIds}
-                            onToggleSelection={onToggleSelection}
-                            onToggleAll={(selected) => onToggleAll?.(selected, filteredItemsForClassMode.map((i: MaterialItem) => i.id))}
-                            showTargetBadge={!!(filters.selectedSemester && filters.selectedMonth)}
-                            selectedMonth={filters.selectedMonth}
-                            monthsByItemId={monthsByItemId}
-                            showSemesterColumn={columnVisibility.showSemesterColumn}
-                            showMonthColumn={columnVisibility.showMonthColumn}
-                            columnToggle={
-                                <ColumnToggle
-                                    columns={[
-                                        { key: 'showSemesterColumn', label: 'Semester' },
-                                        { key: 'showMonthColumn', label: 'Bulan' },
-                                    ]}
-                                    visibility={columnVisibility}
-                                    onChange={setColumnVisibility}
-                                />
-                            }
-                        />
-                    </div>
-                </>
-            )}
+                    }
+                />
+            </div>
         </div>
     );
 }
