@@ -465,7 +465,7 @@ export default function ClassMonitoringTable({
                                 renderCell={renderCell}
                                 searchable={true}
                                 pagination={true}
-                                itemsPerPageOptions={[10, 25, 50, 100]}
+                                itemsPerPageOptions={[10, 15, 25, 50, 100]}
                                 defaultItemsPerPage={10}
                                 defaultSortColumn={filters.comparisonLevel === 'class' ? 'class_name' : 'name'}
                                 defaultSortDirection="asc"

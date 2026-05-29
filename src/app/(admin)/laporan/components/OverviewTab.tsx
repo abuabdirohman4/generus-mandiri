@@ -37,6 +37,7 @@ export default function OverviewTab() {
   const selectedPeriod = filters.period
   const customDateRange = filters.customDateRange
   const classViewMode = filters.classViewMode
+  const categoryGroup = filters.categoryGroup
 
   const { sharedMonth, sharedYear, setSharedTime } = useLaporanStore()
   
@@ -132,7 +133,8 @@ export default function OverviewTab() {
       gender: filters.gender,
       status: filters.status,
       classViewMode,
-      monthString: selectedMonth
+      monthString: selectedMonth,
+      categoryGroup,
     })
 
     if (!result.success) {
@@ -155,6 +157,7 @@ export default function OverviewTab() {
       gender: debouncedFiltersForKey.gender || '',
       viewMode: debouncedFiltersForKey.classViewMode,
       comparisonLevel: debouncedFiltersForKey.comparisonLevel,
+      categoryGroup: debouncedFiltersForKey.categoryGroup || '',
       sharedMonth: sharedMonth,
       sharedYear: sharedYear
     })
@@ -186,6 +189,7 @@ export default function OverviewTab() {
   const handleCustomDateChange = (start: string, end: string) => setFilter('customDateRange', { start, end })
   const handleViewModeChange = (mode: 'separated' | 'combined') => setFilter('classViewMode', mode)
   const handleComparisonLevelChange = (level: 'class' | 'kelompok' | 'desa' | 'daerah') => setFilter('comparisonLevel', level)
+  const handleCategoryGroupChange = (group: 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined) => setFilter('categoryGroup', group)
 
   const attendanceMetrics = useMemo(() => {
     if (!monitoringData || monitoringData.length === 0) {
@@ -280,6 +284,8 @@ export default function OverviewTab() {
           showComparisonLevel={true}
           comparisonLevel={filters.comparisonLevel}
           onComparisonLevelChange={handleComparisonLevelChange}
+          categoryGroup={categoryGroup}
+          onCategoryGroupChange={handleCategoryGroupChange}
         />
         {/* Bulan & Tahun — dalam grid 2-kolom di dalam card */}
         <div className="grid grid-cols-2 gap-4 mt-2">

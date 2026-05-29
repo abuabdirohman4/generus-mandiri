@@ -86,6 +86,9 @@ interface DataFilterProps {
   showComparisonLevel?: boolean
   comparisonLevel?: 'class' | 'kelompok' | 'desa' | 'daerah'
   onComparisonLevelChange?: (level: 'class' | 'kelompok' | 'desa' | 'daerah') => void
+  // Category group filter
+  categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
+  onCategoryGroupChange?: (group: 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined) => void
 }
 
 export default function DataFilter({
@@ -120,7 +123,10 @@ export default function DataFilter({
   // Comparison feature props
   showComparisonLevel = false,
   comparisonLevel = 'class',
-  onComparisonLevelChange
+  onComparisonLevelChange,
+  // Category group filter
+  categoryGroup,
+  onCategoryGroupChange,
 }: DataFilterProps) {
   // Role detection
   const role = useMemo(() => detectRole(userProfile ?? null), [userProfile])
@@ -195,7 +201,8 @@ export default function DataFilter({
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || isLoading || kelompokListCount > 1)
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
-  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType
+  const showCategoryGroup = !!onCategoryGroupChange
+  const shouldReturnNull = !showGender && !showStatus && !effectiveShouldShowDaerah && !effectiveShouldShowDesa && !effectiveShouldShowKelompok && !showKelasFilter && !showActivityType && !showActivityLevel && !showMeetingType && !showCategoryGroup
 
   const filteredClassList = useMemo(() => {
     if (!showKelasFilter) return []
@@ -521,6 +528,7 @@ export default function DataFilter({
     (classViewMode !== undefined && onClassViewModeChange) && 'classViewMode',
     showActivityType && 'activityType',
     showActivityLevel && 'activityLevel',
+    showCategoryGroup && 'categoryGroup',
   ].filter(Boolean)
 
   const filterCount = visibleFilters.length
@@ -541,7 +549,7 @@ export default function DataFilter({
   // Helper function to calculate filter index
   const getFilterIndex = (filterType: string) => {
     // console.log('filterType', filterType)
-    const filterOrder = ['comparisonLevel', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
+    const filterOrder = ['comparisonLevel', 'categoryGroup', 'gender', 'status', 'daerah', 'desa', 'kelompok', 'kelas', 'classViewMode', 'activityType', 'activityLevel']
     const visibleOrder = visibleFilters
     return visibleOrder.indexOf(filterType)
   }
@@ -685,6 +693,26 @@ export default function DataFilter({
               disabled={!!effectiveShouldShowDesa && !filters?.desa?.[0]}
             />
           )}
+        </div>
+      )}
+
+      {showCategoryGroup && (
+        <div className={getFilterClass(getFilterIndex('categoryGroup'))}>
+          <InputFilter
+            id="categoryGroupFilter"
+            label="Kategori"
+            value={categoryGroup || ''}
+            onChange={(value) => onCategoryGroupChange?.(value as 'caberawit' | 'muda_mudi' | 'orang_tua' | undefined || undefined)}
+            options={[
+              { value: 'caberawit', label: 'Caberawit' },
+              { value: 'muda_mudi', label: 'Muda Mudi' },
+              { value: 'orang_tua', label: 'Orang Tua' },
+            ]}
+            allOptionLabel="Semua Kategori"
+            widthClassName="!max-w-full"
+            variant={variant}
+            compact={compact}
+          />
         </div>
       )}
 

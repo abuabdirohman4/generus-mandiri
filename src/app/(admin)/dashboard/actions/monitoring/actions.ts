@@ -11,6 +11,7 @@ import {
     fetchClassesWithOrg,
     fetchMeetingsForMonitoring,
     fetchEnrollments,
+    fetchClassIdsByGroupName,
 } from './queries'
 import {
     getDateRangeForPeriod,
@@ -58,7 +59,18 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
             }
         }
 
-        const classes = await fetchClassesWithOrg(supabase, (hasFilters || (profile?.role === 'teacher' && effectiveClassIds.length > 0)) ? effectiveClassIds : undefined)
+        // Apply categoryGroup filter — intersect with class IDs from that group
+        if (filters.categoryGroup) {
+            const groupClassIds = await fetchClassIdsByGroupName(supabase, filters.categoryGroup)
+            const groupSet = new Set(groupClassIds)
+            if (effectiveClassIds.length > 0) {
+                effectiveClassIds = effectiveClassIds.filter(id => groupSet.has(id))
+            } else {
+                effectiveClassIds = groupClassIds
+            }
+        }
+
+        const classes = await fetchClassesWithOrg(supabase, (hasFilters || filters.categoryGroup || (profile?.role === 'teacher' && effectiveClassIds.length > 0)) ? effectiveClassIds : undefined)
         if (!classes || classes.length === 0) return { success: true, data: [] }
 
         const allClassIds = classes.map((c: any) => c.id)

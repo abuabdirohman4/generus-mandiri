@@ -21,6 +21,9 @@ export interface DashboardFilters {
   // Comparison chart state
   comparisonViewMode: 'table' | 'chart'
   comparisonLevel: 'class' | 'kelompok' | 'desa' | 'daerah'
+
+  // Category group filter for laporan
+  categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
 }
 interface DashboardState {
   filters: DashboardFilters
@@ -78,6 +81,7 @@ export const useDashboardStore = create<DashboardState>()(
           classViewMode: state.filters.classViewMode,
           comparisonViewMode: state.filters.comparisonViewMode,
           comparisonLevel: state.filters.comparisonLevel,
+          categoryGroup: state.filters.categoryGroup,
           // Don't persist custom date range (should be fresh)
           customDateRange: undefined
         }

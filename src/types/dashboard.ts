@@ -72,4 +72,5 @@ export interface ClassMonitoringFilters extends DashboardFilters {
     specificDate?: string
     weekOffset?: number
     monthString?: string
+    categoryGroup?: 'caberawit' | 'muda_mudi' | 'orang_tua'
 }

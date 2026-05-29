@@ -132,6 +132,31 @@ export async function fetchEnrollments(
 }
 
 /**
+ * Fetch class IDs that belong to a given category group_name.
+ * Uses class_master_mappings → class_masters → categories join.
+ */
+export async function fetchClassIdsByGroupName(
+    supabase: SupabaseClient,
+    groupName: string
+): Promise<string[]> {
+    const { data, error } = await supabase
+        .from('class_master_mappings')
+        .select(`
+            class_id,
+            class_masters!inner(
+                categories!inner(group_name)
+            )
+        `)
+        .eq('class_masters.categories.group_name', groupName)
+
+    if (error) {
+        console.error('[fetchClassIdsByGroupName] error:', error)
+        throw error
+    }
+    return [...new Set((data || []).map((row: any) => row.class_id))]
+}
+
+/**
  * Fetch enrollments for a combined set of class IDs (single query)
  */
 export async function fetchCombinedEnrollments(supabase: SupabaseClient, classIds: string[]) {
