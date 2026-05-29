@@ -646,6 +646,21 @@ export interface ClassMaster { id, name, sort_order, ... }
 
 ---
 
+## Material Naming Convention — UI vs Code (sm-uej)
+
+**CRITICAL untuk AI debugging:** Internal code dan DB menggunakan nama BERBEDA dari UI label yang tampil ke user.
+
+| Lapisan | UI Label (tampil ke user) | TypeScript Type | DB Table |
+|---------|--------------------------|-----------------|----------|
+| Level 1 | Kategori Materi | `MaterialCategory` | `material_categories` |
+| Level 2 | **Materi** | `MaterialType` | `material_types` |
+| Level 3 | **Sub Materi** | `MaterialItem` | `materials` |
+
+**Jangan bingung:** `MaterialType` = "Materi" di UI. `MaterialItem` = "Sub Materi" di UI.
+Nama DB (`material_types`, `material_type_id`) dan TypeScript (`MaterialType`, `MaterialItem`) **TIDAK akan diubah** — hanya UI string yang berbeda dari kode.
+
+---
+
 ## Material Management Permissions (sm-*)
 
 Teachers can be granted material management permission via `profiles.permissions` JSONB field.
