@@ -119,13 +119,13 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
                             {item.description}
                         </div>
                     )}
-                    {showTargetBadge && selectedMonth && (
+                    {/* {showTargetBadge && selectedMonth && (
                         <div className="mt-1">
                             <span className="px-1.5 py-0.5 text-[10px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 rounded font-bold">
                                 Target {getMonthName(selectedMonth as Month)}
                             </span>
                         </div>
-                    )}
+                    )} */}
                 </div>
             );
         }
