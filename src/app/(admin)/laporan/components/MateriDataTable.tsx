@@ -28,13 +28,13 @@ export default function MateriDataTable({ rows, siswaRows = [], isLoading }: Mat
         return [
             {
                 key: 'material_name',
-                label: 'Materi',
+                label: 'Sub Materi',
                 sortable: true,
                 align: 'left' as const,
             },
             {
                 key: 'material_type_name',
-                label: 'Tipe',
+                label: 'Materi',
                 sortable: true,
                 align: 'left' as const,
                 className: 'hidden sm:table-cell',

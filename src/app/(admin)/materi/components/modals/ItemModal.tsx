@@ -330,7 +330,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg m-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-        {item ? 'Edit Item Materi' : 'Tambah Item Materi'}
+        {item ? 'Edit Sub Materi' : 'Tambah Sub Materi'}
       </h3>
 
       {generalError && (
@@ -360,7 +360,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
         <div>
           <InputFilter
             id="material_type_id"
-            label="Jenis Materi"
+            label="Materi"
             value={formData.material_type_id}
             onChange={(value) => setFormData({ ...formData, material_type_id: value })}
             options={typeOptions}
@@ -374,14 +374,14 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
         <div>
           <Label htmlFor="name">
-            Nama Item Materi <span className="text-red-500">*</span>
+            Nama Sub Materi <span className="text-red-500">*</span>
           </Label>
           <InputField
             id="name"
             name="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Masukkan nama item materi"
+            placeholder="Masukkan nama sub materi"
             required
             error={!!errors.name}
             hint={errors.name}

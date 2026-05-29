@@ -349,8 +349,8 @@ export function SectionEditorModal({
                   required
                 >
                   <option value="category">Kategori - Nilai gabungan semua materi dalam kategori</option>
-                  <option value="type">Tipe - Nilai gabungan materi dalam satu tipe</option>
-                  <option value="item">Item - Nilai per materi detail (paling spesifik)</option>
+                  <option value="type">Materi - Nilai gabungan sub materi dalam satu materi</option>
+                  <option value="item">Sub Materi - Nilai per sub materi (paling spesifik)</option>
                 </select>
 
                 {/* Help Text */}
@@ -365,7 +365,7 @@ export function SectionEditorModal({
                   )}
                   {materialLevel === 'type' && (
                     <p>
-                      <strong>Tipe:</strong> Siswa akan dinilai untuk semua item dalam tipe ini sebagai satu nilai gabungan.
+                      <strong>Materi:</strong> Siswa akan dinilai untuk semua sub materi dalam satu materi sebagai satu nilai gabungan.
                       Materi yang muncul akan otomatis disesuaikan dengan kelas dan semester siswa saat membuat rapot.
                       <br />
                       <em>Contoh: "Hafalan Doa" mencakup semua doa dengan 1 nilai.</em>
@@ -373,7 +373,7 @@ export function SectionEditorModal({
                   )}
                   {materialLevel === 'item' && (
                     <p>
-                      <strong>Item:</strong> Siswa akan dinilai per item materi secara spesifik.
+                      <strong>Sub Materi:</strong> Siswa akan dinilai per sub materi secara spesifik.
                       Item akan muncul jika tersedia untuk kelas dan semester siswa saat membuat rapot.
                       <br />
                       <em>Contoh: "Doa Sebelum Makan" dinilai terpisah dari "Doa Sesudah Makan".</em>
@@ -405,7 +405,7 @@ export function SectionEditorModal({
                             {item.name}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({item.level === 'category' ? 'Kategori' : item.level === 'type' ? 'Tipe' : 'Item'})
+                            ({item.level === 'category' ? 'Kategori' : item.level === 'type' ? 'Materi' : 'Sub Materi'})
                           </span>
                         </div>
                         <div className="flex items-center gap-4">
@@ -490,7 +490,7 @@ export function SectionEditorModal({
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Pilih Tipe
+                      Pilih Materi
                     </label>
                     <select
                       onChange={e => {
@@ -538,7 +538,7 @@ export function SectionEditorModal({
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Filter Tipe
+                      Filter Materi
                     </label>
                     <select
                       value={selectedTypeId}
@@ -546,7 +546,7 @@ export function SectionEditorModal({
                       disabled={!selectedCategoryId}
                       className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
                     >
-                      <option value="">Semua Tipe</option>
+                      <option value="">Semua Materi</option>
                       {types
                         .filter(t => !selectedCategoryId || t.category_id === selectedCategoryId)
                         .map(type => (

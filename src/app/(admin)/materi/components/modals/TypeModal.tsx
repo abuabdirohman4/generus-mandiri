@@ -136,7 +136,7 @@ export default function TypeModal({ isOpen, onClose, type, defaultCategoryId, on
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md m-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-        {type ? 'Edit Jenis Materi' : 'Tambah Jenis Materi'}
+        {type ? 'Edit Materi' : 'Tambah Materi'}
       </h3>
 
       {generalError && (
@@ -180,14 +180,14 @@ export default function TypeModal({ isOpen, onClose, type, defaultCategoryId, on
 
         <div>
           <Label htmlFor="name">
-            Nama Jenis Materi <span className="text-red-500">*</span>
+            Nama Materi <span className="text-red-500">*</span>
           </Label>
           <InputField
             id="name"
             name="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Masukkan nama jenis materi"
+            placeholder="Masukkan nama materi"
             required
             error={!!errors.name}
             hint={errors.name}

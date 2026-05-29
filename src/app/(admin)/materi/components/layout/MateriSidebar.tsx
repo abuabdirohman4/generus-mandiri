@@ -241,7 +241,7 @@ export default function MateriSidebar({
                 toast.success('Kategori berhasil dihapus');
             } else {
                 await deleteMaterialType(deleteConfirm.item!.id);
-                toast.success('Tipe berhasil dihapus');
+                toast.success('Materi berhasil dihapus');
             }
             if (onDataChange) {
                 await onDataChange();
@@ -301,7 +301,7 @@ export default function MateriSidebar({
                                 <button
                                     onClick={() => setShowCreateMenu(!showCreateMenu)}
                                     className="flex justify-center items-center p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                    title="Tambah Kategori/Tipe"
+                                    title="Tambah Kategori/Materi"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -324,7 +324,7 @@ export default function MateriSidebar({
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                             </svg>
-                                            Tambah Tipe
+                                            Tambah Materi
                                         </button>
                                     </div>
                                 )}
@@ -654,8 +654,8 @@ export default function MateriSidebar({
                 isOpen={deleteConfirm.isOpen}
                 onClose={() => setDeleteConfirm({ isOpen: false, item: null, type: 'category' })}
                 onConfirm={handleConfirmDelete}
-                title={`Hapus ${deleteConfirm.type === 'category' ? 'Kategori' : 'Tipe'}?`}
-                message={`Apakah Anda yakin ingin menghapus ${deleteConfirm.type === 'category' ? 'kategori' : 'tipe'} "${deleteConfirm.item?.name}"?`}
+                title={`Hapus ${deleteConfirm.type === 'category' ? 'Kategori' : 'Materi'}?`}
+                message={`Apakah Anda yakin ingin menghapus ${deleteConfirm.type === 'category' ? 'kategori' : 'materi'} "${deleteConfirm.item?.name}"?`}
                 isDestructive={true}
             />
         </>

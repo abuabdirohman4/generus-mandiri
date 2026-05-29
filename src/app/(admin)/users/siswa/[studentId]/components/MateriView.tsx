@@ -252,7 +252,7 @@ export default function MateriView({ studentId }: MateriViewProps) {
                         </div>
                     </div>
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Materi</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sub Materi</div>
                         <div className="flex items-end gap-1">
                             <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.tuntasCount}/{stats.totalCount}</span>
                             <span className="text-xs text-gray-400 mb-1">tercapai</span>

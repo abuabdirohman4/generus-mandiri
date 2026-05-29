@@ -47,7 +47,7 @@ export default function MateriTable({ items, onEdit, onDelete, onView, selectedI
         }] : []),
         {
             key: 'name',
-            label: 'NAMA MATERI',
+            label: 'SUB MATERI',
             sortable: true,
             align: 'left' as const,
             width: '25rem',
