@@ -18,6 +18,7 @@ import { useDesa } from '@/hooks/useDesa';
 import { useKelompok } from '@/hooks/useKelompok';
 import { useClasses } from '@/hooks/useClasses';
 import { isMobile } from '@/lib/utils';
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess';
 import Link from 'next/link';
 
 export default function RapotPageClient() {
@@ -31,6 +32,11 @@ export default function RapotPageClient() {
     const { desa } = useDesa();
     const { kelompok } = useKelompok();
     const { classes } = useClasses();
+    const allowedKelompokIds = useTeacherKelompokAccess();
+    const filteredKelompok = useMemo(() => {
+        if (!kelompok || allowedKelompokIds === null) return kelompok || []
+        return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+    }, [kelompok, allowedKelompokIds]);
 
     // State
     const [academicYear, setAcademicYear] = useState<{ id: string, name: string } | null>(null);
@@ -440,7 +446,7 @@ export default function RapotPageClient() {
                                             userProfile={userProfile}
                                             daerahList={daerah || []}
                                             desaList={desa || []}
-                                            kelompokList={kelompok || []}
+                                            kelompokList={filteredKelompok}
                                             classList={displayClasses}
                                             showKelas={false}
                                             showMeetingType={false}

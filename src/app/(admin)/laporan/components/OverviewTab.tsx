@@ -19,7 +19,8 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import { useLaporanStore } from '../stores/laporanStore'
 import LaporanTimeFilter from './LaporanTimeFilter'
-import { canAccessMaterials, canAccessMonitoring, isSuperAdmin, isAdminDaerah, isTeacherDaerah } from '@/lib/userUtils'
+import { canAccessMaterials, canAccessMonitoring, isSuperAdmin, isAdminDaerah, isTeacherDaerah, canMultiKelompokLaporan } from '@/lib/userUtils'
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 import { useMateriDashboard } from '@/app/(admin)/dashboard/hooks/useMateriDashboard'
 import LaporanEmptyState from './LaporanEmptyState'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
@@ -58,6 +59,17 @@ export default function OverviewTab() {
     if (!userProfile) return false
     return canAccessMaterials(userProfile) && canAccessMonitoring(userProfile)
   }, [userProfile])
+
+  const hasMultiKelompokLaporan = useMemo(() => {
+    return canMultiKelompokLaporan(userProfile)
+  }, [userProfile])
+
+  const allowedKelompokIds = useTeacherKelompokAccess()
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok) return []
+    if (allowedKelompokIds === null) return kelompok
+    return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+  }, [kelompok, allowedKelompokIds])
 
   const isDaerahLevel = useMemo(() => {
     if (!userProfile) return false
@@ -281,7 +293,7 @@ export default function OverviewTab() {
           userProfile={userProfile}
           daerahList={daerah || []}
           desaList={desa || []}
-          kelompokList={kelompok || []}
+          kelompokList={filteredKelompok}
           classList={classes || []}
           showKelas={true}
           isLoading={orgLoading}
@@ -297,6 +309,7 @@ export default function OverviewTab() {
           onCategoryGroupChange={handleCategoryGroupChange}
           uniqueDaysMode={isDaerahLevel ? uniqueDaysMode : undefined}
           onUniqueDaysModeChange={isDaerahLevel ? handleUniqueDaysModeChange : undefined}
+          allowMultiKelompok={hasMultiKelompokLaporan}
         />
         {/* Bulan & Tahun — dalam grid 2-kolom di dalam card */}
         <div className="grid grid-cols-2 gap-4 mt-2">

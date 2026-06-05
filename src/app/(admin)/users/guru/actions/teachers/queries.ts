@@ -86,12 +86,6 @@ export async function updateTeacherProfile(supabase: SupabaseClient, id: string,
             daerah_id: data.daerah_id,
             desa_id: data.desa_id || null,
             kelompok_id: data.kelompok_id,
-            permissions: data.permissions || {
-                can_archive_students: false,
-                can_transfer_students: false,
-                can_soft_delete_students: false,
-                can_hard_delete_students: false,
-            },
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)

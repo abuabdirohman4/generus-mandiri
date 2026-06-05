@@ -119,6 +119,12 @@ export function canAccessMonitoring(profile: UserProfile | null): boolean {
   return profile.permissions?.can_access_monitoring === true
 }
 
+export function canMultiKelompokLaporan(profile: UserProfile | null | undefined): boolean {
+  if (!profile) return false
+  if (profile.role === 'superadmin' || profile.role === 'admin') return true
+  return profile.permissions?.can_multi_kelompok_laporan === true
+}
+
 export function canAccessOverview(profile: UserProfile | null): boolean {
   if (!profile) return false
   return profile.role === 'superadmin' 

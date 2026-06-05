@@ -211,7 +211,7 @@ Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected 
 
 ### Database & Supabase
 
-**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`.
+**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `teacher_class_masters`, `teacher_kelompok_access`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`.
 
 **Supabase Clients**: `createClient()` from `client` (browser) or `server` (server actions with cookies), `createAdminClient()` from `server` (bypass RLS).
 

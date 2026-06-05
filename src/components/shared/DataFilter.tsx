@@ -92,6 +92,12 @@ interface DataFilterProps {
   // Unique days mode toggle (daerah-level only)
   uniqueDaysMode?: boolean
   onUniqueDaysModeChange?: (val: boolean) => void
+  /**
+   * When true, overrides forceSingleSelectGroupings for the kelompok filter,
+   * allowing multi-select kelompok even when comparisonLevel === 'class'.
+   * Used for guru desa with can_multi_kelompok_laporan permission.
+   */
+  allowMultiKelompok?: boolean
 }
 
 export default function DataFilter({
@@ -133,6 +139,8 @@ export default function DataFilter({
   // Unique days mode
   uniqueDaysMode,
   onUniqueDaysModeChange,
+  // Multi-kelompok override
+  allowMultiKelompok = false,
 }: DataFilterProps) {
   // Role detection
   const role = useMemo(() => detectRole(userProfile ?? null), [userProfile])
@@ -172,7 +180,8 @@ export default function DataFilter({
   const showKelasFilter = baseShowKelasFilter && (!showComparisonLevel || comparisonLevel === 'class')
 
   // Force single-select for grouping levels when comparing classes to prevent massive data loads
-  const forceSingleSelectGroupings = showComparisonLevel && comparisonLevel === 'class'
+  // Exception: allowMultiKelompok overrides this for guru desa with the special permission
+  const forceSingleSelectGroupings = showComparisonLevel && comparisonLevel === 'class' && !allowMultiKelompok
 
   // Filter options based on cascading logic (declare these before counting)
   const filteredDesaList = useMemo(() => {
@@ -205,7 +214,7 @@ export default function DataFilter({
   const effectiveShouldShowDaerah = shouldShowDaerah && (showDaerah !== undefined || isLoading || daerahListCount > 1)
   const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || isLoading || desaListCount > 1)
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || isLoading || kelompokListCount > 1)
-  const effectiveShowClassViewMode = classViewMode !== undefined && comparisonLevel === 'class' && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange
+  const effectiveShowClassViewMode = classViewMode !== undefined && comparisonLevel === 'class' && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange && !!allowMultiKelompok
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
   const showUniqueDaysMode = !!onUniqueDaysModeChange

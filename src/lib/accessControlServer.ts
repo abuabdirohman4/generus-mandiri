@@ -178,8 +178,19 @@ export async function getTeacherAllowedClassIds(
       .from('kelompok')
       .select('id')
       .eq('desa_id', profile.desa_id);
-    const kelompokIds = (kelompoks || []).map((k: any) => k.id);
+    let kelompokIds = (kelompoks || []).map((k: any) => k.id);
     if (kelompokIds.length === 0) return new Set();
+
+    // If teacher has restricted kelompok access, intersect with allowed kelompok
+    const { data: kelompokAccess } = await adminClient
+      .from('teacher_kelompok_access')
+      .select('kelompok_id')
+      .eq('teacher_id', userId);
+    if (kelompokAccess && kelompokAccess.length > 0) {
+      const allowedKelompokSet = new Set(kelompokAccess.map((r: any) => r.kelompok_id));
+      kelompokIds = kelompokIds.filter((id: string) => allowedKelompokSet.has(id));
+      if (kelompokIds.length === 0) return new Set();
+    }
 
     // Fetch all classes in scope (by kelompok only — allAllowedClassIds may be too large for .in())
     const { data: classes } = await adminClient

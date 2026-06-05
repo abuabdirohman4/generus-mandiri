@@ -20,6 +20,7 @@ interface Guru {
     can_transfer_students?: boolean;
     can_soft_delete_students?: boolean;
     can_hard_delete_students?: boolean;
+    can_multi_kelompok_laporan?: boolean;
   };
 }
 

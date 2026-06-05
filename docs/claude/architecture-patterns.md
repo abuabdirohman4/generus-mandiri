@@ -665,12 +665,15 @@ Nama DB (`material_types`, `material_type_id`) dan TypeScript (`MaterialType`, `
 
 Teachers can be granted material management permission via `profiles.permissions` JSONB field.
 
-### Permission Field
+### Permission Fields
 
 ```typescript
 // src/types/user.ts — UserProfile.permissions
 {
-  can_manage_materials?: boolean   // NEW: grant material CRUD to teacher
+  can_manage_materials?: boolean       // Grant material CRUD to teacher
+  can_access_materials?: boolean       // Grant read-only material access
+  can_access_monitoring?: boolean      // Grant monitoring & laporan materi
+  can_multi_kelompok_laporan?: boolean // (sm-97n) Allow multi-select kelompok in OverviewTab laporan
   // ... other permission fields
 }
 ```
@@ -681,22 +684,50 @@ Teachers can be granted material management permission via `profiles.permissions
 - **Teachers**: No access by default — must be granted via `/users/guru` → SettingsModal
 - **Sidebar**: Hides `/materi` route if user lacks permission
 
-### Check Function
+### Check Functions
 
 ```typescript
-import { canManageMaterials } from '@/lib/accessControl'
+import { canManageMaterials, canMultiKelompokLaporan } from '@/lib/accessControl'
 
 // Returns true for superadmin/admin, or teacher with can_manage_materials=true
 if (!canManageMaterials(profile)) return { success: false, error: 'Permission denied' }
+
+// Returns true for superadmin/admin, or teacher with can_multi_kelompok_laporan=true
+const allowMulti = canMultiKelompokLaporan(profile)
 ```
 
 ### Configuration Flow
 
 1. Admin goes to `/users/guru` → click gear icon on teacher row → SettingsModal
-2. Toggle "Izin Kelola Materi" checkbox
-3. Saves to `profiles.permissions.can_manage_materials`
+2. Toggle desired checkboxes (e.g., "Multi-Kelompok di Overview Laporan")
+3. Saves to `profiles.permissions.*` (JSONB merge — no overwrite)
 
-**Reference Implementation**: `src/app/(admin)/users/guru/components/SettingsModal.tsx`
+### CRITICAL: JSONB Merge Pattern (sm-97n Bug Fix)
+
+When saving permissions, ALWAYS use **fetch-then-merge** pattern to avoid overwriting other fields:
+
+```typescript
+// ❌ WRONG: Overwrites all permissions (loses can_manage_materials, etc.)
+return await supabase.from('profiles').update({ permissions }).eq('id', userId)
+
+// ✅ CORRECT: Merge with existing permissions
+const { data: profile } = await supabase.from('profiles').select('permissions').eq('id', userId).single()
+const existing = (profile?.permissions as Record<string, unknown>) || {}
+const merged = { ...existing, ...permissions }
+return await supabase.from('profiles').update({ permissions: merged }).eq('id', userId)
+```
+
+Both `updateTeacherPermissionsQuery` and `updateTeacherMaterialPermissionsQuery` in `settings/queries.ts` use this pattern.
+
+### can_multi_kelompok_laporan (sm-97n)
+
+Allows guru desa with restricted kelompok access to select multiple kelompok in the OverviewTab laporan.
+
+- **Effect**: `DataFilter.tsx` `allowMultiKelompok` prop → overrides `forceSingleSelectGroupings` for kelompok filter
+- **Usage**: `OverviewTab.tsx` reads `canMultiKelompokLaporan(userProfile)` and passes to `DataFilter`
+- **Default**: `false` (single-select, preserving existing behavior for all other users)
+
+**Reference Implementation**: `src/app/(admin)/users/guru/components/SettingsModal.tsx`, `src/components/shared/DataFilter.tsx`, `src/app/(admin)/laporan/components/OverviewTab.tsx`
 
 ---
 

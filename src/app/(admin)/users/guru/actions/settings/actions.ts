@@ -22,12 +22,13 @@ export type { MeetingFormSettings }
  */
 export async function getTeacherMaterialPermissions(
     userId: string
-): Promise<{ 
+): Promise<{
     success: boolean
     data: {
         can_manage_materials: boolean
         can_access_materials: boolean
         can_access_monitoring: boolean
+        can_multi_kelompok_laporan: boolean
     }
     message?: string
 }> {
@@ -42,6 +43,7 @@ export async function getTeacherMaterialPermissions(
                 can_manage_materials: perms.can_manage_materials ?? false,
                 can_access_materials: perms.can_access_materials ?? false,
                 can_access_monitoring: perms.can_access_monitoring ?? false,
+                can_multi_kelompok_laporan: perms.can_multi_kelompok_laporan ?? false,
             }
         }
     } catch (error) {
@@ -53,6 +55,7 @@ export async function getTeacherMaterialPermissions(
                 can_manage_materials: false,
                 can_access_materials: false,
                 can_access_monitoring: false,
+                can_multi_kelompok_laporan: false,
             }
         }
     }
@@ -130,6 +133,7 @@ export async function updateTeacherPermissions(
         can_transfer_students?: boolean
         can_soft_delete_students?: boolean
         can_hard_delete_students?: boolean
+        can_multi_kelompok_laporan?: boolean
     }
 ): Promise<{ success: boolean; message?: string }> {
     try {

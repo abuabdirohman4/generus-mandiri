@@ -19,6 +19,7 @@ import Spinner from '@/components/ui/spinner/Spinner'
 import Pagination from '@/components/ui/pagination/Pagination'
 import { useMeetingFormSettings } from './hooks/useMeetingFormSettings'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 
 export default function AbsensiPage() {
   const router = useRouter()
@@ -28,6 +29,11 @@ export default function AbsensiPage() {
   const { daerah } = useDaerah()
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
+  const allowedKelompokIds = useTeacherKelompokAccess()
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok || allowedKelompokIds === null) return kelompok || []
+    return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+  }, [kelompok, allowedKelompokIds])
   const [loadingTimeout, setLoadingTimeout] = useState(false)
 
   // Prefetch meeting form settings for optimal modal performance
@@ -450,7 +456,7 @@ export default function AbsensiPage() {
           userProfile={userProfile}
           daerahList={daerah || []}
           desaList={desa || []}
-          kelompokList={kelompok || []}
+          kelompokList={filteredKelompok}
           classList={classes || []}
           showKelas={true}
           showActivityType={true}

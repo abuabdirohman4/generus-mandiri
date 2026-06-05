@@ -29,6 +29,7 @@ export {
   canManageMaterials,
   canAccessMaterials,
   canAccessMonitoring,
+  canMultiKelompokLaporan,
   canAccessOverview,
   shouldShowDaerahFilter,
   shouldShowDesaFilter,

@@ -48,7 +48,7 @@ export async function updateMeetingFormSettingsQuery(
 }
 
 /**
- * Update permissions for a teacher
+ * Update permissions for a teacher (fetch-then-merge to avoid overwriting other JSONB fields)
  */
 export async function updateTeacherPermissionsQuery(
     supabase: SupabaseClient,
@@ -58,12 +58,23 @@ export async function updateTeacherPermissionsQuery(
         can_transfer_students?: boolean
         can_soft_delete_students?: boolean
         can_hard_delete_students?: boolean
+        can_multi_kelompok_laporan?: boolean
     }
 ) {
+    // Fetch existing permissions first, then merge (avoid overwriting other fields like can_manage_materials)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('permissions')
+        .eq('id', userId)
+        .single()
+
+    const existing = (profile?.permissions as Record<string, unknown>) || {}
+    const merged = { ...existing, ...permissions }
+
     return await supabase
         .from('profiles')
         .update({
-            permissions,
+            permissions: merged,
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId)

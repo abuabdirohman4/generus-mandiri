@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Button from '@/components/ui/button/Button'
 import SiswaSkeleton from '@/components/ui/skeleton/SiswaSkeleton'
@@ -11,6 +11,7 @@ import TransferRequestModal from './components/TransferRequestModal'
 import PendingTransferRequestsSection from './components/PendingTransferRequestsSection'
 import { useSiswaPage, useSebaranSiswa } from './hooks'
 import { isTeacherDaerah, isTeacherDesa, isTeacherKelompok } from '@/lib/accessControl'
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 import { SebaranSiswaTab } from './components/SebaranSiswa'
 import { useAssignStudentsStore } from './stores/assignStudentsStore'
 import {
@@ -56,6 +57,12 @@ export default function SiswaPage() {
     handleBatchImportSuccess,
     handleDataFilterChange
   } = useSiswaPage()
+
+  const allowedKelompokIds = useTeacherKelompokAccess()
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok || allowedKelompokIds === null) return kelompok || []
+    return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+  }, [kelompok, allowedKelompokIds])
 
   const { showModal: showAssignModal, openModal: openAssignModal, closeModal: closeAssignModal } = useAssignStudentsStore()
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
@@ -406,7 +413,7 @@ export default function SiswaPage() {
               userProfile={userProfile}
               daerahList={daerah || []}
               desaList={desa || []}
-              kelompokList={kelompok || []}
+              kelompokList={filteredKelompok}
               classList={classes || []}
               showKelas={true}
               showGender={true}

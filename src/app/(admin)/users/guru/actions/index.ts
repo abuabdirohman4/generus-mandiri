@@ -36,3 +36,9 @@ export {
     getTeacherClassMasters,
     updateTeacherClassMasters,
 } from './teacher-class-masters/actions'
+
+// ─── Kelompok Access Restrictions (Guru Desa) ──────────────────────────────────
+export {
+    getTeacherKelompokAccess,
+    updateTeacherKelompokAccess,
+} from './teacher-kelompok-access/actions'

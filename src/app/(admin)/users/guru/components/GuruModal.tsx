@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses, getTeacherClassMasters, updateTeacherClassMasters, getTeacherDeleteImpact } from '../actions';
+import { createTeacher, updateTeacher, getTeacherClasses, updateTeacherClasses, getTeacherClassMasters, updateTeacherClassMasters, getTeacherDeleteImpact, getTeacherKelompokAccess, updateTeacherKelompokAccess } from '../actions';
 import { getAllClassMasters } from '@/app/(admin)/kelas/actions/masters';
 import { useKelas } from '@/hooks/useKelas';
 import { Modal } from '@/components/ui/modal';
@@ -93,7 +93,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     daerah_id: '',
     kelompok_id: '',
     classIds: [] as string[],
-    classMasterIds: [] as string[]
+    classMasterIds: [] as string[],
+    kelompokAccessIds: [] as string[]
   });
   const [dataFilters, setDataFilters] = useState({
     daerah: [] as string[],
@@ -219,6 +220,16 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             }
           }
 
+          let kelompokAccessIds: string[] = [];
+          if (detectedLevel === 'desa') {
+            try {
+              const accessResult = await getTeacherKelompokAccess(guru.id);
+              kelompokAccessIds = accessResult.success ? accessResult.data : [];
+            } catch (kaError) {
+              console.error('Error loading kelompok access:', kaError);
+            }
+          }
+
           setFormData({
             username: guru.username || '',
             full_name: guru.full_name || '',
@@ -226,7 +237,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             daerah_id: guru.daerah_id || '',
             kelompok_id: guru.kelompok_id || '',
             classIds: classIds,
-            classMasterIds: classMasterIds
+            classMasterIds: classMasterIds,
+            kelompokAccessIds: kelompokAccessIds
           });
         } catch (error) {
           console.error('Error loading teacher classes:', error);
@@ -237,7 +249,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             daerah_id: guru.daerah_id || '',
             kelompok_id: guru.kelompok_id || '',
             classIds: [],
-            classMasterIds: []
+            classMasterIds: [],
+            kelompokAccessIds: []
           });
         }
 
@@ -279,7 +292,8 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           daerah_id: autoFilledDaerah,
           kelompok_id: autoFilledKelompok,
           classIds: [],
-          classMasterIds: []
+          classMasterIds: [],
+          kelompokAccessIds: []
         });
         setDataFilters({
           daerah: autoFilledDaerah ? [autoFilledDaerah] : [],
@@ -536,6 +550,15 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         } else {
           await updateTeacherClassMasters(guru.id, []);
         }
+        if (teacherLevel === 'desa') {
+          const accessResult = await updateTeacherKelompokAccess(guru.id, formData.kelompokAccessIds);
+          if (!accessResult.success) {
+            setGeneralError(accessResult.message || 'Gagal memperbarui batasan kelompok guru');
+            return;
+          }
+        } else {
+          await updateTeacherKelompokAccess(guru.id, []);
+        }
       } else {
         const result = await createTeacher(submitData);
         if (!result.success || !result.teacher?.id) {
@@ -553,6 +576,13 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           const masterResult = await updateTeacherClassMasters(result.teacher.id, formData.classMasterIds);
           if (!masterResult.success) {
             setGeneralError(masterResult.message || 'Gagal mengatur class master guru');
+            return;
+          }
+        }
+        if (teacherLevel === 'desa' && formData.kelompokAccessIds.length > 0) {
+          const accessResult = await updateTeacherKelompokAccess(result.teacher.id, formData.kelompokAccessIds);
+          if (!accessResult.success) {
+            setGeneralError(accessResult.message || 'Gagal mengatur batasan kelompok guru');
             return;
           }
         }
@@ -868,6 +898,28 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                     disabled={isLoading}
                     maxHeight="8rem"
                     hint="Jika dikosongkan, guru ini memiliki akses ke SEMUA kelas di wilayahnya. Jika diisi, guru HANYA bisa mengakses data kelas dari tingkat yang dipilih (misal: hanya melihat PAUD)."
+                  />
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Kelompok Access Restriction - ONLY for Guru Desa */}
+          {teacherLevel === 'desa' && (() => {
+            const desaId = dataFilters.desa[0];
+            const kelompokForDesa = kelompokList.filter((k: any) => k.desa_id === desaId);
+            return (
+              <div>
+                <Label>Batasan Kelompok (Opsional)</Label>
+                <div className="mb-3">
+                  <MultiSelectCheckbox
+                    label=""
+                    items={kelompokForDesa.map((k: any) => ({ id: k.id, label: k.name }))}
+                    selectedIds={formData.kelompokAccessIds}
+                    onChange={(ids) => setFormData(prev => ({ ...prev, kelompokAccessIds: ids }))}
+                    disabled={isLoading || !desaId}
+                    maxHeight="8rem"
+                    hint="Jika dikosongkan, guru ini memiliki akses ke SEMUA kelompok di desanya. Jika diisi, guru HANYA bisa mengakses data dari kelompok yang dipilih."
                   />
                 </div>
               </div>

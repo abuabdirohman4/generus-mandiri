@@ -5,7 +5,7 @@ import DataTable from '@/components/table/Table';
 import { ClassMonitoringData } from '../actions';
 import { PeriodType } from './PeriodTabs';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa } from '@/lib/userUtils';
+import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok, isTeacherDaerah, isTeacherDesa, canMultiKelompokLaporan } from '@/lib/userUtils';
 import { getRateStyle } from '@/lib/percentages';
 import { useDashboardStore } from '../stores/dashboardStore';
 import ComparisonChart from './ComparisonChart';
@@ -321,11 +321,14 @@ export default function ClassMonitoringTable({
     // Check if user needs to select exactly 1 kelompok to view class comparison
     const needsKelompokSelection = useMemo(() => {
         if (!profile || filters.comparisonLevel !== 'class') return false;
-        
+
         const isHigherLevelAdmin = isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile) || isTeacherDaerah(profile) || isTeacherDesa(profile);
+        if (!isHigherLevelAdmin) return false;
+        // Guru desa with multi-kelompok permission can select multiple kelompok
+        if (isTeacherDesa(profile) && canMultiKelompokLaporan(profile)) return false;
         const hasSelectedExactlyOneKelompok = filters.kelompok && filters.kelompok.length === 1;
-        
-        return isHigherLevelAdmin && !hasSelectedExactlyOneKelompok;
+
+        return !hasSelectedExactlyOneKelompok;
     }, [profile, filters.comparisonLevel, filters.kelompok]);
 
     if (isLoading) {

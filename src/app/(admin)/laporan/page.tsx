@@ -17,6 +17,7 @@ import { useLaporanStore, type LaporanTab } from '@/stores/laporanStore'
 import LaporanSkeleton from '@/components/ui/skeleton/LaporanSkeleton'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { canAccessMonitoring, canAccessOverview } from '@/lib/accessControl'
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 import LaporanTabHeader from './components/LaporanTabHeader'
 import OverviewTab from './components/OverviewTab'
 
@@ -68,6 +69,11 @@ export default function LaporanPage() {
   const [materiReportMode, setMateriReportMode] = useState<'monthly' | 'cumulative'>('cumulative')
 
   const { activityTypes: myActivityTypes } = useMyActivityTypes()
+  const allowedKelompokIds = useTeacherKelompokAccess()
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok || allowedKelompokIds === null) return kelompok || []
+    return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+  }, [kelompok, allowedKelompokIds])
 
   const hasMateriAccess = useMemo(() => {
     if (!userProfile) return false
@@ -272,7 +278,7 @@ export default function LaporanPage() {
               userProfile={userProfile}
               daerahList={daerah || []}
               desaList={desa || []}
-              kelompokList={kelompok || []}
+              kelompokList={filteredKelompok}
               classList={classes || []}
               organisasiFilters={{
                 ...(filters.organisasi || { daerah: [], desa: [], kelompok: [], kelas: [] }),
@@ -341,7 +347,7 @@ export default function LaporanPage() {
               userProfile={userProfile}
               daerahList={daerah || []}
               desaList={desa || []}
-              kelompokList={kelompok || []}
+              kelompokList={filteredKelompok}
               classList={classes || []}
               sharedMonth={sharedMonth}
               sharedYear={sharedYear}

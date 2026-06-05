@@ -29,6 +29,7 @@ interface TeacherPermissions {
   can_transfer_students?: boolean
   can_soft_delete_students?: boolean
   can_hard_delete_students?: boolean
+  can_multi_kelompok_laporan?: boolean
 }
 
 interface SettingsModalProps {
@@ -72,6 +73,7 @@ export default function SettingsModal({
   const [canManageMaterials, setCanManageMaterials] = useState(false)
   const [canAccessMaterials, setCanAccessMaterials] = useState(false)
   const [canAccessMonitoring, setCanAccessMonitoring] = useState(false)
+  const [canMultiKelompokLaporan, setCanMultiKelompokLaporan] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -103,15 +105,17 @@ export default function SettingsModal({
       }
 
       setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
-      
+
       if (materialResult.success && materialResult.data) {
         setCanManageMaterials(materialResult.data.can_manage_materials)
         setCanAccessMaterials(materialResult.data.can_access_materials)
         setCanAccessMonitoring(materialResult.data.can_access_monitoring)
+        setCanMultiKelompokLaporan(materialResult.data.can_multi_kelompok_laporan)
       } else {
         setCanManageMaterials(false)
         setCanAccessMaterials(false)
         setCanAccessMonitoring(false)
+        setCanMultiKelompokLaporan(false)
       }
 
       setAllActivityTypes(types || [])
@@ -158,7 +162,10 @@ export default function SettingsModal({
         return
       }
 
-      const permissionsResult = await updateTeacherPermissions(userId, permissions)
+      const permissionsResult = await updateTeacherPermissions(userId, {
+        ...permissions,
+        can_multi_kelompok_laporan: canMultiKelompokLaporan,
+      })
       if (!permissionsResult.success) {
         toast.error('Gagal menyimpan hak akses: ' + (permissionsResult.message || 'Unknown error'))
         setIsSaving(false)
@@ -441,6 +448,31 @@ export default function SettingsModal({
                     Akses Monitoring & Laporan Materi
                     <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
                       Dapat mengisi penilaian di monitoring dan melihat laporan pencapaian materi
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Laporan Permissions Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
+                Laporan
+              </h4>
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    id="canMultiKelompokLaporan"
+                    checked={canMultiKelompokLaporan}
+                    onChange={(e) => setCanMultiKelompokLaporan(e.target.checked)}
+                    className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    disabled={isSaving}
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                    Multi-Kelompok di Overview Laporan
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
+                      Izinkan pilih lebih dari 1 kelompok sekaligus di tab Overview laporan
                     </span>
                   </span>
                 </label>

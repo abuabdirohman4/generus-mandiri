@@ -22,6 +22,7 @@ import { isTeacherClass } from '@/lib/utils/classHelpers'
 import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
+import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -155,17 +156,24 @@ export default function CreateMeetingModal({
     return counts
   }, [students])
 
+  // Guru Desa tapi hanya beberapa kelompok (tidak semua)
+  const allowedKelompokIds = useTeacherKelompokAccess()
+  const filteredKelompok = useMemo(() => {
+    if (!kelompok || allowedKelompokIds === null) return kelompok || []
+    return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
+  }, [kelompok, allowedKelompokIds])
+
   // Kelompok yang tersedia untuk Guru Desa (filter by desa_id)
   const availableKelompok = useMemo(() => {
     if (!kelompok || !userProfile) return []
     // Hanya untuk Guru Desa (ada desa_id, tidak ada kelompok_id langsung)
     if (!isHierarchicalTeacher) return []
     if (userProfile.desa_id && !userProfile.kelompok_id) {
-      return kelompok.filter((k: any) => k.desa_id === userProfile.desa_id)
+      return filteredKelompok.filter((k: any) => k.desa_id === userProfile.desa_id)
     }
     // Guru Daerah: tampilkan semua (scope terpisah, bisa dikembangkan nanti)
     return []
-  }, [kelompok, userProfile, isHierarchicalTeacher])
+  }, [filteredKelompok, userProfile, isHierarchicalTeacher])
 
   // Filter available classes based on user role and enrich with kelompok_id for teacher
   // Use stable string representation for dependency to avoid infinite loops
