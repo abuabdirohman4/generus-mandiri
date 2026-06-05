@@ -205,6 +205,7 @@ export default function DataFilter({
   const effectiveShouldShowDaerah = shouldShowDaerah && (showDaerah !== undefined || isLoading || daerahListCount > 1)
   const effectiveShouldShowDesa = shouldShowDesa && (showDesa !== undefined || isLoading || desaListCount > 1)
   const effectiveShouldShowKelompok = shouldShowKelompok && (showKelompok !== undefined || isLoading || kelompokListCount > 1)
+  const effectiveShowClassViewMode = classViewMode !== undefined && comparisonLevel === 'class' && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange
 
   // Track whether to return null — evaluated AFTER all hooks to comply with Rules of Hooks
   const showUniqueDaysMode = !!onUniqueDaysModeChange
@@ -800,7 +801,7 @@ export default function DataFilter({
         </div>
       )}
 
-      {/* {classViewMode !== undefined && !isAdminKelompok && kelompokListCount > 1 && onClassViewModeChange && (
+      {effectiveShowClassViewMode && (
         <div className={getFilterClass(getFilterIndex('classViewMode'))}>
           <InputFilter
             id="classViewModeFilter"
@@ -816,7 +817,7 @@ export default function DataFilter({
             compact={compact}
           />
         </div>
-      )} */}
+      )}
 
       {showGender && (
         <div className={getFilterClass(getFilterIndex('gender'))}>
