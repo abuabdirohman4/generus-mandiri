@@ -201,16 +201,19 @@ export default function StudentModal({
     kelompok: string[]
     kelas: string[]
   }) => {
-    const kelompokChanged = filters.kelompok.length > 0 && 
+    const kelompokChanged = filters.kelompok.length > 0 &&
       (newFilters.kelompok.length === 0 || newFilters.kelompok[0] !== filters.kelompok[0])
-    
+
     setFilters(newFilters)
-    
-    // Reset kelas selection when kelompok changes (DataFilter already resets filters.kelas)
-    if (kelompokChanged) {
-      setFormData(prev => ({ ...prev, classId: '' }))
-      setSelectedClassIds([])
-    }
+
+    // Sync kelompokId + reset classId synchronously to avoid useEffect timing issues
+    const newKelompokId = newFilters.kelompok.length > 0 ? newFilters.kelompok[0] : ''
+    setFormData(prev => ({
+      ...prev,
+      kelompokId: newKelompokId,
+      ...(kelompokChanged ? { classId: '' } : {})
+    }))
+    if (kelompokChanged) setSelectedClassIds([])
   }
 
   // Get filtered classes based on selected kelompok (for MultiSelectCheckbox and InputFilter)
@@ -264,6 +267,7 @@ export default function StudentModal({
     } else {
       // For create mode or teacher, use single classId
       if (!formData.classId) {
+        toast.error('Pilih kelas')
         return
       }
     }
@@ -398,6 +402,7 @@ export default function StudentModal({
                   value: cls.id,
                   label: cls.name,
                 }))}
+                placeholder="Pilih kelas"
                 widthClassName="!max-w-full"
                 disabled={!!userProfile && modalShouldShowKelompokFilter(userProfile) && filters.kelompok.length === 0}
               />

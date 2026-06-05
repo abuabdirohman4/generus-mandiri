@@ -60,7 +60,7 @@ export function useSiswaPage() {
 
   // CRUD Mutations
   const { trigger: createStudentMutation } = useSWRMutation(
-    '/api/students',
+    '/api/students/create',
     async (url, { arg }: { arg: FormData }) => {
       const result = await createStudent(arg)
       return result
@@ -68,7 +68,7 @@ export function useSiswaPage() {
   )
 
   const { trigger: updateStudentMutation } = useSWRMutation(
-    '/api/students',
+    '/api/students/update',
     async (url, { arg }: { arg: { studentId: string; formData: FormData } }) => {
       const result = await updateStudent(arg.studentId, arg.formData)
       return result
@@ -76,7 +76,7 @@ export function useSiswaPage() {
   )
 
   const { trigger: deleteStudentMutation } = useSWRMutation(
-    '/api/students',
+    '/api/students/delete',
     async (url, { arg }: { arg: { studentId: string; permanent: boolean } }) => {
       const result = await deleteStudent(arg.studentId, arg.permanent)
       return result
