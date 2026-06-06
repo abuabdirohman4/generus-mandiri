@@ -312,10 +312,7 @@ A unified digital platform that:
 - **Kelompok Assignment**: Link class to organizational unit
 - **Teacher Assignment**: Multiple teachers per class
 - **Student Enrollment**: Multiple students per class (via `student_classes`)
-- **Meeting Types**: Eligible meeting types per class
-- **Special Flags**:
-  - `is_sambung_capable`: Can participate in Sambung meetings
-  - `exclude_pembinaan`: Sambung-only classes
+- **Meeting Types**: Eligible meeting types per class. Sambung Desa eligibility ditentukan oleh helper `isSambungDesaEligible()` (berdasarkan `isCaberawitClass()`/`isTeacherClass()`), bukan kolom DB.
 
 **Technical Note**:
 - **CRITICAL**: Never use PostgREST nested join for `class_master.sort_order` (silently fails)
@@ -900,10 +897,10 @@ Teachers can be granted these permissions by admins:
 |--------------|------------|--------------|------------|----------------|---------|
 | `PEMBINAAN` | ✅ | ✅ | ❌ | ✅ | ✅ Own classes |
 | `ASAD` | ✅ | ✅ | ❌ | ✅ | ✅ If not PAUD/Pengajar only |
-| `SAMBUNG_KELOMPOK` | ✅ | ✅ | ❌ | ✅ | ⚙️ If class `is_sambung_capable` |
-| `SAMBUNG_DESA` | ✅ | ✅ | ✅ | ❌ | ⚙️ If class `is_sambung_capable` |
-| `SAMBUNG_DAERAH` | ✅ | ✅ | ❌ | ❌ | ⚙️ If class `is_sambung_capable` |
-| `SAMBUNG_PUSAT` | ✅ | ✅ | ❌ | ✅ | ⚙️ If class `is_sambung_capable` |
+| `SAMBUNG_KELOMPOK` | ✅ | ✅ | ❌ | ✅ | ⚙️ If Sambung-eligible (non-Caberawit/Pengajar) |
+| `SAMBUNG_DESA` | ✅ | ✅ | ✅ | ❌ | ⚙️ If Sambung-eligible (non-Caberawit/Pengajar) |
+| `SAMBUNG_DAERAH` | ✅ | ✅ | ❌ | ❌ | ⚙️ If Sambung-eligible (non-Caberawit/Pengajar) |
+| `SAMBUNG_PUSAT` | ✅ | ✅ | ❌ | ✅ | ⚙️ If Sambung-eligible (non-Caberawit/Pengajar) |
 
 **Special Rules**:
 

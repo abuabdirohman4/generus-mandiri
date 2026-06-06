@@ -585,13 +585,6 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 name
               )
             )
-          ),
-          class_master_mappings (
-            class_master:class_master_id (
-              category:category_id (
-                is_sambung_capable
-              )
-            )
           )
         )
       `)
@@ -687,10 +680,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               class_master_mappings (
                 class_master:class_master_id (
                   id,
-                  name,
-                  category:category_id (
-                    is_sambung_capable
-                  )
+                  name
                 )
               )
             )
@@ -1236,13 +1226,6 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                     name
                   )
                 )
-              ),
-              class_master_mappings (
-                class_master:class_master_id (
-                  category:category_id (
-                    is_sambung_capable
-                  )
-                )
               )
             )
           `)
@@ -1556,13 +1539,6 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 daerah:daerah_id (
                   id,
                   name
-                )
-              )
-            ),
-            class_master_mappings (
-              class_master:class_master_id (
-                category:category_id (
-                  is_sambung_capable
                 )
               )
             )

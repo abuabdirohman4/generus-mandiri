@@ -290,8 +290,7 @@ See `src/lib/constants/meetingTypes.ts`:
   - **PAUD-only teachers**: PEMBINAAN only
   - **Pengajar-only teachers**: PEMBINAAN only
   - **Other teachers**: PEMBINAAN + ASAD (if not PAUD/Pengajar)
-  - **Sambung-capable teachers**: PEMBINAAN + SAMBUNG types (if class has `is_sambung_capable`)
-  - **Exclude-pembinaan teachers**: SAMBUNG types only (if class has `exclude_pembinaan`)
+  - **Sambung eligibility**: ditentukan helper `isSambungDesaEligible()` (via `isCaberawitClass()`/`isTeacherClass()`) — Caberawit (PAUD/Kelas 1-6) & Pengajar dikecualikan dari Sambung Desa
 
 ### ASAD Meeting Type Restrictions
 

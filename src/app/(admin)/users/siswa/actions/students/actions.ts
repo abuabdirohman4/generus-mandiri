@@ -1024,13 +1024,6 @@ export interface AttendanceLog {
         classes?: {
             id: string
             name: string
-            class_master_mappings?: Array<{
-                class_master?: {
-                    category?: {
-                        is_sambung_capable: boolean
-                    }
-                }
-            }>
         } | null
     }
 }

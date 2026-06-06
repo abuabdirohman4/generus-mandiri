@@ -430,13 +430,6 @@ interface Meeting {
         }
       }
     }
-    class_master_mappings?: Array<{
-      class_master?: {
-        category?: {
-          is_sambung_capable: boolean
-        }
-      }
-    }>
   }
   attendancePercentage: number
   totalStudents: number

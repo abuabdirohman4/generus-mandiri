@@ -46,13 +46,6 @@ export async function fetchMeetingById(supabase: SupabaseClient, meetingId: stri
               name
             )
           )
-        ),
-        class_master_mappings (
-          class_master:class_master_id (
-            category:category_id (
-              is_sambung_capable
-            )
-          )
         )
       )
     `)

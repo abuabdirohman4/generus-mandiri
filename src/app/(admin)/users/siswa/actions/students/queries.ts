@@ -293,14 +293,7 @@ export async function fetchStudentAttendanceHistory(
         class_ids,
         classes (
           id,
-          name,
-          class_master_mappings (
-            class_master:class_master_id (
-              category:category_id (
-                is_sambung_capable
-              )
-            )
-          )
+          name
         )
       )
     `)
