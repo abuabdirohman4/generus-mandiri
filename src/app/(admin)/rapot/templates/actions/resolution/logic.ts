@@ -31,13 +31,10 @@ export function normalizeMaterialItems(items: any[]): any[] {
 }
 
 /**
- * Transform class masters: flatten single-element category array
+ * Transform class masters (passthrough — category now flat column category_group)
  */
 export function normalizeClassMasters(classMasters: any[]): any[] {
-    return (classMasters || []).map((cm: any) => ({
-        ...cm,
-        categories: Array.isArray(cm.categories) ? cm.categories[0] || null : cm.categories || null,
-    }))
+    return classMasters || []
 }
 
 // ─── Section Item Resolution ──────────────────────────────────────────────────

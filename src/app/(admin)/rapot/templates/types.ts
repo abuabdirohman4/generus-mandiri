@@ -18,12 +18,7 @@ export interface ReportTemplate {
   class_masters?: Array<{
     id: string
     name: string
-    category_id?: string | null
-    categories?: {
-      id: string
-      code: string
-      name: string
-    } | null
+    category_group?: string | null
   }>
 }
 

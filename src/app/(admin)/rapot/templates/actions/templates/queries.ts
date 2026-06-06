@@ -37,8 +37,7 @@ export async function fetchTemplateClasses(supabase: SupabaseClient, templateId:
       class_masters:class_master_id(
         id,
         name,
-        category_id,
-        categories:category_id(id, code, name)
+        category_group
       )
     `)
     .eq('template_id', templateId)

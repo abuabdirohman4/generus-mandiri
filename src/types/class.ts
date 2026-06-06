@@ -87,12 +87,7 @@ export interface ClassWithMaster extends Class {
 export interface ClassMaster extends ClassMasterBase {
   sort_order: number
   description?: string | null
-  category_id?: string | null
-  category?: {
-    id: string
-    code: string
-    name: string
-  } | null
+  category_group?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -130,19 +125,11 @@ export interface ClassData {
     class_master?: {
       id?: string
       name?: string
-      category?: {
-        id?: string
-        code?: string
-        name?: string
-      }
+      category_group?: string | null
     } | Array<{
       id?: string
       name?: string
-      category?: {
-        id?: string
-        code?: string
-        name?: string
-      }
+      category_group?: string | null
     }> | null
   }>
 }

@@ -84,8 +84,7 @@ export async function getClassMasters(): Promise<{
     data?: Array<{
         id: string
         name: string
-        category_id?: string | null
-        categories?: { id: string; code: string; name: string } | null
+        category_group?: string | null
     }>
     error?: string
 }> {

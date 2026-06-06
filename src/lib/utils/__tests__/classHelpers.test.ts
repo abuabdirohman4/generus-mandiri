@@ -8,19 +8,15 @@ import {
 
 describe('classHelpers', () => {
     describe('isCaberawitClass', () => {
-        it('should return true for class with CABERAWIT category code', () => {
+        it('should return true for class with caberawit category_group (CABERAWIT)', () => {
             const classData: ClassData = {
                 name: 'Kelas 1',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '1',
-                            name: 'Caberawit',
-                            category: {
-                                id: 'cat-1',
-                                code: 'CABERAWIT',
-                                name: 'Caberawit',
-                            },
+                            name: 'Kelas 1',
+                            category_group: 'caberawit',
                         },
                     },
                 ],
@@ -29,19 +25,15 @@ describe('classHelpers', () => {
             expect(isCaberawitClass(classData)).toBe(true)
         })
 
-        it('should return true for class with PAUD category code', () => {
+        it('should return true for class with caberawit category_group (PAUD)', () => {
             const classData: ClassData = {
                 name: 'PAUD A',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '2',
-                            name: 'PAUD',
-                            category: {
-                                id: 'cat-2',
-                                code: 'PAUD',
-                                name: 'PAUD',
-                            },
+                            name: 'Kelas Paud',
+                            category_group: 'caberawit',
                         },
                     },
                 ],
@@ -50,14 +42,14 @@ describe('classHelpers', () => {
             expect(isCaberawitClass(classData)).toBe(true)
         })
 
-        it('should return false for class without category', () => {
+        it('should return false for class without category_group', () => {
             const classData: ClassData = {
-                name: 'Remaja',
+                name: 'Pengurus',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '3',
-                            name: 'Remaja',
+                            name: 'Pengurus',
                         },
                     },
                 ],
@@ -66,19 +58,15 @@ describe('classHelpers', () => {
             expect(isCaberawitClass(classData)).toBe(false)
         })
 
-        it('should return false for class with different category', () => {
+        it('should return false for class with different category_group (muda_mudi)', () => {
             const classData: ClassData = {
-                name: 'Remaja',
+                name: 'SMA 1',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '4',
-                            name: 'Remaja',
-                            category: {
-                                id: 'cat-3',
-                                code: 'REMAJA',
-                                name: 'Remaja',
-                            },
+                            name: 'SMA 1',
+                            category_group: 'muda_mudi',
                         },
                     },
                 ],
@@ -96,25 +84,21 @@ describe('classHelpers', () => {
             expect(isCaberawitClass(classData)).toBe(false)
         })
 
-        it('should handle case-insensitive category codes', () => {
+        it('should return false for Pengurus (null category_group)', () => {
             const classData: ClassData = {
-                name: 'Kelas 2',
+                name: 'Pengurus',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '5',
-                            name: 'Caberawit',
-                            category: {
-                                id: 'cat-4',
-                                code: 'caberawit',
-                                name: 'Caberawit',
-                            },
+                            name: 'Pengurus',
+                            category_group: null,
                         },
                     },
                 ],
             }
 
-            expect(isCaberawitClass(classData)).toBe(true)
+            expect(isCaberawitClass(classData)).toBe(false)
         })
 
         it('should handle array format from Supabase', () => {
@@ -125,12 +109,8 @@ describe('classHelpers', () => {
                         class_master: [
                             {
                                 id: '6',
-                                name: 'Caberawit',
-                                category: {
-                                    id: 'cat-5',
-                                    code: 'CABERAWIT',
-                                    name: 'Caberawit',
-                                },
+                                name: 'Kelas 3',
+                                category_group: 'caberawit',
                             },
                         ],
                     },
@@ -174,19 +154,15 @@ describe('classHelpers', () => {
     })
 
     describe('isSambungDesaEligible', () => {
-        it('should return true for regular class (not Caberawit, not Teacher)', () => {
+        it('should return true for muda_mudi class (not Caberawit, not Teacher)', () => {
             const classData: ClassData = {
-                name: 'Remaja Kelas 1',
+                name: 'SMA 1',
                 class_master_mappings: [
                     {
                         class_master: {
                             id: '7',
-                            name: 'Remaja',
-                            category: {
-                                id: 'cat-6',
-                                code: 'REMAJA',
-                                name: 'Remaja',
-                            },
+                            name: 'SMA 1',
+                            category_group: 'muda_mudi',
                         },
                     },
                 ],
@@ -202,12 +178,8 @@ describe('classHelpers', () => {
                     {
                         class_master: {
                             id: '8',
-                            name: 'Caberawit',
-                            category: {
-                                id: 'cat-7',
-                                code: 'CABERAWIT',
-                                name: 'Caberawit',
-                            },
+                            name: 'Kelas 1',
+                            category_group: 'caberawit',
                         },
                     },
                 ],
@@ -231,12 +203,8 @@ describe('classHelpers', () => {
                     {
                         class_master: {
                             id: '9',
-                            name: 'PAUD',
-                            category: {
-                                id: 'cat-8',
-                                code: 'PAUD',
-                                name: 'PAUD',
-                            },
+                            name: 'Kelas Paud',
+                            category_group: 'caberawit',
                         },
                     },
                 ],

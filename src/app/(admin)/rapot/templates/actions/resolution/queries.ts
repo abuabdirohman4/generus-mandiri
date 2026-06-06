@@ -75,8 +75,7 @@ export async function fetchClassMasters(supabase: SupabaseClient) {
         .select(`
       id,
       name,
-      category_id,
-      categories:category_id(id, code, name)
+      category_group
     `)
         .order('name')
 }

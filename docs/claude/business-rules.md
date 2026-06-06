@@ -296,9 +296,9 @@ See `src/lib/constants/meetingTypes.ts`:
 
 - **Purpose**: General attendance tracking for ASAD activities
 - **Excluded Classes**:
-  - PAUD classes (category code/name = 'PAUD')
+  - Caberawit classes (`class_masters.category_group = 'caberawit'`, mencakup PAUD)
   - Pengajar classes (class name contains 'pengajar')
-- **Implementation**: Uses `isTeacherClass()` helper and category code checks
+- **Implementation**: Uses `isCaberawitClass()` (baca `category_group`) + `isTeacherClass()` helper
 - **Teacher Eligibility**: Teachers must have at least one non-PAUD, non-Pengajar class to create ASAD meetings
 
 ### Sambung Desa Meeting Restrictions
@@ -341,7 +341,7 @@ const getActualClassIdsFromMasterClasses = (masterClassIds, kelompokIds, allClas
 - Students can be in multiple classes via `student_classes` junction table
 - Profile loads all assigned classes for teachers with complete data:
   - `kelompok_id` and `kelompok` for organizational filtering
-  - `class_master_mappings` with full hierarchy (class_master → category) for class type detection
+  - `class_master_mappings` with `class_master.category_code` + `category_group` for class type detection
 - This enables `isCaberawitClass()` to work correctly on user profile classes
 
 ## Filtering & Reporting Conventions

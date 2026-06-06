@@ -3,7 +3,7 @@ import { STANDARD_SORT_ORDERS, filterStandardMasters, buildBatchPlan } from '../
 import type { ClassMaster } from '@/types/class'
 
 const makeMaster = (id: string, name: string, sort_order: number): ClassMaster =>
-  ({ id, name, sort_order, description: null, category_id: null, category: null })
+  ({ id, name, sort_order, description: null, category_group: null })
 
 describe('STANDARD_SORT_ORDERS', () => {
   it('contains exactly 20 entries', () => {

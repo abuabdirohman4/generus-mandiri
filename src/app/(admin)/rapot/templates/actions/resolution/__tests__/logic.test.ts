@@ -61,22 +61,21 @@ describe('normalizeMaterialItems', () => {
 // ─── normalizeClassMasters ────────────────────────────────────────────────────
 
 describe('normalizeClassMasters', () => {
-    it('takes first element from categories array', () => {
-        const cms = [{ id: 'c1', categories: [{ code: 'CABERAWIT' }] }]
+    it('passes through category_code/category_group flat columns', () => {
+        const cms = [{ id: 'c1', category_code: 'CABERAWIT', category_group: 'caberawit' }]
         const result = normalizeClassMasters(cms)
-        expect(result[0].categories?.code).toBe('CABERAWIT')
+        expect(result[0].category_code).toBe('CABERAWIT')
+        expect(result[0].category_group).toBe('caberawit')
     })
 
-    it('handles object format for categories', () => {
-        const cms = [{ id: 'c1', categories: { code: 'PAUD' } }]
+    it('handles null category columns (Pengurus)', () => {
+        const cms = [{ id: 'c1', category_code: null, category_group: null }]
         const result = normalizeClassMasters(cms)
-        expect(result[0].categories?.code).toBe('PAUD')
+        expect(result[0].category_code).toBeNull()
     })
 
-    it('sets categories to null for empty array', () => {
-        const cms = [{ id: 'c1', categories: [] }]
-        const result = normalizeClassMasters(cms)
-        expect(result[0].categories).toBeNull()
+    it('returns empty array for empty input', () => {
+        expect(normalizeClassMasters([])).toHaveLength(0)
     })
 })
 

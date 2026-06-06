@@ -36,12 +36,7 @@ export async function fetchAllClassMastersWithCategory(supabase: SupabaseClient)
         .select(`
       id,
       name,
-      sort_order,
-      category:category_id (
-        id,
-        code,
-        name
-      )
+      sort_order
     `)
         .lte('sort_order', 20)
         .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)

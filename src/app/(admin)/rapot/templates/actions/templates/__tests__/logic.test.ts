@@ -13,30 +13,30 @@ import {
 describe('mapJunctionToClassMasters', () => {
     it('flattens class_masters from junction (object format)', () => {
         const junction = [
-            { class_masters: { id: 'c1', name: 'Kelas A', categories: { code: 'CABERAWIT' } } },
+            { class_masters: { id: 'c1', name: 'Kelas A', category_code: 'CABERAWIT', category_group: 'caberawit' } },
         ]
         const result = mapJunctionToClassMasters(junction)
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
         expect(result[0].id).toBe('c1')
-        expect(result[0].categories.code).toBe('CABERAWIT')
+        expect(result[0].category_code).toBe('CABERAWIT')
     })
 
     it('flattens class_masters from junction (array format)', () => {
         const junction = [
-            { class_masters: [{ id: 'c1', name: 'K', categories: [{ code: 'PAUD' }] }] },
+            { class_masters: [{ id: 'c1', name: 'K', category_code: 'PAUD', category_group: 'caberawit' }] },
         ]
         const result = mapJunctionToClassMasters(junction)
         expect(result[0].id).toBe('c1')
-        expect(result[0].categories.code).toBe('PAUD')
+        expect(result[0].category_code).toBe('PAUD')
     })
 
     it('filters out null class_masters', () => {
         const junction = [
             { class_masters: null },
-            { class_masters: { id: 'c1', name: 'K', categories: null } },
+            { class_masters: { id: 'c1', name: 'K', category_code: null, category_group: null } },
         ]
         const result = mapJunctionToClassMasters(junction)
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
     })
 
     it('returns empty array for empty input', () => {

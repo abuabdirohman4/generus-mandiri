@@ -173,11 +173,6 @@ export default function TemplateBuilderPage() {
                           className="inline-flex rounded-lg bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                         >
                           {cm.name}
-                          {cm.categories && (
-                            <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
-                              ({cm.categories.name})
-                            </span>
-                          )}
                         </span>
                       ))}
                     </div>

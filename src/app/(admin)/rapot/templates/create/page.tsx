@@ -11,8 +11,7 @@ import Input from '@/components/form/input/InputField'
 type ClassMaster = {
   id: string
   name: string
-  category_id?: string | null
-  categories?: { id: string; code: string; name: string } | null
+  category_group?: string | null
 }
 
 export default function CreateTemplatePage() {
@@ -197,11 +196,6 @@ export default function CreateTemplatePage() {
                           className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                         >
                           {cm.name}
-                          {cm.categories && (
-                            <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
-                              ({cm.categories.name})
-                            </span>
-                          )}
                         </label>
                       </div>
                     ))

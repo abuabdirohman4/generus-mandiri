@@ -15,11 +15,7 @@ export async function getClasses(): Promise<any[]> {
       kelompok:kelompok(id, name),
       class_master_mappings(
         class_master:class_masters(
-          sort_order,
-          category:categories(
-            code,
-            name
-          )
+          sort_order
         )
       )
     `)

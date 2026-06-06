@@ -78,11 +78,7 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
                     id,
                     name,
                     sort_order,
-                    category:category_id(
-                      id,
-                      code,
-                      name
-                    )
+                    category_group
                   )
                 )
               )

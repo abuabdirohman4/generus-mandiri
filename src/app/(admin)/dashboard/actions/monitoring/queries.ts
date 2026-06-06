@@ -132,8 +132,8 @@ export async function fetchEnrollments(
 }
 
 /**
- * Fetch class IDs that belong to a given category group_name.
- * Uses class_master_mappings → class_masters → categories join.
+ * Fetch class IDs that belong to a given category group.
+ * Uses class_masters.category_group (single source of truth, no categories join).
  */
 export async function fetchClassIdsByGroupName(
     supabase: SupabaseClient,
@@ -143,11 +143,9 @@ export async function fetchClassIdsByGroupName(
         .from('class_master_mappings')
         .select(`
             class_id,
-            class_masters!inner(
-                categories!inner(group_name)
-            )
+            class_masters!inner(category_group)
         `)
-        .eq('class_masters.categories.group_name', groupName)
+        .eq('class_masters.category_group', groupName)
 
     if (error) {
         console.error('[fetchClassIdsByGroupName] error:', error)

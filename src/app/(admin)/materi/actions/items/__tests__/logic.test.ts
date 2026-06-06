@@ -17,20 +17,20 @@ import {
 describe('filterCaberawitClasses', () => {
     it('returns all classes mapped to ClassMaster shape', () => {
         const data = [
-            { id: 'c1', name: 'Kelas A', category: { code: 'CABERAWIT' } },
-            { id: 'c2', name: 'Kelas B', category: { code: 'SMP' } },
+            { id: 'c1', name: 'Kelas A', sort_order: 2 },
+            { id: 'c2', name: 'Kelas B', sort_order: 8 },
         ]
         const result = filterCaberawitClasses(data)
-        expect((result as any).data).toHaveLength(2)
+        expect(result).toHaveLength(2)
         expect(result[0].id).toBe('c1')
         expect(result[1].id).toBe('c2')
     })
 
-    it('handles array category format from Supabase', () => {
-        const data: any[] = [{ id: 'c1', name: 'K', category: [{ code: 'CABERAWIT' }] }]
+    it('defaults sort_order to 0 when missing', () => {
+        const data: any[] = [{ id: 'c1', name: 'K' }]
         const result = filterCaberawitClasses(data)
-        expect((result as any).data).toHaveLength(1)
-        expect((result[0].category as any).code).toBe('CABERAWIT')
+        expect(result).toHaveLength(1)
+        expect(result[0].sort_order).toBe(0)
     })
 
     it('returns empty array for empty input', () => {

@@ -623,11 +623,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               class_master:class_master_id (
                 id,
                 name,
-                category:category_id (
-                  id,
-                  code,
-                  name
-                )
+                category_group
               )
             )
           `)

@@ -8,30 +8,21 @@ export type { ClassData }
 
 
 /**
- * Check if a class is Caberawit (Paud/Kelas 1-6) based on category from class_master
- * Returns true if the class has a class_master with category code 'CABERAWIT' or 'PAUD' (case-insensitive)
+ * Check if a class is Caberawit (Paud/Kelas 1-6) based on class_master.category_group
+ * Returns true if any class_master has category_group 'caberawit'
  */
 export function isCaberawitClass(classData: ClassData): boolean {
   if (!classData.class_master_mappings || classData.class_master_mappings.length === 0) {
     return false
   }
-  
+
   return classData.class_master_mappings.some(mapping => {
     // Handle both object and array formats from Supabase
-    const classMaster = Array.isArray(mapping.class_master) 
-      ? mapping.class_master[0] 
+    const classMaster = Array.isArray(mapping.class_master)
+      ? mapping.class_master[0]
       : mapping.class_master
-    
-    if (!classMaster || !classMaster.category) {
-      return false
-    }
-    
-    // Check category code (preferred) or category name
-    const categoryCode = classMaster.category.code?.toUpperCase() || ''
-    const categoryName = classMaster.category.name?.toUpperCase() || ''
-    
-    return categoryCode === 'CABERAWIT' || categoryCode === 'PAUD' ||
-           categoryName === 'CABERAWIT' || categoryName === 'PAUD'
+
+    return classMaster?.category_group === 'caberawit'
   })
 }
 

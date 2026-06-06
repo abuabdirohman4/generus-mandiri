@@ -13,10 +13,8 @@ export function mapJunctionToClassMasters(junctionData: any[]): any[] {
         .map((item: any) => {
             const cm = Array.isArray(item.class_masters) ? item.class_masters[0] : item.class_masters
             if (!cm) return null
-            return {
-                ...cm,
-                categories: Array.isArray(cm.categories) ? cm.categories[0] || null : cm.categories || null,
-            }
+            // category now flat column (category_group) — passthrough
+            return { ...cm }
         })
         .filter(Boolean)
 }
