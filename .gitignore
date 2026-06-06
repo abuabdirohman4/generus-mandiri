@@ -192,6 +192,8 @@ next-env.d.ts
 # Beads issue tracker
 .beads/beads.db         # SQLite cache (regenerated from JSONL)
 # .beads/progress/      # Progress files (COMMIT these for team collaboration)
+!.beads/issues.jsonl    # Track issues across clones (solo dev, no conflict risk)
+!.beads/closed.jsonl    # Track closed issues across clones
 
 # Playwright test results
 test-results/
