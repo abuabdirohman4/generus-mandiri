@@ -77,7 +77,8 @@ export default function SiswaPage() {
     (userProfile ? isTeacherKelompok(userProfile) : false)
 
   // Permission checks for student management actions
-  const canArchive = isAdmin || userProfile?.permissions?.can_archive_students === true
+  // const canArchive = isAdmin || userProfile?.permissions?.can_archive_students === true
+  const canArchive = true; // For now, allow all teachers to archive (since it's just a status change), but only admin can transfer or soft delete
   const canTransfer = isAdmin || userProfile?.permissions?.can_transfer_students === true
   const canSoftDelete = isAdmin || userProfile?.permissions?.can_soft_delete_students === true
 
