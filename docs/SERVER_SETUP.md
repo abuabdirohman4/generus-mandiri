@@ -12,14 +12,22 @@ Saya baru clone repo Generus Mandiri (Next.js 15 + Supabase) ke server ini dan m
 
 ## 1. Beads (issue tracker) — auto-sync
 
-INSTALL DULU kalau `bd` belum ada di server (sumber resmi = github.com/gastownhall/beads, BUKAN @beads/cli atau beads.sh):
+INSTALL bd 1.0.4 kalau belum ada (sumber resmi = github.com/gastownhall/beads, BUKAN @beads/cli atau beads.sh).
+VERSI WAJIB 1.0.4 — sama dengan laptop. Versi beda = format jsonl/DB beda = sync konflik.
+
+Metode (download CDN GitHub sering 504 — `gh release download` paling reliable):
 ```bash
-# pilih salah satu:
-curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash   # install script
-npm install -g @beads/bd                                                                          # via npm
-brew install beads                                                                                # via Linuxbrew
+# Linux x86_64 (amd64):
+gh release download v1.0.4 -R gastownhall/beads -p "beads_1.0.4_linux_amd64.tar.gz" -p "checksums.txt"
+# verify checksum:
+grep linux_amd64 checksums.txt | sha256sum -c -
+# extract + install ke PATH (~/.local/bin lebih awal dari brew):
+tar -xzf beads_1.0.4_linux_amd64.tar.gz && mkdir -p ~/.local/bin && mv bd ~/.local/bin/bd && chmod +x ~/.local/bin/bd
+hash -r && bd version   # harus 1.0.4
+# Alternatif (kalau CDN sehat): curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
+# Alternatif: npm install -g @beads/bd   |   brew install bd (Linuxbrew)
 ```
-VERSI: pakai versi SAMA dengan laptop biar sync aman. Target = 1.0.4 (latest stable). Laptop akan di-upgrade ke 1.0.4 juga (`brew upgrade beads`). Verifikasi `bd version` cocok di kedua mesin sebelum sync.
+(Server ARM64 → ganti `linux_amd64` jadi `linux_arm64`.)
 
 Beads pakai backend Dolt; sync issue antar mesin lewat file .beads/issues.jsonl yang di-track git. Git hooks WAJIB dipasang ulang di tiap clone (hooks tidak ikut git pull). Jalankan:
 - `bd version` (pastikan terinstall + versi cocok laptop)
@@ -61,7 +69,7 @@ Mulai dari #1 (beads), lalu lapor temuan tiap langkah sebelum lanjut.
 - `~/.claude/CLAUDE.md` global + skills + memory + plugins + hooks
 - git hooks beads (`bd hooks install` per clone)
 
-**Paritas versi:** install `bd` versi sama di server. Laptop = 0.61.0 (doctor saran upgrade ke 1.0.4 via `brew upgrade beads`). Server Linux → install bd via rilis Linux (lihat github.com/steveyegge/beads).
+**Paritas versi:** laptop sudah di bd **1.0.4** (di `~/.local/bin/bd`, override brew yang gagal CDN 504). Server WAJIB 1.0.4 juga. Sumber resmi = github.com/gastownhall/beads. Pakai `gh release download v1.0.4` (lebih reliable dari brew/curl yang sering kena GitHub 504).
 
 **Memory folder rename:** di server jalankan `pwd`, ganti `/` jadi `-`, itu nama folder memory. Contoh server `/home/abu/apps/school-management` → folder `-home-abu-apps-school-management`.
 
