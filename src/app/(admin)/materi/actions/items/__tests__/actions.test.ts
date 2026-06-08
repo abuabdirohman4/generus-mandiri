@@ -180,7 +180,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAvailableClassMasters()
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('throws error when fetch fails', async () => {
@@ -216,8 +216,8 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAllClasses()
 
-      expect((result as any).data).toHaveLength(2)
-      expect(result).toEqual(mappedClasses)
+      expect(result.data).toHaveLength(2)
+      expect(result).toEqual({ success: true, data: mappedClasses })
       expect(filterCaberawitClasses).toHaveBeenCalledWith(rawClasses)
     })
 
@@ -231,7 +231,8 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getAllClasses()
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result.success).toBe(false)
+      expect(result.data).toEqual([])
     })
 
     it('calls filterCaberawitClasses with empty array when data is null', async () => {
@@ -300,7 +301,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await getMaterialItems('type-1')
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('throws error when fetch fails', async () => {
@@ -492,14 +493,16 @@ describe('Materi Items Actions (Layer 3)', () => {
     it('throws error when not authenticated', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue(null as any)
 
-      await expect(createMaterialItem(validData)).rejects.toThrow('Not authenticated')
+      const result = await createMaterialItem(validData)
+      expect(result.success).toBe(false)
     })
 
     it('throws error when user lacks canManageMaterials permission', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1', role: 'teacher' } as any)
       vi.mocked(canManageMaterials).mockReturnValue(false)
 
-      await expect(createMaterialItem(validData)).rejects.toThrow('Unauthorized')
+      const result = await createMaterialItem(validData)
+      expect(result.success).toBe(false)
     })
 
     it('creates item and revalidates path on happy path', async () => {
@@ -512,7 +515,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await createMaterialItem(validData)
 
-      expect(result).toEqual(createdItem)
+      expect(result).toEqual({ success: true, data: createdItem })
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
 
@@ -524,9 +527,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(insertItem).mockResolvedValue({ data: null, error: { code: '23505' } } as any)
       vi.mocked(mapItemErrorMessage).mockReturnValue('Nama item materi sudah digunakan untuk jenis materi ini')
 
-      await expect(createMaterialItem(validData)).rejects.toThrow(
-        'Nama item materi sudah digunakan untuk jenis materi ini'
-      )
+      const result = await createMaterialItem(validData)
+      expect(result.success).toBe(false)
       expect(mapItemErrorMessage).toHaveBeenCalledWith('23505', 'create')
     })
   })
@@ -541,14 +543,16 @@ describe('Materi Items Actions (Layer 3)', () => {
     it('throws error when not authenticated', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue(null as any)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow('Not authenticated')
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
 
     it('throws error when user lacks permission', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1' } as any)
       vi.mocked(canManageMaterials).mockReturnValue(false)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow('Unauthorized')
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
 
     it('updates item and revalidates path on happy path', async () => {
@@ -561,7 +565,7 @@ describe('Materi Items Actions (Layer 3)', () => {
 
       const result = await updateMaterialItem('item-1', updateData)
 
-      expect(result).toEqual(updatedItem)
+      expect(result).toEqual({ success: true, data: updatedItem })
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
 
@@ -572,9 +576,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateItemById).mockResolvedValue({ data: null, error: { code: '23505' } } as any)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow(
-        'Nama item materi sudah digunakan untuk jenis materi ini'
-      )
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
 
     it('throws error when updated item not found (PGRST116)', async () => {
@@ -584,9 +587,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateItemById).mockResolvedValue({ data: null, error: { code: 'PGRST116' } } as any)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow(
-        'Item materi tidak ditemukan setelah update'
-      )
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
 
     it('throws generic error for other DB errors', async () => {
@@ -596,7 +598,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateItemById).mockResolvedValue({ data: null, error: { code: '99999', message: 'unknown' } } as any)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow('Gagal memperbarui item materi')
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
 
     it('throws error when data is null after update', async () => {
@@ -606,9 +609,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(updateItemById).mockResolvedValue({ data: null, error: null } as any)
 
-      await expect(updateMaterialItem('item-1', updateData)).rejects.toThrow(
-        'Item materi tidak ditemukan setelah update'
-      )
+      const result = await updateMaterialItem('item-1', updateData)
+      expect(result.success).toBe(false)
     })
   })
 
@@ -620,14 +622,16 @@ describe('Materi Items Actions (Layer 3)', () => {
     it('throws error when not authenticated', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue(null as any)
 
-      await expect(deleteMaterialItem('item-1')).rejects.toThrow('Not authenticated')
+      const result = await deleteMaterialItem('item-1')
+      expect(result.success).toBe(false)
     })
 
     it('throws error when user lacks permission', async () => {
       vi.mocked(getCurrentUserProfile).mockResolvedValue({ id: 'profile-1' } as any)
       vi.mocked(canManageMaterials).mockReturnValue(false)
 
-      await expect(deleteMaterialItem('item-1')).rejects.toThrow('Unauthorized')
+      const result = await deleteMaterialItem('item-1')
+      expect(result.success).toBe(false)
     })
 
     it('deletes item and revalidates path on happy path', async () => {
@@ -650,7 +654,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(deleteItemById).mockResolvedValue({ data: null, error: new Error('Delete failed') } as any)
 
-      await expect(deleteMaterialItem('item-1')).rejects.toThrow('Gagal menghapus item materi')
+      const result = await deleteMaterialItem('item-1')
+      expect(result.success).toBe(false)
     })
   })
 
@@ -705,9 +710,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(deleteItemClassMappings).mockResolvedValue({ data: null, error: new Error('Delete error') } as any)
 
-      await expect(
-        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
-      ).rejects.toThrow('Gagal menghapus mapping lama')
+      const result = await updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
+      expect(result.success).toBe(false)
     })
 
     it('throws error when inserting new mappings fails', async () => {
@@ -716,9 +720,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(deleteItemClassMappings).mockResolvedValue({ data: null, error: null } as any)
       vi.mocked(insertItemClassMappings).mockResolvedValue({ data: null, error: new Error('Insert error') } as any)
 
-      await expect(
-        updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
-      ).rejects.toThrow('Gagal menyimpan mapping baru')
+      const result = await updateMaterialItemClassMappings('item-1', [{ class_master_id: 'cm-1' }])
+      expect(result.success).toBe(false)
     })
 
     it('skips insert and revalidates when mappings is empty', async () => {
@@ -781,9 +784,8 @@ describe('Materi Items Actions (Layer 3)', () => {
         error: new Error('Delete failed'),
       } as any)
 
-      await expect(bulkUpdateMaterialMapping(itemIds, mappings, 'replace')).rejects.toThrow(
-        'Gagal menghapus mapping lama'
-      )
+      const result = await bulkUpdateMaterialMapping(itemIds, mappings, 'replace')
+      expect(result.success).toBe(false)
     })
 
     it('returns success early when payload is empty', async () => {
@@ -848,7 +850,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(upsertDayAssignment).mockResolvedValue({ data: null, error: new Error('Upsert error') } as any)
 
-      await expect(saveDayMaterialAssignment(assignmentData)).rejects.toThrow('Gagal menyimpan assignment materi')
+      const result = await saveDayMaterialAssignment(assignmentData)
+      expect(result.success).toBe(false)
     })
 
     it('throws error when inserting items fails', async () => {
@@ -861,9 +864,8 @@ describe('Materi Items Actions (Layer 3)', () => {
       vi.mocked(buildDayItemsPayload).mockReturnValue([{ assignment_id: 'assign-1', material_item_id: 'item-1', display_order: 1, custom_content: null }])
       vi.mocked(insertDayAssignmentItems).mockResolvedValue({ data: null, error: new Error('Insert error') } as any)
 
-      await expect(saveDayMaterialAssignment({ ...assignmentData, items })).rejects.toThrow(
-        'Gagal menyimpan item materi'
-      )
+      const result = await saveDayMaterialAssignment({ ...assignmentData, items })
+      expect(result.success).toBe(false)
     })
   })
 

@@ -308,7 +308,7 @@ describe('Rapot Business Logic - Layer 2', () => {
       const timestamp = '2026-03-12T00:00:00Z'
       const result = prepareMultipleGradeData(inputs, timestamp)
 
-      expect((result as any).data).toHaveLength(2)
+      expect(result).toHaveLength(2)
       expect(result[0].grade).toBe('B+')
       expect(result[1].grade).toBe('A')
       expect(result[0].updated_at).toBe(timestamp)
@@ -319,7 +319,7 @@ describe('Rapot Business Logic - Layer 2', () => {
     it('should create subjects with correct display order', () => {
       const result = prepareTemplateSubjects('template-1', ['sub-1', 'sub-2', 'sub-3'])
 
-      expect((result as any).data).toHaveLength(3)
+      expect(result).toHaveLength(3)
       expect(result[0].display_order).toBe(1)
       expect(result[1].display_order).toBe(2)
       expect(result[2].display_order).toBe(3)
@@ -329,7 +329,7 @@ describe('Rapot Business Logic - Layer 2', () => {
 
     it('should handle empty subject array', () => {
       const result = prepareTemplateSubjects('template-1', [])
-      expect((result as any).data).toHaveLength(0)
+      expect(result).toHaveLength(0)
     })
   })
 
@@ -341,7 +341,7 @@ describe('Rapot Business Logic - Layer 2', () => {
       ]
 
       const result = flattenTemplateSubjects(data)
-      expect((result as any).data).toHaveLength(2)
+      expect(result).toHaveLength(2)
       expect(result[0].id).toBe('sub-1')
       expect(result[1].id).toBe('sub-2')
     })
@@ -398,7 +398,7 @@ describe('Rapot Business Logic - Layer 2', () => {
       ]
 
       const result = filterValidEnrollments(enrollments)
-      expect((result as any).data).toHaveLength(2)
+      expect(result).toHaveLength(2)
       expect(result[0].student?.id).toBe('student-1')
       expect(result[1].student?.id).toBe('student-2')
     })
@@ -440,7 +440,7 @@ describe('Rapot Business Logic - Layer 2', () => {
 
       const result = buildClassReportsSummary(enrollments, reportMap)
 
-      expect((result as any).data).toHaveLength(2)
+      expect(result).toHaveLength(2)
       expect(result[0].isGenerated).toBe(true)
       expect(result[0].isPublished).toBe(true)
       expect(result[0].averageScore).toBe(85)
@@ -474,7 +474,7 @@ describe('Rapot Business Logic - Layer 2', () => {
 
       const result = buildBulkClassReports(enrollments, gradesMap, assessmentsMap, reportsMap)
 
-      expect((result as any).data).toHaveLength(1)
+      expect(result).toHaveLength(1)
       expect(result[0].grades).toHaveLength(1)
       expect(result[0].character_assessments).toHaveLength(1)
       expect(result[0].sick_days).toBe(2)
@@ -518,7 +518,7 @@ describe('Rapot Business Logic - Layer 2', () => {
 
       const result = prepareSectionGrades(data)
 
-      expect((result as any).data).toHaveLength(1)
+      expect(result).toHaveLength(1)
       expect(result[0].student_id).toBe('student-1')
       expect(result[0].template_id).toBe('template-1')
       expect(result[0].score).toBe(85)

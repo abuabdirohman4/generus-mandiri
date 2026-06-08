@@ -42,9 +42,8 @@ describe('createBatchStandardClasses', () => {
 
   it('throws when no manage_classes permission', async () => {
     vi.mocked(canAccessFeature).mockReturnValue(false)
-    await expect(
-      createBatchStandardClasses(['k1'], ['m1'])
-    ).rejects.toThrow('Anda tidak memiliki akses')
+    const result = await createBatchStandardClasses(['k1'], ['m1'])
+    expect(result.success).toBe(false)
   })
 
   it('creates classes for each kelompok', async () => {

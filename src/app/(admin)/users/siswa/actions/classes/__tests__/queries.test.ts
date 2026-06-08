@@ -67,7 +67,7 @@ describe('fetchClassMasterMappings', () => {
         expect(supabase.from).toHaveBeenNthCalledWith(2, 'class_masters')
         expect(result).toBeInstanceOf(Map)
         // Only c1 should be in result, c99 filtered out in-memory
-        expect(result.get('c1')).toEqual([{ class_master: { id: 'm1', sort_order: 2 } }])
+        expect(result.get('c1')).toEqual([{ class_master: expect.objectContaining({ id: 'm1', sort_order: 2 }) }])
         expect(result.has('c99')).toBe(false)
     })
 

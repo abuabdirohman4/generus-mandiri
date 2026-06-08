@@ -213,7 +213,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getStudentGrades('student-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('throws error when fetchStudentGrades fails', async () => {
@@ -235,7 +235,7 @@ describe('Rapot Actions (Layer 3)', () => {
       const result = await getStudentGrades('student-2', 'year-2', 2)
 
       expect(fetchStudentGrades).toHaveBeenCalledWith(adminClient, 'student-2', 'year-2', 2)
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
   })
 
@@ -416,7 +416,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getCharacterAssessments('student-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('throws when fetchCharacterAssessments fails', async () => {
@@ -503,7 +503,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getReportTemplates()
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('passes filters correctly to fetchReportTemplates', async () => {
@@ -882,7 +882,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsSummary('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('returns empty array when all enrollments have null students', async () => {
@@ -894,7 +894,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsSummary('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('returns empty array when no valid student IDs can be extracted', async () => {
@@ -907,7 +907,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsSummary('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('returns summary on happy path', async () => {
@@ -939,7 +939,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsSummary('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
   })
 
@@ -955,7 +955,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsBulk('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('returns empty array when all enrollments have null students', async () => {
@@ -967,7 +967,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsBulk('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('returns bulk reports on happy path', async () => {
@@ -1005,7 +1005,7 @@ describe('Rapot Actions (Layer 3)', () => {
 
       const result = await getClassReportsBulk('class-1', 'year-1', 1)
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
   })
 

@@ -695,3 +695,50 @@ jobs:
 - **sm-8yf** ⏳ IN PROGRESS: Student management with approval-based transfer (TDD foundation complete)
 
 **Dependencies**: sm-37l and sm-6gn depend on sm-qrt (setup completed)
+
+---
+
+## 🚨 MANDATORY: E2E Test Wajib di Setiap Plan Fitur Baru
+
+**JANGAN tulis plan fitur tanpa section E2E.** Section "Testing" di plan HARUS selalu split dua bagian:
+
+```
+**Unit (Vitest):** [daftar logic.ts tests]
+**E2E (Playwright):** [daftar skenario + file spec]
+```
+
+### Kapan E2E wajib (bukan opsional)
+
+- ✅ Fitur multi-role (kirim→terima, permission gating per role)
+- ✅ Alur lintas halaman / lintas user
+- ✅ Query Supabase PostgREST — select string tidak ter-cover type-check/unit (ref: memory `postgrest-select-not-typechecked`)
+- ✅ RLS enforcement — unit test tidak bisa buktikan row-level security
+- ✅ Fitur kritis (auth, akses data, notifikasi, transfer)
+
+### Template section E2E di plan
+
+```markdown
+**E2E (Playwright)** — `tests/e2e/<nama-fitur>.spec.ts`
+Pakai helpers: `tests/e2e/helpers/auth.ts`, lihat `tests/MULTI_ROLE_TESTING.md`
+
+- Happy path: [user A lakukan X] → [user B lihat Y]
+- Negatif scope: [user tanpa akses tidak bisa Z]
+- Jalankan: `npm run test:e2e`
+```
+
+### Panduan E2E anti-flaky (ref: memory `e2e-flaky-tests`)
+
+- Hindari test yang bergantung pada dropdown/animasi tanpa `waitFor` yang tepat
+- Gunakan `expect(locator).toBeVisible()` + timeout eksplisit untuk elemen dinamis
+- Isolasi state: tiap test harus bersih (gunakan test user berbeda atau reset data)
+- Jumlah minimal tapi bermakna: 1 happy path + 1 negatif per fitur
+
+### Menjalankan E2E
+
+```bash
+npm run test:e2e          # semua spec
+npm run test:e2e:headed   # debug mode (lihat browser)
+npm run test:e2e:debug    # step-by-step
+# Atau jalankan 1 file:
+npx playwright test tests/e2e/notifikasi.spec.ts
+```

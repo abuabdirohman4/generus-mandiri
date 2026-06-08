@@ -118,9 +118,8 @@ describe('Admin Actions (Layer 3)', () => {
     it('throws when validateAdminData fails', async () => {
       vi.mocked(validateAdminData).mockReturnValue({ ok: false, error: 'Username harus diisi' })
 
-      await expect(createAdmin({ ...validAdminData, username: '' })).rejects.toMatchObject({
-        message: 'Gagal membuat admin',
-      })
+      const result = await createAdmin({ ...validAdminData, username: '' })
+      expect(result).toMatchObject({ success: false, message: 'Gagal membuat admin' })
       expect(validateAdminData).toHaveBeenCalled()
     })
 
@@ -128,9 +127,8 @@ describe('Admin Actions (Layer 3)', () => {
       vi.mocked(validateAdminData).mockReturnValue({ ok: true })
       vi.mocked(validatePasswordForCreate).mockReturnValue({ ok: false, error: 'Password harus diisi' })
 
-      await expect(createAdmin({ ...validAdminData, password: undefined })).rejects.toMatchObject({
-        message: 'Gagal membuat admin',
-      })
+      const result = await createAdmin({ ...validAdminData, password: undefined })
+      expect(result).toMatchObject({ success: false, message: 'Gagal membuat admin' })
       expect(validatePasswordForCreate).toHaveBeenCalled()
     })
 
@@ -148,9 +146,8 @@ describe('Admin Actions (Layer 3)', () => {
         error: 'Desa harus dipilih untuk Admin Desa',
       })
 
-      await expect(createAdmin(validAdminData)).rejects.toMatchObject({
-        message: 'Gagal membuat admin',
-      })
+      const result = await createAdmin(validAdminData)
+      expect(result).toMatchObject({ success: false, message: 'Gagal membuat admin' })
     })
 
     it('throws when adminClient.auth.admin.createUser returns an error', async () => {
@@ -173,9 +170,8 @@ describe('Admin Actions (Layer 3)', () => {
         .mockResolvedValue({ data: { user: null }, error: new Error('Email already in use') })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(createAdmin(validAdminData)).rejects.toMatchObject({
-        message: 'Gagal membuat admin',
-      })
+      const result = await createAdmin(validAdminData)
+      expect(result).toMatchObject({ success: false, message: 'Gagal membuat admin' })
     })
 
     it('throws and cleans up auth user when insertAdminProfile fails', async () => {
@@ -204,9 +200,8 @@ describe('Admin Actions (Layer 3)', () => {
         error: new Error('Profile insert failed'),
       } as any)
 
-      await expect(createAdmin(validAdminData)).rejects.toMatchObject({
-        message: 'Gagal membuat admin',
-      })
+      const result = await createAdmin(validAdminData)
+      expect(result).toMatchObject({ success: false, message: 'Gagal membuat admin' })
       // Verify cleanup: auth user should be deleted on profile failure
       expect(adminClient.auth.admin.deleteUser).toHaveBeenCalledWith('new-user-id')
     })
@@ -279,9 +274,8 @@ describe('Admin Actions (Layer 3)', () => {
     it('throws when validateAdminData fails', async () => {
       vi.mocked(validateAdminData).mockReturnValue({ ok: false, error: 'Email harus diisi' })
 
-      await expect(updateAdmin('admin-id', { ...validAdminData, email: '' })).rejects.toMatchObject({
-        message: 'Gagal mengupdate admin',
-      })
+      const result = await updateAdmin('admin-id', { ...validAdminData, email: '' })
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate admin' })
     })
 
     it('throws when updateAdminProfile returns an error', async () => {
@@ -298,9 +292,8 @@ describe('Admin Actions (Layer 3)', () => {
         error: new Error('DB update failed'),
       } as any)
 
-      await expect(updateAdmin('admin-id', validAdminData)).rejects.toMatchObject({
-        message: 'Gagal mengupdate admin',
-      })
+      const result = await updateAdmin('admin-id', validAdminData)
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate admin' })
     })
 
     it('updates password via adminClient when password is provided', async () => {
@@ -342,9 +335,8 @@ describe('Admin Actions (Layer 3)', () => {
       vi.mocked(updateAdminProfile).mockResolvedValue({ data: null, error: null } as any)
 
       const dataWithPassword = { ...validAdminData, password: 'NewPass456' }
-      await expect(updateAdmin('admin-id', dataWithPassword)).rejects.toMatchObject({
-        message: 'Gagal mengupdate admin',
-      })
+      const result = await updateAdmin('admin-id', dataWithPassword)
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate admin' })
     })
 
     it('skips password update when password is not provided', async () => {
@@ -401,9 +393,8 @@ describe('Admin Actions (Layer 3)', () => {
         .mockResolvedValue({ error: new Error('User not found') })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(deleteAdmin('admin-id')).rejects.toMatchObject({
-        message: 'Gagal menghapus admin',
-      })
+      const result = await deleteAdmin('admin-id')
+      expect(result).toMatchObject({ success: false, message: 'Gagal menghapus admin' })
     })
 
     it('returns success and revalidates path on happy path', async () => {
@@ -434,7 +425,8 @@ describe('Admin Actions (Layer 3)', () => {
         .mockResolvedValue({ error: new Error('Deletion failed') })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(deleteAdmin('admin-id')).rejects.toBeDefined()
+      const result = await deleteAdmin('admin-id')
+      expect(result.success).toBe(false)
       expect(revalidatePath).not.toHaveBeenCalled()
     })
   })
@@ -451,9 +443,8 @@ describe('Admin Actions (Layer 3)', () => {
         .mockResolvedValue({ error: new Error('Invalid password format') })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
 
-      await expect(resetAdminPassword('admin-id', 'NewPass123')).rejects.toMatchObject({
-        message: 'Gagal mereset password admin',
-      })
+      const result = await resetAdminPassword('admin-id', 'NewPass123')
+      expect(result).toMatchObject({ success: false, message: 'Gagal mereset password admin' })
     })
 
     it('returns success on happy path', async () => {
@@ -504,9 +495,8 @@ describe('Admin Actions (Layer 3)', () => {
       vi.mocked(getDataFilter).mockReturnValue(null)
       vi.mocked(fetchAdmins).mockResolvedValue({ data: null, error: new Error('DB fetch failed') } as any)
 
-      await expect(getAllAdmins()).rejects.toMatchObject({
-        message: 'Gagal mengambil data admin',
-      })
+      const result = await getAllAdmins()
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengambil data admin' })
     })
 
     it('returns transformed admin list on happy path for superadmin', async () => {
@@ -541,7 +531,7 @@ describe('Admin Actions (Layer 3)', () => {
 
       const result = await getAllAdmins()
 
-      expect(result).toEqual(transformedAdmins)
+      expect(result).toEqual({ success: true, data: transformedAdmins })
       expect(fetchAdmins).toHaveBeenCalledWith(supabase, undefined)
       expect(transformAdminList).toHaveBeenCalledWith(rawAdmins)
     })

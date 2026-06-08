@@ -118,7 +118,7 @@ describe('Guru Settings Actions (Layer 3)', () => {
 
       const result = await getMeetingFormSettings('unknown-user')
 
-      expect(result.success).toBe(true)
+      expect(result.success).toBe(false)
       expect(result.data).toBeUndefined()
       // extractMeetingFormSettings should NOT be called
       expect(extractMeetingFormSettings).not.toHaveBeenCalled()

@@ -138,7 +138,7 @@ describe('findStudentsWithPendingTransfer', () => {
     it('returns empty when no pending requests exist', () => {
         const students = [{ id: 's1', name: 'Budi' }, { id: 's2', name: 'Siti' }]
         const result = findStudentsWithPendingTransfer(students, [])
-        expect(result).toEqual({ success: true, data: [] })
+        expect(result).toEqual([])
     })
 
     it('returns names of students with pending transfers', () => {
@@ -159,6 +159,6 @@ describe('findStudentsWithPendingTransfer', () => {
         const students = [{ id: 's1', name: 'Budi' }]
         const pendingRequests = [{ student_ids: undefined }]
         const result = findStudentsWithPendingTransfer(students, pendingRequests as any)
-        expect(result).toEqual({ success: true, data: [] })
+        expect(result).toEqual([])
     })
 })

@@ -109,7 +109,7 @@ describe('Guru Classes Actions (Layer 3)', () => {
 
       const result = await getTeacherClasses('teacher-1')
 
-      expect(result).toEqual(expectedResult)
+      expect(result).toEqual({ success: true, data: expectedResult })
       expect(fetchTeacherClasses).toHaveBeenCalledWith(supabase, 'teacher-1')
       expect(mapTeacherClassesToResult).toHaveBeenCalledWith(rawData)
     })
@@ -133,9 +133,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: new Error('DB connection failed'),
       } as any)
 
-      await expect(getTeacherClasses('teacher-1')).rejects.toMatchObject({
-        message: 'Gagal memuat kelas guru',
-      })
+      const result = await getTeacherClasses('teacher-1')
+      expect(result).toMatchObject({ success: false, message: 'Gagal memuat kelas guru' })
     })
 
     it('passes null data to mapTeacherClassesToResult when data is null', async () => {
@@ -161,9 +160,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
       vi.mocked(getCurrentUserProfile).mockResolvedValue(null)
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
     })
 
     it('throws when user does not have access to users feature', async () => {
@@ -175,9 +173,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
       } as any)
       vi.mocked(canAccessFeature).mockReturnValue(false)
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
     })
 
     it('succeeds for superadmin with empty classIds (clear all assignments)', async () => {
@@ -242,9 +239,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: new Error('Delete failed'),
       } as any)
 
-      await expect(updateTeacherClasses('teacher-1', [])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', [])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -268,9 +264,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: new Error('Insert failed'),
       } as any)
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -293,9 +288,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: 'Beberapa kelas tidak berada dalam desa Anda',
       })
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
       expect(validateClassesForDesa).toHaveBeenCalledWith(mockClasses, 'desa-1')
     })
 
@@ -318,9 +312,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: 'Beberapa kelas tidak berada dalam daerah Anda',
       })
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
       expect(validateClassesForDaerah).toHaveBeenCalledWith(mockClasses, 'daerah-1')
     })
 
@@ -343,9 +336,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: 'Anda hanya dapat menambahkan atau menghapus kelas dari kelompok Anda sendiri',
       })
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
       expect(validateClassesForKelompok).toHaveBeenCalledWith(mockClasses, 'kelompok-1')
     })
 
@@ -385,9 +377,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: new Error('Validation query failed'),
       } as any)
 
-      await expect(updateTeacherClasses('teacher-1', ['class-1'])).rejects.toMatchObject({
-        message: 'Gagal mengupdate kelas guru',
-      })
+      const result = await updateTeacherClasses('teacher-1', ['class-1'])
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengupdate kelas guru' })
     })
   })
 
@@ -415,9 +406,8 @@ describe('Guru Classes Actions (Layer 3)', () => {
         error: new Error('Insert failed'),
       } as any)
 
-      await expect(assignTeacherToClass('teacher-1', 'class-1')).rejects.toMatchObject({
-        message: 'Gagal mengassign guru ke kelas',
-      })
+      const result = await assignTeacherToClass('teacher-1', 'class-1')
+      expect(result).toMatchObject({ success: false, message: 'Gagal mengassign guru ke kelas' })
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 

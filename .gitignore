@@ -209,3 +209,6 @@ playwright/.cache/
 
 # Beads manual backup dirs (bd upgrade safety net)
 .beads.backup-*/
+
+# Git worktrees
+.worktrees/

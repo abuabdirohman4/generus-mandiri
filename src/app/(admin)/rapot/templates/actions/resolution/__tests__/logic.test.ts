@@ -155,20 +155,20 @@ describe('expandItemsWithSemesterFilter', () => {
     it('includes items matching semester exactly', () => {
         const items = [makeItem('i1', 1), makeItem('i2', 2)]
         const result = expandItemsWithSemesterFilter('si-1', true, items, 1)
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
         expect(result[0].material_item_id).toBe('i1')
     })
 
     it('includes items with null semester (available both)', () => {
         const items = [makeItem('i1', null)]
         const result = expandItemsWithSemesterFilter('si-1', true, items, 1)
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
     })
 
     it('returns empty array when no matching items', () => {
         const items = [makeItem('i1', 2)]
         const result = expandItemsWithSemesterFilter('si-1', true, items, 1)
-        expect((result as any).data).toHaveLength(0)
+        expect(result).toHaveLength(0)
     })
 
     it('returns empty array for empty input', () => {

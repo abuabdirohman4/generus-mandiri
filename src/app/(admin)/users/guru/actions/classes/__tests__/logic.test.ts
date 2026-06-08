@@ -12,7 +12,7 @@ import {
 describe('buildClassAssignmentMappings', () => {
     it('maps class ids to teacher assignments', () => {
         const result = buildClassAssignmentMappings('t1', ['c1', 'c2', 'c3'])
-        expect((result as any).data).toHaveLength(3)
+        expect(result).toHaveLength(3)
         result.forEach(m => expect(m.teacher_id).toBe('t1'))
         expect(result.map(m => m.class_id)).toEqual(['c1', 'c2', 'c3'])
     })
@@ -30,7 +30,7 @@ describe('mapTeacherClassesToResult', () => {
             { id: 'tce-1', class_id: 'c1', class: { name: 'Kelas Alif', kelompok_id: 'k1' } },
         ]
         const result = mapTeacherClassesToResult(raw)
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
         expect(result[0].class_name).toBe('Kelas Alif')
         expect(result[0].kelompok_id).toBe('k1')
     })

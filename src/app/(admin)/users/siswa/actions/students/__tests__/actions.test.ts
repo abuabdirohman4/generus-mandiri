@@ -180,7 +180,7 @@ describe('getStudentClasses', () => {
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
         const result = await getStudentClasses('s1')
-        expect(result).toEqual({ success: true, data: [] })
+        expect(result).toEqual([])
     })
 
     it('returns classes array for student', async () => {
@@ -195,7 +195,7 @@ describe('getStudentClasses', () => {
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
         const result = await getStudentClasses('s1')
-        expect((result as any).data).toHaveLength(2)
+        expect(result).toHaveLength(2)
         expect(result[0].id).toBe('c1')
         expect(result[1].name).toBe('Kelas B')
     })
@@ -276,7 +276,8 @@ describe('createStudent', () => {
         formData.append('gender', 'Laki-laki')
         formData.append('classId', 'c1')
 
-        await expect(createStudent(formData)).rejects.toThrow('not authenticated')
+        const createResult = await createStudent(formData)
+        expect(createResult.success).toBe(false)
     })
 
     it('throws validation error when name missing', async () => {

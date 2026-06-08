@@ -34,13 +34,13 @@ describe('fetchClassesWithOrg', () => {
         const result = await fetchClassesWithOrg(supa, undefined)
         expect(supa.from).toHaveBeenCalledWith('classes')
         expect(supa._chain.in).not.toHaveBeenCalled()
-        expect(result).toEqual({ success: true, data: [] })
+        expect(result).toEqual([])
     })
 
     it('returns empty array immediately when classIds is empty', async () => {
         const supa = makeSupa()
         const result = await fetchClassesWithOrg(supa, [])
-        expect((result as any).data).toHaveLength(0)
+        expect(result).toHaveLength(0)
         expect(supa.from).not.toHaveBeenCalled()
     })
 
@@ -49,7 +49,7 @@ describe('fetchClassesWithOrg', () => {
         const result = await fetchClassesWithOrg(supa, ['c1', 'c2'])
         expect(supa.from).toHaveBeenCalledWith('classes')
         expect(supa._chain.in).toHaveBeenCalledWith('id', ['c1', 'c2'])
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
     })
 })
 
@@ -71,7 +71,7 @@ describe('fetchEnrollments', () => {
     it('returns empty array when classIds is empty', async () => {
         const supa = makeSupa()
         const result = await fetchEnrollments(supa, [])
-        expect((result as any).data).toHaveLength(0)
+        expect(result).toHaveLength(0)
         expect(supa.from).not.toHaveBeenCalled()
     })
 
@@ -80,7 +80,7 @@ describe('fetchEnrollments', () => {
         const result = await fetchEnrollments(supa, ['c1'])
         expect(supa.from).toHaveBeenCalledWith('student_classes')
         expect(supa._chain.in).toHaveBeenCalledWith('class_id', ['c1'])
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
     })
 
     it('filters studentIds in JS (not via DB query) when studentIds provided', async () => {
@@ -96,7 +96,7 @@ describe('fetchEnrollments', () => {
         expect(supa._chain.in).toHaveBeenCalledWith('class_id', ['c1'])
         expect(supa._chain.in).not.toHaveBeenCalledWith('student_id', expect.anything())
         // JS filter: only s1 passes (s3 not in ['s1','s2'])
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
         expect(result[0].student_id).toBe('s1')
     })
 })

@@ -104,13 +104,13 @@ describe('fetchAttendanceLogsForOverview', () => {
         const result = await fetchAttendanceLogsForOverview(supa, '2026-02-08', undefined)
         expect(supa.from).toHaveBeenCalledWith('attendance_logs')
         expect(supa._chain.gte).toHaveBeenCalledWith('date', '2026-02-08')
-        expect((result as any).data).toHaveLength(1)
+        expect(result).toHaveLength(1)
     })
 
     it('returns empty array immediately when studentIds is empty', async () => {
         const supa = makeSupa(null, [])
         const result = await fetchAttendanceLogsForOverview(supa, '2026-02-08', [])
-        expect((result as any).data).toHaveLength(0)
+        expect(result).toHaveLength(0)
         expect(supa.from).not.toHaveBeenCalled()
     })
 })

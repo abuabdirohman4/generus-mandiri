@@ -36,7 +36,7 @@ describe('fetchKelasWithStudentCount', () => {
       }),
     }
     const result = await fetchKelasWithStudentCount(supabase as any, 'klp-1')
-    expect(result).toEqual({ success: true, data: [] })
+    expect(result).toEqual([])
   })
 
   it('returns empty array when kelasError occurs', async () => {
@@ -47,7 +47,7 @@ describe('fetchKelasWithStudentCount', () => {
       }),
     }
     const result = await fetchKelasWithStudentCount(supabase as any, 'klp-1')
-    expect(result).toEqual({ success: true, data: [] })
+    expect(result).toEqual([])
   })
 })
 
@@ -55,7 +55,7 @@ describe('fetchKelompokByIds', () => {
   it('returns empty array for empty kelompokIds', async () => {
     const supabase = { from: vi.fn() }
     const result = await fetchKelompokByIds(supabase as any, [])
-    expect(result).toEqual({ success: true, data: [] })
+    expect(result).toEqual([])
     expect(supabase.from).not.toHaveBeenCalled()
   })
 

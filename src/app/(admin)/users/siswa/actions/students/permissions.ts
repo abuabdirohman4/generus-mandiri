@@ -60,11 +60,13 @@ export function canArchiveStudent(
 
   // Admin can archive students in their organizational hierarchy
   if (user.role === 'admin') {
+    if (!user.permissions?.can_archive_students) return false
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher scope check
+  // Teacher must have permission first, then scope check
   if (user.role === 'teacher') {
+    if (!user.permissions?.can_archive_students) return false
     return canTeacherAccessStudent(user, student)
   }
 
@@ -89,11 +91,13 @@ export function canTransferStudent(
 
   // Admin can transfer students in their organizational hierarchy
   if (user.role === 'admin') {
+    if (!user.permissions?.can_transfer_students) return false
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher scope check
+  // Teacher must have permission first, then scope check
   if (user.role === 'teacher') {
+    if (!user.permissions?.can_transfer_students) return false
     return canTeacherAccessStudent(user, student)
   }
 
@@ -117,11 +121,13 @@ export function canSoftDeleteStudent(
 
   // Admin can soft delete students in their organizational hierarchy
   if (user.role === 'admin') {
+    if (!user.permissions?.can_soft_delete_students) return false
     return isStudentInUserHierarchy(user, student)
   }
 
-  // Teacher scope check
+  // Teacher must have permission first, then scope check
   if (user.role === 'teacher') {
+    if (!user.permissions?.can_soft_delete_students) return false
     return canTeacherAccessStudent(user, student)
   }
 

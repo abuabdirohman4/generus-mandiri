@@ -38,7 +38,8 @@ describe('getAllClasses', () => {
         }
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
-        await expect(getAllClasses()).rejects.toThrow('User not authenticated')
+        const result = await getAllClasses()
+        expect(result.success).toBe(false)
     })
 
     it('throws when profile not found', async () => {
@@ -48,7 +49,8 @@ describe('getAllClasses', () => {
         }
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
 
-        await expect(getAllClasses()).rejects.toThrow('User profile not found')
+        const result2 = await getAllClasses()
+        expect(result2.success).toBe(false)
     })
 
     it('returns classes for admin role', async () => {

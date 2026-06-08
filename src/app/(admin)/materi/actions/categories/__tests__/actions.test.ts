@@ -112,7 +112,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await getMaterialCategories()
 
-      expect(result).toEqual({ success: true, data: [] })
+      expect(result).toEqual([])
     })
 
     it('throws when fetchAllCategories returns an error', async () => {
@@ -134,7 +134,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await getMaterialCategories()
 
-      expect((result as any).data).toHaveLength(2)
+      expect(result).toHaveLength(2)
       expect(result[0].id).toBe('cat-1')
       expect(result[1].id).toBe('cat-2')
     })
@@ -154,7 +154,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await createMaterialCategory(validData)
 
-      expect(result).toEqual(sampleCategory)
+      expect(result).toEqual({ success: true, data: sampleCategory })
       expect(insertCategory).toHaveBeenCalledWith(supabase, validData)
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
@@ -165,7 +165,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(insertCategory).mockResolvedValue({ data: null, error: { code: '23505', message: 'unique violation' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Nama kategori sudah digunakan')
 
-      await expect(createMaterialCategory(validData)).rejects.toThrow('Nama kategori sudah digunakan')
+      const result = await createMaterialCategory(validData)
+      expect(result).toEqual({ success: false, message: 'Nama kategori sudah digunakan' })
       expect(mapCategoryErrorMessage).toHaveBeenCalledWith('23505', 'create')
     })
 
@@ -175,7 +176,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(insertCategory).mockResolvedValue({ data: null, error: { code: '99999', message: 'unknown error' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Gagal membuat kategori materi')
 
-      await expect(createMaterialCategory(validData)).rejects.toThrow('Gagal membuat kategori materi')
+      const result = await createMaterialCategory(validData)
+      expect(result).toEqual({ success: false, message: 'Gagal membuat kategori materi' })
     })
 
     it('does not call revalidatePath when insert fails', async () => {
@@ -218,7 +220,7 @@ describe('Material Category Actions (Layer 3)', () => {
 
       const result = await updateMaterialCategory('cat-1', updateData)
 
-      expect(result).toEqual(updatedCategory)
+      expect(result).toEqual({ success: true, data: updatedCategory })
       expect(updateCategoryById).toHaveBeenCalledWith(supabase, 'cat-1', updateData)
       expect(revalidatePath).toHaveBeenCalledWith('/materi')
     })
@@ -229,7 +231,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(updateCategoryById).mockResolvedValue({ data: null, error: { code: '23505', message: 'unique violation' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Nama kategori sudah digunakan')
 
-      await expect(updateMaterialCategory('cat-1', updateData)).rejects.toThrow('Nama kategori sudah digunakan')
+      const result = await updateMaterialCategory('cat-1', updateData)
+      expect(result).toEqual({ success: false, message: 'Nama kategori sudah digunakan' })
       expect(mapCategoryErrorMessage).toHaveBeenCalledWith('23505', 'update')
     })
 
@@ -239,7 +242,8 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(updateCategoryById).mockResolvedValue({ data: null, error: { code: '500', message: 'server error' } } as any)
       vi.mocked(mapCategoryErrorMessage).mockReturnValue('Gagal memperbarui kategori materi')
 
-      await expect(updateMaterialCategory('cat-1', updateData)).rejects.toThrow('Gagal memperbarui kategori materi')
+      const result = await updateMaterialCategory('cat-1', updateData)
+      expect(result).toEqual({ success: false, message: 'Gagal memperbarui kategori materi' })
     })
 
     it('does not call revalidatePath when update fails', async () => {
@@ -312,8 +316,7 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(categoryHasDependencies).mockReturnValue(false)
       vi.mocked(deleteCategoryById).mockResolvedValue({ error: { message: 'Delete failed' } } as any)
 
-      const result = await deleteMaterialCategory('cat-1')
-      expect(result.success).toBe(false)
+      await expect(deleteMaterialCategory('cat-1')).rejects.toThrow('Gagal menghapus kategori materi')
       expect(revalidatePath).not.toHaveBeenCalled()
     })
 
@@ -323,8 +326,7 @@ describe('Material Category Actions (Layer 3)', () => {
       vi.mocked(fetchTypesForCategory).mockResolvedValue({ data: [{ id: 't1' }, { id: 't2' }], error: null } as any)
       vi.mocked(categoryHasDependencies).mockReturnValue(true)
 
-      const result2 = await deleteMaterialCategory('cat-1')
-      expect(result2.success).toBe(false)
+      await expect(deleteMaterialCategory('cat-1')).rejects.toThrow()
       // categoryHasDependencies is called with types.length (2)
       expect(categoryHasDependencies).toHaveBeenCalledWith(2)
     })

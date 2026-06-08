@@ -84,26 +84,36 @@ describe('updateMeetingFormSettingsQuery', () => {
 
 describe('updateTeacherPermissionsQuery', () => {
     it('updates permissions in profiles for userId', async () => {
-        const supa = makeSupa({ error: null })
-        supa._chain.eq = vi.fn().mockResolvedValue({ error: null })
+        const selectChain = makeChain({ data: { permissions: null }, error: null })
+        const updateChain = makeChain({ error: null })
+        const supa = {
+            from: vi.fn()
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain),
+        } as any
 
         const permissions = { can_archive_students: true, can_transfer_students: false }
         await updateTeacherPermissionsQuery(supa, 'u1', permissions)
 
         expect(supa.from).toHaveBeenCalledWith('profiles')
-        expect(supa._chain.update).toHaveBeenCalledWith(
+        expect(updateChain.update).toHaveBeenCalledWith(
             expect.objectContaining({ permissions })
         )
-        expect(supa._chain.eq).toHaveBeenCalledWith('id', 'u1')
+        expect(updateChain.eq).toHaveBeenCalledWith('id', 'u1')
     })
 
     it('includes updated_at in the update payload', async () => {
-        const supa = makeSupa({ error: null })
-        supa._chain.eq = vi.fn().mockResolvedValue({ error: null })
+        const selectChain = makeChain({ data: { permissions: null }, error: null })
+        const updateChain = makeChain({ error: null })
+        const supa = {
+            from: vi.fn()
+                .mockReturnValueOnce(selectChain)
+                .mockReturnValueOnce(updateChain),
+        } as any
 
         await updateTeacherPermissionsQuery(supa, 'u1', {})
 
-        const updatePayload = supa._chain.update.mock.calls[0][0]
+        const updatePayload = updateChain.update.mock.calls[0][0]
         expect(updatePayload.updated_at).toBeTruthy()
     })
 })
