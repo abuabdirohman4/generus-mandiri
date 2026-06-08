@@ -60,6 +60,19 @@ const settingsCategories = [
       // }
     ]
   },
+  {
+    title: "Naik Kelas",
+    description: "Pengaturan kenaikan kelas massal",
+    icon: 'cog',
+    items: [
+      {
+        name: "Mode Naik Kelas",
+        description: "Aktifkan/nonaktifkan periode naik kelas",
+        href: "/settings/grade-promotion",
+        available: true
+      }
+    ]
+  },
   // {
   //   title: "Sistem",
   //   description: "Pengaturan sistem dan integrasi",

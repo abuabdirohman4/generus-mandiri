@@ -778,3 +778,41 @@ interface TeacherActivityType { teacher_id, activity_type_id, activity_type?: Ac
 ```
 
 **Reference**: `src/app/(admin)/kegiatan/actions.ts`, `src/hooks/useActivityTypes.ts`
+
+---
+
+## Grade Promotion / Naik Kelas (sm-jsb)
+
+Batch kenaikan kelas massal per tahun ajaran. Feature route `/naik-kelas` (wizard) + `/settings/grade-promotion` (toggle).
+
+### Kelas tujuan = kolom eksplisit (BUKAN tebakan sort_order)
+
+`class_masters.promote_to_class_master_id` (uuid, nullable, FK self). Menentukan jenjang naik:
+- terisi → naik ke class_master itu
+- `NULL` → **stopper** (kelas tidak naik; tidak muncul di wizard). Saat ini: Pra Nikah 4, Orang Tua, Pengurus.
+
+Sejalan keputusan project "jangan derive kategori/jenjang dari sort_order, pakai kolom eksplisit". `suggestTargetClass` lama (sort_order+1) DIBATALKAN. Logic ada di `naik-kelas/actions/classes/logic.ts`:
+- `filterPromotableMasters()` — buang stopper
+- `resolveTargetClassInKelompok()` — cari class_id tujuan dalam kelompok yang SAMA (tidak bocor antar kelompok)
+
+### UI per role (Step 1 wizard)
+
+| Role | Pilih dari | Mekanisme |
+|---|---|---|
+| Admin (daerah/desa/kelompok) + Guru hierarki (desa/daerah) | **class_master** (19 − stopper) | sistem expand ke semua class aktual dalam scope, auto-pasang siswa ke kelas tujuan di kelompok masing-masing |
+| Guru biasa (punya `teacher_classes`) | **class aktual** yang dia ajar | per-kelas |
+
+Deteksi guru hierarki vs biasa: `teacher_classes` kosong + punya org_id → hierarki (perlakuan = admin scope). Lihat §Hierarchical Teacher Pattern.
+
+### Toggle "Mode Naik Kelas" (toggle-gated feature)
+
+Disimpan di `app_settings` (reuse, key=`grade_promotion_enabled`, value jsonb `{enabled,enabled_by,enabled_at}`). Pattern baru **toggle-gated nav**:
+- Sidebar `NavItem.requirePromotionEnabled?: boolean` + hook `usePromotionEnabled()` (SWR). Menu hilang kalau toggle off.
+- Page `/naik-kelas` server guard: `getPromotionEnabled()` → redirect `/home` kalau off.
+- Toggle hanya bisa diubah Superadmin & Admin Daerah (`validatePromotionPermission(p,'toggle')`).
+
+### Eksekusi (executeGradePromotion)
+
+`academic_year` AKTIF = sumber kebenaran (admin bikin tahun baru + set-active via `/tahun-ajaran` existing DULU). Naik-kelas TIDAK bikin academic_year sendiri. Per siswa (partial success, no rollback): upsert `student_enrollments` (semester WAJIB, NOT NULL) → update `students.class_id` → upsert `student_classes` → insert `grade_promotion_logs` (immutable audit).
+
+**Reference**: `src/app/(admin)/naik-kelas/`, plan `docs/plans/2026-06-07-sm-jsb-naik-kelas-impl.md`.

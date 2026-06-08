@@ -40,6 +40,10 @@ function PageTitle() {
         return 'Pengaturan';
       case '/tahun-ajaran':
         return 'Tahun Ajaran';
+      case '/naik-kelas':
+        return 'Naik Kelas';
+      case '/settings/grade-promotion':
+        return 'Mode Naik Kelas';
       case '/users/guru':
         return 'Guru';
       case '/users/admin':

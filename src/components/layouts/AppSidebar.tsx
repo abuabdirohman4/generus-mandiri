@@ -24,6 +24,7 @@ import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { isSuperAdmin, isAdminKelompok, isAdminDesa } from "@/lib/userUtils";
 import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from "@/lib/accessControl";
+import { usePromotionEnabled } from "@/hooks/usePromotionEnabled";
 
 type SubNavItem = { name: string; path: string; pro?: boolean; new?: boolean };
 
@@ -38,6 +39,7 @@ type NavItem = {
   requireCanAccessMonitoring?: boolean;
   excludeAdminKelompok?: boolean;
   excludeAdminDesa?: boolean;
+  requirePromotionEnabled?: boolean;
 };
 
 const allNavItems: NavItem[] = [
@@ -112,6 +114,12 @@ const allNavItems: NavItem[] = [
     adminOnly: true,
     excludeAdminKelompok: true,
     excludeAdminDesa: true,
+  },
+  {
+    icon: <GroupIcon className="w-6 h-6" />,
+    name: "Naik Kelas",
+    path: "/naik-kelas",
+    requirePromotionEnabled: true,
   },
   {
     icon: <DashboardIcon className="w-6 h-6" />,
@@ -432,6 +440,7 @@ function SidebarContent({
   const userCanManageMaterials = profile ? canManageMaterials(profile) : false;
   const userCanAccessMaterials = profile ? canAccessMaterials(profile) : false;
   const userCanAccessMonitoring = profile ? canAccessMonitoring(profile) : false;
+  const { promotionEnabled } = usePromotionEnabled();
 
   // Filter navigation items based on admin status and role-specific exclusions
   const visibleNavItems = allNavItems.filter(item => {
@@ -439,6 +448,9 @@ function SidebarContent({
     if (item.requireCanManageMaterials && !userCanManageMaterials) return false
     if (item.requireCanAccessMaterials && !userCanAccessMaterials) return false
     if (item.requireCanAccessMonitoring && !userCanAccessMonitoring) return false
+
+    // Toggle-gated: Naik Kelas only when promotion mode is ON
+    if (item.requirePromotionEnabled && !promotionEnabled) return false
 
     // Filter out admin-only items for non-admins
     if (item.adminOnly && !isAdminUser) {

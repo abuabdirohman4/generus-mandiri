@@ -7,6 +7,7 @@ import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpen
 import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
 import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from '@/lib/accessControl';
+import { usePromotionEnabled } from '@/hooks/usePromotionEnabled';
 import type { UserProfile } from '@/types/user'
 
 type Profile = UserProfile
@@ -27,6 +28,7 @@ interface QuickActionItem {
   iconColor: string;
   adminOnly?: boolean;
   excludeAdminKelompok?: boolean;
+  requirePromotionEnabled?: boolean;
   disabled?: boolean; 
 }
 
@@ -41,6 +43,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   // const userCanManageMaterials = canManageMaterials(profile)
   const userCanAccessMaterials = canAccessMaterials(profile)
   const userCanAccessMonitoring = canAccessMonitoring(profile)
+  const { promotionEnabled } = usePromotionEnabled()
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -74,6 +77,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     //   adminOnly: isPPG ? false : true,
     //   disabled: false
     // },
+    {
+      id: 'naik-kelas',
+      name: 'Naik Kelas',
+      description: 'Kenaikan kelas massal',
+      href: '/naik-kelas',
+      icon: <GroupIcon className="w-6 h-6" />,
+      bgColor: 'bg-amber-100 dark:bg-amber-900',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      requirePromotionEnabled: true,
+      disabled: false
+    },
     {
       id: 'presensi',
       name: 'Presensi',
@@ -243,6 +257,11 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
 
     // Filter out actions that exclude Admin Kelompok
     if (action.excludeAdminKelompok && isAdminKelompok(profile)) {
+      return false
+    }
+
+    // Toggle-gated: Naik Kelas only when promotion mode is ON
+    if (action.requirePromotionEnabled && !promotionEnabled) {
       return false
     }
 

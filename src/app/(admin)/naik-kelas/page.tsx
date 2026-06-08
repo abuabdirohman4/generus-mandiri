@@ -1,0 +1,37 @@
+import { redirect } from 'next/navigation'
+import { getPromotionEnabled } from './actions'
+import { getAcademicYears, getActiveAcademicYear } from '../tahun-ajaran/actions/academic-years'
+import { getCurrentUserProfile } from '@/lib/accessControlServer'
+import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
+import PromotionClient from './PromotionClient'
+
+export const metadata = {
+    title: 'Naik Kelas | Generus Mandiri',
+    description: 'Kenaikan kelas massal per tahun ajaran',
+}
+
+export default async function NaikKelasPage() {
+    const enabled = await getPromotionEnabled()
+    if (!enabled.data?.enabled) {
+        // Mode naik kelas tidak aktif → tidak boleh akses
+        redirect('/home')
+    }
+
+    const [years, activeYear, profile] = await Promise.all([
+        getAcademicYears(),
+        getActiveAcademicYear(),
+        getCurrentUserProfile(),
+    ])
+
+    const academicYears = (years || []).map(y => ({ id: y.id, name: y.name }))
+    const defaultYearId = activeYear?.id ?? academicYears[0]?.id ?? ''
+    const canPickYear = !!profile && (isSuperAdmin(profile) || isAdminDaerah(profile))
+
+    return (
+        <PromotionClient
+            academicYears={academicYears}
+            defaultYearId={defaultYearId}
+            canPickYear={canPickYear}
+        />
+    )
+}

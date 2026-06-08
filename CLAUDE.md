@@ -16,32 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 MANDATORY: Test-Driven Development (TDD)
 
-**ALL new features, business logic, and permission systems MUST be developed using TDD.**
+**TDD WAJIB** untuk business logic, permission, data transformation, algoritma, integrasi, fitur kritis. **SKIP** untuk: UI presentasional murni, getter/setter trivial, config, type definitions.
 
-- **Zero bugs on first implementation** - Tests catch issues before production
-- **Clear requirements** - Tests serve as executable specifications
-- **Safe refactoring** - Change code with confidence
-- **Better design** - TDD forces modular, testable code
-
-**TDD Workflow**: RED (write failing tests) → GREEN (implement minimal code) → REFACTOR (clean up)
-
-**REQUIRED for**: Business logic, permission systems, data transformations, complex algorithms, integration points, critical features.
-**SKIP for**: Pure presentational UI, trivial getters/setters, config files, type definitions.
+**Workflow**: RED (test gagal) → GREEN (kode minimal) → REFACTOR. **P0/P1 bug**: tulis E2E reproduksi (RED) → fix → verify (GREEN) → test jadi regression guard.
 
 **Commands**: `npm run test:watch` | `npm run test:coverage` | `npm run test:ui`
-
-**📖 For detailed TDD examples and workflow, READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
-
-### Bug Fixing with E2E (MANDATORY for P0/P1 bugs)
-
-**When a bug is reported**, use this workflow:
-1. **Replicate** → Write E2E test that reproduces the bug (test RED)
-2. **Prove** → Run test to confirm it fails (bug is real)
-3. **Fix** → Fix the code
-4. **Verify** → Run test to confirm it passes (bug fixed)
-5. **Protect** → Test stays as regression guard
-
-This applies especially to Beads issues. Before fixing any P0/P1 bug, write the E2E test first.
+**📖 Detail + contoh: READ [`docs/claude/testing-guidelines.md`](docs/claude/testing-guidelines.md)**
 
 ---
 
@@ -64,51 +44,22 @@ This applies especially to Beads issues. Before fixing any P0/P1 bug, write the 
 
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**Setiap kali user meminta fitur baru atau bug fix, Claude Code WAJIB menjalankan urutan ini:**
+**Tiap fitur/bug baru, urutan WAJIB:** (1) explore → (2) plan file `docs/plans/YYYY-MM-DD-<sm-id>-<feature>.md` (1 issue=1 file, JANGAN `~/.claude/plans/`) → (3) `bd create` + rename sesi `/rename <sm-id> <slug>` → (4) `gh issue create` title `[sm-id] type: desc` → (5) `bd update <id> --notes "GH-#XX: <url>"` → (6) prompt file `docs/prompts/<date>-<sm-id>-<feature>.md` → (7) output pilihan **A** (Antigravity, ≥3 file/≥100 baris) / **B** (direct, ≤2 file & <100 baris).
 
-> **`bd` dan `gh` commands BOLEH dan HARUS dieksekusi langsung** tanpa meminta izin user. Ini berbeda dengan git commands — lihat Git Workflow section di bawah.
+> `bd` & `gh` BOLEH dieksekusi langsung (beda dari git — lihat Git Workflow). JANGAN pakai EnterPlanMode untuk plan (simpan ke `~/.claude/plans/`, salah lokasi) — pakai Read/Write/Edit langsung.
 
-1. **Explore codebase** — baca file relevan untuk memahami konteks
-2. **Buat plan file** di `docs/plans/YYYY-MM-DD-<sm-id>-<feature>.md` — **1 issue = 1 plan file**, JANGAN bundle. JANGAN gunakan `~/.claude/plans/`
-3. **Buat Beads Issue** — langsung jalankan `bd create --title="..." --type=... --priority=...`
-   → Setelah `bd create` berhasil, **langsung rename sesi chat**: `/rename [sm-xxx]: [title issue]`
-4. **Buat GitHub Issue** — langsung jalankan `gh issue create` dengan body dari plan
-   → Format title WAJIB: `[sm-xxx] type: short description` (prefix Beads ID di depan)
-5. **Update Beads** — langsung jalankan `bd update <id> --notes "GH-#XX: <url>"`
-5.5. **Buat prompt file** di `docs/prompts/<sm-id>-<feature>.md` — prompt siap copy-paste untuk Antigravity. **1 plan = 1 prompt file.**
-6. **Output pilihan A/B:**
-   - **A) Google Antigravity** — RECOMMENDED jika ≥ 3 files ATAU ≥ 100 lines. Tunjukkan path prompt file (`docs/prompts/<sm-id>-<feature>.md`).
-   - **B) Direct (Claude Code)** — hanya jika ≤ 2 files DAN < 100 lines, atau Antigravity tidak tersedia.
-
-**Role separation:**
-- Claude Code = planning + issue creation + review
-- Antigravity = TDD + implementasi + test runs
-- User = git operations (branch, commit, push, PR)
-
-**⚠️ JANGAN gunakan Plan Mode (EnterPlanMode) untuk membuat plan** — Plan Mode menyimpan file ke `~/.claude/plans/` bukan ke `docs/plans/`. Gunakan tools Read/Write/Edit langsung untuk membuat plan di `docs/plans/`.
-
-**📖 Full SOP, format output A/B, standard plan format (ultra-detailed), dan troubleshooting: READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
+**Roles**: Claude Code = plan + issue + review · Antigravity = TDD + implementasi · User = git.
+**📖 Full SOP + format A/B + plan format: READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
 
 ---
 
 ## 🔧 Git Workflow & Commit Protocol
 
-**CRITICAL**: Claude Code MUST NOT execute git operations that modify repository state.
+**Claude Code TIDAK BOLEH** modifikasi repo state. **Read-only OK**: `git status/diff/log/show/branch`. **JANGAN**: `git add/commit/push/pull/merge/rebase`.
 
-**Allowed (Read-Only)**: `git status`, `git diff`, `git log`, `git show`, `git branch`
+Setelah ubah kode: tampilkan `git status`/`git diff` + saran commit message (`Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`), user yang eksekusi git.
 
-**NEVER execute**: `git add`, `git commit`, `git push`, `git pull`, `git merge`, `git rebase`, or anything that modifies `.git/` or working tree.
-
-**After code changes**: Show `git status`/`git diff`, provide suggested commit message (with `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>`), and inform user to run git commands manually.
-
-**Exception — boleh dieksekusi langsung**: `bd sync`, semua `bd` commands (`bd create`, `bd update`, `bd close`, dll), dan semua `gh` commands (`gh issue create`, `gh issue edit`, `gh pr create`, dll).
-
-**Beads & Git Integration:**
-- Beads syncs to `beads-sync` branch (dedicated sync branch, managed via worktree)
-- Master is normal working branch - user can checkout/merge normally
-- Feature branches work as expected - beads doesn't interfere
-- `bd sync` commits to beads-sync automatically, NOT to user's current branch
-- Never manually checkout or modify beads-sync branch
+**Exception (boleh langsung)**: semua `bd` (`bd sync/create/update/close`) + `gh` (`gh issue/pr create/edit`). (Beads sync ke branch `beads-sync` otomatis — lihat Beads Management.)
 
 ---
 
@@ -133,22 +84,12 @@ READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 
 ## 📋 Beads Issue Management
 
-**Beads Sync Branch:** `beads-sync` (NOT master)
-- Master is normal working branch - checkout anytime without conflicts
-- Beads syncs to dedicated `beads-sync` branch automatically via worktree
-- Work on feature branches normally, beads operates independently
+Sync ke branch `beads-sync` otomatis (via worktree, BUKAN master) — master/feature branch aman, beads independen.
 
-**Key Commands:**
-- `bd close <id>` - Close issue (never use `bd delete`)
-- `bd sync` - Sync to remote (commits to beads-sync, not your branch)
-- `bd ready` - Find ready tasks
+**Commands**: `bd ready` (cari task) · `bd close <id>` (jangan `bd delete`) · `bd sync`.
+**JANGAN**: edit `.beads/*.jsonl` manual · ubah `sync-branch` di `.beads/config.yaml`. Progress → `.beads/progress/{id}.md`.
 
-**Critical Rules:**
-- Never manually edit `.beads/*.jsonl` files
-- Never change `sync-branch` config in `.beads/config.yaml`
-- Progress files go in `.beads/progress/{issue-id}.md`
-
-**For complete Beads workflow including JSONL structure, Git hooks, tombstone prevention, and progress documentation format, READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
+**📖 Full workflow (JSONL, git hooks, progress format): READ [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)**
 
 ---
 
@@ -181,25 +122,15 @@ READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 ## 🔧 Development Commands
 
 ```bash
-npm run dev              # Dev server at localhost:3000
-npm run build            # Production build
-npm run type-check       # TypeScript check (no emit)
-npm run format           # Format with Prettier
-npm run fix:all          # Format + type-check
-
-# Unit Tests (Vitest)
-npm run test             # Tests in watch mode
-npm run test:run         # Tests once (CI/CD)
-npm run test:coverage    # Coverage report
-
-# E2E Tests (Playwright)
-npm run test:e2e         # Run E2E tests (headless)
-npm run test:e2e:ui      # Run E2E tests (UI mode)
-npm run test:e2e:headed  # Run E2E tests (headed browser)
-npm run test:e2e:debug   # Run E2E tests (debug mode)
+npm run dev          # Dev server localhost:3000
+npm run build        # Production build
+npm run type-check   # TS check (no emit)
+npm run fix:all      # Format + type-check
+npm run test:run     # Unit tests once (Vitest); :watch :coverage :ui juga ada
+npm run test:e2e     # E2E (Playwright); :ui :headed :debug juga ada
 ```
 
-**📖 For E2E testing setup, multi-role authentication, and security best practices, READ [`tests/QUICK_START.md`](tests/QUICK_START.md)**
+**📖 E2E setup + multi-role auth: READ [`tests/QUICK_START.md`](tests/QUICK_START.md)**
 
 ---
 
@@ -207,11 +138,11 @@ npm run test:e2e:debug   # Run E2E tests (debug mode)
 
 ### App Router Structure
 
-Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/settings`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`.
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/naik-kelas`, `/tahun-ajaran`, `/settings`, `/settings/grade-promotion`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`. `/naik-kelas` menu is toggle-gated (visible only when `app_settings.grade_promotion_enabled`).
 
 ### Database & Supabase
 
-**Key Tables**: `profiles`, `students`, `classes`, `class_masters`, `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `teacher_classes`, `teacher_class_masters`, `teacher_kelompok_access`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`.
+**Key Tables**: `profiles`, `students`, `classes`, `class_masters` (incl. `promote_to_class_master_id` for grade promotion; NULL = stopper), `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `student_enrollments` (per academic_year, UNIQUE student_id+academic_year_id+semester), `academic_years`, `teacher_classes`, `teacher_class_masters`, `teacher_kelompok_access`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`, `app_settings` (key/value jsonb feature flags), `grade_promotion_logs` (immutable audit, RLS no UPDATE/DELETE).
 
 **Supabase Clients**: `createClient()` from `client` (browser) or `server` (server actions with cookies), `createAdminClient()` from `server` (bypass RLS).
 
@@ -239,6 +170,10 @@ Three patterns: (1) Server Action + SWR Hook for reads, (2) Direct Server Action
 ### UI Components & Utilities
 
 **Components**: `components/ui/` (base), `components/form/input/`, `components/layouts/`, `components/charts/`, `components/shared/DataFilter.tsx` (centralized filter). Add to DataFilter only if reused across 2+ pages.
+
+**🚨 JANGAN raw HTML untuk form.** Sebelum tulis `<input>`/`<select>`/`<button>`/`<input type=checkbox>`, WAJIB cek + pakai komponen existing: `InputFilter` (dropdown), `Checkbox` / `MultiSelectCheckbox`, `Button` (semua di `components/form/input/` & `components/ui/button/`). Raw HTML = inkonsisten styling/dark-mode.
+
+**🚨 Halaman/route BARU WAJIB update 3 tempat navigasi** (sering terlupa): (1) `AppSidebar.tsx` `allNavItems[]`, (2) `home/components/QuickActions.tsx` `quickActions[]`, (3) `AppHeader.tsx` `getPageTitle()` switch. Lupa salah satu = menu/judul hilang.
 
 **Key Utilities**: `classHelpers.ts` (isCaberawitClass, isTeacherClass, isSambungDesaEligible), `utils.ts` (cn, isMobile, etc.), `userUtils.ts` (getCurrentUserId, clearUserCache), `batchFetching.ts` (fetchAttendanceLogsInBatches — use for large datasets).
 

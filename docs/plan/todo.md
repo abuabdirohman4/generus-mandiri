@@ -1,9 +1,15 @@
 ## Backlog
+- buatkan e2e, dan ingatkan untuk selalu buat e2e
+- Table absensi bisa disortir
+- buat notifikasi, di home/header, terkait info/feature dll
+- kenaikan Kelas
+    - di kumpulkan data paud, lewat WA/Form/Aplikasi
+
 - Auth
     - [ ] Kalau login gagal usernmae/password, username jangan hilang
 
-- Dashboard
-    - [ ] Dashboard desa, daerah munculkan desa daerah pas pilih kelas
+- [x] Dashboard
+    - [x] Dashboard desa, daerah munculkan desa daerah pas pilih kelas
 
 - Meeting
     - [ ] Add Pengajian Daerah
@@ -20,13 +26,13 @@
     - Untuk Kelas 1 - 6 Warlob, di modal create pertemuan (Warlob 2) tidak muncul tapi di detailnya bisa muncul
 
 - Siswa
-    - [ ] Admin belum selalu mendapat archive & transfer
-    - [ ] Bisa langsung ganti detail siswa dengan memilih nama nya
+    - [x] Admin belum selalu mendapat archive & transfer
+    - [x] Bisa langsung ganti detail siswa dengan memilih nama nya
     - [ ] Tambah NIS untuk Warlob
     - [ ] Add Bulk with CSV, Excel, Text
 
 - Laporan
-    - [ ] Bug untuk absensi reta
+    - [x] Bug untuk absensi reta
 
 - Materi
     - [ ] Handle materi kelas sebelumnya
@@ -52,12 +58,12 @@
 
 - Sidebar
     - [ ] Buat component sidebar content
-        - [ ] Implement untuk Siswa Detail
-        - [ ] Implement untuk Siswa Biodata
-        - [ ] Implement untuk Monitoring
+        - [x] Implement untuk Siswa Detail
+        - [x] Implement untuk Siswa Biodata
+        - [x] Implement untuk Monitoring
         - [ ] Implement untuk Rapot
 
 - Wording
-    - [ ] Ubah Siswa -> Jamaah/Generus
-    - [ ] Ubah Guru -> Penanggung Jawab
-    - [ ] "Absensi" -> "Presensi"
+    - [-] Ubah Siswa -> Jamaah/Generus
+    - [-] Ubah Guru -> Penanggung Jawab
+    - [x] "Absensi" -> "Presensi"
