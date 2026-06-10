@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
 import { sendNotification } from '@/app/(admin)/notifikasi/actions'
+import type { NotificationType } from '@/types/notification'
 import {
   fetchDaerahList,
   fetchDesaList,
@@ -40,6 +41,12 @@ const SCOPE_OPTIONS_ADMIN_DAERAH = [
   { value: 'kelompok', label: 'Per Kelompok' },
 ]
 
+const NOTIF_TYPE_OPTIONS: { value: NotificationType; label: string; color: string }[] = [
+  { value: 'info', label: 'Info', color: 'blue' },
+  { value: 'success', label: 'Sukses', color: 'green' },
+  { value: 'warning', label: 'Peringatan', color: 'amber' },
+]
+
 export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProps) {
   const { profile } = useUserProfile()
 
@@ -56,6 +63,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [selectedDesa, setSelectedDesa] = useState<string>('')
   const [selectedKelompok, setSelectedKelompok] = useState<string>('')
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [notifType, setNotifType] = useState<NotificationType>('info')
 
   // Org data
   const [daerahList, setDaerahList] = useState<OrgItem[]>([])
@@ -153,7 +161,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
 
     setSubmitting(true)
     try {
-      const result = await sendNotification({ title: title.trim(), body: body.trim(), target })
+      const result = await sendNotification({ title: title.trim(), body: body.trim(), type: notifType, target })
       if (result.success) {
         setFeedback({ type: 'success', message: result.message || 'Notifikasi berhasil dikirim.' })
         setTitle('')
@@ -222,6 +230,38 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
           disabled={submitting}
           className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent dark:bg-gray-900 text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-300 dark:focus:border-brand-800 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
+      </div>
+
+      {/* Tipe notifikasi */}
+      <div>
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipe</p>
+        <div className="flex gap-2">
+          {NOTIF_TYPE_OPTIONS.map(opt => {
+            const active = notifType === opt.value
+            const styles = {
+              info: active
+                ? 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+              success: active
+                ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+              warning: active
+                ? 'bg-amber-100 border-amber-500 text-amber-700 dark:bg-amber-900/30 dark:border-amber-400 dark:text-amber-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+            }[opt.value]
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setNotifType(opt.value)}
+                disabled={submitting}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${styles}`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Scope selector */}

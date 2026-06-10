@@ -45,7 +45,7 @@ export async function sendNotification(input: SendNotificationInput) {
     const { data: notif, error: notifError } = await insertNotification(adminClient, {
       title: input.title.trim(),
       body: input.body.trim(),
-      type: 'broadcast',
+      type: input.type ?? 'info',
       target_scope: scopeResult.scope!,
       sender_id: profile.id,
       sender_daerah_id: profile.daerah_id ?? null,

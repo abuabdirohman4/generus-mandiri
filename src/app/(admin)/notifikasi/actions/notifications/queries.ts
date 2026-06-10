@@ -162,7 +162,7 @@ export async function fetchSentNotifications(
 ): Promise<NotificationSentSummary[]> {
   const { data, error } = await supabase
     .from('notifications')
-    .select('id, title, body, created_at, notification_recipients(count)')
+    .select('id, title, body, type, created_at, notification_recipients(count)')
     .eq('sender_id', senderId)
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -173,6 +173,7 @@ export async function fetchSentNotifications(
     id: row.id,
     title: row.title,
     body: row.body,
+    type: row.type ?? 'info',
     created_at: row.created_at,
     recipient_count: row.notification_recipients?.[0]?.count ?? 0,
   }))

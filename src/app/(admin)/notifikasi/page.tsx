@@ -25,10 +25,56 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+type NotifVariant = 'info' | 'success' | 'warning'
+
+function resolveVariant(type: string): NotifVariant {
+  if (type === 'success') return 'success'
+  if (type === 'warning') return 'warning'
+  return 'info'
+}
+
+const VARIANT_STYLES: Record<NotifVariant, {
+  border: string
+  bg: string
+  iconColor: string
+  icon: React.ReactNode
+}> = {
+  info: {
+    border: 'border-l-blue-500',
+    bg: 'bg-blue-50 dark:bg-blue-900/10',
+    iconColor: 'text-blue-500',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  success: {
+    border: 'border-l-green-500',
+    bg: 'bg-green-50 dark:bg-green-900/10',
+    iconColor: 'text-green-500',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  warning: {
+    border: 'border-l-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-900/10',
+    iconColor: 'text-amber-500',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+  },
+}
+
 function SkeletonItem() {
   return (
-    <div className="flex items-start gap-3 p-4 animate-pulse">
-      <div className="mt-1 h-2 w-2 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+    <div className="flex items-start gap-3 p-4 animate-pulse border-l-4 border-l-gray-200 dark:border-l-gray-700">
+      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded" />
         <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded" />
@@ -63,23 +109,18 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
 type TabKey = 'received' | 'sent'
 
 export default function NotifikasiPage() {
-  const { notifications, unreadCount, isLoading, markRead, markAllRead, mutate } = useNotifications()
+  const { notifications, unreadCount, isLoading, markRead, markAllRead, dismiss, mutate } = useNotifications()
   const { profile } = useUserProfile()
   const [showForm, setShowForm] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('received')
 
   const canSend = profile ? canSendNotification(profile) : false
 
-  // Sent history — only fetched for senders, when the tab is active
   const { data: sentRes, isLoading: sentLoading, mutate: mutateSent } = useSWR(
     canSend && activeTab === 'sent' ? 'notifications:sent' : null,
     () => getSentNotifications()
   )
   const sentNotifications = sentRes?.data ?? []
-
-  const handleMarkAllRead = async () => {
-    await markAllRead()
-  }
 
   const handleFormSuccess = () => {
     setShowForm(false)
@@ -101,7 +142,7 @@ export default function NotifikasiPage() {
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'received' && unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+            <Button variant="outline" size="sm" onClick={() => markAllRead()}>
               Tandai semua dibaca
             </Button>
           )}
@@ -166,53 +207,58 @@ export default function NotifikasiPage() {
             />
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {notifications.map(notif => (
-                <li
-                  key={notif.id}
-                  onClick={() => {
-                    if (!notif.is_read) {
-                      markRead([notif.id])
-                    }
-                  }}
-                  className={`flex items-start gap-3 p-4 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                    !notif.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                  }`}
-                >
-                  {/* Unread indicator */}
-                  <div className="mt-1.5 flex-shrink-0">
-                    {!notif.is_read ? (
-                      <span className="block h-2 w-2 rounded-full bg-blue-500" />
-                    ) : (
-                      <span className="block h-2 w-2 rounded-full bg-transparent" />
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm font-medium leading-snug ${
-                        !notif.is_read
-                          ? 'text-gray-900 dark:text-white'
-                          : 'text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {notif.title}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                      {notif.body}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                      {notif.sender_name && (
-                        <>
-                          <span>{notif.sender_name}</span>
-                          <span aria-hidden="true">·</span>
-                        </>
-                      )}
-                      <span>{formatRelativeTime(notif.created_at)}</span>
+              {notifications.map(notif => {
+                const variant = resolveVariant(notif.type)
+                const vs = VARIANT_STYLES[variant]
+                return (
+                  <li
+                    key={notif.id}
+                    onClick={() => { if (!notif.is_read) markRead([notif.id]) }}
+                    className={`relative flex items-start gap-3 p-4 pl-4 border-l-4 cursor-pointer transition-colors hover:brightness-95 dark:hover:brightness-110 ${vs.border} ${!notif.is_read ? vs.bg : 'bg-white dark:bg-gray-900'}`}
+                  >
+                    {/* Type icon */}
+                    <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
+                      {vs.icon}
                     </div>
-                  </div>
-                </li>
-              ))}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 pr-6">
+                      <div className="flex items-start gap-2">
+                        <p className={`text-sm font-semibold leading-snug flex-1 ${!notif.is_read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {notif.title}
+                        </p>
+                        {!notif.is_read && (
+                          <span className="mt-1 block h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                        {notif.body}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                        {notif.sender_name && (
+                          <>
+                            <span>{notif.sender_name}</span>
+                            <span aria-hidden="true">·</span>
+                          </>
+                        )}
+                        <span>{formatRelativeTime(notif.created_at)}</span>
+                      </div>
+                    </div>
+
+                    {/* Dismiss X */}
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); dismiss(notif.id) }}
+                      className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+                      title="Tutup"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>
@@ -234,23 +280,30 @@ export default function NotifikasiPage() {
             />
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {sentNotifications.map(sent => (
-                <li key={sent.id} className="flex items-start gap-3 p-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium leading-snug text-gray-900 dark:text-white">
-                      {sent.title}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                      {sent.body}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                      <span>Terkirim ke {sent.recipient_count} pengguna</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{formatRelativeTime(sent.created_at)}</span>
+              {sentNotifications.map(sent => {
+                const variant = resolveVariant(sent.type)
+                const vs = VARIANT_STYLES[variant]
+                return (
+                  <li key={sent.id} className={`flex items-start gap-3 p-4 border-l-4 ${vs.border} ${vs.bg}`}>
+                    <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
+                      {vs.icon}
                     </div>
-                  </div>
-                </li>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                        {sent.title}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                        {sent.body}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                        <span>Terkirim ke {sent.recipient_count} pengguna</span>
+                        <span aria-hidden="true">·</span>
+                        <span>{formatRelativeTime(sent.created_at)}</span>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

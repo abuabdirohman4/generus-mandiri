@@ -41,9 +41,12 @@ export interface NotificationWithStatus extends NotificationBase {
 
 // ─── Request/Response ─────────────────────────────────────────────────────────
 
+export type NotificationType = 'info' | 'success' | 'warning'
+
 export interface SendNotificationInput {
   title: string
   body: string
+  type?: NotificationType
   target: NotificationTargetScope
 }
 
@@ -53,6 +56,7 @@ export interface NotificationSentSummary {
   id: string
   title: string
   body: string
+  type: string
   created_at: string
   recipient_count: number
 }
