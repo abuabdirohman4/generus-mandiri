@@ -1,15 +1,20 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useNotifications } from '@/hooks/useNotifications';
 import { signOut } from '@/app/(full-width-pages)/(auth)/actions';
 import QuickActions from './components/QuickActions';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { isAdminLegacy, clearUserCache } from '@/lib/userUtils';
 import { useDashboardStore } from '@/app/(admin)/dashboard/stores/dashboardStore';
 import { useLaporanStore } from '@/stores/laporanStore';
+import NotificationBanner from '@/components/layouts/NotificationBanner';
 
 export default function HomePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+  const { unreadCount } = useNotifications();
   const { profile } = useUserProfile();
 
   const handleLogout = async () => {
@@ -96,6 +101,22 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Notification Bell */}
+            <button
+              onClick={() => router.push('/notifikasi')}
+              className="relative w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all duration-200 shrink-0"
+              title="Notifikasi"
+            >
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-400 px-1 text-[10px] font-bold leading-none text-white z-10">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+
             {/* Logout */}
             <button
               onClick={handleLogout}
@@ -125,7 +146,12 @@ export default function HomePage() {
         </div>
       </div>
       
-      <div className="mx-auto px-3 pt-28 pb-24 sm:px-6 lg:px-8 md:py-8">
+      {/* Notification Section */}
+      <div className="md:hidden mb-5 pt-28">
+        <NotificationBanner />
+      </div>
+      
+      <div className="mx-auto px-3 pb-24 sm:px-6 lg:px-8 md:py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="md:flex md:gap-2 text-3xl font-bold text-gray-900 dark:text-white mb-2">

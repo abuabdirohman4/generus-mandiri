@@ -58,6 +58,8 @@ function PageTitle() {
         return 'Kegiatan';
       case '/tracking':
         return 'Tracking';
+      case '/notifikasi':
+        return 'Notifikasi';
       case '/settings':
           return 'Pengaturan';
       case '/settings/security':
@@ -195,7 +197,7 @@ function ApplicationMenu({
         {/* <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} />
         <ThemeToggleButton /> */}
         <NotificationBadge />
-        {/* <NotificationDropdown /> */}
+        <NotificationDropdown />
       </div>
       <UserDropdown />
     </div>
