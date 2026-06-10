@@ -816,3 +816,65 @@ Disimpan di `app_settings` (reuse, key=`grade_promotion_enabled`, value jsonb `{
 `academic_year` AKTIF = sumber kebenaran (admin bikin tahun baru + set-active via `/tahun-ajaran` existing DULU). Naik-kelas TIDAK bikin academic_year sendiri. Per siswa (partial success, no rollback): upsert `student_enrollments` (semester WAJIB, NOT NULL) → update `students.class_id` → upsert `student_classes` → insert `grade_promotion_logs` (immutable audit).
 
 **Reference**: `src/app/(admin)/naik-kelas/`, plan `docs/plans/2026-06-07-sm-jsb-naik-kelas-impl.md`.
+
+---
+
+## Notifikasi (Broadcast Notification) Pattern — sm-69c
+
+### Fan-out storage
+
+1 broadcast → 1 row `notifications` → N rows `notification_recipients` (satu per penerima). Tidak pakai pubsub/channel — simple relational fan-out. MVP delivery via **SWR polling** (60s + revalidateOnFocus).
+
+```
+notifications (1 row)
+  id, title, body, type='broadcast', target_scope (jsonb), sender_id, created_at
+
+notification_recipients (N rows)
+  notification_id → FK notifications CASCADE
+  recipient_id → FK profiles CASCADE
+  is_read, read_at, is_dismissed
+  UNIQUE(notification_id, recipient_id)
+```
+
+### Access control
+
+```ts
+// src/lib/accessControl.ts
+export function canSendNotification(profile: UserProfile): boolean {
+  return isSuperAdmin(profile) || isAdminDaerah(profile)
+}
+```
+
+Admin daerah dipaksa ke scope daerah sendiri (`resolveTargetScopeForSender` di `logic.ts`). Tidak bisa target daerah lain.
+
+### Scope resolution
+
+`fetchRecipientProfileIds(supabase, scope)` di `queries.ts`:
+- scope punya `kelompok_id` → filter langsung by kelompok_id
+- scope punya `desa_id` → resolve semua kelompok dalam desa, filter by kelompok_ids
+- scope punya `daerah_id` → resolve semua desa→kelompok dalam daerah
+- + optional role filter (kolom `role` di profiles)
+- Reuse pola `resolveKelompokIdsInScope` dari `naik-kelas/actions/classes/queries.ts`
+
+### 3-layer structure
+
+`src/app/(admin)/notifikasi/actions/notifications/`
+- `logic.ts` — pure functions (validate, resolveScope, buildFilter)
+- `queries.ts` — DB functions (fetchRecipients, insertNotification, markRead, etc.)
+- `actions.ts` — `'use server'`, return `{success,data,message}`
+- `actions/index.ts` — re-export semua server actions
+
+### Client hook
+
+`src/hooks/useNotifications.ts` — SWR polling, expose `notifications`, `unreadCount`, `markRead`, `markAllRead`, `dismiss`, `mutate`.
+
+### UI components
+
+- `NotificationDropdown.tsx` — bell badge di AppHeader, dropdown 5 terbaru
+- `NotificationBanner.tsx` — dismissable banner di AdminLayout (`src/app/(admin)/layout.tsx`)
+- `/notifikasi/page.tsx` — full list + "Tandai semua" + "Kirim Notifikasi" (guard: `canSendNotification`)
+- `notifikasi/components/KirimBroadcastForm.tsx` — cascading org picker, role checkboxes
+
+### Fase 2 (belum diimplementasi — follow-up issue)
+
+Realtime delivery via Supabase Postgres Changes: `alter publication supabase_realtime add table public.notification_recipients`. Tidak ada di MVP — buat issue terpisah sebelum mengerjakan.
