@@ -136,16 +136,16 @@ function NotificationListItem({
     <li>
       <DropdownItem
         onItemClick={handleClick}
-        baseClassName=""
-        className={`flex gap-3 rounded-lg border-b border-gray-100 px-4 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
+        tag="a"
+        href="/notifikasi"
+        className={`flex w-full gap-3 rounded-lg border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
           item.is_read
             ? "bg-white dark:bg-transparent"
             : "bg-blue-50 dark:bg-blue-900/20"
         }`}
-        href="/notifikasi"
       >
         {/* Unread indicator dot */}
-        <span className="mt-1.5 flex-shrink-0">
+        <span className="mt-1.5 shrink-0">
           <span
             className={`block h-2 w-2 rounded-full ${
               item.is_read ? "bg-transparent" : "bg-blue-500"
@@ -154,19 +154,20 @@ function NotificationListItem({
         </span>
 
         <span className="block min-w-0 flex-1">
-          {/* Sender + title */}
+          {/* Sender name */}
+          {item.sender_name && (
+            <span className="block truncate text-theme-xs text-gray-400 dark:text-gray-500 mb-0.5">
+              {item.sender_name}
+            </span>
+          )}
+          {/* Title */}
           <span
-            className={`mb-0.5 block truncate text-theme-sm ${
+            className={`mb-0.5 block line-clamp-2 text-theme-sm ${
               item.is_read
                 ? "text-gray-700 dark:text-gray-300"
                 : "font-semibold text-gray-900 dark:text-white"
             }`}
           >
-            {item.sender_name ? (
-              <>
-                <span className="font-medium">{item.sender_name}:</span>{" "}
-              </>
-            ) : null}
             {item.title}
           </span>
 
@@ -222,7 +223,7 @@ export default function NotificationDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute -right-[240px] mt-[17px] flex w-[350px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-[361px] lg:right-0"
+        className="absolute -right-60 mt-4.25 flex w-87.5 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-90.25 lg:right-0"
       >
         <NotificationHeader
           unreadCount={unreadCount}
@@ -233,7 +234,7 @@ export default function NotificationDropdown() {
         {recentNotifications.length === 0 ? (
           <EmptyState />
         ) : (
-          <ul className="flex flex-col overflow-y-auto custom-scrollbar max-h-[360px]">
+          <ul className="flex flex-col overflow-y-auto custom-scrollbar max-h-90">
             {recentNotifications.map((item) => (
               <NotificationListItem
                 key={item.id}

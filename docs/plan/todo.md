@@ -1,4 +1,5 @@
 ## Backlog
+- di laporan, siswa tidak aktif masih muncul
 - buatkan e2e, dan ingatkan untuk selalu buat e2e
 - Table absensi bisa disortir
 - buat notifikasi, di home/header, terkait info/feature dll

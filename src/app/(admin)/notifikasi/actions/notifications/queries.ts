@@ -110,7 +110,7 @@ export async function fetchMyNotifications(
     is_read: row.is_read,
     read_at: row.read_at,
     is_dismissed: row.is_dismissed,
-  }))
+  })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
 // Count unread notifications for a user

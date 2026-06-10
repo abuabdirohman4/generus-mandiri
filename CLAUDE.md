@@ -229,6 +229,8 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Dashboard Calculation**: [`docs/claude/dashboard-attendance-calculation-id.md`](docs/claude/dashboard-attendance-calculation-id.md)
 - [x] Standardized Responses: [`docs/claude/server-actions-conventions.md`](docs/claude/server-actions-conventions.md)
 - **Activity Logging**: [`docs/claude/activity-logging.md`](docs/claude/activity-logging.md)
+- **UI Components & Icons**: READ [`docs/claude/ui-components.md`](docs/claude/ui-components.md) — icon system, form components, NotificationBanner, DropdownItem rules
+- **Page Structure**: READ [`docs/claude/page-structure-conventions.md`](docs/claude/page-structure-conventions.md) — outer div pattern, mobile padding, new-page checklist
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:7510c1e2 -->
