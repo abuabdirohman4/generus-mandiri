@@ -30,9 +30,9 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
   >
   > Mulai sekarang, admin atau pengurus bisa mengirim pengumuman langsung ke user melalui aplikasi.
   >
-  > Pengumuman akan muncul otomatis saat user membuka aplikasi. Sebagai penguat selain informasi melalu WhatsApp atau media lain — semua info penting juga akan disampaikan lewat fitur notifikasi atau pengumuman ini.
+  > Pengumuman akan muncul otomatis saat user membuka aplikasi. Sebagai penguat selain informasi melalui WhatsApp atau media lain — semua info penting juga akan disampaikan lewat fitur notifikasi atau pengumuman ini.
   >
-  > Semoga Allah Paring Aman Selamat Lancar Barokah. 
+  > Semoga Allah Paring Aman Selamat Lancar dan Barokah. 
   >
   > Aamiin
 
