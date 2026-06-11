@@ -9,7 +9,7 @@ Claude baca file ini saat `/release` untuk cek apakah ada pengumuman yang perlu 
 ### [status] Judul Pengumuman
 - **Trigger**: Issue/kondisi yang harus selesai dulu sebelum kirim
 - **Target**: Siapa yang menerima (semua / superadmin / admin daerah / dll)
-- **Draft**: Isi pengumuman (bisa dibantu Claude saat waktunya)
+- **Draft**: Isi pengumuman
 - **Dikirim**: Tanggal kirim (diisi setelah dikirim)
 ```
 
@@ -21,31 +21,37 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 
 ### [~] Fitur Pengumuman & Broadcast Notifikasi
 - **Trigger**: sm-69c selesai + deploy
-- **Target**: Semua admin daerah + superadmin
+- **Target**: Semua guru + siswa (penerima notifikasi, bukan pengirim)
 - **Draft**:
 
-  > 🔔 **Fitur Baru: Pengumuman & Broadcast Notifikasi**
+  > 🔔 **Info: Fitur Pengumuman**
   >
-  > Kini Anda bisa mengirim pengumuman langsung ke seluruh pengguna dalam lingkup organisasi Anda — per daerah, desa, kelompok, atau berdasarkan peran (guru/siswa/admin).
+  > Assalammualaikum Wr. Wb.
   >
-  > Cara pakai: buka menu **Notifikasi** → klik **Kirim Notifikasi** → pilih penerima → tulis pesan → kirim.
+  > Mulai sekarang, admin atau pengurus bisa mengirim pengumuman langsung ke user melalui aplikasi.
   >
-  > Penerima akan melihat notifikasi di aplikasi secara langsung. Fitur ini cocok untuk pengumuman jadwal, informasi kegiatan, atau hal penting lainnya.
+  > Pengumuman akan muncul otomatis saat user membuka aplikasi. Sebagai penguat selain informasi melalu WhatsApp atau media lain — semua info penting juga akan disampaikan lewat fitur notifikasi atau pengumuman ini.
+  >
+  > Semoga Allah Paring Aman Selamat Lancar Barokah. 
+  >
+  > Aamiin
 
 - **Dikirim**: -
 
 ---
 
-### [~] Fitur Delete & Archive Notifikasi
-- **Trigger**: Issue delete/archive notif selesai (belum ada issue — buat dulu)
-- **Target**: Semua pengguna
+### [~] Fitur Hapus & Archive Siswa
+- **Trigger**: Issue hapus/archive siswa aktif selesai (belum ada issue — buat dulu)
+- **Target**: Admin daerah + admin desa + admin kelompok
 - **Draft**:
 
-  > 🗂️ **Update Notifikasi: Hapus & Arsipkan Pesan**
+  > 🗂️ **Fitur Kelola Status Siswa**
   >
-  > Kotak notifikasi Anda kini bisa dikelola lebih rapi. Pesan yang sudah dibaca bisa dihapus atau diarsipkan agar tidak menumpuk.
+  > Sekarang Anda bisa menghapus atau mengarsipkan data siswa yang sudah tidak lagi terdaftar di kelompok Anda.
   >
-  > Cukup buka **Notifikasi** dan geser atau klik ikon pada pesan yang ingin dikelola.
+  > Gunakan fitur **Hapus Siswa** hanya untuk data yang salah, jika ada siswa yang tidak aktif karena pindah tempat tinggal atau alasan lainnya, bisa pakai fitur **Arsip Siswa** dengan begitu data siswa tersebut tetap ada dan dapat dipakai lagi nantinya, tapi siswa tersebut sudah tidak termasuk siswa yang wajib hadir di suatu pertemuan.
+  >
+  > Data yang diarsipkan tidak hilang permanen dan masih bisa dikembalikan jika diperlukan. Buka halaman **Siswa** untuk menggunakan fitur ini.
 
 - **Dikirim**: -
 
@@ -58,9 +64,9 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 
   > 📖 **Panduan Penggunaan Aplikasi Tersedia**
   >
-  > Kami telah menyiapkan dokumentasi lengkap cara penggunaan aplikasi Generus Mandiri — mulai dari mengelola siswa, mencatat presensi, hingga mencetak laporan.
+  > Kami telah menyiapkan dokumentasi lengkap cara penggunaan aplikasi **Generus Mandiri** — mulai dari mengelola siswa, mencatat presensi, hingga mencetak laporan.
   >
-  > Dokumentasi bisa diakses langsung dari menu **Bantuan** di aplikasi. Jika ada pertanyaan yang belum terjawab, silakan hubungi admin pusat.
+  > Dokumentasi bisa diakses langsung dari menu **Dokumentasi** di aplikasi.
 
 - **Dikirim**: -
 
@@ -68,30 +74,34 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 
 ### [~] Fitur Naik Kelas Tersedia
 - **Trigger**: sm-ejs selesai + stable di production
-- **Target**: Semua admin daerah + superadmin
+- **Target**: Semua guru + siswa (yang terdampak proses kenaikan kelas)
 - **Draft**:
 
-  > 🎓 **Fitur Baru: Kenaikan Kelas Massal**
+  > 🎓 **Info: Proses Kenaikan Kelas Akan Segera Dilaksanakan**
   >
-  > Proses kenaikan kelas akhir tahun kini bisa dilakukan sekaligus untuk seluruh siswa dalam satu alur wizard yang mudah.
+  > Pengurus sedang mempersiapkan proses kenaikan kelas akhir tahun ajaran 2025/2026.
   >
-  > Buka menu **Naik Kelas**, pilih kelas yang akan dinaikkan, review daftar siswa, lalu konfirmasi. Sistem akan memindahkan siswa ke kelas berikutnya secara otomatis.
+  > Semua siswa dari Kelas 1 - 6, SMP 1 - 3 dan SMA 1 - 3 akan otomatis dinaikkan semua ke kelas di atasnya.
   >
-  > Fitur ini aktif saat admin mengaktifkan **Mode Naik Kelas** di pengaturan.
+  > Untuk kelas PAUD karena ada beberapa siswa yang masih akan termasuk ke dalam kelas PAUD lagi, maka tidak akan otomatis dinaikkan semua.
+  > 
+  > Dan juga Kelas Pra Nikah tida akan otomatis dinaikkan semua karena kenaikkan kelasnya yang berbeda antar kampus nya.
+  > 
+  > Sehingga kami akan meminta para pengajar atau penganggung jawab kelompoknya masing-masing untuk menaikkan siswa yang perlu di naikkan ke Kelas 1 atau kelas Pra Nikah berikutnya secara manual, melalui fitur **Bulk Edit Siswa** yang akan di tambahkan di aplikasi beserta Tutorial singkat cara pakainya.
 
 - **Dikirim**: -
 
 ---
 
-### [~] Info: Naik Kelas — Paud & Pra Nikah Dikecualikan
+### [~] Info: Paud & Pra Nikah Tidak Ikut Naik Kelas
 - **Trigger**: Bersamaan dengan pengumuman naik kelas (sm-ejs)
-- **Target**: Semua admin + guru yang mengampu kelas Paud atau Pra Nikah
+- **Target**: Guru + siswa kelas Paud dan Pra Nikah
 - **Draft**:
 
-  > ℹ️ **Informasi Penting: Kenaikan Kelas**
+  > ℹ️ **Informasi untuk Kelas Paud & Pra Nikah**
   >
-  > Perlu diketahui bahwa kelas **Paud** dan **Pra Nikah** **tidak termasuk** dalam proses kenaikan kelas otomatis.
+  > Proses kenaikan kelas otomatis **tidak berlaku** untuk kelas Paud dan Pra Nikah.
   >
-  > Pengelolaan siswa di kedua kelas tersebut tetap dilakukan secara manual seperti biasa. Jika ada pertanyaan, hubungi admin daerah Anda.
+  > Pengelolaan siswa di kedua kelas ini tetap berjalan seperti biasa. Tidak ada perubahan yang perlu dilakukan. Jika ada pertanyaan, silakan hubungi admin kelompok Anda.
 
 - **Dikirim**: -
