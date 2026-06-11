@@ -129,7 +129,8 @@ export default function NotifikasiPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -309,5 +310,6 @@ export default function NotifikasiPage() {
         </div>
       )}
     </div>
+      </div>
   )
 }

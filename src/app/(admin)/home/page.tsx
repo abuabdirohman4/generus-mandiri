@@ -150,6 +150,9 @@ export default function HomePage() {
       <div className="md:hidden mb-5 pt-28">
         <NotificationBanner />
       </div>
+      <div className="hidden md:block">
+        <NotificationBanner />
+      </div>
       
       <div className="mx-auto px-3 pb-24 sm:px-6 lg:px-8 md:py-8">
         {/* Welcome Section */}

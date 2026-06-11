@@ -12,7 +12,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { canAccessFeature } from "@/lib/accessControl";
 import PageViewTracker from "@/components/common/PageViewTracker";
-import NotificationBanner from "@/components/layouts/NotificationBanner";
 
 export default function AdminLayout({
   children,
@@ -57,9 +56,6 @@ export default function AdminLayout({
         >
           <AppHeader />
           <div className={`px-4 pt-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 md:pb-6`}>
-            <div className="hidden md:block">
-              <NotificationBanner />
-            </div>
             {children}
           </div>
         </div>
