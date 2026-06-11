@@ -1,5 +1,5 @@
 import type { UserProfile } from '@/types/user'
-import type { NotificationTargetScope, SendNotificationInput } from '@/types/notification'
+import type { NotificationTargetScope, SendNotificationInput, UpdateNotificationInput } from '@/types/notification'
 
 export function validateNotificationInput(input: SendNotificationInput): { ok: boolean; error?: string } {
   if (!input.title?.trim()) return { ok: false, error: 'Judul tidak boleh kosong' }
@@ -31,4 +31,12 @@ export function buildRecipientProfileFilter(scope: NotificationTargetScope): {
   if (scope.desa_id) return { column: 'desa_id', value: scope.desa_id, roles: scope.roles }
   if (scope.daerah_id) return { column: 'daerah_id', value: scope.daerah_id, roles: scope.roles }
   return { column: null, value: null, roles: scope.roles }
+}
+
+export function validateUpdateNotificationInput(input: UpdateNotificationInput): { ok: boolean; error?: string } {
+  if (!input.title?.trim()) return { ok: false, error: 'Judul tidak boleh kosong' }
+  if (input.title.length > 200) return { ok: false, error: 'Judul maksimal 200 karakter' }
+  if (!input.body?.trim()) return { ok: false, error: 'Isi pesan tidak boleh kosong' }
+  if (input.body.length > 1000) return { ok: false, error: 'Isi pesan maksimal 1000 karakter' }
+  return { ok: true }
 }

@@ -176,9 +176,12 @@ function NotificationListItem({
             {item.body}
           </span>
 
-          {/* Timestamp */}
-          <span className="text-theme-xs text-gray-400 dark:text-gray-500">
-            {formatRelativeTime(item.created_at)}
+          {/* Timestamp + edited */}
+          <span className="flex items-center gap-1 text-theme-xs text-gray-400 dark:text-gray-500">
+            <span>{formatRelativeTime(item.created_at)}</span>
+            {item.edited_at && (
+              <span className="italic">· diedit</span>
+            )}
           </span>
         </span>
       </DropdownItem>

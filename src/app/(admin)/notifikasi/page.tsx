@@ -5,9 +5,11 @@ import useSWR from 'swr'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canSendNotification } from '@/lib/accessControl'
-import { getSentNotifications } from './actions'
+import { getSentNotifications, deleteNotification, updateNotification } from './actions'
 import Button from '@/components/ui/button/Button'
 import KirimBroadcastForm from './components/KirimBroadcastForm'
+import type { NotificationSentSummary } from '@/types/notification'
+import ConfirmModal from '@/components/ui/modal/ConfirmModal'
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
@@ -113,6 +115,11 @@ export default function NotifikasiPage() {
   const { profile } = useUserProfile()
   const [showForm, setShowForm] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('received')
+  const [editingNotif, setEditingNotif] = useState<NotificationSentSummary | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', body: '', type: 'info' as string })
+  const [editLoading, setEditLoading] = useState(false)
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const canSend = profile ? canSendNotification(profile) : false
 
@@ -126,6 +133,37 @@ export default function NotifikasiPage() {
     setShowForm(false)
     mutate()
     mutateSent()
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeleteLoadingId(id)
+    const res = await deleteNotification(id)
+    setDeleteLoadingId(null)
+    if (res.success) {
+      setConfirmDeleteId(null)
+      mutateSent()
+    }
+  }
+
+  const handleEditStart = (notif: NotificationSentSummary) => {
+    setEditingNotif(notif)
+    setEditForm({ title: notif.title, body: notif.body, type: notif.type })
+  }
+
+  const handleEditSave = async () => {
+    if (!editingNotif) return
+    setEditLoading(true)
+    const res = await updateNotification(editingNotif.id, {
+      title: editForm.title,
+      body: editForm.body,
+      type: editForm.type as 'info' | 'success' | 'warning',
+    })
+    setEditLoading(false)
+    if (res.success) {
+      setEditingNotif(null)
+      mutateSent()
+      mutate()
+    }
   }
 
   return (
@@ -285,23 +323,74 @@ export default function NotifikasiPage() {
                 const variant = resolveVariant(sent.type)
                 const vs = VARIANT_STYLES[variant]
                 return (
-                  <li key={sent.id} className={`flex items-start gap-3 p-4 border-l-4 ${vs.border} ${vs.bg}`}>
-                    <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
-                      {vs.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
-                        {sent.title}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                        {sent.body}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                        <span>Terkirim ke {sent.recipient_count} pengguna</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{formatRelativeTime(sent.created_at)}</span>
+                  <li key={sent.id} className={`border-l-4 ${vs.border} ${vs.bg}`}>
+                    {editingNotif?.id === sent.id ? (
+                      <div className="p-4 space-y-3">
+                        <input
+                          className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white"
+                          value={editForm.title}
+                          onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                          placeholder="Judul"
+                        />
+                        <textarea
+                          className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white resize-none"
+                          rows={3}
+                          value={editForm.body}
+                          onChange={e => setEditForm(f => ({ ...f, body: e.target.value }))}
+                          placeholder="Isi pesan"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="primary" onClick={handleEditSave} disabled={editLoading}>
+                            {editLoading ? 'Menyimpan...' : 'Simpan'}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingNotif(null)}>
+                            Batal
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-start gap-3 p-4">
+                        <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
+                          {vs.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                            {sent.title}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                            {sent.body}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                            <span>Terkirim ke {sent.recipient_count} pengguna</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatRelativeTime(sent.created_at)}</span>
+                            {sent.edited_at && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="italic">diedit</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleEditStart(sent)}
+                            className="text-xs px-2 py-1 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(sent.id)}
+                            disabled={deleteLoadingId === sent.id}
+                            className="text-xs px-2 py-1 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                          >
+                            {deleteLoadingId === sent.id ? '...' : 'Hapus'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 )
               })}
@@ -310,6 +399,16 @@ export default function NotifikasiPage() {
         </div>
       )}
     </div>
-      </div>
+      <ConfirmModal
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+        title="Hapus Notifikasi"
+        message="Notifikasi ini akan dihapus dari semua inbox penerima."
+        confirmText="Hapus"
+        isDestructive
+        isLoading={deleteLoadingId !== null}
+      />
+    </div>
   )
 }

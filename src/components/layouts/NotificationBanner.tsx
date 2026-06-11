@@ -43,7 +43,7 @@ function BannerIcon({ type, className }: { type: string; className: string }) {
 export default function NotificationBanner() {
   const { notifications, dismiss } = useNotifications()
 
-  const undismissed = notifications.filter(n => !n.is_dismissed)
+  const undismissed = notifications.filter(n => !n.is_dismissed).slice(0, 3)
   if (undismissed.length === 0) return null
 
   return (

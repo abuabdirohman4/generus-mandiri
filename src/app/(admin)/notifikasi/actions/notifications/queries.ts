@@ -4,7 +4,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { NotificationTargetScope, NotificationWithStatus, NotificationSentSummary } from '@/types/notification'
+import type { NotificationTargetScope, NotificationWithStatus, NotificationSentSummary, UpdateNotificationInput } from '@/types/notification'
 
 // Insert a notification row, return it
 export async function insertNotification(
@@ -84,6 +84,7 @@ export async function fetchMyNotifications(
         body,
         type,
         created_at,
+        edited_at,
         sender:sender_id (
           full_name
         )
@@ -110,6 +111,7 @@ export async function fetchMyNotifications(
     is_read: row.is_read,
     read_at: row.read_at,
     is_dismissed: row.is_dismissed,
+    edited_at: row.notifications.edited_at ?? null,
   })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
@@ -162,7 +164,7 @@ export async function fetchSentNotifications(
 ): Promise<NotificationSentSummary[]> {
   const { data, error } = await supabase
     .from('notifications')
-    .select('id, title, body, type, created_at, notification_recipients(count)')
+    .select('id, title, body, type, created_at, edited_at, notification_recipients(count)')
     .eq('sender_id', senderId)
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -175,6 +177,45 @@ export async function fetchSentNotifications(
     body: row.body,
     type: row.type ?? 'info',
     created_at: row.created_at,
+    edited_at: row.edited_at ?? null,
     recipient_count: row.notification_recipients?.[0]?.count ?? 0,
   }))
+}
+
+// Hard delete a notification (sender only — cascades to notification_recipients)
+export async function deleteNotification(supabase: SupabaseClient, notificationId: string, senderId: string) {
+  return await supabase
+    .from('notifications')
+    .delete()
+    .eq('id', notificationId)
+    .eq('sender_id', senderId)
+}
+
+// Update notification title/body/type and set edited_at
+export async function updateNotification(
+  supabase: SupabaseClient,
+  notificationId: string,
+  senderId: string,
+  input: UpdateNotificationInput
+) {
+  return await supabase
+    .from('notifications')
+    .update({
+      title: input.title.trim(),
+      body: input.body.trim(),
+      type: input.type ?? 'info',
+      edited_at: new Date().toISOString(),
+    })
+    .eq('id', notificationId)
+    .eq('sender_id', senderId)
+    .select()
+    .single()
+}
+
+// Reset all recipients to unread after an edit
+export async function resetRecipientsUnread(supabase: SupabaseClient, notificationId: string) {
+  return await supabase
+    .from('notification_recipients')
+    .update({ is_read: false, read_at: null, is_dismissed: false })
+    .eq('notification_id', notificationId)
 }

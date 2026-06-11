@@ -19,6 +19,7 @@ export interface NotificationBase {
   body: string
   type: string
   created_at: string
+  edited_at?: string | null
 }
 
 // ─── Extended Types ───────────────────────────────────────────────────────────
@@ -50,6 +51,14 @@ export interface SendNotificationInput {
   target: NotificationTargetScope
 }
 
+// ─── Edit / Update ────────────────────────────────────────────────────────────
+
+export interface UpdateNotificationInput {
+  title: string
+  body: string
+  type?: NotificationType
+}
+
 // ─── Sent (sender's own broadcasts) ───────────────────────────────────────────
 
 export interface NotificationSentSummary {
@@ -58,5 +67,6 @@ export interface NotificationSentSummary {
   body: string
   type: string
   created_at: string
+  edited_at: string | null
   recipient_count: number
 }

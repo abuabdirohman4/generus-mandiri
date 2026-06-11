@@ -6,4 +6,6 @@ export {
   markNotificationRead,
   markAllNotificationsRead,
   dismissNotification,
+  deleteNotification,
+  updateNotification,
 } from './notifications/actions'

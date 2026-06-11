@@ -5,7 +5,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { canSendNotification } from '@/lib/accessControl'
 import { logActivity } from '@/lib/activityLogger'
-import { validateNotificationInput, resolveTargetScopeForSender } from './logic'
+import { validateNotificationInput, resolveTargetScopeForSender, validateUpdateNotificationInput } from './logic'
 import {
   insertNotification,
   insertRecipients,
@@ -16,8 +16,11 @@ import {
   markAllRead,
   dismiss,
   fetchSentNotifications,
+  deleteNotification as dbDeleteNotification,
+  updateNotification as dbUpdateNotification,
+  resetRecipientsUnread,
 } from './queries'
-import type { SendNotificationInput } from '@/types/notification'
+import type { SendNotificationInput, UpdateNotificationInput } from '@/types/notification'
 
 export async function sendNotification(input: SendNotificationInput) {
   try {
@@ -180,5 +183,54 @@ export async function dismissNotification(notificationId: string) {
     return { success: true, message: '' }
   } catch {
     return { success: false, message: 'Gagal menutup notifikasi' }
+  }
+}
+
+export async function deleteNotification(notificationId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, message: 'Tidak terautentikasi' }
+
+    const profile = await getCurrentUserProfile()
+    if (!profile) return { success: false, message: 'Profil tidak ditemukan' }
+    if (!canSendNotification(profile)) return { success: false, message: 'Tidak memiliki izin' }
+
+    const adminClient = await createAdminClient()
+    const { error } = await dbDeleteNotification(adminClient, notificationId, profile.id)
+    if (error) return { success: false, message: 'Gagal menghapus notifikasi' }
+
+    revalidatePath('/notifikasi')
+    return { success: true, message: 'Notifikasi berhasil dihapus' }
+  } catch {
+    return { success: false, message: 'Terjadi kesalahan' }
+  }
+}
+
+export async function updateNotification(notificationId: string, input: UpdateNotificationInput) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, message: 'Tidak terautentikasi' }
+
+    const profile = await getCurrentUserProfile()
+    if (!profile) return { success: false, message: 'Profil tidak ditemukan' }
+    if (!canSendNotification(profile)) return { success: false, message: 'Tidak memiliki izin' }
+
+    const validation = validateUpdateNotificationInput(input)
+    if (!validation.ok) return { success: false, message: validation.error }
+
+    const adminClient = await createAdminClient()
+
+    const { error } = await dbUpdateNotification(adminClient, notificationId, profile.id, input)
+    if (error) return { success: false, message: 'Gagal memperbarui notifikasi' }
+
+    // Reset all recipients to unread so they see the updated content
+    await resetRecipientsUnread(adminClient, notificationId)
+
+    revalidatePath('/notifikasi')
+    return { success: true, message: 'Notifikasi berhasil diperbarui' }
+  } catch {
+    return { success: false, message: 'Terjadi kesalahan' }
   }
 }
