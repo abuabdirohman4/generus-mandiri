@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
@@ -123,21 +124,17 @@ function NotificationHeader({
 function NotificationListItem({
   item,
   onRead,
-  onClose,
   navigating,
   onNavigate,
 }: {
   item: NotificationWithStatus;
   onRead: () => void;
-  onClose: () => void;
   navigating: boolean;
   onNavigate: (id: string) => void;
 }) {
   const handleClick = () => {
     if (!item.is_read) onRead();
     onNavigate(item.id);
-    // Defer close so the <Link> can navigate before Dropdown unmounts
-    setTimeout(() => onClose(), 0);
   };
 
   return (
@@ -222,6 +219,14 @@ export default function NotificationDropdown() {
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotifications();
 
+  const pathname = usePathname();
+  useEffect(() => {
+    if (navigatingId !== null) {
+      setNavigatingId(null);
+      setIsOpen(false);
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const toggleDropdown = useCallback(() => {
     setIsOpen((prev) => !prev);
   }, []);
@@ -256,7 +261,6 @@ export default function NotificationDropdown() {
                 key={item.id}
                 item={item}
                 onRead={() => markRead([item.id])}
-                onClose={closeDropdown}
                 navigating={navigatingId === item.id}
                 onNavigate={setNavigatingId}
               />

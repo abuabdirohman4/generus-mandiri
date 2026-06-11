@@ -9,7 +9,9 @@ import {
   fetchDaerahList,
   fetchDesaList,
   fetchKelompokList,
+  fetchUserList,
   type OrgItem,
+  type UserListItem,
 } from '@/app/(admin)/notifikasi/actions/notifications/orgQueries'
 import Button from '@/components/ui/button/Button'
 import InputFilter from '@/components/form/input/InputFilter'
@@ -21,7 +23,7 @@ interface KirimBroadcastFormProps {
   onSuccess: () => void
 }
 
-type ScopeType = 'all' | 'daerah' | 'desa' | 'kelompok'
+type ScopeType = 'all' | 'daerah' | 'desa' | 'kelompok' | 'personal'
 type UrgencyPreset = 'biasa' | 'penting' | 'wajib_tindakan'
 
 const ROLE_OPTIONS = [
@@ -35,17 +37,19 @@ const SCOPE_OPTIONS_SUPERADMIN = [
   { value: 'daerah', label: 'Daerah' },
   { value: 'desa', label: 'Desa' },
   { value: 'kelompok', label: 'Kelompok' },
+  { value: 'personal', label: 'Personal (pilih pengguna)' },
 ]
 
 const SCOPE_OPTIONS_ADMIN_DAERAH = [
   { value: 'daerah', label: 'Per Daerah' },
   { value: 'desa', label: 'Per Desa' },
   { value: 'kelompok', label: 'Per Kelompok' },
+  { value: 'personal', label: 'Personal (pilih pengguna)' },
 ]
 
 const NOTIF_TYPE_OPTIONS: { value: NotificationType; label: string }[] = [
   { value: 'info', label: 'Info' },
-  { value: 'warning', label: 'Peringatan' },
+  { value: 'warning', label: 'Tindakan' },
   { value: 'success', label: 'Sukses' },
 ]
 
@@ -107,6 +111,12 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [desaList, setDesaList] = useState<OrgItem[]>([])
   const [kelompokList, setKelompokList] = useState<OrgItem[]>([])
 
+  // Personal user picker state
+  const [userSearch, setUserSearch] = useState('')
+  const [userList, setUserList] = useState<UserListItem[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
+  const [userListLoading, setUserListLoading] = useState(false)
+
   // UI state
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -155,12 +165,26 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   useEffect(() => {
     setSelectedDesa('')
     setSelectedKelompok('')
+    setSelectedUsers([])
+    setUserSearch('')
+    setUserList([])
     if (!isSA) {
       setSelectedDaerah(profile?.daerah_id ?? '')
     } else {
       if (scope === 'all') setSelectedDaerah('')
     }
   }, [scope, isSA, profile?.daerah_id])
+
+  // Load user list for personal scope
+  useEffect(() => {
+    if (scope !== 'personal') return
+    setUserListLoading(true)
+    const daerahId = isDA ? (profile?.daerah_id ?? undefined) : undefined
+    fetchUserList({ search: userSearch, daerahId }).then(list => {
+      setUserList(list)
+      setUserListLoading(false)
+    })
+  }, [scope, userSearch, isDA, profile?.daerah_id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -179,8 +203,11 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       return
     }
 
-    const target: { daerah_id?: string; desa_id?: string; kelompok_id?: string; roles?: string[] } = {}
-    if (scope === 'daerah') {
+    const target: { daerah_id?: string; desa_id?: string; kelompok_id?: string; roles?: string[]; recipient_ids?: string[] } = {}
+    if (scope === 'personal') {
+      if (selectedUsers.length === 0) { setFeedback({ type: 'error', message: 'Pilih minimal 1 penerima.' }); return }
+      target.recipient_ids = selectedUsers
+    } else if (scope === 'daerah') {
       const daerahId = isSA ? selectedDaerah : profile?.daerah_id
       if (!daerahId) { setFeedback({ type: 'error', message: 'Pilih daerah terlebih dahulu.' }); return }
       target.daerah_id = daerahId
@@ -191,7 +218,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       if (!selectedKelompok) { setFeedback({ type: 'error', message: 'Pilih kelompok terlebih dahulu.' }); return }
       target.kelompok_id = selectedKelompok
     }
-    if (selectedRoles.length > 0) target.roles = selectedRoles
+    if (scope !== 'personal' && selectedRoles.length > 0) target.roles = selectedRoles
 
     setSubmitting(true)
     try {
@@ -212,6 +239,8 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         setPreset('biasa')
         setActionUrl('')
         setActionLabel('')
+        setSelectedUsers([])
+        setUserSearch('')
         onSuccess()
       } else {
         setFeedback({ type: 'error', message: result.message || 'Gagal mengirim notifikasi.' })
@@ -244,7 +273,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 p-5 space-y-4"
     >
       <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-        Kirim Notifikasi Broadcast
+        Kirim Notifikasi
       </h3>
 
       {/* Title */}
@@ -385,7 +414,56 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
           disabled={submitting}
         />
 
-        {isSA && scope !== 'all' && (
+        {scope === 'personal' && (
+          <div className="mt-3 space-y-3">
+            <div>
+              <label htmlFor="notif-user-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Cari pengguna
+              </label>
+              <InputField
+                id="notif-user-search"
+                type="text"
+                placeholder="Cari nama..."
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            {userListLoading ? (
+              <p className="text-xs text-gray-400 dark:text-gray-500">Memuat daftar pengguna...</p>
+            ) : userList.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-gray-500">{userSearch ? 'Tidak ada hasil.' : 'Ketik nama untuk mencari.'}</p>
+            ) : (
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800">
+                {userList.map(u => (
+                  <label key={u.id} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={selectedUsers.includes(u.id)}
+                      onChange={e => {
+                        if (e.target.checked) setSelectedUsers(prev => [...prev, u.id])
+                        else setSelectedUsers(prev => prev.filter(id => id !== u.id))
+                      }}
+                      disabled={submitting}
+                    />
+                    <span className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{u.name}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{u.subtitle}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+            {selectedUsers.length > 0 && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                {selectedUsers.length} pengguna dipilih
+              </p>
+            )}
+          </div>
+        )}
+
+        {isSA && scope !== 'all' && scope !== 'personal' && (
           <div className="mt-3">
             <InputFilter
               id="notif-daerah"
@@ -433,15 +511,17 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
           </div>
         )}
 
-        <div className="mt-4">
-          <MultiSelectCheckbox
-            label={<>Filter Peran <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(kosong = semua peran)</span></>}
-            items={ROLE_OPTIONS}
-            selectedIds={selectedRoles}
-            onChange={setSelectedRoles}
-            disabled={submitting}
-          />
-        </div>
+        {scope !== 'personal' && (
+          <div className="mt-4">
+            <MultiSelectCheckbox
+              label={<>Filter Peran <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(kosong = semua peran)</span></>}
+              items={ROLE_OPTIONS}
+              selectedIds={selectedRoles}
+              onChange={setSelectedRoles}
+              disabled={submitting}
+            />
+          </div>
+        )}
       </div>
 
       {/* Feedback */}

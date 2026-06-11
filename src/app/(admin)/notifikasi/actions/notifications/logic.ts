@@ -6,6 +6,14 @@ export function validateNotificationInput(input: SendNotificationInput): { ok: b
   if (input.title.length > 200) return { ok: false, error: 'Judul maksimal 200 karakter' }
   if (!input.body?.trim()) return { ok: false, error: 'Isi pesan tidak boleh kosong' }
   if (input.body.length > 1000) return { ok: false, error: 'Isi pesan maksimal 1000 karakter' }
+  if (input.target.recipient_ids !== undefined) {
+    if (!Array.isArray(input.target.recipient_ids) || input.target.recipient_ids.length === 0) {
+      return { ok: false, error: 'Pilih minimal 1 penerima untuk mode personal' }
+    }
+    if (input.target.recipient_ids.some(id => typeof id !== 'string' || !id)) {
+      return { ok: false, error: 'ID penerima tidak valid' }
+    }
+  }
   if (input.display_config) {
     const validModes = ['banner', 'modal', 'both']
     const validDismiss = ['free', 'acknowledge', 'cta_required']
@@ -24,6 +32,10 @@ export function resolveTargetScopeForSender(
     return { ok: true, scope: target }
   }
   if (profile.role === 'admin' && profile.daerah_id && !profile.desa_id && !profile.kelompok_id) {
+    // For personal (recipient_ids), don't overwrite the scope — leave as-is with daerah_id attached for reference
+    if (target.recipient_ids?.length) {
+      return { ok: true, scope: { ...target, daerah_id: profile.daerah_id } }
+    }
     return { ok: true, scope: { ...target, daerah_id: profile.daerah_id } }
   }
   return { ok: false, error: 'Tidak memiliki izin untuk mengirim notifikasi' }

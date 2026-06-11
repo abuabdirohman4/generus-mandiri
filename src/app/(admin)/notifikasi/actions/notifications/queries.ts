@@ -43,6 +43,13 @@ export async function fetchRecipientProfileIds(
   scope: NotificationTargetScope,
   excludeUserId?: string
 ): Promise<string[]> {
+  // Personal: recipient_ids provided directly, skip org resolve
+  if (scope.recipient_ids?.length) {
+    const ids = scope.recipient_ids
+    if (excludeUserId) return ids.filter((id: string) => id !== excludeUserId)
+    return ids
+  }
+
   let query = supabase.from('profiles').select('id')
 
   // Apply org scope filter

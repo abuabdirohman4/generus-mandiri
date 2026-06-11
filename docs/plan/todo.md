@@ -7,7 +7,7 @@
     2. Adanya fitur delete & archive
     3. Adanya dokumentasi
     4. Akan adanya naik kelas
-    5. Naik kelas kecuali padu dan pra nikah
+    5. Naik kelas kecuali paud dan pra nikah
 
 
 - Saat delete, edukasi kalau memang bukan salah data atau siswa hanya pindah sambung tidak perlu dihapus, di archive saja, lalu sediakan arah ke archive

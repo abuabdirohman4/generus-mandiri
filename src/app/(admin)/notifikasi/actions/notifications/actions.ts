@@ -42,6 +42,23 @@ export async function sendNotification(input: SendNotificationInput) {
 
     const adminClient = await createAdminClient()
 
+    // Security guard: Admin Daerah cannot send personal notif to users outside their daerah
+    if (
+      profile.role === 'admin' &&
+      profile.daerah_id &&
+      input.target.recipient_ids?.length
+    ) {
+      const { data: validProfiles } = await adminClient
+        .from('profiles')
+        .select('id')
+        .in('id', input.target.recipient_ids)
+        .eq('daerah_id', profile.daerah_id)
+      const validCount = validProfiles?.length ?? 0
+      if (validCount !== input.target.recipient_ids.length) {
+        return { success: false, message: 'Ada penerima di luar daerah Anda' }
+      }
+    }
+
     // Resolve recipients
     const recipientIds = await fetchRecipientProfileIds(adminClient, scopeResult.scope!, user.id)
     if (recipientIds.length === 0) return { success: false, message: 'Tidak ada penerima ditemukan untuk scope yang dipilih' }

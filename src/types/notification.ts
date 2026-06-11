@@ -27,6 +27,7 @@ export interface NotificationTargetScope {
   desa_id?: string | null
   kelompok_id?: string | null
   roles?: string[] // empty/undefined = all roles in scope
+  recipient_ids?: string[] // personal: skip org resolve, send directly to these profile IDs
 }
 
 // ─── Base Types ───────────────────────────────────────────────────────────────
