@@ -1,3 +1,30 @@
+- Naik Kelas
+    - [-] di kumpulkan data paud, lewat WA/Form/Aplikasi ?
+
+- [x] Dashboard
+    - [x] Dashboard desa, daerah munculkan desa daerah pas pilih kelas
+
+- Meeting
+    - [-] Add Pengajian Daerah
+        - Nama
+        - Tipe (Daerah)
+        - Peserta
+            - Kelas (Remaja, Orang Tua dll)
+            - Desa (Soreang, Baleendah dll)
+    - Pengaturan Opsi data yang bisa di input
+        - Jam Pengajian
+        - Pemateri
+        - Materi
+    - Kalender kegiatan atau agenda kegiatan
+    - [x] Untuk Kelas 1 - 6 Warlob, di modal create pertemuan (Warlob 2) tidak muncul tapi di detailnya bisa muncul
+
+- Siswa
+    - [x] Bisa langsung ganti detail siswa dengan memilih nama nya
+    - [x] Tambah NIS untuk Warlob [manual dulu, sampai daerah pake]
+
+- Laporan
+    - [x] Bug untuk absensi reta
+
 - Guru, Admin, Organisasi
     - [-] Add Bulk Insert Guru, Admin, Organisasi
     - Di handle dengan Smooth Onboarding

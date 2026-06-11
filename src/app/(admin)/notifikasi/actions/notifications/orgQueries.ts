@@ -81,15 +81,17 @@ export async function fetchUserList(opts: { search?: string; daerahId?: string }
       full_name: string
       role: string
       daerah_id: string | null
-      desa: { name: string } | null
-      kelompok: { name: string } | null
+      desa: { name: string }[] | { name: string } | null
+      kelompok: { name: string }[] | { name: string } | null
     }) => {
       const roleLabel = p.role === 'superadmin' ? 'Superadmin'
         : p.role === 'admin' ? 'Admin'
         : p.role === 'teacher' ? 'Guru'
         : p.role === 'student' ? 'Siswa'
         : p.role
-      const orgLabel = p.kelompok?.name ?? p.desa?.name ?? ''
+      const desaName = Array.isArray(p.desa) ? p.desa[0]?.name : p.desa?.name
+      const kelompokName = Array.isArray(p.kelompok) ? p.kelompok[0]?.name : p.kelompok?.name
+      const orgLabel = kelompokName ?? desaName ?? ''
       const subtitle = orgLabel ? `${roleLabel} · ${orgLabel}` : roleLabel
       return { id: p.id, name: p.full_name, subtitle }
     })

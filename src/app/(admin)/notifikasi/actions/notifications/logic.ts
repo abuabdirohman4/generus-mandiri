@@ -57,12 +57,5 @@ export function validateUpdateNotificationInput(input: UpdateNotificationInput):
   if (input.title.length > 200) return { ok: false, error: 'Judul maksimal 200 karakter' }
   if (!input.body?.trim()) return { ok: false, error: 'Isi pesan tidak boleh kosong' }
   if (input.body.length > 1000) return { ok: false, error: 'Isi pesan maksimal 1000 karakter' }
-  if (input.display_config) {
-    const validModes = ['banner', 'modal', 'both']
-    const validDismiss = ['free', 'acknowledge', 'cta_required']
-    if (!validModes.includes(input.display_config.mode)) return { ok: false, error: 'Mode tampilan tidak valid' }
-    if (!validDismiss.includes(input.display_config.dismiss)) return { ok: false, error: 'Mode dismiss tidak valid' }
-    if (typeof input.display_config.showInList !== 'boolean') return { ok: false, error: 'showInList harus boolean' }
-  }
   return { ok: true }
 }
