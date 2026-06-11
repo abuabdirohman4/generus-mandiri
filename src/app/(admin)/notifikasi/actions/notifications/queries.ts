@@ -4,7 +4,8 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { NotificationTargetScope, NotificationWithStatus, NotificationSentSummary, UpdateNotificationInput } from '@/types/notification'
+import type { NotificationTargetScope, NotificationWithStatus, NotificationSentSummary, UpdateNotificationInput, NotificationDisplayConfig, NotificationRecipientStatus } from '@/types/notification'
+import { DEFAULT_DISPLAY_CONFIG } from '@/types/notification'
 
 // Insert a notification row, return it
 export async function insertNotification(
@@ -20,6 +21,7 @@ export async function insertNotification(
     sender_kelompok_id?: string | null
     action_url?: string | null
     action_label?: string | null
+    display_config?: NotificationDisplayConfig | null
   }
 ) {
   return await supabase.from('notifications').insert(row).select().single()
@@ -89,6 +91,7 @@ export async function fetchMyNotifications(
         edited_at,
         action_url,
         action_label,
+        display_config,
         sender:sender_id (
           full_name
         )
@@ -118,6 +121,7 @@ export async function fetchMyNotifications(
     edited_at: row.notifications.edited_at ?? null,
     action_url: row.notifications.action_url ?? null,
     action_label: row.notifications.action_label ?? null,
+    display_config: (row.notifications.display_config as NotificationDisplayConfig | null) ?? DEFAULT_DISPLAY_CONFIG,
   })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
@@ -170,21 +174,59 @@ export async function fetchSentNotifications(
 ): Promise<NotificationSentSummary[]> {
   const { data, error } = await supabase
     .from('notifications')
-    .select('id, title, body, type, created_at, edited_at, notification_recipients(count)')
+    .select('id, title, body, type, created_at, edited_at, display_config, notification_recipients(is_read, is_dismissed)')
     .eq('sender_id', senderId)
     .order('created_at', { ascending: false })
     .limit(limit)
 
   if (error || !data) return []
 
+  return data.map((row: any) => {
+    const recipients: { is_read: boolean; is_dismissed: boolean }[] = row.notification_recipients ?? []
+    return {
+      id: row.id,
+      title: row.title,
+      body: row.body,
+      type: row.type ?? 'info',
+      created_at: row.created_at,
+      edited_at: row.edited_at ?? null,
+      recipient_count: recipients.length,
+      read_count: recipients.filter(r => r.is_read).length,
+      dismissed_count: recipients.filter(r => r.is_dismissed).length,
+      display_config: (row.display_config as NotificationDisplayConfig | null) ?? DEFAULT_DISPLAY_CONFIG,
+    }
+  })
+}
+
+// Fetch per-recipient status for a sent notification (sender only)
+export async function fetchNotificationRecipients(
+  supabase: SupabaseClient,
+  notificationId: string,
+  senderId: string
+): Promise<NotificationRecipientStatus[]> {
+  // Verify ownership first
+  const { data: notif } = await supabase
+    .from('notifications')
+    .select('id')
+    .eq('id', notificationId)
+    .eq('sender_id', senderId)
+    .single()
+  if (!notif) return []
+
+  const { data, error } = await supabase
+    .from('notification_recipients')
+    .select('recipient_id, is_read, read_at, is_dismissed, profiles:recipient_id(full_name)')
+    .eq('notification_id', notificationId)
+    .order('is_read', { ascending: true })
+
+  if (error || !data) return []
+
   return data.map((row: any) => ({
-    id: row.id,
-    title: row.title,
-    body: row.body,
-    type: row.type ?? 'info',
-    created_at: row.created_at,
-    edited_at: row.edited_at ?? null,
-    recipient_count: row.notification_recipients?.[0]?.count ?? 0,
+    recipient_id: row.recipient_id,
+    full_name: row.profiles?.full_name ?? 'Tidak diketahui',
+    is_read: row.is_read,
+    read_at: row.read_at ?? null,
+    is_dismissed: row.is_dismissed,
   }))
 }
 
@@ -247,6 +289,7 @@ export async function fetchNotificationDetail(
         edited_at,
         action_url,
         action_label,
+        display_config,
         sender:sender_id (
           full_name
         )
@@ -268,6 +311,7 @@ export async function fetchNotificationDetail(
     edited_at: row.notifications.edited_at ?? null,
     action_url: row.notifications.action_url ?? null,
     action_label: row.notifications.action_label ?? null,
+    display_config: (row.notifications.display_config as NotificationDisplayConfig | null) ?? DEFAULT_DISPLAY_CONFIG,
     sender_name: row.notifications.sender?.full_name,
     is_read: row.is_read,
     read_at: row.read_at,

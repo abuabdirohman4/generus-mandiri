@@ -1,3 +1,31 @@
+- Guru, Admin, Organisasi
+    - [-] Add Bulk Insert Guru, Admin, Organisasi
+    - Di handle dengan Smooth Onboarding
+
+- Refactoring
+    - [-] Buat satu file khusus untuk berbagai macam action
+        - [-] Get Classes
+        - [-] Get Teachers
+        - [-] Get Students
+        - [-] Get Meetings
+        - [-] Get Attendance
+        - [-] Get Attendance Log
+        - [-] Get Attendance Log Detail
+
+- Notifikasi
+    - [x] buat notifikasi, di home/header, terkait info/feature dll
+    
+- Sidebar
+    - [x] Buat component sidebar content
+        - [x] Implement untuk Siswa Detail
+        - [x] Implement untuk Siswa Biodata
+        - [x] Implement untuk Monitoring
+
+- Wording
+    - [-] Ubah Siswa -> Jamaah/Generus
+    - [-] Ubah Guru -> Penanggung Jawab
+    - [x] "Absensi" -> "Presensi"
+
 ## v1.10.2
 - [x] Unit Testing
 - [x] Filter halaman organisasi tidak berjalan

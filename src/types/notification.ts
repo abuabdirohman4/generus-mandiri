@@ -2,7 +2,25 @@
  * Notification domain types for in-app broadcast system (sm-69c)
  */
 
+// ─── Display Config ───────────────────────────────────────────────────────────
+
+export type NotificationDisplayMode = 'banner' | 'modal' | 'both'
+export type NotificationDismissMode = 'free' | 'acknowledge' | 'cta_required'
+
+export interface NotificationDisplayConfig {
+  mode: NotificationDisplayMode
+  dismiss: NotificationDismissMode
+  showInList: boolean
+}
+
+export const DEFAULT_DISPLAY_CONFIG: NotificationDisplayConfig = {
+  mode: 'banner',
+  dismiss: 'free',
+  showInList: true,
+}
+
 // ─── Scope ────────────────────────────────────────────────────────────────────
+
 
 export interface NotificationTargetScope {
   daerah_id?: string | null
@@ -22,6 +40,7 @@ export interface NotificationBase {
   edited_at?: string | null
   action_url?: string | null
   action_label?: string | null
+  display_config?: NotificationDisplayConfig | null
 }
 
 // ─── Extended Types ───────────────────────────────────────────────────────────
@@ -51,6 +70,9 @@ export interface SendNotificationInput {
   body: string
   type?: NotificationType
   target: NotificationTargetScope
+  display_config?: NotificationDisplayConfig
+  action_url?: string | null
+  action_label?: string | null
 }
 
 // ─── Edit / Update ────────────────────────────────────────────────────────────
@@ -71,4 +93,16 @@ export interface NotificationSentSummary {
   created_at: string
   edited_at: string | null
   recipient_count: number
+  read_count: number
+  dismissed_count: number
+  display_config?: NotificationDisplayConfig | null
+}
+
+// Per-recipient status for sender's read-receipt view
+export interface NotificationRecipientStatus {
+  recipient_id: string
+  full_name: string
+  is_read: boolean
+  read_at: string | null
+  is_dismissed: boolean
 }

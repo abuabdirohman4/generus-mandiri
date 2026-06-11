@@ -3,6 +3,7 @@
 import { useNotifications } from '@/hooks/useNotifications'
 import { AlertIcon, CheckCircleIcon, InfoIcon } from '@/lib/icons'
 import { sanitizeHtml } from '@/lib/htmlText'
+import { DEFAULT_DISPLAY_CONFIG } from '@/types/notification'
 
 const TYPE_STYLES = {
   success: {
@@ -42,9 +43,19 @@ function BannerIcon({ type, className }: { type: string; className: string }) {
 }
 
 export default function NotificationBanner() {
-  const { notifications, dismiss } = useNotifications()
+  const { notifications: listNotifications, dismiss } = useNotifications()
+  // Banner uses allNotifications via separate filter: mode=banner|both, not dismissed
+  // We access raw via hook — but since useNotifications already filters showInList,
+  // we pull from the hook directly and only check mode here (banner doesn't care about showInList)
 
-  const undismissed = notifications.filter(n => !n.is_dismissed).slice(0, 3)
+  const undismissed = listNotifications
+    .filter(n => {
+      if (n.is_dismissed) return false
+      if (n.is_read) return false  // banner hilang otomatis setelah dibaca
+      const cfg = n.display_config ?? DEFAULT_DISPLAY_CONFIG
+      return cfg.mode === 'banner' || cfg.mode === 'both'
+    })
+    .slice(0, 3)
   if (undismissed.length === 0) return null
 
   return (
@@ -54,7 +65,7 @@ export default function NotificationBanner() {
         return (
           <div key={notif.id} className={`relative rounded-lg border px-4 py-3 ${styles.wrapper}`}>
             <div className="flex items-start gap-3">
-              <BannerIcon type={notif.type} className={`w-5 h-5 mt-0.5 shrink-0 ${styles.icon}`} />
+              <BannerIcon type={notif.type} className={`w-6 h-6 mt-0.5 shrink-0 ${styles.icon}`} />
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold ${styles.title}`}>{notif.title}</p>
                 <div

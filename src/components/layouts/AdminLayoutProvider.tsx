@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import BlockingNotificationModal from '@/components/layouts/BlockingNotificationModal';
 import { useUserProfileStore } from '@/stores/userProfileStore';
 import { createClient } from '@/lib/supabase/client';
 import { clearUserCache, clearSWRCache } from '@/lib/userUtils';
@@ -204,5 +205,5 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
     return () => subscription.unsubscribe();
   }, [setProfile, setLoading, setError]);
 
-  return <>{children}</>;
+  return <>{children}<BlockingNotificationModal /></>;
 }

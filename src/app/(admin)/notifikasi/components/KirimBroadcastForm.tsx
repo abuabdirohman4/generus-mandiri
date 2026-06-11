@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
 import { sendNotification } from '@/app/(admin)/notifikasi/actions'
-import type { NotificationType } from '@/types/notification'
+import type { NotificationType, NotificationDisplayConfig } from '@/types/notification'
 import {
   fetchDaerahList,
   fetchDesaList,
@@ -22,6 +22,7 @@ interface KirimBroadcastFormProps {
 }
 
 type ScopeType = 'all' | 'daerah' | 'desa' | 'kelompok'
+type UrgencyPreset = 'biasa' | 'penting' | 'wajib_tindakan'
 
 const ROLE_OPTIONS = [
   { id: 'admin', label: 'Admin' },
@@ -31,9 +32,9 @@ const ROLE_OPTIONS = [
 
 const SCOPE_OPTIONS_SUPERADMIN = [
   { value: 'all', label: 'Semua' },
-  { value: 'daerah', label: 'Per Daerah' },
-  { value: 'desa', label: 'Per Desa' },
-  { value: 'kelompok', label: 'Per Kelompok' },
+  { value: 'daerah', label: 'Daerah' },
+  { value: 'desa', label: 'Desa' },
+  { value: 'kelompok', label: 'Kelompok' },
 ]
 
 const SCOPE_OPTIONS_ADMIN_DAERAH = [
@@ -42,10 +43,40 @@ const SCOPE_OPTIONS_ADMIN_DAERAH = [
   { value: 'kelompok', label: 'Per Kelompok' },
 ]
 
-const NOTIF_TYPE_OPTIONS: { value: NotificationType; label: string; color: string }[] = [
-  { value: 'info', label: 'Info', color: 'blue' },
-  { value: 'success', label: 'Sukses', color: 'green' },
-  { value: 'warning', label: 'Peringatan', color: 'amber' },
+const NOTIF_TYPE_OPTIONS: { value: NotificationType; label: string }[] = [
+  { value: 'info', label: 'Info' },
+  { value: 'warning', label: 'Peringatan' },
+  { value: 'success', label: 'Sukses' },
+]
+
+const URGENCY_PRESETS: {
+  value: UrgencyPreset
+  label: string
+  note: string
+  config: NotificationDisplayConfig
+  requiresCta: boolean
+}[] = [
+  {
+    value: 'biasa',
+    label: 'Biasa',
+    note: 'Muncul sebagai banner di beranda penerima. Bisa ditutup kapan saja dan tersimpan di inbox.',
+    config: { mode: 'banner', dismiss: 'free', showInList: true },
+    requiresCta: false,
+  },
+  {
+    value: 'penting',
+    label: 'Penting',
+    note: 'Muncul sebagai banner + popup di semua halaman. Penerima harus klik "Mengerti" untuk menutup. Tersimpan di inbox.',
+    config: { mode: 'both', dismiss: 'acknowledge', showInList: true },
+    requiresCta: false,
+  },
+  {
+    value: 'wajib_tindakan',
+    label: 'Wajib Tindakan',
+    note: 'Muncul sebagai popup yang tidak bisa ditutup kecuali penerima klik tombol aksi. Untuk tugas yang wajib diselesaikan.',
+    config: { mode: 'modal', dismiss: 'cta_required', showInList: false },
+    requiresCta: true,
+  },
 ]
 
 export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProps) {
@@ -66,6 +97,10 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [notifType, setNotifType] = useState<NotificationType>('info')
 
+  // Urgency preset + CTA
+  const [preset, setPreset] = useState<UrgencyPreset>('biasa')
+  const [actionUrl, setActionUrl] = useState('')
+  const [actionLabel, setActionLabel] = useState('')
 
   // Org data
   const [daerahList, setDaerahList] = useState<OrgItem[]>([])
@@ -76,6 +111,17 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
+  const activePreset = URGENCY_PRESETS.find(p => p.value === preset)!
+  const showCtaFields = activePreset.requiresCta
+
+  // Reset CTA fields when preset changes away from wajib_tindakan
+  useEffect(() => {
+    if (preset !== 'wajib_tindakan') {
+      setActionUrl('')
+      setActionLabel('')
+    }
+  }, [preset])
+
   // Load daerah list on mount (superadmin only)
   useEffect(() => {
     if (isSA) {
@@ -83,7 +129,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
     }
   }, [isSA])
 
-  // Load desa list when daerah changes (or on mount for admin daerah)
+  // Load desa list when daerah changes
   useEffect(() => {
     const daerahId = isSA ? selectedDaerah : (profile?.daerah_id ?? '')
     if (daerahId && (scope === 'desa' || scope === 'kelompok')) {
@@ -110,12 +156,9 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
     setSelectedDesa('')
     setSelectedKelompok('')
     if (!isSA) {
-      // Admin daerah: daerah is locked
       setSelectedDaerah(profile?.daerah_id ?? '')
     } else {
-      if (scope === 'all') {
-        setSelectedDaerah('')
-      }
+      if (scope === 'all') setSelectedDaerah('')
     }
   }, [scope, isSA, profile?.daerah_id])
 
@@ -131,45 +174,44 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       setFeedback({ type: 'error', message: 'Pesan notifikasi wajib diisi.' })
       return
     }
+    if (showCtaFields && !actionUrl.trim()) {
+      setFeedback({ type: 'error', message: 'URL aksi wajib diisi untuk Wajib Tindakan.' })
+      return
+    }
 
-    // Build target scope
     const target: { daerah_id?: string; desa_id?: string; kelompok_id?: string; roles?: string[] } = {}
-
     if (scope === 'daerah') {
       const daerahId = isSA ? selectedDaerah : profile?.daerah_id
-      if (!daerahId) {
-        setFeedback({ type: 'error', message: 'Pilih daerah terlebih dahulu.' })
-        return
-      }
+      if (!daerahId) { setFeedback({ type: 'error', message: 'Pilih daerah terlebih dahulu.' }); return }
       target.daerah_id = daerahId
     } else if (scope === 'desa') {
-      if (!selectedDesa) {
-        setFeedback({ type: 'error', message: 'Pilih desa terlebih dahulu.' })
-        return
-      }
+      if (!selectedDesa) { setFeedback({ type: 'error', message: 'Pilih desa terlebih dahulu.' }); return }
       target.desa_id = selectedDesa
     } else if (scope === 'kelompok') {
-      if (!selectedKelompok) {
-        setFeedback({ type: 'error', message: 'Pilih kelompok terlebih dahulu.' })
-        return
-      }
+      if (!selectedKelompok) { setFeedback({ type: 'error', message: 'Pilih kelompok terlebih dahulu.' }); return }
       target.kelompok_id = selectedKelompok
     }
-    // scope === 'all': no ids needed
-
-    if (selectedRoles.length > 0) {
-      target.roles = selectedRoles
-    }
+    if (selectedRoles.length > 0) target.roles = selectedRoles
 
     setSubmitting(true)
     try {
-      const result = await sendNotification({ title: title.trim(), body: body.trim(), type: notifType, target })
+      const result = await sendNotification({
+        title: title.trim(),
+        body: body.trim(),
+        type: notifType,
+        target,
+        display_config: activePreset.config,
+        action_url: showCtaFields ? actionUrl.trim() : null,
+        action_label: showCtaFields && actionLabel.trim() ? actionLabel.trim() : null,
+      })
       if (result.success) {
         setFeedback({ type: 'success', message: result.message || 'Notifikasi berhasil dikirim.' })
         setTitle('')
         setBody('')
         setSelectedRoles([])
-
+        setPreset('biasa')
+        setActionUrl('')
+        setActionLabel('')
         onSuccess()
       } else {
         setFeedback({ type: 'error', message: result.message || 'Gagal mengirim notifikasi.' })
@@ -182,10 +224,19 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   }
 
   const scopeOptions = isSA ? SCOPE_OPTIONS_SUPERADMIN : SCOPE_OPTIONS_ADMIN_DAERAH
-
   const daerahSelectOptions = daerahList.map(d => ({ value: d.id, label: d.name }))
   const desaSelectOptions = desaList.map(d => ({ value: d.id, label: d.name }))
   const kelompokSelectOptions = kelompokList.map(k => ({ value: k.id, label: k.name }))
+
+  const typeButtonStyle = (opt: { value: NotificationType; label: string }) => {
+    const active = notifType === opt.value
+    const styles = {
+      info: active ? 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+      success: active ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+      warning: active ? 'bg-amber-100 border-amber-500 text-amber-700 dark:bg-amber-900/30 dark:border-amber-400 dark:text-amber-300' : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
+    }
+    return styles[opt.value]
+  }
 
   return (
     <form
@@ -198,10 +249,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
 
       {/* Title */}
       <div>
-        <label
-          htmlFor="notif-title"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-        >
+        <label htmlFor="notif-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Judul <span className="text-red-500">*</span>
         </label>
         <InputField
@@ -217,10 +265,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
 
       {/* Body */}
       <div className="mt-2">
-        <label
-          htmlFor="notif-body"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-        >
+        <label htmlFor="notif-body" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Pesan <span className="text-red-500">*</span>
         </label>
         <RichTextEditor
@@ -235,117 +280,177 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         </p>
       </div>
 
-
-
       {/* Tipe notifikasi */}
       <div>
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipe</p>
         <div className="flex gap-2">
-          {NOTIF_TYPE_OPTIONS.map(opt => {
-            const active = notifType === opt.value
-            const styles = {
-              info: active
-                ? 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300'
-                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
-              success: active
-                ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
-                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
-              warning: active
-                ? 'bg-amber-100 border-amber-500 text-amber-700 dark:bg-amber-900/30 dark:border-amber-400 dark:text-amber-300'
-                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400',
-            }[opt.value]
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setNotifType(opt.value)}
-                disabled={submitting}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${styles}`}
-              >
-                {opt.label}
-              </button>
-            )
-          })}
+          {NOTIF_TYPE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setNotifType(opt.value)}
+              disabled={submitting}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 ${typeButtonStyle(opt)}`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Scope selector */}
-      <InputFilter
-        id="notif-scope"
-        label="Target Penerima"
-        value={scope}
-        onChange={val => setScope(val as ScopeType)}
-        options={scopeOptions}
-        variant="modal"
-        disabled={submitting}
-      />
+      {/* Tingkat Urgensi */}
+      <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tingkat Urgensi</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+          Pilih seberapa penting notifikasi ini bagi penerima.
+        </p>
 
-      {/* Daerah picker — superadmin only, when scope = daerah/desa/kelompok */}
-      {isSA && scope !== 'all' && (
+        <div className="flex flex-col gap-2">
+          {URGENCY_PRESETS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPreset(opt.value)}
+              disabled={submitting}
+              className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors disabled:opacity-50 ${
+                preset === opt.value
+                  ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
+                preset === opt.value ? 'border-blue-500 dark:border-blue-400' : 'border-gray-400 dark:border-gray-600'
+              }`}>
+                {preset === opt.value && (
+                  <span className="h-2 w-2 rounded-full bg-blue-500 dark:bg-blue-400" />
+                )}
+              </span>
+              <span>
+                <span className={`block text-sm font-medium ${preset === opt.value ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                  {opt.label}
+                </span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{opt.note}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* CTA fields — hanya jika Wajib Tindakan */}
+        {showCtaFields && (
+          <div className="mt-3 space-y-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 p-3">
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              Tombol Aksi (wajib diisi — penerima tidak bisa tutup tanpa klik ini)
+            </p>
+            <div>
+              <label htmlFor="notif-action-url" className="block text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">
+                URL Tujuan <span className="text-red-500">*</span>
+              </label>
+              <InputField
+                id="notif-action-url"
+                type="text"
+                placeholder="https://... atau /halaman"
+                value={actionUrl}
+                onChange={e => setActionUrl(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+            <div>
+              <label htmlFor="notif-action-label" className="block text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">
+                Label Tombol
+              </label>
+              <InputField
+                id="notif-action-label"
+                type="text"
+                placeholder="Contoh: Buka Halaman, Lihat Detail"
+                value={actionLabel}
+                onChange={e => setActionLabel(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Target Penerima */}
+      <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Target Penerima</p>
+
         <InputFilter
-          id="notif-daerah"
-          label="Daerah"
-          value={selectedDaerah}
-          onChange={setSelectedDaerah}
-          options={daerahSelectOptions}
-          placeholder="Pilih daerah..."
+          id="notif-scope"
+          label="Lingkup"
+          value={scope}
+          onChange={val => setScope(val as ScopeType)}
+          options={scopeOptions}
           variant="modal"
-          compact
           disabled={submitting}
         />
-      )}
 
-      {/* Desa picker — when scope = desa or kelompok */}
-      {(scope === 'desa' || scope === 'kelompok') && (
-        <InputFilter
-          id="notif-desa"
-          label="Desa"
-          value={selectedDesa}
-          onChange={setSelectedDesa}
-          options={desaSelectOptions}
-          placeholder="Pilih desa..."
-          variant="modal"
-          compact
-          disabled={submitting || desaList.length === 0}
-        />
-      )}
+        {isSA && scope !== 'all' && (
+          <div className="mt-3">
+            <InputFilter
+              id="notif-daerah"
+              label="Daerah"
+              value={selectedDaerah}
+              onChange={setSelectedDaerah}
+              options={daerahSelectOptions}
+              placeholder="Pilih daerah..."
+              variant="modal"
+              compact
+              disabled={submitting}
+            />
+          </div>
+        )}
 
-      {/* Kelompok picker — when scope = kelompok */}
-      {scope === 'kelompok' && (
-        <InputFilter
-          id="notif-kelompok"
-          label="Kelompok"
-          value={selectedKelompok}
-          onChange={setSelectedKelompok}
-          options={kelompokSelectOptions}
-          placeholder="Pilih kelompok..."
-          variant="modal"
-          className="mt-4"
-          compact
-          disabled={submitting || kelompokList.length === 0}
-        />
-      )}
+        {(scope === 'desa' || scope === 'kelompok') && (
+          <div className="mt-3">
+            <InputFilter
+              id="notif-desa"
+              label="Desa"
+              value={selectedDesa}
+              onChange={setSelectedDesa}
+              options={desaSelectOptions}
+              placeholder="Pilih desa..."
+              variant="modal"
+              compact
+              disabled={submitting || desaList.length === 0}
+            />
+          </div>
+        )}
 
-      {/* Roles filter */}
-      <div className="mt-4">
-        <MultiSelectCheckbox
-          label={<>Filter Peran <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(kosong = semua peran)</span></>}
-          items={ROLE_OPTIONS}
-          selectedIds={selectedRoles}
-          onChange={setSelectedRoles}
-          disabled={submitting}
-        />
+        {scope === 'kelompok' && (
+          <div className="mt-3">
+            <InputFilter
+              id="notif-kelompok"
+              label="Kelompok"
+              value={selectedKelompok}
+              onChange={setSelectedKelompok}
+              options={kelompokSelectOptions}
+              placeholder="Pilih kelompok..."
+              variant="modal"
+              compact
+              disabled={submitting || kelompokList.length === 0}
+            />
+          </div>
+        )}
+
+        <div className="mt-4">
+          <MultiSelectCheckbox
+            label={<>Filter Peran <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(kosong = semua peran)</span></>}
+            items={ROLE_OPTIONS}
+            selectedIds={selectedRoles}
+            onChange={setSelectedRoles}
+            disabled={submitting}
+          />
+        </div>
       </div>
 
       {/* Feedback */}
       {feedback && (
-        <p
-          className={`text-sm rounded-lg px-3 py-2 ${
-            feedback.type === 'success'
-              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-          }`}
-        >
+        <p className={`text-sm rounded-lg px-3 py-2 ${
+          feedback.type === 'success'
+            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+            : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+        }`}>
           {feedback.message}
         </p>
       )}

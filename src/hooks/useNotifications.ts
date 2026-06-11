@@ -9,6 +9,7 @@ import {
   dismissNotification,
 } from '@/app/(admin)/notifikasi/actions'
 import type { NotificationWithStatus } from '@/types/notification'
+import { DEFAULT_DISPLAY_CONFIG } from '@/types/notification'
 
 const NOTIFICATIONS_LIST_KEY = 'notifications:list'
 const NOTIFICATIONS_UNREAD_KEY = 'notifications:unread'
@@ -34,8 +35,11 @@ export function useNotifications() {
     }
   )
 
-  const notifications: NotificationWithStatus[] = listData?.data ?? []
-  const unreadCount: number = countData?.data ?? 0
+  const allNotifications: NotificationWithStatus[] = listData?.data ?? []
+  // showInList=false = hanya tampil sebagai banner/modal, tidak masuk inbox
+  const notifications = allNotifications.filter(n => (n.display_config ?? DEFAULT_DISPLAY_CONFIG).showInList !== false)
+  // unread count hanya dari notifikasi yg showInList (yang ada di inbox)
+  const unreadCount: number = notifications.filter(n => !n.is_read).length
 
   async function markRead(ids: string[]) {
     await markNotificationRead(ids)
@@ -55,7 +59,8 @@ export function useNotifications() {
   }
 
   return {
-    notifications,
+    notifications,        // filtered: showInList=true only (for dropdown + list + banner)
+    allNotifications,     // unfiltered: includes showInList=false (for modal)
     unreadCount,
     isLoading,
     markRead,

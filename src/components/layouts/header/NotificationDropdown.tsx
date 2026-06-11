@@ -7,6 +7,7 @@ import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { NotificationWithStatus } from "@/types/notification";
 import { stripHtml } from "@/lib/htmlText";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -123,13 +124,18 @@ function NotificationListItem({
   item,
   onRead,
   onClose,
+  navigating,
+  onNavigate,
 }: {
   item: NotificationWithStatus;
   onRead: () => void;
   onClose: () => void;
+  navigating: boolean;
+  onNavigate: (id: string) => void;
 }) {
   const handleClick = () => {
     if (!item.is_read) onRead();
+    onNavigate(item.id);
     // Defer close so the <Link> can navigate before Dropdown unmounts
     setTimeout(() => onClose(), 0);
   };
@@ -146,13 +152,17 @@ function NotificationListItem({
             : "bg-blue-50 dark:bg-blue-900/20"
         }`}
       >
-        {/* Unread indicator dot */}
-        <span className="mt-1.5 shrink-0">
-          <span
-            className={`block h-2 w-2 rounded-full ${
-              item.is_read ? "bg-transparent" : "bg-blue-500"
-            }`}
-          />
+        {/* Unread indicator dot / loading spinner */}
+        <span className="mt-1 shrink-0">
+          {navigating ? (
+            <Spinner size={14} colorClass="border-gray-400" />
+          ) : (
+            <span
+              className={`block h-2 w-2 rounded-full ${
+                item.is_read ? "bg-transparent" : "bg-blue-500"
+              }`}
+            />
+          )}
         </span>
 
         <span className="block min-w-0 flex-1">
@@ -208,6 +218,7 @@ function EmptyState() {
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotifications();
 
@@ -246,6 +257,8 @@ export default function NotificationDropdown() {
                 item={item}
                 onRead={() => markRead([item.id])}
                 onClose={closeDropdown}
+                navigating={navigatingId === item.id}
+                onNavigate={setNavigatingId}
               />
             ))}
           </ul>

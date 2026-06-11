@@ -22,7 +22,7 @@ const TYPE_CONFIG: Record<string, {
     Icon: CheckCircleIcon,
   },
   warning: {
-    label: 'Peringatan',
+    label: 'Tindakan',
     strip: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
     icon: 'text-amber-600 dark:text-amber-400',
     title: 'text-amber-700 dark:text-amber-300',
@@ -98,7 +98,7 @@ export default function NotifikasiDetailPage({ params }: { params: Promise<{ id:
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           {/* Header strip berwarna */}
           <div className={`flex items-center gap-2 px-5 py-3 border-b ${cfg.strip}`}>
-            <cfg.Icon className={`w-5 h-5 ${cfg.icon}`} />
+            <cfg.Icon className={`w-6 h-6 ${cfg.icon}`} />
             <span className={`text-sm font-semibold ${cfg.title}`}>{cfg.label}</span>
           </div>
 

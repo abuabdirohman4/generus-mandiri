@@ -9,4 +9,5 @@ export {
   deleteNotification,
   updateNotification,
   getNotificationDetail,
+  getNotificationRecipients,
 } from './notifications/actions'

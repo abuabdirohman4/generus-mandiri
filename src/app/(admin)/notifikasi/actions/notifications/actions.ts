@@ -16,6 +16,7 @@ import {
   markAllRead,
   dismiss,
   fetchSentNotifications,
+  fetchNotificationRecipients,
   deleteNotification as dbDeleteNotification,
   updateNotification as dbUpdateNotification,
   resetRecipientsUnread,
@@ -55,8 +56,9 @@ export async function sendNotification(input: SendNotificationInput) {
       sender_daerah_id: profile.daerah_id ?? null,
       sender_desa_id: profile.desa_id ?? null,
       sender_kelompok_id: profile.kelompok_id ?? null,
-      action_url: null,
-      action_label: null,
+      action_url: input.action_url ?? null,
+      action_label: input.action_label ?? null,
+      display_config: input.display_config ?? null,
     })
     if (notifError || !notif) return { success: false, message: 'Gagal menyimpan notifikasi' }
 
@@ -137,6 +139,24 @@ export async function getSentNotifications(opts: { limit?: number } = {}) {
     return { success: true, data: sent, message: '' }
   } catch {
     return { success: false, data: [], message: 'Gagal mengambil riwayat terkirim' }
+  }
+}
+
+export async function getNotificationRecipients(notificationId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, data: [], message: 'Tidak terautentikasi' }
+
+    const profile = await getCurrentUserProfile()
+    if (!profile) return { success: false, data: [], message: 'Profil tidak ditemukan' }
+    if (!canSendNotification(profile)) return { success: false, data: [], message: 'Tidak memiliki izin' }
+
+    const adminClient = await createAdminClient()
+    const recipients = await fetchNotificationRecipients(adminClient, notificationId, profile.id)
+    return { success: true, data: recipients, message: '' }
+  } catch {
+    return { success: false, data: [], message: 'Gagal mengambil daftar penerima' }
   }
 }
 
