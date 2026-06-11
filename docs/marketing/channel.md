@@ -1,3 +1,35 @@
+---
+Release v1.15.0 — 2026-06-12
+---
+
+🇮🇩 *Update v1.15.0 — Notifikasi & Naik Kelas*
+
+Fitur Baru 🆕
+- Sistem Broadcast Notifikasi — admin bisa kirim pengumuman langsung ke user lewat aplikasi, lengkap dengan rich text dan link
+- Halaman detail notifikasi — setiap notif punya halaman penuh dengan status baca
+- Wizard Naik Kelas Batch — proses kenaikan kelas massal lewat 4 langkah sederhana
+- Target personal notifikasi — pilih penerima berdasarkan role atau scope
+- Preset urgensi notif — info, peringatan, sukses, atau kritis (dengan blocking modal)
+
+Perbaikan 🔧
+- Banner notifikasi hanya tampil di Home
+- Bug edit kelas PAUD sudah diperbaiki
+- Label filter admin daerah lebih konsisten
+
+🇬🇧 *Update v1.15.0 — Notifications & Grade Promotion*
+
+New Features 🆕
+- Broadcast Notification System — admins can send announcements directly to users in-app, with rich text and links
+- Notification detail page — each notification has a full-view page with read status
+- Batch Grade Promotion Wizard — promote students in bulk via a 4-step flow
+- Personal notification targeting — choose recipients by role or organizational scope
+- Notification urgency presets — info, warning, success, critical (with optional blocking modal)
+
+Bug Fixes 🔧
+- Notification banner now only shows on Home page
+- Fixed PAUD class edit crash on first edit
+- Admin daerah scope filter labels corrected
+
 *Update v1.14.0 — Reports & Materials Upgrade*
 
 🇮🇩 *Laporan & Materi Makin Lengkap*

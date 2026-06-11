@@ -1,5 +1,23 @@
-
 # Changelog
+
+## [1.15.0] — 2026-06-12
+
+### Added
+- **Sistem Notifikasi & Broadcast**: Admin dapat mengirim pengumuman langsung ke user via halaman Notifikasi baru — mendukung rich text, inline link, dan target personal per peran
+- **Halaman Detail Notifikasi**: Setiap notifikasi punya halaman  dengan tampilan penuh dan status baca
+- **Naik Kelas Batch Wizard**: UI multi-langkah untuk proses kenaikan kelas massal — pilih sumber kelas, preview siswa, konfirmasi, dan eksekusi sekaligus
+- **Display Config Notifikasi**: Preset urgensi (info/warning/success/critical) dengan opsi blocking modal untuk notifikasi penting
+- **Target Personal Notifikasi**: Pengirim dapat menargetkan notifikasi ke role/scope tertentu — bukan hanya broadcast ke semua
+
+### Fixed
+- **Banner Notifikasi**: NotificationBanner hanya tampil di halaman Home, bukan di semua halaman
+- **Edit Kelas PAUD**: Bug edit kelas PAUD tidak tersimpan dan crash pada edit pertama sudah diperbaiki
+- **Label Admin Daerah**: Label scope options di filter admin daerah diperbarui agar konsisten
+
+### Improved
+- **Delete & Edit Notifikasi**: Pengirim dapat menghapus atau mengedit notifikasi yang sudah dikirim
+- **Akses Multi-Kelompok Guru Desa**: Guru desa kini mendapat akses terbatas sesuai kelompok yang diizinkan saja
+
 
 ## [1.14.0] — 2026-05-07
 
