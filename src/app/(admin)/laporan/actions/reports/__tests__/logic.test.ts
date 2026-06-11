@@ -152,7 +152,7 @@ describe('logic.ts – buildEnrollmentMap', () => {
 // ─── enrichAttendanceLogs ─────────────────────────────────────────────────────
 
 describe('logic.ts – enrichAttendanceLogs', () => {
-    const studentMap = new Map([['s1', { id: 's1', name: 'Budi' }]])
+    const studentMap = new Map([['s1', { id: 's1', name: 'Budi', status: 'active' }]])
     const meetingMap = new Map([['m1', { id: 'm1', date: '2024-01-10' }]])
 
     it('enriches logs with student and date', () => {
@@ -174,6 +174,53 @@ describe('logic.ts – enrichAttendanceLogs', () => {
             studentMap, meetingMap
         )
         expect(result).toHaveLength(1)
+    })
+
+    it('filters out logs for inactive students', () => {
+        const studentMapWithInactive = new Map([
+            ['s1', { id: 's1', name: 'Budi', status: 'active' }],
+            ['s2', { id: 's2', name: 'Siti', status: 'inactive' }],
+        ])
+        const result = enrichAttendanceLogs(
+            [
+                { meeting_id: 'm1', student_id: 's1', status: 'H' },
+                { meeting_id: 'm1', student_id: 's2', status: 'H' },
+            ],
+            studentMapWithInactive, meetingMap
+        )
+        expect(result).toHaveLength(1)
+        expect(result[0].students.name).toBe('Budi')
+    })
+
+    it('filters out logs for graduated students', () => {
+        const studentMapWithGraduated = new Map([
+            ['s1', { id: 's1', name: 'Budi', status: 'active' }],
+            ['s3', { id: 's3', name: 'Ahmad', status: 'graduated' }],
+        ])
+        const result = enrichAttendanceLogs(
+            [
+                { meeting_id: 'm1', student_id: 's1', status: 'H' },
+                { meeting_id: 'm1', student_id: 's3', status: 'H' },
+            ],
+            studentMapWithGraduated, meetingMap
+        )
+        expect(result).toHaveLength(1)
+        expect(result[0].students.name).toBe('Budi')
+    })
+
+    it('includes all active students', () => {
+        const studentMapAllActive = new Map([
+            ['s1', { id: 's1', name: 'Budi', status: 'active' }],
+            ['s4', { id: 's4', name: 'Dewi', status: 'active' }],
+        ])
+        const result = enrichAttendanceLogs(
+            [
+                { meeting_id: 'm1', student_id: 's1', status: 'H' },
+                { meeting_id: 'm1', student_id: 's4', status: 'A' },
+            ],
+            studentMapAllActive, meetingMap
+        )
+        expect(result).toHaveLength(2)
     })
 })
 

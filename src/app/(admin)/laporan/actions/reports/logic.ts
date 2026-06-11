@@ -251,7 +251,7 @@ export function enrichAttendanceLogs(
                 students: studentMap.get(log.student_id)
             }
         })
-        .filter((log: any) => log.students && log.date)
+        .filter((log: any) => log.students && log.date && log.students.status === 'active')
 }
 
 // ─── Permission Filters ───────────────────────────────────────────────────────

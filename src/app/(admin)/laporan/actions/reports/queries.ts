@@ -129,6 +129,7 @@ export async function fetchStudentDetails(
       id,
       name,
       gender,
+      status,
       class_id,
       kelompok_id,
       desa_id,
