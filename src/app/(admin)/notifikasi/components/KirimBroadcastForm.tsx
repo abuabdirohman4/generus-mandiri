@@ -41,10 +41,10 @@ const SCOPE_OPTIONS_SUPERADMIN = [
 ]
 
 const SCOPE_OPTIONS_ADMIN_DAERAH = [
-  { value: 'daerah', label: 'Per Daerah' },
-  { value: 'desa', label: 'Per Desa' },
-  { value: 'kelompok', label: 'Per Kelompok' },
-  { value: 'personal', label: 'Personal (pilih pengguna)' },
+  { value: 'daerah', label: 'Daerah' },
+  { value: 'desa', label: 'Desa' },
+  { value: 'kelompok', label: 'Kelompok' },
+  { value: 'personal', label: 'Personal' },
 ]
 
 const NOTIF_TYPE_OPTIONS: { value: NotificationType; label: string }[] = [
