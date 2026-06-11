@@ -58,6 +58,8 @@ function PageTitle() {
         return 'Kegiatan';
       case '/tracking':
         return 'Tracking';
+      case '/notifikasi':
+        return 'Notifikasi';
       case '/settings':
           return 'Pengaturan';
       case '/settings/security':
@@ -73,6 +75,8 @@ function PageTitle() {
           return 'Presensi';
         } else if (path.startsWith('/users/siswa/')) {
           return 'Detail Siswa';
+        } else if (path.startsWith('/notifikasi/')) {
+          return 'Detail Notifikasi';
         }
         return 'Generus Mandiri';
     }
@@ -94,7 +98,8 @@ function PageTitle() {
       path === '/monitoring' ||
       path === '/rapot' ||
       path === '/rapot/templates' ||
-      path === '/dashboard';
+      path === '/dashboard' ||
+      path.startsWith('/notifikasi/');
   };
 
   if (!mounted) {
@@ -195,7 +200,7 @@ function ApplicationMenu({
         {/* <DateTimeDisplay isClient={isClient} currentDateTime={currentDateTime} />
         <ThemeToggleButton /> */}
         <NotificationBadge />
-        {/* <NotificationDropdown /> */}
+        <NotificationDropdown />
       </div>
       <UserDropdown />
     </div>

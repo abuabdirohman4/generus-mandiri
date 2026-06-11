@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpenIcon, PresensiIcon, MonitoringIcon, TahunAjaranIcon, RapotIcon, SettingsIcon } from '@/lib/icons';
-import { isAdminKelompok, isTeacher } from '@/lib/userUtils';
+import { isAdminKelompok, isTeacher, isAdminDaerah, isSuperAdmin } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
 import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from '@/lib/accessControl';
 import { usePromotionEnabled } from '@/hooks/usePromotionEnabled';
@@ -29,6 +29,7 @@ interface QuickActionItem {
   adminOnly?: boolean;
   excludeAdminKelompok?: boolean;
   requirePromotionEnabled?: boolean;
+  requireCanSendNotification?: boolean;
   disabled?: boolean; 
 }
 
@@ -36,6 +37,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const [loadingRoutes, setLoadingRoutes] = useState<Set<string>>(new Set());
   const router = useRouter();
   const isAdminUser = profile.role === 'superadmin' || profile.role === 'admin'
+  const userCanSendNotification = isSuperAdmin(profile) || isAdminDaerah(profile)
   // const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
   // const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
   // const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
@@ -86,6 +88,19 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       bgColor: 'bg-amber-100 dark:bg-amber-900',
       iconColor: 'text-amber-600 dark:text-amber-400',
       requirePromotionEnabled: true,
+      disabled: false
+    },
+    {
+      id: 'notifikasi',
+      name: 'Notifikasi',
+      description: 'Lihat & kirim broadcast',
+      href: '/notifikasi',
+      icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>,
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      requireCanSendNotification: true,
       disabled: false
     },
     {
@@ -264,6 +279,8 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     if (action.requirePromotionEnabled && !promotionEnabled) {
       return false
     }
+
+    if (action.requireCanSendNotification && !userCanSendNotification) return false
 
     return true
   });

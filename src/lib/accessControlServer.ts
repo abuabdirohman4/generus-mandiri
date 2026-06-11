@@ -108,6 +108,12 @@ export function isMaterialCoordinator(profile: UserProfile | null): boolean {
   return profile?.role === 'material_coordinator'
 }
 
+export function canSendNotification(profile: UserProfile): boolean {
+  const isSuperAdmin = profile.role === 'superadmin'
+  const isAdminDaerah = profile.role === 'admin' && !!profile.daerah_id && !profile.desa_id
+  return isSuperAdmin || isAdminDaerah
+}
+
 /**
  * Get restricted class IDs for a teacher based on teacher_class_masters.
  * Optionally filters by hierarchy if a profile is provided.

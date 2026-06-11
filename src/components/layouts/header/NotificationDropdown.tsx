@@ -1,116 +1,30 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
+import { useNotifications } from "@/hooks/useNotifications";
+import type { NotificationWithStatus } from "@/types/notification";
+import { stripHtml } from "@/lib/htmlText";
+import Spinner from "@/components/ui/spinner/Spinner";
 
-interface NotificationItem {
-  id: string;
-  user: {
-    name: string;
-    avatar: string;
-    status: 'online' | 'offline';
-  };
-  action: string;
-  project: string;
-  time: string;
-  href?: string;
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function formatRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "baru saja";
+  if (minutes < 60) return `${minutes} menit lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days} hari lalu`;
 }
 
-const notificationData: NotificationItem[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Terry Franci',
-      avatar: '/images/user/user-02.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '5 min ago'
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Alena Franci',
-      avatar: '/images/user/user-03.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '8 min ago'
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Jocelyn Kenter',
-      avatar: '/images/user/user-04.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '15 min ago'
-  },
-  {
-    id: '4',
-    user: {
-      name: 'Brandon Philips',
-      avatar: '/images/user/user-05.jpg',
-      status: 'offline'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '1 hr ago'
-  },
-  {
-    id: '5',
-    user: {
-      name: 'Terry Franci',
-      avatar: '/images/user/user-02.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '5 min ago'
-  },
-  {
-    id: '6',
-    user: {
-      name: 'Alena Franci',
-      avatar: '/images/user/user-03.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '8 min ago'
-  },
-  {
-    id: '7',
-    user: {
-      name: 'Jocelyn Kenter',
-      avatar: '/images/user/user-04.jpg',
-      status: 'online'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '15 min ago'
-  },
-  {
-    id: '8',
-    user: {
-      name: 'Brandon Philips',
-      avatar: '/images/user/user-05.jpg',
-      status: 'offline'
-    },
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    time: '1 hr ago'
-  }
-];
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-// Component for notification bell icon
 function NotificationBellIcon() {
   return (
     <svg
@@ -130,24 +44,30 @@ function NotificationBellIcon() {
   );
 }
 
-// Component for notification button
-function NotificationButton({ onClick }: { onClick: () => void }) {
+function NotificationButton({
+  onClick,
+  unreadCount,
+}: {
+  onClick: () => void;
+  unreadCount: number;
+}) {
   return (
     <button
       className="relative dropdown-toggle flex items-center justify-center text-gray-500 transition-colors bg-white border border-gray-200 rounded-full hover:text-gray-700 h-11 w-11 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
       onClick={onClick}
+      aria-label={`Notifikasi${unreadCount > 0 ? ` (${unreadCount} belum dibaca)` : ""}`}
     >
-      <span
-        className={`absolute right-0 top-0.5 z-10 h-2 w-2 rounded-full bg-orange-400 flex`}
-      >
-        <span className="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping" />
-      </span>
+      {unreadCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-400 px-1 text-[10px] font-bold leading-none text-white">
+          {unreadCount > 99 ? "99+" : unreadCount}
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+        </span>
+      )}
       <NotificationBellIcon />
     </button>
   );
 }
 
-// Component for close button
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -172,60 +92,105 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Component for notification header
-function NotificationHeader({ onClose }: { onClose: () => void }) {
+function NotificationHeader({
+  unreadCount,
+  onClose,
+  onMarkAllRead,
+}: {
+  unreadCount: number;
+  onClose: () => void;
+  onMarkAllRead: () => void;
+}) {
   return (
-    <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
-      <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-        Notification
-      </h5>
-      <CloseButton onClick={onClose} />
+    <div className="pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between">
+        <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          Notifikasi
+        </h5>
+        <CloseButton onClick={onClose} />
+      </div>
+      {unreadCount > 0 && (
+        <button
+          onClick={onMarkAllRead}
+          className="mt-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Tandai semua dibaca
+        </button>
+      )}
     </div>
   );
 }
 
-// Component for user avatar
-function UserAvatar({ user }: { user: NotificationItem['user'] }) {
-  const statusColor = user.status === 'online' ? 'bg-success-500' : 'bg-error-500';
-  
-  return (
-    <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
-      <Image
-        width={40}
-        height={40}
-        src={user.avatar}
-        alt={user.name}
-        className="w-full overflow-hidden rounded-full"
-      />
-      <span className={`absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white ${statusColor} dark:border-gray-900`} />
-    </span>
-  );
-}
+function NotificationListItem({
+  item,
+  onRead,
+  navigating,
+  onNavigate,
+}: {
+  item: NotificationWithStatus;
+  onRead: () => void;
+  navigating: boolean;
+  onNavigate: (id: string) => void;
+}) {
+  const handleClick = () => {
+    if (!item.is_read) onRead();
+    onNavigate(item.id);
+  };
 
-// Component for notification item
-function NotificationItem({ item, onClose }: { item: NotificationItem; onClose: () => void }) {
   return (
     <li>
       <DropdownItem
-        onItemClick={onClose}
-        className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-        href={item.href}
+        onItemClick={handleClick}
+        tag="a"
+        href={`/notifikasi/${item.id}`}
+        className={`flex w-full gap-3 rounded-lg border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
+          item.is_read
+            ? "bg-white dark:bg-transparent"
+            : "bg-blue-50 dark:bg-blue-900/20"
+        }`}
       >
-        <UserAvatar user={item.user} />
-        <span className="block">
-          <span className="mb-1.5 space-x-1 block text-theme-sm text-gray-500 dark:text-gray-400">
-            <span className="font-medium text-gray-800 dark:text-white/90">
-              {item.user.name}
+        {/* Unread indicator dot / loading spinner */}
+        <span className="mt-1 shrink-0">
+          {navigating ? (
+            <Spinner size={14} colorClass="border-gray-400" />
+          ) : (
+            <span
+              className={`block h-2 w-2 rounded-full ${
+                item.is_read ? "bg-transparent" : "bg-blue-500"
+              }`}
+            />
+          )}
+        </span>
+
+        <span className="block min-w-0 flex-1">
+          {/* Sender name */}
+          {item.sender_name && (
+            <span className="block truncate text-theme-xs text-gray-400 dark:text-gray-500 mb-0.5">
+              {item.sender_name}
             </span>
-            <span>{item.action}</span>
-            <span className="font-medium text-gray-800 dark:text-white/90">
-              {item.project}
-            </span>
+          )}
+          {/* Title */}
+          <span
+            className={`mb-0.5 block line-clamp-2 text-theme-sm ${
+              item.is_read
+                ? "text-gray-700 dark:text-gray-300"
+                : "font-semibold text-gray-900 dark:text-white"
+            }`}
+          >
+            {item.title}
           </span>
-          <span className="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
-            <span>Project</span>
-            <span className="w-1 h-1 bg-gray-400 rounded-full" />
-            <span>{item.time}</span>
+
+          {/* Body preview */}
+          <span className="mb-1 block truncate text-theme-xs text-gray-500 dark:text-gray-400">
+            {stripHtml(item.body)}
+          </span>
+
+          {/* Timestamp + edited */}
+          <span className="flex items-center gap-1 text-theme-xs text-gray-400 dark:text-gray-500">
+            <span>{formatRelativeTime(item.created_at)}</span>
+            {item.edited_at && (
+              <span className="italic">· diedit</span>
+            )}
           </span>
         </span>
       </DropdownItem>
@@ -233,55 +198,83 @@ function NotificationItem({ item, onClose }: { item: NotificationItem; onClose: 
   );
 }
 
-// Component for notification list
-function NotificationList({ notifications, onClose }: { notifications: NotificationItem[]; onClose: () => void }) {
+function EmptyState() {
   return (
-    <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-      {notifications.map((item) => (
-        <NotificationItem key={item.id} item={item} onClose={onClose} />
-      ))}
-    </ul>
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+        Tidak ada notifikasi
+      </p>
+      <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+        Notifikasi baru akan muncul di sini
+      </p>
+    </div>
   );
 }
 
-// Component for view all button
-function ViewAllButton() {
-  return (
-    <Link
-      href="/"
-      className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-    >
-      View All Notifications
-    </Link>
-  );
-}
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const { notifications, unreadCount, markRead, markAllRead } =
+    useNotifications();
+
+  const pathname = usePathname();
+  useEffect(() => {
+    if (navigatingId !== null) {
+      setNavigatingId(null);
+      setIsOpen(false);
+    }
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleDropdown = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen]);
+    setIsOpen((prev) => !prev);
+  }, []);
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false);
   }, []);
 
-  const handleClick = useCallback(() => {
-    toggleDropdown();
-  }, [toggleDropdown]);
+  // Show only the 5 most recent notifications
+  const recentNotifications = notifications.slice(0, 5);
 
   return (
     <div className="relative">
-      <NotificationButton onClick={handleClick} />
+      <NotificationButton onClick={toggleDropdown} unreadCount={unreadCount} />
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
-        className="absolute -right-[240px] mt-[17px] flex h-[480px] w-[350px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-[361px] lg:right-0"
+        className="absolute -right-60 mt-4.25 flex w-87.5 flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark sm:w-90.25 lg:right-0"
       >
-        <NotificationHeader onClose={toggleDropdown} />
-        <NotificationList notifications={notificationData} onClose={closeDropdown} />
-        <ViewAllButton />
+        <NotificationHeader
+          unreadCount={unreadCount}
+          onClose={toggleDropdown}
+          onMarkAllRead={markAllRead}
+        />
+
+        {recentNotifications.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <ul className="flex flex-col overflow-y-auto custom-scrollbar max-h-90">
+            {recentNotifications.map((item) => (
+              <NotificationListItem
+                key={item.id}
+                item={item}
+                onRead={() => markRead([item.id])}
+                navigating={navigatingId === item.id}
+                onNavigate={setNavigatingId}
+              />
+            ))}
+          </ul>
+        )}
+
+        <Link
+          href="/notifikasi"
+          onClick={closeDropdown}
+          className="mt-3 block rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        >
+          Lihat semua
+        </Link>
       </Dropdown>
     </div>
   );

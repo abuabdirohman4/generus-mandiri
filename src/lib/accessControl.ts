@@ -127,9 +127,13 @@ export function canMultiKelompokLaporan(profile: UserProfile | null | undefined)
 
 export function canAccessOverview(profile: UserProfile | null): boolean {
   if (!profile) return false
-  return profile.role === 'superadmin' 
-    || profile.role === 'admin' 
+  return profile.role === 'superadmin'
+    || profile.role === 'admin'
     || profile.role === 'teacher'
+}
+
+export function canSendNotification(profile: UserProfile): boolean {
+  return isSuperAdmin(profile) || isAdminDaerah(profile)
 }
 
 // Filter visibility utilities (for modal forms)
