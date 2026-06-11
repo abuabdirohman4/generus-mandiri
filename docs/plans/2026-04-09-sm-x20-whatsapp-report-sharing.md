@@ -632,7 +632,7 @@ export default function WhatsAppModal({
               </div>
               <button
                 onClick={() => handleSettingChange({ download_image: !settings.download_image })}
-                className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
                   settings.download_image ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >

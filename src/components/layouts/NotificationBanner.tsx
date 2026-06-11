@@ -2,6 +2,7 @@
 
 import { useNotifications } from '@/hooks/useNotifications'
 import { AlertIcon, CheckCircleIcon, InfoIcon } from '@/lib/icons'
+import { sanitizeHtml } from '@/lib/htmlText'
 
 const TYPE_STYLES = {
   success: {
@@ -56,7 +57,10 @@ export default function NotificationBanner() {
               <BannerIcon type={notif.type} className={`w-5 h-5 mt-0.5 shrink-0 ${styles.icon}`} />
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-semibold ${styles.title}`}>{notif.title}</p>
-                <p className={`text-sm mt-0.5 ${styles.body}`}>{notif.body}</p>
+                <div
+                  className={`prose prose-sm dark:prose-invert max-w-none text-sm mt-0.5 ${styles.body}`}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(notif.body) }}
+                />
               </div>
               <button
                 onClick={() => dismiss(notif.id)}

@@ -8,4 +8,5 @@ export {
   dismissNotification,
   deleteNotification,
   updateNotification,
+  getNotificationDetail,
 } from './notifications/actions'

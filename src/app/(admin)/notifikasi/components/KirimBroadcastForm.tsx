@@ -15,6 +15,7 @@ import Button from '@/components/ui/button/Button'
 import InputFilter from '@/components/form/input/InputFilter'
 import InputField from '@/components/form/input/InputField'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
+import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor'
 
 interface KirimBroadcastFormProps {
   onSuccess: () => void
@@ -64,6 +65,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [selectedKelompok, setSelectedKelompok] = useState<string>('')
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [notifType, setNotifType] = useState<NotificationType>('info')
+
 
   // Org data
   const [daerahList, setDaerahList] = useState<OrgItem[]>([])
@@ -167,6 +169,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         setTitle('')
         setBody('')
         setSelectedRoles([])
+
         onSuccess()
       } else {
         setFeedback({ type: 'error', message: result.message || 'Gagal mengirim notifikasi.' })
@@ -220,17 +223,19 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         >
           Pesan <span className="text-red-500">*</span>
         </label>
-        <textarea
-          id="notif-body"
-          rows={3}
-          placeholder="Isi pesan notifikasi..."
+        <RichTextEditor
           value={body}
-          onChange={e => setBody(e.target.value)}
-          required
+          onChange={setBody}
+          placeholder="Isi pesan notifikasi..."
+          rows={10}
           disabled={submitting}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent dark:bg-gray-900 text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-300 dark:focus:border-brand-800 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          Untuk menyisipkan link: seleksi teks yang ingin dijadikan link, lalu klik 🔗 di toolbar.
+        </p>
       </div>
+
+
 
       {/* Tipe notifikasi */}
       <div>

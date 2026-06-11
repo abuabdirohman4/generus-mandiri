@@ -18,6 +18,8 @@ export async function insertNotification(
     sender_daerah_id?: string | null
     sender_desa_id?: string | null
     sender_kelompok_id?: string | null
+    action_url?: string | null
+    action_label?: string | null
   }
 ) {
   return await supabase.from('notifications').insert(row).select().single()
@@ -85,6 +87,8 @@ export async function fetchMyNotifications(
         type,
         created_at,
         edited_at,
+        action_url,
+        action_label,
         sender:sender_id (
           full_name
         )
@@ -112,6 +116,8 @@ export async function fetchMyNotifications(
     read_at: row.read_at,
     is_dismissed: row.is_dismissed,
     edited_at: row.notifications.edited_at ?? null,
+    action_url: row.notifications.action_url ?? null,
+    action_label: row.notifications.action_label ?? null,
   })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
@@ -218,4 +224,53 @@ export async function resetRecipientsUnread(supabase: SupabaseClient, notificati
     .from('notification_recipients')
     .update({ is_read: false, read_at: null, is_dismissed: false })
     .eq('notification_id', notificationId)
+}
+
+// Fetch single notification detail for a recipient (marks as read should happen at action layer)
+export async function fetchNotificationDetail(
+  supabase: SupabaseClient,
+  notificationId: string,
+  userId: string
+): Promise<(import('@/types/notification').NotificationWithStatus & { action_url: string | null; action_label: string | null }) | null> {
+  const { data, error } = await supabase
+    .from('notification_recipients')
+    .select(`
+      is_read,
+      read_at,
+      is_dismissed,
+      notifications!inner (
+        id,
+        title,
+        body,
+        type,
+        created_at,
+        edited_at,
+        action_url,
+        action_label,
+        sender:sender_id (
+          full_name
+        )
+      )
+    `)
+    .eq('recipient_id', userId)
+    .eq('notification_id', notificationId)
+    .single()
+
+  if (error || !data) return null
+
+  const row = data as any
+  return {
+    id: row.notifications.id,
+    title: row.notifications.title,
+    body: row.notifications.body,
+    type: row.notifications.type,
+    created_at: row.notifications.created_at,
+    edited_at: row.notifications.edited_at ?? null,
+    action_url: row.notifications.action_url ?? null,
+    action_label: row.notifications.action_label ?? null,
+    sender_name: row.notifications.sender?.full_name,
+    is_read: row.is_read,
+    read_at: row.read_at,
+    is_dismissed: row.is_dismissed,
+  }
 }

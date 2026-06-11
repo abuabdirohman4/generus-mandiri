@@ -6,6 +6,7 @@ import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { NotificationWithStatus } from "@/types/notification";
+import { stripHtml } from "@/lib/htmlText";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -129,7 +130,8 @@ function NotificationListItem({
 }) {
   const handleClick = () => {
     if (!item.is_read) onRead();
-    onClose();
+    // Defer close so the <Link> can navigate before Dropdown unmounts
+    setTimeout(() => onClose(), 0);
   };
 
   return (
@@ -137,7 +139,7 @@ function NotificationListItem({
       <DropdownItem
         onItemClick={handleClick}
         tag="a"
-        href="/notifikasi"
+        href={`/notifikasi/${item.id}`}
         className={`flex w-full gap-3 rounded-lg border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
           item.is_read
             ? "bg-white dark:bg-transparent"
@@ -173,7 +175,7 @@ function NotificationListItem({
 
           {/* Body preview */}
           <span className="mb-1 block truncate text-theme-xs text-gray-500 dark:text-gray-400">
-            {item.body}
+            {stripHtml(item.body)}
           </span>
 
           {/* Timestamp + edited */}

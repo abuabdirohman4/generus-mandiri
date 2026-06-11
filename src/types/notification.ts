@@ -20,6 +20,8 @@ export interface NotificationBase {
   type: string
   created_at: string
   edited_at?: string | null
+  action_url?: string | null
+  action_label?: string | null
 }
 
 // ─── Extended Types ───────────────────────────────────────────────────────────

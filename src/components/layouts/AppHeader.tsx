@@ -75,6 +75,8 @@ function PageTitle() {
           return 'Presensi';
         } else if (path.startsWith('/users/siswa/')) {
           return 'Detail Siswa';
+        } else if (path.startsWith('/notifikasi/')) {
+          return 'Detail Notifikasi';
         }
         return 'Generus Mandiri';
     }
@@ -96,7 +98,8 @@ function PageTitle() {
       path === '/monitoring' ||
       path === '/rapot' ||
       path === '/rapot/templates' ||
-      path === '/dashboard';
+      path === '/dashboard' ||
+      path.startsWith('/notifikasi/');
   };
 
   if (!mounted) {

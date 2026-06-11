@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import useSWR from 'swr'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useUserProfile } from '@/stores/userProfileStore'
@@ -10,6 +11,8 @@ import Button from '@/components/ui/button/Button'
 import KirimBroadcastForm from './components/KirimBroadcastForm'
 import type { NotificationSentSummary } from '@/types/notification'
 import ConfirmModal from '@/components/ui/modal/ConfirmModal'
+import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor'
+import { stripHtml } from '@/lib/htmlText'
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
@@ -76,7 +79,7 @@ const VARIANT_STYLES: Record<NotifVariant, {
 function SkeletonItem() {
   return (
     <div className="flex items-start gap-3 p-4 animate-pulse border-l-4 border-l-gray-200 dark:border-l-gray-700">
-      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+      <div className="mt-0.5 h-5 w-5 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded" />
         <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded" />
@@ -169,236 +172,237 @@ export default function NotifikasiPage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notifikasi</h1>
-          {unreadCount > 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {unreadCount} belum dibaca
-            </p>
-          )}
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notifikasi</h1>
+            {unreadCount > 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {unreadCount} belum dibaca
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {activeTab === 'received' && unreadCount > 0 && (
+              <Button variant="outline" size="sm" onClick={() => markAllRead()}>
+                Tandai semua dibaca
+              </Button>
+            )}
+            {canSend && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowForm(prev => !prev)}
+              >
+                {showForm ? 'Tutup Form' : 'Kirim Notifikasi'}
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {activeTab === 'received' && unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={() => markAllRead()}>
-              Tandai semua dibaca
-            </Button>
-          )}
-          {canSend && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowForm(prev => !prev)}
+
+        {/* Broadcast form */}
+        {canSend && showForm && (
+          <KirimBroadcastForm onSuccess={handleFormSuccess} />
+        )}
+
+        {/* Tabs (sender only) */}
+        {canSend && (
+          <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => setActiveTab('received')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === 'received'
+                  ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
             >
-              {showForm ? 'Tutup Form' : 'Kirim Notifikasi'}
-            </Button>
-          )}
-        </div>
-      </div>
+              Diterima
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('sent')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === 'sent'
+                  ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              Riwayat Terkirim
+            </button>
+          </div>
+        )}
 
-      {/* Broadcast form */}
-      {canSend && showForm && (
-        <KirimBroadcastForm onSuccess={handleFormSuccess} />
-      )}
-
-      {/* Tabs (sender only) */}
-      {canSend && (
-        <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            onClick={() => setActiveTab('received')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === 'received'
-                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
-          >
-            Diterima
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('sent')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === 'sent'
-                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
-          >
-            Riwayat Terkirim
-          </button>
-        </div>
-      )}
-
-      {/* Received list */}
-      {activeTab === 'received' && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
-          {isLoading ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <SkeletonItem key={i} />
-              ))}
-            </div>
-          ) : notifications.length === 0 ? (
-            <EmptyState
-              title="Belum ada notifikasi"
-              subtitle="Notifikasi yang kamu terima akan muncul di sini."
-            />
-          ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {notifications.map(notif => {
-                const variant = resolveVariant(notif.type)
-                const vs = VARIANT_STYLES[variant]
-                return (
-                  <li
-                    key={notif.id}
-                    onClick={() => { if (!notif.is_read) markRead([notif.id]) }}
-                    className={`relative flex items-start gap-3 p-4 pl-4 border-l-4 cursor-pointer transition-colors hover:brightness-95 dark:hover:brightness-110 ${vs.border} ${!notif.is_read ? vs.bg : 'bg-white dark:bg-gray-900'}`}
-                  >
-                    {/* Type icon */}
-                    <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
-                      {vs.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 pr-6">
-                      <div className="flex items-start gap-2">
-                        <p className={`text-sm font-semibold leading-snug flex-1 ${!notif.is_read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {notif.title}
-                        </p>
-                        {!notif.is_read && (
-                          <span className="mt-1 block h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                        {notif.body}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                        {notif.sender_name && (
-                          <>
-                            <span>{notif.sender_name}</span>
-                            <span aria-hidden="true">·</span>
-                          </>
-                        )}
-                        <span>{formatRelativeTime(notif.created_at)}</span>
-                      </div>
-                    </div>
-
-                    {/* Dismiss X */}
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); dismiss(notif.id) }}
-                      className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-                      title="Tutup"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Sent history (sender only) */}
-      {canSend && activeTab === 'sent' && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
-          {sentLoading ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonItem key={i} />
-              ))}
-            </div>
-          ) : sentNotifications.length === 0 ? (
-            <EmptyState
-              title="Belum ada broadcast terkirim"
-              subtitle="Notifikasi yang kamu kirim akan muncul di sini."
-            />
-          ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {sentNotifications.map(sent => {
-                const variant = resolveVariant(sent.type)
-                const vs = VARIANT_STYLES[variant]
-                return (
-                  <li key={sent.id} className={`border-l-4 ${vs.border} ${vs.bg}`}>
-                    {editingNotif?.id === sent.id ? (
-                      <div className="p-4 space-y-3">
-                        <input
-                          className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white"
-                          value={editForm.title}
-                          onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                          placeholder="Judul"
-                        />
-                        <textarea
-                          className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white resize-none"
-                          rows={3}
-                          value={editForm.body}
-                          onChange={e => setEditForm(f => ({ ...f, body: e.target.value }))}
-                          placeholder="Isi pesan"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="primary" onClick={handleEditSave} disabled={editLoading}>
-                            {editLoading ? 'Menyimpan...' : 'Simpan'}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingNotif(null)}>
-                            Batal
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-3 p-4">
-                        <div className={`mt-0.5 flex-shrink-0 ${vs.iconColor}`}>
+        {/* Received list */}
+        {activeTab === 'received' && (
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+            {isLoading ? (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <SkeletonItem key={i} />
+                ))}
+              </div>
+            ) : notifications.length === 0 ? (
+              <EmptyState
+                title="Belum ada notifikasi"
+                subtitle="Notifikasi yang kamu terima akan muncul di sini."
+              />
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {notifications.map(notif => {
+                  const variant = resolveVariant(notif.type)
+                  const vs = VARIANT_STYLES[variant]
+                  return (
+                    <li key={notif.id}>
+                      <Link
+                        href={`/notifikasi/${notif.id}`}
+                        onClick={() => { if (!notif.is_read) markRead([notif.id]) }}
+                        className={`relative flex items-start gap-3 p-4 pl-4 border-l-4 transition-colors hover:brightness-95 dark:hover:brightness-110 ${vs.border} ${!notif.is_read ? vs.bg : 'bg-white dark:bg-gray-900'}`}
+                      >
+                        {/* Type icon */}
+                        <div className={`mt-0.5 shrink-0 ${vs.iconColor}`}>
                           {vs.icon}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
-                            {sent.title}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
-                            {sent.body}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
-                            <span>Terkirim ke {sent.recipient_count} pengguna</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{formatRelativeTime(sent.created_at)}</span>
-                            {sent.edited_at && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className="italic">diedit</span>
-                              </>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 pr-6">
+                          <div className="flex items-start gap-2">
+                            <p className={`text-sm font-semibold leading-snug flex-1 ${!notif.is_read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                              {notif.title}
+                            </p>
+                            {!notif.is_read && (
+                              <span className="mt-1 block h-2 w-2 rounded-full bg-blue-500 shrink-0" />
                             )}
                           </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                            {stripHtml(notif.body)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                            {notif.sender_name && (
+                              <>
+                                <span>{notif.sender_name}</span>
+                                <span aria-hidden="true">·</span>
+                              </>
+                            )}
+                            <span>{formatRelativeTime(notif.created_at)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleEditStart(sent)}
-                            className="text-xs px-2 py-1 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(sent.id)}
-                            disabled={deleteLoadingId === sent.id}
-                            className="text-xs px-2 py-1 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                          >
-                            {deleteLoadingId === sent.id ? '...' : 'Hapus'}
-                          </button>
+
+                        {/* Dismiss X */}
+                        {/* <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); dismiss(notif.id) }}
+                          className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+                          title="Tutup"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button> */}
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* Sent history (sender only) */}
+        {canSend && activeTab === 'sent' && (
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+            {sentLoading ? (
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SkeletonItem key={i} />
+                ))}
+              </div>
+            ) : sentNotifications.length === 0 ? (
+              <EmptyState
+                title="Belum ada broadcast terkirim"
+                subtitle="Notifikasi yang kamu kirim akan muncul di sini."
+              />
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {sentNotifications.map(sent => {
+                  const variant = resolveVariant(sent.type)
+                  const vs = VARIANT_STYLES[variant]
+                  return (
+                    <li key={sent.id} className={`border-l-4 ${vs.border} ${vs.bg}`}>
+                      {editingNotif?.id === sent.id ? (
+                        <div className="p-4 space-y-3">
+                          <input
+                            className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-white"
+                            value={editForm.title}
+                            onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                            placeholder="Judul"
+                          />
+                          <RichTextEditor
+                            value={editForm.body}
+                            onChange={val => setEditForm(f => ({ ...f, body: val }))}
+                            placeholder="Isi pesan"
+                            rows={5}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="primary" onClick={handleEditSave} disabled={editLoading}>
+                              {editLoading ? 'Menyimpan...' : 'Simpan'}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingNotif(null)}>
+                              Batal
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
+                      ) : (
+                        <div className="flex items-start gap-3 p-4">
+                          <div className={`mt-0.5 shrink-0 ${vs.iconColor}`}>
+                            {vs.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold leading-snug text-gray-900 dark:text-white">
+                              {sent.title}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
+                              {stripHtml(sent.body)}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                              <span>Terkirim ke {sent.recipient_count} pengguna</span>
+                              <span aria-hidden="true">·</span>
+                              <span>{formatRelativeTime(sent.created_at)}</span>
+                              {sent.edited_at && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="italic">diedit</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleEditStart(sent)}
+                              className="text-xs px-2 py-1 rounded text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(sent.id)}
+                              disabled={deleteLoadingId === sent.id}
+                              className="text-xs px-2 py-1 rounded text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                            >
+                              {deleteLoadingId === sent.id ? '...' : 'Hapus'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
       <ConfirmModal
         isOpen={confirmDeleteId !== null}
         onClose={() => setConfirmDeleteId(null)}

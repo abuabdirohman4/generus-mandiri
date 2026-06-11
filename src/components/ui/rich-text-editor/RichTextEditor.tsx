@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
 import styles from './RichTextEditor.module.css';
 
 export interface RichTextEditorProps {
@@ -49,7 +50,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       Placeholder.configure({
         placeholder: placeholder,
       }),
-      Underline, // Add underline support
+      Underline,
+      Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true, HTMLAttributes: { class: 'text-blue-600 dark:text-blue-400 underline', rel: 'noopener noreferrer', target: '_blank' } }),
     ],
     content: value,
     editable: !disabled,
@@ -168,6 +170,22 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             title="Strikethrough"
           >
             <s>S</s>
+          </ToolbarButton>
+
+          <ToolbarButton
+            onClick={() => {
+              if (editor.isActive('link')) {
+                editor.chain().focus().unsetLink().run()
+              } else {
+                const url = window.prompt('Masukkan URL (mis. https://example.com atau /halaman):')
+                if (url) editor.chain().focus().setLink({ href: url }).run()
+              }
+            }}
+            isActive={editor.isActive('link')}
+            disabled={disabled}
+            title="Link"
+          >
+            🔗
           </ToolbarButton>
         </div>
       </div>

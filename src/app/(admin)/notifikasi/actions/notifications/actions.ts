@@ -19,6 +19,7 @@ import {
   deleteNotification as dbDeleteNotification,
   updateNotification as dbUpdateNotification,
   resetRecipientsUnread,
+  fetchNotificationDetail,
 } from './queries'
 import type { SendNotificationInput, UpdateNotificationInput } from '@/types/notification'
 
@@ -54,6 +55,8 @@ export async function sendNotification(input: SendNotificationInput) {
       sender_daerah_id: profile.daerah_id ?? null,
       sender_desa_id: profile.desa_id ?? null,
       sender_kelompok_id: profile.kelompok_id ?? null,
+      action_url: null,
+      action_label: null,
     })
     if (notifError || !notif) return { success: false, message: 'Gagal menyimpan notifikasi' }
 
@@ -232,5 +235,27 @@ export async function updateNotification(notificationId: string, input: UpdateNo
     return { success: true, message: 'Notifikasi berhasil diperbarui' }
   } catch {
     return { success: false, message: 'Terjadi kesalahan' }
+  }
+}
+
+export async function getNotificationDetail(notificationId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, data: null, message: 'Tidak terautentikasi' }
+
+    const profile = await getCurrentUserProfile()
+    if (!profile) return { success: false, data: null, message: 'Profil tidak ditemukan' }
+
+    const adminClient = await createAdminClient()
+    const notif = await fetchNotificationDetail(adminClient, notificationId, profile.id)
+    if (!notif) return { success: false, data: null, message: 'Notifikasi tidak ditemukan' }
+
+    // Mark as read
+    await markRead(adminClient, profile.id, [notificationId])
+
+    return { success: true, data: notif, message: '' }
+  } catch {
+    return { success: false, data: null, message: 'Gagal mengambil detail notifikasi' }
   }
 }
