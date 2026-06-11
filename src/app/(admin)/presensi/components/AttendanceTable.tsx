@@ -41,7 +41,7 @@ export default function AttendanceTable({
   columnToggle
 }: AttendanceTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortColumn, setSortColumn] = useState<'kelompok' | 'desa' | null>(null)
+  const [sortColumn, setSortColumn] = useState<'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(25)
@@ -69,6 +69,17 @@ export default function AttendanceTable({
         const bVal = b.desa_name || ''
         return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
       }
+      if (sortColumn === 'nama') {
+        return sortDirection === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      }
+      if (sortColumn === 'H' || sortColumn === 'I' || sortColumn === 'S' || sortColumn === 'A') {
+        const aMatch = (attendance[a.id]?.status || '') === sortColumn ? 0 : 1
+        const bMatch = (attendance[b.id]?.status || '') === sortColumn ? 0 : 1
+        const diff = aMatch - bMatch
+        return sortDirection === 'asc' ? diff : -diff
+      }
       return a.name.localeCompare(b.name)
     })
 
@@ -85,7 +96,7 @@ export default function AttendanceTable({
     return processedStudents.slice(start, start + itemsPerPage)
   }, [processedStudents, currentPage, itemsPerPage])
 
-  const handleSort = (column: 'kelompok' | 'desa') => {
+  const handleSort = (column: 'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A') => {
     if (sortColumn === column) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
@@ -172,20 +183,56 @@ export default function AttendanceTable({
             {/* Table Header */}
             <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="px-2 sm:px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                  Nama
+                <th
+                  className="px-2 sm:px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => handleSort('nama')}
+                >
+                  <div className="flex items-center gap-1">
+                    Nama
+                    <span className="text-gray-400 dark:text-gray-500">
+                      {sortColumn === 'nama' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
+                    </span>
+                  </div>
                 </th>
-                <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
-                  Hadir
+                <th
+                  className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16 cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => handleSort('H')}
+                  title="Sort berdasarkan Hadir"
+                >
+                  <div className="flex items-center justify-center gap-0.5">
+                    Hadir
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">{sortColumn === 'H' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}</span>
+                  </div>
                 </th>
-                <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
-                  Izin
+                <th
+                  className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16 cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => handleSort('I')}
+                  title="Sort berdasarkan Izin"
+                >
+                  <div className="flex items-center justify-center gap-0.5">
+                    Izin
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">{sortColumn === 'I' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}</span>
+                  </div>
                 </th>
-                <th className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
-                  Sakit
+                <th
+                  className="px-1 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16 cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => handleSort('S')}
+                  title="Sort berdasarkan Sakit"
+                >
+                  <div className="flex items-center justify-center gap-0.5">
+                    Sakit
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">{sortColumn === 'S' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}</span>
+                  </div>
                 </th>
-                <th className="px-1 pr-2 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16">
-                  Alfa
+                <th
+                  className="px-1 pr-2 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white w-10 sm:w-16 cursor-pointer select-none hover:bg-gray-200 dark:hover:bg-gray-600"
+                  onClick={() => handleSort('A')}
+                  title="Sort berdasarkan Alfa"
+                >
+                  <div className="flex items-center justify-center gap-0.5">
+                    Alfa
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">{sortColumn === 'A' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}</span>
+                  </div>
                 </th>
                 {showKelompokColumn && (
                   <th
