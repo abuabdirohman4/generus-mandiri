@@ -61,7 +61,7 @@ function getConfig(type: string) {
 }
 
 export default function BlockingNotificationModal() {
-  const { allNotifications, dismiss } = useNotifications()
+  const { allNotifications, dismiss, markRead } = useNotifications()
   const router = useRouter()
 
   // Pick first undismissed notification with mode=modal or mode=both
@@ -98,11 +98,13 @@ export default function BlockingNotificationModal() {
 
   const handleClose = useCallback(() => {
     if (!notif) return
+    if (!notif.is_read) markRead([notif.id])
     dismiss(notif.id)
-  }, [notif, dismiss])
+  }, [notif, dismiss, markRead])
 
   const handleCta = useCallback(() => {
     if (!notif) return
+    if (!notif.is_read) markRead([notif.id])
     dismiss(notif.id)
     if (notif.action_url) {
       if (notif.action_url.startsWith('http')) {
@@ -111,7 +113,7 @@ export default function BlockingNotificationModal() {
         router.push(notif.action_url)
       }
     }
-  }, [notif, dismiss, router])
+  }, [notif, dismiss, markRead, router])
 
   if (!notif || !displayConfig) return null
 
