@@ -30,7 +30,7 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 - **Urgensi**: medium
 - **Draft**:
 
-  > 🔔 **🔔 Fitur Notifikasi**
+  > **🔔 Fitur Notifikasi**
   >
   > Assalammualaikum Wr. Wb.
   >
@@ -49,13 +49,13 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 ### [~] Update Aplikasi (Sort Absensi + Remember Me + Column Toggle)
 - **Trigger**: sm-16x + sm-7ca + sm-0v3 merged + deploy + verifikasi live
 - **Target**: Semua guru + siswa (semua user)
-- **Tipe**: success
+- **Tipe**: info
 - **Urgensi**: low
 - **Draft**:
 
   > ✨ **Update Aplikasi**
   >
-  > Ada beberapa update terbaru:
+  > Ada beberapa update di aplikasi:
   >
   > 1. **Tabel Absensi Bisa Diurutkan** — tabel presensi sekarang bisa diurutkan berdasarkan nama atau status kehadiran (Hadir/Izin/Sakit/Alpa).
   > 2. **Login Lebih Praktis** — username tidak hilang saat login gagal, dan tersedia opsi "Ingat Saya".

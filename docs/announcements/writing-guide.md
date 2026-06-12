@@ -48,8 +48,8 @@ Kalau ada beberapa poin, pakai numbered list:
 
 | Tipe | Tone | Contoh kalimat |
 |---|---|---|
-| `success` (fitur baru) | Positif, singkat | "Ada beberapa update terbaru:" |
-| `info` (informasi) | Netral, jelas | "Informasi untuk [target]:" |
+| `info` (informasi/update fitur) | Netral, jelas | "Ada beberapa update terbaru:" |
+| `success` (konfirmasi aksi berhasil) | Positif | "Data berhasil disimpan" — untuk feedback aksi user |
 | `action` (butuh tindakan) | Langsung, jelas instruksi | "Ada yang perlu dilakukan sebelum [tanggal]:" |
 | `warning` (perhatian) | Tegas tapi tidak menakutkan | "Perhatian untuk admin kelompok:" |
 

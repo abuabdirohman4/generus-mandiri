@@ -64,24 +64,24 @@ export default function NotificationBanner() {
         const styles = getStyles(notif.type)
         return (
           <div key={notif.id} className={`relative rounded-lg border px-4 py-3 ${styles.wrapper}`}>
-            <div className="flex items-start gap-3">
-              <BannerIcon type={notif.type} className={`w-6 h-6 mt-0.5 shrink-0 ${styles.icon}`} />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${styles.title}`}>{notif.title}</p>
-                <div
-                  className={`prose prose-sm dark:prose-invert max-w-none text-sm mt-0.5 ${styles.body}`}
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(notif.body) }}
-                />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <BannerIcon type={notif.type} className={`w-6 h-6 shrink-0 ${styles.icon}`} />
+                <p className={`text-sm font-semibold flex-1 min-w-0 ${styles.title}`}>{notif.title}</p>
+                <button
+                  onClick={() => dismiss(notif.id)}
+                  className={`shrink-0 transition-colors ${styles.dismiss}`}
+                  aria-label="Tutup notifikasi"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={() => dismiss(notif.id)}
-                className={`shrink-0 transition-colors ${styles.dismiss}`}
-                aria-label="Tutup notifikasi"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div
+                className={`prose prose-sm dark:prose-invert max-w-none text-sm ${styles.body}`}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(notif.body) }}
+              />
             </div>
           </div>
         )
