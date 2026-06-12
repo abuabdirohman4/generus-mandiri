@@ -10,4 +10,5 @@ export {
   updateNotification,
   getNotificationDetail,
   getNotificationRecipients,
+  previewRecipientCount,
 } from './notifications/actions'

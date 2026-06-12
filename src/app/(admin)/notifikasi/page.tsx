@@ -429,6 +429,12 @@ export default function NotifikasiPage() {
                               {stripHtml(sent.body)}
                             </p>
                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                              {sent.sender_name && (
+                                <>
+                                  <span className="text-gray-600 dark:text-gray-300">{sent.sender_name}</span>
+                                  <span aria-hidden="true">·</span>
+                                </>
+                              )}
                               <span>Terkirim {sent.recipient_count}</span>
                               <span aria-hidden="true">·</span>
                               <span className="text-green-600 dark:text-green-400">Dibaca {sent.read_count}</span>

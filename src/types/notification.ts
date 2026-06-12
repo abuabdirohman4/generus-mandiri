@@ -24,6 +24,7 @@ export const DEFAULT_DISPLAY_CONFIG: NotificationDisplayConfig = {
 
 export interface NotificationTargetScope {
   daerah_id?: string | null
+  daerah_ids?: string[] // superadmin multi-daerah; takes priority over daerah_id when set
   desa_id?: string | null
   kelompok_id?: string | null
   roles?: string[] // empty/undefined = all roles in scope
@@ -97,6 +98,7 @@ export interface NotificationSentSummary {
   read_count: number
   dismissed_count: number
   display_config?: NotificationDisplayConfig | null
+  sender_name?: string // only populated for superadmin view
 }
 
 // Per-recipient status for sender's read-receipt view

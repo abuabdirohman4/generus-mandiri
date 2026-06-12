@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
-import { canSendNotification } from '@/lib/accessControl'
+import { canSendNotification, isSuperAdmin } from '@/lib/accessControl'
 import { logActivity } from '@/lib/activityLogger'
 import { validateNotificationInput, resolveTargetScopeForSender, validateUpdateNotificationInput } from './logic'
 import {
@@ -22,7 +22,7 @@ import {
   resetRecipientsUnread,
   fetchNotificationDetail,
 } from './queries'
-import type { SendNotificationInput, UpdateNotificationInput } from '@/types/notification'
+import type { SendNotificationInput, UpdateNotificationInput, NotificationTargetScope } from '@/types/notification'
 
 export async function sendNotification(input: SendNotificationInput) {
   try {
@@ -41,6 +41,11 @@ export async function sendNotification(input: SendNotificationInput) {
     if (!scopeResult.ok) return { success: false, message: scopeResult.error }
 
     const adminClient = await createAdminClient()
+
+    // Security guard: only superadmin may use daerah_ids (multi-daerah targeting)
+    if (input.target.daerah_ids?.length && !isSuperAdmin(profile)) {
+      return { success: false, message: 'Tidak memiliki izin memilih banyak daerah' }
+    }
 
     // Security guard: Admin Daerah cannot send personal notif to users outside their daerah
     if (
@@ -152,7 +157,7 @@ export async function getSentNotifications(opts: { limit?: number } = {}) {
     if (!canSendNotification(profile)) return { success: false, data: [], message: 'Tidak memiliki izin' }
 
     const adminClient = await createAdminClient()
-    const sent = await fetchSentNotifications(adminClient, profile.id, opts.limit ?? 20)
+    const sent = await fetchSentNotifications(adminClient, profile.id, opts.limit ?? 20, isSuperAdmin(profile))
     return { success: true, data: sent, message: '' }
   } catch {
     return { success: false, data: [], message: 'Gagal mengambil riwayat terkirim' }
@@ -170,7 +175,7 @@ export async function getNotificationRecipients(notificationId: string) {
     if (!canSendNotification(profile)) return { success: false, data: [], message: 'Tidak memiliki izin' }
 
     const adminClient = await createAdminClient()
-    const recipients = await fetchNotificationRecipients(adminClient, notificationId, profile.id)
+    const recipients = await fetchNotificationRecipients(adminClient, notificationId, profile.id, isSuperAdmin(profile))
     return { success: true, data: recipients, message: '' }
   } catch {
     return { success: false, data: [], message: 'Gagal mengambil daftar penerima' }
@@ -237,7 +242,7 @@ export async function deleteNotification(notificationId: string) {
     if (!canSendNotification(profile)) return { success: false, message: 'Tidak memiliki izin' }
 
     const adminClient = await createAdminClient()
-    const { error } = await dbDeleteNotification(adminClient, notificationId, profile.id)
+    const { error } = await dbDeleteNotification(adminClient, notificationId, profile.id, isSuperAdmin(profile))
     if (error) return { success: false, message: 'Gagal menghapus notifikasi' }
 
     revalidatePath('/notifikasi')
@@ -262,7 +267,7 @@ export async function updateNotification(notificationId: string, input: UpdateNo
 
     const adminClient = await createAdminClient()
 
-    const { error } = await dbUpdateNotification(adminClient, notificationId, profile.id, input)
+    const { error } = await dbUpdateNotification(adminClient, notificationId, profile.id, input, isSuperAdmin(profile))
     if (error) return { success: false, message: 'Gagal memperbarui notifikasi' }
 
     // Reset all recipients to unread so they see the updated content
@@ -294,5 +299,25 @@ export async function getNotificationDetail(notificationId: string) {
     return { success: true, data: notif, message: '' }
   } catch {
     return { success: false, data: null, message: 'Gagal mengambil detail notifikasi' }
+  }
+}
+
+export async function previewRecipientCount(target: NotificationTargetScope) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, count: 0 }
+
+    const profile = await getCurrentUserProfile()
+    if (!profile || !canSendNotification(profile)) return { success: false, count: 0 }
+
+    const scopeResult = resolveTargetScopeForSender(profile, target)
+    if (!scopeResult.ok) return { success: false, count: 0 }
+
+    const adminClient = await createAdminClient()
+    const ids = await fetchRecipientProfileIds(adminClient, scopeResult.scope!, user.id)
+    return { success: true, count: ids.length }
+  } catch {
+    return { success: false, count: 0 }
   }
 }

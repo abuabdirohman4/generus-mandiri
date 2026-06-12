@@ -14,6 +14,14 @@ export function validateNotificationInput(input: SendNotificationInput): { ok: b
       return { ok: false, error: 'ID penerima tidak valid' }
     }
   }
+  if (input.target.daerah_ids !== undefined) {
+    if (!Array.isArray(input.target.daerah_ids) || input.target.daerah_ids.length === 0) {
+      return { ok: false, error: 'Pilih minimal 1 daerah' }
+    }
+    if (input.target.daerah_ids.some(id => typeof id !== 'string' || !id)) {
+      return { ok: false, error: 'ID daerah tidak valid' }
+    }
+  }
   if (input.display_config) {
     const validModes = ['banner', 'modal', 'both']
     const validDismiss = ['free', 'acknowledge', 'cta_required']

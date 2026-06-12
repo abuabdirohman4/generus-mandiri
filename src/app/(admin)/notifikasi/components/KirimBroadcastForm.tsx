@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
-import { sendNotification } from '@/app/(admin)/notifikasi/actions'
-import type { NotificationType, NotificationDisplayConfig } from '@/types/notification'
+import { sendNotification, previewRecipientCount } from '@/app/(admin)/notifikasi/actions'
+import type { NotificationType, NotificationDisplayConfig, NotificationTargetScope } from '@/types/notification'
 import {
   fetchDaerahList,
   fetchDesaList,
@@ -98,6 +98,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   )
   const [selectedDesa, setSelectedDesa] = useState<string>('')
   const [selectedKelompok, setSelectedKelompok] = useState<string>('')
+  const [selectedDaerahIds, setSelectedDaerahIds] = useState<string[]>([])
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [notifType, setNotifType] = useState<NotificationType>('info')
 
@@ -120,6 +121,8 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   // UI state
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [recipientPreview, setRecipientPreview] = useState<number | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const activePreset = URGENCY_PRESETS.find(p => p.value === preset)!
   const showCtaFields = activePreset.requiresCta
@@ -173,6 +176,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
     } else {
       if (scope === 'all') setSelectedDaerah('')
     }
+    setSelectedDaerahIds([])
   }, [scope, isSA, profile?.daerah_id])
 
   // Load user list for personal scope
@@ -185,6 +189,45 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       setUserListLoading(false)
     })
   }, [scope, userSearch, isDA, profile?.daerah_id])
+
+  // Debounced preview recipient count
+  useEffect(() => {
+    setRecipientPreview(null)
+    const target: NotificationTargetScope = {}
+    if (scope === 'personal') {
+      if (selectedUsers.length > 0) {
+        target.recipient_ids = selectedUsers
+      } else {
+        return
+      }
+    } else if (scope === 'daerah') {
+      if (isSA) {
+        if (selectedDaerahIds.length === 0) return
+        target.daerah_ids = selectedDaerahIds
+      } else {
+        const daerahId = profile?.daerah_id
+        if (!daerahId) return
+        target.daerah_id = daerahId
+      }
+    } else if (scope === 'desa') {
+      if (!selectedDesa) return
+      target.desa_id = selectedDesa
+    } else if (scope === 'kelompok') {
+      if (!selectedKelompok) return
+      target.kelompok_id = selectedKelompok
+    }
+    // scope === 'all': no filter needed
+    if (selectedRoles.length > 0) target.roles = selectedRoles
+
+    setPreviewLoading(true)
+    const timer = setTimeout(async () => {
+      const res = await previewRecipientCount(target)
+      setRecipientPreview(res.success ? res.count : null)
+      setPreviewLoading(false)
+    }, 500)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, selectedDaerah, selectedDaerahIds, selectedDesa, selectedKelompok, selectedUsers, selectedRoles, isSA, profile?.daerah_id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -203,14 +246,19 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       return
     }
 
-    const target: { daerah_id?: string; desa_id?: string; kelompok_id?: string; roles?: string[]; recipient_ids?: string[] } = {}
+    const target: NotificationTargetScope = {}
     if (scope === 'personal') {
       if (selectedUsers.length === 0) { setFeedback({ type: 'error', message: 'Pilih minimal 1 penerima.' }); return }
       target.recipient_ids = selectedUsers
     } else if (scope === 'daerah') {
-      const daerahId = isSA ? selectedDaerah : profile?.daerah_id
-      if (!daerahId) { setFeedback({ type: 'error', message: 'Pilih daerah terlebih dahulu.' }); return }
-      target.daerah_id = daerahId
+      if (isSA) {
+        if (selectedDaerahIds.length === 0) { setFeedback({ type: 'error', message: 'Pilih minimal 1 daerah.' }); return }
+        target.daerah_ids = selectedDaerahIds
+      } else {
+        const daerahId = profile?.daerah_id
+        if (!daerahId) { setFeedback({ type: 'error', message: 'Pilih daerah terlebih dahulu.' }); return }
+        target.daerah_id = daerahId
+      }
     } else if (scope === 'desa') {
       if (!selectedDesa) { setFeedback({ type: 'error', message: 'Pilih desa terlebih dahulu.' }); return }
       target.desa_id = selectedDesa
@@ -463,7 +511,18 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
           </div>
         )}
 
-        {isSA && scope !== 'all' && scope !== 'personal' && (
+        {isSA && scope === 'daerah' && (
+          <div className="mt-3">
+            <MultiSelectCheckbox
+              label="Pilih Daerah"
+              items={daerahList.map(d => ({ id: d.id, label: d.name }))}
+              selectedIds={selectedDaerahIds}
+              onChange={setSelectedDaerahIds}
+              disabled={submitting}
+            />
+          </div>
+        )}
+        {isSA && (scope === 'desa' || scope === 'kelompok') && (
           <div className="mt-3">
             <InputFilter
               id="notif-daerah"
@@ -523,6 +582,15 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
           </div>
         )}
       </div>
+
+      {/* Recipient preview count */}
+      {(previewLoading || recipientPreview !== null) && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {previewLoading
+            ? 'Menghitung penerima...'
+            : `Estimasi penerima: ${recipientPreview} pengguna`}
+        </p>
+      )}
 
       {/* Feedback */}
       {feedback && (

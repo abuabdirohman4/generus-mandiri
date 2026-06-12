@@ -295,3 +295,30 @@ describe('buildRecipientProfileFilter', () => {
         expect(result.value).toBe('desa-005')
     })
 })
+
+
+describe('validateNotificationInput — daerah_ids', () => {
+    const base = { title: 'Judul', body: 'Isi pesan' }
+
+    it('accepts valid daerah_ids array', () => {
+        const r = validateNotificationInput({ ...base, target: { daerah_ids: ['d1', 'd2'] } } as any)
+        expect(r.ok).toBe(true)
+    })
+
+    it('rejects empty daerah_ids array', () => {
+        const r = validateNotificationInput({ ...base, target: { daerah_ids: [] } } as any)
+        expect(r.ok).toBe(false)
+        expect(r.error).toBe('Pilih minimal 1 daerah')
+    })
+
+    it('rejects daerah_ids with empty string element', () => {
+        const r = validateNotificationInput({ ...base, target: { daerah_ids: ['d1', ''] } } as any)
+        expect(r.ok).toBe(false)
+        expect(r.error).toBe('ID daerah tidak valid')
+    })
+
+    it('ignores daerah_ids when undefined', () => {
+        const r = validateNotificationInput({ ...base, target: {} } as any)
+        expect(r.ok).toBe(true)
+    })
+})

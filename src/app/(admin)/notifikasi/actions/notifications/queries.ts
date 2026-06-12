@@ -53,7 +53,9 @@ export async function fetchRecipientProfileIds(
   let query = supabase.from('profiles').select('id')
 
   // Apply org scope filter
-  if (scope.kelompok_id) {
+  if (scope.daerah_ids?.length) {
+    query = query.in('daerah_id', scope.daerah_ids)
+  } else if (scope.kelompok_id) {
     query = query.eq('kelompok_id', scope.kelompok_id)
   } else if (scope.desa_id) {
     query = query.eq('desa_id', scope.desa_id)
@@ -173,23 +175,30 @@ export async function dismiss(supabase: SupabaseClient, userId: string, notifica
 }
 
 
-// Fetch notifications sent by a user (sender's own broadcasts), with recipient count
+// Fetch notifications sent by a user (or all, for superadmin), with recipient count
 export async function fetchSentNotifications(
   supabase: SupabaseClient,
   senderId: string,
-  limit = 20
+  limit = 20,
+  isSuperadmin = false
 ): Promise<NotificationSentSummary[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('notifications')
-    .select('id, title, body, type, created_at, edited_at, display_config, notification_recipients(is_read, is_dismissed)')
-    .eq('sender_id', senderId)
+    .select('id, title, body, type, created_at, edited_at, display_config, sender:sender_id(full_name), notification_recipients(is_read, is_dismissed)')
     .order('created_at', { ascending: false })
     .limit(limit)
 
+  if (!isSuperadmin) {
+    query = query.eq('sender_id', senderId)
+  }
+
+  const { data, error } = await query
   if (error || !data) return []
 
   return data.map((row: any) => {
     const recipients: { is_read: boolean; is_dismissed: boolean }[] = row.notification_recipients ?? []
+    const rawSender = row.sender
+    const senderName = Array.isArray(rawSender) ? rawSender[0]?.full_name : rawSender?.full_name
     return {
       id: row.id,
       title: row.title,
@@ -201,23 +210,22 @@ export async function fetchSentNotifications(
       read_count: recipients.filter(r => r.is_read).length,
       dismissed_count: recipients.filter(r => r.is_dismissed).length,
       display_config: (row.display_config as NotificationDisplayConfig | null) ?? DEFAULT_DISPLAY_CONFIG,
+      sender_name: isSuperadmin ? (senderName ?? undefined) : undefined,
     }
   })
 }
 
-// Fetch per-recipient status for a sent notification (sender only)
+// Fetch per-recipient status for a sent notification (sender only, or superadmin)
 export async function fetchNotificationRecipients(
   supabase: SupabaseClient,
   notificationId: string,
-  senderId: string
+  senderId: string,
+  isSuperadmin = false
 ): Promise<NotificationRecipientStatus[]> {
-  // Verify ownership first
-  const { data: notif } = await supabase
-    .from('notifications')
-    .select('id')
-    .eq('id', notificationId)
-    .eq('sender_id', senderId)
-    .single()
+  // Verify ownership (superadmin bypasses)
+  let ownershipQ = supabase.from('notifications').select('id').eq('id', notificationId)
+  if (!isSuperadmin) ownershipQ = ownershipQ.eq('sender_id', senderId)
+  const { data: notif } = await ownershipQ.single()
   if (!notif) return []
 
   const { data, error } = await supabase
@@ -237,13 +245,11 @@ export async function fetchNotificationRecipients(
   }))
 }
 
-// Hard delete a notification (sender only — cascades to notification_recipients)
-export async function deleteNotification(supabase: SupabaseClient, notificationId: string, senderId: string) {
-  return await supabase
-    .from('notifications')
-    .delete()
-    .eq('id', notificationId)
-    .eq('sender_id', senderId)
+// Hard delete a notification (sender only, or superadmin — cascades to notification_recipients)
+export async function deleteNotification(supabase: SupabaseClient, notificationId: string, senderId: string, isSuperadmin = false) {
+  let q = supabase.from('notifications').delete().eq('id', notificationId)
+  if (!isSuperadmin) q = q.eq('sender_id', senderId)
+  return await q
 }
 
 // Update notification title/body/type and set edited_at
@@ -251,9 +257,10 @@ export async function updateNotification(
   supabase: SupabaseClient,
   notificationId: string,
   senderId: string,
-  input: UpdateNotificationInput
+  input: UpdateNotificationInput,
+  isSuperadmin = false
 ) {
-  return await supabase
+  let q = supabase
     .from('notifications')
     .update({
       title: input.title.trim(),
@@ -262,9 +269,8 @@ export async function updateNotification(
       edited_at: new Date().toISOString(),
     })
     .eq('id', notificationId)
-    .eq('sender_id', senderId)
-    .select()
-    .single()
+  if (!isSuperadmin) q = q.eq('sender_id', senderId)
+  return await q.select().single()
 }
 
 // Reset all recipients to unread after an edit
