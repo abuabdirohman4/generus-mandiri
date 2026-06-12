@@ -19,7 +19,7 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 
 ---
 
-## Fase 2 — Quick Wins / Mode B (Target: 12 Juni ✅ hampir selesai)
+## Fase 2 — Quick Wins / Mode B (✅ SELESAI)
 
 | Issue | Judul | Priority | Status |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 | `sm-kyle` | chore: post-commit hook release reminder | P3 | ✅ done |
 | — | fix: toolbar DataTable responsive | — | ✅ done (no beads) |
 | — | feat: kolom jenis kelamin di laporan (hidden default) | — | ✅ done (no beads) |
-| `sm-36mh` | task: investigasi auto-logout saat deploy | P2 | belum |
+| `sm-36mh` | task: investigasi auto-logout saat deploy | P2 | ✅ done |
 
 ---
 

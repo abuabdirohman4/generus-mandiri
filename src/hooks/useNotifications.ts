@@ -54,8 +54,21 @@ export function useNotifications() {
   }
 
   async function dismiss(notificationId: string) {
-    await dismissNotification(notificationId)
-    mutateList()
+    // Optimistic: hide banner instantly, sync to server in background
+    mutateList(
+      (prev) => {
+        if (!prev?.data) return prev
+        return {
+          ...prev,
+          data: prev.data.map(n =>
+            n.id === notificationId ? { ...n, is_dismissed: true, is_read: true } : n
+          ),
+        }
+      },
+      { revalidate: false }
+    )
+    mutateCount()
+    dismissNotification(notificationId).then(() => { mutateList(); mutateCount() })
   }
 
   return {

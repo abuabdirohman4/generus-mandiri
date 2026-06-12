@@ -169,7 +169,7 @@ export async function markAllRead(supabase: SupabaseClient, userId: string) {
 export async function dismiss(supabase: SupabaseClient, userId: string, notificationId: string) {
   return await supabase
     .from('notification_recipients')
-    .update({ is_dismissed: true })
+    .update({ is_dismissed: true, is_read: true, read_at: new Date().toISOString() })
     .eq('recipient_id', userId)
     .eq('notification_id', notificationId)
 }
