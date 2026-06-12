@@ -3,6 +3,7 @@
 import { ReactNode, useState, useMemo, useEffect, Fragment } from 'react'
 import Spinner from '../ui/spinner/Spinner'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/lib/icons'
+import ColumnToggle from './ColumnToggle'
 
 interface Column {
   key: string
@@ -15,6 +16,8 @@ interface Column {
   className?: string
   sortable?: boolean
   leftMargin?: string
+  hideable?: boolean
+  defaultVisible?: boolean
 }
 
 interface DataTableProps {
@@ -75,6 +78,30 @@ export default function DataTable({
   const [isMobile, setIsMobile] = useState(false)
   const [expandedRowId, setExpandedRowId] = useState<string | number | null>(null)
 
+  // Internal column visibility state (for hideable columns)
+  const [columnVisibility, setColumnVisibilityInternal] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(columns.map(c => [c.key, c.defaultVisible !== false]))
+  )
+
+  // Re-sync visibility when columns change (key set changes)
+  const columnKeysJoined = columns.map(c => c.key).join(',')
+  useEffect(() => {
+    setColumnVisibilityInternal(prev => {
+      const next: Record<string, boolean> = {}
+      columns.forEach(c => {
+        next[c.key] = c.key in prev ? prev[c.key] : (c.defaultVisible !== false)
+      })
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columnKeysJoined])
+
+  const hideableColumns = useMemo(() => columns.filter(c => c.hideable), [columns])
+  const visibleColumns = useMemo(
+    () => columns.filter(c => !c.hideable || columnVisibility[c.key] !== false),
+    [columns, columnVisibility]
+  )
+
   // Screen size detection
   useEffect(() => {
     const checkMobile = () => {
@@ -99,13 +126,13 @@ export default function DataTable({
     }
 
     return data.filter(item => {
-      return columns.some(column => {
+      return visibleColumns.some(column => {
         const value = item[column.key]
         if (value === null || value === undefined) return false
         return String(value).toLowerCase().includes(searchQuery.toLowerCase())
       })
     })
-  }, [data, searchQuery, columns, searchable])
+  }, [data, searchQuery, visibleColumns, searchable])
 
   // Sorting functionality
   const sortedData = useMemo(() => {
@@ -260,54 +287,71 @@ export default function DataTable({
 
   return (
     <div className="space-y-4">
-      {/* Search and Items Per Page Controls */}
-      {(searchable || pagination) && (
-        <div className="flex justify-between gap-4">
-          {/* Items Per Page Selector + Column Toggle */}
-          {pagination && (
-            // <div className="flex justify-between gap-3">
-            <>
-              <div className="flex items-center gap-2 jus text-sm text-gray-700 dark:text-gray-300">
-                <label>Show</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={handleItemsPerPageChange}
-                  className="w-full px-3 py-2 border bg-white border-gray-100 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-size-[16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                    backgroundPosition: 'right 8px center'
-                  }}
-                >
-                  {itemsPerPageOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <label>entries</label>
-              </div>
-              {columnToggle}
-            </>
-            // </div>
-          )}
+      {/* Toolbar: Show entries | [Kolom] [Search] */}
+      {(searchable || pagination || hideableColumns.length > 0) && (() => {
+        const columnToggleEl = hideableColumns.length > 0 && !columnToggle ? (
+          <ColumnToggle
+            columns={hideableColumns.map(c => ({ key: c.key, label: typeof c.label === 'string' ? c.label : c.key }))}
+            visibility={columnVisibility as Record<string, boolean>}
+            onChange={(v) => setColumnVisibilityInternal(prev => ({ ...prev, ...(v as Record<string, boolean>) }))}
+          />
+        ) : (columnToggle ?? null)
 
-          {/* Search Input */}
-          {searchable && (
-            <div className="relative">
-              <input
-                type="search"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={handleSearch}
-                className="w-full sm:w-64 px-3 py-2 pl-10 bg-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+        const searchEl = searchable ? (
+          <div className="relative w-full sm:w-auto">
+            <input
+              type="search"
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={handleSearch}
+              className="w-full sm:w-64 px-3 py-2 pl-10 bg-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ) : null
+
+        return (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Row 1 (mobile) / Left (desktop): Show entries + Kolom (mobile only) */}
+            <div className="flex items-center justify-between gap-2 sm:justify-start">
+              {pagination && (
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label>Show</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={handleItemsPerPageChange}
+                    className="px-3 py-2 border bg-white border-gray-100 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 8px center'
+                    }}
+                  >
+                    {itemsPerPageOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <label>entries</label>
+                </div>
+              )}
+              {/* Column toggle — visible ONLY on mobile (sm:hidden) */}
+              {columnToggleEl && <div className="sm:hidden">{columnToggleEl}</div>}
+            </div>
+
+            {/* Row 2 (mobile) / Right (desktop): Kolom (desktop only) + Search */}
+            {(columnToggleEl || searchEl) && (
+              <div className="flex items-center gap-2">
+                {/* Column toggle — visible ONLY on desktop (hidden sm:flex) */}
+                {columnToggleEl && <div className="hidden sm:block">{columnToggleEl}</div>}
+                {searchEl}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Table */}
       <div className={`rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${className}`}>
@@ -316,7 +360,7 @@ export default function DataTable({
             {/* Table Header */}
             <thead className={`bg-gray-100 dark:bg-gray-700 ${headerClassName}`}>
               <tr>
-                {columns.map((column) => {
+                {visibleColumns.map((column) => {
                   const getAlignmentClass = (align?: string) => {
                     switch (align) {
                       case 'center': return 'text-center'
@@ -384,7 +428,7 @@ export default function DataTable({
                           onRowClick?.(item, index)
                         }}
                       >
-                      {columns.map((column) => {
+                      {visibleColumns.map((column) => {
                         const getAlignmentClass = (align?: string) => {
                           switch (align) {
                             case 'center': return 'text-center'
@@ -438,7 +482,7 @@ export default function DataTable({
                     {/* Expandable Row */}
                     {expandable && renderExpandedRow && String(expandedRowId) === String(rowId) && (
                       <tr className="bg-gray-50/50 dark:bg-gray-900/30">
-                        <td colSpan={columns.length} className="px-0">
+                        <td colSpan={visibleColumns.length} className="px-0">
                           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                             {renderExpandedRow(item, index)}
                           </div>
@@ -450,7 +494,7 @@ export default function DataTable({
               })
             ) : (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={visibleColumns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'No matching records found' : (emptyMessage || 'No data available')}
                   </td>
                 </tr>
