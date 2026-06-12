@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.15.1] — 2026-06-13
+
+### Added
+- **Column Toggle di DataTable**: Kolom tabel laporan presensi bisa dikustomisasi — pilih kolom mana yang ditampilkan
+- **Sort Tabel Absensi**: Tabel presensi bisa diurutkan berdasarkan nama atau status kehadiran (H/I/S/A)
+- **Superadmin Notif History & Multi-Daerah**: Superadmin bisa lihat history notifikasi dan filter per daerah
+
+### Fixed
+- **Auto-Logout saat Deploy**: Service Worker stale HTML cache menyebabkan auto-logout saat deploy baru — sudah diperbaiki
+- **Dismiss Banner Optimistic**: Dismiss banner notifikasi langsung hilang tanpa tunggu server response
+- **is_read saat Dismiss Banner**: is_read kini di-set saat banner di-dismiss, bukan hanya saat dibuka
+- **Filter Siswa Inactive di Laporan**: Siswa tidak aktif/lulus tidak lagi muncul di laporan presensi
+- **Username Persist saat Login Gagal**: Username tidak hilang saat login gagal
+
 ## [1.15.0] — 2026-06-12
 
 ### Added

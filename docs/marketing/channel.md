@@ -1,4 +1,38 @@
 ---
+Release v1.15.1 — 2026-06-13
+---
+
+🇮🇩 *Update v1.15.1 — Stabilitas & UX*
+
+Ada beberapa update terbaru:
+
+Fitur Baru 🆕
+- **Pilih Kolom Laporan** — tampilan tabel laporan presensi bisa dikustomisasi, pilih kolom yang ingin ditampilkan
+- **Sort Tabel Absensi** — urutkan tabel presensi berdasarkan nama atau status (H/I/S/A)
+- **History Notif Superadmin** — superadmin bisa lihat history notifikasi dan filter per daerah
+
+Perbaikan 🔧
+- Fix auto-logout saat ada deploy baru
+- Dismiss banner notifikasi sekarang langsung hilang (optimistic)
+- Siswa tidak aktif tidak lagi muncul di laporan presensi
+- Username tidak hilang saat login gagal
+
+🇬🇧 *Update v1.15.1 — Stability & UX*
+
+New features & fixes:
+
+New 🆕
+- **Column Toggle in Reports** — customize which columns appear in the attendance report table
+- **Attendance Table Sorting** — sort by name or attendance status (P/E/S/A)
+- **Superadmin Notif History** — superadmins can view notification history filtered by region
+
+Fixed 🔧
+- Auto-logout on deploy caused by stale Service Worker cache — fixed
+- Notification banner dismiss is now instant (optimistic update)
+- Inactive/graduated students no longer appear in attendance reports
+- Username no longer cleared on failed login
+
+---
 Release v1.15.0 — 2026-06-12
 ---
 

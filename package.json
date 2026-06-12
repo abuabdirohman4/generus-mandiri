@@ -1,6 +1,6 @@
 {
   "name": "generus-mandiri",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,12 +14,14 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:ui": "playwright test --project=chromium --ui",
+    "test:e2e:headed": "playwright test --project=chromium --headed",
+    "test:e2e:debug": "playwright test --project=chromium --debug",
     "test:e2e:report": "playwright show-report",
-    "test:e2e:start": "next start"
+    "test:e2e:start": "next start",
+    "test:docs-capture": "playwright test --project=docs-capture",
+    "test:docs-capture:headed": "playwright test --project=docs-capture --headed"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
