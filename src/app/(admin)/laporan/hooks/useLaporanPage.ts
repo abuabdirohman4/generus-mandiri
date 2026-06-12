@@ -17,7 +17,7 @@ export function useLaporanPage() {
   // Store state
   const { 
     filters, setFilters, resetFilters, setFilter, hasActiveFilters, filterCount,
-    sharedMonth, sharedYear, setSharedTime 
+    sharedMonth, sharedYear, setSharedTime,
   } = useLaporan()
   
   // User profile for class filtering
@@ -129,6 +129,7 @@ export function useLaporanPage() {
           sakit: record.sakit,
           alpha: record.alpha,
           attendance_rate: `${record.attendance_rate}%`,
+          student_gender: record.student_gender || '-',
         }
       })
   }, [reportData?.detailedRecords, userProfile])
@@ -287,7 +288,7 @@ export function useLaporanPage() {
     ],
     sharedMonth,
     sharedYear,
-    setSharedTime
+    setSharedTime,
   }
 }
 

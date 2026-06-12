@@ -117,7 +117,6 @@ export const useLaporanStore = create<LaporanState>()(
       filters: defaultFilters,
       sharedMonth: getCurrentMonth(),
       sharedYear: getCurrentYear(),
-      
       setSharedTime: (month, year) => set({ 
         sharedMonth: month, 
         sharedYear: year,
@@ -198,7 +197,7 @@ export const useLaporanStore = create<LaporanState>()(
           endDate: null
         },
         sharedMonth: state.sharedMonth,
-        sharedYear: state.sharedYear
+        sharedYear: state.sharedYear,
       })
     }
   )

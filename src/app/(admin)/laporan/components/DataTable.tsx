@@ -12,6 +12,7 @@ interface TableData {
   no: number
   student_id: string
   student_name: string
+  student_gender?: string
   class_name: string
   kelompok_name?: string
   desa_name?: string
@@ -41,83 +42,39 @@ export default function DataTableComponent({ tableData, userProfile }: DataTable
 
   // Build dynamic columns based on user role
   const buildColumns = (userProfile: UserProfile | null) => {
-    const baseColumns = [
-      {
-        key: 'actions',
-        label: 'Detail',
-        align: 'center' as const,
-        width: '24'
-      },
-      {
-        key: 'student_name',
-        label: 'Nama Siswa',
-        align: 'left' as const,
-      },
-      {
-        key: 'attendance_rate',
-        label: 'Tingkat Kehadiran',
-        align: 'center' as const,
-      },
-      {
-        key: 'total_days',
-        label: 'Total Hari',
-        align: 'center' as const,
-      },
-      {
-        key: 'hadir',
-        label: 'Hadir',
-        align: 'center' as const,
-      },
-      {
-        key: 'izin',
-        label: 'Izin',
-        align: 'center' as const,
-      },
-      {
-        key: 'sakit',
-        label: 'Sakit',
-        align: 'center' as const,
-      },
-      {
-        key: 'alpha',
-        label: 'Alpha',
-        align: 'center' as const,
-      },
-    ]
-
-    // Add organizational columns based on role
-    const orgColumns = []
-
     const isSuperAdmin = userProfile?.role === 'superadmin'
     const isAdminDaerah = userProfile?.role === 'admin' && userProfile?.daerah_id && !userProfile?.desa_id
     const isAdminDesa = userProfile?.role === 'admin' && userProfile?.desa_id && !userProfile?.kelompok_id
-
     const isTeacherDaerah = userProfile?.role === 'teacher' && userProfile?.daerah_id && !userProfile?.desa_id && !userProfile?.kelompok_id
     const isTeacherDesa = userProfile?.role === 'teacher' && userProfile?.desa_id && !userProfile?.kelompok_id
-
     const isMultiKelompok = isMultiKelompokTeacher(userProfile as any)
 
+    const cols: Array<{ key: string; label: string; align: 'center' | 'left'; width?: string; hideable?: boolean; defaultVisible?: boolean }> = [
+      { key: 'actions', label: 'Detail', align: 'center', width: '24', hideable: true },
+      { key: 'student_name', label: 'Nama Siswa', align: 'left' },
+      { key: 'student_gender', label: 'Jenis Kelamin', align: 'center', hideable: true, defaultVisible: false },
+      { key: 'attendance_rate', label: 'Tingkat Kehadiran', align: 'center', hideable: true },
+      { key: 'total_days', label: 'Total Hari', align: 'center', hideable: true },
+      { key: 'hadir', label: 'Hadir', align: 'center', hideable: true },
+      { key: 'izin', label: 'Izin', align: 'center', hideable: true },
+      { key: 'sakit', label: 'Sakit', align: 'center', hideable: true },
+      { key: 'alpha', label: 'Alpha', align: 'center', hideable: true },
+    ]
+
     if (isSuperAdmin) {
-      orgColumns.push(
-        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-        { key: 'desa_name', label: 'Desa', align: 'center' as const },
-        { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
-      )
+      cols.push({ key: 'kelompok_name', label: 'Kelompok', align: 'center', hideable: true })
+      cols.push({ key: 'desa_name', label: 'Desa', align: 'center', hideable: true })
+      cols.push({ key: 'daerah_name', label: 'Daerah', align: 'center', hideable: true })
     } else if (isAdminDaerah || isTeacherDaerah) {
-      orgColumns.push(
-        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-        { key: 'desa_name', label: 'Desa', align: 'center' as const },
-      )
+      cols.push({ key: 'kelompok_name', label: 'Kelompok', align: 'center', hideable: true })
+      cols.push({ key: 'desa_name', label: 'Desa', align: 'center', hideable: true })
     } else if (isAdminDesa || isTeacherDesa || isMultiKelompok) {
-      orgColumns.push(
-        { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const }
-      )
+      cols.push({ key: 'kelompok_name', label: 'Kelompok', align: 'center', hideable: true })
     }
 
-    // Always add class column at the end
-    orgColumns.push({ key: 'class_name', label: 'Kelas', align: 'center' as const })
+    cols.push({ key: 'class_name', label: 'Kelas', align: 'center', hideable: true })
 
-    return [...baseColumns, ...orgColumns]
+    return cols
   }
 
   const columns = useMemo(() => buildColumns(userProfile ?? null), [userProfile])
@@ -147,6 +104,13 @@ export default function DataTableComponent({ tableData, userProfile }: DataTable
       )
     }
     
+    if (column.key === 'student_gender') {
+      const g = item.student_gender
+      if (g === 'Laki-laki') return 'L'
+      if (g === 'Perempuan') return 'P'
+      return '-'
+    }
+
     return item[column.key] || '-'
   }
 
