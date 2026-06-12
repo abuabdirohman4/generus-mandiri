@@ -34,11 +34,11 @@ export async function login(formData: FormData) {
 
     if (profileError || !profile) {
       // return redirect("/signin?message=Username tidak ditemukan");
-      return redirect("/signin?message=Username atau password salah. Silakan coba lagi.");
+      return redirect(`/signin?message=Username atau password salah. Silakan coba lagi.&username=${encodeURIComponent(String(username))}`);
     }
 
     if (!profile.email) {
-      return redirect("/signin?message=Email tidak ditemukan untuk user ini");
+      return redirect(`/signin?message=Email tidak ditemukan untuk user ini&username=${encodeURIComponent(String(username))}`);
     }
 
     // Login menggunakan email dari profiles table
@@ -49,7 +49,7 @@ export async function login(formData: FormData) {
 
     if (error) {
       const errorMessage = handleAuthError(error);
-      return redirect(`/signin?message=${encodeURIComponent(errorMessage)}`);
+      return redirect(`/signin?message=${encodeURIComponent(errorMessage)}&username=${encodeURIComponent(String(username))}`);
     }
 
     void logActivity({
@@ -70,7 +70,7 @@ export async function login(formData: FormData) {
     
     // Handle actual errors
     const errorInfo = handleApiError(error, 'autentikasi', 'gagal login');
-    return redirect(`/signin?message=${encodeURIComponent(errorInfo.message || 'Gagal login')}`);
+    return redirect(`/signin?message=${encodeURIComponent(errorInfo.message || 'Gagal login')}&username=${encodeURIComponent(String(username))}`);
   }
 }
 

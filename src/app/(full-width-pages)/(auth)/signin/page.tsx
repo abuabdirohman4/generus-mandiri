@@ -10,9 +10,10 @@ export const metadata: Metadata = {
   description: "Sistem Digital Generus LDII Generus Mandiri",
 };
 
-export default async function SignIn({ searchParams }: { searchParams?: Promise<{ message?: string }> }) {
+export default async function SignIn({ searchParams }: { searchParams?: Promise<{ message?: string; username?: string }> }) {
   const params = await searchParams;
   const message = params?.message;
+  const initialUsername = params?.username || '';
   
   // Check if message is success or error
   const isSuccess = message && (
@@ -91,7 +92,7 @@ export default async function SignIn({ searchParams }: { searchParams?: Promise<
             </div>
           ) : null}
 
-          <SignInForm />
+          <SignInForm initialUsername={initialUsername} />
         </div>
       </div>
 

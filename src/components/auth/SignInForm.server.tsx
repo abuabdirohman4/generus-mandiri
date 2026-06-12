@@ -9,12 +9,30 @@ import Checkbox from "@/components/form/input/Checkbox";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { EyeIcon, EyeCloseIcon } from "@/lib/icons";
 
-export default function SignInForm() {
+export default function SignInForm({ initialUsername = '' }: { initialUsername?: string }) {
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [username, setUsername] = useState(() => {
+    if (initialUsername) return initialUsername
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('remembered_username') || ''
+    }
+    return ''
+  });
+  const [rememberMe, setRememberMe] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('remembered_username')
+    }
+    return false
+  });
 
   const handleSubmit = (formData: FormData) => {
+    const usernameValue = formData.get('username') as string
+    if (rememberMe) {
+      localStorage.setItem('remembered_username', usernameValue)
+    } else {
+      localStorage.removeItem('remembered_username')
+    }
     startTransition(async () => {
       await login(formData);
     });
@@ -37,6 +55,8 @@ export default function SignInForm() {
             type="text"
             required
             disabled={isPending}
+            value={username}
+            onChange={e => setUsername(e.target.value)}
             className="w-full pl-10 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
             placeholder="Masukkan username"
           />
@@ -101,23 +121,16 @@ export default function SignInForm() {
         </div>
       </div> */}
 
-      {/* Remember Me & Forgot Password - Only show on desktop */}
-      {/* <div className="hidden lg:flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Checkbox
-            checked={keepLoggedIn}
-            onChange={setKeepLoggedIn}
-            disabled={isPending}
-            className="checked:opacity-100"
-          />
-          <label onClick={() => setKeepLoggedIn(!keepLoggedIn)} htmlFor="keep-logged-in" className="block font-normal text-gray-700 text-theme-sm cursor-pointer dark:text-gray-400">
-            Tetap masuk
-          </label>
-        </div>
-        <Link href="/forgot-password" className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium">
-          Lupa Password?
-        </Link>
-      </div> */}
+      <div className="flex items-center gap-3">
+        <Checkbox
+          checked={rememberMe}
+          onChange={setRememberMe}
+          disabled={isPending}
+        />
+        <label onClick={() => setRememberMe(!rememberMe)} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+          Ingat Saya
+        </label>
+      </div>
 
       <button 
         type="submit" 
