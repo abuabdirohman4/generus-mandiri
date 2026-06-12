@@ -31,11 +31,13 @@ export async function middleware(request: NextRequest) {
 
     const { supabase, response } = createClient(request)
     
-    // Get session with timeout to prevent hanging
+    // getUser() validates the token with Supabase Auth server and triggers refresh
+    // if the access token is expired. getSession() only reads the cookie without
+    // validation — per @supabase/ssr docs, always use getUser() in middleware.
     let session = null
     try {
-      const { data: { session: sessionData } } = await supabase.auth.getSession()
-      session = sessionData
+      const { data: { user } } = await supabase.auth.getUser()
+      session = user ? { user } : null
     } catch (error) {
       console.error('Auth session error:', error)
       // Continue without session if auth fails

@@ -1,8 +1,10 @@
 // Optimized Service Worker for Generus Mandiri
 // School Management System PWA
+// UPDATE BUILD_VERSION on every meaningful deploy so old caches are purged automatically.
 
-const CACHE_NAME = 'warlob-school-v1.0.0';
-const STATIC_CACHE = 'warlob-static-v1.0.0';
+const BUILD_VERSION = '2026-06-12';
+const CACHE_NAME = `warlob-school-${BUILD_VERSION}`;
+const STATIC_CACHE = `warlob-static-${BUILD_VERSION}`;
 
 // Static assets to cache
 const STATIC_ASSETS = [
@@ -97,24 +99,10 @@ async function handleRequest(request) {
       }
     }
 
-    // For HTML pages, try network first with cache fallback
+    // HTML pages: network-only, NEVER cache.
+    // Caching HTML across deploys causes stale chunk references (404) -> app crash -> logout.
     if (isHTMLPage(url)) {
-      try {
-        const networkResponse = await fetch(request);
-        if (networkResponse.ok) {
-          // Cache successful responses
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(request, networkResponse.clone());
-        }
-        return networkResponse;
-      } catch (error) {
-        // Fallback to cache
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        throw error;
-      }
+      return await fetch(request);
     }
 
     // For other requests, try network first

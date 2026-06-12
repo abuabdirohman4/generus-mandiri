@@ -48,15 +48,44 @@ export default function PWAComponents() {
 
     // Register service worker
     if ('serviceWorker' in navigator) {
+      // Guard against infinite reload loop from controllerchange
+      let reloadPending = false;
+
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then((registration) => {
           console.log('🔧 Warlob Service Worker registered:', registration);
           setIsAppReady(true);
+
+          // When a new SW version is found after deploy, reload so the app
+          // uses the new chunk hashes. Without this, stale HTML referencing
+          // old hashes causes 404s -> app crash -> auto-logout.
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('🔄 New app version available, reloading...');
+                if (!reloadPending) {
+                  reloadPending = true;
+                  window.location.reload();
+                }
+              }
+            });
+          });
         })
         .catch((error) => {
           console.error('❌ Service Worker registration failed:', error);
           setIsAppReady(true); // Continue even if SW fails
         });
+
+      // Reload when SW controller changes (handles tabs already open before update)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloadPending) return;
+        reloadPending = true;
+        console.log('🔄 Service Worker updated, reloading for new version...');
+        window.location.reload();
+      });
     } else {
       setIsAppReady(true);
     }
