@@ -11,9 +11,6 @@
 - Siswa
     - [ ] Saat delete, edukasi kalau memang bukan salah data atau siswa hanya pindah sambung tidak perlu dihapus, di archive saja, lalu sediakan arah ke archive
 
-- Laporan
-    - [ ] Pasang kolom jenis kelamin (default no)
-
 - Overview
     - [ ] Tampilkan untuk semua akun, filter kategori
 
@@ -35,12 +32,14 @@
     - [ ] Table absensi bisa disortir
 
 - Auth
-    - [ ] Kalau login gagal usernmae/password, username jangan hilang
+    - [x] Kalau login gagal usernmae/password, username jangan hilang
+    - [x] Remember Me
 
 - Siswa
     - [ ] Admin belum selalu mendapat archive & transfer
     - [ ] Add Bulk with CSV, Excel, Text
 
 - Laporan
-    - [ ] Siswa tidak aktif masih muncul
+    - [x] Siswa tidak aktif masih muncul
     - [ ] Pasang column toggle
+         - [ ] Pasang kolom jenis kelamin (default no)
