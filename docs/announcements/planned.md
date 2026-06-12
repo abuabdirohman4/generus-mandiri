@@ -9,32 +9,60 @@ Claude baca file ini saat `/release` untuk cek apakah ada pengumuman yang perlu 
 ### [status] Judul Pengumuman
 - **Trigger**: Issue/kondisi yang harus selesai dulu sebelum kirim
 - **Target**: Siapa yang menerima (semua / superadmin / admin daerah / dll)
+- **Tipe**: info | success | warning | action
+- **Urgensi**: low | medium | high
 - **Draft**: Isi pengumuman
 - **Dikirim**: Tanggal kirim (diisi setelah dikirim)
 ```
 
 Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
+Tipe: `info` (informasi) | `success` (fitur baru berhasil) | `warning` (perhatian/perubahan) | `action` (butuh tindakan user)
+Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca/ditindaki)
 
 ---
 
 ## Antrian Pengumuman
 
-### [~] Fitur Pengumuman & Broadcast Notifikasi
+### [x] Fitur Pengumuman & Broadcast Notifikasi
 - **Trigger**: sm-69c selesai + deploy
 - **Target**: Semua guru + siswa (penerima notifikasi, bukan pengirim)
+- **Tipe**: info
+- **Urgensi**: medium
 - **Draft**:
 
-  > 🔔 **Info: Fitur Pengumuman**
+  > 🔔 **🔔 Fitur Notifikasi**
   >
   > Assalammualaikum Wr. Wb.
   >
   > Mulai sekarang, admin atau pengurus bisa mengirim pengumuman langsung ke user melalui aplikasi.
   >
-  > Pengumuman akan muncul otomatis saat user membuka aplikasi. Sebagai penguat selain informasi melalui WhatsApp atau media lain — semua info penting juga akan disampaikan lewat fitur notifikasi atau pengumuman ini.
+  > Pengumuman akan muncul otomatis saat user membuka aplikasi. Sebagai penguat informasi selain melalui WhatsApp atau media lain, semua info penting juga akan disampaikan lewat fitur notifikasi ini.
   >
   > Semoga Allah Paring Aman Selamat Lancar dan Barokah. 
   >
   > Aamiin
+
+- **Dikirim**: 12 Juni 2026
+
+---
+
+### [~] Peningkatan Aplikasi (Sort Absensi + Remember Me)
+- **Trigger**: sm-16x + sm-7ca merged + deploy + verifikasi live
+- **Target**: Semua guru + siswa (semua user)
+- **Tipe**: success
+- **Urgensi**: low
+- **Draft**:
+
+  > ✨ **Peningkatan Aplikasi**
+  >
+  > Assalammualaikum Wr. Wb.
+  >
+  > Beberapa peningkatan sudah tersedia:
+  >
+  > 1. **Tabel Absensi Bisa Diurutkan** — tabel presensi sekarang bisa diurutkan berdasarkan nama atau status kehadiran (Hadir/Izin/Sakit/Alpa) untuk memudahkan pengecekan.
+  > 2. **Login Lebih Praktis** — username tidak hilang lagi saat login gagal, dan tersedia opsi "Ingat Saya" agar tidak perlu ketik ulang.
+  >
+  > Semoga memudahkan. Barokah.
 
 - **Dikirim**: -
 
@@ -43,6 +71,8 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 ### [~] Fitur Hapus & Archive Siswa
 - **Trigger**: Issue hapus/archive siswa aktif selesai (belum ada issue — buat dulu)
 - **Target**: Admin daerah + admin desa + admin kelompok
+- **Tipe**: action
+- **Urgensi**: medium
 - **Draft**:
 
   > 🗂️ **Fitur Kelola Status Siswa**
@@ -60,6 +90,8 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 ### [~] Dokumentasi Panduan Penggunaan Tersedia
 - **Trigger**: sm-4op selesai + deploy
 - **Target**: Semua admin + guru
+- **Tipe**: info
+- **Urgensi**: low
 - **Draft**:
 
   > 📖 **Panduan Penggunaan Aplikasi Tersedia**
@@ -75,6 +107,8 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 ### [~] Fitur Naik Kelas Tersedia
 - **Trigger**: sm-ejs selesai + stable di production
 - **Target**: Semua guru + siswa (yang terdampak proses kenaikan kelas)
+- **Tipe**: action
+- **Urgensi**: high
 - **Draft**:
 
   > 🎓 **Info: Proses Kenaikan Kelas Akan Segera Dilaksanakan**
@@ -96,6 +130,8 @@ Status: `[ ] belum` | `[~] draft siap` | `[x] sudah dikirim`
 ### [~] Info: Paud & Pra Nikah Tidak Ikut Naik Kelas
 - **Trigger**: Bersamaan dengan pengumuman naik kelas (sm-ejs)
 - **Target**: Guru + siswa kelas Paud dan Pra Nikah
+- **Tipe**: info
+- **Urgensi**: medium
 - **Draft**:
 
   > ℹ️ **Informasi untuk Kelas Paud & Pra Nikah**

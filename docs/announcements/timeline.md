@@ -1,7 +1,7 @@
 # Timeline Pengerjaan — Target 26 Juni 2026
 
-Hari ini: 11 Juni 2026. Sisa waktu: **15 hari**.
-Total: **22 open issues**.
+Hari ini: 12 Juni 2026. Sisa waktu: **14 hari**.
+Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak timeline dibuat).
 
 ---
 
@@ -15,27 +15,30 @@ Total: **22 open issues**.
 | `sm-rqr` | feat: BlockingNotificationModal + dismiss logic | ✅ closed |
 | `sm-q3d` | feat: filter visibility notif di dropdown + list | ✅ closed |
 
-> Setelah deploy: kirim pengumuman `planned.md` #1 (Fitur Notifikasi).
+> Pengumuman `planned.md` #1 (Fitur Notifikasi) sudah dikirim 12 Juni 2026. ✅
 
 ---
 
-## Fase 2 — Quick Wins / Mode B (Target: 11–13 Juni)
+## Fase 2 — Quick Wins / Mode B (Target: 12–13 Juni)
 
-| Issue | Judul | Priority | Est. |
+| Issue | Judul | Priority | Status |
 |---|---|---|---|
-| `sm-8pv` | fix: filter siswa tidak aktif di laporan | P1 bug | 30 menit |
-| `sm-36mh` | task: investigasi auto-logout saat deploy | P2 | 1–2 jam |
-| `sm-7ca` | feat: username persist + remember me | P3 | 30 menit |
-| `sm-16x` | feat: sort nama + status di AttendanceTable | P3 | 30 menit |
-| `sm-kyle` | chore: post-commit hook release reminder | P3 | 30 menit |
+| `sm-8pv` | fix: filter siswa tidak aktif di laporan | P1 bug | ✅ done |
+| `sm-7ca` | feat: username persist + remember me | P3 | ✅ done (branch `fix/sm-7ca`) |
+| `sm-16x` | feat: sort nama + status di AttendanceTable | P3 | ✅ done (branch `feat/sm-16x`) |
+| `sm-kyle` | chore: post-commit hook release reminder | P3 | ✅ done |
+| — | fix: toolbar DataTable responsive | — | ✅ done (no beads) |
+| — | feat: kolom jenis kelamin di laporan (hidden default) | — | ✅ done (no beads) |
+| `sm-36mh` | task: investigasi auto-logout saat deploy | P2 | belum |
 
 ---
 
-## Fase 3 — Medium (Target: 14–18 Juni)
+## Fase 3 — Medium (Target: 13–17 Juni)
 
 | Issue | Judul | Priority | Est. |
 |---|---|---|---|
-| `sm-0v3` | feat: column toggle di laporan presensi | P3 | 1 jam |
+| `sm-0v3` | feat: column toggle di laporan presensi | P3 | ✅ done (branch `feat/sm-0v3`) |
+| `sm-4op` | isi konten dokumentasi per fitur | P3 | 2–3 jam (fitur stabil bisa mulai) |
 | `sm-1jj` | feat: bulk edit teacher permissions | P2 | 2–3 jam |
 | `sm-ix1` | feat: export laporan absensi ke PDF | P2 | 2–3 jam |
 | `sm-x20` | feat: WhatsApp report sharing | P2 | 2–3 jam |
@@ -44,7 +47,7 @@ Total: **22 open issues**.
 
 ---
 
-## Fase 4 — Besar / Mode A (Target: 19–25 Juni)
+## Fase 4 — Besar / Mode A (Target: 18–25 Juni)
 
 | Issue | Judul | Priority | Est. |
 |---|---|---|---|
