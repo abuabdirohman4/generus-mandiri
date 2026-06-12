@@ -53,7 +53,7 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 - **Urgensi**: low
 - **Draft**:
 
-  > ✨ **Update Aplikasi**
+  > **Update Aplikasi**
   >
   > Ada beberapa update di aplikasi:
   >

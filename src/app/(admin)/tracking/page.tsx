@@ -112,123 +112,124 @@ export default function TrackingPage() {
   const totalPages = Math.ceil(total / (params.limit || 50))
 
   return (
-    // <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-    <div className="flex flex-col gap-6 bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Tracking System</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Pantau semua aktivitas sistem dan keamanan secara real-time</p>
+    <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="mx-auto px-0 pb-28 md:pb-0 md:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Tracking System</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pantau semua aktivitas sistem dan keamanan secara real-time</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Real-time Presence */}
-      <OnlinePresence />
+        {/* Real-time Presence */}
+        <OnlinePresence />
 
-      {/* Denah Aplikasi */}
-      <AppMap />
+        {/* Denah Aplikasi */}
+        <AppMap />
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 w-fit rounded-xl bg-gray-200/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'all' 
-            ? 'bg-blue-600 text-white shadow-lg' 
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
-        >
-          <BarsOutlined />
-          Semua Aktivitas
-        </button>
-        <button
-          onClick={() => setActiveTab('summary')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'summary' 
-            ? 'bg-blue-600 text-white shadow-lg' 
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          }`}
-        >
-          <TeamOutlined />
-          Ringkasan per User
-        </button>
-      </div>
+        {/* Tabs */}
+        <div className="flex items-center gap-1 p-1 w-fit rounded-xl bg-gray-200/50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'all' 
+              ? 'bg-blue-600 text-white shadow-lg' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            <BarsOutlined />
+            Semua Aktivitas
+          </button>
+          <button
+            onClick={() => setActiveTab('summary')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'summary' 
+              ? 'bg-blue-600 text-white shadow-lg' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            <TeamOutlined />
+            Ringkasan per User
+          </button>
+        </div>
 
-      {activeTab === 'all' ? (
-        <>
-          {/* Table */}
-          {loading && logs.length === 0 ? (
-            <SuperadminTableSkeleton />
-          ) : (
-            <div className="overflow-hidden">
-              <AuditTable logs={logs} />
-              
-              {/* Pagination */}
-              {/* {totalPages > 1 && (
-                <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{logs.length}</span> dari <span className="font-semibold text-gray-900 dark:text-white">{total}</span> log
-                  </span>
-                  
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePageChange((params.page || 1) - 1)}
-                      disabled={(params.page || 1) === 1}
-                      className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600 dark:text-gray-400"
-                    >
-                      <LeftOutlined />
-                    </button>
+        {activeTab === 'all' ? (
+          <>
+            {/* Table */}
+            {loading && logs.length === 0 ? (
+              <SuperadminTableSkeleton />
+            ) : (
+              <div className="overflow-hidden">
+                <AuditTable logs={logs} />
+                
+                {/* Pagination */}
+                {/* {totalPages > 1 && (
+                  <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Menampilkan <span className="font-semibold text-gray-900 dark:text-white">{logs.length}</span> dari <span className="font-semibold text-gray-900 dark:text-white">{total}</span> log
+                    </span>
                     
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum = i + 1;
-                        if (totalPages > 5 && (params.page || 1) > 3) {
-                          pageNum = (params.page || 1) - 3 + i;
-                        }
-                        if (pageNum > totalPages) return null;
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
-                              (params.page || 1) === pageNum 
-                              ? 'bg-blue-600 text-white' 
-                              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePageChange((params.page || 1) - 1)}
+                        disabled={(params.page || 1) === 1}
+                        className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600 dark:text-gray-400"
+                      >
+                        <LeftOutlined />
+                      </button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum = i + 1;
+                          if (totalPages > 5 && (params.page || 1) > 3) {
+                            pageNum = (params.page || 1) - 3 + i;
+                          }
+                          if (pageNum > totalPages) return null;
+                          
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`h-9 w-9 rounded-lg text-sm font-medium transition-all ${
+                                (params.page || 1) === pageNum 
+                                ? 'bg-blue-600 text-white' 
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          )
+                        })}
+                      </div>
 
-                    <button
-                      onClick={() => handlePageChange((params.page || 1) + 1)}
-                      disabled={(params.page || 1) === totalPages}
-                      className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600 dark:text-gray-400"
-                    >
-                      <RightOutlined />
-                    </button>
+                      <button
+                        onClick={() => handlePageChange((params.page || 1) + 1)}
+                        disabled={(params.page || 1) === totalPages}
+                        className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600 dark:text-gray-400"
+                      >
+                        <RightOutlined />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )} */}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          {summaryLoading && userSummaries.length === 0 ? (
-            <SuperadminTableSkeleton />
-          ) : (
-            <div className="overflow-hidden">
-              <UserSummaryTable data={userSummaries} />
-            </div>
-          )}
-        </>
-      )}
+                )} */}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {summaryLoading && userSummaries.length === 0 ? (
+              <SuperadminTableSkeleton />
+            ) : (
+              <div className="overflow-hidden">
+                <UserSummaryTable data={userSummaries} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
