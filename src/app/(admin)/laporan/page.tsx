@@ -54,7 +54,7 @@ export default function LaporanPage() {
     periodOptions,
     sharedMonth,
     sharedYear,
-    setSharedTime
+    setSharedTime,
   } = useLaporanPage()
 
   const {
