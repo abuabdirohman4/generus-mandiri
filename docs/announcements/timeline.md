@@ -19,7 +19,7 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 
 ---
 
-## Fase 2 — Quick Wins / Mode B (Target: 12–13 Juni)
+## Fase 2 — Quick Wins / Mode B (Target: 12 Juni ✅ hampir selesai)
 
 | Issue | Judul | Priority | Status |
 |---|---|---|---|
@@ -33,7 +33,7 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 
 ---
 
-## Fase 3 — Medium (Target: 13–17 Juni)
+## Fase 3 — Medium (Target: 13–16 Juni)
 
 | Issue | Judul | Priority | Est. |
 |---|---|---|---|
@@ -47,7 +47,7 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 
 ---
 
-## Fase 4 — Besar / Mode A (Target: 18–25 Juni)
+## Fase 4 — Besar / Mode A (Target: 17–24 Juni)
 
 | Issue | Judul | Priority | Est. |
 |---|---|---|---|
@@ -68,10 +68,10 @@ Total: **20 open issues** (sm-8pv, sm-16x, sm-7ca, sm-0v3, sm-kyle selesai sejak
 | `sm-2bx` | Enable RLS junction tables | P3 | Kompleks, 38 query terpengaruh, butuh audit penuh |
 | `sm-rfa` | fix rapot core bugs | P3 | Tunggu desain rapot final |
 | `sm-skj` | refactor: pecah god file server actions | P3 | Besar, tidak urgent |
-| `sm-4op` | isi konten dokumentasi per fitur | P3 | Tunggu fitur stabil |
 | `sm-8hu` | refactor: migrate material_item_classes | P4 | Tunggu desain rapot final |
 | `sm-a6y` | refactor: remove semester column | P4 | Tunggu desain rapot final |
 | `sm-8cz` | refactor: pecah DataFilter | P4 | Low priority |
+| `sm-vlf1` | refactor: compound-component table system | P4 | Epic besar, 24 consumer, kerjakan setelah sm-0v3 stabil |
 
 ---
 

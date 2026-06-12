@@ -46,23 +46,20 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 
 ---
 
-### [~] Peningkatan Aplikasi (Sort Absensi + Remember Me)
-- **Trigger**: sm-16x + sm-7ca merged + deploy + verifikasi live
+### [~] Update Aplikasi (Sort Absensi + Remember Me + Column Toggle)
+- **Trigger**: sm-16x + sm-7ca + sm-0v3 merged + deploy + verifikasi live
 - **Target**: Semua guru + siswa (semua user)
 - **Tipe**: success
 - **Urgensi**: low
 - **Draft**:
 
-  > ✨ **Peningkatan Aplikasi**
+  > ✨ **Update Aplikasi**
   >
-  > Assalammualaikum Wr. Wb.
+  > Ada beberapa update terbaru:
   >
-  > Beberapa peningkatan sudah tersedia:
-  >
-  > 1. **Tabel Absensi Bisa Diurutkan** — tabel presensi sekarang bisa diurutkan berdasarkan nama atau status kehadiran (Hadir/Izin/Sakit/Alpa) untuk memudahkan pengecekan.
-  > 2. **Login Lebih Praktis** — username tidak hilang lagi saat login gagal, dan tersedia opsi "Ingat Saya" agar tidak perlu ketik ulang.
-  >
-  > Semoga memudahkan. Barokah.
+  > 1. **Tabel Absensi Bisa Diurutkan** — tabel presensi sekarang bisa diurutkan berdasarkan nama atau status kehadiran (Hadir/Izin/Sakit/Alpa).
+  > 2. **Login Lebih Praktis** — username tidak hilang saat login gagal, dan tersedia opsi "Ingat Saya".
+  > 3. **Pilih Kolom di Laporan** — tampilan tabel laporan presensi bisa dikustomisasi, pilih kolom mana yang ingin ditampilkan.
 
 - **Dikirim**: -
 
