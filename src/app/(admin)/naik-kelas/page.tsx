@@ -5,6 +5,8 @@ import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
 import PromotionClient from './PromotionClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
     title: 'Naik Kelas | Generus Mandiri',
     description: 'Kenaikan kelas massal per tahun ajaran',
