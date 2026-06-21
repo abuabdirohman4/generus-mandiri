@@ -1,6 +1,6 @@
 export default {
   index: "Beranda",
-  "getting-started": "Memulai",
+  "getting-started": "Mulai Dari Sini",
   fitur: "Fitur",
-  panduan: "Panduan per Role",
+  // panduan: "Panduan per Role",
 };

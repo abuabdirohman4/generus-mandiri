@@ -212,3 +212,6 @@ playwright/.cache/
 
 # Git worktrees
 .worktrees/
+
+# Docs capture videos (upload to YouTube manually)
+docs-videos/

@@ -41,6 +41,7 @@ User: review teks + upload video + isi YouTube ID
 - Buat script `scripts/seed-demo-data.ts` yang menambah data realistis ke **org demo existing** (konfirmasi org ID demo saat eksekusi): banyak siswa, kelas terisi, beberapa meeting + attendance, rapot dengan nilai, materi + progress.
 - Idempotent (upsert), aman dijalankan ulang.
 - **CATATAN:** Jangan pakai data production (data sensitif siswa bocor di docs publik).
+- **PENTING (temuan review):** Helper auth E2E login pakai kredensial `TEST_*` dari `.env.test`, dan org test hardcoded di `tests/global-setup.ts` (`eeeeeeee-...`/`ffffffff-...`/`dddddddd-...`) — itu **bukan** akun demo. Pilih salah satu saat eksekusi (konfirmasi user): (a) seed ke org TEST tsb + capture pakai kredensial existing, atau (b) tambah env kredensial akun demo + helper login demo di `auth.ts`. Kalau tidak, screenshot Fase 3 menampilkan data org yang TIDAK di-seed di Fase 1.
 
 ### Fase 2: Komponen MDX
 **Tujuan:** `src/mdx-components.tsx` sekarang kosong (`return {}`). Tambah komponen tampilan.
@@ -71,6 +72,11 @@ User: review teks + upload video + isi YouTube ID
 - Tiap spec: login role yang sesuai → navigate alur utama fitur → `page.screenshot({ path: 'public/images/docs/<fitur>/NN-langkah.png' })` di titik kunci → biarkan video merekam seluruh alur.
 - Script post-process: `ffmpeg` convert `.webm` (di `test-results/`) → `.mp4` ke folder staging (`docs-videos/`) untuk user upload YouTube.
 - npm script baru: `test:docs-capture` (`playwright test --project=docs-capture`).
+- **WAJIB (temuan review):** ubah script `test:e2e` existing jadi `playwright test --project=chromium` — sekarang `playwright test` polos menjalankan SEMUA project, jadi tanpa ini tiap run E2E ikut menjalankan capture slowMo (lambat + overwrite screenshot/video).
+- Video: pakai bentuk `video: { mode: 'on', size: { width: 1280, height: 800 } }` agar resolusi sama dengan viewport (tajam, tidak di-scale).
+- Jalankan capture terhadap **production build** (`next build` lalu `next start`, bukan webServer dev default) — dev mode compile-on-navigate bikin video penuh loading/spinner.
+- Catatan: tidak ada storageState — alur login ikut terekam di tiap video (username demo terlihat, password masked). OK untuk docs (user memang perlu lihat login), atau trim detik awal saat convert ffmpeg.
+- `screenshot: 'on'` di project docs-capture opsional — screenshot dipakai manual via `page.screenshot()`, auto-screenshot akhir test cuma nyampah di `test-results/`; boleh `'off'`.
 - Selector pattern reuse dari spec existing (`a[href^="/presensi/"]`, `button:has-text(...)`, `getByRole`, `.ant-table`).
 
 ### Fase 4: Konten per fitur (batch, di-review user)

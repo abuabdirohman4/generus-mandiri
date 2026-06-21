@@ -229,3 +229,56 @@ END $$;
 
 - See [CLAUDE.md](../../CLAUDE.md) for database structure and Supabase client usage
 - See [business-rules.md](./business-rules.md) for business logic constraints
+
+---
+
+## 🌱 Seeding Demo Data — Kontrak & Constraint
+
+**Script resmi:** `scripts/seed-demo-data.ts` — jalankan untuk seed/reset data demo PAC Gandasari. Idempotent (aman dijalankan ulang).
+
+```bash
+npx tsx scripts/seed-demo-data.ts
+```
+
+### Constraint yang WAJIB dipatuhi (pernah menyebabkan error)
+
+| Kolom / Tipe | Aturan | Error kalau dilanggar |
+|---|---|---|
+| UUID (semua tabel) | Hanya hex `0-9a-f` — prefix `u`/`s`/`g`/huruf lain invalid | `invalid input syntax for type uuid` |
+| `students.gender` | `Laki-laki` atau `Perempuan` (bukan `L`/`P`) | check constraint violation |
+| `meetings.student_snapshot` | **WAJIB** diisi array JSON `student_id` (bukan NULL) | `getMeetingsWithStats` crash dengan TypeError forEach on null |
+| `meetings array cols` | `class_ids`/`kelompok_ids` bertipe `text[]` — bandingkan via `= ANY(col::uuid[])` bukan `LIKE` | `operator does not exist: uuid ~~ unknown` |
+| `auth.identities` | Setiap `auth.users` HARUS punya 1 baris di `auth.identities` | User bisa login tapi session corrupt |
+
+### Kontrak `meetings.student_snapshot`
+
+Kolom ini adalah **snapshot siswa saat meeting dibuat** — array UUID semua siswa di `class_ids` meeting pada saat itu. Cara populasi yang benar (sama seperti UI):
+
+```typescript
+// Ambil student IDs dari student_classes untuk class_ids meeting
+const { data: sc } = await supabase
+  .from('student_classes')
+  .select('student_id')
+  .in('class_id', meeting.class_ids)
+
+const student_snapshot = sc?.map(r => r.student_id) ?? []
+// Lalu INSERT meeting dengan student_snapshot ini — JANGAN biarkan NULL
+```
+
+**Kenapa kritis:** `getMeetingsWithStats` (`presensi/actions/meetings/actions.ts:1028`) memanggil `.forEach()` langsung di snapshot **tanpa null-guard**. NULL snapshot = seluruh daftar meeting crash (sm-8nvh track null-guard fix terpisah).
+
+### Backfill snapshot NULL (one-time fix, sudah dijalankan Juni 2026)
+
+```sql
+UPDATE meetings m
+SET student_snapshot = sub.ids
+FROM (
+  SELECT mm.id,
+    to_jsonb(array_agg(DISTINCT sc.student_id::text)) AS ids
+  FROM meetings mm
+  JOIN student_classes sc ON sc.class_id = ANY(mm.class_ids::uuid[])
+  WHERE mm.student_snapshot IS NULL
+  GROUP BY mm.id
+) sub
+WHERE m.id = sub.id;
+```

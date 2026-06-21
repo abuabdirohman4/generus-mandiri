@@ -1,9 +1,6 @@
 export default {
-  absensi: "Absensi",
-  rapot: "Rapot",
-  monitoring: "Monitoring",
-  kelas: "Kelas",
-  materi: "Materi",
-  organisasi: "Organisasi",
-  users: "Users",
+  presensi: "Presensi",
+  laporan: "Laporan",
+  siswa: "Siswa",
+  settings: "Pengaturan",
 };

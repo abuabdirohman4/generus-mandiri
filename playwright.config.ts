@@ -62,6 +62,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
+    {
+      name: 'docs-capture',
+      testDir: './tests/docs-capture',
+      testMatch: '**/*.capture.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        screenshot: 'off',
+        video: { mode: 'on', size: { width: 1280, height: 800 } },
+        launchOptions: { slowMo: 600 },
+        viewport: { width: 1280, height: 800 },
+        baseURL: process.env.DOCS_CAPTURE_BASE_URL || process.env.TEST_BASE_URL || 'http://localhost:3000',
+      },
+    },
+
     // Uncomment to test on other browsers:
     // {
     //   name: 'firefox',

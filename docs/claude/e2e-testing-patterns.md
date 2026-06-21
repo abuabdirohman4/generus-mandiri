@@ -336,3 +336,53 @@ Warp menampilkan "Contains backslash-escaped whitespace" karena path project men
 - [ ] Permission test pakai `expect(page).not.toHaveURL()` bukan cek URL manual
 - [ ] `clearCookies()` di beforeEach untuk role switch
 - [ ] Tidak ada conditional `test.skip()` berdasarkan data
+
+
+---
+
+## Docs-Capture (Playwright untuk Dokumentasi)
+
+Project `docs-capture` di `playwright.config.ts` digunakan untuk menghasilkan screenshot otomatis bagi dokumentasi. Pelajaran dari pengembangan spec ini (5x gagal sebelum stabil):
+
+### Anti-Tebak Selector (Penyebab Utama Kegagalan Berulang)
+
+**JANGAN tulis selector dari ingatan atau asumsi.** Setiap selector WAJIB diverifikasi dari:
+- (a) Snapshot DOM dari error screenshot Playwright (`test-results/*/error-context.md`)
+- (b) Baca source komponen React (grep `placeholder=`, text button, accessible role)
+- (c) `getByRole`/`getByText` yang accessible-name-nya sudah terbukti ada di DOM
+
+Hasil Explore agent = petunjuk awal, BUKAN kebenaran. Verifikasi ulang saat eksekusi. Ragu 1 selector → berhenti, baca DOM, baru tulis.
+
+### Cek Enable State yang Benar
+
+Valid states untuk `locator.waitFor`: `attached | detached | visible | hidden`.
+Untuk cek enabled, pakai: `await expect(locator).toBeEnabled({ timeout: 10000 })` — bukan `waitFor({state:"enabled"})` yang error TS.
+
+### Pola Idempotent: Reset Data di beforeAll
+
+Jika spec melakukan perubahan data (save presensi → upsert → persist), run ke-2 akan gagal karena state sudah berubah (contoh: `isDirty=false` → Simpan disabled).
+Solusi: `test.beforeAll(async () => { await resetDemoAttendance(); })` — lihat `tests/docs-capture/helpers/reset.ts`.
+
+### student_snapshot di Meeting Wajib Array
+
+Meeting demo HARUS punya `student_snapshot` berisi array siswa — bukan NULL. NULL menyebabkan crash di `getMeetingsWithStats`. Lihat detail constraint di `docs/claude/database-operations.md` section "Seeding Demo Data".
+
+### Sembunyikan UI Dev Next.js
+
+Panggil sebelum setiap `page.screenshot()`:
+```typescript
+await page.addStyleTag({ content: `#__next-build-watcher, nextjs-portal, [data-nextjs-dialog-overlay], [data-nextjs-toast] { display: none !important; }` });
+```
+
+### Screenshot Overwrite (Idempotent Output)
+
+Path screenshot di-resolve ke absolute path. Tiap run MENIMPA file sebelumnya — tidak ada duplikasi. By design supaya selalu update ke state terbaru.
+
+### Checklist Docs-Capture Sebelum Run
+
+- `test.beforeAll` reset data yang di-upsert (presensi, dll)
+- Semua selector diverifikasi dari DOM/source — tidak ditebak
+- `hideDevUI(page)` sebelum setiap screenshot
+- Folder `public/images/docs/<fitur>/` sudah ada
+- `test.describe.configure({ mode: "serial" })` aktif
+- Timeout 180000ms untuk spec panjang

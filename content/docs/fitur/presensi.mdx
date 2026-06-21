@@ -1,0 +1,92 @@
+---
+title: Presensi
+description: Panduan fitur presensi di Generus Mandiri
+---
+
+# Presensi
+
+Fitur Presensi digunakan untuk mencatat kehadiran santri per pertemuan. Guru membuat pertemuan terlebih dahulu, lalu mengisi status hadir/izin/sakit/alpha untuk tiap santri.
+
+<YouTubeEmbed id="" title="Demo fitur Presensi" />
+
+---
+
+## Alur Penggunaan
+
+<Steps>
+  <Step title="Buka halaman Presensi">
+    Klik menu **Presensi** di sidebar kiri. Halaman ini menampilkan daftar pertemuan yang sudah dibuat, diurutkan dari yang terbaru.
+
+    <DocImage
+      src="/images/docs/presensi/01-list-meeting.png"
+      alt="Daftar pertemuan"
+      caption="Daftar pertemuan yang sudah dibuat"
+    />
+  </Step>
+
+  <Step title="Buat pertemuan baru">
+    Klik tombol **Buat Pertemuan Baru**. Isi form:
+    - **Tanggal** — tanggal pertemuan berlangsung
+    - **Kelas** — pilih satu atau lebih kelas yang hadir
+    - **Judul** (opsional) — misal "Pengajian Rutin" atau "BCM"
+
+    Klik **Simpan** untuk membuat pertemuan.
+
+    <DocImage
+      src="/images/docs/presensi/02-modal-buat-meeting.png"
+      alt="Modal buat pertemuan"
+      caption="Form buat pertemuan baru"
+    />
+  </Step>
+
+  <Step title="Buka pertemuan">
+    Klik salah satu pertemuan dari daftar. Halaman detail menampilkan tabel santri beserta kolom status kehadiran:
+
+    - **H** — Hadir
+    - **I** — Izin
+    - **S** — Sakit
+    - **A** — Alpha (tidak hadir tanpa keterangan)
+
+    <DocImage
+      src="/images/docs/presensi/03-detail-meeting.png"
+      alt="Detail pertemuan"
+      caption="Tabel presensi santri dengan pilihan status"
+    />
+  </Step>
+
+  <Step title="Isi kehadiran & simpan">
+    Klik lingkaran di kolom status yang sesuai untuk tiap santri. Setelah semua terisi, klik tombol **Simpan**.
+
+    <DocImage
+      src="/images/docs/presensi/04-isi-absensi.png"
+      alt="Isi status presensi"
+      caption="Isi status kehadiran semua santri"
+    />
+  </Step>
+
+  <Step title="Presensi tersimpan">
+    Setelah simpan, halaman menampilkan konfirmasi dan rekap kehadiran. Kamu bisa kembali ke daftar pertemuan untuk melihat ringkasan.
+
+    <DocImage
+      src="/images/docs/presensi/05-setelah-simpan.png"
+      alt="Setelah simpan"
+      caption="Konfirmasi presensi berhasil disimpan"
+    />
+  </Step>
+</Steps>
+
+---
+
+## Tips
+
+<Callout type="tip" title="Auto-save aktif">
+  Setiap perubahan status presensi langsung tersimpan ke server. Indikator di pojok kanan atas berubah jadi "Tersimpan" setelah setiap klik.
+</Callout>
+
+<Callout type="info" title="Satu pertemuan, banyak kelas">
+  Satu pertemuan bisa mencakup lebih dari satu kelas sekaligus — berguna untuk kegiatan gabungan seperti BCM atau acara khusus. Pilih semua kelas yang hadir saat membuat pertemuan.
+</Callout>
+
+<Callout type="warning" title="Presensi tidak bisa dihapus">
+  Pertemuan yang sudah dibuat tidak dapat dihapus — hanya bisa diedit. Pastikan tanggal dan kelas sudah benar sebelum menyimpan.
+</Callout>
