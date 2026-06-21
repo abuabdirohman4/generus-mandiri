@@ -72,6 +72,7 @@ READ [`docs/claude/release-workflow.md`](docs/claude/release-workflow.md)
 
 ## 📚 Documentation Strategy
 
+- **Roadmap**: [`docs/roadmap.md`](docs/roadmap.md) — status fitur + next up. Update tiap akhir sesi.
 - **Realtime Presence**: Architecture (Zustand) and maintenance guidelines.
   - Technical: [`docs/technical/realtime-presence.md`](docs/technical/realtime-presence.md)
   - Claude Rules: [`docs/claude/realtime-presence.md`](docs/claude/realtime-presence.md)

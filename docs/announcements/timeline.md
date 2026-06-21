@@ -1,3 +1,5 @@
+> ⚠️ **ARSIP** — Timeline ini kadaluarsa (deadline 26 Juni 2026 lewat). Jangan dipakai untuk arah. Lihat [roadmap aktif](../roadmap.md).
+
 # Timeline Pengerjaan — Target 26 Juni 2026
 
 Hari ini: 12 Juni 2026. Sisa waktu: **14 hari**.

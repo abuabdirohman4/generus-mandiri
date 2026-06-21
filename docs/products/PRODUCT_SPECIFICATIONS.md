@@ -1,7 +1,7 @@
 # Product Specifications: Generus Mandiri
 
-**Version:** 1.8.1
-**Last Updated:** March 15, 2026
+**Version:** 1.15.1
+**Last Updated:** June 21, 2026
 **Document Type:** Product Requirements & Technical Specifications
 
 ---
