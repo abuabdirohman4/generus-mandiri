@@ -23,6 +23,8 @@ import { useMeetingFormSettings } from '../hooks/useMeetingFormSettings'
 import { useMyActivityTypes } from '@/hooks/useMyActivityTypes'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
 import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
+import { useDesa } from '@/hooks/useDesa'
+import { deriveClassIdsBySelection } from './logic'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -51,6 +53,7 @@ export default function CreateMeetingModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
+  const [selectedDesaIds, setSelectedDesaIds] = useState<string[]>([])
   // For hierarchical teachers (Guru Desa/Daerah): user picks deduplicated class names,
   // selectedClassIds is auto-derived from selectedClassNames × selectedKelompokIds
   const [selectedClassNames, setSelectedClassNames] = useState<string[]>([])
@@ -116,6 +119,15 @@ export default function CreateMeetingModal({
       (!userProfile.classes || userProfile.classes.length === 0))
   }, [userProfile])
 
+  // Daerah-level user: admin daerah OR guru daerah (has daerah_id but no desa_id/kelompok_id)
+  const isDaerahLevelUser = useMemo(() => {
+    if (!userProfile) return false
+    return userProfile.role !== 'superadmin'
+      && !!userProfile.daerah_id
+      && !userProfile.desa_id
+      && !userProfile.kelompok_id
+  }, [userProfile])
+
   // Auto-determine activity level based on user role
   const activityLevelId = useMemo(() => {
     if (!userProfile || !activityLevels || activityLevels.length === 0) return null
@@ -162,6 +174,20 @@ export default function CreateMeetingModal({
     if (!kelompok || allowedKelompokIds === null) return kelompok || []
     return kelompok.filter((k: any) => allowedKelompokIds.includes(k.id))
   }, [kelompok, allowedKelompokIds])
+
+  const { desa } = useDesa()
+
+  // Desa yang tersedia untuk Guru/Admin Daerah (filter by daerah_id)
+  const availableDesa = useMemo(() => {
+    if (!desa || !userProfile || !isDaerahLevelUser) return []
+    return (desa as any[]).filter(d => d.daerah_id === userProfile.daerah_id)
+  }, [desa, userProfile, isDaerahLevelUser])
+
+  // Map kelompok_id → desa_id for daerah-user class filtering
+  const kelompokDesaMap = useMemo(() => {
+    if (!kelompok) return new Map<string, string>()
+    return new Map((kelompok as any[]).map(k => [k.id, k.desa_id as string]))
+  }, [kelompok])
 
   // Kelompok yang tersedia untuk Guru Desa (filter by desa_id)
   const availableKelompok = useMemo(() => {
@@ -222,6 +248,14 @@ export default function CreateMeetingModal({
       )
     }
 
+    // Apply desa filter for daerah-level user
+    if (isDaerahLevelUser && selectedDesaIds.length > 0) {
+      sorted = sorted.filter(cls => {
+        const desaId = kelompokDesaMap.get((cls as any).kelompok_id)
+        return desaId !== undefined && selectedDesaIds.includes(desaId)
+      })
+    }
+
     // Filter out classes with 0 active students
     const withStudents = sorted.filter(cls => {
       const count = classStudentCounts.get(cls.id) || 0
@@ -240,16 +274,19 @@ export default function CreateMeetingModal({
     classes?.length,
     classes?.map(c => `${c.id}-${c.kelompok_id}`).join(','),
     isHierarchicalTeacher,
+    isDaerahLevelUser,
     classStudentCounts,
     allowedClassIds,
     selectedKelompokIds,
-    availableKelompok
+    availableKelompok,
+    selectedDesaIds,
+    kelompokDesaMap
   ])
 
   // Deduplicated class name options (for hierarchical teacher — Opsi B)
   // Unique class names preserving sort_order via first occurrence
   const dedupedClassOptions = useMemo(() => {
-    if (!isHierarchicalTeacher) return []
+    if (!isHierarchicalTeacher && !isDaerahLevelUser) return []
     const seen = new Set<string>()
     const result: { id: string; label: string; name: string }[] = []
     for (const cls of availableClasses) {
@@ -261,23 +298,29 @@ export default function CreateMeetingModal({
     return result
   }, [isHierarchicalTeacher, availableClasses])
 
-  // For hierarchical teachers: auto-derive selectedClassIds from selectedClassNames × selectedKelompokIds
+  // For hierarchical teachers + daerah users: auto-derive selectedClassIds from selectedClassNames × scope IDs
   useEffect(() => {
-    if (!isHierarchicalTeacher) return
-    const kelompokFilter = selectedKelompokIds.length > 0 ? new Set(selectedKelompokIds) : null
-    const derived = selectedClassNames.length === 0
-      ? []
-      : availableClasses
-          .filter(cls =>
-            selectedClassNames.includes(cls.name) &&
-            (kelompokFilter === null || ((cls as any).kelompok_id && kelompokFilter.has((cls as any).kelompok_id)))
-          )
-          .map(cls => cls.id)
+    if (!isHierarchicalTeacher && !isDaerahLevelUser) return
+
+    let derived: string[]
+    if (isDaerahLevelUser) {
+      // Daerah path: enrich classes with desa_id from kelompokDesaMap, then derive by desa
+      const enriched = availableClasses.map(cls => ({
+        ...cls,
+        desa_id: kelompokDesaMap.get((cls as any).kelompok_id)
+      }))
+      derived = deriveClassIdsBySelection(enriched as any, selectedClassNames, selectedDesaIds, 'desa_id')
+    } else {
+      // Hierarchical teacher (desa) path: derive by kelompok
+      const enriched = availableClasses.map(cls => ({ ...cls }))
+      derived = deriveClassIdsBySelection(enriched as any, selectedClassNames, selectedKelompokIds, 'kelompok_id')
+    }
+
     setSelectedClassIds(prev => {
       if (prev.length === derived.length && prev.every((id, i) => id === derived[i])) return prev
       return derived
     })
-  }, [isHierarchicalTeacher, selectedClassNames, selectedKelompokIds, availableClasses])
+  }, [isHierarchicalTeacher, isDaerahLevelUser, selectedClassNames, selectedKelompokIds, selectedDesaIds, availableClasses, kelompokDesaMap])
 
   // Helper to find matching class for a student
   const getStudentMatchingClass = (student: any, selectedClassIds: string[], classesData: any[]) => {
@@ -394,7 +437,7 @@ export default function CreateMeetingModal({
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
       const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
-      if (isHierarchicalTeacher) {
+      if (isHierarchicalTeacher || isDaerahLevelUser) {
         // Derive selected names from class IDs
         const names = [...new Set(
           availableClasses
@@ -414,8 +457,8 @@ export default function CreateMeetingModal({
       setSelectedClassIds(classIds)
       initializedRef.current = true
     } else if (availableClasses && availableClasses.length > 0) {
-      if (isHierarchicalTeacher) {
-        // Hierarchical teacher: default pilih semua nama kelas (user bisa uncheck)
+      if (isHierarchicalTeacher || isDaerahLevelUser) {
+        // Hierarchical teacher / daerah user: default pilih semua nama kelas
         setSelectedClassNames(dedupedClassOptions.map(o => o.name))
         // selectedClassIds auto-derived by useEffect
       } else {
@@ -436,7 +479,7 @@ export default function CreateMeetingModal({
   useEffect(() => {
     if (!isOpen || initializedRef.current) return
     if (!classId && !meeting && availableClasses && availableClasses.length > 0) {
-      if (isHierarchicalTeacher) {
+      if (isHierarchicalTeacher || isDaerahLevelUser) {
         if (dedupedClassOptions.length > 0) {
           setSelectedClassNames(dedupedClassOptions.map(o => o.name))
         }
@@ -750,6 +793,7 @@ export default function CreateMeetingModal({
     setSelectedStudentIds([])
     setSelectedGender(null)
     setSelectedKelompokIds([])
+    setSelectedDesaIds([])
     setSelectedClassNames([])
     setPreviouslySelectedStudents([])
     isManualSelectionRef.current = false
@@ -778,6 +822,20 @@ export default function CreateMeetingModal({
             </div>
           ) : (
             <>
+              {/* Desa Selector — hanya untuk Admin/Guru Daerah dengan >1 desa */}
+              {isDaerahLevelUser && availableDesa.length > 1 && (
+                <div className="mb-4">
+                  <MultiSelectCheckbox
+                    label="Pilih Desa"
+                    items={availableDesa.map((d: any) => ({ id: d.id, label: d.name }))}
+                    selectedIds={selectedDesaIds}
+                    onChange={setSelectedDesaIds}
+                    hint="Pilih desa yang akan mengikuti pertemuan ini"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              )}
+
               {/* Kelompok Selector — hanya untuk Guru Desa dengan >1 kelompok */}
               {isHierarchicalTeacher && availableKelompok.length > 1 && (
                 <div className="mb-4">
@@ -797,8 +855,8 @@ export default function CreateMeetingModal({
 
               {/* Class Selection */}
               {formSettings.showClassSelection && (
-                isHierarchicalTeacher ? (
-                  // Hierarchical teacher (Guru Desa/Daerah): show deduplicated class names
+                (isHierarchicalTeacher || isDaerahLevelUser) ? (
+                  // Hierarchical teacher (Guru Desa/Daerah) or Daerah user: show deduplicated class names
                   dedupedClassOptions.length > 0 && (
                     <div className="mb-4">
                       <MultiSelectCheckbox

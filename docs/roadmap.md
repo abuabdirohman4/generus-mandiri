@@ -23,7 +23,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | Fitur | Status | Route | Catatan / Issue terbuka |
 |---|---|---|---|
 | Dashboard / Home | ✅ | `/home`, `/dashboard` | metrik real-time |
-| Presensi (absensi) | ✅ | `/presensi` | meeting multi-kelas |
+| Presensi (absensi) | 🔄 | `/presensi` | meeting multi-kelas; pengajian daerah (`sm-ft7w`) |
 | Laporan absensi | 🔄 | `/laporan` | export PDF (`sm-ix1`), share WA (`sm-x20`) |
 | Manajemen User (siswa/guru/admin) | 🔄 | `/users/*` | bulk import Excel (`sm-1kz`), bulk edit guru (`sm-1jj`), bulk ganti kelas (`sm-dp7`) |
 | Kelas | ✅ | `/kelas` | sort by `sort_order` |
@@ -49,6 +49,7 @@ Urutan saran: security dulu, lalu quick win, refactor terakhir.
 - [ ] `sm-x8gl` — rotate `SUPABASE_SERVICE_ROLE_KEY` (ter-ekspos saat investigasi)
 
 ### ✨ Fitur baru (P2)
+- [ ] `sm-ft7w` — pengajian tingkat daerah (lintas desa, Admin/Guru Daerah)
 - [ ] `sm-1kz` — bulk import siswa via Excel
 - [ ] `sm-1jj` — bulk edit teacher permissions
 - [ ] `sm-dp7` — bulk edit ganti kelas siswa

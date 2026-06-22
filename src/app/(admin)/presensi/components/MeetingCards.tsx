@@ -81,13 +81,13 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Daerah: Show Desa, Kelompok
+    // Admin Daerah: Show Desa+Kelompok only if single-desa (kelompok-level meeting), nothing if multi-desa
     else if (isAdminDaerahUser) {
-      if (desaNames.length > 0) {
-        parts.push(desaNames.join(' & '))
-      }
-      if (kelompokNames.length > 0) {
-        parts.push(kelompokNames.join(' & '))
+      if (desaNames.length === 1) {
+        parts.push(String(desaNames[0]))
+        if (kelompokNames.length === 1) parts.push(String(kelompokNames[0]))
+      } else {
+        return ''  // multi-desa = daerah-level meeting, obvious for daerah user
       }
     }
     // Admin Desa: Show kelompok if single-kelompok meeting, nothing if multi-kelompok (desa-level)
@@ -103,7 +103,7 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       return ''
     }
     
-    // return parts.join(' • ')
+    return parts.join(' • ')
   }
   
   // Single class or fallback to original logic
@@ -365,6 +365,30 @@ const countUniqueKelompok = (meeting: any, classesData: any[], kelompokData: any
   return kelompokIds.size
 }
 
+// Helper function to count unique desa in a meeting
+const countUniqueDesa = (meeting: any, classesData: any[], kelompokData: any[], desaData: any[]): number => {
+  if (!meeting.class_ids || !Array.isArray(meeting.class_ids) || meeting.class_ids.length === 0) {
+    return 0
+  }
+  const kelompokMap = new Map(kelompokData.map((k: any) => [k.id, k.desa_id as string]))
+  const desaIds = new Set<string>()
+  if (meeting.allClasses && Array.isArray(meeting.allClasses) && meeting.allClasses.length > 0) {
+    meeting.allClasses.forEach((cls: any) => {
+      const desaId = kelompokMap.get(cls.kelompok_id)
+      if (desaId) desaIds.add(desaId)
+    })
+  } else {
+    meeting.class_ids.forEach((classId: string) => {
+      const classData = classesData.find((c: any) => c.id === classId)
+      if (classData) {
+        const desaId = kelompokMap.get(classData.kelompok_id)
+        if (desaId) desaIds.add(desaId)
+      }
+    })
+  }
+  return desaIds.size
+}
+
 // Helper function to check if user can edit/delete meeting
 const canEditOrDeleteMeeting = (meeting: any, userProfile: any): boolean => {
   if (!userProfile) return false
@@ -618,8 +642,13 @@ export default function MeetingCards({
                         </span>
                       )}
                       {(() => {
+                        const uniqueDesaCount = countUniqueDesa(meeting, classesData || [], kelompokData || [], desaData || [])
                         const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
-                        return uniqueKelompokCount > 1 ? (
+                        return uniqueDesaCount > 1 ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 mr-2 mt-1">
+                            {uniqueDesaCount} Desa
+                          </span>
+                        ) : uniqueKelompokCount > 1 ? (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
                             {uniqueKelompokCount} Kelompok
                           </span>

@@ -1,5 +1,6 @@
 // NO 'use server' directive
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchStudentsInBatches } from '@/lib/utils/batchFetching'
 
 // ============================================================================
 // LAYER 1: DATABASE QUERIES (Exported)
@@ -108,27 +109,28 @@ export async function fetchStudentsByIds(
   supabase: SupabaseClient,
   studentIds: string[]
 ): Promise<{ data: any[] | null; error: any }> {
-  return await supabase
-    .from('students')
-    .select(`
+  const selectQuery = `
+    id,
+    name,
+    gender,
+    class_id,
+    kelompok_id,
+    kelompok:kelompok_id (id, name, desa:desa_id (id, name)),
+    classes (
       id,
-      name,
-      gender,
+      name
+    ),
+    student_classes (
       class_id,
-      kelompok_id,
-      kelompok:kelompok_id (id, name, desa:desa_id (id, name)),
-      classes (
+      classes:class_id (
         id,
         name
-      ),
-      student_classes (
-        class_id,
-        classes:class_id (
-          id,
-          name
-        )
       )
-    `)
-    .in('id', studentIds)
-    .order('name')
+    )
+  `
+  const { data, error } = await fetchStudentsInBatches(supabase, studentIds, selectQuery)
+  if (data) {
+    data.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
+  }
+  return { data, error }
 }

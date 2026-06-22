@@ -8,7 +8,8 @@ export async function fetchInBatches(
     table: string,
     ids: string[],
     selectQuery: string,
-    chunkSize = 100
+    chunkSize = 100,
+    column = 'id'
 ): Promise<{ data: any[] | null; error: any }> {
     if (!ids || ids.length === 0) {
         return { data: [], error: null }
@@ -25,7 +26,7 @@ export async function fetchInBatches(
                 supabaseClient
                     .from(table)
                     .select(selectQuery)
-                    .in('id', chunk)
+                    .in(column, chunk)
             )
         )
 

@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from './helpers.server'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
-import { fetchAttendanceLogsInBatches, fetchInBatches } from '@/lib/utils/batchFetching'
+import { fetchAttendanceLogsInBatches, fetchInBatches, fetchStudentsInBatches } from '@/lib/utils/batchFetching'
 import {
   validateMeetingData,
   buildStudentSnapshot,
@@ -60,6 +60,7 @@ export async function createMeeting(data: CreateMeetingData) {
     // Use admin client to bypass RLS restrictions (similar to getAllStudents)
     const adminClient = await createAdminClient()
 
+
     // If user is a teacher, verify they teach all selected classes
     // Hierarchical teachers (Guru Desa/Daerah) have desa_id/daerah_id but no teacher_classes rows —
     // they access all classes in their scope, so skip the per-class ownership check
@@ -88,22 +89,25 @@ export async function createMeeting(data: CreateMeetingData) {
       // Use provided student IDs (from user selection)
       // Verify all provided student IDs are valid and in selected classes
       // Get student IDs from junction table
-      const { data: studentClassData, error: studentClassError } = await adminClient
-        .from('student_classes')
-        .select('student_id')
-        .in('class_id', data.classIds)
-        .in('student_id', data.studentIds)
+      // Use fetchInBatches to avoid URL overflow when classIds is large (e.g. 220 for daerah scope)
+      const { data: studentClassData, error: studentClassError } = await fetchInBatches(
+        adminClient, 'student_classes', data.classIds, 'student_id', 100, 'class_id'
+      )
+      // Further filter by provided studentIds
+      const filteredStudentClassData = studentClassData?.filter(
+        sc => data.studentIds!.includes(sc.student_id)
+      ) ?? []
 
       if (studentClassError) {
         return { success: false, error: studentClassError.message }
       }
 
-      if (!studentClassData || studentClassData.length === 0) {
+      if (!filteredStudentClassData || filteredStudentClassData.length === 0) {
         return { success: false, error: 'No valid students found in selected classes' }
       }
 
       // Get unique valid student IDs (filter to only include those in selected classes)
-      const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+      const validStudentIds = [...new Set(filteredStudentClassData.map(sc => sc.student_id))]
 
       studentIdsForSnapshot = data.studentIds.filter(id => validStudentIds.includes(id))
 
@@ -111,11 +115,9 @@ export async function createMeeting(data: CreateMeetingData) {
         return { success: false, error: 'No valid students found in selected classes' }
       }
 
-      // Verify students exist
-      const { data: students, error: studentsError } = await adminClient
-        .from('students')
-        .select('id, name, class_id, kelompok_id')
-        .in('id', studentIdsForSnapshot)
+      const { data: students, error: studentsError } = await fetchStudentsInBatches(
+        adminClient, studentIdsForSnapshot, 'id, name, class_id, kelompok_id'
+      )
 
       if (studentsError) {
         return { success: false, error: studentsError.message }
@@ -126,10 +128,10 @@ export async function createMeeting(data: CreateMeetingData) {
       }
     } else {
       // Default: get all students from selected classes (backward compatibility)
-      const { data: studentClassData, error: studentClassError } = await adminClient
-        .from('student_classes')
-        .select('student_id')
-        .in('class_id', data.classIds)
+      // Use fetchInBatches to avoid URL overflow when classIds is large (e.g. 220 for daerah scope)
+      const { data: studentClassData, error: studentClassError } = await fetchInBatches(
+        adminClient, 'student_classes', data.classIds, 'student_id', 100, 'class_id'
+      )
 
       if (studentClassError) {
         return { success: false, error: studentClassError.message }
@@ -142,11 +144,9 @@ export async function createMeeting(data: CreateMeetingData) {
       // Get unique student IDs (a student might be in multiple selected classes)
       const uniqueStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
 
-      // Verify students exist and get their details
-      const { data: students, error: studentsError } = await adminClient
-        .from('students')
-        .select('id, name, class_id, kelompok_id')
-        .in('id', uniqueStudentIds)
+      const { data: students, error: studentsError } = await fetchStudentsInBatches(
+        adminClient, uniqueStudentIds, 'id, name, class_id, kelompok_id'
+      )
 
       if (studentsError) {
         return { success: false, error: studentsError.message }
@@ -279,28 +279,12 @@ export async function getMeetingById(meetingId: string) {
     if (meeting.class_id) allClassIds.add(meeting.class_id)
 
     // Fetch all class details with kelompok info
-    const { data: allClassesData } = await adminClient
-      .from('classes')
-      .select(`
-        id,
-        name,
-        kelompok_id,
-        kelompok:kelompok_id (
-          id,
-          name,
-          desa_id,
-          desa:desa_id (
-            id,
-            name,
-            daerah_id,
-            daerah:daerah_id (
-              id,
-              name
-            )
-          )
-        )
-      `)
-      .in('id', Array.from(allClassIds))
+    const { data: allClassesData } = await fetchInBatches(
+      adminClient,
+      'classes',
+      Array.from(allClassIds),
+      `id, name, kelompok_id, kelompok:kelompok_id (id, name, desa_id, desa:desa_id (id, name, daerah_id, daerah:daerah_id (id, name)))`
+    )
 
     // Create a map of all classes data for easy lookup
     const allClassesMap = new Map<string, any>()
@@ -932,29 +916,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           if (meeting.class_id) allClassIds.add(meeting.class_id)
         })
 
-        // Fetch class names and kelompok info in one query (use admin client to bypass RLS)
-        const { data: classesData } = await adminClientTeacher
-          .from('classes')
-          .select(`
-            id,
-            name,
-            kelompok_id,
-            kelompok:kelompok_id (
-              id,
-              name,
-              desa_id,
-              desa:desa_id (
-                id,
-                name,
-                daerah_id,
-                daerah:daerah_id (
-                  id,
-                  name
-                )
-              )
-            )
-          `)
-          .in('id', Array.from(allClassIds))
+        // Fetch class names and kelompok info - use fetchInBatches for large daerah scope
+        const { data: classesData } = await fetchInBatches(
+          adminClientTeacher,
+          'classes',
+          Array.from(allClassIds),
+          'id, name, kelompok_id, kelompok:kelompok_id(id, name, desa_id, desa:desa_id(id, name, daerah_id, daerah:daerah_id(id, name)))'
+        )
 
         // Create id -> name mapping
         const classNameMap = new Map<string, string>()
@@ -1029,17 +997,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         })
 
         // Query students with junction table for multiple classes support
-        // Use admin client to bypass RLS restrictions (similar to detail page)
-        // This ensures all students from different kelompok are included
-        const { data: studentClassData } = await adminClientTeacher
-          .from('students')
-          .select(`
-            id,
-            student_classes(
-              classes:class_id(id)
-            )
-          `)
-          .in('id', Array.from(allStudentIds))
+        // Use fetchInBatches to avoid URL overflow when allStudentIds is large
+        const { data: studentClassData } = await fetchInBatches(
+          adminClientTeacher,
+          'students',
+          Array.from(allStudentIds),
+          'id, student_classes(classes:class_id(id))'
+        )
 
         const studentToClassMap = new Map<string, string[]>()
         if (studentClassData) {
@@ -1370,11 +1334,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           }
         })
 
-        // Fetch class names in one query
-        const { data: classesData } = await adminClientTeacher
-          .from('classes')
-          .select('id, name')
-          .in('id', Array.from(allClassIds))
+        // Fetch class names in one query - use fetchInBatches for large daerah scope
+        const { data: classesData } = await fetchInBatches(
+          adminClientTeacher,
+          'classes',
+          Array.from(allClassIds),
+          'id, name'
+        )
 
         // Create id -> name mapping
         const classNameMap = new Map<string, string>()
@@ -1727,11 +1693,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         }
       })
 
-      // Fetch class names in one query
-      const { data: classesData } = await adminClientAdmin
-        .from('classes')
-        .select('id, name')
-        .in('id', Array.from(allClassIds))
+      // Fetch class names in one query - use fetchInBatches for large daerah scope
+      const { data: classesData } = await fetchInBatches(
+        adminClientAdmin,
+        'classes',
+        Array.from(allClassIds),
+        'id, name'
+      )
 
       // Create id -> name mapping
       const classNameMap = new Map<string, string>()
@@ -1919,11 +1887,13 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       }
     })
 
-    // Fetch class names in one query
-    const { data: classesData } = await supabase
-      .from('classes')
-      .select('id, name')
-      .in('id', Array.from(allClassIds))
+    // Fetch class names in one query - use fetchInBatches for large daerah scope
+    const { data: classesData } = await fetchInBatches(
+      supabase,
+      'classes',
+      Array.from(allClassIds),
+      'id, name'
+    )
 
     // Create id -> name mapping
     const classNameMap = new Map<string, string>()
@@ -1970,13 +1940,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
     })
 
-    // Use admin client to bypass RLS restrictions (similar to detail page)
-    // This ensures all students from different kelompok are included
+    // Use fetchInBatches to avoid URL overflow when allStudentIds is large
     const adminClientAdmin = await createAdminClient()
-    const { data: studentClassData } = await adminClientAdmin
-      .from('students')
-      .select('id, class_id')
-      .in('id', Array.from(allStudentIds))
+    const { data: studentClassData } = await fetchInBatches(
+      adminClientAdmin,
+      'students',
+      Array.from(allStudentIds),
+      'id, class_id'
+    )
 
     const studentToClassMap = new Map<string, string>()
     if (studentClassData) {
