@@ -24,6 +24,7 @@ interface StudentsTableProps {
   onArchive?: (student: Student) => void
   onTransfer?: (students: Student[]) => void
   onUnarchive?: (student: Student) => void
+  onOpenArchive?: () => void
   userProfile: {
     id: string;
     full_name: string;
@@ -51,6 +52,7 @@ export default function StudentsTable({
   onArchive,
   onTransfer,
   onUnarchive,
+  onOpenArchive,
   userProfile,
   classes: classesData,
   studentsWithPendingTransfer
@@ -512,6 +514,7 @@ export default function StudentsTable({
         onClose={handleDeleteCancel}
         onSoftDelete={handleSoftDelete}
         onHardDelete={handleHardDelete}
+        onOpenArchive={onOpenArchive}
         studentId={deleteModal.studentId}
         studentName={deleteModal.studentName}
         hasAttendance={deleteModal.hasAttendance}

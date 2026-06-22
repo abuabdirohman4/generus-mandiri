@@ -440,6 +440,7 @@ export default function SiswaPage() {
               onEdit={handleEditStudent}
               onDelete={handleDeleteStudent}
               onArchive={canArchive ? handleArchiveClick : undefined}
+              onOpenArchive={canArchive ? () => setShowArchiveModal(true) : undefined}
               onTransfer={canTransfer ? handleTransferClick : undefined}
               onUnarchive={canArchive ? handleUnarchive : undefined}
               userProfile={userProfile}

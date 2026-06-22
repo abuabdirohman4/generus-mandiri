@@ -8,6 +8,7 @@ interface DeleteStudentModalProps {
   onClose: () => void
   onSoftDelete: () => void
   onHardDelete: () => void
+  onOpenArchive?: () => void
   studentId: string
   studentName: string
   hasAttendance: boolean
@@ -32,6 +33,7 @@ export default function DeleteStudentModal({
   studentName,
   hasAttendance,
   isLoading = false,
+  onOpenArchive,
   userProfile,
   studentDeletedAt
 }: DeleteStudentModalProps) {
@@ -76,13 +78,25 @@ export default function DeleteStudentModal({
           {isAlreadySoftDeleted ? (
             <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
               <p className="text-sm text-red-800 dark:text-red-200">
-                <strong>⚠️ PERINGATAN KERAS:</strong> Siswa ini sudah di-soft delete. Hapus permanen akan <strong>MENGHAPUS DATA SELAMANYA</strong> termasuk semua riwayat presensi. Tindakan ini <strong>TIDAK DAPAT DIBATALKAN</strong>.
+                <strong>⚠️ PERINGATAN KERAS:</strong> Hapus permanen akan <strong>MENGHAPUS DATA SELAMANYA</strong> termasuk semua riwayat presensi. Tindakan ini <strong>TIDAK DAPAT DIBATALKAN</strong>.
               </p>
             </div>
           ) : hasAttendance ? (
             <div className="mt-4 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Peringatan:</strong> Siswa ini memiliki riwayat presensi. Gunakan <strong>Hapus (Data Tersimpan)</strong> untuk menjaga data historis.
+                Siswa ini punya riwayat presensi. Jika ada siswa yang tidak aktif karena pindah tempat tinggal atau alasan lainnya, bisa pakai fitur{' '}
+                {onOpenArchive ? (
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); onOpenArchive(); }}
+                    className="font-semibold underline hover:no-underline text-blue-600 dark:text-blue-400"
+                  >
+                    Arsip Siswa
+                  </button>
+                ) : (
+                  <strong>Arsip Siswa</strong>
+                )}{'  '}
+                dengan begitu data siswa tersebut tetap ada dan dapat dipakai lagi nantinya.
               </p>
             </div>
           ) : null}
@@ -101,7 +115,7 @@ export default function DeleteStudentModal({
               variant={canHardDelete ? 'outline' : 'danger'}
               className="w-full px-4 py-2"
             >
-              Hapus (Data Tersimpan)
+              Hapus
             </Button>
           )}
 

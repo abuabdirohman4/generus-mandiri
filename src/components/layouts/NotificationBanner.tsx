@@ -55,7 +55,7 @@ export default function NotificationBanner() {
       const cfg = n.display_config ?? DEFAULT_DISPLAY_CONFIG
       return cfg.mode === 'banner' || cfg.mode === 'both'
     })
-    .slice(0, 3)
+    .slice(0, 1)
   if (undismissed.length === 0) return null
 
   return (
