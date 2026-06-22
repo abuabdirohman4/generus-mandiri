@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from './helpers.server'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
-import { fetchAttendanceLogsInBatches } from '@/lib/utils/batchFetching'
+import { fetchAttendanceLogsInBatches, fetchInBatches } from '@/lib/utils/batchFetching'
 import {
   validateMeetingData,
   buildStudentSnapshot,
@@ -1239,6 +1239,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           return { success: false, error: meetingsError.message, data: null }
         }
 
+
         if (!meetings || meetings.length === 0) {
           return { success: true, data: [], hasMore: false }
         }
@@ -1252,10 +1253,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           if (meeting.class_id) allMeetingClassIds.add(meeting.class_id)
         })
 
+
         // Fetch all class details to get kelompok_id, desa_id, daerah_id
-        const { data: allClassesData } = await adminClientTeacher
-          .from('classes')
-          .select(`
+        // Use fetchInBatches to avoid URL overflow with large class ID arrays (>100 UUIDs)
+        const { data: allClassesData, error: classesError } = await fetchInBatches(
+          adminClientTeacher,
+          'classes',
+          Array.from(allMeetingClassIds),
+          `
             id,
             name,
             kelompok_id,
@@ -1273,8 +1278,12 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
                 )
               )
             )
-          `)
-          .in('id', Array.from(allMeetingClassIds))
+          `
+        )
+
+        if (classesError) {
+        }
+
 
         // Create mappings: classId -> kelompok_id, desa_id, daerah_id
         const classToKelompokMap = new Map<string, string>()
@@ -1343,6 +1352,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
             })
           })
         }
+
 
         if (!filteredMeetings || filteredMeetings.length === 0) {
           return { success: true, data: [], hasMore: false }
@@ -1554,6 +1564,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         return { success: false, error: meetingsError.message, data: null }
       }
 
+
       if (!meetings || meetings.length === 0) {
         return { success: true, data: [], hasMore: false }
       }
@@ -1567,10 +1578,14 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         if (meeting.class_id) allMeetingClassIds.add(meeting.class_id)
       })
 
+
       // Fetch all class details to get kelompok_id, desa_id, daerah_id
-      const { data: allClassesData } = await adminClientAdmin
-        .from('classes')
-        .select(`
+      // Use fetchInBatches to avoid URL overflow with large class ID arrays (>100 UUIDs)
+      const { data: allClassesData, error: classesError } = await fetchInBatches(
+        adminClientAdmin,
+        'classes',
+        Array.from(allMeetingClassIds),
+        `
           id,
           name,
           kelompok_id,
@@ -1588,8 +1603,12 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               )
             )
           )
-        `)
-        .in('id', Array.from(allMeetingClassIds))
+        `
+      )
+
+      if (classesError) {
+      }
+
 
       // Create mappings: classId -> kelompok_id, desa_id, daerah_id
       const classToKelompokMap = new Map<string, string>()
@@ -1690,6 +1709,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           filteredMeetings = meetings
         }
       }
+
 
       if (!filteredMeetings || filteredMeetings.length === 0) {
         return { success: true, data: [], hasMore: false }

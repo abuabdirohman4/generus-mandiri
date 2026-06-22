@@ -1,4 +1,51 @@
 /**
+ * Generic batch fetcher for any table using .in() on 'id'.
+ * PostgREST encodes .in() as a query string — large arrays exceed URL limits.
+ * Splits into chunks of 100 and fetches in parallel.
+ */
+export async function fetchInBatches(
+    supabaseClient: any,
+    table: string,
+    ids: string[],
+    selectQuery: string,
+    chunkSize = 100
+): Promise<{ data: any[] | null; error: any }> {
+    if (!ids || ids.length === 0) {
+        return { data: [], error: null }
+    }
+
+    const chunks: string[][] = []
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        chunks.push(ids.slice(i, i + chunkSize))
+    }
+
+    try {
+        const results = await Promise.all(
+            chunks.map(chunk =>
+                supabaseClient
+                    .from(table)
+                    .select(selectQuery)
+                    .in('id', chunk)
+            )
+        )
+
+        const allData: any[] = []
+        for (const result of results) {
+            if (result.error) {
+                return { data: null, error: result.error }
+            }
+            if (result.data) {
+                allData.push(...result.data)
+            }
+        }
+
+        return { data: allData, error: null }
+    } catch (error: any) {
+        return { data: null, error: error }
+    }
+}
+
+/**
  * Fetch students in batches to avoid URL length limits with large ID arrays.
  * PostgREST encodes .in() as a query string — 773 UUIDs (~28KB) exceeds the limit.
  */
