@@ -103,7 +103,7 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
       return ''
     }
     
-    return parts.join(' • ')
+    // return parts.join(' • ')
   }
   
   // Single class or fallback to original logic
