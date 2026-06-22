@@ -677,7 +677,7 @@ export default function MeetingList({
                           {meeting.activity_level && (
                             <span className={`inline-flex items-center px-2 py-0.5 mr-2 rounded-full text-xs font-medium ${
                               meeting.activity_level.code === 'DAERAH'
-                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
                                 : meeting.activity_level.code === 'DESA'
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
@@ -689,11 +689,11 @@ export default function MeetingList({
                             const uniqueDesaCount = countUniqueDesa(meeting, classesData || [], kelompokData || [], desaData || [])
                             const uniqueKelompokCount = countUniqueKelompok(meeting, classesData || [], kelompokData || [])
                             return uniqueDesaCount > 1 ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200 mr-2 mt-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mr-2 mt-1">
                                 {uniqueDesaCount} Desa
                               </span>
                             ) : uniqueKelompokCount > 1 ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 mr-2 mt-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mr-2 mt-1">
                                 {uniqueKelompokCount} Kelompok
                               </span>
                             ) : meeting.class_ids && meeting.class_ids.length > 1 && (
