@@ -90,9 +90,13 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
         parts.push(kelompokNames.join(' & '))
       }
     }
-    // Admin Desa: Show nothing (meeting already spans their desa)
+    // Admin Desa: Show kelompok if single-kelompok meeting, nothing if multi-kelompok (desa-level)
     else if (isAdminDesaUser) {
-      return ''
+      if (kelompokNames.length === 1) {
+        parts.push(String(kelompokNames[0]))
+      } else {
+        return ''
+      }
     }
     // Admin Kelompok or Teacher: Show nothing
     else {
