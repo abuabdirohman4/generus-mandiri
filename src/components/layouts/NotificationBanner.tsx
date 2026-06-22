@@ -67,7 +67,7 @@ export default function NotificationBanner() {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <BannerIcon type={notif.type} className={`w-6 h-6 shrink-0 ${styles.icon}`} />
-                <p className={`text-sm font-semibold flex-1 min-w-0 ${styles.title}`}>{notif.title}</p>
+                <p className={`font-bold flex-1 min-w-0 ${styles.title}`}>{notif.title}</p>
                 <button
                   onClick={() => dismiss(notif.id)}
                   className={`shrink-0 transition-colors ${styles.dismiss}`}
