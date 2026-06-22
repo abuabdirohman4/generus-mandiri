@@ -22,6 +22,7 @@ import ColumnToggle from '@/components/table/ColumnToggle'
 import DataFilter from '@/components/shared/DataFilter'
 import { useClasses } from '@/hooks/useClasses'
 import { useKelompok } from '@/hooks/useKelompok'
+import { useDesa } from '@/hooks/useDesa'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
 
@@ -54,6 +55,7 @@ export default function MeetingAttendancePage() {
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
   const { kelompok: kelompokData } = useKelompok()
+  const { desa: desaData } = useDesa()
   const { activityLevels } = useActivityLevels()
   const { columnVisibility, setColumnVisibility } = usePresensiAttendanceStore()
 
@@ -886,8 +888,8 @@ export default function MeetingAttendancePage() {
           onClose={() => setIsQuickAddOpen(false)}
           meetingId={meetingId}
           classList={classesData}
-          kelompokList={kelompokListForFilter}
-          desaList={desaListForFilter}
+          kelompokList={kelompokData || []}
+          desaList={desaData || []}
           onSuccess={(studentId, studentName) => {
             toast.success('Siswa berhasil ditambahkan')
             
