@@ -49,7 +49,9 @@ Urutan saran: security dulu, lalu quick win, refactor terakhir.
 - [ ] `sm-x8gl` — rotate `SUPABASE_SERVICE_ROLE_KEY` (ter-ekspos saat investigasi)
 
 ### ✨ Fitur baru (P2)
-- [ ] `sm-ft7w` — pengajian tingkat daerah (lintas desa, Admin/Guru Daerah)
+- [x] `sm-ft7w` — pengajian tingkat daerah (lintas desa, Admin/Guru Daerah)
+    [x] Di dalam pertemuan belum ada filter desa dan kelas
+    [x] Di tingkat desa masih muncul semua
 - [ ] `sm-1kz` — bulk import siswa via Excel
 - [ ] `sm-1jj` — bulk edit teacher permissions
 - [ ] `sm-dp7` — bulk edit ganti kelas siswa

@@ -290,6 +290,7 @@ export async function getStudentsFromSnapshot(studentIds: string[]) {
         class_id: allClasses[0]?.id || student.class_id || '',
         classes: allClasses, // Add all classes array
         kelompok_name: (student?.kelompok as any)?.name || undefined,
+        desa_id: (student?.kelompok as any)?.desa?.id || undefined,
         desa_name: (student?.kelompok as any)?.desa?.name || undefined,
       }
     })

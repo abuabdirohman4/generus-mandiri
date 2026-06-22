@@ -142,7 +142,7 @@ export function shouldShowDaerahFilter(profile: UserProfile): boolean {
 }
 
 export function shouldShowDesaFilter(profile: UserProfile): boolean {
-  return isSuperAdmin(profile) || isAdminDaerah(profile)
+  return isSuperAdmin(profile) || isAdminDaerah(profile) || isTeacherDaerah(profile)
 }
 
 export function shouldShowKelompokFilter(profile: UserProfile): boolean {
@@ -160,12 +160,17 @@ export function modalShouldShowKelompokFilter(profile: UserProfile): boolean {
 }
 
 export function shouldShowKelasFilter(profile: UserProfile, hasMultipleClasses?: boolean): boolean {
-  // For teachers, only show if they have multiple classes
+  // For admins and hierarchical teachers, always show (if multiple classes)
+  if (isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile) || isAdminKelompok(profile) || isTeacherDaerah(profile) || isTeacherDesa(profile)) {
+    return hasMultipleClasses || false
+  }
+
+  // For regular teachers, only show if they have multiple classes
   if (isTeacher(profile)) {
     return hasMultipleClasses || false
   }
-  // For admins, always show
-  return isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile) || isAdminKelompok(profile)
+  
+  return false
 }
 
 // Get required fields for forms based on role

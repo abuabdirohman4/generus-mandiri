@@ -12,6 +12,7 @@ interface Student {
   class_id: string
   classes?: Array<{ id: string; name: string }> // Add all classes array for multi-class students
   kelompok_name?: string
+  desa_id?: string
   desa_name?: string
 }
 
@@ -97,6 +98,10 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
         || studentData?.student_classes?.[0]?.classes?.kelompok?.name
         || undefined
 
+      const desaId = (studentData?.kelompok as any)?.desa?.id
+        || studentData?.student_classes?.[0]?.classes?.kelompok?.desa?.id
+        || undefined
+
       const desaName = (studentData?.kelompok as any)?.desa?.name
         || studentData?.student_classes?.[0]?.classes?.kelompok?.desa?.name
         || undefined
@@ -111,6 +116,7 @@ const fetcher = async (url: string): Promise<{ meeting: any; attendance: Attenda
           class_id: primaryClass?.id || '',
           classes: allClasses, // Add all classes array for multi-class support
           kelompok_name: kelompokName,
+          desa_id: desaId,
           desa_name: desaName
         })
       }

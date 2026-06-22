@@ -4,6 +4,7 @@ import { persist } from 'zustand/middleware'
 export interface PresensiColumnVisibility {
   showKelompokColumn: boolean
   showDesaColumn: boolean
+  showKelasColumn: boolean
 }
 
 interface PresensiAttendanceStore {
@@ -14,7 +15,7 @@ interface PresensiAttendanceStore {
 export const usePresensiAttendanceStore = create<PresensiAttendanceStore>()(
   persist(
     (set) => ({
-      columnVisibility: { showKelompokColumn: true, showDesaColumn: true },
+      columnVisibility: { showKelompokColumn: true, showDesaColumn: true, showKelasColumn: false },
       setColumnVisibility: (visibility) => set((state) => ({
         columnVisibility: { ...state.columnVisibility, ...visibility }
       })),

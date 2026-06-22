@@ -25,6 +25,7 @@ interface AttendanceTableProps {
   onStatusChange: (studentId: string, status: 'H' | 'I' | 'S' | 'A') => void
   className?: string
   canEditStudent?: (studentId: string) => boolean
+  showKelasColumn?: boolean
   showKelompokColumn?: boolean
   showDesaColumn?: boolean
   columnToggle?: React.ReactNode
@@ -36,12 +37,13 @@ export default function AttendanceTable({
   onStatusChange, 
   className = '',
   canEditStudent,
+  showKelasColumn = false,
   showKelompokColumn = false,
   showDesaColumn = false,
   columnToggle
 }: AttendanceTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortColumn, setSortColumn] = useState<'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A' | null>(null)
+  const [sortColumn, setSortColumn] = useState<'kelas' | 'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(25)
@@ -59,6 +61,11 @@ export default function AttendanceTable({
     }
 
     result = [...result].sort((a, b) => {
+      if (sortColumn === 'kelas') {
+        const aVal = a.class_name || ''
+        const bVal = b.class_name || ''
+        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
       if (sortColumn === 'kelompok') {
         const aVal = a.kelompok_name || ''
         const bVal = b.kelompok_name || ''
@@ -96,7 +103,7 @@ export default function AttendanceTable({
     return processedStudents.slice(start, start + itemsPerPage)
   }, [processedStudents, currentPage, itemsPerPage])
 
-  const handleSort = (column: 'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A') => {
+  const handleSort = (column: 'kelas' | 'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A') => {
     if (sortColumn === column) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
@@ -234,12 +241,25 @@ export default function AttendanceTable({
                     <span className="text-gray-400 dark:text-gray-500 text-xs">{sortColumn === 'A' ? (sortDirection === 'asc' ? '↑' : '↓') : ''}</span>
                   </div>
                 </th>
+                {showKelasColumn && (
+                  <th
+                    className="px-2 sm:px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-600"
+                    onClick={() => handleSort('kelas')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Kelas
+                      <span className="text-gray-400 dark:text-gray-500">
+                        {sortColumn === 'kelas' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
+                      </span>
+                    </div>
+                  </th>
+                )}
                 {showKelompokColumn && (
                   <th
-                    className="px-2 sm:px-4 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="px-2 sm:px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-600"
                     onClick={() => handleSort('kelompok')}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       Kelompok
                       <span className="text-gray-400 dark:text-gray-500">
                         {sortColumn === 'kelompok' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
@@ -249,10 +269,10 @@ export default function AttendanceTable({
                 )}
                 {showDesaColumn && (
                   <th
-                    className="px-2 sm:px-4 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="px-2 sm:px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-200 dark:hover:bg-gray-600"
                     onClick={() => handleSort('desa')}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       Desa
                       <span className="text-gray-400 dark:text-gray-500">
                         {sortColumn === 'desa' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
@@ -301,6 +321,12 @@ export default function AttendanceTable({
                         </td>
                       )
                     })}
+
+                    {showKelasColumn && (
+                      <td className="px-2 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {student.class_name || '—'}
+                      </td>
+                    )}
                     {showKelompokColumn && (
                       <td className="px-2 sm:px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                         {student.kelompok_name || '—'}
@@ -315,7 +341,7 @@ export default function AttendanceTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={showKelompokColumn && showDesaColumn ? 7 : (showKelompokColumn || showDesaColumn ? 6 : 5)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={5 + (showKelasColumn ? 1 : 0) + (showKelompokColumn ? 1 : 0) + (showDesaColumn ? 1 : 0)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'Tidak ada siswa yang cocok dengan pencarian' : 'Tidak ada data siswa'}
                   </td>
                 </tr>
