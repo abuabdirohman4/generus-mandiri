@@ -97,7 +97,7 @@ export function useMeetings(classId?: string) {
     ? `${classId ? `/api/meetings/${classId}/${userId}` : `/api/meetings/${userId}`}?dummy=${useDummyData}`
     : null
 
-  const { data, error, isLoading, mutate } = useSWR<{
+  const { data, error, isLoading, isValidating, mutate } = useSWR<{
     allMeetings: MeetingWithStats[]
     total: number
   }>(
@@ -166,7 +166,7 @@ export function useMeetings(classId?: string) {
     {
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 30000,    // 30 seconds — avoid duplicate fetches
+      dedupingInterval: 2000,     // 2 seconds — lower so refetch works when navigating back
       revalidateIfStale: false,   // Don't auto-refetch stale data
       revalidateOnMount: true,
       refreshInterval: 0,
@@ -200,6 +200,7 @@ export function useMeetings(classId?: string) {
     isDummy,
     error,
     isLoading: combinedLoading,
+    isValidating,
     mutate
   }
 }

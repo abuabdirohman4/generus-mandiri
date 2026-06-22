@@ -122,8 +122,35 @@ export default function AbsensiPage() {
     meetings: allMeetings,
     isLoading,
     error,
-    mutate
+    mutate,
+    isValidating
   } = useMeetings(classId)
+
+  const [refreshingMeetingId, setRefreshingMeetingId] = useState<string | null>(null)
+  const [isMinRefreshTimePassed, setIsMinRefreshTimePassed] = useState(true)
+
+  // Trigger revalidation if coming back from detail page after saving
+  useEffect(() => {
+    const needsRefresh = sessionStorage.getItem('presensi_needs_refresh')
+    if (needsRefresh) {
+      setRefreshingMeetingId(needsRefresh)
+      setIsMinRefreshTimePassed(false)
+      mutate()
+      sessionStorage.removeItem('presensi_needs_refresh')
+      
+      // Minimum loading appearance for better UX (800ms)
+      setTimeout(() => {
+        setIsMinRefreshTimePassed(true)
+      }, 800)
+    }
+  }, [mutate])
+
+  // Clear refreshing state when validation is done AND min time passed
+  useEffect(() => {
+    if (!isValidating && refreshingMeetingId && isMinRefreshTimePassed) {
+      setRefreshingMeetingId(null)
+    }
+  }, [isValidating, refreshingMeetingId, isMinRefreshTimePassed])
 
   // Handle pagination change
   const handlePageChange = (page: number) => {
@@ -484,6 +511,7 @@ export default function AbsensiPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={isLoading}
+                refreshingMeetingId={refreshingMeetingId}
               />
               {!isLoading && totalPages > 1 && (
                 <Pagination
@@ -503,6 +531,7 @@ export default function AbsensiPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 isLoading={isLoading}
+                refreshingMeetingId={refreshingMeetingId}
               />
               {!isLoading && totalPages > 1 && (
                 <Pagination

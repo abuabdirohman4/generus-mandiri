@@ -469,6 +469,7 @@ interface MeetingListProps {
   onDelete?: (meetingId: string) => void
   className?: string
   isLoading?: boolean
+  refreshingMeetingId?: string | null
 }
 
 export default function MeetingList({ 
@@ -476,7 +477,8 @@ export default function MeetingList({
   onEdit, 
   onDelete, 
   className = '',
-  isLoading = false
+  isLoading = false,
+  refreshingMeetingId = null
 }: MeetingListProps) {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -734,11 +736,13 @@ export default function MeetingList({
                       </div>
 
                       {/* Loading Overlay */}
-                      {loadingMeetingId === meeting.id && (
+                      {(loadingMeetingId === meeting.id || refreshingMeetingId === meeting.id) && (
                         <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 rounded-lg flex items-center justify-center z-10">
                           <div className="flex flex-col items-center gap-2">
                             <Spinner size={24} />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Memuat...</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {refreshingMeetingId === meeting.id ? 'Memperbarui...' : 'Memuat...'}
+                            </span>
                           </div>
                         </div>
                       )}

@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import { getCurrentUserId, shouldShowKelompokFilter, shouldShowDesaFilter, shouldShowKelasFilter, isSuperAdmin, isAdminDesa, isTeacherDesa } from '@/lib/userUtils'
-import { invalidateMeetingsCache } from '../utils/cache'
+import { upsertMeetingInCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/presensi/actions/meetings/helpers.client'
 import { usePresensiAttendanceStore } from '../stores/presensiAttendanceStore'
@@ -146,16 +146,23 @@ export default function MeetingAttendancePage() {
       const result = await saveAttendanceForMeeting(meetingId, attendanceData)
 
       if (result.success) {
+        sessionStorage.setItem('presensi_needs_refresh', meetingId)
         toast.success('Data presensi berhasil disimpan!')
         hasInitialized.current = false
         mutate() // Refresh current page data
 
-        // Revalidate meetings cache for main presensi page
+        // Optimistic upsert: sisipkan meeting baru / patch existing di cache list instan.
+        // void = fire-and-forget, navigasi back tidak tertahan refetch berat (40s).
         const userId = await getCurrentUserId()
-        if (userId) {
-          // Get classId from meeting data to invalidate the correct cache
-          const classId = meeting?.class_id
-          await invalidateMeetingsCache(userId, classId)
+        if (userId && meeting) {
+          const allRecords = Object.values(localAttendance)
+          void upsertMeetingInCache(userId, meeting, {
+            totalStudents: allRecords.length,
+            presentCount: allRecords.filter(r => r.status === 'H').length,
+            absentCount: allRecords.filter(r => r.status === 'A').length,
+            sickCount: allRecords.filter(r => r.status === 'S').length,
+            excusedCount: allRecords.filter(r => r.status === 'I').length,
+          })
         }
       } else {
         toast.error('Gagal menyimpan data presensi: ' + result.error)
