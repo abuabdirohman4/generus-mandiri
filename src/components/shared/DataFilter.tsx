@@ -685,7 +685,7 @@ export default function DataFilter({
               required={requiredFields.desa}
               error={!!errors.desa}
               hint={errors.desa}
-              disabled={!!effectiveShouldShowDaerah && !filters?.daerah?.[0]}
+              disabled={variant === 'modal' && !!effectiveShouldShowDaerah && !filters?.daerah?.[0]}
             />
           )}
         </div>
@@ -723,7 +723,7 @@ export default function DataFilter({
               required={requiredFields.kelompok}
               error={!!errors.kelompok}
               hint={errors.kelompok}
-              disabled={!!effectiveShouldShowDesa && !filters?.desa?.[0]}
+              disabled={variant === 'modal' && !!effectiveShouldShowDesa && !filters?.desa?.[0]}
             />
           )}
         </div>
@@ -785,6 +785,7 @@ export default function DataFilter({
               required={requiredFields.kelas}
               error={!!errors.kelas}
               hint={errors.kelas}
+              disabled={variant === 'modal' && !!effectiveShouldShowKelompok && (!filters?.kelompok || filters.kelompok.length === 0)}
             // error={!!errors.kelas || isKelasInvalid}
             // hint={errors.kelas || (isKelasInvalid ? "Pilihan Kelas tidak sesuai dengan Kelompok/Desa/Daerah" : undefined)}
             />

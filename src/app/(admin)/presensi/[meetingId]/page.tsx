@@ -6,6 +6,7 @@ import { useMeetingAttendance } from '../hooks/useMeetingAttendance'
 import { saveAttendanceForMeeting } from '../actions'
 import AttendanceTable from '../components/AttendanceTable'
 import ReasonModal from '../components/ReasonModal'
+import QuickAddStudentModal from '../components/QuickAddStudentModal'
 import SummaryCard from '../components/SummaryCard'
 import LoadingState from '../components/LoadingState'
 import Button from '@/components/ui/button/Button'
@@ -45,7 +46,9 @@ export default function MeetingAttendancePage() {
 
   const [saving, setSaving] = useState(false)
   const [showReasonModal, setShowReasonModal] = useState(false)
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [tableSearchQuery, setTableSearchQuery] = useState('')
   const [localAttendance, setLocalAttendance] = useState(attendance)
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
@@ -69,11 +72,27 @@ export default function MeetingAttendancePage() {
     gender: ''
   })
 
-  // Update local attendance when data changes (only once when data loads)
+  // Update local attendance when data changes
   React.useEffect(() => {
-    if (attendance && Object.keys(attendance).length > 0 && !hasInitialized.current) {
-      setLocalAttendance(attendance)
-      hasInitialized.current = true
+    if (attendance && Object.keys(attendance).length > 0) {
+      if (!hasInitialized.current) {
+        setLocalAttendance(attendance)
+        hasInitialized.current = true
+      } else {
+        // Merge any new attendance records from DB that are not in localAttendance
+        // This preserves unsaved local edits while pulling in newly added students (e.g. from Quick Add)
+        setLocalAttendance(prev => {
+          let hasChanges = false
+          const merged = { ...prev }
+          Object.keys(attendance).forEach(studentId => {
+            if (!merged[studentId]) {
+              merged[studentId] = attendance[studentId]
+              hasChanges = true
+            }
+          })
+          return hasChanges ? merged : prev
+        })
+      }
     }
   }, [attendance])
 
@@ -774,6 +793,22 @@ export default function MeetingAttendancePage() {
                   <span>{dayjs(meeting.date).format('dddd, DD MMMM YYYY')}</span>
                 </div>
               </div>
+              
+              {/* Quick Add Student Button - Only for Desa/Daerah level meetings */}
+              {(isDaerahLevelMeeting || meeting.activity_level?.code === 'DESA' || kelompokListForFilter.length > 1) && (
+                <div className="ml-4 flex-shrink-0">
+                  <Button
+                    onClick={() => setIsQuickAddOpen(true)}
+                    variant="outline"
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="hidden sm:inline">Tambah Siswa</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -815,6 +850,8 @@ export default function MeetingAttendancePage() {
             showKelompokColumn={showKelompokColumn}
             showDesaColumn={showDesaColumn}
             columnToggle={columnToggleElement}
+            searchQuery={tableSearchQuery}
+            onSearchQueryChange={setTableSearchQuery}
           />
         </div>
 
@@ -841,6 +878,32 @@ export default function MeetingAttendancePage() {
           }}
           onSubmit={handleReasonSubmit}
           studentName={students.find(s => s.id === selectedStudent)?.name || ''}
+        />
+        
+        {/* Quick Add Student Modal */}
+        <QuickAddStudentModal
+          isOpen={isQuickAddOpen}
+          onClose={() => setIsQuickAddOpen(false)}
+          meetingId={meetingId}
+          classList={classesData}
+          kelompokList={kelompokListForFilter}
+          desaList={desaListForFilter}
+          onSuccess={(studentId, studentName) => {
+            toast.success('Siswa berhasil ditambahkan')
+            
+            // UX Enhancement: auto-select "Hadir" visually and search for the new student
+            if (studentId) {
+              setLocalAttendance(prev => ({
+                ...prev,
+                [studentId]: { status: 'H' }
+              }))
+            }
+            if (studentName) {
+              setTableSearchQuery(studentName)
+            }
+            
+            mutate() // Refresh data
+          }}
         />
       </div>
     </div>

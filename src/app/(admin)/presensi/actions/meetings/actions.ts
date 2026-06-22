@@ -409,22 +409,25 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
       const classIdsToCheck = data.classIds || []
 
       if (classIdsToCheck.length > 0) {
-        const { data: studentClassData, error: studentClassError } = await adminClient
-          .from('student_classes')
-          .select('student_id')
-          .in('class_id', classIdsToCheck)
-          .in('student_id', data.studentIds)
+        // Use fetchInBatches to avoid URL overflow when classIds is large
+        const { data: studentClassData, error: studentClassError } = await fetchInBatches(
+          adminClient, 'student_classes', classIdsToCheck, 'student_id', 100, 'class_id'
+        )
 
         if (studentClassError) {
           return { success: false, error: studentClassError.message }
         }
 
-        if (!studentClassData || studentClassData.length === 0) {
+        const filteredStudentClassData = studentClassData?.filter(
+          sc => data.studentIds!.includes(sc.student_id)
+        ) ?? []
+
+        if (!filteredStudentClassData || filteredStudentClassData.length === 0) {
           return { success: false, error: 'No valid students found in selected classes' }
         }
 
         // Get unique valid student IDs
-        const validStudentIds = [...new Set(studentClassData.map(sc => sc.student_id))]
+        const validStudentIds = [...new Set(filteredStudentClassData.map(sc => sc.student_id))]
         const validatedStudentIds = data.studentIds.filter(id => validStudentIds.includes(id))
 
         if (validatedStudentIds.length === 0) {

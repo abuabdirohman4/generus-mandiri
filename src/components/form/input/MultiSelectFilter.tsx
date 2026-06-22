@@ -26,6 +26,7 @@ interface MultiSelectFilterProps {
   widthClassName?: string
   className?: string
   searchable?: boolean
+  disabled?: boolean
 }
 
 export default function MultiSelectFilter({
@@ -43,7 +44,8 @@ export default function MultiSelectFilter({
   hint,
   widthClassName = "!max-w-full",
   className = '',
-  searchable = false
+  searchable = false,
+  disabled = false
 }: MultiSelectFilterProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -202,24 +204,26 @@ export default function MultiSelectFilter({
         </Label>
 
         {/* Input field */}
-        <div className="relative" onClick={() => !searchable && setIsOpen(!isOpen)}>
+        <div className="relative" onClick={() => !disabled && !searchable && setIsOpen(!isOpen)}>
           <input
             ref={inputRef}
             id={id}
             type="text"
             value={displayValue}
-            readOnly={!searchable}  // read-only when not searchable
+            readOnly={!searchable || disabled}  // read-only when not searchable
             onChange={(e) => searchable && setSearchTerm(e.target.value)}  // only update if searchable
-            onFocus={searchable ? handleInputFocus : undefined}
-            onKeyDown={searchable ? handleKeyDown : undefined}
+            onFocus={searchable && !disabled ? handleInputFocus : undefined}
+            onKeyDown={searchable && !disabled ? handleKeyDown : undefined}
             placeholder={selectedOptions.length === 0 ? placeholder : ''}
             className={inputClass}
             autoComplete="off"
+            disabled={disabled}
           />
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            onClick={() => !disabled && setIsOpen(!isOpen)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            disabled={disabled}
           >
             <ChevronDownIcon className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
           </button>

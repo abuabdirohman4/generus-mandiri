@@ -29,6 +29,8 @@ interface AttendanceTableProps {
   showKelompokColumn?: boolean
   showDesaColumn?: boolean
   columnToggle?: React.ReactNode
+  searchQuery?: string
+  onSearchQueryChange?: (query: string) => void
 }
 
 export default function AttendanceTable({ 
@@ -40,9 +42,16 @@ export default function AttendanceTable({
   showKelasColumn = false,
   showKelompokColumn = false,
   showDesaColumn = false,
-  columnToggle
+  columnToggle,
+  searchQuery: controlledSearchQuery,
+  onSearchQueryChange
 }: AttendanceTableProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [internalSearchQuery, setInternalSearchQuery] = useState('')
+  const searchQuery = controlledSearchQuery !== undefined ? controlledSearchQuery : internalSearchQuery
+  const setSearchQuery = (query: string) => {
+    if (onSearchQueryChange) onSearchQueryChange(query)
+    setInternalSearchQuery(query)
+  }
   const [sortColumn, setSortColumn] = useState<'kelas' | 'kelompok' | 'desa' | 'nama' | 'H' | 'I' | 'S' | 'A' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)

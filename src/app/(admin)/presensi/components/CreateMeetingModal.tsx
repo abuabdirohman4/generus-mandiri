@@ -437,6 +437,23 @@ export default function CreateMeetingModal({
     if (meeting) {
       // Edit mode: populate from meeting.class_ids
       const meetingClassIds = meeting.class_ids || (meeting.class_id ? [meeting.class_id] : [])
+      
+      // Determine selected kelompok and desa from the meeting's classes
+      const selectedKelompoks = new Set<string>()
+      const selectedDesas = new Set<string>()
+      
+      meetingClassIds.forEach((id: string) => {
+        const cls = availableClasses.find(c => c.id === id) as any
+        if (cls?.kelompok_id) {
+          selectedKelompoks.add(cls.kelompok_id)
+          const desaId = kelompokDesaMap.get(cls.kelompok_id)
+          if (desaId) selectedDesas.add(desaId)
+        }
+      })
+      
+      if (selectedKelompoks.size > 0) setSelectedKelompokIds(Array.from(selectedKelompoks))
+      if (selectedDesas.size > 0) setSelectedDesaIds(Array.from(selectedDesas))
+
       if (isHierarchicalTeacher || isDaerahLevelUser) {
         // Derive selected names from class IDs
         const names = [...new Set(
