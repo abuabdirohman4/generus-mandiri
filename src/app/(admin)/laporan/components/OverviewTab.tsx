@@ -307,7 +307,7 @@ export default function OverviewTab() {
           onComparisonLevelChange={handleComparisonLevelChange}
           categoryGroup={categoryGroup}
           onCategoryGroupChange={handleCategoryGroupChange}
-          uniqueDaysMode={isDaerahLevel ? uniqueDaysMode : undefined}
+          uniqueDaysMode={uniqueDaysMode}
           onUniqueDaysModeChange={handleUniqueDaysModeChange}
           allowMultiKelompok={hasMultiKelompokLaporan}
         />
