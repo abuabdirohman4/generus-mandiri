@@ -36,6 +36,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | Tahun Ajaran | ✅ | `/tahun-ajaran` | — |
 | Notifikasi | ✅ | `/notifikasi`, `/settings` | in-app broadcast by scope |
 | Settings | ✅ | `/settings`, `/settings/grade-promotion` | feature flags |
+| Onboarding | ✅ | `/onboarding` | wizard org+kelas+guru |
 | Monitoring | ✅ | `/monitoring` | — |
 | Dokumentasi | 🔄 | `content/docs/` | isi konten per fitur (`sm-4op`) |
 
@@ -58,11 +59,11 @@ Urutan saran: security dulu, lalu quick win, refactor terakhir.
 - [ ] `sm-ejs` — pending naik kelas actionable per kelompok · 📋 plan + prompt siap (`plans/2026-06-23-sm-ejs-pending-naik-kelas-actionable.md`, GH-#111)
 - [ ] `sm-ix1` — export laporan absensi ke PDF · 📋 plan + prompt siap (`plans/2026-04-03-sm-ix1-export-laporan-absensi-pdf.md`, GH-#19)
 - [ ] `sm-x20` — share laporan via WhatsApp · 📋 plan + prompt siap (`plans/2026-04-09-sm-x20-whatsapp-report-sharing.md`, GH-#34)
-- [ ] `sm-ju54` — onboarding wizard (org + kelas + guru) · 📋 plan + prompt siap (`plans/2026-06-23-sm-ju54-onboarding-wizard.md`, GH-#110)
+- [x] `sm-ju54` — onboarding wizard (org + kelas + guru) · 📋 plan + prompt siap (`plans/2026-06-23-sm-ju54-onboarding-wizard.md`, GH-#110)
 
 ### 🐛 P3 — Bug / penyempurnaan
 - [ ] `sm-rfa` — rapot core bugs (end-to-end usable) · 📋 plan + prompt siap (`plans/2026-03-18-rapot-core-bugs.md`, GH-#22)
-- [ ] `sm-8nvh` — null-guard `student_snapshot` di `getMeetingsWithStats` · 📋 plan + prompt siap (`plans/2026-06-23-sm-8nvh-null-guard-student-snapshot.md`, GH-#114)
+- [x] `sm-8nvh` — null-guard `student_snapshot` di `getMeetingsWithStats` · 📋 plan + prompt siap (`plans/2026-06-23-sm-8nvh-null-guard-student-snapshot.md`, GH-#114)
 - [ ] `sm-f1nh` — tab realtime presensi untuk infocus · 📋 plan + prompt siap (`plans/2026-06-23-sm-f1nh-realtime-presensi-tab.md`, GH-#115)
 - [ ] `sm-nke7` — grafik per-desa/kelompok per pertemuan · 📋 plan + prompt siap (`plans/2026-06-23-sm-nke7-grafik-per-desa-kelompok.md`, GH-#116)
 - [x] `sm-7ca` — username persist + remember me
