@@ -110,10 +110,11 @@ export async function fetchAttendanceLogsInBatches(
         return { data: [], error: null }
     }
 
-    // Split into chunks of 10 to stay safely under Supabase's 1000-row response limit.
-    // With ~20 students per meeting, 10 meetings = ~200 rows per chunk (well under 1000).
-    // Previously used 100 which could produce ~2000 rows/chunk → silently truncated at 1000.
-    const chunkSize = 10
+    // Split into chunks of 3 to stay safely under Supabase's 1000-row response limit.
+    // Real-world meetings can have 175+ students: 3 × 175 = ~525 rows/chunk (safe).
+    // Previously 10 meetings × 175 students = ~1750 rows/chunk → silently truncated at 1000
+    // causing some meetings to show 0 attendance stats in card view.
+    const chunkSize = 3
     const chunks: string[][] = []
     for (let i = 0; i < meetingIds.length; i += chunkSize) {
         chunks.push(meetingIds.slice(i, i + chunkSize))

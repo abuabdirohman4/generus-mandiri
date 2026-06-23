@@ -1030,9 +1030,10 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               return classDetails ? isTeacherClass(classDetails) : false
             }))
 
-          // For teachers: filter to only their class students (EXCEPT for Pengajar meetings)
-          // Pengajar meetings should show all students from snapshot
-          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0 && !isPengajarMeeting) {
+          // For teachers: filter to only their class students (EXCEPT for Pengajar meetings and multi-class meetings)
+          // Pengajar meetings and multi-class meetings should show all students from snapshot
+          const isMultiClassMeeting = meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1
+          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0 && !isPengajarMeeting && !isMultiClassMeeting) {
             relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
               const studentClassIds = studentToClassMap.get(studentId) || []
               // Check if student has at least one class that matches teacher's classes
@@ -1962,8 +1963,9 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       let meetingAttendance = attendanceByMeeting[meeting.id] || []
       let relevantStudentIds = meeting.student_snapshot
 
-      // For teachers: filter to only their class students
-      if (profile.role === 'teacher' && teacherClassIdsAdmin.length > 0) {
+      // For teachers: filter to only their class students (except multi-class meetings)
+      const isMultiClassMeetingAdmin = meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1
+      if (profile.role === 'teacher' && teacherClassIdsAdmin.length > 0 && !isMultiClassMeetingAdmin) {
         relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
           const studentClassId = studentToClassMap.get(studentId)
           return studentClassId && teacherClassIdsAdmin.includes(studentClassId)
