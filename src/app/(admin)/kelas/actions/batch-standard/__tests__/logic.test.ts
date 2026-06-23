@@ -6,8 +6,8 @@ const makeMaster = (id: string, name: string, sort_order: number): ClassMaster =
   ({ id, name, sort_order, description: null, category_group: null })
 
 describe('STANDARD_SORT_ORDERS', () => {
-  it('contains exactly 20 entries', () => {
-    expect(STANDARD_SORT_ORDERS.size).toBe(20)
+  it('contains exactly 18 entries', () => {
+    expect(STANDARD_SORT_ORDERS.size).toBe(18)
   })
 })
 
@@ -15,8 +15,8 @@ describe('filterStandardMasters', () => {
   it('returns only masters with sort_order in STANDARD_SORT_ORDERS', () => {
     const allMasters = [
       makeMaster('a', 'Kelas Paud', 1),
-      makeMaster('b', 'Pra Remaja', 8),  // bukan standar
-      makeMaster('c', 'SMP 1', 9),
+      makeMaster('b', 'Pra Remaja', 19),  // bukan standar
+      makeMaster('c', 'SMP 1', 8),
       makeMaster('d', 'Pengajar', 24),   // bukan standar
     ]
     const result = filterStandardMasters(allMasters)
@@ -29,7 +29,7 @@ describe('buildBatchPlan', () => {
   const masters = [
     makeMaster('m1', 'Kelas Paud', 1),
     makeMaster('m2', 'Kelas 1', 2),
-    makeMaster('m3', 'SMP 1', 9),
+    makeMaster('m3', 'SMP 1', 8),
   ]
 
   it('returns all masters as toCreate when kelompok has no existing classes', () => {

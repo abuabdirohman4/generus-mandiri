@@ -42,6 +42,8 @@ function PageTitle() {
         return 'Tahun Ajaran';
       case '/naik-kelas':
         return 'Naik Kelas';
+      case '/onboarding':
+        return 'Onboarding';
       case '/settings/grade-promotion':
         return 'Mode Naik Kelas';
       case '/users/guru':

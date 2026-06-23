@@ -159,7 +159,8 @@ export default function QuickAddStudentModal({
         <div>
           <InputFilter
             id="gender"
-            label="Jenis Kelamin *"
+            label="Jenis Kelamin"
+            required
             value={gender}
             onChange={setGender}
             options={genderOptions}
@@ -173,7 +174,8 @@ export default function QuickAddStudentModal({
           <div>
             <InputFilter
               id="desa_id"
-              label="Desa *"
+              label="Desa"
+              required
               value={selectedDesa}
               onChange={(val) => {
                 setSelectedDesa(val)
@@ -192,7 +194,8 @@ export default function QuickAddStudentModal({
           <div>
             <InputFilter
               id="kelompok_id"
-              label="Kelompok *"
+              label="Kelompok"
+              required
               value={selectedKelompok}
               onChange={(val) => {
                 setSelectedKelompok(val)
@@ -210,7 +213,8 @@ export default function QuickAddStudentModal({
         <div>
           <InputFilter
             id="classId"
-            label="Kelas *"
+            label="Kelas"
+            required
             value={selectedClass}
             onChange={setSelectedClass}
             options={classOptions}

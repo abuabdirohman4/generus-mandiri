@@ -139,7 +139,7 @@ npm run test:e2e     # E2E (Playwright); :ui :headed :debug juga ada
 
 ### App Router Structure
 
-Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/naik-kelas`, `/tahun-ajaran`, `/notifikasi`, `/settings`, `/settings/grade-promotion`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`. `/naik-kelas` menu is toggle-gated (visible only when `app_settings.grade_promotion_enabled`).
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/naik-kelas`, `/tahun-ajaran`, `/notifikasi`, `/settings`, `/settings/grade-promotion`, `/onboarding`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`. `/naik-kelas` menu is toggle-gated (visible only when `app_settings.grade_promotion_enabled`).
 
 ### Database & Supabase
 

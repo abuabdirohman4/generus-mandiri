@@ -24,6 +24,7 @@ interface InputFilterProps {
   placeholder?: string        // NEW - placeholder option text
   error?: boolean             // NEW - error state
   hint?: string               // NEW - hint text
+  selectClassName?: string    // NEW - override select styles
 }
 
 export default function InputFilter({ 
@@ -41,7 +42,8 @@ export default function InputFilter({
   required = false,
   placeholder,
   error = false,
-  hint
+  hint,
+  selectClassName = ''
 }: InputFilterProps) {
   // Determine styling based on variant and compact mode
   const containerClass = compact ? 'mb-0' : (variant === 'modal' ? 'mb-4' : 'mb-6')
@@ -62,10 +64,12 @@ export default function InputFilter({
   return (
     <div className={`${className} ${containerClass}`}>
       <div className={wrapperClass}>
-        <Label htmlFor={id} className={compact ? "mb-0.5 text-xs" : ""}>
-          {label}
-          {/* {required && <span className="text-red-500 ml-1">*</span>} */}
-        </Label>
+        {label ? (
+          <Label htmlFor={id} className={compact ? "mb-0.5 text-xs" : ""}>
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </Label>
+        ) : null}
         <select
           id={id}
           value={effectiveValue}
@@ -76,7 +80,7 @@ export default function InputFilter({
             error 
               ? "border-red-500 focus:ring-red-500 focus:border-red-500" 
               : "border-gray-100 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-          }`}
+          } ${selectClassName}`}
           style={{
             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
             backgroundPosition: 'right 8px center'

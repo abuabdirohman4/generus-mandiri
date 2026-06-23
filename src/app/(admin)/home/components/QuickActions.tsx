@@ -30,6 +30,7 @@ interface QuickActionItem {
   excludeAdminKelompok?: boolean;
   requirePromotionEnabled?: boolean;
   requireCanSendNotification?: boolean;
+  requireCanOnboard?: boolean;
   disabled?: boolean; 
 }
 
@@ -38,6 +39,7 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   const router = useRouter();
   const isAdminUser = profile.role === 'superadmin' || profile.role === 'admin'
   const userCanSendNotification = isSuperAdmin(profile) || isAdminDaerah(profile)
+  const userCanOnboard = isSuperAdmin(profile) || isAdminDaerah(profile)
   // const teacherCaberawit = profile.classes?.some(c => isCaberawitClass(c)) || false
   // const isTeacherDaerah = isTeacher(profile) && profile.daerah_id && !profile.desa_id && !profile.kelompok_id
   // const isTeacherDesa = isTeacher(profile) && profile.desa_id && !profile.kelompok_id
@@ -79,6 +81,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     //   adminOnly: isPPG ? false : true,
     //   disabled: false
     // },
+    {
+      id: 'onboarding',
+      name: 'Onboarding',
+      description: 'Setup org, kelas & guru baru',
+      href: '/onboarding',
+      icon: <BuildingIcon className="w-6 h-6" />,
+      bgColor: 'bg-violet-100 dark:bg-violet-900',
+      iconColor: 'text-violet-600 dark:text-violet-400',
+      requireCanOnboard: true,
+      disabled: false
+    },
     {
       id: 'naik-kelas',
       name: 'Naik Kelas',
@@ -279,6 +292,9 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
     if (action.requirePromotionEnabled && !promotionEnabled) {
       return false
     }
+
+    // Onboarding: superadmin + admin daerah only
+    if (action.requireCanOnboard && !userCanOnboard) return false
 
     if (action.requireCanSendNotification && !userCanSendNotification) return false
 

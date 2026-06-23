@@ -2,10 +2,10 @@ import type { ClassMaster } from '@/types/class'
 
 export const STANDARD_SORT_ORDERS = new Set([
   1, 2, 3, 4, 5, 6, 7,  // Kelas Paud, Kelas 1-6
-  9, 10, 11,             // SMP 1-3
-  13, 14, 15,            // SMA 1-3
-  17, 18, 19, 20,        // Pra Nikah 1-4
-  21, 22, 23             // Orang Tua (<35), Orang Tua (>35), Lansia
+  8, 9, 10,             // SMP 1-3
+  11, 12, 13,            // SMA 1-3
+  14, 15, 16, 17,        // Pra Nikah 1-4
+  18                     // Orang Tua
 ])
 
 export interface ExistingClass {
@@ -26,7 +26,10 @@ export interface KelompokBatchPlan {
 }
 
 export function filterStandardMasters(allMasters: ClassMaster[]): ClassMaster[] {
-  return allMasters.filter(m => STANDARD_SORT_ORDERS.has(m.sort_order))
+  return allMasters.filter(m => 
+    STANDARD_SORT_ORDERS.has(m.sort_order) && 
+    !m.name.toLowerCase().includes('pengurus')
+  )
 }
 
 export function buildBatchPlan(

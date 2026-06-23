@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
 import { useUserProfile } from "@/stores/userProfileStore";
 import { isSuperAdmin, isAdminKelompok, isAdminDesa, isAdminDaerah } from "@/lib/userUtils";
+import { CheckCircleIcon as OnboardingIcon } from "@/lib/icons";
 import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from "@/lib/accessControl";
 import { usePromotionEnabled } from "@/hooks/usePromotionEnabled";
 
@@ -41,6 +42,7 @@ type NavItem = {
   excludeAdminDesa?: boolean;
   requirePromotionEnabled?: boolean;
   requireCanSendNotification?: boolean;
+  requireCanOnboard?: boolean;
 };
 
 const allNavItems: NavItem[] = [
@@ -129,6 +131,12 @@ const allNavItems: NavItem[] = [
     name: "Naik Kelas",
     path: "/naik-kelas",
     requirePromotionEnabled: true,
+  },
+  {
+    icon: <OnboardingIcon className="w-6 h-6" />,
+    name: "Onboarding",
+    path: "/onboarding",
+    requireCanOnboard: true,
   },
   {
     icon: <DashboardIcon className="w-6 h-6" />,
@@ -451,6 +459,7 @@ function SidebarContent({
   const userCanAccessMaterials = profile ? canAccessMaterials(profile) : false;
   const userCanAccessMonitoring = profile ? canAccessMonitoring(profile) : false;
   const { promotionEnabled } = usePromotionEnabled();
+  const userCanOnboard = profile ? (isSuperAdmin(profile) || isAdminDaerah(profile)) : false
 
   // Filter navigation items based on admin status and role-specific exclusions
   const visibleNavItems = allNavItems.filter(item => {
@@ -461,6 +470,9 @@ function SidebarContent({
 
     // Toggle-gated: Naik Kelas only when promotion mode is ON
     if (item.requirePromotionEnabled && !promotionEnabled) return false
+
+    // Onboarding: superadmin + admin daerah only
+    if (item.requireCanOnboard && !userCanOnboard) return false
 
     // Filter out admin-only items for non-admins
     if (item.adminOnly && !isAdminUser) {

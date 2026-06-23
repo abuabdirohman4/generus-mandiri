@@ -80,7 +80,7 @@ const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <>
           <Spinner size={16} colorClass={getSpinnerColor()} />
-          <span className={!loadingText ? "hidden" : ""}>{loadingText}</span>
+          <span>{loadingText || children}</span>
         </>
       ) : (
         <>
