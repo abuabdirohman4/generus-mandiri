@@ -805,7 +805,7 @@ export default function MeetingAttendancePage() {
               
               {/* Quick Add Student Button - Only for Desa/Daerah level meetings */}
               {(isDaerahLevelMeeting || meeting.activity_level?.code === 'DESA' || kelompokListForFilter.length > 1) && (
-                <div className="ml-4 flex-shrink-0">
+                <div className="ml-4 shrink-0">
                   <Button
                     onClick={() => setIsQuickAddOpen(true)}
                     variant="outline"

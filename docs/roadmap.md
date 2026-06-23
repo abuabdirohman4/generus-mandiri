@@ -2,7 +2,7 @@
 
 > **File ini = peta arah produk.** Sumber tunggal visi + status fitur + next up.
 > PRD & spec detail di [`products/PRODUCT_SPECIFICATIONS.md`](./products/PRODUCT_SPECIFICATIONS.md). Task detail di beads (`bd list`, prefix `sm-`). Plan per-issue di [`plans/`](./plans/).
-> Diperbarui: 2026-06-21 · Versi app: **v1.15.1**
+> Diperbarui: 2026-06-23 · Versi app: **v1.15.1**
 
 ---
 
@@ -23,7 +23,7 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 | Fitur | Status | Route | Catatan / Issue terbuka |
 |---|---|---|---|
 | Dashboard / Home | ✅ | `/home`, `/dashboard` | metrik real-time |
-| Presensi (absensi) | 🔄 | `/presensi` | meeting multi-kelas; pengajian daerah (`sm-ft7w`) |
+| Presensi (absensi) | 🔄 | `/presensi` | meeting multi-kelas; pengajian daerah (`sm-ft7w`); stats bug (`sm-77m6`); slow query (`sm-871q`); realtime infocus (`sm-f1nh`); grafik per-desa (`sm-nke7`) |
 | Laporan absensi | 🔄 | `/laporan` | export PDF (`sm-ix1`), share WA (`sm-x20`) |
 | Manajemen User (siswa/guru/admin) | 🔄 | `/users/*` | bulk import Excel (`sm-1kz`), bulk edit guru (`sm-1jj`), bulk ganti kelas (`sm-dp7`) |
 | Kelas | ✅ | `/kelas` | sort by `sort_order` |
@@ -45,30 +45,32 @@ Legenda: ✅ jadi · 🔄 sebagian / ada perbaikan terbuka · ⏳ belum jalan
 
 Urutan saran: security dulu, lalu quick win, refactor terakhir.
 
-### 🔴 Security (P1)
-- [ ] `sm-x8gl` — rotate `SUPABASE_SERVICE_ROLE_KEY` (ter-ekspos saat investigasi)
+### 🔴 P1 — Critical
+- [x] `sm-77m6` — [bug] fix stats card multi-class meeting
+- [x] `sm-x8gl` — rotate `SUPABASE_SERVICE_ROLE_KEY` (ter-ekspos saat investigasi)
 
-### ✨ Fitur baru (P2)
+### ⚡ P2 — Performance & Fitur
+- [x] `sm-871q` — perf: optimize `getMeetingsWithStats` slow query
 - [x] `sm-ft7w` — pengajian tingkat daerah (lintas desa, Admin/Guru Daerah)
-    [x] Di dalam pertemuan belum ada filter desa dan kelas
-    [x] Di tingkat desa masih muncul semua
-- [ ] `sm-1kz` — bulk import siswa via Excel
-- [ ] `sm-1jj` — bulk edit teacher permissions
-- [ ] `sm-dp7` — bulk edit ganti kelas siswa
-- [ ] `sm-ejs` — pending naik kelas actionable per kelompok
-- [ ] `sm-ix1` — export laporan absensi ke PDF
-- [ ] `sm-x20` — share laporan via WhatsApp
-- [ ] `sm-ju54` — onboarding wizard (org + kelas + guru)
+- [ ] `sm-1kz` — bulk import siswa via Excel · 📋 plan + prompt siap (`plans/2026-06-23-sm-1kz-bulk-import-siswa-excel.md`, GH-#112)
+- [ ] `sm-1jj` — bulk edit teacher permissions · 📋 plan + prompt siap (`plans/2026-06-23-sm-1jj-bulk-edit-teacher-permissions.md`, GH-#81)
+- [ ] `sm-dp7` — bulk edit ganti kelas siswa · 📋 plan + prompt siap (`plans/2026-06-23-sm-dp7-bulk-ganti-kelas-siswa.md`, GH-#113)
+- [ ] `sm-ejs` — pending naik kelas actionable per kelompok · 📋 plan + prompt siap (`plans/2026-06-23-sm-ejs-pending-naik-kelas-actionable.md`, GH-#111)
+- [ ] `sm-ix1` — export laporan absensi ke PDF · 📋 plan + prompt siap (`plans/2026-04-03-sm-ix1-export-laporan-absensi-pdf.md`, GH-#19)
+- [ ] `sm-x20` — share laporan via WhatsApp · 📋 plan + prompt siap (`plans/2026-04-09-sm-x20-whatsapp-report-sharing.md`, GH-#34)
+- [ ] `sm-ju54` — onboarding wizard (org + kelas + guru) · 📋 plan + prompt siap (`plans/2026-06-23-sm-ju54-onboarding-wizard.md`, GH-#110)
 
-### 🐛 Bug / penyempurnaan (P3)
-- [ ] `sm-rfa` — rapot core bugs (end-to-end usable)
-- [ ] `sm-8nvh` — null-guard `student_snapshot` di `getMeetingsWithStats`
-- [ ] `sm-7ca` — username persist + remember me
-- [ ] `sm-q7x` — QR Code attendance (scanner + cetak QR siswa)
-- [ ] `sm-4op` — isi konten dokumentasi per fitur
-- [ ] `sm-7fw` — E2E naik kelas
-- [ ] `sm-2bx` — enable RLS junction tables (security hole, deferred)
-- [ ] `sm-4cy` — integrasi Sentry error tracking
+### 🐛 P3 — Bug / penyempurnaan
+- [ ] `sm-rfa` — rapot core bugs (end-to-end usable) · 📋 plan + prompt siap (`plans/2026-03-18-rapot-core-bugs.md`, GH-#22)
+- [ ] `sm-8nvh` — null-guard `student_snapshot` di `getMeetingsWithStats` · 📋 plan + prompt siap (`plans/2026-06-23-sm-8nvh-null-guard-student-snapshot.md`, GH-#114)
+- [ ] `sm-f1nh` — tab realtime presensi untuk infocus · 📋 plan + prompt siap (`plans/2026-06-23-sm-f1nh-realtime-presensi-tab.md`, GH-#115)
+- [ ] `sm-nke7` — grafik per-desa/kelompok per pertemuan · 📋 plan + prompt siap (`plans/2026-06-23-sm-nke7-grafik-per-desa-kelompok.md`, GH-#116)
+- [x] `sm-7ca` — username persist + remember me
+- [ ] `sm-q7x` — QR Code attendance (scanner + cetak QR siswa) · 📋 plan + prompt siap (`plans/2026-03-21-qr-code-attendance.md`, GH-#25)
+- [ ] `sm-4op` — isi konten dokumentasi per fitur · 📋 plan + prompt siap (`plans/2026-06-10-sm-4op-docs-auto-content.md`)
+- [ ] `sm-7fw` — E2E naik kelas · 📋 plan + prompt siap (`plans/2026-06-23-sm-7fw-e2e-naik-kelas.md`, GH-#117)
+- [ ] `sm-2bx` — enable RLS junction tables (security hole, deferred) · 📋 plan + prompt siap (`plans/2026-06-23-sm-2bx-rls-junction-tables.md`, GH-#27)
+- [ ] `sm-4cy` — integrasi Sentry error tracking · 📋 plan + prompt siap (`plans/2026-06-23-sm-4cy-sentry-error-tracking.md`, GH-#118)
 
 ### 🧹 Refactor / tech-debt (P3–P4)
 - [ ] `sm-skj` — pecah god file server actions + konsistenkan response
