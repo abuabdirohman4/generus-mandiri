@@ -308,7 +308,7 @@ export default function OverviewTab() {
           categoryGroup={categoryGroup}
           onCategoryGroupChange={handleCategoryGroupChange}
           uniqueDaysMode={isDaerahLevel ? uniqueDaysMode : undefined}
-          onUniqueDaysModeChange={isDaerahLevel ? handleUniqueDaysModeChange : undefined}
+          onUniqueDaysModeChange={handleUniqueDaysModeChange}
           allowMultiKelompok={hasMultiKelompokLaporan}
         />
         {/* Bulan & Tahun — dalam grid 2-kolom di dalam card */}
