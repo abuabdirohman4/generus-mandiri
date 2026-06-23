@@ -55,8 +55,10 @@ export default function AbsensiPage() {
     setEditingMeeting
   } = useAbsensiUIStore()
 
-  // Pagination from URL query params
-  const currentPage = parseInt(searchParams.get('page') || '1', 10)
+  // Pagination from local state (initialized from URL)
+  const [currentPage, setCurrentPage] = useState(() => 
+    parseInt(searchParams.get('page') || '1', 10)
+  )
   const ITEMS_PER_PAGE = 10
 
   // Calculate valid class IDs based on organisasi filters
@@ -128,6 +130,7 @@ export default function AbsensiPage() {
 
   const [refreshingMeetingId, setRefreshingMeetingId] = useState<string | null>(null)
   const [isMinRefreshTimePassed, setIsMinRefreshTimePassed] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Trigger revalidation if coming back from detail page after saving
   useEffect(() => {
@@ -152,19 +155,36 @@ export default function AbsensiPage() {
     }
   }, [isValidating, refreshingMeetingId, isMinRefreshTimePassed])
 
-  // Handle pagination change
+  // Handle pagination change without triggering Next.js navigation
   const handlePageChange = (page: number) => {
-    router.push(`/presensi?page=${page}`, { scroll: false })
+    setCurrentPage(page)
+    // Update URL cosmetically without triggering router/scroll behaviors
+    window.history.replaceState(null, '', `/presensi?page=${page}`)
   }
 
   // Reset page when filters change
   useEffect(() => {
-    // Only reset if not already on page 1
     if (currentPage !== 1) {
-      router.replace('/presensi?page=1')
+      setCurrentPage(1)
+      window.history.replaceState(null, '', '/presensi?page=1')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataFilters, validClassIds])
+  }, [dataFilters])
+
+  // Scroll to bottom automatically when page changes to facilitate rapid clicks
+  useEffect(() => {
+    // Only scroll to bottom if it's not the initial load
+    if (paginatedMeetings.length > 0) {
+      // Use requestAnimationFrame or a tiny timeout to ensure DOM has painted the new items
+      const timeout = setTimeout(() => {
+        window.scrollTo({ 
+          top: document.documentElement.scrollHeight, 
+          behavior: 'auto' // 'auto' means instant, preventing the visual jump/flicker
+        })
+      }, 10)
+      return () => clearTimeout(timeout)
+    }
+  }, [currentPage])
 
   // Filter meetings based on valid class IDs when "Semua Kelas" is selected
   const filteredMeetings = useMemo(() => {
@@ -303,17 +323,24 @@ export default function AbsensiPage() {
     return []
   }, [allMeetings, validClassIds, dataFilters.kelas, dataFilters.activityType, dataFilters.activityLevel, userProfile])
 
+  // Apply search query filter
+  const searchedMeetings = useMemo(() => {
+    if (!searchQuery.trim()) return filteredMeetings
+    const query = searchQuery.toLowerCase()
+    return filteredMeetings.filter((m: any) => m.title?.toLowerCase().includes(query))
+  }, [filteredMeetings, searchQuery])
+
   // Paginate filtered meetings
   const paginatedMeetings = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
-    return filteredMeetings.slice(startIndex, endIndex)
-  }, [filteredMeetings, currentPage])
+    return searchedMeetings.slice(startIndex, endIndex)
+  }, [searchedMeetings, currentPage])
 
   // Calculate total pages from filtered data
   const totalPages = useMemo(() => {
-    return Math.ceil(filteredMeetings.length / ITEMS_PER_PAGE)
-  }, [filteredMeetings.length])
+    return Math.ceil(searchedMeetings.length / ITEMS_PER_PAGE)
+  }, [searchedMeetings.length])
 
   // Track revalidating state
   const isRevalidating = isLoading && paginatedMeetings.length > 0
@@ -333,10 +360,6 @@ export default function AbsensiPage() {
     mutate() // Refresh meetings list
   }
 
-  // Scroll to top when page changes
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [currentPage])
 
   // Only show loading skeleton on initial load (when no data yet)
   const initialLoading = (isLoading && paginatedMeetings.length === 0) || classesLoading
@@ -491,6 +514,30 @@ export default function AbsensiPage() {
           activityTypeOptions={myActivityTypes?.map(t => ({ value: t.id, label: t.name }))}
           cascadeFilters={true}
         />
+
+        {/* Search Input */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Cari pertemuan..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                if (currentPage !== 1) {
+                  setCurrentPage(1)
+                  window.history.replaceState(null, '', '/presensi?page=1')
+                }
+              }}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            />
+          </div>
+        </div>
 
         {/* Revalidating Overlay */}
         {isRevalidating && (
