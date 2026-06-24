@@ -7,6 +7,7 @@ const withNextra = nextra({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'standalone',
 
   // Bundle optimization
   webpack(config) {
