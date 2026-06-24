@@ -17,6 +17,7 @@ import type {
 import DataFilter from '@/components/shared/DataFilter'
 import InputFilter from '@/components/form/input/InputFilter'
 import Checkbox from '@/components/form/input/Checkbox'
+import Skeleton from '@/components/ui/skeleton/Skeleton'
 import type { DataFilters } from '@/components/shared/dataFilterHelpers'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { useDaerah } from '@/hooks/useDaerah'
@@ -45,6 +46,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
     const [rows, setRows] = useState<PromotionStudentRow[]>([])
     const [loadingRows, setLoadingRows] = useState(false)
     const [executing, setExecuting] = useState(false)
+    const [redirecting, setRedirecting] = useState(false)
     const [result, setResult] = useState<PromotionResult | null>(null)
     const [dataFilters, setDataFilters] = useState<DataFilters>(EMPTY_FILTERS)
     const [search, setSearch] = useState('')
@@ -248,7 +250,16 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                 )}
                             </div>
                             {loadingOptions ? (
-                                <p className="text-gray-500">Memuat...</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex items-start gap-3">
+                                            <Skeleton className="w-4 h-4 mt-1 shrink-0 rounded" />
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="h-4 w-3/4" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : options.length === 0 ? (
                                 <p className="text-gray-500">Tidak ada kelas yang bisa dinaikkan dalam akses Anda.</p>
                             ) : (
@@ -404,7 +415,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                 <Button variant="outline" onClick={() => { setStep(1); setSelectedIds(new Set()); setSelectedCount(0); setRows([]); setResult(null); setDataFilters(EMPTY_FILTERS); setSearch(''); setSelectedYearId(defaultYearId) }}>
                                     Naik Kelas Lagi
                                 </Button>
-                                <Button variant="primary" onClick={() => router.push('/home')}>
+                                <Button variant="primary" loading={redirecting} onClick={() => { setRedirecting(true); router.push('/home') }}>
                                     Selesai
                                 </Button>
                             </div>

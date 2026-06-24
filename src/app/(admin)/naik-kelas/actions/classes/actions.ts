@@ -117,6 +117,11 @@ export async function getStudentsToPromote(
         kelompok_id: c.kelompok_id,
     }))
 
+    // sort_order per class_master untuk sort siswa per jenjang kelas
+    const masterSortOrder = new Map<string, number>(
+        masterList.map((m: any) => [m.id, m.sort_order ?? 0])
+    )
+
     const rows: PromotionStudentRow[] = (students || []).map((s: any) => {
         const fromClass = classById.get(s.class_id)
         const fromMasterId = fromClass?.class_master_id ?? ''
@@ -135,6 +140,13 @@ export async function getStudentsToPromote(
             to_class_name: toClass?.class_name ?? null,
             excluded: false,
         }
+    }).sort((a, b) => {
+        const fromMasterA = classById.get(a.from_class_id)?.class_master_id ?? ''
+        const fromMasterB = classById.get(b.from_class_id)?.class_master_id ?? ''
+        const orderA = masterSortOrder.get(fromMasterA) ?? 0
+        const orderB = masterSortOrder.get(fromMasterB) ?? 0
+        if (orderA !== orderB) return orderA - orderB
+        return a.student_name.localeCompare(b.student_name, 'id')
     })
 
     return { success: true, data: rows, message: '' }
