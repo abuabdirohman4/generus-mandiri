@@ -24,6 +24,7 @@ import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useClasses } from '@/hooks/useClasses'
+import { useNotifications } from '@/hooks/useNotifications'
 
 interface Props {
     academicYears: { id: string; name: string }[]
@@ -58,6 +59,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
     const { desa } = useDesa()
     const { kelompok } = useKelompok()
     const { classes: classList } = useClasses()
+    const { mutate: mutateNotifications } = useNotifications()
 
     const selectedYearName = useMemo(
         () => academicYears.find(y => y.id === selectedYearId)?.name ?? null,
@@ -176,6 +178,9 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
         if (res.success && res.data) {
             setResult(res.data)
             setStep(4)
+            if (res.data.success.length > 0) {
+                void mutateNotifications()
+            }
         } else {
             toast.error(res.message)
         }

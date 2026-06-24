@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { revalidatePath } from 'next/cache'
 import { logActivity } from '@/lib/activityLogger'
+import { dismissPromotionCtaNotifications } from '@/app/(admin)/notifikasi/actions/notifications/actions'
 import type { PromotionPayload, PromotionResult } from '@/types/promotion'
 import { preparePromotionData, validatePromotionPermission } from './logic'
 import {
@@ -92,6 +93,10 @@ export async function executeGradePromotion(
             pagePath: '/naik-kelas',
             metadata: { academic_year_id: academicYearId, success: result.success.length, failed: result.failed.length },
         })
+    }
+
+    if (result.success.length > 0) {
+        await dismissPromotionCtaNotifications()
     }
 
     revalidatePath('/naik-kelas')

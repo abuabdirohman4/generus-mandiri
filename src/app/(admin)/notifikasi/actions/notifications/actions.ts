@@ -23,6 +23,7 @@ import {
   fetchNotificationDetail,
 } from './queries'
 import type { SendNotificationInput, UpdateNotificationInput, NotificationTargetScope } from '@/types/notification'
+import { isPromotionCtaNotification } from '@/lib/utils/notificationUtils'
 
 export async function sendNotification(input: SendNotificationInput) {
   try {
@@ -321,3 +322,27 @@ export async function previewRecipientCount(target: NotificationTargetScope) {
     return { success: false, count: 0 }
   }
 }
+
+export async function dismissPromotionCtaNotifications() {
+  try {
+    const { success, data: notifications } = await getMyNotifications({ onlyUnread: false })
+    if (!success || !notifications) return { success: false, message: 'Gagal mengambil notifikasi' }
+
+    const supabase = await createClient()
+    const profile = await getCurrentUserProfile()
+    if (!profile) return { success: false, message: 'Profil tidak ditemukan' }
+
+    let dismissedCount = 0
+    for (const notif of notifications) {
+      if (!notif.is_dismissed && isPromotionCtaNotification(notif)) {
+        await dismiss(supabase, profile.id, notif.id)
+        dismissedCount++
+      }
+    }
+    
+    return { success: true, count: dismissedCount, message: '' }
+  } catch (error) {
+    return { success: false, message: 'Terjadi kesalahan saat dismiss notifikasi naik kelas' }
+  }
+}
+

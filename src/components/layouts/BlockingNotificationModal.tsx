@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useNotifications } from '@/hooks/useNotifications'
+import { isPromotionCtaNotification } from '@/lib/utils/notificationUtils'
 import { sanitizeHtml } from '@/lib/htmlText'
 import { CloseLineIcon } from '@/lib/icons'
 import type { NotificationWithStatus } from '@/types/notification'
@@ -63,13 +64,18 @@ function getConfig(type: string) {
 export default function BlockingNotificationModal() {
   const { allNotifications, dismiss, markRead } = useNotifications()
   const router = useRouter()
+  const pathname = usePathname()
 
   // Pick first undismissed notification with mode=modal or mode=both
-  const notif: NotificationWithStatus | undefined = allNotifications.find(n => {
+  const rawNotif: NotificationWithStatus | undefined = allNotifications.find(n => {
     if (n.is_dismissed) return false
     const cfg = n.display_config ?? DEFAULT_DISPLAY_CONFIG
     return cfg.mode === 'modal' || cfg.mode === 'both'
   })
+
+  // Skip promotion modal on /naik-kelas so it doesn't block the wizard
+  const isWizardPage = pathname?.startsWith('/naik-kelas')
+  const notif = (rawNotif && isWizardPage && isPromotionCtaNotification(rawNotif)) ? undefined : rawNotif
 
   const displayConfig = notif ? (notif.display_config ?? DEFAULT_DISPLAY_CONFIG) : null
   const isBlocking = displayConfig?.dismiss === 'cta_required'
@@ -105,7 +111,13 @@ export default function BlockingNotificationModal() {
   const handleCta = useCallback(() => {
     if (!notif) return
     if (!notif.is_read) markRead([notif.id])
-    dismiss(notif.id)
+    
+    // Do not dismiss promotion CTA on click. It is dismissed automatically
+    // when executeGradePromotion succeeds.
+    if (!isPromotionCtaNotification(notif)) {
+      dismiss(notif.id)
+    }
+
     if (notif.action_url) {
       if (notif.action_url.startsWith('http')) {
         window.open(notif.action_url, '_blank', 'noopener')

@@ -1,7 +1,7 @@
 ## Backlog
-- Naik Kelas
-    - Ada bug tampilan di mobile
-    - Ada bug, kelasnya nambah bukan ganti
+- [x] Naik Kelas
+    - [x] Ada bug tampilan di mobile
+    - [x] Ada bug, kelasnya nambah bukan ganti
 
 - Global
     - [ ] Ingatkan untuk selalu buat e2e
@@ -13,10 +13,11 @@
     - [ ] Saat pilih siswa di sidebar, pilihannya hilang, jadi harus cari dan pilih lagi
 
 - Siswa
-    - [ ] Saat delete, edukasi kalau memang bukan salah data atau siswa hanya pindah sambung tidak perlu dihapus, di archive saja, lalu sediakan arah ke archive
+    - [x] Saat delete, edukasi kalau memang bukan salah data atau siswa hanya pindah sambung tidak perlu dihapus, di archive saja, lalu sediakan arah ke archive
+    - [ ] Di halaman siswa tampilkan column toggle
 
 - Overview
-    - [ ] Tampilkan untuk semua akun, filter kategori
+    - [x] Tampilkan untuk semua akun, filter kategori
 
 <!-- - Materi
     - [ ] Handle materi kelas sebelumnya
@@ -30,20 +31,20 @@
 
 ## Beads Issue
 - Global
-    - [ ] Smooth Onboarding
+    - [x] Smooth Onboarding
 
 - Presensi
-    - [ ] Table absensi bisa disortir
+    - [x] Table absensi bisa disortir
 
 - Auth
     - [x] Kalau login gagal usernmae/password, username jangan hilang
     - [x] Remember Me
 
 - Siswa
-    - [ ] Admin belum selalu mendapat archive & transfer
+    - [x] Admin belum selalu mendapat archive & transfer
     - [ ] Add Bulk with CSV, Excel, Text
 
 - Laporan
     - [x] Siswa tidak aktif masih muncul
-    - [ ] Pasang column toggle
-         - [ ] Pasang kolom jenis kelamin (default no)
+    - [x] Pasang column toggle
+         - [x] Pasang kolom jenis kelamin (default no)
