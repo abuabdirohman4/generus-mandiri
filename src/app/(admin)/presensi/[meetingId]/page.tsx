@@ -13,7 +13,19 @@ import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
-import { getCurrentUserId, shouldShowKelompokFilter, shouldShowDesaFilter, shouldShowKelasFilter, isSuperAdmin, isAdminDesa, isTeacherDesa } from '@/lib/userUtils'
+import { 
+  getCurrentUserId, 
+  shouldShowKelompokFilter, 
+  shouldShowDesaFilter, 
+  shouldShowKelasFilter, 
+  isSuperAdmin, 
+  isAdminDaerah,
+  isAdminDesa,
+  isAdminKelompok,
+  isTeacherDaerah,
+  isTeacherDesa,
+  isTeacherKelompok
+} from '@/lib/userUtils'
 import { upsertMeetingInCache } from '../utils/cache'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canUserEditMeetingAttendance } from '@/app/(admin)/presensi/actions/meetings/helpers.client'
@@ -242,6 +254,50 @@ export default function MeetingAttendancePage() {
       (!userProfile.classes || userProfile.classes.length === 0))
   }, [userProfile])
 
+  // Check if meeting is strictly read-only for the current user based on hierarchy
+  const isReadOnlyMeeting = useMemo(() => {
+    if (!userProfile || !meeting) return true
+    
+    // Creator can always edit
+    if (isMeetingCreator) return false
+    
+    // Superadmin can always edit
+    if (isSuperAdmin(userProfile)) return false
+
+    // Determine meeting level rank
+    const getLevelRank = (code?: string) => {
+      switch (code?.toUpperCase()) {
+        case 'PUSAT': return 4
+        case 'DAERAH': return 3
+        case 'DESA': return 2
+        case 'KELOMPOK': return 1
+        default: return 0
+      }
+    }
+    
+    let meetingLevelRank = getLevelRank(meeting.activity_level?.code)
+    
+    // Fallback to activity type if level is not set
+    if (meetingLevelRank === 0 && meeting.activity_type?.code) {
+      const typeCode = meeting.activity_type.code.toUpperCase()
+      if (typeCode.includes('PUSAT')) meetingLevelRank = 4
+      else if (typeCode.includes('DAERAH')) meetingLevelRank = 3
+      else if (typeCode.includes('DESA')) meetingLevelRank = 2
+    }
+    
+    if (meetingLevelRank === 0) return false // Not a hierarchical meeting
+    
+    // Determine user level rank using project permissions
+    let userLevelRank = 1
+    if (isAdminDaerah(userProfile) || isTeacherDaerah(userProfile)) userLevelRank = 3
+    else if (isAdminDesa(userProfile) || isTeacherDesa(userProfile)) userLevelRank = 2
+    else if (isAdminKelompok(userProfile) || isTeacherKelompok(userProfile)) userLevelRank = 1
+    else if (userProfile.role === 'admin') userLevelRank = 4 // Fallback for unspecified admins
+    
+    // If meeting is higher level than user, it's read only
+    return meetingLevelRank > userLevelRank
+  }, [userProfile, meeting, isMeetingCreator])
+
   // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
     let filtered = students
@@ -426,6 +482,9 @@ export default function MeetingAttendancePage() {
   // Determine if a specific student's attendance can be edited
   const canEditStudent = useCallback((studentId: string) => {
     if (!userProfile || !meeting) return false
+    
+    // If meeting is strictly read-only for this user's hierarchy, disallow edits
+    if (isReadOnlyMeeting) return false
 
     const student = students.find(s => s.id === studentId)
     if (!student) return false
@@ -442,7 +501,7 @@ export default function MeetingAttendancePage() {
       userProfile.classes?.map(c => c.id) || [],
       isHierarchicalTeacher
     )
-  }, [userProfile, meeting, students, isMeetingCreator, isPengajarMeeting, teacherCaberawit, isHierarchicalTeacher])
+  }, [userProfile, meeting, students, isMeetingCreator, isPengajarMeeting, teacherCaberawit, isHierarchicalTeacher, isReadOnlyMeeting])
 
   // Prepare class list for filter - only for multi-class meetings
   const classListForFilter = useMemo(() => {
@@ -865,18 +924,20 @@ export default function MeetingAttendancePage() {
         </div>
 
         {/* Save Button - Mobile: floating, Desktop: static */}
-        <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
-          <Button
-            onClick={handleSave}
-            disabled={saving || !isDirty}
-            variant="primary"
-            className="w-full md:w-auto"
-            loading={saving}
-            loadingText="Menyimpan..."
-          >
-            Simpan
-          </Button>
-        </div>
+        {!isReadOnlyMeeting && (
+          <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
+            <Button
+              onClick={handleSave}
+              disabled={saving || !isDirty}
+              variant="primary"
+              className="w-full md:w-auto"
+              loading={saving}
+              loadingText="Menyimpan..."
+            >
+              Simpan
+            </Button>
+          </div>
+        )}
 
         {/* Reason Modal */}
         <ReasonModal

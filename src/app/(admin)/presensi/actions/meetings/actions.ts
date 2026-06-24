@@ -1030,15 +1030,35 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
               return classDetails ? isTeacherClass(classDetails) : false
             }))
 
-          // For teachers: filter to only their class students (EXCEPT for Pengajar meetings and multi-class meetings)
-          // Pengajar meetings and multi-class meetings should show all students from snapshot
-          const isMultiClassMeeting = meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1
-          if (profile.role === 'teacher' && teacherClassIdsTeacher.length > 0 && !isPengajarMeeting && !isMultiClassMeeting) {
-            relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
-              const studentClassIds = studentToClassMap.get(studentId) || []
-              // Check if student has at least one class that matches teacher's classes
-              return studentClassIds.some(classId => teacherClassIdsTeacher.includes(classId))
-            })
+          // For teachers: filter to only relevant students (except Pengajar meetings which show all)
+          if (profile.role === 'teacher' && !isPengajarMeeting) {
+            // Determine if teacher has any explicit classes assigned
+            const hasAssignedClasses = teacherClassIdsTeacher.length > 0
+            
+            // If they have no scope at all, show nothing
+            if (!hasAssignedClasses && !profile.kelompok_id && !profile.desa_id && !profile.daerah_id) {
+              relevantStudentIds = []
+            } else {
+              relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
+                const studentClassIds = studentToClassMap.get(studentId) || []
+                
+                return studentClassIds.some((classId: string) => {
+                  // Scope by hierarchy if teacher has one (use most specific scope)
+                  const classData = allClassesMap.get(classId)
+                  if (profile.kelompok_id) {
+                    if (classData?.kelompok_id === profile.kelompok_id) return true
+                  } else if (profile.desa_id) {
+                    if (classData?.kelompok?.desa?.id === profile.desa_id) return true
+                  } else if (profile.daerah_id) {
+                    if (classData?.kelompok?.desa?.daerah?.id === profile.daerah_id) return true
+                  }
+                  // Fallback to specific assigned classes
+                  if (hasAssignedClasses && teacherClassIdsTeacher.includes(classId)) return true
+
+                  return false
+                })
+              })
+            }
 
             // Filter attendance to only relevant students
             const relevantStudentIdSet = new Set(relevantStudentIds)
@@ -1403,10 +1423,56 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
           })
         }
 
+        // Fetch student class mappings for filtering
+        const allStudentIds = new Set<string>()
+        filteredMeetings.forEach((meeting: any) => {
+          if (meeting.student_snapshot && Array.isArray(meeting.student_snapshot)) {
+            meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
+          }
+        })
+
+        const { data: studentClassData } = await fetchInBatches(
+          adminClientTeacher,
+          'students',
+          Array.from(allStudentIds),
+          'id, class_id, student_classes(classes:class_id(id))'
+        )
+
+        const studentToClassMap = new Map<string, string[]>()
+        if (studentClassData) {
+          studentClassData.forEach(s => {
+            const classIds = (s.student_classes || [])
+              .map((sc: any) => sc.classes?.id)
+              .filter(Boolean)
+            if (s.class_id && !classIds.includes(s.class_id)) classIds.push(s.class_id)
+            studentToClassMap.set(s.id, classIds)
+          })
+        }
+
         // Calculate statistics for each meeting
         const meetingsWithStats = filteredMeetings.map((meeting: any) => {
-          const attendance = attendanceByMeeting[meeting.id] || []
-          const totalStudents = attendance.length
+          let attendance = attendanceByMeeting[meeting.id] || []
+          let relevantStudentIds = meeting.student_snapshot || []
+
+          relevantStudentIds = relevantStudentIds.filter((studentId: string) => {
+            const studentClassIds = studentToClassMap.get(studentId) || []
+            return studentClassIds.some((classId: string) => {
+               // Use most specific scope
+               if (profile.kelompok_id) {
+                 return classToKelompokMap.get(classId) === profile.kelompok_id
+               } else if (profile.desa_id) {
+                 return classToDesaMap.get(classId) === profile.desa_id
+               } else if (profile.daerah_id) {
+                 return classToDaerahMap.get(classId) === profile.daerah_id
+               }
+               return false
+            })
+          })
+
+          const relevantStudentIdSet = new Set(relevantStudentIds)
+          attendance = attendance.filter((a: any) => relevantStudentIdSet.has(a.student_id))
+
+          const totalStudents = relevantStudentIds.length
           const presentCount = attendance.filter((a: any) => a.status === 'H').length
           const absentCount = attendance.filter((a: any) => a.status === 'A').length
           const sickCount = attendance.filter((a: any) => a.status === 'S').length
@@ -1760,10 +1826,56 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
         })
       }
 
+      // Fetch student class mappings for filtering
+      const allStudentIds = new Set<string>()
+      filteredMeetings.forEach((meeting: any) => {
+        if (meeting.student_snapshot && Array.isArray(meeting.student_snapshot)) {
+          meeting.student_snapshot.forEach((id: string) => allStudentIds.add(id))
+        }
+      })
+
+      const { data: studentClassData } = await fetchInBatches(
+        adminClientAttendance,
+        'students',
+        Array.from(allStudentIds),
+        'id, class_id, student_classes(classes:class_id(id))'
+      )
+
+      const studentToClassMap = new Map<string, string[]>()
+      if (studentClassData) {
+        studentClassData.forEach(s => {
+          const classIds = (s.student_classes || [])
+            .map((sc: any) => sc.classes?.id)
+            .filter(Boolean)
+          if (s.class_id && !classIds.includes(s.class_id)) classIds.push(s.class_id)
+          studentToClassMap.set(s.id, classIds)
+        })
+      }
+
       // Process meetings with stats
       const meetingsWithStats = filteredMeetings.map((meeting: any) => {
-        const meetingAttendance = attendanceByMeeting[meeting.id] || []
-        const relevantStudentIds = meeting.student_snapshot
+        let meetingAttendance = attendanceByMeeting[meeting.id] || []
+        let relevantStudentIds = meeting.student_snapshot || []
+
+        if (profile.role !== 'superadmin') {
+          relevantStudentIds = relevantStudentIds.filter((studentId: string) => {
+            const studentClassIds = studentToClassMap.get(studentId) || []
+            return studentClassIds.some((classId: string) => {
+               // Use most specific scope
+               if (profile.kelompok_id) {
+                 return classToKelompokMap.get(classId) === profile.kelompok_id
+               } else if (profile.desa_id) {
+                 return classToDesaMap.get(classId) === profile.desa_id
+               } else if (profile.daerah_id) {
+                 return classToDaerahMap.get(classId) === profile.daerah_id
+               }
+               return false
+            })
+          })
+
+          const relevantStudentIdSet = new Set(relevantStudentIds)
+          meetingAttendance = meetingAttendance.filter((a: any) => relevantStudentIdSet.has(a.student_id))
+        }
 
         const totalStudents = relevantStudentIds.length
 
@@ -1963,13 +2075,28 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
       let meetingAttendance = attendanceByMeeting[meeting.id] || []
       let relevantStudentIds = meeting.student_snapshot
 
-      // For teachers: filter to only their class students (except multi-class meetings)
-      const isMultiClassMeetingAdmin = meeting.class_ids && Array.isArray(meeting.class_ids) && meeting.class_ids.length > 1
-      if (profile.role === 'teacher' && teacherClassIdsAdmin.length > 0 && !isMultiClassMeetingAdmin) {
-        relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
-          const studentClassId = studentToClassMap.get(studentId)
-          return studentClassId && teacherClassIdsAdmin.includes(studentClassId)
-        })
+      // For teachers: filter to only relevant students
+      if (profile.role === 'teacher') {
+        // Determine if teacher has any explicit classes assigned
+        const hasAssignedClasses = teacherClassIdsAdmin.length > 0
+
+        // If they have no scope at all, show nothing
+        if (!hasAssignedClasses && !profile.kelompok_id && !profile.desa_id && !profile.daerah_id) {
+          relevantStudentIds = []
+        } else {
+          relevantStudentIds = meeting.student_snapshot.filter((studentId: string) => {
+            const studentClassId = studentToClassMap.get(studentId)
+            if (!studentClassId) return false
+            
+            // Note: studentToClassMap in getMeetingById only maps to a SINGLE class string, not array
+            const classId = studentClassId as string
+            
+            // Try getting hierarchical mapping if available (we might not have classToKelompokMap here, 
+            // but we can fallback to explicitly assigned classes for getMeetingById since the detail page re-calculates anyway)
+            // For getMeetingById, we just use assigned classes. Detail page will do hierarchical filtering.
+            return hasAssignedClasses && teacherClassIdsAdmin.includes(classId)
+          })
+        }
 
         // Filter attendance to only relevant students
         const relevantStudentIdSet = new Set(relevantStudentIds)

@@ -316,15 +316,22 @@ export default function AttendanceTable({
                       const isDisabled = canEditStudent ? !canEditStudent(student.id) : false
                       return (
                         <td key={status} className={`px-1 py-3 sm:py-4 text-center ${index === 3 ? 'pr-2' : ''}`}>
-                          <label className={`flex items-center justify-center ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                          <label 
+                            className={`flex items-center justify-center ${isDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                            onClick={(e) => { if (isDisabled) e.preventDefault() }}
+                          >
                             <input
                               type="radio"
                               name={`status-${student.id}`}
                               value={status}
                               checked={attendance[student.id]?.status === status}
-                              onChange={() => onStatusChange(student.id, status)}
-                              disabled={isDisabled}
-                              className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onChange={() => {
+                                if (!isDisabled) onStatusChange(student.id, status)
+                              }}
+                              readOnly={isDisabled}
+                              tabIndex={isDisabled ? -1 : 0}
+                              aria-disabled={isDisabled}
+                              className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 ${isDisabled ? 'pointer-events-none' : ''}`}
                             />
                           </label>
                         </td>
