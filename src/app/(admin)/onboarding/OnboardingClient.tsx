@@ -450,7 +450,7 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
                 <button
                   key={label}
                   onClick={() => setStep((i + 1) as Step)}
-                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                     isActive
                       ? 'border-brand-500 text-brand-600 dark:border-brand-400 dark:text-brand-400'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -715,10 +715,16 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
           {/* ──── STEP 2 — Kelas ──────────────────────────────────────── */}
           {step === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Step 2: Tambah Kelas</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Step 2: Tambah Kelas Standar</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Pilih kelas standar yang akan dibuat untuk {allKelompoks.length} kelompok di {desas.length} desa. Kelas yang sudah ada dilewati otomatis.
+                Pilih template kelas yang ingin dibuat untuk setiap kelompok yang sudah ada. Kelas akan otomatis dibuatkan secara masal.
               </p>
+
+              {!selectedDaerahId && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
+                  ⚠️ Silakan kembali ke tab <strong>Organisasi</strong> dan pilih Daerah/Desa/Kelompok terlebih dahulu sebelum membuat kelas.
+                </div>
+              )}
 
               {/* Master checkboxes */}
               <div>
@@ -788,7 +794,7 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
                   onClick={handleBuatKelas}
                   loading={creatingKelas}
                   loadingText="Membuat kelas..."
-                  disabled={selectedMasterIds.length === 0}
+                  disabled={!selectedDaerahId || selectedMasterIds.length === 0}
                 >
                   Tambah Kelas
                 </Button>
@@ -803,6 +809,12 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Pilih template akun yang ingin dibuat. Sistem akan otomatis men-generate akun untuk setiap kelompok, desa, dan daerah yang telah dipilih.
               </p>
+
+              {(!selectedDaerahId || !kelasResult) && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
+                  ⚠️ Harap pilih Daerah di tab <strong>Organisasi</strong> dan jalankan fitur Buat Kelas di tab <strong>Kelas</strong> terlebih dahulu agar akun guru yang dibuat otomatis terhubung dengan kelasnya.
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 {/* Tingkat Kelompok */}
@@ -865,7 +877,7 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
                 <Button
                   variant="primary"
                   onClick={handleGeneratePreview}
-                  disabled={!selectedDaerahId}
+                  disabled={!selectedDaerahId || !kelasResult}
                 >
                   Preview
                 </Button>
@@ -970,6 +982,7 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
                     loading={creatingGuru}
                     loadingText="Menyimpan akun..."
                     className="w-full sm:w-auto"
+                    disabled={!selectedDaerahId || !kelasResult}
                   >
                     Simpan & Buat Akun
                   </Button>
