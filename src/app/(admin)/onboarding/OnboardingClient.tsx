@@ -812,7 +812,7 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
 
               {(!selectedDaerahId || !kelasResult) && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
-                  ⚠️ Harap pilih Daerah di tab <strong>Organisasi</strong> dan jalankan fitur Buat Kelas di tab <strong>Kelas</strong> terlebih dahulu agar akun guru yang dibuat otomatis terhubung dengan kelasnya.
+                  ⚠️ Harap pilih Daerah/Desa/Kelompok di tab <strong>Organisasi</strong> dan jalankan fitur Buat Kelas di tab <strong>Kelas</strong> terlebih dahulu agar akun guru yang dibuat otomatis terhubung dengan kelasnya.
                 </div>
               )}
 
@@ -820,35 +820,43 @@ export default function OnboardingClient({ profile, standardMasters }: Props) {
                 {/* Tingkat Kelompok */}
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3 border-b pb-2">Tingkat Kelompok</h3>
-                  <div className="space-y-3">
-                    <Checkbox
-                      label="PJ Kelompok (Paud - Orang Tua)"
-                      checked={guruTemplates.pj_kelompok}
-                      onChange={(checked) => setGuruTemplates(prev => ({ ...prev, pj_kelompok: checked }))}
-                    />
-                    <Checkbox
-                      label="PJ Generus Kelompok (Paud - Pra Nikah 4)"
-                      checked={guruTemplates.generus_kelompok}
-                      onChange={(checked) => setGuruTemplates(prev => ({ ...prev, generus_kelompok: checked }))}
-                    />
-                  </div>
+                  {allKelompoks.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">Belum ada kelompok yang dibuat di Step 1.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <Checkbox
+                        label="PJ Kelompok (Paud - Orang Tua)"
+                        checked={guruTemplates.pj_kelompok}
+                        onChange={(checked) => setGuruTemplates(prev => ({ ...prev, pj_kelompok: checked }))}
+                      />
+                      <Checkbox
+                        label="PJ Generus Kelompok (Paud - Pra Nikah 4)"
+                        checked={guruTemplates.generus_kelompok}
+                        onChange={(checked) => setGuruTemplates(prev => ({ ...prev, generus_kelompok: checked }))}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Tingkat Desa */}
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3 border-b pb-2">Tingkat Desa</h3>
-                  <div className="space-y-3">
-                    <Checkbox
-                      label="PJ Desa (Paud - Orang Tua)"
-                      checked={guruTemplates.pj_desa}
-                      onChange={(checked) => setGuruTemplates(prev => ({ ...prev, pj_desa: checked }))}
-                    />
-                    <Checkbox
-                      label="PJ Generus Desa (Paud - Pra Nikah 4)"
-                      checked={guruTemplates.generus_desa}
-                      onChange={(checked) => setGuruTemplates(prev => ({ ...prev, generus_desa: checked }))}
-                    />
-                  </div>
+                  {desas.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">Belum ada desa yang dibuat di Step 1.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <Checkbox
+                        label="PJ Desa (Paud - Orang Tua)"
+                        checked={guruTemplates.pj_desa}
+                        onChange={(checked) => setGuruTemplates(prev => ({ ...prev, pj_desa: checked }))}
+                      />
+                      <Checkbox
+                        label="PJ Generus Desa (Paud - Pra Nikah 4)"
+                        checked={guruTemplates.generus_desa}
+                        onChange={(checked) => setGuruTemplates(prev => ({ ...prev, generus_desa: checked }))}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Tingkat Daerah */}
