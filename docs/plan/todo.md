@@ -1,4 +1,8 @@
 ## Backlog
+- Naik Kelas
+    - Ada bug tampilan di mobile
+    - Ada bug, kelasnya nambah bukan ganti
+
 - Global
     - [ ] Ingatkan untuk selalu buat e2e
     - [ ] Buat data berapa yang online, pakai fitur tracking, tapi jadi global untuk yang online nya

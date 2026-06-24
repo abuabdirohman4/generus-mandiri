@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Button from '@/components/ui/button/Button'
 import {
@@ -49,6 +50,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
     const [search, setSearch] = useState('')
     const [selectedYearId, setSelectedYearId] = useState(defaultYearId)
 
+    const router = useRouter()
     const { profile: userProfile } = useUserProfile()
     const { daerah } = useDaerah()
     const { desa } = useDesa()
@@ -331,17 +333,22 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                         </div>
                                         <div className="divide-y divide-gray-100 dark:divide-gray-700">
                                             {g.rows.map(r => (
-                                                <div key={r.student_id} className="px-4 py-2 flex items-center justify-between text-sm">
-                                                    <Checkbox
-                                                        checked={!r.excluded && !!r.to_class_id}
-                                                        disabled={!r.to_class_id}
-                                                        onChange={() => toggleExclude(r.student_id)}
-                                                        label={r.student_name}
-                                                        className={r.excluded || !r.to_class_id ? 'line-through' : ''}
-                                                    />
-                                                    <span className="text-gray-500 dark:text-gray-400">
-                                                        {r.from_class_name} → {r.to_class_name ?? '(tidak ada)'}
-                                                    </span>
+                                                <div key={r.student_id} className="px-4 py-2 flex items-start gap-3 text-sm">
+                                                    <div className="pt-0.5 shrink-0">
+                                                        <Checkbox
+                                                            checked={!r.excluded && !!r.to_class_id}
+                                                            disabled={!r.to_class_id}
+                                                            onChange={() => toggleExclude(r.student_id)}
+                                                        />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className={`truncate font-medium text-gray-900 dark:text-white ${r.excluded || !r.to_class_id ? "line-through" : ""}`}>
+                                                            {r.student_name}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            {r.from_class_name} → {r.to_class_name ?? '(tidak ada)'}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -393,9 +400,12 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                     </ul>
                                 )}
                             </div>
-                            <div className="flex justify-end mt-6">
-                                <Button variant="primary" onClick={() => { setStep(1); setSelectedIds(new Set()); setSelectedCount(0); setRows([]); setResult(null); setDataFilters(EMPTY_FILTERS); setSearch(''); setSelectedYearId(defaultYearId) }}>
-                                    Selesai / Naik Kelas Lagi
+                            <div className="flex justify-between mt-6">
+                                <Button variant="outline" onClick={() => { setStep(1); setSelectedIds(new Set()); setSelectedCount(0); setRows([]); setResult(null); setDataFilters(EMPTY_FILTERS); setSearch(''); setSelectedYearId(defaultYearId) }}>
+                                    Naik Kelas Lagi
+                                </Button>
+                                <Button variant="primary" onClick={() => router.push('/home')}>
+                                    Selesai
                                 </Button>
                             </div>
                         </div>

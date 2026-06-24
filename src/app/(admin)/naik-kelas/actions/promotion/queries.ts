@@ -25,6 +25,15 @@ export async function updateStudentClassId(supabase: SupabaseClient, studentId: 
     return await supabase.from('students').update({ class_id: classId }).eq('id', studentId)
 }
 
+/** Hapus relasi siswa-kelas lama sebelum naik kelas. */
+export async function deleteStudentClass(supabase: SupabaseClient, studentId: string, classId: string) {
+    return await supabase
+        .from('student_classes')
+        .delete()
+        .eq('student_id', studentId)
+        .eq('class_id', classId)
+}
+
 /** Upsert relasi siswa-kelas (student_classes). */
 export async function upsertStudentClass(supabase: SupabaseClient, studentId: string, classId: string) {
     return await supabase
