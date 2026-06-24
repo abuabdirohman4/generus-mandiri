@@ -7,6 +7,6 @@ import type { UserProfile } from '@/types/user'
  */
 export function canOnboard(profile: UserProfile | null | undefined): boolean {
   if (!profile) return false
-  // return isSuperAdmin(profile) || isAdminDaerah(profile)
-  return isSuperAdmin(profile)
+  return isSuperAdmin(profile) || isAdminDaerah(profile)
+  // return isSuperAdmin(profile)
 }
