@@ -125,12 +125,33 @@ export default function PWAComponents() {
       // For now, we'll just log it. In the future, you can show an update prompt
     };
 
+    // Deploy-skew error handler.
+    // Self-hosted (non-Vercel) tidak punya skew protection: tiap deploy, hash chunk
+    // & ID Server Action berubah. Client build lama bisa kena ChunkLoadError yang
+    // lewat sebagai unhandled rejection (tidak kena error boundary React). Deteksi
+    // di sini lalu reload SEKALI (guard sessionStorage cegah loop).
+    const SKEW_GUARD_KEY = 'skew-reload-at';
+    const isSkewMessage = (msg: string) =>
+      /ChunkLoadError|Loading chunk|Loading CSS chunk|Failed to find Server Action|older or newer deployment/i.test(msg);
+    const reloadOnSkew = (msg: string) => {
+      if (!isSkewMessage(msg)) return;
+      const last = Number(sessionStorage.getItem(SKEW_GUARD_KEY) || 0);
+      if (Date.now() - last < 15000) return;
+      sessionStorage.setItem(SKEW_GUARD_KEY, String(Date.now()));
+      window.location.reload();
+    };
+    const handleWindowError = (e: ErrorEvent) => reloadOnSkew(e.message || String(e.error));
+    const handleRejection = (e: PromiseRejectionEvent) =>
+      reloadOnSkew(e.reason?.message || String(e.reason));
+
     // Event listeners
     if (typeof window !== 'undefined') {
       window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.addEventListener("online", handleOnline);
       window.addEventListener("offline", handleOffline);
-      
+      window.addEventListener("error", handleWindowError);
+      window.addEventListener("unhandledrejection", handleRejection);
+
       // Listen for service worker updates
       navigator.serviceWorker?.addEventListener('message', handleServiceWorkerUpdate);
     }
@@ -140,6 +161,8 @@ export default function PWAComponents() {
         window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
         window.removeEventListener("online", handleOnline);
         window.removeEventListener("offline", handleOffline);
+        window.removeEventListener("error", handleWindowError);
+        window.removeEventListener("unhandledrejection", handleRejection);
         navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerUpdate);
       }
     };
