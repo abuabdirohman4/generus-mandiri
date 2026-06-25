@@ -20,6 +20,7 @@ export async function fetchUserProfile(
         .from('profiles')
         .select(`
       id,
+      username,
       role,
       daerah_id,
       desa_id,

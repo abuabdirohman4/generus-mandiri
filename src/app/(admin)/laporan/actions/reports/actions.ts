@@ -1,5 +1,6 @@
 'use server'
 
+import { logError } from '@/lib/logError'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import {
     calculateAttendanceStats,
@@ -36,15 +37,19 @@ import type { ReportFilters, ReportData } from '@/types/report'
  * Thin orchestrator — delegates to queries (Layer 1) and logic (Layer 2).
  */
 export async function getAttendanceReport(filters: ReportFilters): Promise<ReportData> {
+    let logUsername: string | undefined
+    let logUserId: string | undefined
     try {
         // 1. Auth check
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('User not authenticated')
+        logUserId = user.id
 
         // 2. Fetch user profile (Layer 1)
         const { data: profile } = await fetchUserProfile(supabase, user.id)
         if (!profile) throw new Error('User profile not found')
+        logUsername = (profile as { username?: string }).username
 
         // 3. Get teacher class IDs
         const teacherClassIds = profile.role === 'teacher' && profile.teacher_classes
@@ -241,10 +246,10 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         }
 
     } catch (error) {
-        console.error('[MEMUAT DATA] Error:', {
-            message: 'Gagal memuat laporan kehadiran',
-            originalError: error,
-            timestamp: new Date().toISOString()
+        logError('getAttendanceReport', error, {
+            username: logUsername,
+            userId: logUserId,
+            filters,
         })
         throw error
     }
