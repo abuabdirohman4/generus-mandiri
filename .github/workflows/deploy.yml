@@ -27,7 +27,7 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
       - name: Rsync artifact to server
         run: |
-          rsync -az --delete --exclude='.env' .next/standalone/ \
+          rsync -az --delete --exclude='.env' --exclude='ecosystem.config.js' .next/standalone/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/apps/generus-mandiri/
       - name: Reload app via pm2
         run: |
