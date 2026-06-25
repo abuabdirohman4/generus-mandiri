@@ -69,14 +69,12 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
     
     // Superadmin: Show Daerah, Desa, Kelompok
     if (isSuperAdminUser) {
-      if (daerahNames.length > 0) {
-        parts.push(daerahNames.join(' & '))
-      }
-      if (desaNames.length > 0) {
-        parts.push(desaNames.join(' & '))
-      }
-      if (kelompokNames.length > 0) {
-        parts.push(kelompokNames.join(' & '))
+      if (daerahNames.length === 1) {
+        parts.push(String(daerahNames[0]))
+        if (desaNames.length === 1) parts.push(String(desaNames[0]))
+        if (kelompokNames.length === 1) parts.push(String(kelompokNames[0]))
+      } else {
+        return ''
       }
     }
     // Daerah: Show Desa+Kelompok only if single-desa (kelompok-level meeting), nothing if multi-desa
@@ -100,6 +98,8 @@ const formatMeetingLocation = (meeting: any, userProfile: any, classesData: any[
     else {
       return ''
     }
+    
+    return parts.join(' • ')
   }
   
   // Single class or fallback to original logic
