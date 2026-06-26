@@ -215,3 +215,6 @@ playwright/.cache/
 
 # Docs capture videos (upload to YouTube manually)
 docs-videos/
+
+# Sentry Config File
+.env.sentry-build-plugin

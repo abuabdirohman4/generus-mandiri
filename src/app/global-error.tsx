@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-
+import * as Sentry from '@sentry/nextjs';
 /**
  * Global error boundary.
  *
@@ -37,7 +37,10 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    if (!isSkewError(error)) return;
+    if (!isSkewError(error)) {
+      Sentry.captureException(error);
+      return;
+    }
 
     // Cegah loop: kalau baru saja reload karena skew, jangan reload lagi.
     const last = Number(sessionStorage.getItem(RELOAD_GUARD_KEY) || 0);

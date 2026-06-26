@@ -205,14 +205,14 @@ Key: NEVER INSERT into `auth.users` without `auth.identities`. Use `''` for toke
 ## 🌍 Environment & Configuration
 
 **Required** `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-**Optional**: `NEXT_PUBLIC_USE_DUMMY_DATA=false`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`
+**Optional**: `NEXT_PUBLIC_USE_DUMMY_DATA=false`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`, `NEXT_PUBLIC_SENTRY_DSN`
 **Path Alias**: `@/*` maps to `src/*` — always use `@/` imports.
 
 ---
 
 ## 🛠️ Key Technologies
 
-Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth + RLS), SWR, Zustand, Vitest, Playwright, Ant Design, Recharts, @react-pdf/renderer, PWA, TipTap, dnd-kit, Sonner, Flatpickr.
+Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth + RLS), SWR, Zustand, Vitest, Playwright, Ant Design, Recharts, @react-pdf/renderer, PWA, TipTap, dnd-kit, Sonner, Flatpickr, @sentry/nextjs.
 
 ---
 

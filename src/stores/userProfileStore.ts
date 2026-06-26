@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import * as Sentry from '@sentry/nextjs';
 import { clearUserCache } from '@/lib/userUtils';
 import type { UserProfile, UserProfileState } from '@/types/user'
 
@@ -14,12 +15,27 @@ export const useUserProfileStore = create<UserProfileState>()(
       error: null,
       isInitialized: false,
 
-      setProfile: (profile: UserProfile | null) => set({
-        profile,
-        loading: false,
-        error: null,
-        isInitialized: true
-      }),
+      setProfile: (profile: UserProfile | null) => {
+        if (profile) {
+          Sentry.setUser({
+            id: profile.id,
+            username: profile.full_name,
+            email: profile.email,
+            role: profile.role,
+            daerah_id: profile.daerah_id || undefined,
+            desa_id: profile.desa_id || undefined,
+            kelompok_id: profile.kelompok_id || undefined,
+          });
+        } else {
+          Sentry.setUser(null);
+        }
+        set({
+          profile,
+          loading: false,
+          error: null,
+          isInitialized: true
+        });
+      },
 
       setAvatarUrl: (avatarUrl: string) => set({ avatarUrl }),
 
@@ -33,6 +49,7 @@ export const useUserProfileStore = create<UserProfileState>()(
       clearProfile: () => {
         // Clear all user-related cache when logging out
         clearUserCache()
+        Sentry.setUser(null)
         set({
           profile: null,
           avatarUrl: null,
