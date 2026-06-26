@@ -101,40 +101,23 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 
 ---
 
-### [~] Fitur Naik Kelas Tersedia
+### [~] Masa Kenaikan Kelas Dibuka
 - **Trigger**: sm-ejs selesai + stable di production
-- **Target**: Semua guru + siswa (yang terdampak proses kenaikan kelas)
+- **Target**: Semua guru
 - **Tipe**: action
 - **Urgensi**: high
 - **Draft**:
 
-  > 🎓 **Info: Proses Kenaikan Kelas Akan Segera Dilaksanakan**
+  > 🎓 **Info: Proses Kenaikan Kelas Telah Dibuka**
   >
-  > Pengurus sedang mempersiapkan proses kenaikan kelas akhir tahun ajaran 2025/2026.
+  > Fitur **Naik Kelas** sekarang sudah dapat digunakan langsung melalui menu di aplikasi!
   >
-  > Semua siswa dari Kelas 1 - 6, SMP 1 - 3 dan SMA 1 - 3 akan otomatis dinaikkan semua ke kelas di atasnya.
+  > Kepada seluruh PJ Kelompok, mohon untuk segera memeriksa dan memproses siswa-siswi Anda yang perlu dinaikkan tingkatannya (seperti PAUD ke Kelas 1, dsb). 
   >
-  > Untuk kelas PAUD karena ada beberapa siswa yang masih akan termasuk ke dalam kelas PAUD lagi, maka tidak akan otomatis dinaikkan semua.
+  > ⚠️ **Perhatian:** Untuk kelas reguler (PAUD s.d. SMA), mohon diproses sebelum **batas waktu (deadline)** yang telah ditentukan pengurus. Setelah batas waktu berakhir, akses kenaikan kelas reguler akan ditutup.
   > 
-  > Dan juga Kelas Pra Nikah tida akan otomatis dinaikkan semua karena kenaikkan kelasnya yang berbeda antar kampus nya.
-  > 
-  > Sehingga kami akan meminta para pengajar atau penganggung jawab kelompoknya masing-masing untuk menaikkan siswa yang perlu di naikkan ke Kelas 1 atau kelas Pra Nikah berikutnya secara manual, melalui fitur **Bulk Edit Siswa** yang akan di tambahkan di aplikasi beserta Tutorial singkat cara pakainya.
-
-- **Dikirim**: -
-
----
-
-### [~] Info: Paud & Pra Nikah Tidak Ikut Naik Kelas
-- **Trigger**: Bersamaan dengan pengumuman naik kelas (sm-ejs)
-- **Target**: Guru + siswa kelas Paud dan Pra Nikah
-- **Tipe**: info
-- **Urgensi**: medium
-- **Draft**:
-
-  > ℹ️ **Informasi untuk Kelas Paud & Pra Nikah**
+  > Khusus untuk kelas **Pra Nikah**, kenaikan tingkatnya dapat Anda proses kapan saja tanpa terikat batas waktu.
   >
-  > Proses kenaikan kelas otomatis **tidak berlaku** untuk kelas Paud dan Pra Nikah.
-  >
-  > Pengelolaan siswa di kedua kelas ini tetap berjalan seperti biasa. Tidak ada perubahan yang perlu dilakukan. Jika ada pertanyaan, silakan hubungi admin kelompok Anda.
+  > Silakan buka menu **Naik Kelas** sekarang untuk memulai prosesnya!
 
 - **Dikirim**: -

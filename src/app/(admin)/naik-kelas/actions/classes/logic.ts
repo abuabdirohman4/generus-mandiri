@@ -37,3 +37,29 @@ export function resolveTargetClassInKelompok(
     )
     return hit?.class_id ?? null
 }
+
+/**
+ * Filter kelas asal berdasarkan status window dan role user.
+ * - Jika window aktif, semua role full akses.
+ * - Jika window tutup, Guru Kelompok hanya Pra Nikah. Role lain (VIP) bypass full akses.
+ */
+export function filterSourcesByWindow(
+    sources: any[], // using any[] to avoid circular dependency with types if needed, or import PromotionSourceOption
+    options: {
+        isTeacherKelompok: boolean
+        isActive: boolean
+    }
+): any[] {
+    const { isTeacherKelompok, isActive } = options
+
+    // Jika window aktif, atau user bukan guru kelompok (VIP bypass)
+    if (isActive || !isTeacherKelompok) {
+        return sources
+    }
+
+    // Window tutup & user guru kelompok -> bypass Pra Nikah
+    return sources.filter(source => {
+        const name = source.name || ''
+        return name.toLowerCase().includes('pra nikah')
+    })
+}

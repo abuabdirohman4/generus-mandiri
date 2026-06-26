@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { getPromotionEnabled } from './actions'
 import { getAcademicYears, getActiveAcademicYear } from '../tahun-ajaran/actions/academic-years'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { isSuperAdmin, isAdminDaerah } from '@/lib/accessControl'
@@ -13,11 +12,7 @@ export const metadata = {
 }
 
 export default async function NaikKelasPage() {
-    const enabled = await getPromotionEnabled()
-    if (!enabled.data?.enabled) {
-        // Mode naik kelas tidak aktif → tidak boleh akses
-        redirect('/home')
-    }
+    // Gate sudah pindah ke backend/dropdown logic. Halaman selalu bisa diakses.
 
     const [years, activeYear, profile] = await Promise.all([
         getAcademicYears(),

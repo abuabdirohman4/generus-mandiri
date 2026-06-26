@@ -47,3 +47,21 @@ export function isSambungDesaEligible(classData: ClassData): boolean {
   return !isCaberawitClass(classData) && !isTeacherClass(classData)
 }
 
+/**
+ * Check if a class name is a Pra Nikah class
+ * Returns true if the name contains 'pra nikah' (case-insensitive)
+ */
+export function isPraNikahName(name: string): boolean {
+  if (!name) return false
+  return name.toLowerCase().includes('pra nikah')
+}
+
+/**
+ * Check if a class is Pra Nikah class
+ * Returns true if the class name contains 'pra nikah' (case-insensitive)
+ */
+export function isPraNikahClass(classData: ClassData): boolean {
+  if (!classData.name) return false
+  return isPraNikahName(classData.name)
+}
+

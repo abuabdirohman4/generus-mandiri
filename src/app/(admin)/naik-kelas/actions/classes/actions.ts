@@ -10,7 +10,9 @@ import {
     fetchStudentsInClasses,
     fetchTeacherClassIds,
 } from './queries'
-import { filterPromotableMasters, resolveTargetClassInKelompok } from './logic'
+import { filterPromotableMasters, resolveTargetClassInKelompok, filterSourcesByWindow } from './logic'
+import { getPromotionEnabled } from '../settings/actions'
+import { isTeacherKelompok } from '@/lib/accessControl'
 
 /** Apakah profile = guru biasa (punya assignment teacher_classes), bukan guru hierarki. */
 async function isRegularTeacher(supabase: any, profile: any): Promise<boolean> {
@@ -24,7 +26,7 @@ async function isRegularTeacher(supabase: any, profile: any): Promise<boolean> {
  * - Admin & guru hierarki → daftar class_master yang promotable (kind='class_master')
  * - Guru biasa → kelas yang dia ajar (kind='class')
  */
-export async function getPromotionSourceOptions(): Promise<{ success: boolean; data: PromotionSourceOption[]; message: string }> {
+export async function getPromotionSourceOptions(): Promise<{ success: boolean; data: PromotionSourceOption[]; message: string; windowClosedForUser?: boolean }> {
     const profile = await getCurrentUserProfile()
     if (!profile) return { success: false, data: [], message: 'Tidak terautentikasi' }
 
@@ -33,13 +35,18 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
     const masterList = masters || []
     const masterById = new Map(masterList.map((m: any) => [m.id, m]))
 
+    // Ambil status window
+    const windowStatus = await getPromotionEnabled()
+    const isActive = windowStatus.data.enabled
+    const isTk = isTeacherKelompok(profile as any)
+
     // Guru biasa → kelas yang dia ajar
     if (await isRegularTeacher(supabase, profile)) {
         const teacherClassIds = await fetchTeacherClassIds(supabase, profile.id)
         const kelompokIds = await resolveKelompokIdsInScope(supabase, getDataFilter(profile))
         const { classes } = await fetchClassesWithMasterInKelompok(supabase, kelompokIds)
         const mine = classes.filter(c => teacherClassIds.includes(c.class_id))
-        const options: PromotionSourceOption[] = mine
+        let options: PromotionSourceOption[] = mine
             .map(c => {
                 const master: any = masterById.get(c.class_master_id)
                 const toMaster: any = master?.promote_to_class_master_id ? masterById.get(master.promote_to_class_master_id) : null
@@ -52,21 +59,26 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
                 }
             })
             .filter(Boolean) as PromotionSourceOption[]
-        return { success: true, data: options, message: '' }
+            
+        options = filterSourcesByWindow(options, { isTeacherKelompok: isTk, isActive })
+        return { success: true, data: options, message: '', windowClosedForUser: !isActive && isTk }
     }
 
     // Admin & guru hierarki → class_master promotable
     const promotable = filterPromotableMasters(masterList as any[])
-    const options: PromotionSourceOption[] = promotable.map((m: any) => {
+    let options: PromotionSourceOption[] = promotable.map((m: any) => {
         const toMaster: any = masterById.get(m.promote_to_class_master_id)
         return {
             kind: 'class_master' as const,
             id: m.id,
             name: m.name,
-            to_name: toMaster?.name ?? null,
+            to_name: toMaster ? toMaster.name : null,
         }
     })
-    return { success: true, data: options, message: '' }
+    
+    options = filterSourcesByWindow(options, { isTeacherKelompok: isTk, isActive })
+
+    return { success: true, data: options, message: '', windowClosedForUser: !isActive && isTk }
 }
 
 /**

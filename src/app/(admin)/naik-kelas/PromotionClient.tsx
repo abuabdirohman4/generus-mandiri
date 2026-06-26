@@ -41,6 +41,7 @@ const EMPTY_FILTERS: DataFilters = { daerah: [], desa: [], kelompok: [], kelas: 
 export default function PromotionClient({ academicYears, defaultYearId, canPickYear }: Props) {
     const [step, setStep] = useState<Step>(1)
     const [options, setOptions] = useState<PromotionSourceOption[]>([])
+    const [windowClosedForUser, setWindowClosedForUser] = useState(false)
     const [loadingOptions, setLoadingOptions] = useState(true)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [selectedCount, setSelectedCount] = useState(0)
@@ -77,8 +78,12 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
         ;(async () => {
             setLoadingOptions(true)
             const res = await getPromotionSourceOptions()
-            if (res.success) setOptions(res.data)
-            else toast.error(res.message)
+            if (res.success) {
+                setOptions(res.data)
+                setWindowClosedForUser(res.windowClosedForUser ?? false)
+            } else {
+                toast.error(res.message)
+            }
             setLoadingOptions(false)
         })()
     }, [])
@@ -254,6 +259,16 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                     />
                                 )}
                             </div>
+                            
+                            {windowClosedForUser && options.length > 0 && (
+                                <div className="mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 text-sm text-blue-800 dark:text-blue-200 flex gap-2">
+                                    <span className="shrink-0 mt-0.5">ℹ️</span>
+                                    <p>
+                                        Masa kenaikan kelas reguler (PAUD - SMA) ditutup oleh pengurus. Anda saat ini hanya dapat memproses kenaikan tingkat untuk kelas <strong>Pra Nikah</strong>.
+                                    </p>
+                                </div>
+                            )}
+
                             {loadingOptions ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {Array.from({ length: 6 }).map((_, i) => (
@@ -266,7 +281,21 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                     ))}
                                 </div>
                             ) : options.length === 0 ? (
-                                <p className="text-gray-500">Tidak ada kelas yang bisa dinaikkan dalam akses Anda.</p>
+                                <div className="text-center py-10 px-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mb-4">
+                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Tidak ada kelas yang bisa dinaikkan</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto leading-relaxed">
+                                        Saat ini tidak ada daftar kelas yang dapat Anda proses. Hal ini biasanya terjadi jika:
+                                    </p>
+                                    <ul className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-2 text-left list-disc list-inside">
+                                        <li>Sedang <strong>berada di luar masa kenaikan kelas</strong> (sehingga kelas PAUD hingga SMA dikunci oleh Admin).</li>
+                                        <li>Anda hanya ditugaskan mengajar kelas akhir yang tidak memiliki tingkatan lanjutan (misal: Kelas Orang Tua).</li>
+                                    </ul>
+                                </div>
                             ) : (
                                 <>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

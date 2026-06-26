@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { filterPromotableMasters, resolveTargetClassInKelompok } from '../logic'
+import { filterPromotableMasters, resolveTargetClassInKelompok, filterSourcesByWindow } from '../logic'
+import type { PromotionSourceOption } from '@/types/promotion'
 
 describe('filterPromotableMasters', () => {
     const masters = [
@@ -48,5 +49,33 @@ describe('resolveTargetClassInKelompok', () => {
 
     it('returns null when no class of that master exists in the kelompok', () => {
         expect(resolveTargetClassInKelompok('m99', 'kA', classes)).toBeNull()
+    })
+})
+
+describe('filterSourcesByWindow', () => {
+    const sources: PromotionSourceOption[] = [
+        { kind: 'class_master', id: 'm1', name: 'Kelas 1', to_name: 'Kelas 2' },
+        { kind: 'class_master', id: 'm2', name: 'Pra Nikah 1', to_name: 'Pra Nikah 2' },
+        { kind: 'class', id: 'c1', name: 'SMA 1 - Nambo', to_name: 'SMA 2' },
+        { kind: 'class', id: 'c2', name: 'Pra Nikah 3 - Nambo', to_name: 'Pra Nikah 4' },
+    ]
+
+    it('returns all sources when window is active, regardless of role', () => {
+        const result1 = filterSourcesByWindow(sources, { isTeacherKelompok: true, isActive: true })
+        expect(result1).toHaveLength(4)
+
+        const result2 = filterSourcesByWindow(sources, { isTeacherKelompok: false, isActive: true })
+        expect(result2).toHaveLength(4)
+    })
+
+    it('returns all sources when window is closed BUT user is NOT teacher kelompok (VIP bypass)', () => {
+        const result = filterSourcesByWindow(sources, { isTeacherKelompok: false, isActive: false })
+        expect(result).toHaveLength(4)
+    })
+
+    it('returns ONLY Pra Nikah sources when window is closed AND user is teacher kelompok', () => {
+        const result = filterSourcesByWindow(sources, { isTeacherKelompok: true, isActive: false })
+        expect(result).toHaveLength(2)
+        expect(result.map(r => r.id)).toEqual(['m2', 'c2'])
     })
 })

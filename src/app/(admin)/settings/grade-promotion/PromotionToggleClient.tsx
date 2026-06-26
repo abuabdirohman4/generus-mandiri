@@ -2,20 +2,43 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { togglePromotionEnabled } from '../../naik-kelas/actions'
+import dayjs, { Dayjs } from 'dayjs'
+import { updatePromotionEndDate } from '../../naik-kelas/actions'
+import DatePickerInput from '@/components/form/input/DatePicker'
+import Button from '@/components/ui/button/Button'
+import { usePromotionEnabled } from '@/hooks/usePromotionEnabled'
 
-export default function PromotionToggleClient({ initialEnabled }: { initialEnabled: boolean }) {
-    const [enabled, setEnabled] = useState(initialEnabled)
+export default function PromotionToggleClient({ initialEndDate }: { initialEndDate: string | null }) {
+    const [endDate, setEndDate] = useState<Dayjs | null>(initialEndDate ? dayjs(initialEndDate) : null)
     const [saving, setSaving] = useState(false)
+    const { mutate } = usePromotionEnabled()
 
-    const handleToggle = async () => {
-        const next = !enabled
+    const handleSave = async () => {
+        if (!endDate) {
+            toast.error('Pilih tanggal batas waktu terlebih dahulu')
+            return
+        }
+        
         setSaving(true)
-        const res = await togglePromotionEnabled(next)
+        const dateStr = endDate.format('YYYY-MM-DD')
+        const res = await updatePromotionEndDate(dateStr)
         setSaving(false)
         if (res.success) {
-            setEnabled(next)
             toast.success(res.message)
+            mutate()
+        } else {
+            toast.error(res.message)
+        }
+    }
+
+    const handleCloseAccess = async () => {
+        setSaving(true)
+        const res = await updatePromotionEndDate(null)
+        setSaving(false)
+        if (res.success) {
+            setEndDate(null)
+            toast.success(res.message)
+            mutate()
         } else {
             toast.error(res.message)
         }
@@ -30,21 +53,34 @@ export default function PromotionToggleClient({ initialEnabled }: { initialEnabl
                         Aktifkan untuk membuka menu <span className="font-medium">Naik Kelas</span>. Nyalakan hanya saat periode kenaikan kelas (Juni/Juli), lalu matikan lagi setelah selesai.
                     </p>
 
-                    <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                        <div>
-                            <div className="font-medium text-gray-900 dark:text-white">Aktifkan Mode Naik Kelas</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                Status: {enabled ? <span className="text-green-600 dark:text-green-400">Aktif</span> : <span className="text-gray-500">Nonaktif</span>}
-                            </div>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                        <div className="flex-1 w-full max-w-sm">
+                            <DatePickerInput
+                                label="Batas Akhir (Deadline)"
+                                value={endDate}
+                                onChange={setEndDate}
+                                placeholder="Pilih tanggal penutupan"
+                                disabled={saving}
+                                mode="single"
+                            />
                         </div>
-                        <button
-                            onClick={handleToggle}
-                            disabled={saving}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-50 ${enabled ? 'bg-brand-600' : 'bg-gray-300 dark:bg-gray-600'}`}
-                            aria-label="Toggle mode naik kelas"
-                        >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <Button 
+                                variant="outline" 
+                                onClick={handleCloseAccess}
+                                disabled={saving || !endDate}
+                                className="flex-1 md:flex-none"
+                            >
+                                Tutup Akses
+                            </Button>
+                            <Button 
+                                onClick={handleSave}
+                                disabled={saving || !endDate}
+                                className="flex-1 md:flex-none"
+                            >
+                                {saving ? 'Menyimpan...' : 'Simpan'}
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="mt-4 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-3 text-sm text-blue-800 dark:text-blue-200">

@@ -13,8 +13,15 @@
 // ─── Toggle (app_settings: key='grade_promotion_enabled') ───────────────────────
 export interface PromotionEnabledValue {
     enabled: boolean
+    end_date?: string | null
     enabled_by: string | null
     enabled_at: string | null
+}
+
+// ─── Window Status (computed server-side) ───────────────────────────────────────
+export interface PromotionWindowStatus {
+    isActive: boolean
+    endDate: string | null
 }
 
 // ─── Wizard Step 1: Source Option ───────────────────────────────────────────────

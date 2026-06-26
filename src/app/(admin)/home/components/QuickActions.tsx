@@ -7,7 +7,6 @@ import { GroupIcon, ReportIcon, DashboardIcon, BuildingIcon, TableIcon, BookOpen
 import { isAdminKelompok, isTeacher, isAdminDaerah, isSuperAdmin } from '@/lib/userUtils';
 import { isCaberawitClass } from '@/lib/utils/classHelpers';
 import { canManageMaterials, canAccessMaterials, canAccessMonitoring } from '@/lib/accessControl';
-import { usePromotionEnabled } from '@/hooks/usePromotionEnabled';
 import type { UserProfile } from '@/types/user'
 
 type Profile = UserProfile
@@ -28,7 +27,6 @@ interface QuickActionItem {
   iconColor: string;
   adminOnly?: boolean;
   excludeAdminKelompok?: boolean;
-  requirePromotionEnabled?: boolean;
   requireCanSendNotification?: boolean;
   requireCanOnboard?: boolean;
   disabled?: boolean; 
@@ -47,7 +45,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   // const userCanManageMaterials = canManageMaterials(profile)
   const userCanAccessMaterials = canAccessMaterials(profile)
   const userCanAccessMonitoring = canAccessMonitoring(profile)
-  const { promotionEnabled } = usePromotionEnabled()
 
   const handleNavigation = useCallback((href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -70,17 +67,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
   }, []);
 
   const quickActions: QuickActionItem[] = [
-    // {
-    //   id: 'dashboard',
-    //   name: 'Dashboard',
-    //   description: 'Overview sistem',
-    //   href: '/dashboard',
-    //   icon: <DashboardIcon className="w-6 h-6" />,
-    //   bgColor: 'bg-indigo-100 dark:bg-indigo-900',
-    //   iconColor: 'text-indigo-600 dark:text-indigo-400',
-    //   adminOnly: isPPG ? false : true,
-    //   disabled: false
-    // },
     {
       id: 'onboarding',
       name: 'Onboarding',
@@ -92,30 +78,19 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       requireCanOnboard: true,
       disabled: false
     },
-    {
-      id: 'naik-kelas',
-      name: 'Naik Kelas',
-      description: 'Kenaikan kelas massal',
-      href: '/naik-kelas',
-      icon: <GroupIcon className="w-6 h-6" />,
-      bgColor: 'bg-amber-100 dark:bg-amber-900',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      requirePromotionEnabled: true,
-      disabled: false
-    },
-    {
-      id: 'notifikasi',
-      name: 'Notifikasi',
-      description: 'Lihat & kirim broadcast',
-      href: '/notifikasi',
-      icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>,
-      bgColor: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      requireCanSendNotification: true,
-      disabled: false
-    },
+    // {
+    //   id: 'notifikasi',
+    //   name: 'Notifikasi',
+    //   description: 'Lihat & kirim broadcast',
+    //   href: '/notifikasi',
+    //   icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    //     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    //   </svg>,
+    //   bgColor: 'bg-blue-100 dark:bg-blue-900',
+    //   iconColor: 'text-blue-600 dark:text-blue-400',
+    //   requireCanSendNotification: true,
+    //   disabled: false
+    // },
     {
       id: 'presensi',
       name: 'Presensi',
@@ -158,17 +133,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       iconColor: 'text-yellow-600 dark:text-yellow-400',
       adminOnly: false,
       disabled: !userCanAccessMaterials
-    },
-    {
-      id: 'tahun-ajaran',
-      name: 'Tahun Ajaran',
-      description: 'Kelola tahun ajaran',
-      href: '/tahun-ajaran',
-      icon: <TahunAjaranIcon className="w-6 h-6" />,
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900',
-      iconColor: 'text-cyan-600 dark:text-cyan-400',
-      adminOnly: true,
-      disabled: false
     },
     {
       id: 'monitoring',
@@ -253,6 +217,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       disabled: false
     },
     {
+      id: 'tahun-ajaran',
+      name: 'Tahun Ajaran',
+      description: 'Kelola tahun ajaran',
+      href: '/tahun-ajaran',
+      icon: <TahunAjaranIcon className="w-6 h-6" />,
+      bgColor: 'bg-cyan-100 dark:bg-cyan-900',
+      iconColor: 'text-cyan-600 dark:text-cyan-400',
+      adminOnly: true,
+      disabled: false
+    },
+    {
       id: 'tracking',
       name: 'Tracking',
       description: 'Tracking',
@@ -264,6 +239,16 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       excludeAdminKelompok: true,
       disabled: false
     },
+    // {
+    //   id: 'naik-kelas',
+    //   name: 'Naik Kelas',
+    //   description: 'Naikkan kelas siswa',
+    //   href: '/naik-kelas',
+    //   icon: <GroupIcon className="w-6 h-6" />,
+    //   bgColor: 'bg-amber-100 dark:bg-amber-900',
+    //   iconColor: 'text-amber-600 dark:text-amber-400',
+    //   disabled: false
+    // },
     {
       id: 'settings',
       name: 'Pengaturan',
@@ -285,11 +270,6 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
 
     // Filter out actions that exclude Admin Kelompok
     if (action.excludeAdminKelompok && isAdminKelompok(profile)) {
-      return false
-    }
-
-    // Toggle-gated: Naik Kelas only when promotion mode is ON
-    if (action.requirePromotionEnabled && !promotionEnabled) {
       return false
     }
 

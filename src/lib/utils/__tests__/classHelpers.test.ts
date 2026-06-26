@@ -3,6 +3,8 @@ import {
     isCaberawitClass,
     isTeacherClass,
     isSambungDesaEligible,
+    isPraNikahName,
+    isPraNikahClass,
     type ClassData,
 } from '../classHelpers'
 
@@ -211,6 +213,33 @@ describe('classHelpers', () => {
             }
 
             expect(isSambungDesaEligible(classData)).toBe(false)
+        })
+    })
+
+    describe('isPraNikahName', () => {
+        it('should return true for names containing "pra nikah"', () => {
+            expect(isPraNikahName('Pra Nikah 1')).toBe(true)
+            expect(isPraNikahName('Pra Nikah 2')).toBe(true)
+            expect(isPraNikahName('PRA NIKAH 3')).toBe(true)
+            expect(isPraNikahName('pra nikah')).toBe(true)
+        })
+
+        it('should return false for names not containing "pra nikah"', () => {
+            expect(isPraNikahName('Kelas 1')).toBe(false)
+            expect(isPraNikahName('SMP 1')).toBe(false)
+            expect(isPraNikahName('Pra Remaja')).toBe(false)
+            expect(isPraNikahName('')).toBe(false)
+        })
+    })
+
+    describe('isPraNikahClass', () => {
+        it('should return true for ClassData with "pra nikah" in name', () => {
+            expect(isPraNikahClass({ name: 'Pra Nikah 1' })).toBe(true)
+        })
+
+        it('should return false for ClassData without "pra nikah" in name', () => {
+            expect(isPraNikahClass({ name: 'Remaja' })).toBe(false)
+            expect(isPraNikahClass({})).toBe(false)
         })
     })
 })

@@ -18,6 +18,7 @@ import {
   SettingsIcon,
   MonitoringIcon,
   PresensiIcon,
+  TahunAjaranIcon,
 } from "@/lib/icons";
 import { useRouter } from "next/navigation";
 import Spinner from "../ui/spinner/Spinner";
@@ -40,7 +41,6 @@ type NavItem = {
   requireCanAccessMonitoring?: boolean;
   excludeAdminKelompok?: boolean;
   excludeAdminDesa?: boolean;
-  requirePromotionEnabled?: boolean;
   requireCanSendNotification?: boolean;
   requireCanOnboard?: boolean;
 };
@@ -52,19 +52,13 @@ const allNavItems: NavItem[] = [
     path: "/home",
   },
   // {
-  //   icon: <DashboardIcon className="w-6 h-6" />,
-  //   name: "Dashboard",
-  //   path: "/dashboard",
-  //   adminOnly: true,
+  //   icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  //   </svg>,
+  //   name: "Notifikasi",
+  //   path: "/notifikasi",
+  //   requireCanSendNotification: true,
   // },
-  {
-    icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-    </svg>,
-    name: "Notifikasi",
-    path: "/notifikasi",
-    requireCanSendNotification: true,
-  },
   {
     icon: <PresensiIcon className="w-6 h-6" />,
     name: "Presensi",
@@ -127,16 +121,12 @@ const allNavItems: NavItem[] = [
     excludeAdminDesa: true,
   },
   {
-    icon: <GroupIcon className="w-6 h-6" />,
-    name: "Naik Kelas",
-    path: "/naik-kelas",
-    requirePromotionEnabled: true,
-  },
-  {
-    icon: <OnboardingIcon className="w-6 h-6" />,
-    name: "Onboarding",
-    path: "/onboarding",
-    requireCanOnboard: true,
+    icon: <TahunAjaranIcon className="w-6 h-6" />,
+    name: "Tahun Ajaran",
+    path: "/tahun-ajaran",
+    adminOnly: true,
+    excludeAdminKelompok: true,
+    excludeAdminDesa: true,
   },
   {
     icon: <DashboardIcon className="w-6 h-6" />,
@@ -144,6 +134,17 @@ const allNavItems: NavItem[] = [
     path: "/tracking",
     adminOnly: true,
   },
+  {
+    icon: <OnboardingIcon className="w-6 h-6" />,
+    name: "Onboarding",
+    path: "/onboarding",
+    requireCanOnboard: true,
+  },
+  // {
+  //   icon: <GroupIcon className="w-6 h-6" />,
+  //   name: "Naik Kelas",
+  //   path: "/naik-kelas",
+  // },
   {
     icon: <SettingsIcon className="w-6 h-6" />,
     name: "Pengaturan",
@@ -468,8 +469,7 @@ function SidebarContent({
     if (item.requireCanAccessMaterials && !userCanAccessMaterials) return false
     if (item.requireCanAccessMonitoring && !userCanAccessMonitoring) return false
 
-    // Toggle-gated: Naik Kelas only when promotion mode is ON
-    if (item.requirePromotionEnabled && !promotionEnabled) return false
+    // Toggle-gated check removed
 
     // Onboarding: superadmin + admin daerah only
     if (item.requireCanOnboard && !userCanOnboard) return false

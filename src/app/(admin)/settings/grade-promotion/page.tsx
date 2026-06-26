@@ -14,5 +14,5 @@ export default async function GradePromotionSettingsPage() {
         redirect('/settings')
     }
     const res = await getPromotionEnabled()
-    return <PromotionToggleClient initialEnabled={res.data?.enabled === true} />
+    return <PromotionToggleClient initialEndDate={res.data?.endDate ?? null} />
 }
