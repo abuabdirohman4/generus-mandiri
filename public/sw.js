@@ -77,9 +77,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Skip Next.js internal files and API routes
-  if (url.includes('/_next/') || 
+  if (url.includes('/_next/') ||
       url.includes('/api/') ||
       url.includes('/auth/')) {
+    return;
+  }
+
+  // Skip third-party external domains
+  if (!url.startsWith(self.location.origin)) {
     return;
   }
 
