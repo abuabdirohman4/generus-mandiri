@@ -85,39 +85,65 @@ export async function fetchClassesWithMasterInKelompok(
     return { classes }
 }
 
-/** Siswa aktif (belum dihapus) yang class_id-nya termasuk daftar classIds. */
-const STUDENT_SELECT = 'id, name, gender, class_id, kelompok_id, status, kelompok:kelompok_id(name)'
+/**
+ * Siswa (belum dihapus) yang terdaftar di salah satu classIds — via junction table
+ * student_classes, BUKAN students.class_id (siswa bisa multi-kelas, mis. kelas
+ * akademik + kelas Pengurus/organisasi paralel; students.class_id cuma "primary"
+ * konvensi, tidak mencerminkan semua keanggotaan kelas siswa).
+ * Tiap baris hasil membawa class_id dari junction match (bukan students.class_id),
+ * supaya from_class_id di layer atas tetap benar walau itu bukan kelas primary siswa.
+ * Kalau siswa match >1 classIds sekaligus (jarang — 2 kelas promotable bersamaan),
+ * hasilkan 1 baris per pasangan (student_id, matched class_id).
+ */
+const STUDENT_SELECT = 'id, name, gender, kelompok_id, status, kelompok:kelompok_id(name)'
 const CHUNK = 100        // hindari PostgREST URL/header overflow saat class_id banyak (600+)
 const PAGE = 1000        // PostgREST default row limit
 
-/**
- * Siswa (belum dihapus) yang class_id-nya termasuk daftar classIds.
- * Di-chunk per 100 class_id + paginasi per 1000 baris → aman untuk ratusan kelas / ribuan siswa.
- */
 export async function fetchStudentsInClasses(supabase: SupabaseClient, classIds: string[]) {
     if (classIds.length === 0) return { data: [] as any[], error: null }
 
-    const all: any[] = []
+    // Step 1: resolve pasangan (student_id, class_id) via junction, per chunk.
+    const pairs: { student_id: string; class_id: string }[] = []
     for (let i = 0; i < classIds.length; i += CHUNK) {
         const chunk = classIds.slice(i, i + CHUNK)
+        const { data, error } = await supabase
+            .from('student_classes')
+            .select('student_id, class_id')
+            .in('class_id', chunk)
+        if (error) return { data: [] as any[], error }
+        if (data) pairs.push(...(data as any[]))
+    }
+    if (pairs.length === 0) return { data: [] as any[], error: null }
+
+    const studentIds = [...new Set(pairs.map(p => p.student_id))]
+
+    // Step 2: ambil data siswa aktif untuk studentIds, per chunk + paginasi.
+    const studentById = new Map<string, any>()
+    for (let i = 0; i < studentIds.length; i += CHUNK) {
+        const chunk = studentIds.slice(i, i + CHUNK)
         let offset = 0
-        // paginate tiap chunk sampai habis
         while (true) {
             const { data, error } = await supabase
                 .from('students')
                 .select(STUDENT_SELECT)
-                .in('class_id', chunk)
+                .in('id', chunk)
                 .eq('status', 'active')
                 .is('deleted_at', null)
-                .order('name')
                 .range(offset, offset + PAGE - 1)
-            if (error) return { data: all, error }
+            if (error) return { data: [] as any[], error }
             if (!data || data.length === 0) break
-            all.push(...data)
+            data.forEach((s: any) => studentById.set(s.id, s))
             if (data.length < PAGE) break
             offset += PAGE
         }
     }
+
+    // Step 3: gabungkan — 1 baris per pasangan (student, matched class_id), pakai class_id junction.
+    const all = pairs
+        .filter(p => studentById.has(p.student_id))
+        .map(p => ({ ...studentById.get(p.student_id), class_id: p.class_id }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'id'))
+
     return { data: all, error: null }
 }
 

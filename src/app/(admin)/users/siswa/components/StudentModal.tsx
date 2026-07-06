@@ -19,6 +19,8 @@ import {
   getAutoFilledOrgValues
 } from '@/lib/userUtils'
 import { getStudentClasses, type Student } from '../actions'
+import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
+import type { AcademicYear } from '@/app/(admin)/tahun-ajaran/types'
 import type { UserProfile } from '@/types/user'
 import type { Class } from '@/types/class'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
@@ -64,6 +66,7 @@ export default function StudentModal({
   })
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [loadingClasses, setLoadingClasses] = useState(false)
+  const [activeYearName, setActiveYearName] = useState<string | null>(null)
 
   // State for DataFilter
   const [filters, setFilters] = useState({
@@ -72,6 +75,14 @@ export default function StudentModal({
     kelompok: [] as string[],
     kelas: [] as string[]
   })
+
+  // Ambil nama tahun ajaran aktif untuk info di form
+  useEffect(() => {
+    if (!isOpen) return
+    getActiveAcademicYear()
+      .then((year: AcademicYear | null) => setActiveYearName(year?.name ?? null))
+      .catch(() => setActiveYearName(null))
+  }, [isOpen])
 
   // Initialize filters and formData when modal opens
   useEffect(() => {
@@ -294,10 +305,15 @@ export default function StudentModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} className="max-w-[600px] m-4">
       <div className="p-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+        <h2 className={`text-2xl font-semibold text-gray-900 dark:text-white ${activeYearName ? 'mb-1' : 'mb-6'}`}>
           {mode === 'create' ? 'Tambah' : 'Edit'} Siswa
         </h2>
-        
+        {activeYearName && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Tahun Ajaran aktif: <span className="font-medium">{activeYearName}</span>
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Nama Lengkap</Label>

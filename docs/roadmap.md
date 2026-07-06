@@ -56,7 +56,7 @@ Urutan saran: security dulu, lalu quick win, refactor terakhir.
 - [ ] `sm-1kz` — bulk import siswa via Excel · 📋 plan + prompt siap (`plans/2026-06-23-sm-1kz-bulk-import-siswa-excel.md`, GH-#112)
 - [ ] `sm-1jj` — bulk edit teacher permissions · 📋 plan + prompt siap (`plans/2026-06-23-sm-1jj-bulk-edit-teacher-permissions.md`, GH-#81)
 - [ ] `sm-dp7` — bulk edit ganti kelas siswa · 📋 plan + prompt siap (`plans/2026-06-23-sm-dp7-bulk-ganti-kelas-siswa.md`, GH-#113)
-- [ ] `sm-ejs` — pending naik kelas actionable per kelompok · 📋 plan + prompt siap (`plans/2026-06-23-sm-ejs-pending-naik-kelas-actionable.md`, GH-#111)
+- [x] `sm-ejs` — pending naik kelas actionable per kelompok · 📋 plan + prompt siap (`plans/2026-06-23-sm-ejs-pending-naik-kelas-actionable.md`, GH-#111)
 - [ ] `sm-ix1` — export laporan absensi ke PDF · 📋 plan + prompt siap (`plans/2026-04-03-sm-ix1-export-laporan-absensi-pdf.md`, GH-#19)
 - [ ] `sm-x20` — share laporan via WhatsApp · 📋 plan + prompt siap (`plans/2026-04-09-sm-x20-whatsapp-report-sharing.md`, GH-#34)
 - [x] `sm-ju54` — onboarding wizard (org + kelas + guru) · 📋 plan + prompt siap (`plans/2026-06-23-sm-ju54-onboarding-wizard.md`, GH-#110)
