@@ -15,7 +15,7 @@ Presensi saat ini manual (centang siswa satu-satu di tabel meeting detail). User
 **Keputusan terkonfirmasi user:**
 - Izin scan = sama dengan yang sudah bisa edit presensi meeting itu (reuse permission existing, tidak ada role baru).
 - QR payload = permanen, plain `student_id` (tanpa expiry/signing). Trade-off diterima: cuma untuk presensi, bukan akses sensitif.
-- Scanner = `@yudiel/react-qr-scanner` (BUKAN `html5-qrcode` — unmaintained, pre-React-18, butuh banyak guard anti-race).
+- Scanner = `html5-qrcode` (**dikoreksi 2026-07-06** — sempat dicoba `@yudiel/react-qr-scanner` karena React 19-friendly, tapi GAGAL di manual test: library itu bergantung Barcode Detection API browser native + WASM polyfill dari CDN eksternal, rapuh di desktop browser tanpa native support. `html5-qrcode` bundle decoder ZXing sendiri, robust tanpa dependensi CDN runtime — sama seperti yang dipakai repo referensi setelah mereka juga pindah dari react-scanner).
 
 ## 2. Reuse / Context (terverifikasi via kode + DB)
 
@@ -29,9 +29,9 @@ Presensi saat ini manual (centang siswa satu-satu di tabel meeting detail). User
 - **DB terverifikasi**: `attendance_logs` RLS enabled + policy SELECT scoped (admin/teacher/superadmin). Realtime enforce RLS otomatis (relevan untuk sm-f1nh, bukan issue ini).
 
 ## 3. Dependency Baru
-- `@yudiel/react-qr-scanner` — scanner kamera (React component, React 19-friendly).
+- `html5-qrcode` — scanner kamera. Bundle decoder ZXing sendiri, tidak bergantung Barcode Detection API native / WASM CDN eksternal (lihat catatan koreksi di §1).
 - `qrcode.react` — render QR di komponen React (halaman QR per-siswa).
-- Reuse `@react-pdf/renderer` untuk cetak single-card. TIDAK perlu `html5-qrcode`/`jspdf`/`html2canvas`.
+- Reuse `@react-pdf/renderer` untuk cetak single-card. TIDAK perlu `jspdf`/`html2canvas`.
 
 ## 4. Tasks
 
@@ -63,9 +63,9 @@ Folder: `src/app/(admin)/presensi/actions/attendance/`.
 
 ### Task 3 — Tab Scan QR di meeting detail
 - New component `src/app/(admin)/presensi/components/PresensiTabHeader.tsx` — generalize `LaporanTabHeader` (props `{id,label}[]` + `activeTab`/`onTabChange`).
-- Modify `src/app/(admin)/presensi/[meetingId]/page.tsx`: tambah `activeTab` state (`'daftar-hadir' | 'scan-qr'`). Tab `scan-qr` cuma render kalau user boleh edit attendance (reuse gate existing, mis. `!isReadOnlyMeeting`). Existing view (SummaryCard + DataFilter + AttendanceTable) di bawah `daftar-hadir`.
-- New component `src/app/(admin)/presensi/components/QrScannerTab.tsx` — render `<Scanner onScan={...}>` dari `@yudiel/react-qr-scanner` + feedback (nama siswa terakhir discan, badge status) + list "baru discan". Props: `meetingId`, `students`, `onScanSuccess`.
-- New hook `src/app/(admin)/presensi/hooks/useQrScanCooldown.ts` — debounce payload (`isProcessingRef` + `lastScannedId`+timestamp, cooldown 1.5-2s biar QR sama gak ke-fire berkali dari frame beruntun), parse via `parseStudentQrPayload`, panggil `markAttendanceByQrScan`, mainkan beep. Return `{handleScan, lastResult}`.
+- Modify `src/app/(admin)/presensi/[meetingId]/page.tsx`: tambah `activeTab` state (`'daftar-hadir' | 'scan-qr'`). Tab `scan-qr` cuma render kalau (a) user boleh edit attendance (`!isReadOnlyMeeting`) DAN (b) meeting level Desa/Daerah (`isDesaOrDaerahMeeting`, reuse pola `getLevelRank`/`activity_level.code` yang sudah ada di file ini — **dikonfirmasi user 2026-07-06**: pertemuan Kelompok tidak butuh QR scan, cukup manual). Existing view (SummaryCard + DataFilter + AttendanceTable) di bawah `daftar-hadir`.
+- New component `src/app/(admin)/presensi/components/QrScannerTab.tsx` — pakai `Html5Qrcode` class dari `html5-qrcode` (bukan React component, manual lifecycle `new Html5Qrcode(elementId)` + `.start()`/`.stop()`/`.clear()`), guard `isProcessingRef`/`isStoppingRef` (port dari pola repo referensi) + feedback (nama siswa terakhir discan, badge status) + list "baru discan". Props: `meetingId`, `students`.
+- New hook `src/app/(admin)/presensi/hooks/useQrScanCooldown.ts` — debounce payload (`lastPayloadRef` + timestamp, cooldown 2s), parse via `parseStudentQrPayload`, panggil `markAttendanceByQrScan`. Return `{handleScan, lastResult, isProcessing}`.
 - On scan sukses: optimistic update `localAttendance` + toast (`sonner`). Status `already_marked` → toast info beda warna, bukan error.
 
 ## 5. Verifikasi

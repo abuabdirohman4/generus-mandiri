@@ -4,13 +4,17 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import {
   calculateAttendanceStats,
-  validateAttendanceData
+  validateAttendanceData,
+  getMeetingWibDateStr,
+  isStudentInMeeting
 } from './logic'
 import {
   upsertAttendanceLogs,
   fetchAttendanceByDate,
   fetchAttendanceByMeeting,
-  fetchStudentsByIds
+  fetchStudentsByIds,
+  fetchMeetingForScan,
+  fetchAttendanceLogByStudentAndMeeting
 } from './queries'
 import type {
   AttendanceData,
@@ -138,12 +142,7 @@ export async function saveAttendanceForMeeting(
     }
 
     // Extract meeting date in WIB (UTC+7) as YYYY-MM-DD string.
-    // meeting.date is a timestamptz stored as UTC midnight (e.g. "2026-03-14T00:00:00+00:00").
-    // Using new Date() + toLocaleDateString would give wrong date on UTC servers.
-    // Instead, manually offset by +7 hours before extracting the date part.
-    const meetingUtc = new Date(meeting.date)
-    const meetingWib = new Date(meetingUtc.getTime() + 7 * 60 * 60 * 1000)
-    const meetingDateStr = meetingWib.toISOString().split('T')[0] // "YYYY-MM-DD"
+    const meetingDateStr = getMeetingWibDateStr(meeting.date)
 
     // Prepare data for upsert
     const attendanceRecords = attendanceData.map(record => ({
@@ -179,6 +178,96 @@ export async function saveAttendanceForMeeting(
   } catch (error) {
     console.error('Error in saveAttendanceForMeeting:', error)
     return { success: false, error: 'Internal server error' }
+  }
+}
+
+/**
+ * Marks a student as present (hadir) for a meeting via QR code scan.
+ * Permission is re-checked server-side (this is a new attack surface, not a form submit).
+ */
+export async function markAttendanceByQrScan(
+  meetingId: string,
+  studentId: string
+): Promise<{
+  success: boolean
+  status: 'marked' | 'already_marked' | 'not_in_meeting' | 'error'
+  message?: string
+}> {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, status: 'error', message: 'User not authenticated' }
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      return { success: false, status: 'error', message: 'User profile not found' }
+    }
+
+    const adminClient = await createAdminClient()
+
+    // Permission: same population that can edit attendance (superadmin/admin/teacher).
+    // Reject unrelated roles (e.g. student) before touching meeting/attendance data.
+    if (!['superadmin', 'admin', 'teacher'].includes(profile.role)) {
+      return { success: false, status: 'error', message: 'Permission denied' }
+    }
+
+    const { data: meeting, error: meetingError } = await fetchMeetingForScan(adminClient, meetingId)
+
+    if (meetingError || !meeting) {
+      return { success: false, status: 'error', message: 'Meeting not found' }
+    }
+
+    if (!isStudentInMeeting(meeting.student_snapshot, studentId)) {
+      return { success: false, status: 'not_in_meeting', message: 'Siswa bukan peserta pertemuan ini' }
+    }
+
+    const { data: existingLog } = await fetchAttendanceLogByStudentAndMeeting(adminClient, studentId, meetingId)
+
+    if (existingLog?.status === 'H') {
+      return { success: true, status: 'already_marked' }
+    }
+
+    const meetingDateStr = getMeetingWibDateStr(meeting.date)
+
+    const { error } = await upsertAttendanceLogs(adminClient, [
+      {
+        student_id: studentId,
+        meeting_id: meetingId,
+        date: meetingDateStr,
+        status: 'H',
+        recorded_by: profile.id
+      }
+    ])
+
+    if (error) {
+      console.error('Error marking attendance by QR scan:', error)
+      return { success: false, status: 'error', message: error.message }
+    }
+
+    revalidatePath('/presensi')
+
+    void logActivity({
+      userId: profile.id,
+      action: 'mark_attendance_qr_scan',
+      entityType: 'meeting',
+      entityId: meetingId,
+      entityLabel: `Meeting ${meetingDateStr}`,
+      metadata: { student_id: studentId },
+      pagePath: '/presensi',
+    })
+
+    return { success: true, status: 'marked' }
+  } catch (error) {
+    console.error('Error in markAttendanceByQrScan:', error)
+    return { success: false, status: 'error', message: 'Internal server error' }
   }
 }
 

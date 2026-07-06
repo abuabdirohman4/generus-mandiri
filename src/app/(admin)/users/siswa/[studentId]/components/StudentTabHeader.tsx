@@ -36,6 +36,7 @@ export default function StudentTabHeader({ studentId, onSidebarToggle }: Student
         { label: 'Presensi', href: `/users/siswa/${studentId}/presensi`, match: '/presensi' },
         ...(canSeeMateri ? [{ label: 'Materi', href: `/users/siswa/${studentId}/materi`, match: '/materi' }] : []),
         { label: 'Biodata', href: `/users/siswa/${studentId}/biodata`, match: '/biodata' },
+        { label: 'Kartu QR', href: `/users/siswa/${studentId}/qr`, match: '/qr' },
     ]
 
     const isActive = (tab: TabItem) => {

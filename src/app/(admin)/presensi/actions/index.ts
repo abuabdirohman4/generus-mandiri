@@ -16,5 +16,6 @@ export {
   getAttendanceByDate,
   getAttendanceByMeeting,
   getAttendanceStats,
-  getStudentsFromSnapshot
+  getStudentsFromSnapshot,
+  markAttendanceByQrScan
 } from './attendance/actions'

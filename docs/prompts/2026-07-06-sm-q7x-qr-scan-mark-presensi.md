@@ -16,7 +16,7 @@ REQUIREMENTS:
 4. Jangan lanjut jika ada test FAIL
 5. Setelah semua task: npm run type-check
 6. Ikuti 3-layer architecture (queries.ts/logic.ts/actions.ts) — lihat docs/claude/architecture-patterns.md §3-Layer Functional Architecture
-7. Install dependency baru dulu: npm install @yudiel/react-qr-scanner qrcode.react
+7. Install dependency baru dulu: npm install html5-qrcode qrcode.react
 8. Output per task: "✅ Task N complete: [ringkasan]"
 9. JANGAN deviate dari plan tanpa approval user
 10. JANGAN bikin ulang logic WIB-date offset — extract dari saveAttendanceForMeeting existing (actions.ts:140-146) jadi helper shared

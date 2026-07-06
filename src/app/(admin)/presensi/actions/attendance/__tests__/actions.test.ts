@@ -14,12 +14,18 @@ vi.mock('../queries', () => ({
   upsertAttendanceLogs: vi.fn(),
   fetchAttendanceByDate: vi.fn(),
   fetchAttendanceByMeeting: vi.fn(),
-  fetchStudentsByIds: vi.fn()
+  fetchStudentsByIds: vi.fn(),
+  fetchMeetingForScan: vi.fn(),
+  fetchAttendanceLogByStudentAndMeeting: vi.fn()
 }))
 
 vi.mock('../logic', () => ({
   validateAttendanceData: vi.fn(),
-  calculateAttendanceStats: vi.fn()
+  calculateAttendanceStats: vi.fn(),
+  getMeetingWibDateStr: vi.fn((date: string) => date),
+  isStudentInMeeting: vi.fn((snapshot: string[] | null | undefined, studentId: string) =>
+    Array.isArray(snapshot) ? snapshot.includes(studentId) : false
+  )
 }))
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
@@ -28,16 +34,19 @@ import {
   upsertAttendanceLogs,
   fetchAttendanceByDate,
   fetchAttendanceByMeeting,
-  fetchStudentsByIds
+  fetchStudentsByIds,
+  fetchMeetingForScan,
+  fetchAttendanceLogByStudentAndMeeting
 } from '../queries'
-import { validateAttendanceData, calculateAttendanceStats } from '../logic'
+import { validateAttendanceData, calculateAttendanceStats, getMeetingWibDateStr } from '../logic'
 import {
   saveAttendance,
   saveAttendanceForMeeting,
   getAttendanceByDate,
   getAttendanceByMeeting,
   getAttendanceStats,
-  getStudentsFromSnapshot
+  getStudentsFromSnapshot,
+  markAttendanceByQrScan
 } from '../actions'
 
 // ---------------------------------------------------------------------------
@@ -509,6 +518,112 @@ describe('Attendance Actions (Layer 3)', () => {
       const result = await getStudentsFromSnapshot(['student-1'])
 
       expect(result).toEqual({ success: false, error: 'Students fetch failed', data: null })
+    })
+  })
+
+
+  describe('markAttendanceByQrScan', () => {
+    const meetingId = 'meeting-1'
+    const studentId = 'student-1'
+
+    it('should mark student as hadir when scan is valid and not yet marked', async () => {
+      const supabase = makeSupabase({ profileData: { id: 'profile-1', role: 'teacher' } })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      vi.mocked(fetchMeetingForScan).mockResolvedValue({
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1', 'student-2'] },
+        error: null
+      })
+      vi.mocked(fetchAttendanceLogByStudentAndMeeting).mockResolvedValue({ data: null, error: null })
+      vi.mocked(upsertAttendanceLogs).mockResolvedValue({ data: [{}], error: null })
+
+      const adminClient = {} as any
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: true, status: 'marked' })
+      expect(upsertAttendanceLogs).toHaveBeenCalledWith(adminClient, [
+        {
+          student_id: studentId,
+          meeting_id: meetingId,
+          date: '2026-03-18',
+          status: 'H',
+          recorded_by: 'profile-1'
+        }
+      ])
+      expect(revalidatePath).toHaveBeenCalledWith('/presensi')
+    })
+
+    it('should return already_marked when student already has status H for this meeting', async () => {
+      const supabase = makeSupabase({ profileData: { id: 'profile-1', role: 'teacher' } })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      vi.mocked(fetchMeetingForScan).mockResolvedValue({
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1'] },
+        error: null
+      })
+      vi.mocked(fetchAttendanceLogByStudentAndMeeting).mockResolvedValue({
+        data: { id: 'log-1', status: 'H' },
+        error: null
+      })
+      vi.mocked(createAdminClient).mockResolvedValue({} as any)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: true, status: 'already_marked' })
+      expect(upsertAttendanceLogs).not.toHaveBeenCalled()
+    })
+
+    it('should return not_in_meeting when student is not in meeting roster', async () => {
+      const supabase = makeSupabase({ profileData: { id: 'profile-1', role: 'teacher' } })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      vi.mocked(fetchMeetingForScan).mockResolvedValue({
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['other-student'] },
+        error: null
+      })
+      vi.mocked(createAdminClient).mockResolvedValue({} as any)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: false, status: 'not_in_meeting', message: 'Siswa bukan peserta pertemuan ini' })
+      expect(upsertAttendanceLogs).not.toHaveBeenCalled()
+    })
+
+    it('should return error when user is not authenticated', async () => {
+      const supabase = {
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
+        from: vi.fn()
+      } as any
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: false, status: 'error', message: 'User not authenticated' })
+    })
+
+    it('should return error when meeting is not found', async () => {
+      const supabase = makeSupabase({ profileData: { id: 'profile-1', role: 'teacher' } })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      vi.mocked(fetchMeetingForScan).mockResolvedValue({ data: null, error: { message: 'not found' } })
+      vi.mocked(createAdminClient).mockResolvedValue({} as any)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: false, status: 'error', message: 'Meeting not found' })
+    })
+
+    it('should deny student role from marking attendance', async () => {
+      const supabase = makeSupabase({ profileData: { id: 'profile-1', role: 'student' } })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+      vi.mocked(createAdminClient).mockResolvedValue({} as any)
+
+      const result = await markAttendanceByQrScan(meetingId, studentId)
+
+      expect(result).toEqual({ success: false, status: 'error', message: 'Permission denied' })
+      expect(fetchMeetingForScan).not.toHaveBeenCalled()
     })
   })
 })

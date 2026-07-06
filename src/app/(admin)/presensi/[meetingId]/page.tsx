@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useMeetingAttendance } from '../hooks/useMeetingAttendance'
 import { saveAttendanceForMeeting } from '../actions'
@@ -8,6 +8,8 @@ import AttendanceTable from '../components/AttendanceTable'
 import ReasonModal from '../components/ReasonModal'
 import QuickAddStudentModal from '../components/QuickAddStudentModal'
 import SummaryCard from '../components/SummaryCard'
+import PresensiTabHeader from '../components/PresensiTabHeader'
+import QrScannerTab from '../components/QrScannerTab'
 import LoadingState from '../components/LoadingState'
 import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
@@ -63,6 +65,7 @@ export default function MeetingAttendancePage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [tableSearchQuery, setTableSearchQuery] = useState('')
   const [localAttendance, setLocalAttendance] = useState(attendance)
+  const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr'>('daftar-hadir')
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
@@ -297,6 +300,24 @@ export default function MeetingAttendancePage() {
     // If meeting is higher level than user, it's read only
     return meetingLevelRank > userLevelRank
   }, [userProfile, meeting, isMeetingCreator])
+
+  // Scan QR tab is only useful for large, cross-kelompok meetings (Desa/Daerah level)
+  // where manual roll-call doesn't scale — kelompok-level meetings stay manual-only.
+  const isDesaOrDaerahMeeting = useMemo(() => {
+    if (!meeting) return false
+    const levelCode = meeting.activity_level?.code?.toUpperCase()
+    if (levelCode === 'DESA' || levelCode === 'DAERAH') return true
+    const typeCode = meeting.activity_type?.code?.toUpperCase()
+    if (typeCode?.includes('DESA') || typeCode?.includes('DAERAH')) return true
+    return false
+  }, [meeting])
+
+  // Fallback to Daftar Hadir if Scan QR tab is no longer available (e.g. meeting data changes)
+  useEffect(() => {
+    if (activeTab === 'scan-qr' && !isDesaOrDaerahMeeting) {
+      setActiveTab('daftar-hadir')
+    }
+  }, [activeTab, isDesaOrDaerahMeeting])
 
   // Filter students based on user role and filters
   const visibleStudents = useMemo(() => {
@@ -889,54 +910,74 @@ export default function MeetingAttendancePage() {
           />
         </div>
 
-        {/* Filters */}
-        <DataFilter
-          filters={filters}
-          onFilterChange={setFilters}
-          userProfile={userProfile}
-          daerahList={[]}
-          desaList={desaListForFilter}
-          kelompokList={kelompokListForFilter}
-          classList={classListForFilter}
-          showDaerah={false}
-          showDesa={showDesaFilterForMeeting}
-          showKelompok={showKelompokFilter}
-          showKelas={showClassFilter}
-          showGender={true}
-          variant="page"
-          cascadeFilters={false}
-        />
-
-        {/* Attendance Table */}
-        <div className="pb-28 md:pb-8">
-          <AttendanceTable
-            students={visibleStudents}
-            attendance={localAttendance}
-            onStatusChange={handleStatusChange}
-            canEditStudent={canEditStudent}
-            showKelasColumn={showKelasColumn}
-            showKelompokColumn={showKelompokColumn}
-            showDesaColumn={showDesaColumn}
-            columnToggle={columnToggleElement}
-            searchQuery={tableSearchQuery}
-            onSearchQueryChange={setTableSearchQuery}
+        {/* Tabs: Daftar Hadir (manual) vs Scan QR - Scan QR only for Desa/Daerah meetings
+            (large, cross-kelompok attendance where manual roll-call doesn't scale) and users
+            who can edit attendance. */}
+        {!isReadOnlyMeeting && isDesaOrDaerahMeeting && (
+          <PresensiTabHeader
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr')}
+            tabs={[
+              { id: 'daftar-hadir', label: 'Daftar Hadir' },
+              { id: 'scan-qr', label: 'Scan QR' },
+            ]}
           />
-        </div>
+        )}
 
-        {/* Save Button - Mobile: floating, Desktop: static */}
-        {!isReadOnlyMeeting && (
-          <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
-            <Button
-              onClick={handleSave}
-              disabled={saving || !isDirty}
-              variant="primary"
-              className="w-full md:w-auto"
-              loading={saving}
-              loadingText="Menyimpan..."
-            >
-              Simpan
-            </Button>
-          </div>
+        {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
+          <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={mutate} />
+        ) : (
+          <>
+            {/* Filters */}
+            <DataFilter
+              filters={filters}
+              onFilterChange={setFilters}
+              userProfile={userProfile}
+              daerahList={[]}
+              desaList={desaListForFilter}
+              kelompokList={kelompokListForFilter}
+              classList={classListForFilter}
+              showDaerah={false}
+              showDesa={showDesaFilterForMeeting}
+              showKelompok={showKelompokFilter}
+              showKelas={showClassFilter}
+              showGender={true}
+              variant="page"
+              cascadeFilters={false}
+            />
+
+            {/* Attendance Table */}
+            <div className="pb-28 md:pb-8">
+              <AttendanceTable
+                students={visibleStudents}
+                attendance={localAttendance}
+                onStatusChange={handleStatusChange}
+                canEditStudent={canEditStudent}
+                showKelasColumn={showKelasColumn}
+                showKelompokColumn={showKelompokColumn}
+                showDesaColumn={showDesaColumn}
+                columnToggle={columnToggleElement}
+                searchQuery={tableSearchQuery}
+                onSearchQueryChange={setTableSearchQuery}
+              />
+            </div>
+
+            {/* Save Button - Mobile: floating, Desktop: static */}
+            {!isReadOnlyMeeting && (
+              <div className="fixed md:static bottom-16 left-4 right-4 md:flex md:justify-end z-50 shadow-lg md:shadow-none">
+                <Button
+                  onClick={handleSave}
+                  disabled={saving || !isDirty}
+                  variant="primary"
+                  className="w-full md:w-auto"
+                  loading={saving}
+                  loadingText="Menyimpan..."
+                >
+                  Simpan
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Reason Modal */}

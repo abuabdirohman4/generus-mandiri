@@ -32,6 +32,30 @@ export function calculateAttendanceStats(logs: AttendanceLog[]): AttendanceStats
 }
 
 /**
+ * Extracts a meeting date in WIB (UTC+7) as a YYYY-MM-DD string.
+ * meeting.date is timestamptz stored as UTC midnight - offset by +7h before
+ * extracting the date part to avoid off-by-one-day errors on UTC servers.
+ */
+export function getMeetingWibDateStr(meetingDate: string): string {
+  const meetingUtc = new Date(meetingDate)
+  const meetingWib = new Date(meetingUtc.getTime() + 7 * 60 * 60 * 1000)
+  return meetingWib.toISOString().split("T")[0]
+}
+
+/**
+ * Checks whether a student belongs to a meeting expected roster.
+ * @param studentSnapshot meeting.student_snapshot array (source of truth for roster)
+ * @param studentId student to check
+ */
+export function isStudentInMeeting(
+  studentSnapshot: string[] | null | undefined,
+  studentId: string
+): boolean {
+  if (!studentSnapshot) return false
+  return studentSnapshot.includes(studentId)
+}
+
+/**
  * Validates attendance data before saving
  * @param data - Array of attendance data to validate
  * @returns Validation result with valid flag and optional error message

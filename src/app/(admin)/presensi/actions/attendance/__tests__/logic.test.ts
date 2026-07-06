@@ -1,7 +1,9 @@
 import { describe, test, expect } from 'vitest'
 import {
   calculateAttendanceStats,
-  validateAttendanceData
+  validateAttendanceData,
+  getMeetingWibDateStr,
+  isStudentInMeeting
 } from '../logic'
 import type { AttendanceLog, AttendanceData } from '@/types/attendance'
 
@@ -171,5 +173,37 @@ describe('Attendance Calculation Functions', () => {
       expect(result.valid).toBe(true)
       expect(result.error).toBeUndefined()
     })
+  })
+})
+
+
+describe('getMeetingWibDateStr', () => {
+  test('extracts WIB date from UTC midnight timestamptz', () => {
+    // 2026-03-14T00:00:00+00:00 UTC -> +7h -> 2026-03-14T07:00:00 WIB -> date part unchanged
+    expect(getMeetingWibDateStr('2026-03-14T00:00:00+00:00')).toBe('2026-03-14')
+  })
+
+  test('rolls over to next day when UTC time is late enough', () => {
+    // 2026-03-14T18:00:00 UTC + 7h = 2026-03-15T01:00:00 WIB
+    expect(getMeetingWibDateStr('2026-03-14T18:00:00+00:00')).toBe('2026-03-15')
+  })
+})
+
+describe('isStudentInMeeting', () => {
+  test('returns true when studentId is in snapshot', () => {
+    expect(isStudentInMeeting(['s1', 's2', 's3'], 's2')).toBe(true)
+  })
+
+  test('returns false when studentId is not in snapshot', () => {
+    expect(isStudentInMeeting(['s1', 's2', 's3'], 's99')).toBe(false)
+  })
+
+  test('returns false for empty snapshot', () => {
+    expect(isStudentInMeeting([], 's1')).toBe(false)
+  })
+
+  test('returns false for null/undefined snapshot', () => {
+    expect(isStudentInMeeting(null, 's1')).toBe(false)
+    expect(isStudentInMeeting(undefined, 's1')).toBe(false)
   })
 })

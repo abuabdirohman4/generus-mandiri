@@ -103,6 +103,37 @@ export async function fetchAttendanceByMeeting(
 }
 
 /**
+ * Fetches meeting fields needed to validate a QR scan (roster + date)
+ */
+export async function fetchMeetingForScan(
+  supabase: SupabaseClient,
+  meetingId: string
+): Promise<{ data: { teacher_id: string; class_ids: string[]; date: string; student_snapshot: string[] } | null; error: any }> {
+  return await supabase
+    .from('meetings')
+    .select('teacher_id, class_ids, date, student_snapshot')
+    .eq('id', meetingId)
+    .single()
+}
+
+/**
+ * Fetches a single attendance log row for a student+meeting pair
+ * (used to detect duplicate QR scans)
+ */
+export async function fetchAttendanceLogByStudentAndMeeting(
+  supabase: SupabaseClient,
+  studentId: string,
+  meetingId: string
+): Promise<{ data: { id: string; status: string } | null; error: any }> {
+  return await supabase
+    .from('attendance_logs')
+    .select('id, status')
+    .eq('student_id', studentId)
+    .eq('meeting_id', meetingId)
+    .maybeSingle()
+}
+
+/**
  * Fetches students by their IDs with class information
  */
 export async function fetchStudentsByIds(
