@@ -56,9 +56,12 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
                     id: c.class_id,
                     name: c.class_name,
                     to_name: toMaster.name,
+                    _sortOrder: master?.sort_order ?? 0,
                 }
             })
-            .filter(Boolean) as PromotionSourceOption[]
+            .filter(Boolean)
+            .sort((a: any, b: any) => a._sortOrder - b._sortOrder)
+            .map(({ _sortOrder, ...rest }: any) => rest) as PromotionSourceOption[]
             
         options = filterSourcesByWindow(options, { isTeacherKelompok: isTk, isActive })
         return { success: true, data: options, message: '', windowClosedForUser: !isActive && isTk }
