@@ -136,6 +136,17 @@ export default function MeetingAttendancePage() {
     setSelectedStudent(null)
   }
 
+  // QR scan already committed to DB (unlike manual table edits, which wait for Simpan).
+  // Overwrite the entry directly instead of relying on the conservative merge effect above
+  // (that effect only fills in missing students, it won't overwrite an existing default status).
+  const handleQrScanSuccess = (studentId: string) => {
+    setLocalAttendance(prev => ({
+      ...prev,
+      [studentId]: { status: 'H', reason: undefined }
+    }))
+    void mutate()
+  }
+
   const isDirty = useMemo(() => {
     const keys = Object.keys(localAttendance)
     if (keys.length !== Object.keys(attendance).length) return true
@@ -925,7 +936,7 @@ export default function MeetingAttendancePage() {
         )}
 
         {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
-          <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={mutate} />
+          <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} />
         ) : (
           <>
             {/* Filters */}

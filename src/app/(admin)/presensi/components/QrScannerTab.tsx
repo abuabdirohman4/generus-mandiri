@@ -14,7 +14,7 @@ interface Student {
 interface QrScannerTabProps {
   meetingId: string
   students: Student[]
-  onAttendanceChange?: () => void
+  onAttendanceChange?: (studentId: string) => void
 }
 
 const STATUS_LABEL: Record<ScanResult['status'], string> = {
@@ -53,7 +53,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
     if (result.status === 'marked') {
       playBeep()
       toast.success(`${studentName || 'Siswa'} — Hadir`)
-      onAttendanceChange?.()
+      if (result.studentId) onAttendanceChange?.(result.studentId)
     } else if (result.status === 'already_marked') {
       playBeep()
       toast.info(`${studentName || 'Siswa'} sudah tercatat hadir`)
