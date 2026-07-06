@@ -303,7 +303,7 @@ export default function StudentModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} className="max-w-[600px] m-4">
+    <Modal isOpen={isOpen} onClose={handleClose} className="max-w-150 m-4">
       <div className="p-6">
         <h2 className={`text-2xl font-semibold text-gray-900 dark:text-white ${activeYearName ? 'mb-1' : 'mb-6'}`}>
           {mode === 'create' ? 'Tambah' : 'Edit'} Siswa
