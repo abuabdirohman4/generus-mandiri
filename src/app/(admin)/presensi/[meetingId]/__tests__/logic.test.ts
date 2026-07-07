@@ -3,6 +3,7 @@ import {
   shouldShowBreakdown,
   isMultiDesaMeeting,
   aggregateMeetingByOrg,
+  filterAttendanceRowsByOrg,
   type MeetingForBreakdown,
   type AttendanceOrgRow,
 } from '../logic'
@@ -148,5 +149,37 @@ describe('aggregateMeetingByOrg', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ id: 'kel-1', present: 1, total: 1 })
+  })
+})
+
+
+describe('filterAttendanceRowsByOrg', () => {
+  const rows: AttendanceOrgRow[] = [
+    { student_id: 's1', status: 'H', kelompok_id: 'kel-1', kelompok_name: 'Kelompok A', desa_id: 'desa-1', desa_name: 'Desa X' },
+    { student_id: 's2', status: 'A', kelompok_id: 'kel-2', kelompok_name: 'Kelompok B', desa_id: 'desa-1', desa_name: 'Desa X' },
+    { student_id: 's3', status: 'H', kelompok_id: 'kel-3', kelompok_name: 'Kelompok C', desa_id: 'desa-2', desa_name: 'Desa Y' },
+  ]
+
+  it('returns all rows unchanged when no filter ids given', () => {
+    expect(filterAttendanceRowsByOrg(rows, 'kelompok', [])).toEqual(rows)
+    expect(filterAttendanceRowsByOrg(rows, 'desa', [])).toEqual(rows)
+  })
+
+  it('filters rows by selected kelompok ids', () => {
+    const result = filterAttendanceRowsByOrg(rows, 'kelompok', ['kel-1', 'kel-3'])
+    expect(result.map(r => r.student_id)).toEqual(['s1', 's3'])
+  })
+
+  it('filters rows by selected desa ids', () => {
+    const result = filterAttendanceRowsByOrg(rows, 'desa', ['desa-2'])
+    expect(result.map(r => r.student_id)).toEqual(['s3'])
+  })
+
+  it('returns empty array when no row matches selected ids', () => {
+    expect(filterAttendanceRowsByOrg(rows, 'kelompok', ['kel-999'])).toEqual([])
+  })
+
+  it('handles empty rows input', () => {
+    expect(filterAttendanceRowsByOrg([], 'kelompok', ['kel-1'])).toEqual([])
   })
 })

@@ -166,3 +166,28 @@ export function aggregateMeetingByOrg(
 
   return result.sort((a, b) => a.name.localeCompare(b.name))
 }
+
+
+/**
+ * Filters attendance rows down to a selected set of kelompok/desa ids.
+ * Used by the breakdown tab's org filter so the user can narrow the chart
+ * to specific kelompok/desa within a multi-scope meeting.
+ *
+ * An empty `selectedIds` means "no filter applied" — all rows pass through.
+ */
+export function filterAttendanceRowsByOrg(
+  attendanceRows: AttendanceOrgRow[],
+  level: 'kelompok' | 'desa',
+  selectedIds: string[]
+): AttendanceOrgRow[] {
+  if (!attendanceRows || attendanceRows.length === 0) return []
+  if (!selectedIds || selectedIds.length === 0) return attendanceRows
+
+  const idKey = level === 'kelompok' ? 'kelompok_id' : 'desa_id'
+  const selectedSet = new Set(selectedIds)
+
+  return attendanceRows.filter(row => {
+    const id = row[idKey]
+    return !!id && selectedSet.has(id)
+  })
+}

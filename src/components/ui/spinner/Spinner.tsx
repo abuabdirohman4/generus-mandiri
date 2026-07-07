@@ -11,7 +11,7 @@ const Spinner: React.FC<SpinnerProps> = ({
   colorClass = "border-brand-600",
   className = ""
 }) => (
-  <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${colorClass} ${className}`} style={{ width: size, height: size }}></div>
+  <div className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${colorClass} ${className}`} style={{ width: size, height: size }}></div>
 );
 
 export default Spinner; 

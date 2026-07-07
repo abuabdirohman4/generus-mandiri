@@ -3,6 +3,7 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useMeetingAttendance } from '../hooks/useMeetingAttendance'
+import { useAttendanceRealtime } from '@/hooks/useAttendanceRealtime'
 import { saveAttendanceForMeeting } from '../actions'
 import AttendanceTable from '../components/AttendanceTable'
 import ReasonModal from '../components/ReasonModal'
@@ -68,7 +69,7 @@ export default function MeetingAttendancePage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [tableSearchQuery, setTableSearchQuery] = useState('')
   const [localAttendance, setLocalAttendance] = useState(attendance)
-  const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr' | 'live'>('daftar-hadir')
+  const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr' | 'live' | 'breakdown'>('daftar-hadir')
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
@@ -115,6 +116,45 @@ export default function MeetingAttendancePage() {
       }
     }
   }, [attendance])
+
+  // Realtime cross-device sync: subscribe to attendance_logs changes for this
+  // meeting. When another device saves a change, adopt it here for students the
+  // current user is NOT actively editing (i.e. whose local value still matches
+  // the last-known server value). Locally-dirty students keep their unsaved
+  // edits until the user Simpan/discard. Also revalidate SWR so `attendance`
+  // (the server baseline used by isDirty) stays in sync.
+  const { attendanceMap: realtimeAttendance, connectionStatus: realtimeStatus } = useAttendanceRealtime(meetingId, {
+    initialAttendance: attendance,
+  })
+
+  useEffect(() => {
+    if (!realtimeAttendance || Object.keys(realtimeAttendance).length === 0) return
+    // Pull the fresh server baseline (updates `attendance`, feeding the merge below + isDirty).
+    void mutate()
+
+    setLocalAttendance(prev => {
+      let hasChanges = false
+      const next = { ...prev }
+      Object.keys(realtimeAttendance).forEach(studentId => {
+        const incoming = realtimeAttendance[studentId]
+        const current = prev[studentId]
+        const baseline = attendance[studentId]
+        // A student is "locally dirty" when their local value diverges from the
+        // last server baseline — don't clobber those. Otherwise adopt the
+        // realtime value from the other device.
+        const isLocallyDirty = current && baseline
+          ? current.status !== baseline.status || current.reason !== baseline.reason
+          : !!current && !baseline
+        if (isLocallyDirty) return
+        if (!current || current.status !== incoming.status || current.reason !== incoming.reason) {
+          next[studentId] = incoming
+          hasChanges = true
+        }
+      })
+      return hasChanges ? next : prev
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realtimeAttendance])
 
   const handleStatusChange = (studentId: string, status: 'H' | 'I' | 'S' | 'A') => {
     if (status === 'I') {
@@ -788,6 +828,13 @@ export default function MeetingAttendancePage() {
   // (classes spanning more than one kelompok). Single-class meetings never show it.
   const showOrgBreakdown = useMemo(() => shouldShowBreakdown(meeting), [meeting])
 
+  // Fallback to Daftar Hadir if Breakdown tab is no longer available (e.g. meeting data changes)
+  useEffect(() => {
+    if (activeTab === 'breakdown' && !showOrgBreakdown) {
+      setActiveTab('daftar-hadir')
+    }
+  }, [activeTab, showOrgBreakdown])
+
   const attendanceRowsForBreakdown = useMemo(() => {
     if (!showOrgBreakdown) return []
 
@@ -962,28 +1009,33 @@ export default function MeetingAttendancePage() {
             percentageLabel="Kehadiran"
           />
 
-          {/* Per-desa/kelompok breakdown chart — multi-scope meetings only */}
-          {showOrgBreakdown && (
-            <MeetingOrgBreakdown meeting={meeting} attendanceRows={attendanceRowsForBreakdown} />
-          )}
         </div>
 
         {/* Tabs: Daftar Hadir (manual) vs Scan QR (Desa/Daerah meetings only, editors only)
             vs Live/Infocus (read-only realtime view, always available). */}
         <PresensiTabHeader
           activeTab={activeTab}
-          onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr' | 'live')}
+          onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr' | 'live' | 'breakdown')}
           tabs={[
             { id: 'daftar-hadir', label: 'Daftar Hadir' },
+            ...(showOrgBreakdown ? [{ id: 'breakdown', label: 'Perbandingan' }] : []),
             ...(!isReadOnlyMeeting && isDesaOrDaerahMeeting ? [{ id: 'scan-qr', label: 'Scan QR' }] : []),
-            { id: 'live', label: 'Live / Infocus' },
+            { id: 'live', label: 'Presentasi' },
           ]}
         />
 
         {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
           <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} />
         ) : activeTab === 'live' ? (
-          <LivePresensiTab meetingId={meetingId} students={visibleStudents} initialAttendance={localAttendance} />
+          <LivePresensiTab students={visibleStudents} attendanceMap={realtimeAttendance} connectionStatus={realtimeStatus} />
+        ) : activeTab === 'breakdown' && showOrgBreakdown ? (
+          <MeetingOrgBreakdown
+            meeting={meeting}
+            attendanceRows={attendanceRowsForBreakdown}
+            userProfile={userProfile}
+            desaList={desaListForFilter}
+            kelompokList={kelompokListForFilter}
+          />
         ) : (
           <>
             {/* Filters */}

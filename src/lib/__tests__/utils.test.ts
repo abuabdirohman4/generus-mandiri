@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { cn, isMac, isDesktop, isMobile, isTouchDevice, isIOS, shouldUseMobileUI } from '../utils'
+import { cn, isMac, isDesktop, isMobile, isTouchDevice, isIOS, shouldUseMobileUI, toTitleCase } from '../utils'
 
 describe('utils (Common Utilities)', () => {
     describe('cn (Classname merging)', () => {
@@ -65,6 +65,37 @@ describe('utils (Common Utilities)', () => {
             // Desktop + Touch = No UI
             vi.stubGlobal('window', { innerWidth: 1024, ontouchstart: {} })
             expect(shouldUseMobileUI()).toBe(false)
+        })
+    })
+
+    describe('toTitleCase', () => {
+        it('title-cases an all-uppercase name', () => {
+            expect(toTitleCase('AGNA BJG')).toBe('Agna Bjg')
+            expect(toTitleCase('ALFI MALIKA')).toBe('Alfi Malika')
+        })
+
+        it('leaves an already title-cased name unchanged', () => {
+            expect(toTitleCase('Aghna')).toBe('Aghna')
+        })
+
+        it('lowercases the tail of mixed-case words', () => {
+            expect(toTitleCase('aGHNA nur PADILAH')).toBe('Aghna Nur Padilah')
+        })
+
+        it('collapses/handles multiple spaces without producing empty words', () => {
+            expect(toTitleCase('dinda   alvina')).toBe('Dinda   Alvina')
+        })
+
+        it('handles empty and whitespace-only strings', () => {
+            expect(toTitleCase('')).toBe('')
+            expect(toTitleCase('   ')).toBe('   ')
+        })
+
+        it('handles non-string / nullish input defensively', () => {
+            // @ts-expect-error runtime guard
+            expect(toTitleCase(undefined)).toBe('')
+            // @ts-expect-error runtime guard
+            expect(toTitleCase(null)).toBe('')
         })
     })
 })

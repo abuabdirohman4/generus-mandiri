@@ -53,3 +53,21 @@ export function applyAttendanceEvent(
     },
   }
 }
+
+
+/**
+ * Compares two attendance maps and returns the student ids that just became
+ * "present" (status 'H') — i.e. were not 'H' in `prev` but are 'H' in `next`.
+ *
+ * Used to briefly highlight students who were just marked hadir in the live
+ * Presentasi view as realtime events arrive.
+ */
+export function getNewlyPresentIds(prev: AttendanceMap, next: AttendanceMap): string[] {
+  const result: string[] = []
+  for (const studentId in next) {
+    if (next[studentId]?.status === 'H' && prev[studentId]?.status !== 'H') {
+      result.push(studentId)
+    }
+  }
+  return result
+}

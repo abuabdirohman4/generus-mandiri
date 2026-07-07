@@ -141,7 +141,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-32">
       <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden max-w-md mx-auto p-2">
         {cameraError ? (
           <div className="p-6 text-center text-sm text-red-500 dark:text-red-400">{cameraError}</div>

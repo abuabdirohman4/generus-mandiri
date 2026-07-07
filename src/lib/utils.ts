@@ -6,6 +6,26 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Converts a string to Title Case (first letter of each word uppercase, rest
+ * lowercase). Display-only helper — e.g. normalizes messy student names like
+ * "AGNA BJG" or "aghna nur padilah" to "Agna Bjg" / "Aghna Nur Padilah".
+ *
+ * Preserves the original whitespace runs between words (splits on single
+ * spaces) so spacing isn't collapsed. Returns '' for nullish/non-string input.
+ */
+export function toTitleCase(str: string): string {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .split(' ')
+    .map((word) =>
+      word.length === 0
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(' ');
+}
+
+/**
  * Detects if the user is on a Mac system
  * @returns {boolean} True if running on Mac, false otherwise
  */
