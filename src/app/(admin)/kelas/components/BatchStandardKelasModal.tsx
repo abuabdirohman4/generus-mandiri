@@ -9,6 +9,7 @@ import { useDesa } from '@/hooks/useDesa'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useClassMasters } from '@/hooks/useClassMasters'
 import { createBatchStandardClasses } from '../actions/batch-standard/actions'
+import { createBatchCustomClass } from '../actions/batch-standard/custom-actions'
 import { filterStandardMasters } from '../actions/batch-standard/logic'
 import type { BatchStandardResult } from '../actions/batch-standard/actions'
 import Modal from '@/components/ui/modal'
@@ -29,6 +30,8 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
   const { masters: allMasters, isLoading: mastersLoading } = useClassMasters()
 
   // Local state (no Zustand needed — modal is simple enough)
+  const [mode, setMode] = useState<'standard' | 'custom'>('standard')
+  const [customName, setCustomName] = useState('')
   const [filterDaerahId, setFilterDaerahId] = useState('')
   const [filterDesaId, setFilterDesaId] = useState('')
   const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
@@ -55,6 +58,8 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
   // Reset on close
   useEffect(() => {
     if (!isOpen) {
+      setMode('standard')
+      setCustomName('')
       setFilterDaerahId('')
       setFilterDesaId('')
       setSelectedKelompokIds([])
@@ -92,6 +97,12 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
     )
   }
 
+  const toggleSelectAllKelompok = () => {
+    const allIds = filteredKelompok.map((k: Kelompok) => k.id)
+    const isAllSelected = allIds.length > 0 && allIds.every((id: string) => selectedKelompokIds.includes(id))
+    setSelectedKelompokIds(isAllSelected ? [] : allIds)
+  }
+
   const toggleMaster = (id: string) => {
     setSelectedMasterIds(prev =>
       prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
@@ -103,14 +114,20 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
       toast.error('Pilih minimal satu kelompok')
       return
     }
-    if (selectedMasterIds.length === 0) {
+    if (mode === 'standard' && selectedMasterIds.length === 0) {
       toast.error('Pilih minimal satu kelas standar')
+      return
+    }
+    if (mode === 'custom' && !customName.trim()) {
+      toast.error('Isi nama kelas')
       return
     }
 
     setIsSubmitting(true)
     try {
-      const res = await createBatchStandardClasses(selectedKelompokIds, selectedMasterIds)
+      const res = mode === 'custom'
+        ? await createBatchCustomClass(selectedKelompokIds, customName)
+        : await createBatchStandardClasses(selectedKelompokIds, selectedMasterIds)
       setResult(res)
       if (res.totalCreated > 0) {
         toast.success(`${res.totalCreated} kelas berhasil dibuat`)
@@ -133,7 +150,7 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
   const isAdminKelompokUser = userProfile && isAdminKelompok(userProfile)
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={result ? 'Hasil Pembuatan Kelas' : 'Tambah Kelas Standar'}>
+    <Modal isOpen={isOpen} onClose={handleClose} title={result ? 'Hasil Pembuatan Kelas' : 'Tambah Kelas Batch'}>
       {result ? (
         // Result view
         <div className="space-y-4">
@@ -170,12 +187,49 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
       ) : (
         // Input view
         <div className="space-y-4">
+          {/* Mode tabs */}
+          <div className="flex gap-1 border-b dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => setMode('standard')}
+              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                mode === 'standard'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Kelas Standar
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('custom')}
+              className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+                mode === 'custom'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Kelas Custom
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             {/* Left: Kelompok selection */}
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Pilih Kelompok <span className="text-red-500">*</span>
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Pilih Kelompok <span className="text-red-500">*</span>
+                </p>
+                {!isAdminKelompokUser && filteredKelompok.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleSelectAllKelompok}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {filteredKelompok.every((k: Kelompok) => selectedKelompokIds.includes(k.id)) ? 'Batalkan semua' : 'Pilih semua'}
+                  </button>
+                )}
+              </div>
 
               {/* Cascade filter — hidden for admin kelompok */}
               {!isAdminKelompokUser && (
@@ -226,49 +280,67 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
               )}
             </div>
 
-            {/* Right: Standard masters selection */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Pilih Kelas Standar <span className="text-red-500">*</span>
+            {/* Right: Standard masters OR custom name */}
+            {mode === 'custom' ? (
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Nama Kelas <span className="text-red-500">*</span>
                 </p>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMasterIds(standardMasters.map(m => m.id))}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Semua
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMasterIds([])}
-                    className="text-xs text-gray-500 hover:underline"
-                  >
-                    Hapus
-                  </button>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
+                  placeholder="mis. CAI 2026"
+                  className="w-full text-sm border rounded px-3 py-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Kelas ini dibuat di tiap kelompok terpilih dengan nama yang sama.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Pilih Kelas Standar <span className="text-red-500">*</span>
+                  </p>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMasterIds(standardMasters.map(m => m.id))}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Semua
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMasterIds([])}
+                      className="text-xs text-gray-500 hover:underline"
+                    >
+                      Hapus
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="max-h-64 overflow-y-auto space-y-1 border rounded p-2 dark:border-gray-700">
-                {mastersLoading ? (
-                  <p className="text-sm text-gray-400 p-2">Memuat...</p>
-                ) : (
-                  standardMasters.map(m => (
-                    <label key={m.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded px-1 py-0.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedMasterIds.includes(m.id)}
-                        onChange={() => toggleMaster(m.id)}
-                      />
-                      <span className="text-gray-700 dark:text-gray-300">{m.name}</span>
-                    </label>
-                  ))
-                )}
+                <div className="max-h-64 overflow-y-auto space-y-1 border rounded p-2 dark:border-gray-700">
+                  {mastersLoading ? (
+                    <p className="text-sm text-gray-400 p-2">Memuat...</p>
+                  ) : (
+                    standardMasters.map(m => (
+                      <label key={m.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded px-1 py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={selectedMasterIds.includes(m.id)}
+                          onChange={() => toggleMaster(m.id)}
+                        />
+                        <span className="text-gray-700 dark:text-gray-300">{m.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{selectedMasterIds.length} / {standardMasters.length} dipilih</p>
               </div>
-              <p className="text-xs text-gray-500 mt-1">{selectedMasterIds.length} / {standardMasters.length} dipilih</p>
-            </div>
+            )}
           </div>
 
           {/* Footer info */}
@@ -282,11 +354,15 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || selectedKelompokIds.length === 0 || selectedMasterIds.length === 0}
+              disabled={
+                isSubmitting ||
+                selectedKelompokIds.length === 0 ||
+                (mode === 'standard' ? selectedMasterIds.length === 0 : !customName.trim())
+              }
               loading={isSubmitting}
               loadingText="Membuat kelas..."
             >
-              Buat Kelas Standar
+              {mode === 'custom' ? 'Buat Kelas Custom' : 'Buat Kelas Standar'}
             </Button>
           </div>
         </div>

@@ -59,7 +59,7 @@ export default function KelasPage() {
   };
 
   const getButtonText = () => {
-    if (activeTab === 'kelompok') return 'Tambah Kelas';
+    if (activeTab === 'kelompok') return 'Tambah';
     if (activeTab === 'masters') return 'Tambah Master';
     return 'Tambah';
   };
@@ -85,14 +85,14 @@ export default function KelasPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              {canShowButton() && activeTab === 'kelompok' && (
-                <Button variant="outline" onClick={openBatchStandardModal}>
-                  Kelas Standar
-                </Button>
-              )}
               {canShowButton() && (
                 <Button variant="primary" onClick={handleCreateClick}>
                   {getButtonText()}
+                </Button>
+              )}
+              {canShowButton() && activeTab === 'kelompok' && (
+                <Button variant="outline" onClick={openBatchStandardModal}>
+                  Batch
                 </Button>
               )}
             </div>
