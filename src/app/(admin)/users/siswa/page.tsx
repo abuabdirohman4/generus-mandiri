@@ -326,6 +326,13 @@ export default function SiswaPage() {
                 </Button>
                 <div className="flex gap-2">
                   <Button
+                    onClick={() => router.push('/users/siswa/qr-cards')}
+                    variant="outline"
+                    className="px-4 py-2 flex-1"
+                  >
+                    Cetak Kartu QR
+                  </Button>
+                  <Button
                     onClick={openBatchModal}
                     variant="outline"
                     className="px-4 py-2 flex-1"
@@ -348,6 +355,13 @@ export default function SiswaPage() {
                   className="px-4 py-2"
                 >
                   Tambah
+                </Button>
+                <Button
+                  onClick={() => router.push('/users/siswa/qr-cards')}
+                  variant="outline"
+                  className="px-4 py-2"
+                >
+                  Cetak Kartu QR
                 </Button>
                 <Button
                   onClick={openBatchModal}

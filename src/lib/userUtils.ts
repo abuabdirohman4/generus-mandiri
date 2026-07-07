@@ -25,6 +25,7 @@ export {
   isAdminKelompok,
   isTeacher,
   isAdmin,
+  canManageIdCardTemplate,
   isMaterialCoordinator,
   canManageMaterials,
   canAccessMaterials,

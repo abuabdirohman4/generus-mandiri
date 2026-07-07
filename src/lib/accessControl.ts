@@ -92,6 +92,13 @@ export function isAdmin(profile: UserProfile): boolean {
   return profile.role === 'admin' || profile.role === 'superadmin'
 }
 
+export function canManageIdCardTemplate(profile: UserProfile | null): boolean {
+  if (!profile) return false
+  if (isSuperAdmin(profile) || isAdmin(profile)) return true
+  if (isTeacherDaerah(profile) || isTeacherDesa(profile)) return true
+  return false
+}
+
 export function isMaterialCoordinator(profile: UserProfile | null): boolean {
   return profile?.role === 'material_coordinator'
 }

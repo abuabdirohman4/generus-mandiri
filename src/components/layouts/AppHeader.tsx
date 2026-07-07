@@ -30,6 +30,8 @@ function PageTitle() {
         return 'Laporan';
       case '/users/siswa':
         return 'Siswa';
+      case '/users/siswa/qr-cards/template':
+        return 'Template Kartu ID';
       case '/materi':
         return 'Materi';
       case '/monitoring':
@@ -89,6 +91,7 @@ function PageTitle() {
     return path.startsWith('/presensi/') || // Include all presensi sub-pages including meeting IDs
       path.startsWith('/users/siswa/') ||
       path === '/users/guru' ||
+      path === '/users/siswa/qr-cards/template' ||
       path === '/users/admin' ||
       path === '/settings' ||
       path === '/settings/security' ||
