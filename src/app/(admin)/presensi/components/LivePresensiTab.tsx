@@ -11,6 +11,7 @@ interface Student {
   id: string
   name: string
   class_name?: string
+  kelompok_name?: string
 }
 
 interface LivePresensiTabProps {
@@ -41,6 +42,20 @@ const STATUS_DOT: Record<string, string> = {
   I: 'bg-blue-500',
   S: 'bg-yellow-500',
   A: 'bg-gray-400',
+}
+
+const STATUS_BADGE: Record<string, string> = {
+  H: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  I: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  S: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+  A: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+}
+
+/** First letters of up to the first two words of a name, for the avatar initials. */
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  return words.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
 
 /** How long (ms) a just-marked-hadir card keeps its highlight ring. */
@@ -151,8 +166,9 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
         )}
       </div>
 
-      {/* Name grid — read-only, large text for projection legibility */}
-      <div className={`grid gap-3 ${big ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'}`}>
+      {/* Name grid — vertical avatar-over-name cards so names never get
+          truncated even at many columns; read-only, sized for projection. */}
+      <div className={`grid gap-3 ${big ? 'grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10' : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6'}`}>
         {sortedStudents.map((student) => {
           const status = attendanceMap[student.id]?.status
           const isHadir = status === 'H'
@@ -160,24 +176,40 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
           return (
             <div
               key={student.id}
-              className={`rounded-lg border px-4 py-3 flex items-center gap-3 transition-all ${
+              className={`rounded-lg border px-2 py-3 flex flex-col items-center text-center gap-1.5 transition-all ${
                 isHadir
                   ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
               } ${isNew ? 'ring-2 ring-green-400 dark:ring-green-500 animate-pulse' : ''}`}
             >
-              <span
-                className={`w-3 h-3 rounded-full shrink-0 ${status ? STATUS_DOT[status] : 'bg-gray-300 dark:bg-gray-600'}`}
+              <div
+                className={`rounded-full flex items-center justify-center font-bold shrink-0 ${
+                  isHadir
+                    ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200'
+                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                } ${big ? 'w-14 h-14 text-lg' : 'w-11 h-11 text-sm'}`}
                 aria-hidden
-              />
-              <div className="min-w-0">
-                <div className={`font-semibold text-gray-900 dark:text-white truncate ${big ? 'text-lg md:text-xl' : 'text-base sm:text-lg'}`}>
-                  {toTitleCase(student.name)}
-                </div>
-                <div className={`text-gray-500 dark:text-gray-400 ${big ? 'text-sm md:text-base' : 'text-xs sm:text-sm'}`}>
-                  {status ? STATUS_LABEL[status] : 'Belum absen'}
-                </div>
+              >
+                {getInitials(student.name)}
               </div>
+              <div
+                className={`font-semibold text-gray-900 dark:text-white leading-tight break-words ${big ? 'text-base md:text-lg' : 'text-xs sm:text-sm'}`}
+              >
+                {toTitleCase(student.name)}
+              </div>
+              {student.kelompok_name && (
+                <div className={`text-gray-400 dark:text-gray-500 leading-tight truncate w-full ${big ? 'text-xs md:text-sm' : 'text-[10px]'}`}>
+                  {student.kelompok_name}
+                </div>
+              )}
+              <span
+                className={`inline-flex items-center gap-1 rounded-full font-medium ${big ? 'px-2.5 py-0.5 text-xs' : 'px-2 py-0.5 text-[10px]'} ${
+                  status ? STATUS_BADGE[status] : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${status ? STATUS_DOT[status] : 'bg-gray-300 dark:bg-gray-600'}`} aria-hidden />
+                {status ? STATUS_LABEL[status] : 'Belum absen'}
+              </span>
             </div>
           )
         })}
