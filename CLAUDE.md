@@ -139,11 +139,11 @@ npm run test:e2e     # E2E (Playwright); :ui :headed :debug juga ada
 
 ### App Router Structure
 
-Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*`, `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/naik-kelas`, `/tahun-ajaran`, `/notifikasi`, `/settings`, `/settings/grade-promotion`, `/onboarding`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`. `/naik-kelas` menu is toggle-gated (visible only when `app_settings.grade_promotion_enabled`).
+Two layout groups: `(full-width-pages)` for auth pages, `(admin)` for protected pages (`/home`, `/presensi`, `/laporan`, `/users/*` (incl. `/users/siswa/qr-cards/template` for ID-card templates, `/users/siswa/[studentId]/qr` for per-student QR), `/kelas`, `/organisasi`, `/rapot`, `/materi`, `/kegiatan`, `/tracking`, `/naik-kelas`, `/tahun-ajaran`, `/notifikasi`, `/settings`, `/settings/grade-promotion`, `/onboarding`). Each feature directory co-locates `page.tsx`, `actions.ts`, `hooks/`, `stores/`, `components/`. `/naik-kelas` menu is toggle-gated (visible only when `app_settings.grade_promotion_enabled`).
 
 ### Database & Supabase
 
-**Key Tables**: `profiles`, `students`, `classes`, `class_masters` (incl. `promote_to_class_master_id` for grade promotion; NULL = stopper), `class_master_mappings`, `meetings` (supports `class_ids` array), `attendance_logs`, `student_classes`, `student_enrollments` (per academic_year, UNIQUE student_id+academic_year_id+semester), `academic_years`, `teacher_classes`, `teacher_class_masters`, `teacher_kelompok_access`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`, `app_settings` (key/value jsonb feature flags), `grade_promotion_logs` (immutable audit, RLS no UPDATE/DELETE), `notifications` (1 row per broadcast, fan-out storage), `notification_recipients` (1 row per recipient per notif, tracks is_read/is_dismissed).
+**Key Tables**: `profiles`, `students`, `classes`, `class_masters` (incl. `promote_to_class_master_id` for grade promotion; NULL = stopper), `class_master_mappings`, `meetings` (supports `class_ids` array; `start_time` + `check_time_enabled` gate late detection), `attendance_logs` (`check_in_time` — late = check_in_time > meeting.start_time when check_time_enabled), `id_card_templates` (QR/ID-card layouts, `TemplatePositions` JSON), `student_classes`, `student_enrollments` (per academic_year, UNIQUE student_id+academic_year_id+semester), `academic_years`, `teacher_classes`, `teacher_class_masters`, `teacher_kelompok_access`, `daerah`/`desa`/`kelompok`, `rapot_templates`, `rapot_data`, `materials`, `activity_logs`, `activity_types`, `activity_levels`, `teacher_activity_types`, `monthly_targets`, `app_settings` (key/value jsonb feature flags), `grade_promotion_logs` (immutable audit, RLS no UPDATE/DELETE), `notifications` (1 row per broadcast, fan-out storage), `notification_recipients` (1 row per recipient per notif, tracks is_read/is_dismissed).
 
 **Supabase Clients**: `createClient()` from `client` (browser) or `server` (server actions with cookies), `createAdminClient()` from `server` (bypass RLS).
 
@@ -184,7 +184,7 @@ Three patterns: (1) Server Action + SWR Hook for reads, (2) Direct Server Action
 
 ## ⚠️ Important Business Rules
 
-**YOU MUST READ [`docs/claude/business-rules.md`](docs/claude/business-rules.md)** before implementing features related to Students, Attendance, Transfers, or Meetings.
+**YOU MUST READ [`docs/claude/business-rules.md`](docs/claude/business-rules.md)** before implementing features related to Students, Attendance (incl. jam-masuk/telat via `start_time`+`check_time_enabled`, QR scan-to-hadir), Transfers, Meetings, or Grade Promotion (deadline + pra-nikah bypass).
 
 ---
 
