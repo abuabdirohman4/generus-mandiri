@@ -10,6 +10,7 @@ import QuickAddStudentModal from '../components/QuickAddStudentModal'
 import SummaryCard from '../components/SummaryCard'
 import PresensiTabHeader from '../components/PresensiTabHeader'
 import QrScannerTab from '../components/QrScannerTab'
+import LivePresensiTab from '../components/LivePresensiTab'
 import LoadingState from '../components/LoadingState'
 import Button from '@/components/ui/button/Button'
 import { toast } from 'sonner'
@@ -65,7 +66,7 @@ export default function MeetingAttendancePage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [tableSearchQuery, setTableSearchQuery] = useState('')
   const [localAttendance, setLocalAttendance] = useState(attendance)
-  const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr'>('daftar-hadir')
+  const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr' | 'live'>('daftar-hadir')
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
   const { classes: classesData } = useClasses()
@@ -921,22 +922,22 @@ export default function MeetingAttendancePage() {
           />
         </div>
 
-        {/* Tabs: Daftar Hadir (manual) vs Scan QR - Scan QR only for Desa/Daerah meetings
-            (large, cross-kelompok attendance where manual roll-call doesn't scale) and users
-            who can edit attendance. */}
-        {!isReadOnlyMeeting && isDesaOrDaerahMeeting && (
-          <PresensiTabHeader
-            activeTab={activeTab}
-            onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr')}
-            tabs={[
-              { id: 'daftar-hadir', label: 'Daftar Hadir' },
-              { id: 'scan-qr', label: 'Scan QR' },
-            ]}
-          />
-        )}
+        {/* Tabs: Daftar Hadir (manual) vs Scan QR (Desa/Daerah meetings only, editors only)
+            vs Live/Infocus (read-only realtime view, always available). */}
+        <PresensiTabHeader
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr' | 'live')}
+          tabs={[
+            { id: 'daftar-hadir', label: 'Daftar Hadir' },
+            ...(!isReadOnlyMeeting && isDesaOrDaerahMeeting ? [{ id: 'scan-qr', label: 'Scan QR' }] : []),
+            { id: 'live', label: 'Live / Infocus' },
+          ]}
+        />
 
         {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
           <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} />
+        ) : activeTab === 'live' ? (
+          <LivePresensiTab meetingId={meetingId} students={visibleStudents} initialAttendance={localAttendance} />
         ) : (
           <>
             {/* Filters */}
