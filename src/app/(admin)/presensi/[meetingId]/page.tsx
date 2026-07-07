@@ -3,6 +3,7 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useMeetingAttendance } from '../hooks/useMeetingAttendance'
+import { getMeetingWibDateStr } from '../actions/attendance/logic'
 import { useAttendanceRealtime } from '@/hooks/useAttendanceRealtime'
 import { saveAttendanceForMeeting } from '../actions'
 import AttendanceTable from '../components/AttendanceTable'
@@ -366,9 +367,9 @@ export default function MeetingAttendancePage() {
     return false
   }, [meeting])
 
-  // Fallback to Daftar Hadir if Scan QR tab is no longer available (e.g. meeting data changes)
+  // Fallback to Daftar Hadir if Scan QR / Presentasi tab is no longer available (e.g. meeting data changes)
   useEffect(() => {
-    if (activeTab === 'scan-qr' && !isDesaOrDaerahMeeting) {
+    if ((activeTab === 'scan-qr' || activeTab === 'live') && !isDesaOrDaerahMeeting) {
       setActiveTab('daftar-hadir')
     }
   }, [activeTab, isDesaOrDaerahMeeting])
@@ -1017,17 +1018,24 @@ export default function MeetingAttendancePage() {
           activeTab={activeTab}
           onTabChange={(tab) => setActiveTab(tab as 'daftar-hadir' | 'scan-qr' | 'live' | 'breakdown')}
           tabs={[
-            { id: 'daftar-hadir', label: 'Daftar Hadir' },
+            { id: 'daftar-hadir', label: 'Daftar Hadir', shortLabel: 'Daftar' },
             ...(showOrgBreakdown ? [{ id: 'breakdown', label: 'Perbandingan' }] : []),
-            ...(!isReadOnlyMeeting && isDesaOrDaerahMeeting ? [{ id: 'scan-qr', label: 'Scan QR' }] : []),
-            { id: 'live', label: 'Presentasi' },
+            ...(!isReadOnlyMeeting && isDesaOrDaerahMeeting ? [{ id: 'scan-qr', label: 'Scan QR', shortLabel: 'Scan' }] : []),
+            ...(isDesaOrDaerahMeeting ? [{ id: 'live', label: 'Presentasi' }] : []),
           ]}
         />
 
         {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
           <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} />
-        ) : activeTab === 'live' ? (
-          <LivePresensiTab students={visibleStudents} attendanceMap={realtimeAttendance} connectionStatus={realtimeStatus} />
+        ) : activeTab === 'live' && isDesaOrDaerahMeeting ? (
+          <LivePresensiTab
+            students={visibleStudents}
+            attendanceMap={realtimeAttendance}
+            connectionStatus={realtimeStatus}
+            meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
+            meetingStartTime={meeting?.start_time}
+            checkTimeEnabled={meeting?.check_time_enabled}
+          />
         ) : activeTab === 'breakdown' && showOrgBreakdown ? (
           <MeetingOrgBreakdown
             meeting={meeting}
@@ -1069,6 +1077,9 @@ export default function MeetingAttendancePage() {
                 columnToggle={columnToggleElement}
                 searchQuery={tableSearchQuery}
                 onSearchQueryChange={setTableSearchQuery}
+                meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
+                meetingStartTime={meeting?.start_time}
+                checkTimeEnabled={meeting?.check_time_enabled}
               />
             </div>
 

@@ -29,6 +29,7 @@ export async function getTeacherMaterialPermissions(
         can_access_materials: boolean
         can_access_monitoring: boolean
         can_multi_kelompok_laporan: boolean
+        can_manage_check_time: boolean
     }
     message?: string
 }> {
@@ -44,6 +45,7 @@ export async function getTeacherMaterialPermissions(
                 can_access_materials: perms.can_access_materials ?? false,
                 can_access_monitoring: perms.can_access_monitoring ?? false,
                 can_multi_kelompok_laporan: perms.can_multi_kelompok_laporan ?? false,
+                can_manage_check_time: perms.can_manage_check_time ?? false,
             }
         }
     } catch (error) {
@@ -56,6 +58,7 @@ export async function getTeacherMaterialPermissions(
                 can_access_materials: false,
                 can_access_monitoring: false,
                 can_multi_kelompok_laporan: false,
+                can_manage_check_time: false,
             }
         }
     }
@@ -134,6 +137,7 @@ export async function updateTeacherPermissions(
         can_soft_delete_students?: boolean
         can_hard_delete_students?: boolean
         can_multi_kelompok_laporan?: boolean
+        can_manage_check_time?: boolean
     }
 ): Promise<{ success: boolean; message?: string }> {
     try {

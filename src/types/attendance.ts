@@ -5,6 +5,7 @@ export interface AttendanceLog {
   meeting_id?: string | null
   status: 'H' | 'I' | 'S' | 'A'
   reason?: string | null
+  check_in_time?: string | null
   recorded_by: string
   created_at: string
   updated_at: string

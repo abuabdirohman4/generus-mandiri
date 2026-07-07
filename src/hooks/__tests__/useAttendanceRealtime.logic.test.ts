@@ -75,6 +75,15 @@ describe('applyAttendanceEvent', () => {
       s3: { status: 'S', reason: 'Izin keluarga' },
     })
   })
+
+  it('propagates check_in_time on INSERT/UPDATE', () => {
+    const result = applyAttendanceEvent({}, {
+      eventType: 'INSERT',
+      new: { student_id: 's1', status: 'H', check_in_time: '2026-07-07T12:05:00.000Z' },
+      old: {},
+    })
+    expect(result.s1.check_in_time).toBe('2026-07-07T12:05:00.000Z')
+  })
 })
 
 

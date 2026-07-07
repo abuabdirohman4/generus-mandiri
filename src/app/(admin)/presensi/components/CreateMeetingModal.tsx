@@ -15,7 +15,9 @@ import InputFilter from '@/components/form/input/InputFilter'
 import MultiSelectCheckbox from '@/components/form/input/MultiSelectCheckbox'
 import Link from 'next/link'
 import DatePickerInput from '@/components/form/input/DatePicker'
+import Checkbox from '@/components/form/input/Checkbox'
 import { useUserProfile } from '@/stores/userProfileStore'
+import { canManageCheckTime } from '@/lib/accessControl'
 import Modal from '@/components/ui/modal'
 import { invalidateAllMeetingsCache } from '../utils/cache'
 import { isTeacherClass } from '@/lib/utils/classHelpers'
@@ -44,6 +46,8 @@ export default function CreateMeetingModal({
   classId,
   meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
+  const [checkTimeEnabled, setCheckTimeEnabled] = useState(meeting?.check_time_enabled || false)
+  const [startTime, setStartTime] = useState(meeting?.start_time || '')
   const [formData, setFormData] = useState({
     date: meeting ? dayjs(meeting.date) : dayjs(),
     title: meeting?.title || '',
@@ -522,6 +526,11 @@ export default function CreateMeetingModal({
         description: meeting.description || ''
       })
       setActivityTypeId(meeting.activity_type_id || null)
+      setCheckTimeEnabled(meeting.check_time_enabled || false)
+      setStartTime(meeting.start_time || '')
+    } else {
+      setCheckTimeEnabled(false)
+      setStartTime('')
     }
   }, [meeting])
 
@@ -742,6 +751,8 @@ export default function CreateMeetingModal({
           description: formData.description || undefined,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
+          startTime: checkTimeEnabled ? (startTime || undefined) : null,
+          checkTimeEnabled,
           studentIds: selectedStudentIds
         })
 
@@ -778,6 +789,8 @@ export default function CreateMeetingModal({
           description: formData.description || undefined,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
+          startTime: checkTimeEnabled ? (startTime || undefined) : null,
+          checkTimeEnabled,
           studentIds: selectedStudentIds
         })
 
@@ -1037,6 +1050,34 @@ export default function CreateMeetingModal({
                     placeholder="Pilih Tanggal"
                   />
                 </div>
+              )}
+
+              {/* Cek Waktu Masuk Toggle */}
+              {canManageCheckTime(userProfile) && (
+                <>
+                  <div className="mb-4">
+                    <Checkbox
+                      label="Aktifkan cek waktu masuk"
+                      checked={checkTimeEnabled}
+                      onChange={(checked) => setCheckTimeEnabled(checked)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {checkTimeEnabled && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Jam Mulai
+                      </label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Student Preview */}

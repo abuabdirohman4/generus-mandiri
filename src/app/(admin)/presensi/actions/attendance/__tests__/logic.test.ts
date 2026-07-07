@@ -3,7 +3,8 @@ import {
   calculateAttendanceStats,
   validateAttendanceData,
   getMeetingWibDateStr,
-  isStudentInMeeting
+  isStudentInMeeting,
+  isLate
 } from '../logic'
 import type { AttendanceLog, AttendanceData } from '@/types/attendance'
 
@@ -205,5 +206,34 @@ describe('isStudentInMeeting', () => {
   test('returns false for null/undefined snapshot', () => {
     expect(isStudentInMeeting(null, 's1')).toBe(false)
     expect(isStudentInMeeting(undefined, 's1')).toBe(false)
+  })
+})
+
+describe('isLate', () => {
+  test('returns false when checkInTime is null', () => {
+    expect(isLate(null, '2026-07-07', '19:00')).toBe(false)
+  })
+
+  test('returns false when startTime is not set (feature disabled)', () => {
+    expect(isLate('2026-07-07T12:30:00Z', '2026-07-07', null)).toBe(false)
+  })
+
+  test('returns false when check-in is exactly on time', () => {
+    // 19:00 WIB = 12:00:00Z
+    expect(isLate('2026-07-07T12:00:00.000Z', '2026-07-07', '19:00')).toBe(false)
+  })
+
+  test('returns false when check-in is before start time', () => {
+    // 18:55 WIB = 11:55:00Z
+    expect(isLate('2026-07-07T11:55:00.000Z', '2026-07-07', '19:00')).toBe(false)
+  })
+
+  test('returns true when check-in is after start time', () => {
+    // 19:05 WIB = 12:05:00Z
+    expect(isLate('2026-07-07T12:05:00.000Z', '2026-07-07', '19:00')).toBe(true)
+  })
+
+  test('handles startTime with seconds (HH:mm:ss)', () => {
+    expect(isLate('2026-07-07T12:05:00.000Z', '2026-07-07', '19:00:00')).toBe(true)
   })
 })

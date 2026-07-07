@@ -10,6 +10,8 @@ export interface Meeting {
   activity_level_id?: string | null
   activity_type?: { id: string; code: string; name: string } | null
   activity_level?: { id: string; code: string; name: string } | null
+  start_time?: string | null
+  check_time_enabled?: boolean
   student_snapshot?: string[]
   created_at: string
   updated_at?: string
@@ -26,6 +28,8 @@ export interface CreateMeetingData {
   description?: string
   activityTypeId?: string | null
   activityLevelId?: string | null
+  startTime?: string | null
+  checkTimeEnabled?: boolean
   studentIds?: string[]
 }
 

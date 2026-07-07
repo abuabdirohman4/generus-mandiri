@@ -3,6 +3,7 @@ import {
   modalShouldShowDesaFilter,
   modalShouldShowKelompokFilter,
   canAccessMaterials,
+  canManageCheckTime,
   canAccessMonitoring,
   canAccessOverview,
   canTeacherAccessStudent,
@@ -119,6 +120,27 @@ describe('canAccessMaterials', () => {
     })
     it('returns false if teacher has no permissions', () => {
         expect(canAccessMaterials({ role: 'teacher', permissions: {} } as any)).toBe(false)
+    })
+})
+
+describe('canManageCheckTime', () => {
+    it('returns true for superadmin', () => {
+        expect(canManageCheckTime({ role: 'superadmin' } as any)).toBe(true)
+    })
+    it('returns true for admin', () => {
+        expect(canManageCheckTime({ role: 'admin' } as any)).toBe(true)
+    })
+    it('returns true if can_manage_check_time is true', () => {
+        expect(canManageCheckTime({
+            role: 'teacher',
+            permissions: { can_manage_check_time: true }
+        } as any)).toBe(true)
+    })
+    it('returns false if teacher has no permissions', () => {
+        expect(canManageCheckTime({ role: 'teacher', permissions: {} } as any)).toBe(false)
+    })
+    it('returns false for null profile', () => {
+        expect(canManageCheckTime(null)).toBe(false)
     })
 })
 

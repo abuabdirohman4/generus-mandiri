@@ -59,6 +59,7 @@ export async function updateTeacherPermissionsQuery(
         can_soft_delete_students?: boolean
         can_hard_delete_students?: boolean
         can_multi_kelompok_laporan?: boolean
+        can_manage_check_time?: boolean
     }
 ) {
     // Fetch existing permissions first, then merge (avoid overwriting other fields like can_manage_materials)

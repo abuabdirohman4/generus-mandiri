@@ -432,8 +432,12 @@ interface Meeting {
   student_snapshot: string[]
   created_at: string
   meeting_type_code?: string | null // deprecated
+  activity_type_id?: string | null
+  activity_level_id?: string | null
   activity_type?: { id: string; code: string; name: string } | null
   activity_level?: { id: string; code: string; name: string } | null
+  start_time?: string | null
+  check_time_enabled?: boolean
   classes: {
     id: string
     name: string

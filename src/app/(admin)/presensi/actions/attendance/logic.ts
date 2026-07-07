@@ -56,6 +56,34 @@ export function isStudentInMeeting(
 }
 
 /**
+ * Determines if a check-in is late relative to a meeting's start time.
+ * Both times compared in the same timezone context (WIB) — meetingDate is
+ * the meeting's date (YYYY-MM-DD, WIB), startTime is "HH:mm" or "HH:mm:ss".
+ *
+ * @param checkInTime ISO timestamp string of actual check-in
+ * @param meetingDate meeting date as YYYY-MM-DD (WIB)
+ * @param startTime meeting start time as HH:mm or HH:mm:ss, or null/undefined if not set
+ * @returns true if checkInTime is after the threshold; false if on-time or no threshold set
+ */
+export function isLate(
+  checkInTime: string | null | undefined,
+  meetingDate: string,
+  startTime: string | null | undefined
+): boolean {
+  if (!checkInTime || !startTime) return false
+
+  const [h, m, s] = startTime.split(':').map(Number)
+  const thresholdUtcMs = new Date(`${meetingDate}T00:00:00Z`).getTime()
+    + (h * 3600 + (m || 0) * 60 + (s || 0)) * 1000
+    - 7 * 60 * 60 * 1000
+
+  const checkInMs = new Date(checkInTime).getTime()
+  if (Number.isNaN(checkInMs) || Number.isNaN(thresholdUtcMs)) return false
+
+  return checkInMs > thresholdUtcMs
+}
+
+/**
  * Validates attendance data before saving
  * @param data - Array of attendance data to validate
  * @returns Validation result with valid flag and optional error message

@@ -17,6 +17,7 @@ export async function upsertAttendanceLogs(
     meeting_id?: string | null
     status: 'H' | 'I' | 'S' | 'A'
     reason?: string | null
+    check_in_time?: string | null
     recorded_by: string
   }>
 ): Promise<{ data: any; error: any }> {
@@ -44,6 +45,7 @@ export async function fetchAttendanceByDate(
       date,
       status,
       reason,
+      check_in_time,
       students (
         id,
         name,
@@ -73,6 +75,7 @@ export async function fetchAttendanceByMeeting(
       student_id,
       status,
       reason,
+      check_in_time,
       students (
         id,
         name,
@@ -108,10 +111,10 @@ export async function fetchAttendanceByMeeting(
 export async function fetchMeetingForScan(
   supabase: SupabaseClient,
   meetingId: string
-): Promise<{ data: { teacher_id: string; class_ids: string[]; date: string; student_snapshot: string[] } | null; error: any }> {
+): Promise<{ data: { teacher_id: string; class_ids: string[]; date: string; student_snapshot: string[]; start_time: string | null; check_time_enabled: boolean } | null; error: any }> {
   return await supabase
     .from('meetings')
-    .select('teacher_id, class_ids, date, student_snapshot')
+    .select('teacher_id, class_ids, date, student_snapshot, start_time, check_time_enabled')
     .eq('id', meetingId)
     .single()
 }
@@ -124,10 +127,10 @@ export async function fetchAttendanceLogByStudentAndMeeting(
   supabase: SupabaseClient,
   studentId: string,
   meetingId: string
-): Promise<{ data: { id: string; status: string } | null; error: any }> {
+): Promise<{ data: { id: string; status: string; check_in_time: string | null } | null; error: any }> {
   return await supabase
     .from('attendance_logs')
-    .select('id, status')
+    .select('id, status, check_in_time')
     .eq('student_id', studentId)
     .eq('meeting_id', meetingId)
     .maybeSingle()

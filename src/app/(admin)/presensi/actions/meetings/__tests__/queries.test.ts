@@ -63,7 +63,9 @@ describe('Meeting Queries', () => {
         description: 'Test Description',
         student_snapshot: ['student-1'],
         activity_type_id: null,
-        activity_level_id: null
+        activity_level_id: null,
+        start_time: null,
+        check_time_enabled: false
       })
       expect(result.data).toEqual({ id: 'new-id' })
     })

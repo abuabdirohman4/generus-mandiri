@@ -3,6 +3,7 @@ export type AttendanceStatus = 'H' | 'I' | 'S' | 'A'
 export interface AttendanceEntry {
   status: AttendanceStatus
   reason?: string
+  check_in_time?: string | null
 }
 
 export type AttendanceMap = Record<string, AttendanceEntry>
@@ -12,6 +13,7 @@ export interface AttendanceLogRow {
   student_id?: string
   status?: AttendanceStatus
   reason?: string | null
+  check_in_time?: string | null
 }
 
 export interface AttendanceChangePayload {
@@ -50,6 +52,7 @@ export function applyAttendanceEvent(
     [studentId]: {
       status: row.status,
       reason: row.reason ?? undefined,
+      check_in_time: row.check_in_time ?? undefined,
     },
   }
 }

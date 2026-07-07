@@ -110,6 +110,13 @@ export function canManageMaterials(profile: UserProfile | null): boolean {
   return profile.permissions?.can_manage_materials === true
 }
 
+export function canManageCheckTime(profile: UserProfile | null): boolean {
+  if (!profile) return false
+  if (profile.role === 'superadmin') return true
+  if (profile.role === 'admin') return true
+  return profile.permissions?.can_manage_check_time === true
+}
+
 export function canAccessMaterials(profile: UserProfile | null): boolean {
   if (!profile) return false
   if (profile.role === 'superadmin') return true

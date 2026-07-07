@@ -144,15 +144,38 @@ export async function saveAttendanceForMeeting(
     // Extract meeting date in WIB (UTC+7) as YYYY-MM-DD string.
     const meetingDateStr = getMeetingWibDateStr(meeting.date)
 
+    // Fetch existing attendance to preserve check_in_time for students already marked H
+    // (avoid resetting their check-in time when only e.g. reason changes on re-save)
+    const { data: existingLogs } = await adminClient
+      .from('attendance_logs')
+      .select('student_id, status, check_in_time')
+      .eq('meeting_id', meetingId)
+
+    const existingByStudent = new Map(
+      (Array.isArray(existingLogs) ? existingLogs : []).map((l: any) => [l.student_id, l])
+    )
+
+    const nowIso = new Date().toISOString()
+
     // Prepare data for upsert
-    const attendanceRecords = attendanceData.map(record => ({
-      student_id: record.student_id,
-      meeting_id: meetingId,
-      date: meetingDateStr, // Use WIB date string, not raw timestamptz
-      status: record.status,
-      reason: record.reason,
-      recorded_by: profile.id
-    }))
+    const attendanceRecords = attendanceData.map(record => {
+      const existing = existingByStudent.get(record.student_id)
+      let checkInTime: string | null = null
+      if (record.status === 'H') {
+        checkInTime = existing?.status === 'H'
+          ? (existing.check_in_time ?? null)
+          : nowIso
+      }
+      return {
+        student_id: record.student_id,
+        meeting_id: meetingId,
+        date: meetingDateStr, // Use WIB date string, not raw timestamptz
+        status: record.status,
+        reason: record.reason,
+        check_in_time: checkInTime,
+        recorded_by: profile.id
+      }
+    })
 
     // Use upsert to handle both insert and update
     const { error } = await upsertAttendanceLogs(adminClient, attendanceRecords)
@@ -243,6 +266,7 @@ export async function markAttendanceByQrScan(
         meeting_id: meetingId,
         date: meetingDateStr,
         status: 'H',
+        check_in_time: new Date().toISOString(),
         recorded_by: profile.id
       }
     ])

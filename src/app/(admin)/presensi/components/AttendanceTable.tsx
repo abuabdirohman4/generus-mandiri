@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { isLate } from '../actions/attendance/logic'
 
 interface Student {
   id: string
@@ -16,6 +17,7 @@ interface AttendanceData {
   [studentId: string]: {
     status: 'H' | 'I' | 'S' | 'A'
     reason?: string
+    check_in_time?: string | null
   }
 }
 
@@ -31,6 +33,9 @@ interface AttendanceTableProps {
   columnToggle?: React.ReactNode
   searchQuery?: string
   onSearchQueryChange?: (query: string) => void
+  meetingDate?: string
+  meetingStartTime?: string | null
+  checkTimeEnabled?: boolean
 }
 
 export default function AttendanceTable({ 
@@ -44,7 +49,10 @@ export default function AttendanceTable({
   showDesaColumn = false,
   columnToggle,
   searchQuery: controlledSearchQuery,
-  onSearchQueryChange
+  onSearchQueryChange,
+  meetingDate,
+  meetingStartTime,
+  checkTimeEnabled = false
 }: AttendanceTableProps) {
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
   const searchQuery = controlledSearchQuery !== undefined ? controlledSearchQuery : internalSearchQuery
@@ -306,6 +314,20 @@ export default function AttendanceTable({
                         {attendance[student.id]?.reason && (
                           <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                             Alasan: {attendance[student.id].reason}
+                          </div>
+                        )}
+                        {checkTimeEnabled && attendance[student.id]?.status === 'H' && attendance[student.id]?.check_in_time && (
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                              isLate(attendance[student.id].check_in_time, meetingDate || '', meetingStartTime)
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                                : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                            }`}>
+                              {isLate(attendance[student.id].check_in_time, meetingDate || '', meetingStartTime) ? 'Telat' : 'Tepat Waktu'}
+                            </span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                              {new Date(attendance[student.id].check_in_time!).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' })}
+                            </span>
                           </div>
                         )}
                       </div>

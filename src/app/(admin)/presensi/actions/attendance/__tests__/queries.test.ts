@@ -91,7 +91,7 @@ describe('Attendance Queries', () => {
       const result = await fetchMeetingForScan(mockSupabase, 'meeting-1')
 
       expect(mockSupabase.from).toHaveBeenCalledWith('meetings')
-      expect(mockSelect).toHaveBeenCalledWith('teacher_id, class_ids, date, student_snapshot')
+      expect(mockSelect).toHaveBeenCalledWith('teacher_id, class_ids, date, student_snapshot, start_time, check_time_enabled')
       expect(mockEq).toHaveBeenCalledWith('id', 'meeting-1')
       expect(result.data?.student_snapshot).toEqual(['s1', 's2'])
     })

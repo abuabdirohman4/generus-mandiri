@@ -89,11 +89,15 @@ function makeSupabase(overrides: {
   } as any
 }
 
-function makeAdminSupabase(overrides: { fromBuilder?: any } = {}) {
+function makeAdminSupabase(overrides: { fromBuilder?: any; tableBuilders?: Record<string, any> } = {}) {
+  const defaultBuilder = overrides.fromBuilder || makeQueryBuilder({ data: null, error: null })
+  const emptyListBuilder = makeQueryBuilder({ data: [], error: null })
   return {
-    from: vi.fn().mockReturnValue(
-      overrides.fromBuilder || makeQueryBuilder({ data: null, error: null })
-    )
+    from: vi.fn().mockImplementation((table: string) => {
+      if (overrides.tableBuilders?.[table]) return overrides.tableBuilders[table]
+      if (table === 'attendance_logs' && !overrides.fromBuilder) return emptyListBuilder
+      return defaultBuilder
+    })
   } as any
 }
 
@@ -265,7 +269,10 @@ describe('Attendance Actions (Layer 3)', () => {
         data: { teacher_id: 'teacher-1', class_ids: ['class-1'], date: '2026-03-18' },
         error: null
       })
-      const adminClient = makeAdminSupabase({ fromBuilder: meetingBuilder })
+      const existingLogsBuilder = makeQueryBuilder({ data: [], error: null })
+      const adminClient = makeAdminSupabase({
+        tableBuilders: { meetings: meetingBuilder, attendance_logs: existingLogsBuilder }
+      })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
       vi.mocked(upsertAttendanceLogs).mockResolvedValue({ data: [], error: null })
 
@@ -280,6 +287,7 @@ describe('Attendance Actions (Layer 3)', () => {
             meeting_id: meetingId,
             date: '2026-03-18',
             status: 'H',
+            check_in_time: expect.any(String),
             recorded_by: 'profile-1'
           })
         ])
@@ -300,7 +308,10 @@ describe('Attendance Actions (Layer 3)', () => {
         data: { teacher_id: 'teacher-1', class_ids: ['class-1'], date: '2026-03-18' },
         error: null
       })
-      const adminClient = makeAdminSupabase({ fromBuilder: meetingBuilder })
+      const existingLogsBuilder = makeQueryBuilder({ data: [], error: null })
+      const adminClient = makeAdminSupabase({
+        tableBuilders: { meetings: meetingBuilder, attendance_logs: existingLogsBuilder }
+      })
       vi.mocked(createAdminClient).mockResolvedValue(adminClient)
       vi.mocked(upsertAttendanceLogs).mockResolvedValue({
         data: null,
@@ -311,6 +322,38 @@ describe('Attendance Actions (Layer 3)', () => {
 
       expect(result).toEqual({ success: false, error: 'Upsert failed' })
       expect(revalidatePath).not.toHaveBeenCalled()
+    })
+
+    it('does not restamp check_in_time for student already H with null check_in_time (legacy data)', async () => {
+      vi.mocked(validateAttendanceData).mockReturnValue({ valid: true })
+      const profileBuilder = makeQueryBuilder({ data: { id: 'profile-1', role: 'teacher' }, error: null })
+      const supabase = makeSupabase({ fromBuilder: profileBuilder })
+      vi.mocked(createClient).mockResolvedValue(supabase)
+
+      const meetingBuilder = makeQueryBuilder({
+        data: { teacher_id: 'teacher-1', class_ids: ['class-1'], date: '2026-03-18' },
+        error: null
+      })
+      // Existing log: already H, but check_in_time is null (legacy data pre-feature)
+      const existingLogsBuilder = makeQueryBuilder({
+        data: [{ student_id: 'student-1', status: 'H', check_in_time: null }],
+        error: null
+      })
+      const adminClient = makeAdminSupabase({
+        tableBuilders: { meetings: meetingBuilder, attendance_logs: existingLogsBuilder }
+      })
+      vi.mocked(createAdminClient).mockResolvedValue(adminClient)
+      vi.mocked(upsertAttendanceLogs).mockResolvedValue({ data: [], error: null })
+
+      const validData = [{ student_id: 'student-1', date: '2026-03-18', status: 'H' as const }]
+      await saveAttendanceForMeeting('meeting-1', validData)
+
+      expect(upsertAttendanceLogs).toHaveBeenCalledWith(
+        adminClient,
+        expect.arrayContaining([
+          expect.objectContaining({ student_id: 'student-1', check_in_time: null })
+        ])
+      )
     })
   })
 
@@ -531,7 +574,7 @@ describe('Attendance Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       vi.mocked(fetchMeetingForScan).mockResolvedValue({
-        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1', 'student-2'] },
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1', 'student-2'], start_time: null, check_time_enabled: false },
         error: null
       })
       vi.mocked(fetchAttendanceLogByStudentAndMeeting).mockResolvedValue({ data: null, error: null })
@@ -549,6 +592,7 @@ describe('Attendance Actions (Layer 3)', () => {
           meeting_id: meetingId,
           date: '2026-03-18',
           status: 'H',
+          check_in_time: expect.any(String),
           recorded_by: 'profile-1'
         }
       ])
@@ -560,11 +604,11 @@ describe('Attendance Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       vi.mocked(fetchMeetingForScan).mockResolvedValue({
-        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1'] },
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['student-1'], start_time: null, check_time_enabled: false },
         error: null
       })
       vi.mocked(fetchAttendanceLogByStudentAndMeeting).mockResolvedValue({
-        data: { id: 'log-1', status: 'H' },
+        data: { id: 'log-1', status: 'H', check_in_time: '2026-03-18T10:00:00.000Z' },
         error: null
       })
       vi.mocked(createAdminClient).mockResolvedValue({} as any)
@@ -580,7 +624,7 @@ describe('Attendance Actions (Layer 3)', () => {
       vi.mocked(createClient).mockResolvedValue(supabase)
 
       vi.mocked(fetchMeetingForScan).mockResolvedValue({
-        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['other-student'] },
+        data: { teacher_id: 'profile-1', class_ids: ['c1'], date: '2026-03-18', student_snapshot: ['other-student'], start_time: null, check_time_enabled: false },
         error: null
       })
       vi.mocked(createAdminClient).mockResolvedValue({} as any)

@@ -6,6 +6,7 @@ import { getNewlyPresentIds } from '@/hooks/useAttendanceRealtime.logic'
 import { getRateStyle } from '@/lib/percentages'
 import { toTitleCase } from '@/lib/utils'
 import Button from '@/components/ui/button/Button'
+import { isLate } from '../actions/attendance/logic'
 
 interface Student {
   id: string
@@ -28,6 +29,9 @@ interface LivePresensiTabProps {
    */
   attendanceMap: AttendanceMap
   connectionStatus: string
+  meetingDate?: string
+  meetingStartTime?: string | null
+  checkTimeEnabled?: boolean
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -70,7 +74,14 @@ const HIGHLIGHT_MS = 3000
  * Supports an in-app fullscreen "Mode Presentasi" overlay (fixed inset-0) that
  * covers the admin chrome (sidebar/header) for a clean projector view.
  */
-export default function LivePresensiTab({ students, attendanceMap, connectionStatus }: LivePresensiTabProps) {
+export default function LivePresensiTab({
+  students,
+  attendanceMap,
+  connectionStatus,
+  meetingDate,
+  meetingStartTime,
+  checkTimeEnabled = false
+}: LivePresensiTabProps) {
   const [isPresentationMode, setIsPresentationMode] = useState(false)
 
   // Track students who *just* became hadir via realtime, to briefly highlight them.
@@ -136,12 +147,40 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
   )
   const percentage = total > 0 ? Math.round((hadirCount / total) * 100) : 0
 
+  const { lateCount, onTimeCount, izinCount, sakitCount, alfaCount } = useMemo(() => {
+    let lateCount = 0, onTimeCount = 0, izinCount = 0, sakitCount = 0, alfaCount = 0
+    students.forEach(s => {
+      const entry = attendanceMap[s.id]
+      const status = entry?.status
+      if (status === 'H') {
+        if (checkTimeEnabled && entry?.check_in_time) {
+          if (isLate(entry.check_in_time, meetingDate || '', meetingStartTime)) lateCount++
+          else onTimeCount++
+        }
+      } else if (status === 'I') izinCount++
+      else if (status === 'S') sakitCount++
+      else alfaCount++
+    })
+    return { lateCount, onTimeCount, izinCount, sakitCount, alfaCount }
+  }, [students, attendanceMap, checkTimeEnabled, meetingDate, meetingStartTime])
+
   const sortedStudents = useMemo(() => {
-    // Hadir students first (most relevant during live roll-call), then by name.
+    // Hadir first (roll-call effect: most-recently-scanned appears at front),
+    // then belum-hadir alfabetis.
     return [...students].sort((a, b) => {
-      const aHadir = attendanceMap[a.id]?.status === 'H' ? 0 : 1
-      const bHadir = attendanceMap[b.id]?.status === 'H' ? 0 : 1
-      if (aHadir !== bHadir) return aHadir - bHadir
+      const aHadir = attendanceMap[a.id]?.status === 'H'
+      const bHadir = attendanceMap[b.id]?.status === 'H'
+      if (aHadir !== bHadir) return aHadir ? -1 : 1
+
+      if (aHadir && bHadir) {
+        const aTime = attendanceMap[a.id]?.check_in_time
+        const bTime = attendanceMap[b.id]?.check_in_time
+        if (aTime && bTime) return new Date(bTime).getTime() - new Date(aTime).getTime()
+        if (aTime) return -1
+        if (bTime) return 1
+        return a.name.localeCompare(b.name)
+      }
+
       return a.name.localeCompare(b.name)
     })
   }, [students, attendanceMap])
@@ -164,6 +203,15 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
             {connectionStatus === 'DISCONNECTED' ? 'Menghubungkan...' : `Status: ${connectionStatus}`}
           </div>
         )}
+        {checkTimeEnabled && (
+          <div className={`mt-4 flex flex-wrap justify-center gap-2 ${big ? 'text-sm' : 'text-xs'}`}>
+            <span className="px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 font-medium">Telat: {lateCount}</span>
+            <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 font-medium">Tepat Waktu: {onTimeCount}</span>
+            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 font-medium">Izin: {izinCount}</span>
+            <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 font-medium">Sakit: {sakitCount}</span>
+            <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">Alfa: {alfaCount}</span>
+          </div>
+        )}
       </div>
 
       {/* Name grid — vertical avatar-over-name cards so names never get
@@ -173,14 +221,30 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
           const status = attendanceMap[student.id]?.status
           const isHadir = status === 'H'
           const isNew = recentlyMarked.has(student.id)
+          const hasCheckIn = checkTimeEnabled && isHadir && !!attendanceMap[student.id]?.check_in_time
+          const late = hasCheckIn && isLate(attendanceMap[student.id].check_in_time, meetingDate || '', meetingStartTime)
+
+          const displayLabel = hasCheckIn
+            ? (late ? 'Telat' : 'Tepat Waktu')
+            : (status ? STATUS_LABEL[status] : 'Belum absen')
+          const badgeColorClass = hasCheckIn
+            ? (late
+                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'
+                : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400')
+            : (status ? STATUS_BADGE[status] : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500')
+          const dotColorClass = hasCheckIn
+            ? (late ? 'bg-orange-500' : 'bg-green-500')
+            : (status ? STATUS_DOT[status] : 'bg-gray-300 dark:bg-gray-600')
+          const cardColorClass = late
+            ? 'border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20'
+            : isHadir
+              ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+
           return (
             <div
               key={student.id}
-              className={`rounded-lg border px-2 py-3 flex flex-col items-center text-center gap-1.5 transition-all ${
-                isHadir
-                  ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-              } ${isNew ? 'ring-2 ring-green-400 dark:ring-green-500 animate-pulse' : ''}`}
+              className={`rounded-lg border px-2 py-3 flex flex-col items-center text-center gap-1.5 transition-all ${cardColorClass} ${isNew ? 'ring-2 ring-green-400 dark:ring-green-500 animate-pulse' : ''}`}
             >
               <div
                 className={`rounded-full flex items-center justify-center font-bold shrink-0 ${
@@ -203,13 +267,18 @@ export default function LivePresensiTab({ students, attendanceMap, connectionSta
                 </div>
               )}
               <span
-                className={`inline-flex items-center gap-1 rounded-full font-medium ${big ? 'px-2.5 py-0.5 text-xs' : 'px-2 py-0.5 text-[10px]'} ${
-                  status ? STATUS_BADGE[status] : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-                }`}
+                className={`inline-flex items-center gap-1 rounded-full font-medium ${big ? 'px-2.5 py-0.5 text-xs' : 'px-2 py-0.5 text-[10px]'} ${badgeColorClass}`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${status ? STATUS_DOT[status] : 'bg-gray-300 dark:bg-gray-600'}`} aria-hidden />
-                {status ? STATUS_LABEL[status] : 'Belum absen'}
+                <span className={`w-1.5 h-1.5 rounded-full ${dotColorClass}`} aria-hidden />
+                {displayLabel}
               </span>
+              {hasCheckIn && (
+                <div className={`text-gray-400 dark:text-gray-500 ${big ? "text-xs md:text-sm" : "text-[10px]"}`}>
+                  {new Date(attendanceMap[student.id].check_in_time as string).toLocaleTimeString('id-ID', {
+                    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta'
+                  })}
+                </div>
+              )}
             </div>
           )
         })}

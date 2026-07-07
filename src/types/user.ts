@@ -61,6 +61,7 @@ export interface UserProfile extends UserProfileWithOrg {
     can_access_materials?: boolean
     can_access_monitoring?: boolean
     can_multi_kelompok_laporan?: boolean
+    can_manage_check_time?: boolean
   }
   last_seen_at?: string | null
 }
