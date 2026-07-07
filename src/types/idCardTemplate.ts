@@ -10,10 +10,12 @@ export interface IdCardTemplate {
   name_x_pct: number
   name_y_pct: number
   name_font_size: number
+  name_casing: 'original' | 'uppercase' | 'titlecase'
   show_kelompok: boolean
   kelompok_x_pct: number
   kelompok_y_pct: number
   kelompok_font_size: number
+  kelompok_casing: 'original' | 'uppercase' | 'titlecase'
   name_color: string
   name_italic: boolean
   name_bold: boolean
@@ -32,10 +34,12 @@ export interface TemplatePositions {
   name_x_pct: number
   name_y_pct: number
   name_font_size: number
+  name_casing: 'original' | 'uppercase' | 'titlecase'
   show_kelompok: boolean
   kelompok_x_pct: number
   kelompok_y_pct: number
   kelompok_font_size: number
+  kelompok_casing: 'original' | 'uppercase' | 'titlecase'
   name_color: string
   name_italic: boolean
   name_bold: boolean

@@ -149,7 +149,7 @@ export default function StudentsTable({
   const buildColumns = (userProfile: any) => {
     const baseColumns = [
       { key: 'name', label: 'Nama', widthMobile: '200px', align: 'left' as const },
-      { key: 'gender', label: 'Jenis Kelamin', align: 'center' as const },
+      { key: 'gender', label: 'Jenis Kelamin', align: 'center' as const, hideable: true },
     ];
 
     const orgColumns = [];
@@ -159,31 +159,31 @@ export default function StudentsTable({
       // Superadmin sees all
       if (userProfile?.role === 'superadmin') {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const },
-          { key: 'daerah_name', label: 'Daerah', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
+          { key: 'daerah_name', label: 'Daerah', align: 'center' as const, hideable: true },
         );
       }
       // Admin Daerah
       else if (isAdminDaerah(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
         );
       }
       // Admin Desa
       else if (isAdminDesa(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
         );
       }
       // Admin Kelompok - only Kelas
       else if (isAdminKelompok(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true }
         );
       }
     }
@@ -197,20 +197,20 @@ export default function StudentsTable({
       if (isTeacherDaerah) {
         // Guru Daerah: show Desa + Kelompok + Class
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
         )
       } else if (isTeacherDesa || isMultiKelompokTeacher(userProfile)) {
         // Guru Desa atau Guru Multi-Kelompok: show Kelompok + Class
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
         )
       } else if (isTeacherKelompok && userProfile.classes && userProfile.classes.length > 1) {
         // Guru Kelompok with multiple classes: show Class only
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const }
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true }
         )
       }
     }

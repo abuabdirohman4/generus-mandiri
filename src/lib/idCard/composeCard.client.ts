@@ -1,5 +1,6 @@
 import QRCode from 'qrcode'
 import type { TemplatePositions } from '@/types/idCardTemplate'
+import { applyCasing } from './textCasing'
 
 export async function composeCard(params: {
   templateImageUrl: string
@@ -56,7 +57,8 @@ export async function composeCard(params: {
         ctx.fillStyle = positions.name_color || '#000000'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(studentName, nameXPx, nameYPx)
+        const casedName = applyCasing(studentName, positions.name_casing || 'original')
+        ctx.fillText(casedName, nameXPx, nameYPx)
 
         // 4. Draw Kelompok if enabled
         if (positions.show_kelompok && studentKelompok && positions.kelompok_x_pct !== undefined && positions.kelompok_y_pct !== undefined) {
@@ -70,9 +72,11 @@ export async function composeCard(params: {
             `${kelFontSize}px`,
             'sans-serif',
           ].filter(Boolean)
+          
           ctx.font = kelStyleParts.join(' ')
           ctx.fillStyle = positions.kelompok_color || '#000000'
-          ctx.fillText(studentKelompok, kelXPx, kelYPx)
+          const casedKelompok = applyCasing(studentKelompok, positions.kelompok_casing || 'original')
+          ctx.fillText(casedKelompok, kelXPx, kelYPx)
         }
 
         resolve(canvas.toDataURL('image/png'))

@@ -23,8 +23,18 @@ export function validateTemplatePositions(positions: TemplatePositions) {
     throw new Error('Font size must be between 8 and 72')
   }
   
-  if (kelompok_font_size !== undefined && (kelompok_font_size < 8 || kelompok_font_size > 72)) {
-    throw new Error('Kelompok font size must be between 8 and 72')
+  if (positions.kelompok_font_size && (positions.kelompok_font_size < 8 || positions.kelompok_font_size > 72)) {
+    throw new Error('Ukuran font Kelompok tidak valid (8-72)')
+  }
+
+  const validCasings = ['original', 'uppercase', 'titlecase']
+  
+  if (positions.name_casing && !validCasings.includes(positions.name_casing)) {
+    throw new Error('Casing nama tidak valid')
+  }
+
+  if (positions.kelompok_casing && !validCasings.includes(positions.kelompok_casing)) {
+    throw new Error('Casing kelompok tidak valid')
   }
 
   // Validate hex colors (#RRGGBB)

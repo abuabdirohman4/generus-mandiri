@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useTransition } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Button from '@/components/ui/button/Button'
 import SiswaSkeleton from '@/components/ui/skeleton/SiswaSkeleton'
+import Spinner from '@/components/ui/spinner/Spinner'
 import DataFilter from '@/components/shared/DataFilter'
-import { StatsCards, StudentModal, StudentsTable, BatchImportModal, AssignStudentsModal } from './components'
+import { StatsCards, StudentModal, StudentsTable, BatchImportModal, AssignStudentsModal, QrCardsTab } from './components'
 import ArchiveStudentModal from './components/ArchiveStudentModal'
 import TransferRequestModal from './components/TransferRequestModal'
 import PendingTransferRequestsSection from './components/PendingTransferRequestsSection'
 import { useSiswaPage, useSebaranSiswa } from './hooks'
 import { isTeacherDaerah, isTeacherDesa, isTeacherKelompok } from '@/lib/accessControl'
+import { canManageIdCardTemplate } from '@/lib/userUtils'
 import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 import { SebaranSiswaTab } from './components/SebaranSiswa'
 import { useAssignStudentsStore } from './stores/assignStudentsStore'
@@ -30,6 +32,7 @@ export default function SiswaPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const activeTab = searchParams.get('tab') || 'students'
+  const [isPending, startTransition] = useTransition()
 
   const {
     students,
@@ -289,7 +292,9 @@ export default function SiswaPage() {
 
   const handleTabChange = useCallback(
     (tab: string) => {
-      router.push(`/users/siswa?tab=${tab}`)
+      startTransition(() => {
+        router.push(`/users/siswa?tab=${tab}`)
+      })
     },
     [router]
   )
@@ -326,13 +331,6 @@ export default function SiswaPage() {
                 </Button>
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => router.push('/users/siswa/qr-cards')}
-                    variant="outline"
-                    className="px-4 py-2 flex-1"
-                  >
-                    Cetak Kartu QR
-                  </Button>
-                  <Button
                     onClick={openBatchModal}
                     variant="outline"
                     className="px-4 py-2 flex-1"
@@ -355,13 +353,6 @@ export default function SiswaPage() {
                   className="px-4 py-2"
                 >
                   Tambah
-                </Button>
-                <Button
-                  onClick={() => router.push('/users/siswa/qr-cards')}
-                  variant="outline"
-                  className="px-4 py-2"
-                >
-                  Cetak Kartu QR
                 </Button>
                 <Button
                   onClick={openBatchModal}
@@ -398,6 +389,17 @@ export default function SiswaPage() {
                 >
                   Sebaran Siswa
                 </button>
+                {canManageIdCardTemplate(userProfile) && (
+                  <button
+                    onClick={() => handleTabChange('qr-cards')}
+                    className={`${activeTab === 'qr-cards'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+                  >
+                    Cetak Kartu QR
+                  </button>
+                )}
                 {/* Show tab only when there are pending requests */}
                 {isAdmin && pendingRequests.length > 0 && (
                   <button
@@ -418,9 +420,14 @@ export default function SiswaPage() {
           </div>
         )}
 
-        {/* Students Tab */}
-        {activeTab === 'students' && (
+        {/* Tab Content with Transition Loading */}
+        {isPending ? (
+          <SiswaSkeleton />
+        ) : (
           <>
+            {/* Students Tab */}
+            {activeTab === 'students' && (
+              <>
             {/* Filter Section */}
             <DataFilter
               filters={dataFilters}
@@ -464,6 +471,11 @@ export default function SiswaPage() {
           </>
         )}
 
+        {/* Qr Cards Tab */}
+        {activeTab === 'qr-cards' && canManageIdCardTemplate(userProfile) && (
+          <QrCardsTab />
+        )}
+
         {/* Sebaran Siswa Tab */}
         {activeTab === 'sebaran-siswa' && showSebaranTab && (
           <SebaranSiswaTab
@@ -484,6 +496,8 @@ export default function SiswaPage() {
             onRefresh={fetchPendingRequests}
             isLoading={pendingRequestsLoading}
           />
+        )}
+          </>
         )}
 
         {/* Modal Form */}

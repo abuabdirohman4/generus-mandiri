@@ -58,10 +58,12 @@ export async function uploadIdCardTemplate(formData: FormData) {
       name_x_pct: 50,
       name_y_pct: 50,
       name_font_size: 24,
+      name_casing: 'original',
       show_kelompok: false,
       kelompok_x_pct: 50,
       kelompok_y_pct: 60,
       kelompok_font_size: 18,
+      kelompok_casing: 'original',
       name_color: '#000000',
       name_italic: false,
       name_bold: true,
@@ -77,7 +79,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
       .update({ created_by: user?.id })
       .eq('id', data.id)
     
-    revalidatePath('/users/siswa/qr-cards/template')
+    revalidatePath('/users/siswa')
     return { success: true, data }
   } catch (err: any) {
     return { success: false, message: err.message || 'Failed to upload template' }
@@ -103,7 +105,7 @@ export async function saveIdCardTemplatePositions(id: string, positions: Templat
     validateTemplatePositions(positions)
     
     const data = await updateIdCardTemplatePositions(adminSupabase, id, positions, name)
-    revalidatePath('/users/siswa/qr-cards/template')
+    revalidatePath('/users/siswa')
     return { success: true, data }
   } catch (err: any) {
     return { success: false, message: err.message || 'Failed to save positions' }
@@ -118,7 +120,7 @@ export async function deleteIdCardTemplateAction(id: string) {
     await deleteIdCardTemplate(adminSupabase, id)
     await deleteTemplateImage(adminSupabase, template.image_path)
     
-    revalidatePath('/users/siswa/qr-cards/template')
+    revalidatePath('/users/siswa')
     return { success: true, data: null }
   } catch (err: any) {
     return { success: false, message: err.message || 'Failed to delete template' }

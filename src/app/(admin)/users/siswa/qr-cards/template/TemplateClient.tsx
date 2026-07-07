@@ -7,11 +7,15 @@ import Button from '@/components/ui/button/Button'
 import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
 import Checkbox from '@/components/form/input/Checkbox'
+import InputFilter from '@/components/form/input/InputFilter'
 import GridPreview from '@/lib/idCard/GridPreview'
 import Spinner from '@/components/ui/spinner/Spinner'
 import { toast } from 'sonner'
 import { uploadIdCardTemplate, getIdCardTemplate } from '../actions/template/actions'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
+import { getAllStudents } from '@/app/(admin)/users/siswa/actions/students/actions'
+import { EyeIcon } from '@/lib/icons'
 
 interface Position {
   x: number // percent
@@ -37,6 +41,7 @@ function DraggableBox({
   imageWidth = undefined,
   containerWidthPx = undefined,
   centerAnchor = false,
+  disabled = false,
   onResize = undefined,
 }: {
   id: string
@@ -47,9 +52,10 @@ function DraggableBox({
   imageWidth?: number
   containerWidthPx?: number
   centerAnchor?: boolean
+  disabled?: boolean
   onResize?: (deltaXPct: number) => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id, disabled })
 
   // Drag delta (px) on top of any anchor-centering offset (%). Order matters:
   // translate3d must come first so its px values aren't affected by the
@@ -79,10 +85,10 @@ function DraggableBox({
         ? `${(textStyle.fontSizePx / imageWidth) * containerWidthPx}px`
         : undefined,
     zIndex: isDragging ? 10 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    border: '2px dashed #666',
-    padding: '4px',
+    cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
+    backgroundColor: disabled ? 'transparent' : 'rgba(255, 255, 255, 0.8)',
+    border: disabled ? 'none' : '2px dashed #666',
+    padding: disabled ? '0' : '4px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -94,9 +100,9 @@ function DraggableBox({
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style} {...(!disabled ? listeners : {})} {...attributes}>
       {children}
-      {onResize && <ResizeHandle onResize={onResize} />}
+      {onResize && !disabled && <ResizeHandle onResize={onResize} />}
     </div>
   )
 }
@@ -180,10 +186,12 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [qrSize, setQrSize] = useState(20)
   const [nameFontSize, setNameFontSize] = useState(24)
   const [namePos, setNamePos] = useState<Position>({ x: 50, y: 50 })
+  const [nameCasing, setNameCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [showKelompok, setShowKelompok] = useState(false)
   const [kelompokPos, setKelompokPos] = useState<Position>({ x: 50, y: 60 })
   const [kelompokFontSize, setKelompokFontSize] = useState(18)
+  const [kelompokCasing, setKelompokCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [nameColor, setNameColor] = useState('#000000')
   const [nameItalic, setNameItalic] = useState(false)
@@ -193,6 +201,22 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [kelompokBold, setKelompokBold] = useState(true)
 
   const [showCenterGuide, setShowCenterGuide] = useState(false)
+
+  // Preview Mode State
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [previewStudents, setPreviewStudents] = useState<any[]>([])
+  const [previewIndex, setPreviewIndex] = useState(0)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+
+  // Casing format helper
+  const formatCasing = useCallback((text: string | null | undefined, casingRule: string) => {
+    if (!text) return ''
+    if (casingRule === 'uppercase') return text.toUpperCase()
+    if (casingRule === 'titlecase') {
+      return text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    }
+    return text
+  }, [])
 
   // Ref mirror of qrPos so the resize clamp never reads a stale closure.
   const qrPosRef = useRef(qrPos)
@@ -243,9 +267,11 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
       setQrSize(Number(template.qr_size_pct))
       setNamePos({ x: Number(template.name_x_pct), y: Number(template.name_y_pct) })
       setNameFontSize(Number(template.name_font_size))
+      setNameCasing(template.name_casing || 'original')
       setShowKelompok(template.show_kelompok)
       setKelompokPos({ x: Number(template.kelompok_x_pct), y: Number(template.kelompok_y_pct) })
       setKelompokFontSize(Number(template.kelompok_font_size))
+      setKelompokCasing(template.kelompok_casing || 'original')
       setNameColor(template.name_color)
       setNameItalic(template.name_italic)
       setNameBold(template.name_bold)
@@ -376,10 +402,12 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
         name_x_pct: namePos.x,
         name_y_pct: namePos.y,
         name_font_size: nameFontSize,
+        name_casing: nameCasing,
         show_kelompok: showKelompok,
         kelompok_x_pct: kelompokPos.x,
         kelompok_y_pct: kelompokPos.y,
         kelompok_font_size: kelompokFontSize,
+        kelompok_casing: kelompokCasing,
         name_color: nameColor,
         name_italic: nameItalic,
         name_bold: nameBold,
@@ -412,7 +440,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
 
         toast.success('Template berhasil disimpan')
         onSaved?.()
-        router.push('/users/siswa/qr-cards')
+        router.push('/users/siswa?tab=qr-cards')
       }
     } catch (err: any) {
       toast.error(err.message || 'Terjadi kesalahan saat menyimpan')
@@ -482,14 +510,30 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
           {/* Name styling */}
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-3">
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Nama</p>
-            <div className="max-w-45">
-              <Label htmlFor="name-font-size">Ukuran Font (px)</Label>
-              <Input
-                id="name-font-size"
-                type="number"
-                value={nameFontSize}
-                onChange={e => setNameFontSize(Number(e.target.value))}
-              />
+            <div className="flex gap-4">
+              <div className="flex-1 max-w-45">
+                <Label htmlFor="name-font-size">Ukuran Font (px)</Label>
+                <Input
+                  id="name-font-size"
+                  type="number"
+                  value={nameFontSize}
+                  onChange={e => setNameFontSize(Number(e.target.value))}
+                />
+              </div>
+              <div className="flex-1 max-w-45">
+                <InputFilter
+                  id="name-casing"
+                  label="Format Huruf"
+                  value={nameCasing}
+                  onChange={(val) => setNameCasing(val as any)}
+                  options={[
+                    { value: 'original', label: 'Apa adanya' },
+                    { value: 'uppercase', label: 'HURUF BESAR' },
+                    { value: 'titlecase', label: 'Awal Kata Besar' },
+                  ]}
+                  variant="page"
+                />
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex items-center gap-2">
@@ -519,14 +563,30 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
             />
             {showKelompok && (
               <div className="space-y-3 pt-1">
-                <div className="max-w-45">
-                  <Label htmlFor="kelompok-font-size">Ukuran Font (px)</Label>
-                  <Input
-                    id="kelompok-font-size"
-                    type="number"
-                    value={kelompokFontSize}
-                    onChange={e => setKelompokFontSize(Number(e.target.value))}
-                  />
+                <div className="flex gap-4">
+                  <div className="flex-1 max-w-45">
+                    <Label htmlFor="kelompok-font-size">Ukuran Font (px)</Label>
+                    <Input
+                      id="kelompok-font-size"
+                      type="number"
+                      value={kelompokFontSize}
+                      onChange={e => setKelompokFontSize(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="flex-1 max-w-45">
+                    <InputFilter
+                      id="kelompok-casing"
+                      label="Format Huruf"
+                      value={kelompokCasing}
+                      onChange={(val) => setKelompokCasing(val as any)}
+                      options={[
+                        { value: 'original', label: 'Apa adanya' },
+                        { value: 'uppercase', label: 'HURUF BESAR' },
+                        { value: 'titlecase', label: 'Awal Kata Besar' },
+                      ]}
+                      variant="page"
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                   <div className="flex items-center gap-2">
@@ -578,8 +638,71 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
 
       {previewUrl && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow space-y-4 lg:sticky lg:top-4">
-          <h3 className="font-semibold text-lg">Preview & Atur Posisi</h3>
-          <p className="text-sm text-gray-500">Geser kotak untuk atur posisi. Tarik titik biru di pojok kotak QR untuk ubah ukuran. Garis biru muncul saat pas di tengah.</p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="font-semibold text-lg">Preview & Atur Posisi</h3>
+              <p className="text-sm text-gray-500">Geser kotak untuk atur posisi. Tarik titik biru di pojok kotak QR untuk ubah ukuran.</p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+              {isPreviewMode && previewStudents.length > 0 && (
+                <div className="flex items-center justify-between sm:justify-end gap-2 text-sm bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setPreviewIndex(i => Math.max(0, i - 1))}
+                    disabled={previewIndex === 0}
+                    className="text-gray-500 hover:text-brand-600 disabled:opacity-50 font-medium px-2"
+                  >
+                    &lt; Prev
+                  </button>
+                  <span className="text-gray-700 dark:text-gray-300 min-w-20 text-center font-medium">
+                    {previewIndex + 1} / {previewStudents.length}
+                  </span>
+                  <button 
+                    onClick={() => setPreviewIndex(i => Math.min(previewStudents.length - 1, i + 1))}
+                    disabled={previewIndex === previewStudents.length - 1}
+                    className="text-gray-500 hover:text-brand-600 disabled:opacity-50 font-medium px-2"
+                  >
+                    Next &gt;
+                  </button>
+                </div>
+              )}
+              
+              <Button 
+                variant={isPreviewMode ? "primary" : "outline"} 
+                size="sm" 
+                startIcon={<EyeIcon className="w-4 h-4" />}
+                loading={isLoadingPreview}
+                onClick={async () => {
+                  if (isPreviewMode) {
+                    setIsPreviewMode(false)
+                  } else {
+                    if (previewStudents.length === 0) {
+                      setIsLoadingPreview(true)
+                      try {
+                        const res = await getAllStudents()
+                        if (res.success && res.data && res.data.length > 0) {
+                          setPreviewStudents(res.data)
+                          setIsPreviewMode(true)
+                          setPreviewIndex(0)
+                        } else {
+                          toast.error('Tidak ada data siswa untuk di-preview')
+                        }
+                      } catch (err) {
+                        toast.error('Gagal memuat data siswa untuk preview')
+                      } finally {
+                        setIsLoadingPreview(false)
+                      }
+                    } else {
+                      setIsPreviewMode(true)
+                    }
+                  }
+                }}
+                className="w-full sm:w-auto justify-center"
+              >
+                {isPreviewMode ? 'Tutup Preview' : 'Preview Data Siswa'}
+              </Button>
+            </div>
+          </div>
 
           <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd} modifiers={[restrictToParentElement]}>
             <div className="max-h-[70vh] overflow-auto rounded-md">
@@ -613,8 +736,18 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                 />
               )}
 
-              <DraggableBox id="qr-box" position={qrPos} sizePct={qrSize} onResize={handleQrResize}>
-                <div className="text-xs text-center pointer-events-none">QR CODE<br />(Area)</div>
+              <DraggableBox id="qr-box" position={qrPos} sizePct={qrSize} onResize={handleQrResize} disabled={isPreviewMode}>
+                {isPreviewMode && previewStudents[previewIndex] ? (
+                  <QRCodeSVG
+                    value={`https://app.generusmandiri.com/verify/${previewStudents[previewIndex].id}`}
+                    width="100%"
+                    height="100%"
+                    level="Q"
+                    className="rounded-sm"
+                  />
+                ) : (
+                  <div className="text-xs text-center pointer-events-none">QR CODE<br />(Area)</div>
+                )}
               </DraggableBox>
               <DraggableBox
                 id="name-box"
@@ -623,8 +756,11 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                 containerWidthPx={containerWidthPx}
                 centerAnchor
                 textStyle={{ color: nameColor, italic: nameItalic, bold: nameBold, fontSizePx: nameFontSize }}
+                disabled={isPreviewMode}
               >
-                [NAMA SISWA]
+                {isPreviewMode && previewStudents[previewIndex] 
+                  ? formatCasing(previewStudents[previewIndex].name, nameCasing) 
+                  : '[NAMA SISWA]'}
               </DraggableBox>
               {showKelompok && (
                 <DraggableBox
@@ -634,8 +770,11 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                   containerWidthPx={containerWidthPx}
                   centerAnchor
                   textStyle={{ color: kelompokColor, italic: kelompokItalic, bold: kelompokBold, fontSizePx: kelompokFontSize }}
+                  disabled={isPreviewMode}
                 >
-                  [NAMA KELOMPOK]
+                  {isPreviewMode && previewStudents[previewIndex] 
+                    ? formatCasing(previewStudents[previewIndex].kelompok_name || 'Tanpa Kelompok', kelompokCasing) 
+                    : '[NAMA KELOMPOK]'}
                 </DraggableBox>
               )}
             </div>
