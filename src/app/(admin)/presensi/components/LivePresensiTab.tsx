@@ -257,7 +257,7 @@ export default function LivePresensiTab({
                 {getInitials(student.name)}
               </div>
               <div
-                className={`font-semibold text-gray-900 dark:text-white leading-tight break-words ${big ? 'text-base md:text-lg' : 'text-xs sm:text-sm'}`}
+                className={`font-semibold text-gray-900 dark:text-white leading-tight wrap-break-word ${big ? 'text-base md:text-lg' : 'text-xs sm:text-sm'}`}
               >
                 {toTitleCase(student.name)}
               </div>

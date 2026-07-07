@@ -244,6 +244,7 @@ export default function AssignStudentsModal({
             }))}
             allOptionLabel="Pilih kelas"
             widthClassName="!max-w-full"
+            className='mt-6'
             variant="modal"
           />
           {selectedClass && (
