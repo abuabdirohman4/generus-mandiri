@@ -40,6 +40,8 @@ import { useKelompok } from '@/hooks/useKelompok'
 import { useDesa } from '@/hooks/useDesa'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
+import MeetingOrgBreakdown from './MeetingOrgBreakdown'
+import { shouldShowBreakdown } from './logic'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -782,6 +784,45 @@ export default function MeetingAttendancePage() {
   const showKelompokFilter = kelompokListForFilter.length > 1 &&
     userProfile ? shouldShowKelompokFilter(userProfile) : false
 
+  // Per-desa/kelompok attendance breakdown chart — only for multi-scope meetings
+  // (classes spanning more than one kelompok). Single-class meetings never show it.
+  const showOrgBreakdown = useMemo(() => shouldShowBreakdown(meeting), [meeting])
+
+  const attendanceRowsForBreakdown = useMemo(() => {
+    if (!showOrgBreakdown) return []
+
+    return visibleStudents.map(student => {
+      // Resolve kelompok_id/desa_id, falling back to classesData/kelompokData
+      // lookup for students where the attendance query didn't attach org info
+      // directly (e.g. placeholder/snapshot students).
+      let kelompokId = student.kelompok_id
+      let kelompokName = student.kelompok_name
+      let desaId = student.desa_id
+      let desaName = student.desa_name
+
+      if (!kelompokId) {
+        const primaryClass = classesData.find(c => c.id === student.class_id)
+        if (primaryClass?.kelompok_id) {
+          kelompokId = primaryClass.kelompok_id
+          const kelompok = kelompokData?.find((k: any) => k.id === primaryClass.kelompok_id)
+          if (kelompok) {
+            kelompokName = kelompokName || kelompok.name
+            desaId = desaId || kelompok.desa_id
+          }
+        }
+      }
+
+      return {
+        student_id: student.id,
+        status: (localAttendance[student.id]?.status || 'A') as 'H' | 'I' | 'S' | 'A',
+        kelompok_id: kelompokId,
+        kelompok_name: kelompokName,
+        desa_id: desaId,
+        desa_name: desaName,
+      }
+    })
+  }, [showOrgBreakdown, visibleStudents, localAttendance, classesData, kelompokData])
+
   const goBack = () => {
     router.push('/presensi')
   }
@@ -920,6 +961,11 @@ export default function MeetingAttendancePage() {
             percentage={localAttendancePercentage}
             percentageLabel="Kehadiran"
           />
+
+          {/* Per-desa/kelompok breakdown chart — multi-scope meetings only */}
+          {showOrgBreakdown && (
+            <MeetingOrgBreakdown meeting={meeting} attendanceRows={attendanceRowsForBreakdown} />
+          )}
         </div>
 
         {/* Tabs: Daftar Hadir (manual) vs Scan QR (Desa/Daerah meetings only, editors only)
