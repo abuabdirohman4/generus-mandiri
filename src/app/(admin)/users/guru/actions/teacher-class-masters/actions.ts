@@ -10,7 +10,7 @@ import {
   deleteTeacherClassMasterAssignments,
   insertTeacherClassMasterAssignments,
 } from './queries'
-import { buildClassMasterMappings, mapTeacherClassMastersToResult } from './logic'
+import { buildClassMasterMappings, mapTeacherClassMastersToResult, type ClassMasterAssignmentInput } from './logic'
 
 export async function getTeacherClassMasters(teacherId: string): Promise<{ success: boolean; data: any[]; message?: string }> {
   try {
@@ -24,7 +24,7 @@ export async function getTeacherClassMasters(teacherId: string): Promise<{ succe
   }
 }
 
-export async function updateTeacherClassMasters(teacherId: string, classMasterIds: string[]) {
+export async function updateTeacherClassMasters(teacherId: string, assignments: ClassMasterAssignmentInput[]) {
   try {
     const profile = await getCurrentUserProfile()
     if (!profile || !canAccessFeature(profile, 'users')) {
@@ -35,8 +35,8 @@ export async function updateTeacherClassMasters(teacherId: string, classMasterId
     const { error: deleteError } = await deleteTeacherClassMasterAssignments(adminClient, teacherId)
     if (deleteError) throw deleteError
 
-    if (classMasterIds.length > 0) {
-      const mappings = buildClassMasterMappings(teacherId, classMasterIds)
+    if (assignments.length > 0) {
+      const mappings = buildClassMasterMappings(teacherId, assignments)
       const { error: insertError } = await insertTeacherClassMasterAssignments(adminClient, mappings)
       if (insertError) throw insertError
     }
@@ -51,7 +51,7 @@ export async function updateTeacherClassMasters(teacherId: string, classMasterId
         entityId: teacherId,
         entityLabel: 'Update Class Master Assignments',
         pagePath: '/users/guru',
-        metadata: { classMasterIds }
+        metadata: { assignments }
       })
     }
 

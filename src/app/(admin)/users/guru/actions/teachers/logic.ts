@@ -139,7 +139,8 @@ export function transformTeacher(teacher: any, classesMap: Map<string, any>): an
 
     const classMasterNames = teacherClassMasters.map((tcm: any) => {
         const master = Array.isArray(tcm.class_masters) ? tcm.class_masters[0] : tcm.class_masters
-        return master?.name
+        if (!master?.name) return null
+        return tcm.custom_class_name ? `${master.name} (${tcm.custom_class_name})` : master.name
     }).filter(Boolean)
 
     return {

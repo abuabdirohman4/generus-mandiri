@@ -28,6 +28,7 @@ export async function fetchTeachers(supabase: SupabaseClient, filter?: {
       ),
       teacher_class_masters(
         class_master_id,
+        custom_class_name,
         class_masters(name)
       )
     `)
@@ -65,9 +66,9 @@ export async function insertTeacherProfile(
             desa_id: data.desa_id || null,
             kelompok_id: data.kelompok_id,
             permissions: data.permissions || {
-                can_archive_students: false,
+                can_archive_students: true,
                 can_transfer_students: false,
-                can_soft_delete_students: false,
+                can_soft_delete_students: true,
                 can_hard_delete_students: false,
             },
         }])

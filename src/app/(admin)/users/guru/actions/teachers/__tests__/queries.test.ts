@@ -97,7 +97,7 @@ describe('insertTeacherProfile', () => {
         )
     })
 
-    it('sets default permissions when none provided', async () => {
+    it('sets default permissions when none provided (archive + soft-delete on by default)', async () => {
         const supa = makeSupa({ error: null })
         supa._chain.insert = vi.fn().mockResolvedValue({ error: null })
 
@@ -110,9 +110,9 @@ describe('insertTeacherProfile', () => {
 
         const insertCall = supa._chain.insert.mock.calls[0][0][0]
         expect(insertCall.permissions).toEqual({
-            can_archive_students: false,
+            can_archive_students: true,
             can_transfer_students: false,
-            can_soft_delete_students: false,
+            can_soft_delete_students: true,
             can_hard_delete_students: false,
         })
     })

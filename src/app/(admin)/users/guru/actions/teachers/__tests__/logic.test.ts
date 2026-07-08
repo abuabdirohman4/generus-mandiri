@@ -196,4 +196,41 @@ describe('transformTeacher', () => {
         expect(result.desa_name).toBe('Desa B')
         expect(result.kelompok_name).toBe('Kel C')
     })
+
+    it('appends custom_class_name in parens for restricted "Lainnya" master', () => {
+        const teacher = {
+            teacher_classes: [],
+            teacher_class_masters: [
+                { class_master_id: 'cm-lainnya', custom_class_name: 'CAI 2026', class_masters: { name: 'Lainnya' } }
+            ],
+            daerah: null, desa: null, kelompok: null,
+        }
+        const result = transformTeacher(teacher, new Map())
+        expect(result.class_master_names).toBe('Lainnya (CAI 2026)')
+    })
+
+    it('shows plain master name when custom_class_name is null', () => {
+        const teacher = {
+            teacher_classes: [],
+            teacher_class_masters: [
+                { class_master_id: 'cm-1', custom_class_name: null, class_masters: { name: 'PAUD' } }
+            ],
+            daerah: null, desa: null, kelompok: null,
+        }
+        const result = transformTeacher(teacher, new Map())
+        expect(result.class_master_names).toBe('PAUD')
+    })
+
+    it('mixes restricted and unrestricted masters in the joined string', () => {
+        const teacher = {
+            teacher_classes: [],
+            teacher_class_masters: [
+                { class_master_id: 'cm-1', custom_class_name: null, class_masters: { name: 'PAUD' } },
+                { class_master_id: 'cm-lainnya', custom_class_name: 'CAI 2026', class_masters: { name: 'Lainnya' } }
+            ],
+            daerah: null, desa: null, kelompok: null,
+        }
+        const result = transformTeacher(teacher, new Map())
+        expect(result.class_master_names).toBe('PAUD, Lainnya (CAI 2026)')
+    })
 })
