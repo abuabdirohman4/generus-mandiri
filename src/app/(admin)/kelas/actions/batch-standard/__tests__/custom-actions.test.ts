@@ -8,7 +8,7 @@ vi.mock('@/lib/accessControlServer', () => ({
   canAccessFeature: vi.fn(),
 }))
 vi.mock('../custom-queries', () => ({
-  findOrCreateCustomClassMaster: vi.fn(),
+  getLainnyaClassMaster: vi.fn(),
 }))
 vi.mock('../queries', () => ({
   fetchExistingClassesForKelompoks: vi.fn(),
@@ -20,10 +20,11 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 import { createBatchCustomClass } from '../custom-actions'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile, canAccessFeature } from '@/lib/accessControlServer'
-import { findOrCreateCustomClassMaster } from '../custom-queries'
+import { getLainnyaClassMaster } from '../custom-queries'
 import { fetchExistingClassesForKelompoks, insertClassWithMasterMapping } from '../queries'
 
 const mockProfile = { id: 'u1', role: 'admin', daerah_id: 'd1' }
+const LAINNYA_ID = 'm-lainnya'
 
 describe('createBatchCustomClass', () => {
   beforeEach(() => {
@@ -31,7 +32,7 @@ describe('createBatchCustomClass', () => {
     vi.mocked(getCurrentUserProfile).mockResolvedValue(mockProfile as any)
     vi.mocked(canAccessFeature).mockReturnValue(true)
     vi.mocked(createAdminClient).mockResolvedValue({} as any)
-    vi.mocked(findOrCreateCustomClassMaster).mockResolvedValue({ data: { id: 'm1', name: 'CAI 2026' }, error: null } as any)
+    vi.mocked(getLainnyaClassMaster).mockResolvedValue({ data: { id: LAINNYA_ID, name: 'Lainnya' }, error: null } as any)
     vi.mocked(fetchExistingClassesForKelompoks).mockResolvedValue({ data: [], error: null })
     vi.mocked(insertClassWithMasterMapping).mockResolvedValue({ data: { id: 'new-id' }, error: null })
   })
@@ -52,29 +53,42 @@ describe('createBatchCustomClass', () => {
     expect(result.success).toBe(false)
   })
 
-  it('creates one class per kelompok sharing the same master', async () => {
+  it('creates one class per kelompok, all mapped to the "Lainnya" master', async () => {
     const result = await createBatchCustomClass(['k1', 'k2', 'k3'], 'CAI 2026')
-    expect(findOrCreateCustomClassMaster).toHaveBeenCalledTimes(1)
+    expect(getLainnyaClassMaster).toHaveBeenCalledTimes(1)
     expect(insertClassWithMasterMapping).toHaveBeenCalledTimes(3)
-    expect(insertClassWithMasterMapping).toHaveBeenCalledWith(expect.anything(), 'k1', 'CAI 2026', 'm1')
+    expect(insertClassWithMasterMapping).toHaveBeenCalledWith(expect.anything(), 'k1', 'CAI 2026', LAINNYA_ID)
     expect(result.totalCreated).toBe(3)
     expect(result.success).toBe(true)
   })
 
-  it('skips kelompok that already has a class with this name', async () => {
+  it('skips kelompok that already has a class with this exact name', async () => {
     vi.mocked(fetchExistingClassesForKelompoks).mockResolvedValue({
-      data: [{ id: 'c1', name: 'CAI 2026', kelompok_id: 'k1', class_master_mappings: [] }] as any,
+      data: [{ id: 'c1', name: 'CAI 2026', kelompok_id: 'k1', class_master_mappings: [{ class_master_id: LAINNYA_ID }] }] as any,
       error: null,
     })
     const result = await createBatchCustomClass(['k1', 'k2'], 'CAI 2026')
     expect(insertClassWithMasterMapping).toHaveBeenCalledTimes(1)
-    expect(insertClassWithMasterMapping).toHaveBeenCalledWith(expect.anything(), 'k2', 'CAI 2026', 'm1')
+    expect(insertClassWithMasterMapping).toHaveBeenCalledWith(expect.anything(), 'k2', 'CAI 2026', LAINNYA_ID)
     expect(result.totalCreated).toBe(1)
     expect(result.totalSkipped).toBe(1)
   })
 
-  it('returns error when master find-or-create fails', async () => {
-    vi.mocked(findOrCreateCustomClassMaster).mockResolvedValue({ data: null, error: new Error('boom') } as any)
+  it('does NOT skip when kelompok has a different custom class sharing the same "Lainnya" master', async () => {
+    // k1 already has "Tahfidz" (also mapped to Lainnya) — must NOT block creating "CAI 2026" in k1
+    vi.mocked(fetchExistingClassesForKelompoks).mockResolvedValue({
+      data: [{ id: 'c1', name: 'Tahfidz', kelompok_id: 'k1', class_master_mappings: [{ class_master_id: LAINNYA_ID }] }] as any,
+      error: null,
+    })
+    const result = await createBatchCustomClass(['k1'], 'CAI 2026')
+    expect(insertClassWithMasterMapping).toHaveBeenCalledTimes(1)
+    expect(insertClassWithMasterMapping).toHaveBeenCalledWith(expect.anything(), 'k1', 'CAI 2026', LAINNYA_ID)
+    expect(result.totalCreated).toBe(1)
+    expect(result.totalSkipped).toBe(0)
+  })
+
+  it('returns error when "Lainnya" master lookup fails', async () => {
+    vi.mocked(getLainnyaClassMaster).mockResolvedValue({ data: null, error: new Error('boom') } as any)
     const result = await createBatchCustomClass(['k1'], 'CAI 2026')
     expect(result.success).toBe(false)
     expect(insertClassWithMasterMapping).not.toHaveBeenCalled()

@@ -5,27 +5,18 @@ export interface ClassMasterRef {
   name: string
 }
 
-export async function findOrCreateCustomClassMaster(
-  supabase: SupabaseClient,
-  name: string
-): Promise<{ data: ClassMasterRef | null; error: any }> {
-  const trimmedName = name.trim()
+const LAINNYA_MASTER_NAME = 'Lainnya'
 
+export async function getLainnyaClassMaster(
+  supabase: SupabaseClient
+): Promise<{ data: ClassMasterRef | null; error: any }> {
   const { data: existing } = await supabase
     .from('class_masters')
     .select('id, name')
-    .ilike('name', trimmedName)
+    .ilike('name', LAINNYA_MASTER_NAME)
     .maybeSingle()
 
   if (existing) return { data: existing, error: null }
 
-  const { data: created, error } = await supabase
-    .from('class_masters')
-    .insert({ name: trimmedName, category_group: 'custom' })
-    .select('id, name')
-    .single()
-
-  if (error || !created) return { data: null, error }
-
-  return { data: created, error: null }
+  return { data: null, error: new Error('Master kelas "Lainnya" tidak ditemukan') }
 }

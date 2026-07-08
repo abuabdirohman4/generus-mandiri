@@ -44,12 +44,19 @@ export function useKelasPage() {
     if (filters.daerah.length > 0) {
       result = result.filter(c => c.kelompok?.desa?.daerah_id && filters.daerah.includes(c.kelompok.desa.daerah_id))
     }
+    if (filters.kelas.length > 0) {
+      // DataFilter's Kelas option can be comma-separated IDs when the same
+      // class name spans multiple kelompok (e.g. "CAI 2026 (2 kelompok)")
+      const selectedClassIds = filters.kelas.flatMap(id => id.split(','))
+      result = result.filter(c => selectedClassIds.includes(c.id))
+    }
     
     return result
   }, [kelas, filters])
 
   return {
     classes: filteredClasses,
+    allClasses: kelas || [],
     isLoading,
     error,
     mutate,

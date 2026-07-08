@@ -11,11 +11,16 @@ describe('accessControlServer', () => {
 
         it('should allow admin to access specific admin features', () => {
             const profile = { id: '2', full_name: 'Admin', role: 'admin' }
-            const allowedFeatures = ['dashboard', 'organisasi', 'users', 'manage_class_masters', 'manage_classes']
+            const allowedFeatures = ['dashboard', 'organisasi', 'users', 'manage_classes']
 
             allowedFeatures.forEach(feature => {
                 expect(canAccessFeature(profile, feature)).toBe(true)
             })
+        })
+
+        it('should deny admin (any level) from managing class masters - superadmin only', () => {
+            const profile = { id: '2', full_name: 'Admin', role: 'admin' }
+            expect(canAccessFeature(profile, 'manage_class_masters')).toBe(false)
         })
 
         it('should deny admin from accessing unknown features', () => {

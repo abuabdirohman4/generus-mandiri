@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from 'react';
 import { useKelasPage } from '../hooks/useKelasPage';
 import { deleteClass } from '../actions/classes';
+import { deleteClassesBatch } from '../actions/batch-delete/actions';
 import { isSuperAdmin, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils';
 import Button from '@/components/ui/button/Button';
 import { PencilIcon, TrashBinIcon } from '@/lib/icons';
@@ -16,6 +18,7 @@ import { toast } from 'sonner';
 export default function ClassesKelompokTab() {
   const {
     classes,
+    allClasses,
     isLoading,
     mutate,
     userProfile,
@@ -34,6 +37,9 @@ export default function ClassesKelompokTab() {
     setFilters
   } = useKelasPage();
 
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
+  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const confirmDelete = async () => {
     if (!deleteConfirm.classItem) return;
@@ -54,6 +60,29 @@ export default function ClassesKelompokTab() {
     mutate(); // Refresh data after modal operations
   };
 
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      const result = await deleteClassesBatch(Array.from(selectedIds) as string[]);
+      await mutate();
+      setSelectedIds(new Set());
+      setIsBulkDeleteConfirmOpen(false);
+
+      if (result.totalDeleted > 0 && result.totalFailed === 0) {
+        toast.success(`${result.totalDeleted} kelas berhasil dihapus`);
+      } else if (result.totalDeleted > 0 && result.totalFailed > 0) {
+        toast.warning(`${result.totalDeleted} kelas dihapus, ${result.totalFailed} gagal (masih ada siswa/pertemuan terkait)`);
+      } else {
+        toast.error('Gagal menghapus kelas — masih ada siswa/pertemuan terkait');
+      }
+    } catch (error) {
+      console.error('Error bulk deleting classes:', error);
+      toast.error('Gagal menghapus kelas');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return <KelasTableSkeleton />;
   }
@@ -70,9 +99,9 @@ export default function ClassesKelompokTab() {
           daerahList={daerah || []}
           desaList={desa || []}
           kelompokList={kelompok || []}
-          classList={[]}
-          showKelas={false}
-          cascadeFilters={false}
+          classList={allClasses}
+          showKelas={true}
+          cascadeFilters={true}
         />
       )}
 
@@ -140,6 +169,27 @@ export default function ClassesKelompokTab() {
         }}
         searchPlaceholder="Cari kelas..."
         defaultItemsPerPage={10}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        renderBulkActions={(ids, clearSelection) => (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 dark:text-gray-300">{ids.size} kelas dipilih</span>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkDeleteConfirmOpen(true)}
+            >
+              Hapus Terpilih
+            </Button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-sm text-gray-500 hover:underline"
+            >
+              Batal
+            </button>
+          </div>
+        )}
       />
 
       {/* Modal */}
@@ -163,6 +213,19 @@ export default function ClassesKelompokTab() {
         cancelText="Batal"
         isDestructive={true}
         isLoading={false}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isBulkDeleteConfirmOpen}
+        onClose={() => setIsBulkDeleteConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Hapus Kelas Terpilih"
+        message={`Apakah Anda yakin ingin menghapus ${selectedIds.size} kelas terpilih? Kelas yang masih punya siswa/pertemuan terkait akan dilewati.`}
+        confirmText="Hapus"
+        cancelText="Batal"
+        isDestructive={true}
+        isLoading={isBulkDeleting}
       />
     </>
   );

@@ -295,6 +295,7 @@ export default function BatchStandardKelasModal({ isOpen, onClose, onSuccess }: 
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Kelas ini dibuat di tiap kelompok terpilih dengan nama yang sama.
+                  Master kelas yang dipakai: <span className="font-bold">"Lainnya"</span>.
                 </p>
               </div>
             ) : (

@@ -4,7 +4,9 @@ export function canAccessFeature(profile: UserProfile, feature: string): boolean
   if (profile.role === 'superadmin') return true;
   if (profile.role === 'admin') {
     // Admin can access all features but with filtered data
-    return ['dashboard', 'organisasi', 'users', 'manage_class_masters', 'manage_classes'].includes(feature);
+    // manage_class_masters is intentionally excluded — the 19 class masters are
+    // a fixed reference list, only superadmin may create/edit/delete them.
+    return ['dashboard', 'organisasi', 'users', 'manage_classes'].includes(feature);
   }
   return false;
 }

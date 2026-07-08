@@ -72,7 +72,9 @@ export default function ClassMastersTab() {
           { key: 'sort_order', label: 'No.', align: 'center' },
           { key: 'name', label: 'Nama Kelas', sortable: true },
           { key: 'description', label: 'Deskripsi' },
-          { key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }
+          ...(userProfile && isSuperAdmin(userProfile)
+            ? [{ key: 'actions', label: 'Aksi', width: '120px', align: 'center' as const }]
+            : [])
         ]}
         data={masters}
         renderCell={(column, master) => {
@@ -96,6 +98,7 @@ export default function ClassMastersTab() {
                 </div>
               );
             case 'actions':
+              if (!userProfile || !isSuperAdmin(userProfile)) return null;
               return (
                 <TableActions
                   actions={[

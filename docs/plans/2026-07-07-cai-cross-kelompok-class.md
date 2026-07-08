@@ -17,7 +17,8 @@ Tambahan: akses fitur assign ini juga dibuka ke **guru terpilih** (guru desa/dae
 
 ### Fakta yang sudah diverifikasi (DB + kode)
 
-- Kelas senama lintas kelompok **selalu berbagi tepat 1 `class_master_id`**, 0 baris tanpa master (dicek: 48 kelompok, distinct_masters=1). → `class_master_id` = kunci routing andal (jangan match by `name` text).
+- Kelas senama lintas kelompok **selalu berbagi tepat 1 `class_master_id`**, 0 baris tanpa master (dicek: 48 kelompok, distinct_masters=1). → `class_master_id` = kunci routing andal (jangan match by `name` text) **untuk kelas STANDAR (19 master fix)**.
+- **REVISI 2026-07-08 (sm-o9no fix):** kelas CUSTOM (dibuat via "Kelas Custom" tab) TIDAK bikin class_masters baru — semua custom class pakai master fix **"Lainnya"** (id tetap, `class_masters` selalu 19 row). Konsekuensi: `class_master_id` SAJA tidak cukup buat identifikasi "keluarga kelas" custom (CAI 2026 vs Tahfidz sama-sama masternya "Lainnya"). Routing utk kelas custom WAJIB kombinasi `class_master_id = Lainnya AND name = ?` (exact/case-insensitive match), bukan `class_master_id` doang. Kelas standar tetap cukup `class_master_id` saja.
 - RLS `classes` **sudah benar** untuk admin daerah/desa (policy "Users can view classes in their hierarchy" handle cabang daerah/desa/kelompok). Bug "dropdown kelas kosong" yang dilaporkan awal **tidak tereproduksi statis** — data kelas untuk admin daerah ada (ratusan baris). Bukan bug; nyeri sebenarnya = alur assign lintas-kelompok belum ada.
 - **`student_classes` RLS DISABLED** (dicek `pg_class.relrowsecurity=false`) — tak ada satupun policy. Artinya siapapun authenticated bisa insert; **tak ada guard per-kelompok dari DB**. → Guard `class.kelompok_id === student.kelompok_id` **WAJIB di server action** (bukan andalkan RLS). `student_enrollments` RLS enabled (autoEnroll admin sudah jalan).
 - Belum ada satupun jalur kode yang memvalidasi `class.kelompok_id === student.kelompok_id`. Wajib tambah guard di fitur baru.
@@ -50,8 +51,8 @@ Generalisasi `AssignStudentsModal` agar target = **keluarga kelas** (by `class_m
 - `MultiSelectCheckbox` (search + select-all built-in), `InputFilter`, `DataFilter`.
 
 **Perubahan:**
-1. Helper resolver baru (siswa/actions/classes atau lib): `resolveClassInKelompok(classMasterId, kelompokId) → classId | null` — query `class_master_mappings` JOIN `classes` WHERE `class_master_id = ? AND kelompok_id = ?`. Pakai **two-query pattern** (jangan nested PostgREST — silently fails, lihat CLAUDE.md & accessControlServer.ts:170).
-2. Action baru `assignStudentsToClassGroup(studentIds: string[], classMasterId: string)`:
+1. Helper resolver baru (siswa/actions/classes atau lib): `resolveClassInKelompok(classMasterId, kelompokId, className?) → classId | null` — query `class_master_mappings` JOIN `classes` WHERE `class_master_id = ? AND kelompok_id = ?`. **Untuk master "Lainnya" (custom), WAJIB tambah filter `AND name ILIKE className`** (banyak kelas custom beda nama share master yang sama — lihat revisi 2026-07-08 di atas). Untuk 18 master standar lain, `className` tidak perlu (class_master_id sudah unik per kelompok). Pakai **two-query pattern** (jangan nested PostgREST — silently fails, lihat CLAUDE.md & accessControlServer.ts:170).
+2. Action baru `assignStudentsToClassGroup(studentIds: string[], classMasterId: string, className?: string)` (`className` wajib diisi kalau `classMasterId` = "Lainnya"):
    - Ambil `kelompok_id` tiap siswa (query `students`).
    - Per siswa: `targetClassId = resolveClassInKelompok(classMasterId, student.kelompok_id)`.
      - Kalau null (kelas "CAI 2026" belum ada di kelompok itu) → masuk `skipped` dengan alasan, ATAU auto-create (putuskan saat eksekusi — default: skip + laporkan, suruh user jalankan Feature A dulu).
@@ -60,7 +61,7 @@ Generalisasi `AssignStudentsModal` agar target = **keluarga kelas** (by `class_m
    - Access gate: helper baru `canBulkAssignCrossKelompok(profile)` = `isAdmin || isTeacherDaerah || isTeacherDesa || permissions.can_bulk_assign_cross_kelompok` (mirror `canMultiKelompokLaporan` accessControl.ts:136 & `canManageIdCardTemplate`:95). Server-side pakai `getUserProfile` + cek. **Gate ini KRITIS** — `student_classes` RLS disabled, jadi cek akses di action = satu-satunya benteng.
    - Pakai `createClient()` (RLS-scoped) untuk admin & guru — insert `student_classes` boleh (RLS disabled). Untuk **membatasi scope** siswa/kelas yang boleh di-assign guru hierarkis: filter kandidat via `getTeacherAllowedClassIds` + `teacher_kelompok_access` (pola cabang teacher siswa/actions/classes/actions.ts:66) SEBELUM insert. Jangan andalkan RLS `student_classes` (tak ada).
 3. UI (modal baru `AssignStudentsCrossKelompokModal` atau extend existing):
-   - Target: `InputFilter` pilih **keluarga kelas** (list distinct `class_master` yang punya baris di scope, mis. "CAI 2026") — bukan pilih 1 kelas/1 kelompok.
+   - Target: `InputFilter` pilih **keluarga kelas** — untuk 18 master standar, list `class_master.name` biasa; untuk kelas custom, list **distinct `classes.name` yang mapping ke master "Lainnya"** di scope (bukan cuma "Lainnya" satu opsi — user pilih "CAI 2026" atau "Tahfidz" dst by nama). Kirim `classMasterId` + `className` (kalau custom) ke action.
    - Siswa: `MultiSelectCheckbox` semua siswa dalam scope daerah/desa (lintas kelompok), search + select-all. Tampilkan kelompok tiap siswa di label (biar jelas).
    - Submit → `assignStudentsToClassGroup`. Tampilkan hasil: X assigned, Y skipped (+alasan).
 4. Navigasi: kalau bikin halaman/route baru, WAJIB update 3 tempat — `AppSidebar.tsx allNavItems[]`, `home/components/QuickActions.tsx quickActions[]`, `AppHeader.tsx getPageTitle()` (lihat memory [[new-page-checklist]]). Kalau cuma modal di `/users/siswa`, tak perlu.
