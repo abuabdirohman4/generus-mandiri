@@ -13,6 +13,7 @@ export {
     deleteStudent,
     getStudentClasses,
     assignStudentsToClass,
+    assignStudentsToClassGroup,
     createStudentsBatch,
     getCurrentUserRole,
     getStudentInfo,

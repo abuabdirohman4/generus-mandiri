@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { useAssignStudentsStore } from '../stores/assignStudentsStore'
 import { useClasses } from '@/hooks/useClasses'
 import { useStudents } from '@/hooks/useStudents'
+import { useClassMasters } from '@/hooks/useClassMasters'
 import { assignStudentsToClass } from '../actions'
 import { useUserProfile } from '@/stores/userProfileStore'
 import {
@@ -20,6 +21,7 @@ import {
   modalShouldShowKelompokFilter,
   getAutoFilledOrgValues,
 } from '@/lib/userUtils'
+import { canBulkAssignCrossKelompok } from '@/lib/accessControl'
 import DataFilter, { type DataFilters } from '@/components/shared/DataFilter'
 import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
@@ -52,6 +54,7 @@ export default function AssignStudentsModal({
 
   const { classes, isLoading: classesLoading } = useClasses()
   const { students, isLoading: studentsLoading } = useStudents({ enabled: isOpen })
+  const { masters, isLoading: mastersLoading } = useClassMasters()
   const [isAssigning, setIsAssigning] = useState(false)
   const [studentsWithClasses, setStudentsWithClasses] = useState<Map<string, string[]>>(new Map())
   const { profile } = useUserProfile()
@@ -67,9 +70,18 @@ export default function AssignStudentsModal({
     kelompok: autoFilled.kelompok_id ? [autoFilled.kelompok_id] : [],
     kelas: [] as string[]
   })
+  const [studentOrgFilters, setStudentOrgFilters] = useState<DataFilters>({
+    daerah: autoFilled.daerah_id ? [autoFilled.daerah_id] : [],
+    desa: autoFilled.desa_id ? [autoFilled.desa_id] : [],
+    kelompok: autoFilled.kelompok_id ? [autoFilled.kelompok_id] : [],
+    kelas: [] as string[]
+  })
 
   const needsKelompok = !!profile && modalShouldShowKelompokFilter(profile) && !isAdminKelompok(profile) && !isTeacherKelompok(profile)
-  const kelompokReady = !needsKelompok || orgFilters.kelompok.length > 0
+  const canBulkAssign = canBulkAssignCrossKelompok(profile)
+  const kelompokReady = canBulkAssign || !needsKelompok || orgFilters.kelompok.length > 0
+  const [selectedMasterId, setSelectedMasterId] = useState<string>('')
+  const [customClassName, setCustomClassName] = useState('')
 
   // Load students' classes when class is selected - use existing classes from student data
   useEffect(() => {
@@ -102,10 +114,21 @@ export default function AssignStudentsModal({
     }
   }, [orgFilters.kelompok, kelompokFilteredClasses, selectedClassId, setSelectedClassId])
 
-  // Filter students based on search query and class filter
+  // Filter students based on search query, class filter, and org filters
   const filteredStudents = useMemo(() => {
     let filtered = students || []
     
+    // Apply org filters (daerah, desa, kelompok)
+    if (studentOrgFilters.daerah.length > 0) {
+      filtered = filtered.filter(student => studentOrgFilters.daerah.includes(student.daerah_id!))
+    }
+    if (studentOrgFilters.desa.length > 0) {
+      filtered = filtered.filter(student => studentOrgFilters.desa.includes(student.desa_id!))
+    }
+    if (studentOrgFilters.kelompok.length > 0) {
+      filtered = filtered.filter(student => studentOrgFilters.kelompok.includes(student.kelompok_id!))
+    }
+
     // Apply search query filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
@@ -124,7 +147,7 @@ export default function AssignStudentsModal({
     }
     
     return filtered
-  }, [students, searchQuery, filterClassId])
+  }, [students, searchQuery, filterClassId, studentOrgFilters])
 
   // Filter out students already in selected class
   const availableStudents = useMemo(() => {
@@ -135,10 +158,37 @@ export default function AssignStudentsModal({
     })
   }, [filteredStudents, selectedClassId, studentsWithClasses])
 
+  // Get unique "Lainnya" class names available in the user's scope
+  const lainnyaClassNames = useMemo(() => {
+    if (!classes) return []
+    const names = new Set<string>()
+    classes.forEach(c => {
+      const hasLainnyaMaster = c.class_master_mappings?.some(
+        m => m.class_master?.name === 'Lainnya'
+      )
+      if (hasLainnyaMaster) {
+        names.add(c.name)
+      }
+    })
+    return Array.from(names).sort()
+  }, [classes])
+
   const handleAssign = async () => {
-    if (!selectedClassId) {
-      toast.error('Pilih kelas terlebih dahulu')
-      return
+    if (canBulkAssign) {
+      if (!selectedMasterId) {
+        toast.error('Pilih keluarga kelas tujuan')
+        return
+      }
+      const selectedMaster = masters.find(m => m.id === selectedMasterId)
+      if (selectedMaster?.name === 'Lainnya' && !customClassName.trim()) {
+        toast.error('Masukkan nama kelas tujuan')
+        return
+      }
+    } else {
+      if (!selectedClassId) {
+        toast.error('Pilih kelas terlebih dahulu')
+        return
+      }
     }
 
     if (selectedStudentIds.length === 0) {
@@ -149,19 +199,44 @@ export default function AssignStudentsModal({
     setIsAssigning(true)
 
     try {
-      const result = await assignStudentsToClass(selectedStudentIds, selectedClassId)
+      let result
+      if (canBulkAssign) {
+        const { assignStudentsToClassGroup } = await import('../actions')
+        const selectedMaster = masters.find(m => m.id === selectedMasterId)
+        const isLainnya = selectedMaster?.name === 'Lainnya'
+        result = await assignStudentsToClassGroup(
+          selectedStudentIds,
+          isLainnya ? 'Lainnya' : selectedMasterId,
+          isLainnya ? customClassName.trim() : undefined
+        )
+      } else {
+        result = await assignStudentsToClass(selectedStudentIds, selectedClassId)
+      }
       
       if (result.success && result.data) {
-        if (result.data.skipped.length > 0) {
-          toast.warning(`${result.data.assigned} siswa berhasil diassign, ${result.data.skipped.length} siswa sudah ada di kelas ini`)
+        if (result.data.skipped && result.data.skipped.length > 0) {
+          const alreadyExistsCount = result.data.skipped.filter((s: any) => s.reason.includes('Sudah berada di kelas ini')).length
+          const missingClassCount = result.data.skipped.filter((s: any) => s.reason.includes('tidak ditemukan')).length
+          const otherCount = result.data.skipped.length - alreadyExistsCount - missingClassCount
+
+          let messages = result.data.assigned > 0
+            ? [`${result.data.assigned} siswa berhasil diassign.`]
+            : ['Gagal melakukan assign.']
+          if (alreadyExistsCount > 0) messages.push(`${alreadyExistsCount} siswa sudah ada di kelas ini.`)
+          if (missingClassCount > 0) messages.push(`${missingClassCount} siswa dilewati karena kelas tujuan belum dibuat di kelompoknya.`)
+          if (otherCount > 0) messages.push(`${otherCount} siswa gagal diproses.`)
+
+          toast.warning(messages.join(' '))
         } else {
           toast.success(`${result.data.assigned} siswa berhasil diassign ke kelas`)
         }
-        closeModal()
-        // Trigger refresh dengan delay untuk memastikan data sudah diupdate
-        setTimeout(() => {
-          onSuccess?.()
-        }, 500)
+        if (result.data.assigned > 0) {
+          closeModal()
+          // Trigger refresh dengan delay untuk memastikan data sudah diupdate
+          setTimeout(() => {
+            onSuccess?.()
+          }, 500)
+        }
       } else {
         toast.error(result.message || 'Terjadi kesalahan')
       }
@@ -184,6 +259,14 @@ export default function AssignStudentsModal({
       kelompok: autoFilledOnClose.kelompok_id ? [autoFilledOnClose.kelompok_id] : [],
       kelas: [] as string[]
     })
+    setStudentOrgFilters({
+      daerah: autoFilledOnClose.daerah_id ? [autoFilledOnClose.daerah_id] : [],
+      desa: autoFilledOnClose.desa_id ? [autoFilledOnClose.desa_id] : [],
+      kelompok: autoFilledOnClose.kelompok_id ? [autoFilledOnClose.kelompok_id] : [],
+      kelas: [] as string[]
+    })
+    setSelectedMasterId('')
+    setCustomClassName('')
     onClose()
   }
 
@@ -191,7 +274,7 @@ export default function AssignStudentsModal({
   const allFilteredSelected = availableStudents.length > 0 && 
     availableStudents.every(s => selectedStudentIds.includes(s.id))
 
-  if (classesLoading || studentsLoading) {
+  if (classesLoading || studentsLoading || (canBulkAssign && mastersLoading)) {
     return (
       <Modal isOpen={isOpen} onClose={handleClose} className="max-w-4xl m-4">
         <div className="p-6">
@@ -212,50 +295,95 @@ export default function AssignStudentsModal({
       <div className="space-y-6">
         {/* Step 1: Pilih Kelas (with org selector for non-kelompok roles) */}
         <div>
-          {profile && !isAdminKelompok(profile) && !isTeacherKelompok(profile) && (
-            <DataFilter
-              filters={orgFilters}
-              onFilterChange={setOrgFilters}
-              userProfile={profile}
-              daerahList={daerah}
-              desaList={desa}
-              kelompokList={kelompok}
-              classList={classes}
-              showDaerah={shouldShowDaerahFilter(profile)}
-              showDesa={modalShouldShowDesaFilter(profile)}
-              showKelompok={modalShouldShowKelompokFilter(profile)}
-              showKelas={false}
-              variant="modal"
-              compact={true}
-              hideAllOption={true}
-              cascadeFilters={true}
-            />
-          )}
-          <InputFilter
-            id="classId"
-            label="Pilih Kelas Tujuan"
-            value={selectedClassId}
-            onChange={setSelectedClassId}
-            options={kelompokFilteredClasses.map((cls) => ({
-              value: cls.id,
-              label: orgFilters.kelompok.length > 0
-                ? cls.name
-                : `${cls.name}${cls.kelompok?.name ? ` - ${cls.kelompok.name}` : ''}`,
-            }))}
-            allOptionLabel="Pilih kelas"
-            widthClassName="!max-w-full"
-            className='mt-6'
-            variant="modal"
-          />
-          {selectedClass && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Siswa yang sudah ada di kelas <strong>{selectedClass.name}</strong> tidak akan ditampilkan
-            </p>
+          {canBulkAssign ? (
+            <div className="mt-6">
+              <InputFilter
+                id="classMasterId"
+                label="Pilih Kelas Tujuan"
+                value={selectedMasterId}
+                onChange={setSelectedMasterId}
+                options={masters.map((m) => ({
+                  value: m.id,
+                  label: m.name,
+                }))}
+                allOptionLabel="Pilih kelas"
+                widthClassName="!max-w-full"
+                variant="modal"
+              />
+              
+              {masters.find(m => m.id === selectedMasterId)?.name === 'Lainnya' && (
+                <div className="mt-4">
+                  <InputFilter
+                    id="customClassName"
+                    label="Pilih Kelas Lainnya"
+                    value={customClassName}
+                    onChange={setCustomClassName}
+                    options={lainnyaClassNames.map(name => ({
+                      value: name,
+                      label: name,
+                    }))}
+                    allOptionLabel="Pilih Kelas Lainnya"
+                    widthClassName="!max-w-full"
+                    variant="modal"
+                  />
+                  {lainnyaClassNames.length === 0 && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-2 font-medium">
+                      Belum ada kelas custom (Lainnya) yang tersedia di wilayah Anda. Buat kelas di menu Kelas terlebih dahulu.
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Siswa yang dipilih akan dimasukkan ke kelas ini di kelompok masing-masing. Jika kelas tidak ditemukan di kelompok siswa, siswa tersebut akan dilewati (skip).
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {profile && !isAdminKelompok(profile) && !isTeacherKelompok(profile) && (
+                <DataFilter
+                  filters={orgFilters}
+                  onFilterChange={setOrgFilters}
+                  userProfile={profile}
+                  daerahList={daerah}
+                  desaList={desa}
+                  kelompokList={kelompok}
+                  classList={classes}
+                  showDaerah={shouldShowDaerahFilter(profile)}
+                  showDesa={modalShouldShowDesaFilter(profile)}
+                  showKelompok={modalShouldShowKelompokFilter(profile)}
+                  showKelas={false}
+                  variant="modal"
+                  compact={true}
+                  cascadeFilters={true}
+                />
+              )}
+              <InputFilter
+                id="classId"
+                label="Pilih Kelas Tujuan"
+                value={selectedClassId}
+                onChange={setSelectedClassId}
+                options={kelompokFilteredClasses.map((cls) => ({
+                  value: cls.id,
+                  label: orgFilters.kelompok.length > 0
+                    ? cls.name
+                    : `${cls.name}${cls.kelompok?.name ? ` - ${cls.kelompok.name}` : ''}`,
+                }))}
+                allOptionLabel="Pilih kelas"
+                widthClassName="!max-w-full"
+                className='mt-6'
+                variant="modal"
+              />
+              {selectedClass && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                  Siswa yang sudah ada di kelas <strong>{selectedClass.name}</strong> tidak akan ditampilkan
+                </p>
+              )}
+            </>
           )}
         </div>
 
         {/* Step 2: Pilih Siswa dengan Search */}
-        {selectedClassId && (
+        {(selectedClassId || canBulkAssign) && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label>Pilih Siswa</Label>
@@ -272,6 +400,26 @@ export default function AssignStudentsModal({
                 </Button>
               )}
             </div>
+
+            {/* Student Org Filters for non-kelompok roles */}
+            {profile && !isAdminKelompok(profile) && !isTeacherKelompok(profile) && (
+              <div className="mb-4">
+                <DataFilter
+                  filters={studentOrgFilters}
+                  onFilterChange={setStudentOrgFilters}
+                  userProfile={profile}
+                  daerahList={daerah}
+                  desaList={desa}
+                  kelompokList={kelompok}
+                  showDaerah={shouldShowDaerahFilter(profile)}
+                  showDesa={modalShouldShowDesaFilter(profile)}
+                  showKelompok={modalShouldShowKelompokFilter(profile)}
+                  showKelas={false}
+                  variant="modal"
+                  compact={true}
+                  cascadeFilters={true} classList={[]}                />
+              </div>
+            )}
 
             {/* Search Input */}
             <div className="mb-4">
@@ -335,6 +483,18 @@ export default function AssignStudentsModal({
                             {student.gender} • {currentClasses.length > 0 
                               ? `Kelas: ${currentClasses.map(c => c.name).join(', ')}`
                               : 'Tidak ada kelas'}
+                            
+                            {/* Org info depending on role */}
+                            {profile && modalShouldShowKelompokFilter(profile) && (
+                              <span className="text-gray-400">
+                                {' • '}
+                                {modalShouldShowDesaFilter(profile) ? (
+                                  `${student.desa_name || 'Tanpa Desa'} - ${student.kelompok_name || 'Tanpa Kelompok'}`
+                                ) : (
+                                  `${student.kelompok_name || 'Tanpa Kelompok'}`
+                                )}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </label>
@@ -363,7 +523,14 @@ export default function AssignStudentsModal({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedClassId || selectedStudentIds.length === 0 || isAssigning || !kelompokReady}
+            disabled={
+              (!canBulkAssign && !selectedClassId) || 
+              (canBulkAssign && !selectedMasterId) || 
+              (canBulkAssign && masters.find(m => m.id === selectedMasterId)?.name === 'Lainnya' && !customClassName.trim()) || 
+              selectedStudentIds.length === 0 || 
+              isAssigning || 
+              !kelompokReady
+            }
           >
             {isAssigning ? 'Mengassign...' : `Assign ${selectedStudentIds.length} Siswa`}
           </Button>

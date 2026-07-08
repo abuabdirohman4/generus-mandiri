@@ -394,7 +394,7 @@ export default function DataTable({
             <thead className={`bg-gray-100 dark:bg-gray-700 ${headerClassName}`}>
               <tr>
                 {selectable && (
-                  <th className="px-2 sm:px-6 py-4 w-[48px]">
+                  <th className="px-2 sm:px-6 py-4 w-12">
                     <Checkbox checked={isAllSelected} onChange={handleToggleAll} />
                   </th>
                 )}

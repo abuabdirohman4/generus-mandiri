@@ -7,6 +7,8 @@ export interface BatchStudent {
   name: string
   gender: string
   error?: string
+  kelompok_id?: string
+  desa_id?: string
 }
 
 interface BatchImportState {
@@ -19,6 +21,9 @@ interface BatchImportState {
   // Configuration
   batchSize: number // 1-20
   selectedClassId: string
+  selectedMasterId: string
+  customClassName: string
+  isBulkAssign: boolean
   
   // Students data
   students: BatchStudent[]
@@ -32,6 +37,9 @@ interface BatchImportState {
   setCurrentStep: (step: number) => void
   setBatchSize: (size: number) => void
   setSelectedClassId: (classId: string) => void
+  setSelectedMasterId: (masterId: string) => void
+  setCustomClassName: (name: string) => void
+  setIsBulkAssign: (isBulk: boolean) => void
   setStudents: (students: BatchStudent[]) => void
   addStudent: (student: BatchStudent) => void
   updateStudent: (id: string, updates: Partial<BatchStudent>) => void
@@ -56,6 +64,9 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
   currentStep: 1,
   batchSize: 5,
   selectedClassId: '',
+  selectedMasterId: '',
+  customClassName: '',
+  isBulkAssign: false,
   students: [],
   importProgress: 0,
   isImporting: false,
@@ -65,6 +76,9 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
   setCurrentStep: (step) => set({ currentStep: step }),
   setBatchSize: (size) => set({ batchSize: Math.max(0, Math.min(20, size)) }),
   setSelectedClassId: (classId) => set({ selectedClassId: classId }),
+  setSelectedMasterId: (masterId) => set({ selectedMasterId: masterId }),
+  setCustomClassName: (name) => set({ customClassName: name }),
+  setIsBulkAssign: (isBulk) => set({ isBulkAssign: isBulk }),
   setStudents: (students) => set({ students }),
   addStudent: (student) => set((state) => ({ students: [...state.students, student] })),
   updateStudent: (id, updates) => set((state) => ({
@@ -87,6 +101,9 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
     currentStep: 1,
     batchSize: 5,
     selectedClassId: '',
+    selectedMasterId: '',
+    customClassName: '',
+    isBulkAssign: false,
     students: [],
     importProgress: 0,
     isImporting: false
@@ -97,6 +114,9 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
     currentStep: 1,
     batchSize: 5,
     selectedClassId: '',
+    selectedMasterId: '',
+    customClassName: '',
+    isBulkAssign: false,
     students: [],
     importProgress: 0,
     isImporting: false
@@ -106,6 +126,9 @@ export const useBatchImportStore = create<BatchImportState>((set, get) => ({
     currentStep: 1,
     batchSize: 5,
     selectedClassId: '',
+    selectedMasterId: '',
+    customClassName: '',
+    isBulkAssign: false,
     students: [],
     importProgress: 0,
     isImporting: false

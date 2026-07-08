@@ -21,6 +21,8 @@ import type { UserProfile } from '@/types/user'
 import type { DaerahBase, DesaBase, KelompokBase } from '@/types/organization'
 import DataFilter from '@/components/shared/DataFilter'
 import type { DataFilters } from '@/components/shared/DataFilter'
+import { canBulkAssignCrossKelompok } from '@/lib/accessControl'
+import { useClassMasters } from '@/hooks/useClassMasters'
 
 interface Step1ConfigProps {
   userProfile: UserProfile | null | undefined
@@ -38,7 +40,21 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
     selectedClassId,
     setBatchSize,
     setSelectedClassId,
+    selectedMasterId,
+    customClassName,
+    setSelectedMasterId,
+    setCustomClassName,
+    isBulkAssign,
+    setIsBulkAssign
   } = useBatchImportStore()
+
+  const { masters } = useClassMasters()
+  const canBulkAssign = canBulkAssignCrossKelompok(userProfile)
+  
+  // Initialize isBulkAssign based on permission
+  useEffect(() => {
+    setIsBulkAssign(canBulkAssign)
+  }, [canBulkAssign, setIsBulkAssign])
 
   const showKelompokInLabel = userProfile ? isAdminDesa(userProfile) : false
 
@@ -58,9 +74,21 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
   }, [userProfile, selectedClassId, setSelectedClassId])
 
   const handleNext = () => {
-    if (!selectedClassId) {
-      toast.error('Pilih kelas terlebih dahulu')
-      return
+    if (isBulkAssign) {
+      if (!selectedMasterId) {
+        toast.error('Pilih keluarga kelas tujuan')
+        return
+      }
+      const selectedMaster = masters.find(m => m.id === selectedMasterId)
+      if (selectedMaster?.name === 'Lainnya' && !customClassName.trim()) {
+        toast.error('Masukkan nama kelas custom')
+        return
+      }
+    } else {
+      if (!selectedClassId) {
+        toast.error('Pilih kelas terlebih dahulu')
+        return
+      }
     }
 
     if (batchSize < 1 || batchSize > 20) {
@@ -104,8 +132,23 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
     }
   }, [filters.kelompok, availableClasses, selectedClassId, setSelectedClassId])
 
+  // Get unique "Lainnya" class names available in the user's scope
+  const lainnyaClassNames = useMemo(() => {
+    if (!classes) return []
+    const names = new Set<string>()
+    classes.forEach(c => {
+      const hasLainnyaMaster = c.class_master_mappings?.some(
+        (m: any) => m.class_master?.name === 'Lainnya'
+      )
+      if (hasLainnyaMaster) {
+        names.add(c.name)
+      }
+    })
+    return Array.from(names).sort()
+  }, [classes])
+
   const needsKelompok = !!userProfile && modalShouldShowKelompokFilter(userProfile) && !isAdminKelompok(userProfile) && !isTeacherKelompok(userProfile)
-  const kelompokReady = !needsKelompok || filters.kelompok.length > 0
+  const kelompokReady = isBulkAssign || !needsKelompok || filters.kelompok.length > 0
 
   return (
     <div className="space-y-6">
@@ -152,7 +195,7 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
       </div>
 
       {/* Org Selector (Daerah → Desa → Kelompok) */}
-      {userProfile && !isAdminKelompok(userProfile) && !isTeacherKelompok(userProfile) && (
+      {!isBulkAssign && userProfile && !isAdminKelompok(userProfile) && !isTeacherKelompok(userProfile) && (
         <DataFilter
           filters={filters}
           onFilterChange={setFilters}
@@ -167,14 +210,76 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
           showKelas={false}
           variant="modal"
           compact={true}
-          hideAllOption={true}
           cascadeFilters={true}
         />
       )}
 
-      {/* Class Selection */}
-      <div>
-        <InputFilter
+      {/* Class/Master Selection */}
+      <div className="space-y-4">
+        {canBulkAssign && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <input
+              type="checkbox"
+              id="isBulkAssignMode"
+              checked={isBulkAssign}
+              onChange={(e) => setIsBulkAssign(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded border-gray-300"
+            />
+            <label htmlFor="isBulkAssignMode" className="text-sm text-blue-900 dark:text-blue-100 font-medium cursor-pointer">
+              Assign Lintas Kelompok
+            </label>
+          </div>
+        )}
+
+        {isBulkAssign ? (
+          <div className="space-y-4">
+            <InputFilter
+              id="masterClassId"
+              label="Pilih Kelas Tujuan"
+              value={selectedMasterId}
+              onChange={(value) => setSelectedMasterId(value)}
+              options={masters
+                .filter(m => m.name !== 'Lainnya')
+                .map((m) => ({ value: m.id, label: m.name }))
+                // Append 'Lainnya' at the end
+                .concat(
+                  masters
+                    .filter(m => m.name === 'Lainnya')
+                    .map(m => ({ value: m.id, label: m.name }))
+                )}
+              allOptionLabel="Pilih kelas"
+              widthClassName="!max-w-full"
+              variant="modal"
+            />
+            {masters.find(m => m.id === selectedMasterId)?.name === 'Lainnya' && (
+              <div className="mt-4">
+                <InputFilter
+                  id="customClassName"
+                  label="Pilih Kelas Lainnya"
+                  value={customClassName}
+                  onChange={setCustomClassName}
+                  options={lainnyaClassNames.map(name => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  allOptionLabel="Pilih Kelas Lainnya"
+                  widthClassName="!max-w-full"
+                  variant="modal"
+                />
+                {lainnyaClassNames.length === 0 && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-2 font-medium">
+                    Belum ada kelas custom (Lainnya) yang tersedia di wilayah Anda. Buat kelas di menu Kelas terlebih dahulu.
+                  </p>
+                )}
+              </div>
+            )}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Siswa akan dimasukkan ke kelas ini di kelompok masing-masing (dipilih di langkah selanjutnya).
+            </p>
+          </div>
+        ) : (
+          <div>
+            <InputFilter
           id="classId"
           label="Kelas"
           value={selectedClassId}
@@ -195,12 +300,14 @@ export default function Step1Config({ userProfile, classes, daerah, desa, kelomp
           </p>
         )}
       </div>
+      )}
+      </div>
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-4">
         <Button
           onClick={handleNext}
-          disabled={!selectedClassId || batchSize < 1 || !kelompokReady}
+          disabled={(isBulkAssign ? (!selectedMasterId) : (!selectedClassId)) || batchSize < 1 || !kelompokReady}
           className="px-4 py-2"
         >
           Selanjutnya

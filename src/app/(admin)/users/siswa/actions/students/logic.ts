@@ -167,7 +167,7 @@ export function buildStudentHierarchy(
         daerah_id: string | null
         role: string
     },
-    kelompokId?: string,
+    kelompokId?: string | null,
     kelompokData?: {
         id: string
         desa_id: string
@@ -176,17 +176,35 @@ export function buildStudentHierarchy(
             daerah_id: string
             daerah?: { id: string }
         }
-    }
+    } | null
 ): {
     kelompok_id: string | null
     desa_id: string | null
     daerah_id: string | null
 } {
-    if (kelompokId && kelompokData) {
-        if (userProfile.role === 'admin' && userProfile.desa_id && !userProfile.kelompok_id) {
-            const kelompokDesa = Array.isArray(kelompokData.desa) ? (kelompokData.desa as any)[0] : kelompokData.desa
-            if (kelompokDesa?.id !== userProfile.desa_id) {
-                throw new Error('Kelompok tidak berada di desa Anda')
+    if (kelompokId) {
+        if (!kelompokData) {
+            throw new Error('Data kelompok tidak ditemukan')
+        }
+
+        if (userProfile.role !== 'superadmin') {
+            if (userProfile.kelompok_id) {
+                if (kelompokId !== userProfile.kelompok_id) {
+                    throw new Error('Kelompok tidak sesuai dengan profil Anda')
+                }
+            } else if (userProfile.desa_id) {
+                const kelompokDesa = Array.isArray(kelompokData.desa) ? (kelompokData.desa as any)[0] : kelompokData.desa
+                if (kelompokDesa?.id !== userProfile.desa_id) {
+                    throw new Error('Kelompok tidak berada di desa Anda')
+                }
+            } else if (userProfile.daerah_id) {
+                const desa = Array.isArray(kelompokData.desa) ? (kelompokData.desa as any)[0] : kelompokData.desa
+                const daerah = Array.isArray(desa?.daerah) ? desa?.daerah[0] : desa?.daerah
+                if (daerah?.id !== userProfile.daerah_id) {
+                    throw new Error('Kelompok tidak berada di daerah Anda')
+                }
+            } else {
+                throw new Error('Akses ditolak: profil tidak memiliki cakupan akses yang valid')
             }
         }
 

@@ -36,7 +36,7 @@ export async function fetchClassMasterMappings(
     const masterIds = [...new Set(relevantMappings.map((m: any) => m.class_master_id))]
     const { data: masters } = await supabase
         .from('class_masters')
-        .select('id, sort_order, category_group')
+        .select('id, name, sort_order, category_group')
         .in('id', masterIds)
 
     if (!masters) return classMappings
@@ -125,4 +125,78 @@ export async function fetchClassesHierarchical(
         .from('classes')
         .select('id, name, kelompok_id, kelompok:kelompok_id(id, name, desa_id)')
         .in('kelompok_id', kelompokIds)
+}
+
+export async function resolveClassInKelompok(
+    supabase: SupabaseClient,
+    classMasterId: string,
+    kelompokId: string,
+    className?: string
+): Promise<string | null> {
+    // Special case for 'Lainnya' custom classes where we route by exact name
+    if (classMasterId === 'Lainnya') {
+        if (!className) return null
+        
+        // Find the Lainnya master ID first
+        const { data: master } = await supabase
+            .from('class_masters')
+            .select('id')
+            .ilike('name', 'Lainnya')
+            .limit(1)
+            
+        if (!master || master.length === 0) return null
+        const lainnyaId = master[0].id
+        
+        // Get mapped classes for Lainnya
+        const { data: mappings } = await supabase
+            .from('class_master_mappings')
+            .select('class_id')
+            .eq('class_master_id', lainnyaId)
+            
+        if (!mappings || mappings.length === 0) return null
+        const mappedClassIds = mappings.map((m: any) => m.class_id)
+        if (mappedClassIds.length === 0) return null
+        
+        const { data: classes } = await supabase
+            .from('classes')
+            .select('id')
+            .in('id', mappedClassIds)
+            .eq('kelompok_id', kelompokId)
+            .ilike('name', className)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            
+        if (!classes || classes.length === 0) return null
+        return classes[0].id
+    }
+
+    // Step 1: Get all class_ids mapped to this master
+    const { data: mappings } = await supabase
+        .from('class_master_mappings')
+        .select('class_id')
+        .eq('class_master_id', classMasterId)
+        
+    if (!mappings || mappings.length === 0) return null
+    
+    const classIds = mappings.map((m: any) => m.class_id)
+    if (classIds.length === 0) return null
+    
+    // Step 2: Find the specific class in the target kelompok
+    let query = supabase
+        .from('classes')
+        .select('id')
+        .in('id', classIds)
+        .eq('kelompok_id', kelompokId)
+        
+    if (className) {
+        // Custom classes share the same master, so we must filter by exact name
+        query = query.ilike('name', className)
+    }
+    
+    const { data: classes } = await query
+        .order('created_at', { ascending: true })
+        .limit(1)
+    
+    if (!classes || classes.length === 0) return null
+    return classes[0].id
 }

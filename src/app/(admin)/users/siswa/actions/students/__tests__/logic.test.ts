@@ -173,7 +173,7 @@ describe('buildStudentHierarchy', () => {
             desa: { id: 'd1', daerah_id: 'da1', daerah: { id: 'da1' } },
         }
         const result = buildStudentHierarchy(
-            { ...userProfile, desa_id: null, kelompok_id: null },
+            { ...userProfile, desa_id: null, kelompok_id: null, daerah_id: 'da1' },
             'k1',
             kelompokData
         )

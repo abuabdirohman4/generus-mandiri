@@ -116,6 +116,20 @@ export function canSendNotification(profile: UserProfile): boolean {
   return isSuperAdmin || isAdminDaerah
 }
 
+export function canBulkAssignCrossKelompok(profile: UserProfile | null | undefined): boolean {
+  if (!profile) return false
+  const isSuperAdmin = profile.role === 'superadmin'
+  const isAdminDaerah = profile.role === 'admin' && !!profile.daerah_id && !profile.desa_id
+  const isAdminDesa = profile.role === 'admin' && !!profile.desa_id && !profile.kelompok_id
+  const isTeacherDaerah = profile.role === 'teacher' && !!profile.daerah_id && !profile.desa_id && !profile.kelompok_id
+  const isTeacherDesa = profile.role === 'teacher' && !!profile.desa_id && !profile.kelompok_id
+
+  if (isSuperAdmin || isAdminDaerah || isAdminDesa) return true
+  if (isTeacherDaerah || isTeacherDesa) return true
+  
+  return profile.permissions?.can_bulk_assign_cross_kelompok === true
+}
+
 /**
  * Get restricted class IDs for a teacher based on teacher_class_masters.
  * Optionally filters by hierarchy if a profile is provided.

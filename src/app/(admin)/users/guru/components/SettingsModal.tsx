@@ -31,6 +31,7 @@ interface TeacherPermissions {
   can_hard_delete_students?: boolean
   can_multi_kelompok_laporan?: boolean
   can_manage_check_time?: boolean
+  can_bulk_assign_cross_kelompok?: boolean
 }
 
 interface SettingsModalProps {
@@ -57,7 +58,8 @@ const DEFAULT_PERMISSIONS: TeacherPermissions = {
   can_archive_students: false,
   can_transfer_students: false,
   can_soft_delete_students: false,
-  can_hard_delete_students: false
+  can_hard_delete_students: false,
+  can_bulk_assign_cross_kelompok: false
 }
 
 export default function SettingsModal({
@@ -394,6 +396,27 @@ export default function SettingsModal({
                     />
                     <span className="ml-2 text-sm text-red-600 dark:text-red-400 font-medium">
                       Hapus Permanen (Hard Delete - Tidak dapat dikembalikan)
+                    </span>
+                  </label>
+                )}
+
+                {(userProfile?.role === 'superadmin' || (userProfile?.role === 'admin' && !userProfile.desa_id)) && (
+                  <label className="flex items-start gap-3 cursor-pointer group mt-4">
+                    <input
+                      type="checkbox"
+                      checked={permissions.can_bulk_assign_cross_kelompok}
+                      onChange={(e) => setPermissions(prev => ({
+                        ...prev,
+                        can_bulk_assign_cross_kelompok: e.target.checked
+                      }))}
+                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      disabled={isSaving}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                      Bulk Assign Lintas Kelompok
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
+                        Izinkan guru ini memasukkan banyak siswa sekaligus ke kelas lintas kelompok dalam satu daerah/desa.
+                      </span>
                     </span>
                   </label>
                 )}

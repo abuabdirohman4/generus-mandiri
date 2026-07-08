@@ -9,8 +9,9 @@ import {
     type UserProfile,
     type Student as StudentPermission,
 } from './permissions'
-import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
+import { getTeacherAllowedClassIds, canBulkAssignCrossKelompok } from '@/lib/accessControlServer'
 import type { StudentWithClasses } from '@/types/student'
+import { fetchClassesHierarchical, resolveClassInKelompok } from '../classes/queries'
 import {
     fetchAllStudents,
     fetchStudentsByIds,
@@ -104,10 +105,12 @@ export async function getUserProfile() {
         const { data: profile } = await supabase
             .from('profiles')
             .select(`
+        id,
         role,
         kelompok_id,
         desa_id,
         daerah_id,
+        permissions,
         teacher_classes!teacher_classes_teacher_id_fkey(
           class_id,
           classes:class_id(id, name)
@@ -124,10 +127,12 @@ export async function getUserProfile() {
         }
 
         return {
+            id: profile.id,
             role: profile.role,
             kelompok_id: profile.kelompok_id,
             desa_id: profile.desa_id,
             daerah_id: profile.daerah_id,
+            permissions: profile.permissions,
             class_id: classesData[0]?.id || null,
             class_name: classesData[0]?.name || null,
             classes: classesData
@@ -790,6 +795,52 @@ export async function getStudentClasses(studentId: string): Promise<Array<{ id: 
 }
 
 /**
+ * Helper: Validate student scope securely and efficiently (avoids N+1 group queries)
+ */
+async function filterAllowedStudents(adminClient: any, profile: any, students: any[]) {
+    const allowedStudentIds = new Set<string>()
+    const skipped: Array<{ studentName: string, reason: string }> = []
+    
+    if (profile.role === 'superadmin') {
+        students.forEach(s => allowedStudentIds.add(s.id))
+        return { allowedStudentIds, skipped }
+    }
+
+    // Group by kelompok_id to avoid N+1 queries
+    const kelompokIds = Array.from(new Set(students.map(s => s.kelompok_id).filter(Boolean)))
+    let kelompokDataMap = new Map<string, any>()
+    
+    if (kelompokIds.length > 0) {
+        const { data: kelompokRows, error: kelompokError } = await adminClient
+            .from('kelompok')
+            .select('id, desa_id, desa:desa_id(id, daerah_id, daerah:daerah_id(id))')
+            .in('id', kelompokIds)
+            
+        if (kelompokError) {
+            throw new Error('Gagal memuat data kelompok untuk validasi akses')
+        }
+        
+        kelompokRows?.forEach((row: any) => kelompokDataMap.set(row.id, row))
+    }
+
+    for (const student of students) {
+        if (!student.kelompok_id) {
+            skipped.push({ studentName: student.name, reason: 'Siswa belum memiliki kelompok' })
+            continue
+        }
+        try {
+            const kelompokData = kelompokDataMap.get(student.kelompok_id)
+            buildStudentHierarchy(profile, student.kelompok_id, kelompokData)
+            allowedStudentIds.add(student.id)
+        } catch(e: any) {
+            skipped.push({ studentName: student.name, reason: e.message || 'Siswa di luar cakupan akses Anda' })
+        }
+    }
+    
+    return { allowedStudentIds, skipped }
+}
+
+/**
  * Assign siswa yang sudah ada ke kelas tertentu (batch)
  */
 export async function assignStudentsToClass(
@@ -799,26 +850,58 @@ export async function assignStudentsToClass(
     try {
         const supabase = await createClient()
 
-        await getUserProfile()
+        const profile = await getUserProfile()
 
         const { data: classData, error: classError } = await supabase
             .from('classes')
-            .select('id, name')
+            .select('id, name, kelompok_id')
             .eq('id', classId)
             .single()
 
         if (classError || !classData) throw new Error('Kelas tidak ditemukan')
 
+        // Security check
+        const canBulkAssign = canBulkAssignCrossKelompok(profile as any)
+
+        if (!canBulkAssign) {
+            const adminClient = await createAdminClient()
+            const { data: allowedClasses } = await fetchClassesHierarchical(adminClient, profile as any)
+            const isClassAllowed = (allowedClasses || []).some((c: any) => c.id === classId)
+            if (!isClassAllowed) {
+                if (profile.role === 'teacher') {
+                    const allowedClassIdsSet = await getTeacherAllowedClassIds(profile.id, profile as any)
+                    if (!allowedClassIdsSet || !allowedClassIdsSet.has(classId)) {
+                        throw new Error('Tidak memiliki izin untuk mengassign siswa ke kelas ini')
+                    }
+                } else {
+                    throw new Error('Tidak memiliki izin untuk mengassign siswa ke kelas ini')
+                }
+            }
+        }
+
         if (!studentIds || studentIds.length === 0) throw new Error('Pilih minimal satu siswa')
+        
+        // Scope validation for students
+        const adminClient = await createAdminClient()
+        const { data: students, error: studentsError } = await adminClient
+            .from('students')
+            .select('id, name, kelompok_id')
+            .in('id', studentIds)
+            
+        if (studentsError || !students) throw new Error('Gagal memuat data siswa')
+        
+        const { allowedStudentIds, skipped: scopeSkipped } = await filterAllowedStudents(adminClient, profile, students)
+        
+        const validStudentIds = studentIds.filter(id => allowedStudentIds.has(id))
 
         const { data: existingAssignments } = await supabase
             .from('student_classes')
             .select('student_id')
             .eq('class_id', classId)
-            .in('student_id', studentIds)
+            .in('student_id', validStudentIds)
 
         const existingStudentIds = new Set(existingAssignments?.map(a => a.student_id) || [])
-        const newStudentIds = studentIds.filter(id => !existingStudentIds.has(id))
+        const newStudentIds = validStudentIds.filter(id => !existingStudentIds.has(id))
 
         if (newStudentIds.length > 0) {
             const assignments = newStudentIds.map(studentId => ({
@@ -850,11 +933,16 @@ export async function assignStudentsToClass(
             })
         }
 
+        const allSkipped = [
+            ...scopeSkipped.map(s => s.studentName),
+            ...Array.from(existingStudentIds)
+        ]
+        
         return {
             success: true,
             data: {
                 assigned: newStudentIds.length,
-                skipped: Array.from(existingStudentIds)
+                skipped: allSkipped
             }
         }
     } catch (error) {
@@ -864,11 +952,111 @@ export async function assignStudentsToClass(
 }
 
 /**
+ * Assign siswa yang sudah ada ke kelas custom lintas kelompok (bulk)
+ */
+export async function assignStudentsToClassGroup(
+    studentIds: string[],
+    classMasterId: string,
+    className?: string
+): Promise<{ success: boolean; data: { assigned: number; skipped: Array<{studentName: string, reason: string}> }; message?: string }> {
+    try {
+        const supabase = await createClient()
+        const adminClient = await createAdminClient()
+
+        const profile = await getUserProfile()
+        const { canBulkAssignCrossKelompok } = await import('@/lib/accessControlServer')
+        if (!canBulkAssignCrossKelompok(profile as any)) {
+            return { success: false, message: 'Tidak memiliki izin bulk-assign lintas kelompok', data: { assigned: 0, skipped: [] } }
+        }
+
+        if (!studentIds || studentIds.length === 0) throw new Error('Pilih minimal satu siswa')
+
+        const { data: students, error: studentsError } = await adminClient
+            .from('students')
+            .select('id, name, kelompok_id')
+            .in('id', studentIds)
+            
+        if (studentsError || !students) throw new Error('Gagal memuat data siswa')
+
+        const { allowedStudentIds, skipped } = await filterAllowedStudents(adminClient, profile, students)
+
+        let assignedCount = 0
+
+
+
+        for (const student of students) {
+            if (!allowedStudentIds.has(student.id)) {
+                continue
+            }
+
+            if (!student.kelompok_id) {
+                skipped.push({ studentName: student.name, reason: 'Siswa tidak memiliki kelompok' })
+                continue
+            }
+
+            const targetClassId = await resolveClassInKelompok(adminClient, classMasterId, student.kelompok_id, className)
+            
+            if (!targetClassId) {
+                skipped.push({ studentName: student.name, reason: `Kelas "${className}" tidak ditemukan di kelompoknya` })
+                continue
+            }
+
+            const { data: targetClass } = await adminClient.from('classes').select('kelompok_id').eq('id', targetClassId).single()
+            if (targetClass?.kelompok_id !== student.kelompok_id) {
+                 skipped.push({ studentName: student.name, reason: 'Target class kelompok mismatch (defense)' })
+                 continue
+            }
+
+            const { error: insertError } = await adminClient
+                .from('student_classes')
+                .insert({ student_id: student.id, class_id: targetClassId })
+                
+            if (insertError) {
+                if (insertError.code === '23505') {
+                     skipped.push({ studentName: student.name, reason: 'Sudah berada di kelas ini' })
+                } else {
+                     skipped.push({ studentName: student.name, reason: 'Gagal insert' })
+                }
+                continue
+            }
+
+            await autoEnrollStudent(student.id, targetClassId)
+            assignedCount++
+        }
+        
+        revalidatePath('/users/siswa')
+        
+        if (assignedCount > 0) {
+            void logActivity({
+                userId: profile.id,
+                action: 'bulk_assign_cross_kelompok',
+                entityType: 'student_batch',
+                entityId: classMasterId,
+                entityLabel: className || 'Bulk Assign',
+                metadata: { assigned: assignedCount, skipped: skipped.length },
+                pagePath: '/users/siswa',
+            })
+        }
+
+        return {
+            success: true,
+            data: {
+                assigned: assignedCount,
+                skipped
+            }
+        }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'mengupdate data', 'Gagal melakukan bulk assign')
+        return { success: false, message: errorInfo.message, data: { assigned: 0, skipped: [] } }
+    }
+}
+
+/**
  * Membuat siswa dalam batch
  */
 export async function createStudentsBatch(
-    students: Array<{ name: string; gender: string }>,
-    classId: string
+    students: Array<{ name: string; gender: string; kelompok_id?: string; desa_id?: string }>,
+    target: { type: 'class'; classId: string } | { type: 'master'; masterId: string; customClassName?: string }
 ) {
     try {
         const supabase = await createClient()
@@ -876,18 +1064,98 @@ export async function createStudentsBatch(
 
         const profile = await getUserProfile()
 
-        const { data: classData, error: classError } = await supabase
-            .from('classes')
-            .select('id, name, kelompok_id')
-            .eq('id', classId)
-            .single()
+        let insertedStudents: any[] = []
+        
+        if (target.type === 'class') {
+            const classId = target.classId
+            const { data: classData, error: classError } = await supabase
+                .from('classes')
+                .select('id, name, kelompok_id')
+                .eq('id', classId)
+                .single()
 
-        if (classError || !classData) throw new Error('Kelas tidak ditemukan')
+            if (classError || !classData) throw new Error('Kelas tidak ditemukan')
 
-        // Resolve kelompok hierarchy from selected class (needed for guru desa whose profile.kelompok_id is null)
-        let kelompokData: any = null
-        if (classData.kelompok_id) {
-            const { data: kData } = await supabase
+            // Resolve kelompok hierarchy from selected class (needed for guru desa whose profile.kelompok_id is null)
+            let kelompokData: any = null
+            if (classData.kelompok_id) {
+                const { data: kData } = await supabase
+                    .from('kelompok')
+                    .select(`
+                        id,
+                        desa_id,
+                        desa:desa_id(
+                            id,
+                            daerah_id,
+                            daerah:daerah_id(id)
+                        )
+                    `)
+                    .eq('id', classData.kelompok_id)
+                    .single()
+                kelompokData = kData
+            }
+
+            const hierarchy = buildStudentHierarchy(
+                { kelompok_id: profile.kelompok_id, desa_id: profile.desa_id, daerah_id: profile.daerah_id, role: profile.role },
+                classData.kelompok_id || undefined,
+                kelompokData || undefined
+            )
+
+            const validStudents = students.filter(s => s.name.trim() !== '')
+            if (validStudents.length === 0) throw new Error('Tidak ada siswa yang valid untuk ditambah')
+
+            const studentsToInsert = validStudents.map(s => ({
+                name: s.name.trim(),
+                gender: s.gender,
+                class_id: classId,
+                kelompok_id: hierarchy.kelompok_id,
+                desa_id: hierarchy.desa_id,
+                daerah_id: hierarchy.daerah_id
+            }))
+
+            // Batch insert (Layer 1)
+            const { data: inserts, error: insertError } = await insertStudentsBatch(adminClient, studentsToInsert)
+            if (insertError) {
+                console.error('Batch insert error:', insertError)
+                throw insertError
+            }
+            insertedStudents = inserts || []
+
+            if (insertedStudents.length > 0) {
+                const junctionInserts = insertedStudents.map(student => ({
+                    student_id: student.id,
+                    class_id: classId
+                }))
+
+                const { error: junctionError } = await insertStudentClassesBatch(adminClient, junctionInserts)
+                if (junctionError && junctionError.code !== '23505') {
+                    console.error('Error inserting to junction table:', junctionError)
+                }
+
+                for (const student of insertedStudents) {
+                    await autoEnrollStudent(student.id, classId)
+                }
+            }
+
+            if (insertedStudents.length > 0) {
+                void logActivity({
+                    userId: (await supabase.auth.getUser()).data.user?.id || '',
+                    action: 'create_student',
+                    entityType: 'student_batch',
+                    entityId: classId,
+                    entityLabel: classData.name,
+                    metadata: { count: insertedStudents.length },
+                    pagePath: '/users/siswa',
+                })
+            }
+
+        } else {
+            // Master mode (Cross-Kelompok)
+            const validStudents = students.filter(s => s.name.trim() !== '' && !!s.kelompok_id)
+            if (validStudents.length === 0) throw new Error('Tidak ada siswa yang valid/memiliki kelompok untuk ditambah')
+
+            // Resolve hierarchy per student based on their selected kelompok_id
+            const { data: kelompoks } = await supabase
                 .from('kelompok')
                 .select(`
                     id,
@@ -898,73 +1166,73 @@ export async function createStudentsBatch(
                         daerah:daerah_id(id)
                     )
                 `)
-                .eq('id', classData.kelompok_id)
-                .single()
-            kelompokData = kData
-        }
+                .in('id', validStudents.map(s => s.kelompok_id!))
+            
+            const kelompokMap = new Map(kelompoks?.map(k => [k.id, k]) || [])
+            const classResolveCache = new Map<string, string | null>()
 
-        const hierarchy = buildStudentHierarchy(
-            { kelompok_id: profile.kelompok_id, desa_id: profile.desa_id, daerah_id: profile.daerah_id, role: profile.role },
-            classData.kelompok_id || undefined,
-            kelompokData || undefined
-        )
+            for (const s of validStudents) {
+                const kid = s.kelompok_id!
+                const kData = kelompokMap.get(kid)
+                const hierarchy = buildStudentHierarchy(
+                    { kelompok_id: profile.kelompok_id, desa_id: profile.desa_id, daerah_id: profile.daerah_id, role: profile.role },
+                    kid,
+                    kData as any || undefined
+                )
 
-        const validStudents = students.filter(s => s.name.trim() !== '')
+                // Resolve class first so we can set class_id on the student record
+                let targetClassId = classResolveCache.get(kid)
+                if (targetClassId === undefined) {
+                    targetClassId = await resolveClassInKelompok(adminClient, target.masterId, kid, target.customClassName)
+                    classResolveCache.set(kid, targetClassId)
+                }
 
-        if (validStudents.length === 0) throw new Error('Tidak ada siswa yang valid untuk ditambah')
+                // Insert the student
+                const { data: insertRes, error: insertError } = await insertStudentsBatch(adminClient, [{
+                    name: s.name.trim(),
+                    gender: s.gender,
+                    class_id: targetClassId || undefined,
+                    kelompok_id: hierarchy.kelompok_id,
+                    desa_id: hierarchy.desa_id,
+                    daerah_id: hierarchy.daerah_id
+                }])
+                if (insertError || !insertRes || insertRes.length === 0) {
+                    console.error('Insert error for', s.name, insertError)
+                    continue
+                }
+                const newStudent = insertRes[0]
+                insertedStudents.push(newStudent)
 
-        const studentsToInsert = validStudents.map(s => ({
-            name: s.name.trim(),
-            gender: s.gender,
-            class_id: classId,
-            kelompok_id: hierarchy.kelompok_id,
-            desa_id: hierarchy.desa_id,
-            daerah_id: hierarchy.daerah_id
-        }))
-
-        // Batch insert (Layer 1)
-        const { data: insertedStudents, error: insertError } = await insertStudentsBatch(adminClient, studentsToInsert)
-
-        if (insertError) {
-            console.error('Batch insert error:', insertError)
-            throw insertError
-        }
-
-        if (insertedStudents && insertedStudents.length > 0) {
-            const junctionInserts = insertedStudents.map(student => ({
-                student_id: student.id,
-                class_id: classId
-            }))
-
-            const { error: junctionError } = await insertStudentClassesBatch(adminClient, junctionInserts)
-            if (junctionError && junctionError.code !== '23505') {
-                console.error('Error inserting to junction table:', junctionError)
+                if (targetClassId) {
+                    const { error: junctionError } = await insertStudentClassesBatch(adminClient, [{
+                        student_id: newStudent.id,
+                        class_id: targetClassId
+                    }])
+                    if (!junctionError || junctionError.code === '23505') {
+                        await autoEnrollStudent(newStudent.id, targetClassId)
+                    }
+                }
             }
 
-            // Auto-enroll all inserted students to active academic year
-            for (const student of insertedStudents) {
-                await autoEnrollStudent(student.id, classId)
+            if (insertedStudents.length > 0) {
+                void logActivity({
+                    userId: (await supabase.auth.getUser()).data.user?.id || '',
+                    action: 'create_student',
+                    entityType: 'student_batch_cross_kelompok',
+                    entityId: target.masterId,
+                    entityLabel: target.customClassName || 'Keluarga Kelas Lintas Kelompok',
+                    metadata: { count: insertedStudents.length },
+                    pagePath: '/users/siswa',
+                })
             }
         }
 
         revalidatePath('/users/siswa')
 
-        if (insertedStudents && insertedStudents.length > 0) {
-            void logActivity({
-                userId: (await supabase.auth.getUser()).data.user?.id || '',
-                action: 'create_student',
-                entityType: 'student_batch',
-                entityId: classId,
-                entityLabel: classData.name,
-                metadata: { count: insertedStudents.length },
-                pagePath: '/users/siswa',
-            })
-        }
-
         return {
             success: true,
-            imported: insertedStudents?.length || 0,
-            total: validStudents.length,
+            imported: insertedStudents.length || 0,
+            total: target.type === 'class' ? students.filter(s => s.name.trim() !== '').length : students.filter(s => s.name.trim() !== '' && !!s.kelompok_id).length,
             errors: []
         }
     } catch (error) {

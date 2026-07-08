@@ -330,7 +330,7 @@ export async function insertStudentsBatch(
   students: Array<{
     name: string
     gender: string
-    class_id: string
+    class_id?: string
     kelompok_id: string | null
     desa_id: string | null
     daerah_id: string | null

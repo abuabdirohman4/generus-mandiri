@@ -105,3 +105,141 @@ describe('fetchClassMasterMappings', () => {
         expect(supabase.from).toHaveBeenCalledTimes(1)
     })
 })
+
+// ─── resolveClassInKelompok ───────────────────────────────────────────────────
+
+import { resolveClassInKelompok } from '../queries'
+
+describe('resolveClassInKelompok', () => {
+    it('returns null if no mappings found for classMasterId', async () => {
+        const supabase = {
+            from: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                    eq: vi.fn().mockResolvedValue({ data: [] })
+                })
+            })
+        } as any
+
+        const result = await resolveClassInKelompok(supabase, 'master-1', 'kel-1')
+        expect(result).toBeNull()
+    })
+
+    it('returns classId for standard class (no className provided)', async () => {
+        const mockMappings = [{ class_id: 'c1' }, { class_id: 'c2' }]
+        const mockClasses = [{ id: 'c2' }]
+
+        const mockEqKelompok = vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: mockClasses })
+            })
+        })
+
+        const mockIn = vi.fn().mockReturnValue({
+            eq: mockEqKelompok
+        })
+
+        const supabase = {
+            from: vi.fn().mockImplementation((table) => {
+                if (table === 'class_master_mappings') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: mockMappings })
+                        })
+                    }
+                }
+                if (table === 'classes') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            in: mockIn
+                        })
+                    }
+                }
+            })
+        } as any
+
+        const result = await resolveClassInKelompok(supabase, 'master-1', 'kel-1')
+        expect(result).toBe('c2')
+        expect(mockIn).toHaveBeenCalledWith('id', ['c1', 'c2'])
+        expect(mockEqKelompok).toHaveBeenCalledWith('kelompok_id', 'kel-1')
+    })
+
+    it('filters by className using ilike if provided (custom class routing)', async () => {
+        const mockMappings = [{ class_id: 'c1' }, { class_id: 'c2' }]
+        const mockClasses = [{ id: 'c1' }]
+
+        const mockIlike = vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: mockClasses })
+            })
+        })
+
+        const mockEqKelompok = vi.fn().mockReturnValue({
+            ilike: mockIlike
+        })
+
+        const mockIn = vi.fn().mockReturnValue({
+            eq: mockEqKelompok
+        })
+
+        const supabase = {
+            from: vi.fn().mockImplementation((table) => {
+                if (table === 'class_master_mappings') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: mockMappings })
+                        })
+                    }
+                }
+                if (table === 'classes') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            in: mockIn
+                        })
+                    }
+                }
+            })
+        } as any
+
+        const result = await resolveClassInKelompok(supabase, 'master-lainnya', 'kel-1', 'CAI 2026')
+        expect(result).toBe('c1')
+        expect(mockIn).toHaveBeenCalledWith('id', ['c1', 'c2'])
+        expect(mockEqKelompok).toHaveBeenCalledWith('kelompok_id', 'kel-1')
+        expect(mockIlike).toHaveBeenCalledWith('name', 'CAI 2026')
+    })
+
+    it('returns null if class not found in that kelompok', async () => {
+        const mockMappings = [{ class_id: 'c1' }, { class_id: 'c2' }]
+
+        const mockEqKelompok = vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [] })
+            })
+        })
+
+        const mockIn = vi.fn().mockReturnValue({
+            eq: mockEqKelompok
+        })
+
+        const supabase = {
+            from: vi.fn().mockImplementation((table) => {
+                if (table === 'class_master_mappings') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            eq: vi.fn().mockResolvedValue({ data: mockMappings })
+                        })
+                    }
+                }
+                if (table === 'classes') {
+                    return {
+                        select: vi.fn().mockReturnValue({
+                            in: mockIn
+                        })
+                    }
+                }
+            })
+        } as any
+
+        const result = await resolveClassInKelompok(supabase, 'master-1', 'kel-1')
+        expect(result).toBeNull()
+    })
+})

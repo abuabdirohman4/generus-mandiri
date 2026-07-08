@@ -11,7 +11,7 @@ import ArchiveStudentModal from './components/ArchiveStudentModal'
 import TransferRequestModal from './components/TransferRequestModal'
 import PendingTransferRequestsSection from './components/PendingTransferRequestsSection'
 import { useSiswaPage, useSebaranSiswa } from './hooks'
-import { isTeacherDaerah, isTeacherDesa, isTeacherKelompok } from '@/lib/accessControl'
+import { isTeacherDaerah, isTeacherDesa, isTeacherKelompok, canBulkAssignCrossKelompok } from '@/lib/accessControl'
 import { canManageIdCardTemplate } from '@/lib/userUtils'
 import { useTeacherKelompokAccess } from '@/hooks/useTeacherKelompokAccess'
 import { SebaranSiswaTab } from './components/SebaranSiswa'
@@ -69,6 +69,7 @@ export default function SiswaPage() {
 
   const { showModal: showAssignModal, openModal: openAssignModal, closeModal: closeAssignModal } = useAssignStudentsStore()
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+  const canBulkAssign = canBulkAssignCrossKelompok(userProfile)
 
   const { sebaranData, sebaranStats, sebaranError, sebaranLoading } = useSebaranSiswa(
     userProfile?.id
@@ -321,7 +322,7 @@ export default function SiswaPage() {
             </p>
           </div>
           <div className="flex flex-col md:flex-row gap-2">
-            {isAdmin ? (
+            {(isAdmin || canBulkAssign) ? (
               <>
                 <Button
                   onClick={openCreateModal}

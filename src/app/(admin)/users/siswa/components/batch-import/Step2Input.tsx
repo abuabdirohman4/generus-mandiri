@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Button from '@/components/ui/button/Button'
 import Input from '@/components/form/input/InputField'
 import Label from '@/components/form/Label'
 import { useBatchImportStore } from '../../stores/batchImportStore'
 import { saveDraft } from '../../utils/draftStorage'
 import { TrashBinIcon } from '@/lib/icons'
+
+import type { KelompokBase } from '@/types/organization'
 
 interface Class {
   id: string
@@ -15,18 +17,20 @@ interface Class {
 
 interface Step2InputProps {
   selectedClass: Class | null
+  kelompokList: KelompokBase[]
   onBack: () => void
   onNext: () => void
 }
 
-export default function Step2Input({ selectedClass, onBack, onNext }: Step2InputProps) {
+export default function Step2Input({ selectedClass, kelompokList, onBack, onNext }: Step2InputProps) {
   const {
     batchSize,
     students,
+    isBulkAssign,
+    selectedMasterId,
+    customClassName,
     setStudents,
-    addStudent,
     updateStudent,
-    removeStudent
   } = useBatchImportStore()
 
   const [isValid, setIsValid] = useState(false)
@@ -53,8 +57,21 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
   // Validate form
   useEffect(() => {
     const hasValidStudents = students.some(s => s.name.trim() !== '' && s.gender !== '')
-    setIsValid(hasValidStudents)
-  }, [students])
+    let valid = hasValidStudents
+
+    // If bulk assign mode, valid students MUST have a kelompok_id selected
+    if (isBulkAssign) {
+      const allValidHaveKelompok = students
+        .filter(s => s.name.trim() !== '' && s.gender !== '')
+        .every(s => !!s.kelompok_id)
+      
+      if (!allValidHaveKelompok) {
+        valid = false
+      }
+    }
+
+    setIsValid(valid)
+  }, [students, isBulkAssign])
 
   const handleAddMore = () => {
     const newStudents = Array.from({ length: 5 }, (_, i) => ({
@@ -73,12 +90,31 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
   }
 
   const handleNext = () => {
-    if (!isValid) {
+    const validStudents = students.filter(s => s.name.trim() !== '' && s.gender !== '')
+    if (validStudents.length === 0) {
       alert('Minimal isi satu siswa dengan nama dan jenis kelamin')
       return
     }
+    
+    if (isBulkAssign) {
+      const missingKelompok = validStudents.some(s => !s.kelompok_id)
+      if (missingKelompok) {
+        alert('Mohon pilih kelompok untuk setiap siswa yang akan diisi')
+        return
+      }
+    }
+    
     onNext()
   }
+
+  const sortedKelompokList = useMemo(() => {
+    return [...kelompokList].sort((a, b) => {
+      const desaA = a.desa?.name || ''
+      const desaB = b.desa?.name || ''
+      if (desaA !== desaB) return desaA.localeCompare(desaB)
+      return a.name.localeCompare(b.name)
+    })
+  }, [kelompokList])
 
   const getCategoryFromClassName = (className: string): string => {
     const lower = className.toLowerCase()
@@ -102,22 +138,19 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
       </div>
 
       {/* Class Info */}
-      {selectedClass && (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-          <div className="grid grid-cols-1 gap-4 text-sm">
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300"></span>
-              <span className="ml-2 text-gray-900 dark:text-white">Kelas {selectedClass.name}</span>
-            </div>
-            {/* <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Kategori:</span>
-              <span className="ml-2 text-gray-900 dark:text-white">
-                {getCategoryFromClassName(selectedClass.name)}
-              </span>
-            </div> */}
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="grid grid-cols-1 gap-4 text-sm">
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Tujuan:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">
+              {isBulkAssign 
+                ? (customClassName ? `Kelas "${customClassName}"` : `Keluarga Kelas Lintas Kelompok`)
+                : `Kelas ${selectedClass?.name || '-'}`
+              }
+            </span>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Students Form */}
       <div className="space-y-4">
@@ -144,7 +177,7 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
                 />
               </div>
               
-              <div className="col-span-8 md:col-span-9">
+              <div className={isBulkAssign ? "col-span-4 md:col-span-5" : "col-span-8 md:col-span-9"}>
                 <Input
                   value={student.name}
                   onChange={(e) => updateStudent(student.id, { name: e.target.value })}
@@ -156,6 +189,38 @@ export default function Step2Input({ selectedClass, onBack, onNext }: Step2Input
                   }`}
                 />
               </div>
+
+              {isBulkAssign && (
+                <div className="col-span-4">
+                  <select
+                    value={student.kelompok_id || ""}
+                    onChange={(e) => {
+                      const selId = e.target.value
+                      const selKelompok = kelompokList.find(k => k.id === selId)
+                      updateStudent(student.id, { 
+                        kelompok_id: selId,
+                        desa_id: selKelompok?.desa_id || undefined
+                      })
+                    }}
+                    className={`w-full px-3 py-2 border ${
+                      !student.kelompok_id && student.name.trim() !== ''
+                        ? 'border-red-300 focus:border-red-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white appearance-none bg-no-repeat bg-right bg-[length:16px] pr-8 text-sm`}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                      backgroundPosition: 'right 8px center'
+                    }}
+                  >
+                    <option value="" disabled>Pilih kelompok</option>
+                    {sortedKelompokList.map(k => (
+                      <option key={k.id} value={k.id}>
+                        {k.name} {k.desa?.name ? `(${k.desa.name})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <div className="col-span-3 md:col-span-2">
                 <select

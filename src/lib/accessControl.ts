@@ -139,6 +139,13 @@ export function canMultiKelompokLaporan(profile: UserProfile | null | undefined)
   return profile.permissions?.can_multi_kelompok_laporan === true
 }
 
+export function canBulkAssignCrossKelompok(profile: UserProfile | null | undefined): boolean {
+  if (!profile) return false
+  if (isSuperAdmin(profile) || isAdminDaerah(profile) || isAdminDesa(profile)) return true
+  if (isTeacherDaerah(profile) || isTeacherDesa(profile)) return true
+  return profile.permissions?.can_bulk_assign_cross_kelompok === true
+}
+
 export function canAccessOverview(profile: UserProfile | null): boolean {
   if (!profile) return false
   return profile.role === 'superadmin'

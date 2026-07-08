@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { canAccessFeature, getDataFilter, canManageMaterials, canAccessMaterials, canAccessMonitoring, isMaterialCoordinator } from '../accessControlServer'
+import { canAccessFeature, getDataFilter, canManageMaterials, canAccessMaterials, canAccessMonitoring, isMaterialCoordinator, canBulkAssignCrossKelompok } from '../accessControlServer'
 
 describe('accessControlServer', () => {
     describe('canAccessFeature', () => {
@@ -176,6 +176,38 @@ describe('accessControlServer', () => {
 
         it('should return false if profile is null', () => {
             expect(isMaterialCoordinator(null)).toBe(false)
+        })
+    })
+
+    describe('canBulkAssignCrossKelompok', () => {
+        it('returns true for superadmin', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'superadmin' } as any)).toBe(true)
+        })
+        it('returns true for adminDaerah and adminDesa', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'admin', daerah_id: 'd1' } as any)).toBe(true)
+            expect(canBulkAssignCrossKelompok({ role: 'admin', daerah_id: 'd1', desa_id: 'v1' } as any)).toBe(true)
+        })
+        it('returns false for adminKelompok', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'admin', daerah_id: 'd1', desa_id: 'v1', kelompok_id: 'k1' } as any)).toBe(false)
+        })
+        it('returns true for teacherDaerah and teacherDesa', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'teacher', daerah_id: 'd1' } as any)).toBe(true)
+            expect(canBulkAssignCrossKelompok({ role: 'teacher', daerah_id: 'd1', desa_id: 'v1' } as any)).toBe(true)
+        })
+        it('returns false for teacherKelompok without flag', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'teacher', daerah_id: 'd1', desa_id: 'v1', kelompok_id: 'k1' } as any)).toBe(false)
+        })
+        it('returns true for teacherKelompok with flag', () => {
+            expect(canBulkAssignCrossKelompok({ 
+                role: 'teacher', 
+                daerah_id: 'd1', 
+                desa_id: 'v1', 
+                kelompok_id: 'k1', 
+                permissions: { can_bulk_assign_cross_kelompok: true } 
+            } as any)).toBe(true)
+        })
+        it('returns false for student', () => {
+            expect(canBulkAssignCrossKelompok({ role: 'student' } as any)).toBe(false)
         })
     })
 })

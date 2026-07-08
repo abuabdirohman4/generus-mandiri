@@ -55,3 +55,11 @@ bd close <id>         # Complete work
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
+
+## Backend & Supabase Conventions
+
+- **Supabase Querying**: "Two-query pattern wajib". Avoid nested PostgREST joins (e.g., deep `.select('..., relation(..., nested(...))')`). Instead, fetch the primary data first, extract the necessary IDs, and fetch the related data in a second separate query.
+- **Server Actions**: Must always return a standard object format: `{ success: boolean, data?: any, message?: string, error?: string }`.
+- **Role Literals**: User roles are strictly defined as literals: `'superadmin'`, `'admin'`, `'teacher'`. The concept of `isAdmin` implies `'admin'` or `'superadmin'`.
+- **Security & Authorization**: Security fixes and authorization gates MUST be implemented alongside the feature in the same PR, never deferred.
+- **TDD Requirement**: All business logic and security-related changes require strict TDD (RED -> GREEN -> REFACTOR).

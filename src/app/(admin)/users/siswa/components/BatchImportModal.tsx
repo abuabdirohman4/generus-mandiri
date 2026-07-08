@@ -24,6 +24,9 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
   const {
     currentStep,
     selectedClassId,
+    selectedMasterId,
+    customClassName,
+    isBulkAssign,
     students,
     showBatchModal,
     closeBatchModal,
@@ -53,9 +56,16 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
   }
 
   const handleImport = async () => {
-    if (!selectedClassId) {
-      toast.error('Kelas tidak dipilih')
-      return
+    if (isBulkAssign) {
+      if (!selectedMasterId) {
+        toast.error('Keluarga Kelas tidak dipilih')
+        return
+      }
+    } else {
+      if (!selectedClassId) {
+        toast.error('Kelas tidak dipilih')
+        return
+      }
     }
 
     const validStudents = students.filter(s => s.name.trim() !== '' && s.gender !== '')
@@ -65,10 +75,22 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
       return
     }
 
+    if (isBulkAssign) {
+      const missingKelompok = validStudents.some(s => !s.kelompok_id)
+      if (missingKelompok) {
+        toast.error('Mohon lengkapi pilihan kelompok untuk semua siswa')
+        return
+      }
+    }
+
     setIsImporting(true)
 
     try {
-      const result = await createStudentsBatch(validStudents, selectedClassId)
+      const target = isBulkAssign 
+        ? { type: 'master' as const, masterId: selectedMasterId, customClassName: customClassName.trim() }
+        : { type: 'class' as const, classId: selectedClassId }
+        
+      const result = await createStudentsBatch(validStudents, target)
       
       if (result.success) {
         toast.success(`${result.imported} siswa berhasil ditambah`)
@@ -164,6 +186,7 @@ export default function BatchImportModal({ isOpen, onClose, onSuccess }: BatchIm
           {currentStep === 2 && (
             <Step2Input
               selectedClass={getSelectedClass()}
+              kelompokList={kelompok || []}
               onBack={() => useBatchImportStore.getState().prevStep()}
               onNext={() => useBatchImportStore.getState().nextStep()}
             />

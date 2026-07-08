@@ -7,6 +7,7 @@ import {
   canAccessMonitoring,
   canAccessOverview,
   canTeacherAccessStudent,
+  canBulkAssignCrossKelompok,
   type UserProfile
 } from '@/lib/accessControl'
 
@@ -220,5 +221,33 @@ describe('canTeacherAccessStudent — multi-kelompok teacher', () => {
             class_id: 'class-k1',
         }
         expect(canTeacherAccessStudent(multiKelompokTeacher, student)).toBe(true)
+    })
+})
+
+describe('canBulkAssignCrossKelompok', () => {
+    it('returns true for superadmin', () => {
+        expect(canBulkAssignCrossKelompok(makeSuperAdmin())).toBe(true)
+    })
+    it('returns true for adminDaerah and adminDesa', () => {
+        expect(canBulkAssignCrossKelompok(makeAdminDaerah())).toBe(true)
+        expect(canBulkAssignCrossKelompok(makeAdminDesa())).toBe(true)
+    })
+    it('returns false for adminKelompok', () => {
+        expect(canBulkAssignCrossKelompok(makeAdminKelompok())).toBe(false)
+    })
+    it('returns true for teacherDaerah and teacherDesa', () => {
+        expect(canBulkAssignCrossKelompok(makeTeacherDaerah())).toBe(true)
+        expect(canBulkAssignCrossKelompok(makeTeacherDesa())).toBe(true)
+    })
+    it('returns false for teacherKelompok without flag', () => {
+        expect(canBulkAssignCrossKelompok(makeTeacherKelompok())).toBe(false)
+    })
+    it('returns true for teacherKelompok with flag', () => {
+        const teacher = makeTeacherKelompok()
+        teacher.permissions = { can_bulk_assign_cross_kelompok: true }
+        expect(canBulkAssignCrossKelompok(teacher)).toBe(true)
+    })
+    it('returns false for student', () => {
+        expect(canBulkAssignCrossKelompok({ role: 'student' } as any)).toBe(false)
     })
 })
