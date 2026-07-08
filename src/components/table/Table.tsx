@@ -2,6 +2,7 @@
 
 import { ReactNode, useState, useMemo, useEffect, Fragment } from 'react'
 import Spinner from '../ui/spinner/Spinner'
+import Checkbox from '../form/input/Checkbox'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/lib/icons'
 import ColumnToggle from './ColumnToggle'
 
@@ -43,6 +44,10 @@ interface DataTableProps {
   expandable?: boolean
   renderExpandedRow?: (item: any, index: number) => ReactNode
   emptyMessage?: string
+  selectable?: boolean
+  selectedIds?: Set<string | number>
+  onSelectionChange?: (next: Set<string | number>) => void
+  renderBulkActions?: (selectedIds: Set<string | number>, clearSelection: () => void) => ReactNode
 }
 
 export default function DataTable({
@@ -67,7 +72,11 @@ export default function DataTable({
   columnToggle,
   expandable = false,
   renderExpandedRow,
-  emptyMessage
+  emptyMessage,
+  selectable = false,
+  selectedIds,
+  onSelectionChange,
+  renderBulkActions
 }: DataTableProps) {
   // State management
   const [currentPage, setCurrentPage] = useState(1)
@@ -259,6 +268,27 @@ export default function DataTable({
     return pages
   }
 
+  // Selection helpers (v1 scope: select-all applies to sortedData, i.e. all filtered results, not just current page)
+  const effectiveSelectedIds = selectedIds ?? new Set<string | number>()
+  const isRowSelected = (id: string | number) => effectiveSelectedIds.has(id)
+  const isAllSelected = sortedData.length > 0 && sortedData.every((item, i) => isRowSelected(getRowId(item, i)))
+  const handleToggleRow = (id: string | number) => {
+    const next = new Set(effectiveSelectedIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    onSelectionChange?.(next)
+  }
+  const handleToggleAll = () => {
+    if (isAllSelected) {
+      onSelectionChange?.(new Set())
+    } else {
+      onSelectionChange?.(new Set(sortedData.map((item, i) => getRowId(item, i))))
+    }
+  }
+
   const defaultRenderCell = (column: Column, item: any) => {
     const value = item[column.key] || '-'
 
@@ -287,6 +317,9 @@ export default function DataTable({
 
   return (
     <div className="space-y-4">
+      {selectable && renderBulkActions && effectiveSelectedIds.size > 0 && (
+        <div>{renderBulkActions(effectiveSelectedIds, () => onSelectionChange?.(new Set()))}</div>
+      )}
       {/* Toolbar: Show entries | [Kolom] [Search] */}
       {(searchable || pagination || hideableColumns.length > 0) && (() => {
         const columnToggleEl = hideableColumns.length > 0 && !columnToggle ? (
@@ -360,6 +393,11 @@ export default function DataTable({
             {/* Table Header */}
             <thead className={`bg-gray-100 dark:bg-gray-700 ${headerClassName}`}>
               <tr>
+                {selectable && (
+                  <th className="px-2 sm:px-6 py-4 w-[48px]">
+                    <Checkbox checked={isAllSelected} onChange={handleToggleAll} />
+                  </th>
+                )}
                 {visibleColumns.map((column) => {
                   const getAlignmentClass = (align?: string) => {
                     switch (align) {
@@ -428,6 +466,14 @@ export default function DataTable({
                           onRowClick?.(item, index)
                         }}
                       >
+                      {selectable && (
+                        <td
+                          className="px-2 sm:px-6 py-3 sm:py-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Checkbox checked={isRowSelected(rowId)} onChange={() => handleToggleRow(rowId)} />
+                        </td>
+                      )}
                       {visibleColumns.map((column) => {
                         const getAlignmentClass = (align?: string) => {
                           switch (align) {
@@ -482,7 +528,7 @@ export default function DataTable({
                     {/* Expandable Row */}
                     {expandable && renderExpandedRow && String(expandedRowId) === String(rowId) && (
                       <tr className="bg-gray-50/50 dark:bg-gray-900/30">
-                        <td colSpan={visibleColumns.length} className="px-0">
+                        <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="px-0">
                           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                             {renderExpandedRow(item, index)}
                           </div>
@@ -494,7 +540,7 @@ export default function DataTable({
               })
             ) : (
                 <tr>
-                  <td colSpan={visibleColumns.length} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={visibleColumns.length + (selectable ? 1 : 0)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'No matching records found' : (emptyMessage || 'No data available')}
                   </td>
                 </tr>
