@@ -18,11 +18,27 @@ function makeStudentsQueryMock(resolvedValue: any) {
     return { mockSelect, mockIs, mockOrder, from: vi.fn().mockReturnValue({ select: mockSelect }) }
 }
 
+// Helper: build a batched students query mock — .order() returns an object
+// whose .range() can be called repeatedly (paginated fetch), each call resolving
+// to the next page from `pages`.
+function makeBatchedStudentsQueryMock(pages: any[][]) {
+    let callIndex = 0
+    const mockRange = vi.fn().mockImplementation(() => {
+        const data = pages[callIndex] ?? []
+        callIndex++
+        return Promise.resolve({ data, error: null })
+    })
+    const mockOrder = vi.fn().mockReturnValue({ range: mockRange })
+    const mockIs = vi.fn().mockReturnValue({ order: mockOrder })
+    const mockSelect = vi.fn().mockReturnValue({ is: mockIs })
+    return { mockSelect, mockIs, mockOrder, mockRange, from: vi.fn().mockReturnValue({ select: mockSelect }) }
+}
+
 // ─── fetchAllStudents ─────────────────────────────────────────────────────────
 
 describe('fetchAllStudents', () => {
     it('queries students table (no classId filter)', async () => {
-        const mock = makeStudentsQueryMock({ data: [], error: null })
+        const mock = makeBatchedStudentsQueryMock([[]])
         const supabase = { from: mock.from } as any
 
         await fetchAllStudents(supabase)
@@ -32,6 +48,32 @@ describe('fetchAllStudents', () => {
         expect(mock.mockOrder).toHaveBeenCalledWith('name')
     })
 
+    it('collects all rows across multiple pages when result exceeds PAGE_SIZE (1000)', async () => {
+        const page1 = Array.from({ length: 1000 }, (_, i) => ({ id: `s${i}`, name: `Student ${i}` }))
+        const page2 = [{ id: 's1000', name: 'Student 1000' }, { id: 's1001', name: 'Student 1001' }]
+        const mock = makeBatchedStudentsQueryMock([page1, page2, []])
+        const supabase = { from: mock.from } as any
+
+        const result = await fetchAllStudents(supabase)
+
+        expect(result.data).toHaveLength(1002)
+        expect(mock.mockRange).toHaveBeenCalledWith(0, 999)
+        expect(mock.mockRange).toHaveBeenCalledWith(1000, 1999)
+        // stops once a page returns fewer than PAGE_SIZE rows — no 3rd call needed
+        expect(mock.mockRange).toHaveBeenCalledTimes(2)
+    })
+
+    it('stops after a single page when result is smaller than PAGE_SIZE', async () => {
+        const page1 = [{ id: 's1', name: 'Budi' }, { id: 's2', name: 'Ani' }]
+        const mock = makeBatchedStudentsQueryMock([page1])
+        const supabase = { from: mock.from } as any
+
+        const result = await fetchAllStudents(supabase)
+
+        expect(result.data).toHaveLength(2)
+        expect(mock.mockRange).toHaveBeenCalledTimes(1)
+    })
+
     it('filters by classId via student_classes junction, then queries students', async () => {
         // The actual execution order in fetchAllStudents:
         // 1. from('students').select().is().order() — built first (not yet awaited)
@@ -39,7 +81,14 @@ describe('fetchAllStudents', () => {
         // 3. the students query .in(studentIds) — awaited to resolve
 
         const junctionResult = { data: [{ student_id: 's1' }] }
-        const mockStudentsIn = vi.fn().mockResolvedValue({ data: [{ id: 's1', name: 'Budi' }], error: null })
+        let rangeCallIndex = 0
+        const rangePages = [[{ id: 's1', name: 'Budi' }], []]
+        const mockRange = vi.fn().mockImplementation(() => {
+            const data = rangePages[rangeCallIndex] ?? []
+            rangeCallIndex++
+            return Promise.resolve({ data, error: null })
+        })
+        const mockStudentsIn = vi.fn().mockReturnValue({ range: mockRange })
         const mockStudentsOrder = vi.fn().mockReturnValue({ in: mockStudentsIn })
         const mockStudentsIs = vi.fn().mockReturnValue({ order: mockStudentsOrder })
         const mockStudentsSelect = vi.fn().mockReturnValue({ is: mockStudentsIs })
@@ -53,11 +102,12 @@ describe('fetchAllStudents', () => {
                 .mockReturnValueOnce({ select: mockJunctionSelect }),   // second: student_classes awaited
         } as any
 
-        await fetchAllStudents(supabase, 'class-id')
+        const result = await fetchAllStudents(supabase, 'class-id')
 
         expect(supabase.from).toHaveBeenCalledWith('students')
         expect(supabase.from).toHaveBeenCalledWith('student_classes')
         expect(mockStudentsIn).toHaveBeenCalledWith('id', ['s1'])
+        expect(result.data).toEqual([{ id: 's1', name: 'Budi' }])
     })
 
     it('returns empty immediately when no students for given classId', async () => {

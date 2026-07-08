@@ -52,7 +52,32 @@ export async function fetchAllStudents(
     }
   }
 
-  return await query
+  // Fetch in batches to bypass Supabase/PostgREST default 1000 row limit
+  let allStudents: any[] = []
+  let page = 0
+  const PAGE_SIZE = 1000
+  let hasMore = true
+  let lastError: any = null
+
+  while (hasMore) {
+    const { data, error } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+
+    if (error) {
+      lastError = error
+      hasMore = false
+      break
+    }
+
+    if (!data || data.length === 0) {
+      hasMore = false
+    } else {
+      allStudents = [...allStudents, ...data]
+      hasMore = data.length === PAGE_SIZE
+      page++
+    }
+  }
+
+  return { data: allStudents, error: lastError }
 }
 
 export async function fetchStudentsByIds(
