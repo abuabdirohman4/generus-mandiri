@@ -108,7 +108,7 @@ export default function SettingsModal({
         setSettings(DEFAULT_SETTINGS)
       }
 
-      setPermissions(currentPermissions || DEFAULT_PERMISSIONS)
+      setPermissions({ ...DEFAULT_PERMISSIONS, ...(currentPermissions || {}) })
 
       if (materialResult.success && materialResult.data) {
         setCanManageMaterials(materialResult.data.can_manage_materials)
@@ -386,7 +386,7 @@ export default function SettingsModal({
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={permissions.can_hard_delete_students}
+                      checked={permissions.can_hard_delete_students || false}
                       onChange={(e) => setPermissions(prev => ({
                         ...prev,
                         can_hard_delete_students: e.target.checked
@@ -404,7 +404,7 @@ export default function SettingsModal({
                   <label className="flex items-start gap-3 cursor-pointer group mt-4">
                     <input
                       type="checkbox"
-                      checked={permissions.can_bulk_assign_cross_kelompok}
+                      checked={permissions.can_bulk_assign_cross_kelompok || false}
                       onChange={(e) => setPermissions(prev => ({
                         ...prev,
                         can_bulk_assign_cross_kelompok: e.target.checked
