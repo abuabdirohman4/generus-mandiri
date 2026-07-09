@@ -38,7 +38,19 @@ Per-source breakdown, first 3 days of the cycle (captured 2026-07-09 via Supabas
 - **09 Jul dropped sharply (146MB vs 500MB+ prior days)** — likely lower usage that day (weekend/less activity), not yet an effect of the fix (fix was implemented same day, not deployed to production until user commits/pushes/deploys). This is BEFORE-fix baseline data.
 - **Run-rate warning:** 1.24GB in 3 days ≈ ~410MB/day average. Extrapolated over a 30-day cycle ≈ **~12GB/month** — more than double the 5GB quota. This matches why the previous cycle went over and confirms the fix is urgent, not optional.
 
-**This 3-day table is the "before" baseline.** Compare against it once the fix has been live for a few days to measure actual impact — success looks like the PostgREST-driven daily total dropping well below the ~400–540MB/day seen here.
+**This 3-day table is the "before" baseline — but see caveat below.** Compare against it once the fix has been live for a few days to measure actual impact — success looks like the PostgREST-driven daily total dropping well below the ~400–540MB/day seen here.
+
+### Caveat: baseline likely inflated by active development, not just real usage
+
+Cross-checked against git log for 06–09 Jul (confirmed via `git log --since="4 days ago"`):
+- **06 Jul:** 6 commits — QR scanner attendance, QR code generation
+- **07 Jul:** 11 commits — realtime presensi, live attendance chart, QR cards, worktree merges
+- **08 Jul:** 8 commits — including `c154f51` (batch fetchAllStudents bypassing the 1000-row limit) at 13:30, same day as the 540MB egress peak
+- **09 Jul:** 3 commits (2 of which are this egress fix itself)
+
+This window directly overlaps the 3-day egress spike. New realtime/QR/attendance features shipping 06–07 Jul imply heavy manual testing (repeated page opens, QR scans, cross-device realtime checks) right when egress spiked, plus the all-rows student fetch landing mid-spike on 08 Jul. **The 1.24GB/3-day baseline is likely inflated by dev-session traffic (superadmin/admin-daerah accounts, which have the widest data scope, hot-reload, frequent tab-switching before the `revalidateOnFocus` fix landed) and does not cleanly represent real end-user load.**
+
+Practical implication: don't treat this baseline as "real user traffic requiring urgent P0.2 pagination." Wait for a quieter, non-dev-heavy window (~2-3 days of normal usage, ideally without active feature development) before re-measuring and deciding whether sm-uxnv (pagination) is actually needed.
 
 ---
 
