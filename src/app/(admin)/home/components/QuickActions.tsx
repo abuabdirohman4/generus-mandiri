@@ -68,6 +68,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
 
   const quickActions: QuickActionItem[] = [
     {
+      id: 'naik-kelas',
+      name: 'Naik Kelas',
+      description: 'Naikkan kelas siswa',
+      href: '/naik-kelas',
+      icon: <GroupIcon className="w-6 h-6" />,
+      bgColor: 'bg-amber-100 dark:bg-amber-900',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      adminOnly: false,
+      disabled: true
+    },
+    {
       id: 'onboarding',
       name: 'Onboarding',
       description: 'Setup org, kelas & guru baru',
@@ -239,17 +250,17 @@ export default function QuickActions({ isAdmin, profile }: QuickActionsProps) {
       excludeAdminKelompok: true,
       disabled: false
     },
-    {
-      id: 'naik-kelas',
-      name: 'Naik Kelas',
-      description: 'Naikkan kelas siswa',
-      href: '/naik-kelas',
-      icon: <GroupIcon className="w-6 h-6" />,
-      bgColor: 'bg-amber-100 dark:bg-amber-900',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      adminOnly: false,
-      disabled: !userCanAccessMonitoring
-    },
+    // {
+    //   id: 'naik-kelas',
+    //   name: 'Naik Kelas',
+    //   description: 'Naikkan kelas siswa',
+    //   href: '/naik-kelas',
+    //   icon: <GroupIcon className="w-6 h-6" />,
+    //   bgColor: 'bg-amber-100 dark:bg-amber-900',
+    //   iconColor: 'text-amber-600 dark:text-amber-400',
+    //   adminOnly: false,
+    //   disabled: !userCanAccessMonitoring
+    // },
     {
       id: 'settings',
       name: 'Pengaturan',
