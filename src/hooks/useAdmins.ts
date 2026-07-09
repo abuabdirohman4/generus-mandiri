@@ -14,7 +14,7 @@ export function useAdmins() {
     'admins-list',
     fetcher,
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // sm-kt2j: full-list payload was re-fetched on every focus, dominant egress cost
       revalidateOnReconnect: true,
       dedupingInterval: 2 * 60 * 1000, // 2 minutes
     }

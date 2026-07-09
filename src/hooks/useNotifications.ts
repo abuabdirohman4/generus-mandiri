@@ -41,8 +41,8 @@ export function useNotifications() {
     NOTIFICATIONS_LIST_KEY,
     () => getMyNotifications({ limit: 20 }),
     {
-      refreshInterval: 60000,
-      revalidateOnFocus: true,
+      refreshInterval: 0, // sm-kt2j: notif ~monthly cadence, polling was pure egress waste
+      revalidateOnFocus: false,
       dedupingInterval: 30000,
     }
   )
@@ -51,8 +51,8 @@ export function useNotifications() {
     NOTIFICATIONS_UNREAD_KEY,
     () => getUnreadCount(),
     {
-      refreshInterval: 60000,
-      revalidateOnFocus: true,
+      refreshInterval: 0, // sm-kt2j: notif ~monthly cadence, polling was pure egress waste
+      revalidateOnFocus: false,
       dedupingInterval: 30000,
     }
   )

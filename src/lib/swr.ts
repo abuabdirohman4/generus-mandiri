@@ -5,7 +5,7 @@ import { SWRConfiguration } from 'swr';
  */
 export const swrConfig: SWRConfiguration = {
   // Prefetching configuration
-  revalidateOnFocus: true, // ✅ ENABLED - Revalidate on focus for fresh data
+  revalidateOnFocus: false, // Disabled to reduce PostgREST egress — full payload re-fetch on every window focus was the dominant Supabase egress cost (sm-kt2j)
   revalidateOnReconnect: true, // Revalidate when internet comes back
   revalidateIfStale: true, // ✅ ENABLED - Revalidate stale data
   

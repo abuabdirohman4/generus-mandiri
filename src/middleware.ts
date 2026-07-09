@@ -29,6 +29,19 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next()
     }
 
+    // Skip auth validation for Next.js prefetch requests (Link hover, etc).
+    // Prefetch responses aren't shown to the user, so skipping getUser() here
+    // can't break a real navigation redirect — the actual click still validates.
+    // sm-kt2j: prefetch was inflating auth-validation calls with no user-facing benefit.
+    const isPrefetch =
+      request.headers.get('next-router-prefetch') === '1' ||
+      request.headers.get('purpose') === 'prefetch' ||
+      request.headers.get('sec-purpose')?.includes('prefetch')
+
+    if (isPrefetch) {
+      return NextResponse.next()
+    }
+
     const { supabase, response } = createClient(request)
     
     // getUser() validates the token with Supabase Auth server and triggers refresh
