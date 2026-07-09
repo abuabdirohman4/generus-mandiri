@@ -200,6 +200,8 @@ All sensitive operations in server actions with permission checks. Use RLS for d
 
 Key: NEVER INSERT into `auth.users` without `auth.identities`. Use `''` for tokens, not NULL.
 
+**Egress/bandwidth cost**: Supabase Free tier bills egress (5GB/mo). Before adding data-fetching code (new hooks, `revalidateOnFocus`, polling, realtime), READ [`docs/claude/egress-cost-optimization.md`](docs/claude/egress-cost-optimization.md) — egress scales with fetch size × frequency, not DB size.
+
 ---
 
 ## 🌍 Environment & Configuration
@@ -222,6 +224,7 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **E2E Testing**: [`tests/QUICK_START.md`](tests/QUICK_START.md) | [`tests/MULTI_ROLE_TESTING.md`](tests/MULTI_ROLE_TESTING.md) | [`docs/claude/e2e-testing-patterns.md`](docs/claude/e2e-testing-patterns.md)
 - **Business Rules**: [`docs/claude/business-rules.md`](docs/claude/business-rules.md)
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
+- **Egress Cost Optimization**: [`docs/claude/egress-cost-optimization.md`](docs/claude/egress-cost-optimization.md)
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
