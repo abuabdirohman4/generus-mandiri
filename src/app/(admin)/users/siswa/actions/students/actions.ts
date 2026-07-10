@@ -18,6 +18,7 @@ import {
     fetchStudentById,
     fetchStudentBiodata,
     fetchStudentAttendanceHistory,
+    fetchMeetingDetail,
     insertStudent,
     insertStudentClass,
     updateStudentRecord,
@@ -1284,8 +1285,8 @@ export interface AttendanceLog {
     meetings: {
         id: string
         title: string
-        topic: string | null
-        description: string | null
+        topic?: string | null       // optional: dropped from list query, lazy-fetched on modal open (sm-euox)
+        description?: string | null  // optional: lazy-fetched on modal open (sm-euox)
         meeting_type_code?: string | null // deprecated
         activity_type_id?: string | null
         activity_type?: { id: string; code: string; name: string } | null
@@ -1450,6 +1451,22 @@ export async function getStudentAttendanceHistory(
         }
     } catch (error) {
         const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat riwayat kehadiran siswa')
+        throw new Error(errorInfo.message)
+    }
+}
+
+/**
+ * Ambil detail 1 pertemuan (topic + description) untuk MeetingDetailModal.
+ * Lazy-fetch saat modal dibuka — field gemuk ini TIDAK lagi di query list attendance (egress).
+ */
+export async function getMeetingDetail(meetingId: string) {
+    try {
+        const supabase = await createClient()
+        const { data, error } = await fetchMeetingDetail(supabase, meetingId)
+        if (error) throw error
+        return data
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat detail pertemuan')
         throw new Error(errorInfo.message)
     }
 }

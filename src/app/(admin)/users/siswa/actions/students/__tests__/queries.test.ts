@@ -7,6 +7,8 @@ import {
     hardDeleteStudent,
     fetchCurrentStudentClasses,
     checkStudentHasAttendance,
+    fetchStudentAttendanceHistory,
+    fetchMeetingDetail,
 } from '../queries'
 
 // Helper: build a complete Supabase mock chain for the students query
@@ -242,5 +244,53 @@ describe('checkStudentHasAttendance', () => {
         expect(supabase.from).toHaveBeenCalledWith('attendance_logs')
         expect(mockEq).toHaveBeenCalledWith('student_id', 's1')
         expect(mockLimit).toHaveBeenCalledWith(1)
+    })
+})
+
+
+// ─── fetchStudentAttendanceHistory (egress: list query must NOT carry fat fields) ──
+
+describe('fetchStudentAttendanceHistory', () => {
+    function makeMock() {
+        const mockOrder = vi.fn().mockResolvedValue({ data: [], error: null })
+        const mockLte = vi.fn().mockReturnValue({ order: mockOrder })
+        const mockGte = vi.fn().mockReturnValue({ lte: mockLte })
+        const mockEq = vi.fn().mockReturnValue({ gte: mockGte })
+        const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+        return { mockSelect, from: vi.fn().mockReturnValue({ select: mockSelect }) }
+    }
+
+    it('does NOT select topic or description (dropped for egress — lazy-fetched on modal open)', async () => {
+        const mock = makeMock()
+        const supabase = { from: mock.from } as any
+
+        await fetchStudentAttendanceHistory(supabase, 's1', '2026-07-01', '2026-07-31')
+
+        const select = mock.mockSelect.mock.calls[0][0] as string
+        expect(select).not.toContain('topic')
+        expect(select).not.toContain('description')
+        // still carries the fields the list/calendar render + role/class filter needs
+        expect(select).toContain('title')
+        expect(select).toContain('class_id')
+        expect(select).toContain('class_ids')
+    })
+})
+
+// ─── fetchMeetingDetail (lazy-fetch: must carry topic + description) ──────────────
+
+describe('fetchMeetingDetail', () => {
+    it('selects topic and description for the meeting detail modal', async () => {
+        const mockSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+        const mockEq = vi.fn().mockReturnValue({ single: mockSingle })
+        const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+        const supabase = { from: vi.fn().mockReturnValue({ select: mockSelect }) } as any
+
+        await fetchMeetingDetail(supabase, 'm1')
+
+        expect(supabase.from).toHaveBeenCalledWith('meetings')
+        const select = mockSelect.mock.calls[0][0] as string
+        expect(select).toContain('topic')
+        expect(select).toContain('description')
+        expect(mockEq).toHaveBeenCalledWith('id', 'm1')
     })
 })

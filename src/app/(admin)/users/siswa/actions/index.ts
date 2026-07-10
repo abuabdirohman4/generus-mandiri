@@ -18,6 +18,7 @@ export {
     getCurrentUserRole,
     getStudentInfo,
     getStudentAttendanceHistory,
+    getMeetingDetail,
     getStudentBiodata,
     updateStudentBiodata,
     type Student,

@@ -1,7 +1,9 @@
 'use client'
 
+import useSWR from 'swr'
 import { Modal } from '@/components/ui/modal'
 import dayjs from 'dayjs'
+import { getMeetingDetail } from '@/app/(admin)/users/siswa/actions'
 import type { AttendanceLog } from '@/app/(admin)/users/siswa/actions'
 
 interface MeetingDetailModalProps {
@@ -41,7 +43,23 @@ const getStatusLabel = (status: string) => {
 }
 
 export default function MeetingDetailModal({ isOpen, onClose, meeting }: MeetingDetailModalProps) {
+  // Lazy-fetch topic+description on modal open (dropped from list query for egress — sm-euox)
+  const meetingId = isOpen && meeting ? meeting.meeting_id : null
+  const { data: detail } = useSWR(
+    meetingId ? `meeting-detail-${meetingId}` : null,
+    () => getMeetingDetail(meetingId as string),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300000, // 5 min — meeting detail is stable
+    }
+  )
+
   if (!meeting) return null
+
+  // Prefer lazy-fetched detail for fat fields; fall back to whatever the list object had
+  const topic = (detail as any)?.topic ?? meeting.meetings.topic
+  const description = (detail as any)?.description ?? meeting.meetings.description
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-2xl m-4">
@@ -87,26 +105,26 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }: Meeting
           )}
 
           {/* Topic */}
-          {meeting.meetings.topic && (
+          {topic && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Topik
               </label>
               {/* <p className="text-gray-500 dark:text-white">{meeting.meetings.topic}</p> */}
               <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                {meeting.meetings.topic}
+                {topic}
               </p>
             </div>
           )}
 
           {/* Description */}
-          {meeting.meetings.description && (
+          {description && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Deskripsi
               </label>
               <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg whitespace-pre-wrap">
-                {meeting.meetings.description}
+                {description}
               </p>
               {/* <p className="text-gray-500 dark:text-white whitespace-pre-wrap">
                 {meeting.meetings.description}

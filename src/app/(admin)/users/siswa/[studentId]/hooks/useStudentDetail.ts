@@ -32,7 +32,7 @@ export function useStudentDetail(
     studentId ? `attendance-${studentId}-${year}-${month}-${classId || 'all'}` : null,
     () => getStudentAttendanceHistory(studentId, year, month, classId || undefined),
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,      // egress: attendance history not volatile — no refetch per tab-focus (sm-euox)
       revalidateOnReconnect: true,
       dedupingInterval: 30000,       // 30 seconds — prevent spam refetch on tab-switch
     }

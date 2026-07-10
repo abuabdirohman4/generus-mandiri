@@ -3,7 +3,7 @@
 **Date:** 2026-07-10
 **Beads:** sm-euox (P1)
 **GH:** #TBD
-**Status:** planned
+**Status:** implemented (Task 1-3+5; Task 4 deferred) — nunggu user test+commit
 
 ## Context — why this exists
 

@@ -310,8 +310,6 @@ export async function fetchStudentAttendanceHistory(
       meetings!inner(
         id,
         title,
-        topic,
-        description,
         activity_type_id,
         activity_type:activity_types(id, code, name),
         class_id,
@@ -326,6 +324,30 @@ export async function fetchStudentAttendanceHistory(
     .gte('date', startDate)
     .lte('date', endDate)
     .order('date', { ascending: true })
+}
+
+export async function fetchMeetingDetail(
+  supabase: SupabaseClient,
+  meetingId: string
+) {
+  return await supabase
+    .from('meetings')
+    .select(`
+      id,
+      title,
+      topic,
+      description,
+      activity_type_id,
+      activity_type:activity_types(id, code, name),
+      class_id,
+      class_ids,
+      classes (
+        id,
+        name
+      )
+    `)
+    .eq('id', meetingId)
+    .single()
 }
 
 export async function checkStudentHasAttendance(
