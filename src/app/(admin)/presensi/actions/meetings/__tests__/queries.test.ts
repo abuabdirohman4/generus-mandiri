@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { fetchMeetingById, insertMeeting } from '../queries'
+import { fetchMeetingById, fetchMeetingsByClass, insertMeeting } from '../queries'
 
 describe('Meeting Queries', () => {
   describe('fetchMeetingById', () => {
@@ -20,6 +20,69 @@ describe('Meeting Queries', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('meetings')
       expect(mockSelect).toHaveBeenCalled()
+    })
+  })
+
+  describe('fetchMeetingsByClass (sm-2fux egress trim)', () => {
+    function makeChain() {
+      const select = vi.fn()
+      const chain: any = {
+        select,
+        order: vi.fn(),
+        limit: vi.fn(),
+        lt: vi.fn(),
+        contains: vi.fn(),
+      }
+      // make chainable + terminal resolves
+      chain.order.mockReturnValue(chain)
+      chain.limit.mockReturnValue(chain)
+      chain.lt.mockReturnValue(chain)
+      chain.contains.mockResolvedValue({ data: [], error: null })
+      // when no classId, the awaited value is the chain itself → give it a then
+      chain.then = (res: any) => Promise.resolve({ data: [], error: null }).then(res)
+      select.mockReturnValue(chain)
+      return chain
+    }
+
+    it('does NOT select student_snapshot or description (fat fields lazy-fetched on edit)', async () => {
+      const chain = makeChain()
+      const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+
+      await fetchMeetingsByClass(supabase, 'class-1', 20, undefined)
+
+      expect(supabase.from).toHaveBeenCalledWith('meetings')
+      const selectArg = chain.select.mock.calls[0][0] as string
+      expect(selectArg).not.toContain('student_snapshot')
+      expect(selectArg).not.toContain('description')
+    })
+
+    it('still selects topic (rendered in the meeting card)', async () => {
+      const chain = makeChain()
+      const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+
+      await fetchMeetingsByClass(supabase, undefined, 20, undefined)
+
+      const selectArg = chain.select.mock.calls[0][0] as string
+      expect(selectArg).toContain('topic')
+    })
+  })
+
+  describe('fetchMeetingById (lazy-fetch source for edit modal)', () => {
+    it('still selects student_snapshot + description (edit modal needs them)', async () => {
+      const chain = {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+          }),
+        }),
+      }
+      const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+
+      await fetchMeetingById(supabase, 'm1')
+
+      const selectArg = chain.select.mock.calls[0][0] as string
+      expect(selectArg).toContain('student_snapshot')
+      expect(selectArg).toContain('description')
     })
   })
 

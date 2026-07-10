@@ -431,7 +431,7 @@ interface Meeting {
   date: string
   topic?: string
   description?: string
-  student_snapshot: string[]
+  student_snapshot?: string[] // sm-2fux: not in list query; lazy-fetched on edit
   created_at: string
   meeting_type_code?: string | null // deprecated
   activity_type_id?: string | null

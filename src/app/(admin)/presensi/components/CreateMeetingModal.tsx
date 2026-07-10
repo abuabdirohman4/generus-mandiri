@@ -5,7 +5,7 @@ import { DatePicker } from 'antd'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id' // Import Indonesian locale
 import Button from '@/components/ui/button/Button'
-import { createMeeting, updateMeeting } from '../actions'
+import { createMeeting, updateMeeting, getMeetingById } from '../actions'
 import { toast } from 'sonner'
 import { useStudents } from '@/hooks/useStudents'
 import { useClasses, type Class } from '@/hooks/useClasses'
@@ -55,6 +55,9 @@ export default function CreateMeetingModal({
     description: meeting?.description || ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // sm-2fux: student_snapshot + description no longer come from the list query (egress cut).
+  // On edit, lazy-fetch the full meeting (which carries them) via getMeetingById.
+  const [fullMeeting, setFullMeeting] = useState<any>(null)
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([])
   const [selectedKelompokIds, setSelectedKelompokIds] = useState<string[]>([])
   const [selectedDesaIds, setSelectedDesaIds] = useState<string[]>([])
@@ -303,6 +306,29 @@ export default function CreateMeetingModal({
   }, [isHierarchicalTeacher, availableClasses])
 
   // For hierarchical teachers + daerah users: auto-derive selectedClassIds from selectedClassNames × scope IDs
+  // sm-2fux: on edit-modal open, fetch full meeting detail (student_snapshot + description)
+  // that the trimmed list query no longer provides. Fetch once per opened meeting.
+  useEffect(() => {
+    if (!isOpen || !meeting?.id) {
+      setFullMeeting(null)
+      return
+    }
+    // If the passed meeting already has the fat fields (e.g. opened from a detail view), reuse it.
+    if (meeting.student_snapshot !== undefined && meeting.description !== undefined) {
+      setFullMeeting(meeting)
+      return
+    }
+    let cancelled = false
+    getMeetingById(meeting.id).then((res) => {
+      if (cancelled) return
+      if (res?.success && res.data) setFullMeeting(res.data)
+      else setFullMeeting(meeting) // fallback to whatever we have
+    }).catch(() => {
+      if (!cancelled) setFullMeeting(meeting)
+    })
+    return () => { cancelled = true }
+  }, [isOpen, meeting?.id])
+
   useEffect(() => {
     if (!isHierarchicalTeacher && !isDaerahLevelUser) return
 
@@ -522,8 +548,8 @@ export default function CreateMeetingModal({
       setFormData({
         date: dayjs(meeting.date),
         title: meeting.title,
-        topic: meeting.topic || '',
-        description: meeting.description || ''
+        topic: fullMeeting?.topic ?? meeting.topic ?? '',
+        description: fullMeeting?.description ?? meeting.description ?? ''
       })
       setActivityTypeId(meeting.activity_type_id || null)
       setCheckTimeEnabled(meeting.check_time_enabled || false)
@@ -532,7 +558,7 @@ export default function CreateMeetingModal({
       setCheckTimeEnabled(false)
       setStartTime('')
     }
-  }, [meeting])
+  }, [meeting, fullMeeting])
 
   // Initialize selectedStudentIds with smart preservation
   useEffect(() => {
@@ -549,10 +575,12 @@ export default function CreateMeetingModal({
     // Wait for students to load
     if (filteredStudents.length === 0) return
 
-    // CASE 1: Edit Mode - Initialize from meeting.student_snapshot (ONCE)
-    if (meeting && meeting.student_snapshot && !isManualSelectionRef.current) {
+    // CASE 1: Edit Mode - Initialize from student_snapshot (ONCE).
+    // sm-2fux: snapshot comes from the lazy-fetched fullMeeting, not the trimmed list object.
+    const editSnapshot = fullMeeting?.student_snapshot
+    if (meeting && editSnapshot && !isManualSelectionRef.current) {
       const validStudentIds = filteredStudents
-        .filter(s => meeting.student_snapshot.includes(s.id))
+        .filter(s => editSnapshot.includes(s.id))
         .map(s => s.id)
 
       setSelectedStudentIds(validStudentIds.length > 0 ? validStudentIds : filteredStudents.map(s => s.id))
@@ -663,7 +691,7 @@ export default function CreateMeetingModal({
   }, [
     selectedClassIds.join(','),
     filteredStudents.map(s => s.id).join(','),
-    meeting?.student_snapshot?.join(','),
+    fullMeeting?.student_snapshot?.join(','),
     students
   ])
 

@@ -73,8 +73,6 @@ export async function fetchMeetingsByClass(
       title,
       date,
       topic,
-      description,
-      student_snapshot,
       created_at,
       activity_type_id,
       activity_level_id,
