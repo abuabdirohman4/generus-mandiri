@@ -94,6 +94,14 @@ print('tables:', tables.most_common())
 ```
 Match the heavy table (usually `attendance_logs` or `students` with nested joins) back to the page from step 3. A `meetings!inner(...)` join carrying `topic`/`description`/`student_snapshot`, or `attendance_logs` fetched in many small chunks, is the classic fat pattern.
 
+### 4b. Verifikasi hasil fix (jangan salah baca dashboard)
+
+Tiga jebakan saat menilai "apakah fix berhasil":
+
+1. **Jebakan UTC.** Dashboard bucket per hari **UTC**. DB `now()` juga UTC. WIB = UTC+7 → jam 00:00–06:59 WIB masih hari UTC **kemarin**. Contoh: 05:25 WIB 11 Jul = 22:25 UTC 10 Jul → bar "hari ini" di dashboard masih **10 Jul**. Cek `select now()` sebelum menyimpulkan tanggal.
+2. **Bar = kode lama.** Fix yang **baru** di-push HARI INI tidak mengubah bar hari itu — traffic hari itu jalan di kode lama. Efek fix baru kelihatan di hari-hari **setelah** deploy. Jangan bilang "fix gagal, egress masih tinggi" kalau bar-nya pra-deploy.
+3. **Bandingkan user-asli vs user-asli.** Hari dev-session (hot-reload + testing manual pakai akun admin scope lebar) menggelembungkan egress dan TIDAK representatif — jangan jadikan baseline. Bandingkan hari user-asli-penuh sebelum fix vs hari user-asli-penuh sesudah fix, dengan **jumlah page-view sebanding** (normalisasi: MB ÷ view, bukan MB absolut — hari sepi otomatis lebih rendah tanpa fix apa pun).
+
 ### 5. Project and diagnose
 - **Daily budget:** 5GB / 30 ≈ 167MB/day average. Compare today's GB (from dashboard) against day-of-cycle.
 - **Separate dev-session days** from real-user days — hot-reload + manual testing on wide-scope admin accounts inflate egress and are NOT representative (see the register's dev-session note). If the heavy day coincides with your own coding, say so.

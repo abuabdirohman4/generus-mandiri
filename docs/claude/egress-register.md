@@ -1,6 +1,6 @@
 # Egress Register — Generus Mandiri
 
-Catatan hidup soal masalah egress Supabase, akar penyebab, fix, dan snapshot aktivitas harian. Supabase Free tier menagih **5GB egress/bulan** (siklus billing **07 → 07**, proyek ini). Egress = ukuran payload PostgREST × frekuensi, BUKAN ukuran DB. Aturan umum: [`egress-cost-optimization.md`](egress-cost-optimization.md). Cara monitoring: [`egress-monitoring-inventory.md`](egress-monitoring-inventory.md).
+Catatan hidup soal masalah egress Supabase, akar penyebab, fix, dan snapshot aktivitas harian. Supabase Free tier menagih **5GB egress/bulan** (siklus billing **07 → 07**, proyek ini). Egress = ukuran payload PostgREST × frekuensi, BUKAN ukuran DB. Aturan umum: [`egress-cost-optimization.md`](egress-cost-optimization.md). Cara monitoring: [`egress-monitoring-inventory.md`](egress-monitoring-inventory.md). Rincian per-user per-hari: [`egress-daily-users.md`](egress-daily-users.md).
 
 **Sumber data untuk investigasi:**
 - **"Query apa / berapa egress"** → dashboard Supabase (breakdown per-source) + MCP `get_logs` service `api` (URL REST mentah, ~100 entry terakhir, tidak bisa difilter waktu).
@@ -16,10 +16,10 @@ Catatan hidup soal masalah egress Supabase, akar penyebab, fix, dan snapshot akt
 | 2 | Notifikasi SWR polling tiap 60s per tab | 09 Jul 2026 | `refreshInterval: 60000` untuk fitur cadence ~bulanan | SEDANG (2 fetch/menit/tab) | `useNotifications.ts` → `refreshInterval: 0`, `revalidateOnFocus:false` | ✅ shipped (sm-lmi3) | sm-kt2j |
 | 3 | Middleware `getUser()` jalan saat Next.js `<Link>` prefetch | 09 Jul 2026 | matcher terlalu lebar; prefetch memicu validasi auth | RENDAH-SEDANG (Auth ~5%) | middleware skip prefetch/`_next/data` | ✅ shipped (sm-lmi3) | sm-kt2j |
 | 4 | `/tracking` N+1 + badai refetch realtime | ~09 Jul 2026 | `.in()` per-user tanpa chunk + realtime tanpa debounce | SEDANG | chunk-100 `.in()`, split 2-effect, debounce 3s | ✅ shipped | sm-hsp7 |
-| 5 | `/laporan`: `meetings` di-fetch DUA KALI + `student_snapshot` jsonb ke-egress cuma buat `.length` + `title` tak terpakai | 10 Jul 2026 | double fetch meeting (fetchMeetingsForDateRange + WithFullDetails); jsonb gemuk per row | TINGGI (~100MB per load report full-scope) | RPC `get_report_meetings` (1 call, return `snapshot_count` bukan jsonb); logic pakai `snapshot_count` | ✅ kode selesai, nunggu verify | sm-5jzd (#134) |
+| 5 | `/laporan`: `meetings` di-fetch DUA KALI + `student_snapshot` jsonb ke-egress cuma buat `.length` + `title` tak terpakai | 10 Jul 2026 | double fetch meeting (fetchMeetingsForDateRange + WithFullDetails); jsonb gemuk per row | TINGGI (~100MB per load report full-scope) | RPC `get_report_meetings` (1 call, return `snapshot_count` bukan jsonb); logic pakai `snapshot_count` | ✅ shipped (61ae009 batch) | sm-5jzd (#134) |
 | 6 | `/organisasi` tanpa server access guard | 10 Jul 2026 | page `use client`, cuma sidebar yang sembunyikan; akses URL langsung = render + fetch org-tree | RENDAH (ternyata tidak diakses hari ini — lihat snapshot) | server guard di `organisasi/layout.tsx`: non-admin → redirect `/home` | ✅ shipped | sm-2m5n |
-| 7 | Detail-presensi (`/users/siswa/<id>/presensi`): `meetings!inner` fetch `topic`+`description` per row (cuma dipakai di modal), `revalidateOnFocus:true`, refetch per-bulan | 10 Jul 2026 | field gemuk tiap row; focus refetch; filter client-side | TINGGI (#1 sumber traffic asli — 35 view detail hari ini) | trim query list (buang topic+description), lazy-fetch `getMeetingDetail` saat modal buka, `revalidateOnFocus:false` | ✅ kode selesai, nunggu verify | sm-euox (#135) |
-| 8 | `/presensi` list (`fetchMeetingsByClass`): `student_snapshot` jsonb + `description` di-fetch tiap row list meeting, padahal cuma dipakai saat EDIT pertemuan (modal) | 10 Jul 2026 | field gemuk tiap row list; git konfirmasi sm-kt2j hanya optimasi setting global, query ini tak tersentuh | POTENSI TINGGI (frekuensi TERTINGGI — 215 view/hari, bytes/fetch belum dioptimasi) | trim query list (buang snapshot+description, keep topic), lazy-fetch `getMeetingById` saat modal edit | ✅ kode selesai, nunggu verify | sm-2fux (#136) |
+| 7 | Detail-presensi (`/users/siswa/<id>/presensi`): `meetings!inner` fetch `topic`+`description` per row (cuma dipakai di modal), `revalidateOnFocus:true`, refetch per-bulan | 10 Jul 2026 | field gemuk tiap row; focus refetch; filter client-side | TINGGI (#1 sumber traffic asli — 35 view detail hari ini) | trim query list (buang topic+description), lazy-fetch `getMeetingDetail` saat modal buka, `revalidateOnFocus:false` | ✅ shipped (61ae009) | sm-euox (#135) |
+| 8 | `/presensi` list (`fetchMeetingsByClass`): `student_snapshot` jsonb + `description` di-fetch tiap row list meeting, padahal cuma dipakai saat EDIT pertemuan (modal) | 10 Jul 2026 | field gemuk tiap row list; git konfirmasi sm-kt2j hanya optimasi setting global, query ini tak tersentuh | POTENSI TINGGI (frekuensi TERTINGGI — 215 view/hari, bytes/fetch belum dioptimasi) | trim query list (buang snapshot+description, keep topic), lazy-fetch `getMeetingById` saat modal edit | ✅ shipped (76abd53) | sm-2fux (#136) |
 | — | LIST siswa fetch all-rows (2198 baris, tanpa pagination) | 09 Jul 2026 | `fetchAllStudents` buat render list | SEDANG | pagination server-side `.range()` + narrow select | ⏳ open (deferred) | sm-uxnv |
 | — | Traffic dev-session menggelembungkan egress (hot-reload, testing manual pakai akun admin scope lebar) | 22-25 Jun + 07-08 Jul | ngoding langsung ke DB prod live | SEDANG (2 dari 4 hari siklus ini) | Supabase lokal (Docker+CLI) | ⏳ open (P3) | sm-csvk (#133) |
 
@@ -67,6 +67,32 @@ Egress (per ~20:54 WIB, hari ke-4 siklus): **1.71 GB / 5 GB (34%)**. PostgREST ~
 - **`/presensi` pemimpin volume** (215 view) — layak audit egress lanjutan walau per-view lebih ringan dari laporan/detail.
 - **`/laporan` (48) + detail-presensi (35)** halaman berat per-view — persis dua fix yang sedang jalan (sm-5jzd, sm-euox). Target tepat.
 - **Proyeksi:** di rate pemakaian asli (~245MB/hari di hari non-dev), ~7.4GB/bln → **akan lewat 5GB**. Setelah sm-5jzd + sm-euox landing, dua halaman terberat per-view menyusut → proyeksi balik ke bawah 5GB. Verifikasi 2-3 hari bersih setelah keduanya shipped.
+
+---
+
+## Status Optimasi & Baseline Verifikasi — per 11 Jul 2026 (05:25 WIB)
+
+**Semua 6 fix egress sudah di master** (di-push 11 Jul pagi). Rekap:
+
+| Fix | Sasaran | Sifat | Commit |
+|-----|---------|-------|--------|
+| sm-kt2j/lmi3 | `revalidateOnFocus` global off + notif polling off + middleware prefetch skip | frekuensi ↓ | b2c7e15 |
+| sm-hsp7 | `/tracking` N+1 chunk + realtime debounce | frekuensi+bytes ↓ | 43ec14a |
+| sm-5jzd | `/laporan` — RPC `get_report_meetings` (return count, bukan jsonb; 1 fetch bukan 2) | bytes/view ↓↓ | 6488093 |
+| sm-2m5n | `/organisasi` server guard (blok render+fetch non-admin) | akses tak sah ↓ | 7c84cd0 |
+| sm-2fux | `/presensi` list — buang `student_snapshot`+`description`, lazy-fetch saat edit | bytes/view ↓ (× frekuensi tertinggi) | 76abd53 |
+| sm-euox | detail-presensi — buang `topic`+`description`, lazy-fetch modal, focus-off | bytes/view ↓↓ (halaman terberat/view) | 61ae009 |
+
+**BASELINE sebelum fix (dari dashboard, PostgREST saja):**
+- 07 Jul ~530MB · 08 Jul ~540MB (dua hari **dev-session** — hot-reload + testing akun admin scope lebar, TIDAK representatif)
+- 09 Jul kecil · **10 Jul 323MB** (hari user-asli penuh — 22 user, 471 view; ini baseline pembanding sebenarnya)
+- Total periode per hari-4: **1.72 GB / 5 GB (34%)**
+
+**PENTING:** fix sm-5jzd/2fux/euox baru di-push 11 Jul — **data 10 Jul (323MB) belum kena efeknya**. Semua bar dashboard s/d 10 Jul = KODE LAMA. Verifikasi hasil = bandingkan **10 Jul (323MB, kode lama, ~471 view) vs hari user-asli PERTAMA setelah 11 Jul** dengan jumlah view sebanding. Target: PostgREST MB/view turun jelas di halaman /laporan + detail-presensi + /presensi.
+
+**Proyeksi:** di rate user-asli ~325MB/hari (kode lama) → ~9.7GB/bln → jebol. Fix menyasar 3 halaman terberat (laporan/detail/presensi) yang menyusun mayoritas bytes/view. Kalau turun ke ~170MB/hari user-asli → ~5.1GB/bln (mepet, tapi 07/08 dev-session tak terulang kalau pindah Supabase lokal — sm-csvk). Butuh 2-3 hari bersih pasca-11 Jul untuk angka pasti.
+
+**Cara baca dashboard (jebakan UTC):** DB `now()` = UTC. 05:25 WIB 11 Jul = 22:25 UTC **10 Jul** — jadi "hari ini" di dashboard masih bar 10 Jul. Hari 11 Jul (UTC) baru mulai 07:00 WIB.
 
 ---
 

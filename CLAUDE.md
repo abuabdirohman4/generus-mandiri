@@ -226,6 +226,7 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Database Operations**: [`docs/claude/database-operations.md`](docs/claude/database-operations.md)
 - **Egress Cost Optimization**: [`docs/claude/egress-cost-optimization.md`](docs/claude/egress-cost-optimization.md)
 - **Egress Register** (problems/fixes table + daily activity snapshots): [`docs/claude/egress-register.md`](docs/claude/egress-register.md)
+- **Egress Daily Users** (per-user per-day activity 7-10 Jul + biang egress): [`docs/claude/egress-daily-users.md`](docs/claude/egress-daily-users.md)
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)
