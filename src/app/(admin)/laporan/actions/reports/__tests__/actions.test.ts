@@ -8,12 +8,11 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('../queries', () => ({
   fetchUserProfile: vi.fn(),
-  fetchMeetingsForDateRange: vi.fn(),
+  fetchReportMeetings: vi.fn(),
   fetchClassHierarchyMaps: vi.fn(),
   fetchAttendanceLogs: vi.fn(),
   fetchStudentDetails: vi.fn(),
   fetchKelompokNames: vi.fn(),
-  fetchMeetingsWithFullDetails: vi.fn(),
   fetchStudentClassesForEnrollment: vi.fn(),
 }))
 vi.mock('../logic', () => ({
@@ -36,12 +35,11 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import {
   fetchUserProfile,
-  fetchMeetingsForDateRange,
+  fetchReportMeetings,
   fetchClassHierarchyMaps,
   fetchAttendanceLogs,
   fetchStudentDetails,
   fetchKelompokNames,
-  fetchMeetingsWithFullDetails,
   fetchStudentClassesForEnrollment,
 } from '../queries'
 import {
@@ -120,8 +118,8 @@ function setupDefaultHappyPathMocks() {
   const mockDateFilter = { date: { gte: '2026-03-01', lte: '2026-03-31' } }
   vi.mocked(buildDateFilter).mockReturnValue(mockDateFilter)
 
-  vi.mocked(fetchMeetingsForDateRange).mockResolvedValue({
-    data: [{ id: 'meeting-1', date: '2026-03-10', class_id: 'class-1', class_ids: ['class-1'] }],
+  vi.mocked(fetchReportMeetings).mockResolvedValue({
+    data: [{ id: 'meeting-1', date: '2026-03-10', class_id: 'class-1', class_ids: ['class-1'], kelompok_id: null, snapshot_count: 0 }],
     error: null,
   } as any)
 
@@ -158,11 +156,6 @@ function setupDefaultHappyPathMocks() {
     },
   ]
   vi.mocked(enrichAttendanceLogs).mockReturnValue(mockEnrichedLogs)
-
-  vi.mocked(fetchMeetingsWithFullDetails).mockResolvedValue({
-    data: [{ id: 'meeting-1', date: '2026-03-10', class_id: 'class-1', class_ids: ['class-1'], classes: null }],
-    error: null,
-  } as any)
 
   vi.mocked(fetchStudentClassesForEnrollment).mockResolvedValue({ data: [], error: null } as any)
   vi.mocked(buildEnrollmentMap).mockReturnValue(new Map())
@@ -438,12 +431,11 @@ describe('getAttendanceReport (Layer 3)', () => {
   describe('empty data edge cases', () => {
     it('returns empty summary when no meetings exist for date range', async () => {
       setupDefaultHappyPathMocks()
-      vi.mocked(fetchMeetingsForDateRange).mockResolvedValue({ data: [], error: null } as any)
+      vi.mocked(fetchReportMeetings).mockResolvedValue({ data: [], error: null } as any)
       vi.mocked(filterMeetingsByRole).mockReturnValue([])
       vi.mocked(fetchAttendanceLogs).mockResolvedValue({ data: [], error: null } as any)
       vi.mocked(fetchStudentDetails).mockResolvedValue({ data: [], error: null } as any)
       vi.mocked(enrichAttendanceLogs).mockReturnValue([])
-      vi.mocked(fetchMeetingsWithFullDetails).mockResolvedValue({ data: [], error: null } as any)
       vi.mocked(aggregateStudentSummary).mockReturnValue([])
       vi.mocked(aggregateTrendData).mockReturnValue([])
       vi.mocked(calculateAttendanceStats).mockReturnValue({ total: 0, hadir: 0, izin: 0, sakit: 0, alpha: 0 } as any)
@@ -458,9 +450,9 @@ describe('getAttendanceReport (Layer 3)', () => {
 
     it('handles meetings with class_ids array (multi-class meetings)', async () => {
       setupDefaultHappyPathMocks()
-      vi.mocked(fetchMeetingsForDateRange).mockResolvedValue({
+      vi.mocked(fetchReportMeetings).mockResolvedValue({
         data: [
-          { id: 'meeting-multi', date: '2026-03-10', class_id: null, class_ids: ['class-1', 'class-2'] },
+          { id: 'meeting-multi', date: '2026-03-10', class_id: null, class_ids: ['class-1', 'class-2'], kelompok_id: null, snapshot_count: 0 },
         ],
         error: null,
       } as any)
@@ -476,10 +468,10 @@ describe('getAttendanceReport (Layer 3)', () => {
 
     it('deduplicates class IDs from multiple meetings before fetching hierarchy', async () => {
       setupDefaultHappyPathMocks()
-      vi.mocked(fetchMeetingsForDateRange).mockResolvedValue({
+      vi.mocked(fetchReportMeetings).mockResolvedValue({
         data: [
-          { id: 'm1', date: '2026-03-10', class_id: 'class-1', class_ids: ['class-1'] },
-          { id: 'm2', date: '2026-03-11', class_id: 'class-1', class_ids: ['class-1'] },
+          { id: 'm1', date: '2026-03-10', class_id: 'class-1', class_ids: ['class-1'], kelompok_id: null, snapshot_count: 0 },
+          { id: 'm2', date: '2026-03-11', class_id: 'class-1', class_ids: ['class-1'], kelompok_id: null, snapshot_count: 0 },
         ],
         error: null,
       } as any)

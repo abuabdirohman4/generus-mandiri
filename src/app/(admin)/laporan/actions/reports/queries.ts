@@ -35,44 +35,6 @@ export async function fetchUserProfile(
 }
 
 /**
- * Fetch meetings within date range with optional meeting type filter
- */
-export async function fetchMeetingsForDateRange(
-    supabase: SupabaseClient,
-    dateFilter: {
-        date?: {
-            eq?: string
-            gte?: string
-            lte?: string
-        }
-    },
-    activityTypeFilter?: string,
-    activityLevelFilter?: string
-) {
-    const activityTypes = activityTypeFilter
-        ? activityTypeFilter.split(',').filter(Boolean)
-        : null
-    const activityLevels = activityLevelFilter
-        ? activityLevelFilter.split(',').filter(Boolean)
-        : null
-
-    let query = supabase
-        .from('meetings')
-        .select('id, date, class_id, class_ids')
-        .gte('date', dateFilter.date?.gte || '1900-01-01')
-        .lte('date', dateFilter.date?.lte || '2100-12-31')
-
-    if (activityTypes && activityTypes.length > 0) {
-        query = query.in('activity_type_id', activityTypes)
-    }
-    if (activityLevels && activityLevels.length > 0) {
-        query = query.in('activity_level_id', activityLevels)
-    }
-
-    return await query.order('date')
-}
-
-/**
  * Fetch class details with organizational hierarchy (kelompok → desa → daerah)
  */
 export async function fetchClassHierarchyMaps(
@@ -176,9 +138,29 @@ export async function fetchKelompokNames(supabase: SupabaseClient) {
 }
 
 /**
- * Fetch meetings with full details including class relations
+ * Fetch student_classes junction table for enrollment validation
  */
-export async function fetchMeetingsWithFullDetails(
+export async function fetchStudentClassesForEnrollment(
+    supabase: SupabaseClient,
+    classIds: string[]
+) {
+    if (classIds.length === 0) {
+        return { data: [], error: null }
+    }
+
+    return await supabase
+        .from('student_classes')
+        .select('class_id, student_id, students(id, kelompok_id)')
+        .in('class_id', classIds)
+}
+
+/**
+ * Fetch report meetings via RPC (sm-5jzd egress cut).
+ * Replaces fetchMeetingsForDateRange + fetchMeetingsWithFullDetails.
+ * Returns snapshot_count (jsonb_array_length) instead of full student_snapshot jsonb,
+ * and kelompok_id joined from classes — the fat jsonb never leaves Postgres.
+ */
+export async function fetchReportMeetings(
     supabase: SupabaseClient,
     dateFilter: {
         date?: {
@@ -197,46 +179,10 @@ export async function fetchMeetingsWithFullDetails(
         ? activityLevelFilter.split(',').filter(Boolean)
         : null
 
-    let query = supabase
-        .from('meetings')
-        .select(`
-      id,
-      title,
-      date,
-      student_snapshot,
-      class_id,
-      class_ids,
-      classes:class_id(
-        id,
-        kelompok_id
-      )
-    `)
-        .gte('date', dateFilter.date?.gte || '1900-01-01')
-        .lte('date', dateFilter.date?.lte || '2100-12-31')
-
-    if (activityTypes && activityTypes.length > 0) {
-        query = query.in('activity_type_id', activityTypes)
-    }
-    if (activityLevels && activityLevels.length > 0) {
-        query = query.in('activity_level_id', activityLevels)
-    }
-
-    return await query.order('date')
-}
-
-/**
- * Fetch student_classes junction table for enrollment validation
- */
-export async function fetchStudentClassesForEnrollment(
-    supabase: SupabaseClient,
-    classIds: string[]
-) {
-    if (classIds.length === 0) {
-        return { data: [], error: null }
-    }
-
-    return await supabase
-        .from('student_classes')
-        .select('class_id, student_id, students(id, kelompok_id)')
-        .in('class_id', classIds)
+    return await supabase.rpc('get_report_meetings', {
+        p_date_gte: dateFilter.date?.gte || '1900-01-01',
+        p_date_lte: dateFilter.date?.lte || '2100-12-31',
+        p_activity_type_ids: activityTypes && activityTypes.length ? activityTypes : null,
+        p_activity_level_ids: activityLevels && activityLevels.length ? activityLevels : null,
+    })
 }

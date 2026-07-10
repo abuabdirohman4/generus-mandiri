@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+    aggregateTrendData,
     getWeekStartDate,
     getWeekEndDate,
     getWeekNumberInMonth,
@@ -551,5 +552,43 @@ describe('logic.ts – aggregateStudentSummary', () => {
     it('calculates attendance_rate correctly', () => {
         const result = aggregateStudentSummary(logs, kelompokMap)
         expect(result[0].attendance_rate).toBe(50) // 1/2 = 50%
+    })
+})
+
+
+describe('aggregateTrendData – snapshot_count fallback (sm-5jzd)', () => {
+    const filters: any = { viewMode: 'general', period: 'daily' }
+
+    it('uses snapshot_count as total students when a meeting has no logs', () => {
+        const meetings = [{ id: 'm1', date: '2026-07-01', snapshot_count: 5 }]
+        const logs: any[] = [] // no attendance logs for this meeting
+        const result = aggregateTrendData(meetings, logs, filters) as any[]
+
+        // 0 present out of 5 potential → 0%
+        expect(result).toHaveLength(1)
+        expect(result[0].presentCount).toBe(0)
+        expect(result[0].attendancePercentage).toBe(0)
+    })
+
+    it('falls back to student_snapshot.length when snapshot_count is absent', () => {
+        const meetings = [{ id: 'm1', date: '2026-07-01', student_snapshot: [{}, {}, {}] }]
+        const logs: any[] = []
+        const result = aggregateTrendData(meetings, logs, filters) as any[]
+
+        expect(result).toHaveLength(1)
+        // 3 potential, 0 present → 0%; totalRecords derived from snapshot length
+        expect(result[0].attendancePercentage).toBe(0)
+    })
+
+    it('prefers snapshot_count (0) over stale student_snapshot when logs exist', () => {
+        const meetings = [{ id: 'm1', date: '2026-07-01', snapshot_count: 0 }]
+        const logs = [
+            { meeting_id: 'm1', student_id: 's1', status: 'H' },
+            { meeting_id: 'm1', student_id: 's2', status: 'A' },
+        ]
+        const result = aggregateTrendData(meetings, logs, filters) as any[]
+
+        // 2 visible students, 1 present → 50%
+        expect(result[0].attendancePercentage).toBe(50)
     })
 })

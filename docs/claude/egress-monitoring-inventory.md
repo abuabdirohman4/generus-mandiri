@@ -63,6 +63,30 @@ Three compounding problems:
 
 Timezone note: Supabase's "Egress per day" chart buckets by **UTC**, not WIB. WIB = UTC+7, so a UTC day-bar covers 07:00 WIB to 06:59 WIB the next day.
 
+## Normalizing egress across days with different traffic
+
+Raw MB/day is not comparable across days — user count and what they clicked varies daily (see sm-kt2j caveat: dev-session days had inflated superadmin/admin-daerah traffic vs a quiet day). Before concluding "egress dropped/rose because of a fix," normalize by page-view volume using `activity_logs` (already populated by `PageViewTracker.tsx` on every route change, no new instrumentation needed):
+
+```sql
+-- Page-view count for a given day (UTC, matches the dashboard's day-bar bucketing)
+SELECT
+  date_trunc('day', created_at) AS day_utc,
+  count(*) AS page_views,
+  count(DISTINCT user_id) AS distinct_users
+FROM activity_logs
+WHERE action = 'open_page'
+  AND created_at >= '2026-07-10 00:00:00+00'
+  AND created_at <  '2026-07-11 00:00:00+00'
+GROUP BY 1;
+```
+
+Then: `MB/day ÷ page_views = MB per page-view` — compare THIS ratio across days, not the raw MB total. A day with fewer users will naturally show lower MB but can have the same (or worse) per-view cost, which is the number that actually says whether a fix helped.
+
+**Known reference point (2026-07-10):** one `/presensi` page load (full class/meeting scope) ≈ 4MB — confirmed via `get_logs` (service: `api`) showing the request burst: one heavy nested-join `students?id=in.(...)` query (kelompok→desa, classes, student_classes joins) + ~15-20 parallel `attendance_logs?meeting_id=in.(...)` chunk requests (chunk size 3, deliberate — see `fetchAttendanceLogsInBatches` in `src/lib/utils/batchFetching.ts`, prevents Supabase's 1000-row silent-truncate). Use this as a rough per-feature yardstick, not a hard budget.
+
+**How to pull the matching request burst for a specific window:** `get_logs` (service: `api`) only returns the last ~100 entries project-wide (not time-ranged), so it's only useful for "what just happened in the last few minutes," not reconstructing an arbitrary past hour like the start of a dashboard day-bar.
+
+
 ## Why not custom per-fetch logging? (decided 2026-07-10)
 
 Considered building a `query_metrics` table (log every fetch's row-count + role + timestamp) for per-feature/per-role egress visibility. **Rejected** after testing:

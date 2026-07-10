@@ -499,7 +499,7 @@ export function aggregateTrendData(
         const visibleStudentIds = new Set(meetingLogs.map((log: any) => log.student_id))
         const totalStudents = visibleStudentIds.size > 0
             ? visibleStudentIds.size
-            : meeting.student_snapshot?.length || 0
+            : meeting.snapshot_count ?? (meeting.student_snapshot?.length || 0)
 
         let groupKey: string
         let displayDate: string

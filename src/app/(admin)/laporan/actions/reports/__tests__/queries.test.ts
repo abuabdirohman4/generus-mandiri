@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
     fetchUserProfile,
-    fetchMeetingsForDateRange,
+    fetchReportMeetings,
     fetchClassHierarchyMaps,
     fetchAttendanceLogs,
     fetchStudentDetails,
     fetchKelompokNames,
-    fetchMeetingsWithFullDetails,
     fetchStudentClassesForEnrollment
 } from '../queries'
 
@@ -42,37 +41,49 @@ describe('queries.ts – Layer 1', () => {
         })
     })
 
-    // ─── fetchMeetingsForDateRange ─────────────────────────────────────────────
+    // ─── fetchReportMeetings (sm-5jzd RPC) ─────────────────────────────────────
 
-    describe('fetchMeetingsForDateRange', () => {
-        it('applies gte/lte date filters', async () => {
-            const chain = makeMockChain({ data: [], error: null })
-            const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+    describe('fetchReportMeetings', () => {
+        it('calls get_report_meetings RPC with date range params', async () => {
+            const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+            const supabase = { rpc } as any
 
-            await fetchMeetingsForDateRange(supabase, { date: { gte: '2024-01-01', lte: '2024-01-31' } })
+            await fetchReportMeetings(supabase, { date: { gte: '2024-01-01', lte: '2024-01-31' } })
 
-            expect(supabase.from).toHaveBeenCalledWith('meetings')
-            expect(chain.gte).toHaveBeenCalledWith('date', '2024-01-01')
-            expect(chain.lte).toHaveBeenCalledWith('date', '2024-01-31')
-            expect(chain.order).toHaveBeenCalledWith('date')
+            expect(rpc).toHaveBeenCalledWith('get_report_meetings', {
+                p_date_gte: '2024-01-01',
+                p_date_lte: '2024-01-31',
+                p_activity_type_ids: null,
+                p_activity_level_ids: null,
+            })
         })
 
-        it('applies activity type filter when provided', async () => {
-            const chain = makeMockChain({ data: [], error: null })
-            const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+        it('passes activity type/level arrays when provided', async () => {
+            const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+            const supabase = { rpc } as any
 
-            await fetchMeetingsForDateRange(supabase, { date: {} }, 'uuid-1,uuid-2')
+            await fetchReportMeetings(supabase, { date: {} }, 'uuid-1,uuid-2', 'lvl-1')
 
-            expect(chain.in).toHaveBeenCalledWith('activity_type_id', ['uuid-1', 'uuid-2'])
+            expect(rpc).toHaveBeenCalledWith('get_report_meetings', {
+                p_date_gte: '1900-01-01',
+                p_date_lte: '2100-12-31',
+                p_activity_type_ids: ['uuid-1', 'uuid-2'],
+                p_activity_level_ids: ['lvl-1'],
+            })
         })
 
-        it('skips meeting type filter when not provided', async () => {
-            const chain = makeMockChain({ data: [], error: null })
-            const supabase = { from: vi.fn().mockReturnValue(chain) } as any
+        it('sends null filters when not provided (falls back to full range)', async () => {
+            const rpc = vi.fn().mockResolvedValue({ data: [], error: null })
+            const supabase = { rpc } as any
 
-            await fetchMeetingsForDateRange(supabase, { date: {} })
+            await fetchReportMeetings(supabase, { date: {} })
 
-            expect(chain.in).not.toHaveBeenCalled()
+            expect(rpc).toHaveBeenCalledWith('get_report_meetings', {
+                p_date_gte: '1900-01-01',
+                p_date_lte: '2100-12-31',
+                p_activity_type_ids: null,
+                p_activity_level_ids: null,
+            })
         })
     })
 

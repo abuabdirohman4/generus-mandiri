@@ -9,12 +9,11 @@ import {
 import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import {
     fetchUserProfile,
-    fetchMeetingsForDateRange,
+    fetchReportMeetings,
     fetchClassHierarchyMaps,
     fetchAttendanceLogs,
     fetchStudentDetails,
     fetchKelompokNames,
-    fetchMeetingsWithFullDetails,
     fetchStudentClassesForEnrollment,
 } from './queries'
 import {
@@ -66,14 +65,26 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
         // 5. Use admin client for queries that need to bypass RLS
         const adminClient = await createAdminClient()
 
-        // 6. Fetch meetings for date range (Layer 1)
-        const { data: meetingsForFilter, error: meetingsError } = await fetchMeetingsForDateRange(
+        // 6. Fetch meetings via RPC (sm-5jzd) — single call replaces the old
+        //    fetchMeetingsForDateRange + fetchMeetingsWithFullDetails double-fetch.
+        //    RPC returns flat kelompok_id + snapshot_count (no fat student_snapshot jsonb).
+        //    Reshape each row to { classes: { kelompok_id } } so downstream logic
+        //    (steps 7/11/16/20/21 + logic.ts) stays untouched.
+        const { data: reportMeetingsRaw, error: meetingsError } = await fetchReportMeetings(
             adminClient,
             dateFilter,
             filters.activityType,
             filters.activityLevel
         )
         if (meetingsError) throw meetingsError
+        const meetingsForFilter = (reportMeetingsRaw || []).map((m: any) => ({
+            id: m.id,
+            date: m.date,
+            class_id: m.class_id,
+            class_ids: m.class_ids,
+            snapshot_count: m.snapshot_count,
+            classes: m.kelompok_id ? { id: m.class_id, kelompok_id: m.kelompok_id } : null,
+        }))
 
         // 7. Collect all class IDs from meetings
         const allClassIdsFromMeetings = new Set<string>()
@@ -128,14 +139,9 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
             meetingMap
         )
 
-        // 15. Fetch full meeting details (for final assembly + trend chart)
-        const { data: meetings, error: fullMeetingsError } = await fetchMeetingsWithFullDetails(
-            adminClient,
-            dateFilter,
-            filters.activityType,
-            filters.activityLevel
-        )
-        if (fullMeetingsError) throw fullMeetingsError
+        // 15. Reuse the single meetings fetch (sm-5jzd) for final assembly + trend chart.
+        //     Same array as meetingsForFilter — no second round-trip, no student_snapshot egress.
+        const meetings = meetingsForFilter
 
         // 16. Enrich classKelompokMap from full meetings
         if (meetings) {

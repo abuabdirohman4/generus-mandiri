@@ -21,6 +21,8 @@ Supabase Free tier bills **egress** (outgoing bandwidth) at 5GB/month. This proj
 - ✅ Long `dedupingInterval` (10-30min) + `revalidateIfStale: false` for reference/stable data (classes, kelompok, daerah, desa, activity types — anything that rarely changes).
 - ✅ Scope realtime subscriptions tightly (filter by ID, not whole-table) if you do need them — see `useAttendanceRealtime.ts` for the pattern (per-meeting channel, cleanup on unmount).
 - ✅ Keep the middleware matcher narrow and skip auth validation (`getUser()`) on Next.js prefetch requests (`next-router-prefetch` / `purpose: prefetch` headers) — see `src/middleware.ts`. Never swap `getUser()` for `getSession()` in middleware, that skips token validation (security regression).
+- ✅ **Shrink/aggregate server-side via a Postgres RPC instead of egressing full rows.** If you only need a count, sum, or derived value from a fat column (jsonb array, large text), compute it in SQL (`jsonb_array_length`, `count`, `sum`) and return the small value — the fat field never leaves Postgres. Also use one RPC to collapse a query fetched twice with the same filter. Example: `get_report_meetings` (sm-5jzd) replaced two `/laporan` meeting fetches (one carrying full `student_snapshot` jsonb) with a single RPC returning `snapshot_count`.
+- ✅ **Guard admin-only pages in a server component (layout/page), not just by hiding the sidebar menu.** A hidden menu still lets a non-admin hit the URL directly and trigger the page's data fetch (= egress + access leak). A `redirect()` in the server layout blocks render AND fetch before anything runs. Example: `organisasi/layout.tsx` (sm-2m5n).
 
 ## Checking impact
 
