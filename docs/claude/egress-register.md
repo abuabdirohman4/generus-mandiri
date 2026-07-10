@@ -19,6 +19,7 @@ Catatan hidup soal masalah egress Supabase, akar penyebab, fix, dan snapshot akt
 | 5 | `/laporan`: `meetings` di-fetch DUA KALI + `student_snapshot` jsonb ke-egress cuma buat `.length` + `title` tak terpakai | 10 Jul 2026 | double fetch meeting (fetchMeetingsForDateRange + WithFullDetails); jsonb gemuk per row | TINGGI (~100MB per load report full-scope) | RPC `get_report_meetings` (1 call, return `snapshot_count` bukan jsonb); logic pakai `snapshot_count` | ✅ kode selesai, nunggu verify | sm-5jzd (#134) |
 | 6 | `/organisasi` tanpa server access guard | 10 Jul 2026 | page `use client`, cuma sidebar yang sembunyikan; akses URL langsung = render + fetch org-tree | RENDAH (ternyata tidak diakses hari ini — lihat snapshot) | server guard di `organisasi/layout.tsx`: non-admin → redirect `/home` | ✅ shipped | sm-2m5n |
 | 7 | Detail-presensi (`/users/siswa/<id>/presensi`): `meetings!inner` fetch `topic`+`description` per row (cuma dipakai di modal), `revalidateOnFocus:true`, refetch per-bulan | 10 Jul 2026 | field gemuk tiap row; focus refetch; filter client-side | TINGGI (#1 sumber traffic asli — 35 view detail hari ini) | trim query list, lazy-fetch detail modal, `revalidateOnFocus:false` | 📝 direncanakan | sm-euox (#135) |
+| 8 | `/presensi` list (`fetchMeetingsByClass`): `student_snapshot` jsonb + `description` di-fetch tiap row list meeting, padahal cuma dipakai saat EDIT pertemuan (modal) | 10 Jul 2026 | field gemuk tiap row list; git konfirmasi sm-kt2j hanya optimasi setting global, query ini tak tersentuh | POTENSI TINGGI (frekuensi TERTINGGI — 215 view/hari, bytes/fetch belum dioptimasi) | trim query list (buang snapshot+description, keep topic), lazy-fetch `getMeetingById` saat modal edit | 📝 direncanakan | sm-2fux (#136) |
 | — | LIST siswa fetch all-rows (2198 baris, tanpa pagination) | 09 Jul 2026 | `fetchAllStudents` buat render list | SEDANG | pagination server-side `.range()` + narrow select | ⏳ open (deferred) | sm-uxnv |
 | — | Traffic dev-session menggelembungkan egress (hot-reload, testing manual pakai akun admin scope lebar) | 22-25 Jun + 07-08 Jul | ngoding langsung ke DB prod live | SEDANG (2 dari 4 hari siklus ini) | Supabase lokal (Docker+CLI) | ⏳ open (P3) | sm-csvk (#133) |
 
@@ -35,9 +36,11 @@ Egress (per ~20:54 WIB, hari ke-4 siklus): **1.71 GB / 5 GB (34%)**. PostgREST ~
 - **445 page view**
 - Breakdown per jenis halaman:
 
-| Halaman | View | Bobot egress | Catatan |
+> **Catatan penting:** kolom "Bobot egress" di bawah adalah **estimasi kualitatif**, BUKAN MB terukur. Egress total = view × bytes/view. `/presensi` (215 view) menang di **frekuensi**, `/laporan`/detail menang di **bytes/view**. Untuk ranking pasti perlu ukur bytes/view via api-logs. `/presensi` tinggi karena frekuensi, DAN query-nya belum dioptimasi (sm-2fux).
+
+| Halaman | View | Bobot egress (estimasi) | Catatan |
 |---------|------|--------------|---------|
-| `/presensi*` | 215 | SEDANG-TINGGI | batch fetch attendance (chunk 3) — halaman driver harian utama |
+| `/presensi*` | 215 | SEDANG-TINGGI (frekuensi tertinggi) | list meeting fetch student_snapshot+description tiap row — BELUM dioptimasi (sm-2fux). Batch attendance chunk 3. |
 | `/home` | 95 | RENDAH | landing |
 | `/laporan` | 48 | **TINGGI per view** | report berat (fix sm-5jzd nunggu verify) |
 | `/users/siswa/<id>/presensi` (detail) | 35 | **TINGGI per view** | query paling gemuk (sm-euox direncanakan) |
