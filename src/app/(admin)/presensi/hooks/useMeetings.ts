@@ -166,9 +166,9 @@ export function useMeetings(classId?: string) {
       }
     },
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // sm-hsp7: fetches up to 1000 meetings+stats, was re-fetching on every window focus
       revalidateOnReconnect: true,
-      dedupingInterval: 2000,     // 2 seconds — lower so refetch works when navigating back
+      dedupingInterval: 2 * 60 * 1000, // sm-hsp7: raised from 2s to 2min, matches other large-list hooks
       revalidateIfStale: false,   // Don't auto-refetch stale data
       revalidateOnMount: true,
       refreshInterval: 0,

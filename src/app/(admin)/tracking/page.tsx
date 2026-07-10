@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { 
   SafetyCertificateOutlined, 
   LeftOutlined, 
@@ -32,6 +32,8 @@ export default function TrackingPage() {
     page: 1,
     limit: 50
   })
+  const paramsRef = useRef(params)
+  paramsRef.current = params
 
   const loadLogs = async (currentParams: GetLogsParams, showLoading = true) => {
     if (showLoading) setLoading(true)
@@ -71,31 +73,48 @@ export default function TrackingPage() {
     setMetadata(meta)
   }
 
+  // sm-hsp7: logs re-fetch when params (page/filters) change.
   useEffect(() => {
     loadLogs(params)
+  }, [params])
+
+  // sm-hsp7: metadata + summary + realtime subscription only run once on mount
+  // (was re-running on every params change — every page/filter click was
+  // re-fetching 2000-row metadata and re-subscribing the realtime channel).
+  // The realtime callback was also unfiltered (fires on every activity_logs
+  // INSERT app-wide, since every page navigation logs an 'open_page' row) and
+  // uncoalesced — debounced here so a burst of inserts triggers one refresh,
+  // not one per event.
+  useEffect(() => {
     loadMetadata()
     loadSummary()
 
-    // Initialize Supabase Realtime
     const { createClient } = require('@/lib/supabase/client')
     const supabase = createClient()
-    
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        loadLogs(paramsRef.current, false)
+        loadSummary(false)
+      }, 3000)
+    }
+
     const channel = supabase.channel('tracking-logs-changes')
       .on(
-        'postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'activity_logs' }, 
-        () => {
-          // Trigger SILENT refresh when new log inserted
-          loadLogs(params, false)
-          loadSummary(false)
-        }
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'activity_logs' },
+        scheduleRefresh
       )
       .subscribe()
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
       supabase.removeChannel(channel)
     }
-  }, [params])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleFilter = (newFilters: Partial<GetLogsParams>) => {
     const newParams = { ...params, ...newFilters, page: 1 }

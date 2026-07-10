@@ -125,31 +125,51 @@ export async function getUserActivitySummary() {
     const { data: profiles, error: profileError } = await profileQuery
     if (profileError) throw profileError
 
-    // Untuk setiap profile, ambil last_active dan total actions 30 hari
-    const summaries = await Promise.all(
-      (profiles ?? []).map(async (p) => {
-        const { data: logs } = await supabase
-          .from('activity_logs')
-          .select('created_at, action')
-          .eq('user_id', p.id)
-          .order('created_at', { ascending: false })
-          .limit(500)
+    const profileIds = (profiles ?? []).map((p) => p.id)
 
-        const allLogs = logs ?? []
-        const recentActions = allLogs.filter(
-          (l) => l.created_at >= thirtyDaysAgoISO && l.action !== 'open_page'
-        )
+    // sm-hsp7: single batched query for all users in scope instead of N+1 (was
+    // one 500-row query per profile — up to ~126 queries / 63k rows per page
+    // load). Fetch only the last 30 days directly in the query (was fetching
+    // 500 rows per user unfiltered, then filtering by date in JS).
+    //
+    // .in('user_id', profileIds) is chunked at 100 IDs: PostgREST encodes .in()
+    // into the URL, and >100 UUIDs overflow the URL length limit → data returns
+    // null with NO error (see memory: postgrest-in-url-overflow). profileIds can
+    // reach ~126 for superadmin and grows with the org, so chunking is required.
+    const CHUNK = 100
+    const recentLogs: { user_id: string; created_at: string; action: string }[] = []
+    for (let i = 0; i < profileIds.length; i += CHUNK) {
+      const chunk = profileIds.slice(i, i + CHUNK)
+      const { data, error } = await supabase
+        .from('activity_logs')
+        .select('user_id, created_at, action')
+        .in('user_id', chunk)
+        .gte('created_at', thirtyDaysAgoISO)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      if (data) recentLogs.push(...data)
+    }
 
-        return {
-          id: p.id,
-          full_name: p.full_name,
-          username: p.username,
-          role: p.role,
-          last_active: allLogs[0]?.created_at ?? null,
-          total_actions_30d: recentActions.length,
-        }
-      })
-    )
+    const logsByUser = new Map<string, { created_at: string; action: string }[]>()
+    for (const log of recentLogs) {
+      const list = logsByUser.get(log.user_id) ?? []
+      list.push(log)
+      logsByUser.set(log.user_id, list)
+    }
+
+    const summaries = (profiles ?? []).map((p) => {
+      const userLogs = logsByUser.get(p.id) ?? []
+      const recentActions = userLogs.filter((l) => l.action !== 'open_page')
+
+      return {
+        id: p.id,
+        full_name: p.full_name,
+        username: p.username,
+        role: p.role,
+        last_active: userLogs[0]?.created_at ?? null,
+        total_actions_30d: recentActions.length,
+      }
+    })
 
     return { success: true, data: summaries }
   } catch (error) {
