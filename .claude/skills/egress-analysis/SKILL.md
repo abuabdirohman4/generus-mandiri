@@ -102,6 +102,15 @@ Tiga jebakan saat menilai "apakah fix berhasil":
 2. **Bar = kode lama.** Fix yang **baru** di-push HARI INI tidak mengubah bar hari itu — traffic hari itu jalan di kode lama. Efek fix baru kelihatan di hari-hari **setelah** deploy. Jangan bilang "fix gagal, egress masih tinggi" kalau bar-nya pra-deploy.
 3. **Bandingkan user-asli vs user-asli.** Hari dev-session (hot-reload + testing manual pakai akun admin scope lebar) menggelembungkan egress dan TIDAK representatif — jangan jadikan baseline. Bandingkan hari user-asli-penuh sebelum fix vs hari user-asli-penuh sesudah fix, dengan **jumlah page-view sebanding** (normalisasi: MB ÷ view, bukan MB absolut — hari sepi otomatis lebih rendah tanpa fix apa pun).
 
+### 4c. Egress spike bersifat MUSIMAN (pola tanggal, bukan acak)
+
+Dari data cycle 7 Jun–7 Jul: puncak egress jatuh di **17, 22–25 Jun, 06 Jul** — semuanya jelang **akhir bulan / deadline input presensi / awal semester**, saat banyak guru input presensi barengan. Bukan acak, bukan bug — musiman & **predictable**.
+
+Implikasi saat analisa:
+- Sebelum panik lihat spike, cek: tanggal berapa? Kalau jatuh di akhir bulan / deadline → kemungkinan besar input massal normal, bukan leak. Konfirmasi via per-user (tersebar banyak guru = normal; satu akun meledak di halaman berat = investigasi).
+- Antisipasi cycle berikut: tanggal rawan serupa akan spike lagi. Fix bytes/view (bukan potong frekuensi) yang bikin spike volume-tinggi tetap murah.
+- **Profil egress bergeser seiring adopsi fitur.** Contoh: detail-presensi hampir nol di cycle Jun (0–12/hari), lalu melonjak 10 Jul (satu user 26×). Biang bulan ini belum tentu biang bulan depan → re-audit tiap cycle, jangan asumsi fix lama masih menutup halaman terberat.
+
 ### 5. Project and diagnose
 - **Daily budget:** 5GB / 30 ≈ 167MB/day average. Compare today's GB (from dashboard) against day-of-cycle.
 - **Separate dev-session days** from real-user days — hot-reload + manual testing on wide-scope admin accounts inflate egress and are NOT representative (see the register's dev-session note). If the heavy day coincides with your own coding, say so.
