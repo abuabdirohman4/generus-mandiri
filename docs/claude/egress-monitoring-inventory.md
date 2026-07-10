@@ -62,3 +62,11 @@ Three compounding problems:
 4. **Re-run this audit** after the 32-kelompok expansion or any major feature addition — row counts (esp. `students`, `attendance_logs`, `activity_logs`) will grow, which can push a currently-🟢/🟡 item into 🔴.
 
 Timezone note: Supabase's "Egress per day" chart buckets by **UTC**, not WIB. WIB = UTC+7, so a UTC day-bar covers 07:00 WIB to 06:59 WIB the next day.
+
+## Why not custom per-fetch logging? (decided 2026-07-10)
+
+Considered building a `query_metrics` table (log every fetch's row-count + role + timestamp) for per-feature/per-role egress visibility. **Rejected** after testing:
+- **`pg_stat_statements` is contaminated** for this project — top queries are one-off manual/MCP/migration SQL we ran ourselves (`calls: 1`), not repeating app traffic. PostgREST's parameterized app queries are hard to isolate from that noise, and `rows` ≠ actual egress bytes anyway.
+- **A custom `query_metrics` table would work** but costs real effort (table + helper in ~8-10 hot server actions + retention pruning) AND adds its own egress overhead (every log write is a PostgREST call) — heaviest exactly at the hottest queries we'd want to watch.
+- **Conclusion:** the Supabase dashboard per-source breakdown (PostgREST %, MB/day) is the *most accurate* egress signal (it's real network bytes, measured at the edge) and it's free. Combined with this inventory (which already tells us *which feature* is risky), that's enough. Don't build custom fetch logging unless the dashboard + this doc prove insufficient for a concrete decision.
+
