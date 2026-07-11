@@ -62,7 +62,13 @@ export async function fetchAttendanceByDate(
 }
 
 /**
- * Fetches attendance logs for a specific meeting
+ * Fetches attendance logs for a specific meeting.
+ *
+ * NARROW by design: the only consumer (`useMeetingAttendance`) reads just
+ * `student_id, status, reason, check_in_time` from each row -- the roster,
+ * names, kelompok/desa/class labels all come from `getStudentsFromSnapshot`,
+ * NOT from here. Nested `students(...)` joins were pure egress waste (fetched
+ * then discarded), so they are dropped. See egress-register #9 (sm-6niw).
  */
 export async function fetchAttendanceByMeeting(
   supabase: SupabaseClient,
@@ -70,39 +76,8 @@ export async function fetchAttendanceByMeeting(
 ): Promise<{ data: any[] | null; error: any }> {
   return await supabase
     .from('attendance_logs')
-    .select(`
-      id,
-      student_id,
-      status,
-      reason,
-      check_in_time,
-      students (
-        id,
-        name,
-        gender,
-        class_id,
-        kelompok_id,
-        kelompok:kelompok_id (id, name, desa:desa_id (id, name)),
-        classes (
-          id,
-          name
-        ),
-        student_classes (
-          class_id,
-          classes:class_id (
-            id,
-            name,
-            kelompok_id,
-            kelompok:kelompok_id (
-              id,
-              name
-            )
-          )
-        )
-      )
-    `)
+    .select('id, student_id, status, reason, check_in_time')
     .eq('meeting_id', meetingId)
-    .order('students(name)')
 }
 
 /**

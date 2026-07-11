@@ -106,11 +106,19 @@ export function useMeetingAttendance(meetingId: string) {
     meetingId ? `/api/meeting-attendance/${meetingId}` : null,
     fetcher,
     {
-      revalidateOnFocus: true,
+      // Live updates on this page come from `useAttendanceRealtime`
+      // (postgres_changes push), NOT from SWR refetch. So focus/stale
+      // revalidation here is redundant double-fetch of 3 fat server actions
+      // every time the teacher refocuses the app (opens QR camera, switches
+      // apps, comes back) during attendance entry — the #1 remaining PostgREST
+      // egress source. Disabled. mutate() is still called on each realtime
+      // event (see [meetingId]/page.tsx) to keep the isDirty baseline in sync.
+      // See egress-register #9 (sm-6niw).
+      revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 30000,       // 30 seconds — prevent spam refetch on tab-switch
+      dedupingInterval: 300000,      // 5 min — realtime handles liveness
       revalidateOnMount: true,
-      revalidateIfStale: true,
+      revalidateIfStale: false,
       onError: (error) => {
         console.error('Error fetching meeting attendance:', error)
       }
