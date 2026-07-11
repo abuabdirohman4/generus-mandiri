@@ -18,7 +18,8 @@ import {
   shouldShowDaerahFilter,
   getAutoFilledOrgValues
 } from '@/lib/userUtils'
-import { getStudentClasses, type Student } from '../actions'
+import { getStudentClasses } from '../actions'
+import type { PaginatedStudentRow as Student } from '@/types/student'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 import type { AcademicYear } from '@/app/(admin)/tahun-ajaran/types'
 import type { UserProfile } from '@/types/user'

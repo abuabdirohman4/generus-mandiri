@@ -25,7 +25,7 @@ import {
   getPendingTransferRequests,
   getAllOrganisationsForTransfer
 } from './actions/management/actions'
-import type { Student } from './actions'
+import type { PaginatedStudentRow as Student } from '@/types/student'
 import { toast } from 'sonner'
 
 export default function SiswaPage() {
@@ -36,6 +36,10 @@ export default function SiswaPage() {
 
   const {
     students,
+    totalCount,
+    page,
+    pageSize,
+    search,
     classes,
     daerah,
     desa,
@@ -58,7 +62,10 @@ export default function SiswaPage() {
     openBatchModal,
     closeBatchModal,
     handleBatchImportSuccess,
-    handleDataFilterChange
+    handleDataFilterChange,
+    setPage,
+    setPageSize,
+    setSearch
   } = useSiswaPage()
 
   const allowedKelompokIds = useTeacherKelompokAccess()
@@ -445,19 +452,15 @@ export default function SiswaPage() {
             />
 
             {/* Stats Cards */}
-            <StatsCards students={students.filter(s => {
-              const status = dataFilters.status || 'active'
-              const studentStatus = s.status || 'active' // Fallback to 'active' if undefined
-              return status === 'all' || studentStatus === status
-            })} userProfile={userProfile} />
+            <StatsCards 
+              students={students} 
+              totalCount={totalCount}
+              userProfile={userProfile} 
+            />
 
             {/* Students Table */}
             <StudentsTable
-              students={students.filter(s => {
-                const status = dataFilters.status || 'active'
-                const studentStatus = s.status || 'active' // Fallback to 'active' if undefined
-                return status === 'all' || studentStatus === status
-              })}
+              students={students}
               userRole={userProfile?.role || null}
               onEdit={handleEditStudent}
               onDelete={handleDeleteStudent}
@@ -468,6 +471,12 @@ export default function SiswaPage() {
               userProfile={userProfile}
               classes={classes}
               studentsWithPendingTransfer={studentsWithPendingTransfer}
+              manualPagination={true}
+              totalCount={totalCount}
+              page={page}
+              onPageChange={setPage}
+              onSearchChange={setSearch}
+              onItemsPerPageChange={setPageSize}
             />
           </>
         )}

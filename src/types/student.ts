@@ -16,8 +16,29 @@ export interface StudentBase {
   id: string
   name: string
   gender: 'Laki-laki' | 'Perempuan' | string | null
-  status: 'active' | 'graduated' | 'inactive'
+  status: 'active' | 'graduated' | 'inactive' | string
   deleted_at?: string | null
+}
+
+/**
+ * Narrowed type for paginated student lists
+ * Matches NARROW_SELECT exactly
+ */
+export interface PaginatedStudentRow {
+  id: string
+  name: string
+  gender: string | null
+  class_id: string | null
+  kelompok_id: string | null
+  desa_id: string | null
+  daerah_id: string | null
+  status: string
+  created_at: string
+  updated_at: string
+  deleted_at?: string | null
+  daerah_name?: string
+  desa_name?: string
+  kelompok_name?: string
 }
 
 /**

@@ -231,6 +231,7 @@ Next.js 15, React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth 
 - **Egress Previous Cycle** (per-day + per-user breakdown 7 Jun-7 Jul, spike analysis): [`docs/claude/egress-previous-cycle.md`](docs/claude/egress-previous-cycle.md)
 - **Egress Tracking** (perkembangan MB/hari + MB/view dari data dashboard real): [`docs/claude/egress-tracking.md`](docs/claude/egress-tracking.md)
 - **Egress MB per Day** (angka MB PASTI hover + MB/view + pembanding Sabtu-vs-Sabtu): [`docs/claude/egress-mb-per-day.md`](docs/claude/egress-mb-per-day.md)
+- **Egress Audit Fase 2** (sweep 18 route: monitoring+materi = biang, naik-kelas aman rilis): [`docs/claude/egress-audit-phase2.md`](docs/claude/egress-audit-phase2.md)
 - **Architecture Patterns**: [`docs/claude/architecture-patterns.md`](docs/claude/architecture-patterns.md)
 - **Beads Workflow**: [`docs/claude/beads-workflow.md`](docs/claude/beads-workflow.md)
 - **Type Management**: [`docs/claude/type-management.md`](docs/claude/type-management.md)

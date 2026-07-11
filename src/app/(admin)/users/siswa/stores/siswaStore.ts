@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Student } from '../actions'
+import type { PaginatedStudentRow as Student } from '@/types/student'
 
 // Re-export Student type for use in store
 export type { Student }

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import DataTable from '@/components/table/Table'
 import DeleteStudentModal from './DeleteStudentModal'
 import { PencilIcon, TrashBinIcon, EyeIcon, ReportIcon, UserCircleIcon } from '@/lib/icons'
-import { Student } from '@/hooks/useStudents'
+import { PaginatedStudentRow } from '@/types/student'
 import { isAdminLegacy, isAdminDaerah, isAdminDesa, isAdminKelompok } from '@/lib/userUtils'
 import { checkStudentHasAttendance } from '../actions'
 import {
@@ -17,13 +17,13 @@ import {
 import { isMultiKelompokTeacher } from '@/lib/accessControl'
 
 interface StudentsTableProps {
-  students: Student[]
+  students: PaginatedStudentRow[]
   userRole: string | null
-  onEdit: (student: Student) => void
+  onEdit: (student: PaginatedStudentRow) => void
   onDelete: (studentId: string, permanent: boolean) => void
-  onArchive?: (student: Student) => void
-  onTransfer?: (students: Student[]) => void
-  onUnarchive?: (student: Student) => void
+  onArchive?: (student: PaginatedStudentRow) => void
+  onTransfer?: (students: PaginatedStudentRow[]) => void
+  onUnarchive?: (student: PaginatedStudentRow) => void
   onOpenArchive?: () => void
   userProfile: {
     id: string;
@@ -42,6 +42,12 @@ interface StudentsTableProps {
   } | null | undefined
   classes?: Array<{ id: string; name: string; kelompok_id?: string | null }>
   studentsWithPendingTransfer?: Set<string>
+  manualPagination?: boolean
+  totalCount?: number
+  page?: number
+  onPageChange?: (page: number) => void
+  onSearchChange?: (search: string) => void
+  onItemsPerPageChange?: (size: number) => void
 }
 
 export default function StudentsTable({
@@ -55,7 +61,13 @@ export default function StudentsTable({
   onOpenArchive,
   userProfile,
   classes: classesData,
-  studentsWithPendingTransfer
+  studentsWithPendingTransfer,
+  manualPagination,
+  totalCount,
+  page,
+  onPageChange,
+  onSearchChange,
+  onItemsPerPageChange
 }: StudentsTableProps) {
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
@@ -225,63 +237,22 @@ export default function StudentsTable({
   const columns = buildColumns(userProfile);
 
   // Filter classes based on user role for display
-  const getDisplayClasses = (student: Student): string => {
+  const getDisplayClasses = (student: PaginatedStudentRow): string => {
     try {
       if (!student || typeof student !== 'object') {
         return '-'
       }
 
-      if (!student.classes || !Array.isArray(student.classes) || student.classes.length === 0) {
-        return String(student.class_name || '-')
-      }
+      if (!student.class_id) return '-'
 
-      // If admin, show all classes
-      if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
-        return student.classes
-          .filter(c => c && c.name)
-          .map(c => String(c.name))
-          .join(', ') || '-'
-      }
-
-      // If teacher with hierarchical access (Guru Desa/Daerah), show all classes like admin
-      if (userProfile?.role === 'teacher') {
-        const isHierarchicalTeacher = (userProfile.daerah_id || userProfile.desa_id || userProfile.kelompok_id) &&
-          (!userProfile.classes || userProfile.classes.length === 0)
-
-        if (isHierarchicalTeacher) {
-          // Show all student classes (like admin)
-          return student.classes
-            .filter(c => c && c.name)
-            .map(c => String(c.name))
-            .join(', ') || '-'
-        }
-
-        // Regular teacher: filter to only classes they teach
-        if (userProfile.classes && Array.isArray(userProfile.classes)) {
-          const teacherClassIds = userProfile.classes
-            .filter(c => c && c.id)
-            .map(c => String(c.id))
-          const studentTeacherClasses = student.classes.filter(c =>
-            c && c.id && teacherClassIds.includes(String(c.id))
-          )
-          if (studentTeacherClasses.length === 0) {
-            return '-' // Student tidak punya kelas yang diajarkan guru ini
-          }
-          return studentTeacherClasses
-            .filter(c => c && c.name)
-            .map(c => String(c.name))
-            .join(', ') || '-'
-        }
-      }
-
-      // Default: return first class
-      const firstClass = student.classes[0]
-      return (firstClass && firstClass.name) ? String(firstClass.name) : '-'
-    } catch (error) {
-      console.error('Error in getDisplayClasses:', error, student)
+      // Just return the primary class name for now using the classes prop
+      const cls = classesData?.find(c => c.id === student.class_id)
+      return cls ? cls.name : '-'
+    } catch (e) {
+      console.error("Error formatting classes for student:", student?.id, e)
       return '-'
     }
-  }
+  };
 
   // Ensure students is an array and filter out invalid entries
   const validStudents = Array.isArray(students)
@@ -500,6 +471,12 @@ export default function StudentsTable({
         loadingColumnKey={clickedColumn}
         spinnerSize={16}
         pagination={true}
+        manualPagination={manualPagination}
+        totalCount={totalCount}
+        page={page}
+        onPageChange={onPageChange}
+        onSearchChange={onSearchChange}
+        onItemsPerPageChange={onItemsPerPageChange}
         searchable={true}
         itemsPerPageOptions={[5, 10, 25, 50]}
         defaultItemsPerPage={10}

@@ -52,8 +52,8 @@ describe('batchFetching', () => {
             mockSupabase.from.mockReturnValue({
                 select: vi.fn().mockReturnValue({
                     in: vi.fn().mockImplementation(() => {
-                        const start = callCount * 10
-                        const end = Math.min(start + 10, mockAttendance.length)
+                        const start = callCount * 3
+                        const end = Math.min(start + 3, mockAttendance.length)
                         callCount++
                         return Promise.resolve({
                             data: mockAttendance.slice(start, end),
@@ -67,8 +67,8 @@ describe('batchFetching', () => {
 
             expect(result.data).toHaveLength(25)
             expect(result.error).toBeNull()
-            // Should be called 3 times (3 batches of 10: 10, 10, 5)
-            expect(mockSupabase.from).toHaveBeenCalledTimes(3)
+            // Should be called 9 times (25 items / 3 = 8 full batches + 1 partial)
+            expect(mockSupabase.from).toHaveBeenCalledTimes(9)
         })
 
         it('should handle errors from batch fetch', async () => {

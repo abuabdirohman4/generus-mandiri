@@ -11,6 +11,7 @@ import {
     createStudent,
     deleteStudent,
     updateStudent,
+    getStudentsPaginated,
 } from '../actions'
 import * as accessControlServer from '@/lib/accessControlServer'
 
@@ -23,6 +24,13 @@ vi.mock('@/lib/accessControlServer', () => ({
     getTeacherAllowedClassIds: vi.fn(),
     getCurrentUserProfile: vi.fn(),
 }))
+vi.mock('../queries', async (importOriginal) => {
+    const actual = await importOriginal<any>()
+    return {
+        ...actual,
+        fetchStudentsPaginated: vi.fn(),
+    }
+})
 
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
@@ -478,3 +486,121 @@ describe('updateStudent — guru desa class permission', () => {
         expect(result.success).toBe(true)
     })
 })
+
+// ─── getStudentsPaginated ─────────────────────────────────────────────────────
+
+describe('getStudentsPaginated', () => {
+    it('returns error when unauthenticated', async () => {
+        const mockSupabase = {
+            auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
+            from: vi.fn(),
+        }
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+
+        const result = await getStudentsPaginated({ page: 1, pageSize: 10 })
+        expect(result.success).toBe(false)
+        expect(result.message).toContain('Gagal memuat daftar siswa')
+    })
+
+    it('returns paginated data successfully for admin', async () => {
+        const mockSupabase = makeSupabase({ profile: { role: 'superadmin' } })
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+
+        const { fetchStudentsPaginated } = await import('../queries')
+        vi.mocked(fetchStudentsPaginated).mockResolvedValue({
+            data: [{ 
+                id: '1', 
+                name: 'Student 1',
+                gender: 'Laki-laki',
+                class_id: 'c1',
+                kelompok_id: 'k1',
+                desa_id: 'd1',
+                daerah_id: 'da1',
+                status: 'active',
+                created_at: '2026-07-11',
+                updated_at: '2026-07-11',
+                deleted_at: null,
+                daerah: { name: 'da1_name' },
+                desa: { name: 'd1_name' },
+                kelompok: { name: 'k1_name' }
+            }] as any,
+            count: 1,
+            error: null
+        })
+
+        const result = await getStudentsPaginated({ page: 1, pageSize: 10 })
+        
+        expect(result.success).toBe(true)
+        expect(result.data).toEqual({ 
+            rows: [{ 
+                id: '1', 
+                name: 'Student 1',
+                gender: 'Laki-laki',
+                class_id: 'c1',
+                kelompok_id: 'k1',
+                desa_id: 'd1',
+                daerah_id: 'da1',
+                status: 'active',
+                created_at: '2026-07-11',
+                updated_at: '2026-07-11',
+                deleted_at: null,
+                daerah: { name: 'da1_name' },
+                desa: { name: 'd1_name' },
+                kelompok: { name: 'k1_name' },
+                daerah_name: 'da1_name',
+                desa_name: 'd1_name',
+                kelompok_name: 'k1_name'
+            }], 
+            totalCount: 1 
+        })
+        expect(fetchStudentsPaginated).toHaveBeenCalled()
+    })
+
+    it('enforces admin scoping via intersection', async () => {
+        // Admin desa shouldn't be able to fetch another daerah's students
+        const mockSupabase = makeSupabase({ profile: { role: 'admin', desa_id: 'desa_1', daerah_id: 'daerah_1' } })
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+
+        const { fetchStudentsPaginated } = await import('../queries')
+        vi.mocked(fetchStudentsPaginated).mockResolvedValue({ data: [], count: 0, error: null })
+
+        await getStudentsPaginated({ 
+            page: 1, 
+            pageSize: 10,
+            filters: { kelompok: ['kelompok_lain'] } 
+        })
+        
+        // Ensure that the query parameters have the admin's hard limits merged
+        expect(fetchStudentsPaginated).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+                filters: {
+                    kelompok: ['kelompok_lain'],
+                    desa: ['desa_1'],
+                    daerah: ['daerah_1']
+                }
+            })
+        )
+    })
+
+    it('enforces teacher class scoping', async () => {
+        const mockSupabase = makeSupabase({ profile: { role: 'teacher', desa_id: 'desa_1', daerah_id: 'daerah_1' } })
+        vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
+
+        const { getTeacherAllowedClassIds } = await import('@/lib/accessControlServer')
+        vi.mocked(getTeacherAllowedClassIds).mockResolvedValue(new Set(['class_1', 'class_2']))
+
+        const { fetchStudentsPaginated } = await import('../queries')
+        vi.mocked(fetchStudentsPaginated).mockResolvedValue({ data: [], count: 0, error: null })
+
+        await getStudentsPaginated({ page: 1, pageSize: 10 })
+        
+        expect(fetchStudentsPaginated).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+                teacherClassIds: ['class_1', 'class_2']
+            })
+        )
+    })
+})
+

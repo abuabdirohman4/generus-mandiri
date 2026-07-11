@@ -48,6 +48,13 @@ interface DataTableProps {
   selectedIds?: Set<string | number>
   onSelectionChange?: (next: Set<string | number>) => void
   renderBulkActions?: (selectedIds: Set<string | number>, clearSelection: () => void) => ReactNode
+  manualPagination?: boolean
+  totalCount?: number
+  page?: number
+  onPageChange?: (page: number) => void
+  onSearchChange?: (search: string) => void
+  onSortChange?: (column: string | null, direction: 'asc' | 'desc' | null) => void
+  onItemsPerPageChange?: (size: number) => void
 }
 
 export default function DataTable({
@@ -76,10 +83,18 @@ export default function DataTable({
   selectable = false,
   selectedIds,
   onSelectionChange,
-  renderBulkActions
+  renderBulkActions,
+  manualPagination = false,
+  totalCount,
+  page,
+  onPageChange,
+  onSearchChange,
+  onSortChange,
+  onItemsPerPageChange
 }: DataTableProps) {
   // State management
-  const [currentPage, setCurrentPage] = useState(1)
+  const [internalPage, setInternalPage] = useState(1)
+  const currentPage = page !== undefined ? page : internalPage
   const [itemsPerPage, setItemsPerPage] = useState(defaultItemsPerPage)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(defaultSortColumn || null)
@@ -130,6 +145,7 @@ export default function DataTable({
 
   // Search functionality
   const filteredData = useMemo(() => {
+    if (manualPagination) return data
     if (!searchable || !searchQuery.trim()) {
       return data
     }
@@ -141,10 +157,11 @@ export default function DataTable({
         return String(value).toLowerCase().includes(searchQuery.toLowerCase())
       })
     })
-  }, [data, searchQuery, visibleColumns, searchable])
+  }, [data, searchQuery, visibleColumns, searchable, manualPagination])
 
   // Sorting functionality
   const sortedData = useMemo(() => {
+    if (manualPagination) return filteredData
     if (!sortColumn || !sortDirection) return filteredData
 
     return [...filteredData].sort((a, b) => {
@@ -188,10 +205,10 @@ export default function DataTable({
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [filteredData, sortColumn, sortDirection])
+  }, [filteredData, sortColumn, sortDirection, manualPagination])
 
   // Pagination calculations
-  const totalEntries = sortedData.length
+  const totalEntries = manualPagination && totalCount !== undefined ? totalCount : sortedData.length
   const totalPages = Math.ceil(totalEntries / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage + 1
   const endIndex = Math.min(currentPage * itemsPerPage, totalEntries)
@@ -199,46 +216,75 @@ export default function DataTable({
   // Get current page data
   const currentPageData = useMemo(() => {
     if (!pagination) return sortedData
+    if (manualPagination) return sortedData
     const start = (currentPage - 1) * itemsPerPage
     const end = start + itemsPerPage
     return sortedData.slice(start, end)
-  }, [sortedData, currentPage, itemsPerPage, pagination])
+  }, [sortedData, currentPage, itemsPerPage, pagination, manualPagination])
 
   // Reset to first page when search or sort changes
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery, sortColumn, sortDirection])
+    if (page === undefined) {
+      setInternalPage(1)
+    }
+  }, [searchQuery, sortColumn, sortDirection, page])
 
   // Event handlers
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
+    if (manualPagination) {
+      onSearchChange?.(e.target.value)
+      onPageChange?.(1)
+    }
   }
 
   const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value))
-    setCurrentPage(1)
+    if (page === undefined) {
+      setInternalPage(1)
+    }
+    if (manualPagination) {
+      onItemsPerPageChange?.(Number(e.target.value))
+      onPageChange?.(1)
+    }
   }
 
   const handleSort = (columnKey: string) => {
     // Clear expansion when sorting to avoid confusion
     setExpandedRowId(null)
+    
+    let nextSortColumn = sortColumn
+    let nextSortDirection = sortDirection
+    
     if (sortColumn === columnKey) {
       // Toggle through: asc → desc → null
       if (sortDirection === 'asc') {
-        setSortDirection('desc')
+        nextSortDirection = 'desc'
       } else if (sortDirection === 'desc') {
-        setSortColumn(null)
-        setSortDirection(null)
+        nextSortColumn = null
+        nextSortDirection = null
       }
     } else {
-      setSortColumn(columnKey)
-      setSortDirection('asc')
+      nextSortColumn = columnKey
+      nextSortDirection = 'asc'
+    }
+    
+    setSortColumn(nextSortColumn)
+    setSortDirection(nextSortDirection)
+    
+    if (manualPagination) {
+      onSortChange?.(nextSortColumn, nextSortDirection)
     }
   }
 
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      if (page === undefined) {
+        setInternalPage(pageNumber)
+      }
+      if (manualPagination) {
+        onPageChange?.(pageNumber)
+      }
     }
   }
 

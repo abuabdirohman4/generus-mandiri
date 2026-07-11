@@ -294,3 +294,30 @@ describe('fetchMeetingDetail', () => {
         expect(mockEq).toHaveBeenCalledWith('id', 'm1')
     })
 })
+
+describe('fetchStudentsPaginated', () => {
+    it('applies pagination, search, and status filters correctly', async () => {
+        const { fetchStudentsPaginated } = await import('../queries')
+        const mockOrder = vi.fn().mockResolvedValue({ data: [], count: 0, error: null })
+        const mockRange = vi.fn().mockReturnValue({ order: mockOrder })
+        const mockEqStatus = vi.fn().mockReturnValue({ range: mockRange })
+        const mockIlike = vi.fn().mockReturnValue({ eq: mockEqStatus })
+        const mockIs = vi.fn().mockReturnValue({ ilike: mockIlike })
+        const mockSelect = vi.fn().mockReturnValue({ is: mockIs })
+        const supabase = { from: vi.fn().mockReturnValue({ select: mockSelect }) } as any
+
+        await fetchStudentsPaginated(supabase, {
+            page: 2,
+            pageSize: 20,
+            search: 'budi',
+            filters: { status: 'graduated' }
+        })
+
+        expect(supabase.from).toHaveBeenCalledWith('students')
+        expect(mockSelect).toHaveBeenCalledWith(expect.any(String), { count: 'exact' })
+        expect(mockIlike).toHaveBeenCalledWith('name', '%budi%')
+        expect(mockEqStatus).toHaveBeenCalledWith('status', 'graduated')
+        expect(mockRange).toHaveBeenCalledWith(20, 39) // page 2, size 20 (20-39)
+        expect(mockOrder).toHaveBeenCalledWith('name')
+    })
+})

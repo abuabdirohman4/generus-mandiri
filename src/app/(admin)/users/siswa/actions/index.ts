@@ -7,6 +7,7 @@
 export {
     getUserProfile,
     getAllStudents,
+    getStudentsPaginated,
     createStudent,
     updateStudent,
     checkStudentHasAttendance,

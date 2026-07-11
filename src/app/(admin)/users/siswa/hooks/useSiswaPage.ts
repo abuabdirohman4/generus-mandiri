@@ -4,13 +4,15 @@ import { useCallback, useState, useMemo } from 'react'
 import useSWRMutation from 'swr/mutation'
 import { toast } from 'sonner'
 import { useSiswaStore } from '../stores/siswaStore'
-import { useStudents } from '@/hooks/useStudents'
+import { useStudents, useStudentsPaginated, type UseStudentsPaginatedOptions } from '@/hooks/useStudents'
+import { useDebounce } from '@/hooks/useDebounce'
 import { useClasses } from '@/hooks/useClasses'
 import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
 import { useKelompok } from '@/hooks/useKelompok'
 import { useUserProfile } from '@/stores/userProfileStore'
-import { createStudent, updateStudent, deleteStudent, type Student } from '../actions'
+import { createStudent, updateStudent, deleteStudent } from '../actions'
+import type { PaginatedStudentRow as Student } from '@/types/student'
 
 export function useSiswaPage() {
   // Zustand store
@@ -43,15 +45,39 @@ export function useSiswaPage() {
   const { desa } = useDesa()
   const { kelompok } = useKelompok()
 
-  // Students with conditional classId
-  // For teachers, don't filter by classId - fetch all students and filter client-side
-  // For admins, use selectedClassFilter
-  const classId = userProfile?.role === 'teacher' 
-    ? undefined  // Don't filter by classId for teachers
-    : selectedClassFilter || undefined
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
-  const { students, isLoading: studentsLoading, mutate: mutateStudents } = useStudents({
-    classId,
+  // Combined filters for paginated query
+  const paginationParams = useMemo(() => {
+    const filters: UseStudentsPaginatedOptions['filters'] = {
+      daerah: dataFilters.daerah.length > 0 ? dataFilters.daerah : undefined,
+      desa: dataFilters.desa.length > 0 ? dataFilters.desa : undefined,
+      kelompok: dataFilters.kelompok.length > 0 ? dataFilters.kelompok : undefined,
+      gender: dataFilters.gender || undefined,
+      status: dataFilters.status || undefined,
+    }
+
+    // Process kelas filter logic
+    if (dataFilters.kelas.length > 0) {
+      filters.kelas = dataFilters.kelas.flatMap(k => k.split(','))
+    } else if (selectedClassFilter) {
+      filters.kelas = [selectedClassFilter]
+    }
+
+    return {
+      page,
+      pageSize,
+      search: debouncedSearch,
+      filters
+    }
+  }, [page, pageSize, debouncedSearch, dataFilters, selectedClassFilter])
+
+  const { data: paginatedData, isLoading: studentsLoading, mutate: mutateStudents } = useStudentsPaginated({
+    ...paginationParams,
     enabled: !!userProfile
   })
 
@@ -177,73 +203,24 @@ export function useSiswaPage() {
   }, [mutateStudents])
 
   // Data filter handler
-  const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string }) => {
+  const handleDataFilterChange = useCallback((filters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[]; gender?: string; status?: string }) => {
     setDataFilters(filters)
+    setPage(1) // Reset to first page when filter changes
   }, [setDataFilters])
 
   // Filter students based on data filters and teacher classes
-  const filteredStudents = useMemo(() => {
-    let result = students || []
-    
-    // For teachers, filter by their assigned classes (support multiple classes per student)
-    if (userProfile?.role === 'teacher' && userProfile.classes?.length) {
-      const teacherClassIds = userProfile.classes.map(c => c.id)
-      result = result.filter(s => {
-        // Check if student has at least one class that matches teacher's classes
-        // Ensure classes is always an array
-        const studentClasses = Array.isArray(s.classes) ? s.classes : []
-        const studentClassIds = studentClasses.map(c => c.id)
-        return studentClassIds.some(classId => teacherClassIds.includes(classId))
-      })
-    }
-    
-    // Apply data filters
-    if (dataFilters.daerah.length > 0) {
-      result = result.filter(s => s.daerah_id && dataFilters.daerah.includes(s.daerah_id))
-    }
-    if (dataFilters.desa.length > 0) {
-      result = result.filter(s => s.desa_id && dataFilters.desa.includes(s.desa_id))
-    }
-    if (dataFilters.kelompok.length > 0) {
-      result = result.filter(s => s.kelompok_id && dataFilters.kelompok.includes(s.kelompok_id))
-    }
-    
-    // Apply kelas filter - for teacher with multiple classes, allow filtering by specific class
-    // This works the same way as presensi page: filter applies to BOTH teacher and admin
-    if (dataFilters.kelas.length > 0) {
-      // Support comma-separated class IDs from DataFilter
-      const selectedClassIds = dataFilters.kelas.flatMap(k => k.split(','))
-      
-      // For teacher: filter students by selected classes
-      if (userProfile?.role === 'teacher') {
-        result = result.filter(s => {
-          const studentClassIds = (s.classes || []).map(c => c.id)
-          // Also check class_id for backward compatibility
-          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
-          // Check if student has at least one class in selected classes
-          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
-        })
-      } else {
-        // For admin/superadmin: filter by selected classes
-        result = result.filter(s => {
-          const studentClassIds = (s.classes || []).map(c => c.id)
-          // Also check class_id for backward compatibility
-          const allStudentClassIds = s.class_id ? [...studentClassIds, s.class_id] : studentClassIds
-          return allStudentClassIds.some(classId => selectedClassIds.includes(classId))
-        })
-      }
-    }
-    // Apply gender filter
-    if (dataFilters.gender && dataFilters.gender !== '') {
-      result = result.filter(s => s.gender === dataFilters.gender)
-    }
-
-    return result
-  }, [students, dataFilters, userProfile])
+  // Note: filteredStudents is now server-side paginated directly.
+  // The rows returned from getStudentsPaginated are already filtered and scoped.
+  const filteredStudents = paginatedData.rows || []
+  const totalCount = paginatedData.totalCount || 0
 
   return {
     // State
     students: filteredStudents,
+    totalCount,
+    page,
+    pageSize,
+    search,
     classes,
     daerah,
     desa,
@@ -268,6 +245,9 @@ export function useSiswaPage() {
     openBatchModal,
     closeBatchModal,
     handleBatchImportSuccess,
-    handleDataFilterChange
+    handleDataFilterChange,
+    setPage,
+    setPageSize,
+    setSearch
   }
 }

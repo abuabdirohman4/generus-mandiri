@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { studentKeys } from '@/lib/swr'
 import { getCurrentUserId } from '@/lib/userUtils'
-import { getAllStudents, type Student } from '@/app/(admin)/users/siswa/actions'
+import { getAllStudents, getStudentsPaginated, type Student } from '@/app/(admin)/users/siswa/actions'
+import type { PaginatedStudentRow } from '@/types/student'
 
 interface UseStudentsOptions {
   classId?: string
@@ -61,6 +62,64 @@ export function useStudents({ classId, enabled = true }: UseStudentsOptions = {}
 
   return {
     students,
+    isLoading,
+    error,
+    mutate
+  }
+}
+
+export interface UseStudentsPaginatedOptions {
+  page: number
+  pageSize: number
+  search?: string
+  filters?: {
+    daerah?: string[]
+    desa?: string[]
+    kelompok?: string[]
+    kelas?: string[]
+    gender?: string
+    status?: string
+  }
+  enabled?: boolean
+}
+
+const fetcherPaginated = async (params: UseStudentsPaginatedOptions) => {
+  try {
+    const result = await getStudentsPaginated(params)
+    if (!result.success) {
+      console.error('Gagal memuat siswa:', result.message)
+      return { rows: [], totalCount: 0 }
+    }
+    return result.data
+  } catch (error) {
+    console.error('Error fetching paginated students:', error)
+    return { rows: [], totalCount: 0 }
+  }
+}
+
+export function useStudentsPaginated({ page, pageSize, search, filters, enabled = true }: UseStudentsPaginatedOptions) {
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    getCurrentUserId()
+      .then(setUserId)
+      .catch((error) => console.error('Error getting user ID:', error))
+  }, [])
+
+  const key = enabled && userId ? studentKeys.listPaginated(userId, page, pageSize, search, JSON.stringify(filters)) : null
+
+  const { data, error, isLoading, mutate } = useSWR(
+    key,
+    () => fetcherPaginated({ page, pageSize, search, filters }),
+    {
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+      dedupingInterval: 2 * 60 * 1000,
+    }
+  )
+
+  return {
+    data: data || { rows: [], totalCount: 0 },
     isLoading,
     error,
     mutate

@@ -10,10 +10,12 @@ import {
     type Student as StudentPermission,
 } from './permissions'
 import { getTeacherAllowedClassIds, canBulkAssignCrossKelompok } from '@/lib/accessControlServer'
-import type { StudentWithClasses } from '@/types/student'
+import type { StudentWithClasses, StudentBiodata, StudentBiodataFormData, PaginatedStudentRow } from '@/types/student'
 import { fetchClassesHierarchical, resolveClassInKelompok } from '../classes/queries'
 import {
     fetchAllStudents,
+    fetchStudentsPaginated,
+    type FetchStudentsParams,
     fetchStudentsByIds,
     fetchStudentById,
     fetchStudentBiodata,
@@ -376,6 +378,101 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
     } catch (error) {
         const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
         return { success: false, message: errorInfo.message, data: [] }
+    }
+}
+
+/**
+ * Mendapatkan daftar siswa secara paginated dengan filter yang diproses di server
+ */
+export async function getStudentsPaginated(params: {
+    page: number
+    pageSize: number
+    search?: string
+    filters?: {
+        daerah?: string[]
+        desa?: string[]
+        kelompok?: string[]
+        kelas?: string[]
+        gender?: string
+    }
+}): Promise<{ success: boolean; data: { rows: PaginatedStudentRow[]; totalCount: number }; message?: string }> {
+    try {
+        const supabase = await createClient()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('User not authenticated')
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select(`
+                role,
+                kelompok_id,
+                desa_id,
+                daerah_id,
+                teacher_classes(class_id)
+            `)
+            .eq('id', user.id)
+            .single()
+
+        if (!profile) throw new Error('User profile not found')
+
+        const adminClient = await createAdminClient()
+        const queryParams: FetchStudentsParams = {
+            page: params.page,
+            pageSize: params.pageSize,
+            search: params.search,
+            filters: params.filters || {},
+        }
+
+        // Role-based scoping for teacher
+        if (profile.role === 'teacher') {
+            const allowedClassIdsSet = await getTeacherAllowedClassIds(user.id, profile)
+            if (allowedClassIdsSet) {
+                queryParams.teacherClassIds = Array.from(allowedClassIdsSet)
+            } else {
+                // If allowedClassIdsSet is null but role is teacher, it means they have 
+                // broader access, but we still apply their primary scope
+                if (profile.kelompok_id) {
+                    queryParams.filters!.kelompok = [profile.kelompok_id]
+                    queryParams.filters!.desa = [profile.desa_id]
+                    queryParams.filters!.daerah = [profile.daerah_id]
+                } else if (profile.desa_id) {
+                    queryParams.filters!.desa = [profile.desa_id]
+                    queryParams.filters!.daerah = [profile.daerah_id]
+                } else if (profile.daerah_id) {
+                    queryParams.filters!.daerah = [profile.daerah_id]
+                }
+            }
+        }
+        
+        // Role-based scoping for admins
+        if (profile.role === 'admin') {
+            if (profile.kelompok_id) {
+                queryParams.filters!.kelompok = [profile.kelompok_id]
+                queryParams.filters!.desa = [profile.desa_id]
+                queryParams.filters!.daerah = [profile.daerah_id]
+            } else if (profile.desa_id) {
+                queryParams.filters!.desa = [profile.desa_id]
+                queryParams.filters!.daerah = [profile.daerah_id]
+            } else if (profile.daerah_id) {
+                queryParams.filters!.daerah = [profile.daerah_id]
+            }
+        }
+
+        const { data: rows, count, error } = await fetchStudentsPaginated(adminClient, queryParams)
+        if (error) throw error
+
+        const mappedRows = (rows || []).map((row: any) => ({
+            ...row,
+            daerah_name: row.daerah?.name,
+            desa_name: row.desa?.name,
+            kelompok_name: row.kelompok?.name
+        }))
+
+        return { success: true, data: { rows: mappedRows, totalCount: count || 0 } }
+    } catch (error) {
+        const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat daftar siswa')
+        return { success: false, message: errorInfo.message, data: { rows: [], totalCount: 0 } }
     }
 }
 

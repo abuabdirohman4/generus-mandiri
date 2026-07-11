@@ -25,9 +25,13 @@ vi.mock('@/lib/utils/classHelpers', () => ({
   isCaberawitClass: vi.fn().mockReturnValue(false),
   isTeacherClass: vi.fn().mockReturnValue(false),
 }))
-vi.mock('@/lib/utils/batchFetching', () => ({
-  fetchAttendanceLogsInBatches: vi.fn(),
-}))
+vi.mock('@/lib/utils/batchFetching', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/utils/batchFetching')>()
+  return {
+    ...actual,
+    fetchAttendanceLogsInBatches: vi.fn(),
+  }
+})
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'

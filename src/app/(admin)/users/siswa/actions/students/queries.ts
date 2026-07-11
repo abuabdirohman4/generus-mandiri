@@ -27,6 +27,23 @@ const STUDENT_SELECT = `
   kelompok:kelompok_id(name)
 `
 
+const NARROW_SELECT = `
+  id,
+  name,
+  gender,
+  class_id,
+  kelompok_id,
+  desa_id,
+  daerah_id,
+  status,
+  created_at,
+  updated_at,
+  deleted_at,
+  daerah:daerah_id(name),
+  desa:desa_id(name),
+  kelompok:kelompok_id(name)
+`
+
 export async function fetchAllStudents(
   supabase: SupabaseClient,
   classId?: string
@@ -78,6 +95,148 @@ export async function fetchAllStudents(
   }
 
   return { data: allStudents, error: lastError }
+}
+
+export interface FetchStudentsParams {
+  page: number
+  pageSize: number
+  search?: string
+  filters?: {
+    daerah?: string[]
+    desa?: string[]
+    kelompok?: string[]
+    kelas?: string[]
+    gender?: string
+    status?: string
+  }
+  teacherClassIds?: string[]
+}
+
+export async function fetchStudentsPaginated(
+  supabase: SupabaseClient,
+  params: FetchStudentsParams
+) {
+  const { page, pageSize, search, filters, teacherClassIds } = params
+
+  // Helper to apply common filters
+  const applyFilters = (q: any) => {
+    q = q.is('deleted_at', null)
+    if (search) q = q.ilike('name', `%${search}%`)
+    const status = filters?.status || 'active'
+    if (status !== 'all') {
+      if (status === 'active') {
+        q = q.or('status.eq.active,status.is.null')
+      } else {
+        q = q.eq('status', status)
+      }
+    }
+    if (filters?.gender) q = q.eq('gender', filters.gender)
+    if (filters?.daerah && filters?.daerah.length > 0) q = q.in('daerah_id', filters.daerah)
+    if (filters?.desa && filters?.desa.length > 0) q = q.in('desa_id', filters.desa)
+    if (filters?.kelompok && filters?.kelompok.length > 0) q = q.in('kelompok_id', filters.kelompok)
+    return q
+  }
+
+  let targetClassIds: string[] = []
+  
+  if (teacherClassIds && teacherClassIds.length > 0) {
+    if (filters?.kelas && filters.kelas.length > 0) {
+      targetClassIds = filters.kelas.filter(c => teacherClassIds.includes(c))
+      if (targetClassIds.length === 0) {
+        return { data: [], count: 0, error: null }
+      }
+    } else {
+      targetClassIds = teacherClassIds
+    }
+  } else if (filters?.kelas && filters.kelas.length > 0) {
+    targetClassIds = filters.kelas
+  }
+
+  if (targetClassIds.length > 0) {
+    const { data: scData } = await supabase
+      .from('student_classes')
+      .select('student_id')
+      .in('class_id', targetClassIds)
+      
+    const junctionStudentIds = (scData || []).map(sc => sc.student_id)
+    
+    const { data: pcData } = await supabase
+      .from('students')
+      .select('id')
+      .in('class_id', targetClassIds)
+      
+    const primaryStudentIds = (pcData || []).map(s => s.id)
+    
+    const allStudentIds = [...new Set([...junctionStudentIds, ...primaryStudentIds])]
+    
+    if (allStudentIds.length === 0) {
+      return { data: [], count: 0, error: null }
+    }
+    
+    if (allStudentIds.length <= 100) {
+      let q = supabase.from('students').select(NARROW_SELECT, { count: 'exact' })
+      q = applyFilters(q)
+      q = q.in('id', allStudentIds)
+      
+      const from = (page - 1) * pageSize
+      const to = from + pageSize - 1
+      q = q.range(from, to).order('name')
+      
+      const { data, count, error } = await q
+      return { data, count: count || 0, error }
+    } else {
+      // Chunking for >100 ids to avoid PostgREST URL overflow and minimize egress
+      const chunks = []
+      for (let i = 0; i < allStudentIds.length; i += 100) {
+        chunks.push(allStudentIds.slice(i, i + 100))
+      }
+      
+      let allMergedRows: { id: string, name: string }[] = []
+      
+      for (const chunk of chunks) {
+        let chunkQuery = supabase.from('students').select('id, name')
+        chunkQuery = applyFilters(chunkQuery)
+        chunkQuery = chunkQuery.in('id', chunk)
+        
+        const { data, error } = await chunkQuery
+        if (error) return { data: null, count: 0, error }
+        if (data) allMergedRows.push(...data)
+      }
+      
+      const totalCount = allMergedRows.length
+      
+      // Sort in memory by name
+      allMergedRows.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      
+      // Paginate in memory
+      const from = (page - 1) * pageSize
+      const paginatedIds = allMergedRows.slice(from, from + pageSize).map(r => r.id)
+      
+      if (paginatedIds.length === 0) {
+        return { data: [], count: totalCount, error: null }
+      }
+      
+      // Fetch full rows for just the paginated IDs
+      const { data: finalData, error: finalError } = await supabase
+        .from('students')
+        .select(NARROW_SELECT)
+        .in('id', paginatedIds)
+        .order('name')
+        
+      return { data: finalData, count: totalCount, error: finalError }
+    }
+  } else {
+    // Normal query without in('id')
+    let q = supabase.from('students').select(NARROW_SELECT, { count: 'exact' })
+    q = applyFilters(q)
+    
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+    q = q.range(from, to).order('name')
+    
+    const { data, count, error } = await q
+    return { data, count: count || 0, error }
+  }
 }
 
 export async function fetchStudentsByIds(
