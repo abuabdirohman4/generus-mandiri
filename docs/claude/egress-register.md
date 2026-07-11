@@ -20,8 +20,48 @@ Catatan hidup soal masalah egress Supabase, akar penyebab, fix, dan snapshot akt
 | 6 | `/organisasi` tanpa server access guard | 10 Jul 2026 | page `use client`, cuma sidebar yang sembunyikan; akses URL langsung = render + fetch org-tree | RENDAH (ternyata tidak diakses hari ini — lihat snapshot) | server guard di `organisasi/layout.tsx`: non-admin → redirect `/home` | ✅ shipped | sm-2m5n |
 | 7 | Detail-presensi (`/users/siswa/<id>/presensi`): `meetings!inner` fetch `topic`+`description` per row (cuma dipakai di modal), `revalidateOnFocus:true`, refetch per-bulan | 10 Jul 2026 | field gemuk tiap row; focus refetch; filter client-side | TINGGI (#1 sumber traffic asli — 35 view detail hari ini) | trim query list (buang topic+description), lazy-fetch `getMeetingDetail` saat modal buka, `revalidateOnFocus:false` | ✅ shipped (61ae009) | sm-euox (#135) |
 | 8 | `/presensi` list (`fetchMeetingsByClass`): `student_snapshot` jsonb + `description` di-fetch tiap row list meeting, padahal cuma dipakai saat EDIT pertemuan (modal) | 10 Jul 2026 | field gemuk tiap row list; git konfirmasi sm-kt2j hanya optimasi setting global, query ini tak tersentuh | POTENSI TINGGI (frekuensi TERTINGGI — 215 view/hari, bytes/fetch belum dioptimasi) | trim query list (buang snapshot+description, keep topic), lazy-fetch `getMeetingById` saat modal edit | ✅ shipped (76abd53) | sm-2fux (#136) |
+| 10 | Auth flood: tiap navigasi/render page 10+ `auth/v1/user` + `profiles?...permissions` beruntun | 11 Jul 2026 | `getCurrentUserProfile` (accessControlServer) dipanggil 48 consumer; 1 page-load fan-out ke banyak action/guard → tiap satu re-fetch getUser()+profiles tanpa dedup | SEDANG (Auth 11% = 21.8MB/hari 11 Jul) | wrap `getCurrentUserProfile` dgn React `cache()` — dedup dalam 1 request render pass (reset tiap request, auth tetap tervalidasi 1×/request, no stale). Follow-up: `getCurrentUserId` (21 direct getUser caller) | ⏳ open | sm-lm8q |
+| 9 | `/presensi/<meetingId>` detail (`useMeetingAttendance`): tiap buka/fokus refetch 3 server-action fat (`getMeetingById` + `getAttendanceByMeeting` nested kelompok/desa/classes/student_classes + `getStudentsFromSnapshot` nested) padahal halaman SUDAH pakai realtime push (`useAttendanceRealtime`) | 11 Jul 2026 | `revalidateOnFocus:true` + `revalidateIfStale:true` di hook DETAIL — redundant vs realtime; nested join gemuk tak dirender; guru fokus keluar-masuk app puluhan kali/sesi input presensi | **TINGGI** (satu guru buka 1 meeting 117 siswa 50×/hari = ~6-9MB dari 1 meeting; biang PostgREST hari ngajar) | `revalidateOnFocus:false` + `revalidateIfStale:false` + dedup 30s→5min (realtime handle live); trim nested `getAttendanceByMeeting`/`getStudentsFromSnapshot` ke kolom yang dirender saja | ⏳ open | sm-TBD |
 | — | LIST siswa fetch all-rows (2198 baris, tanpa pagination) | 09 Jul 2026 | `fetchAllStudents` buat render list | SEDANG | pagination server-side `.range()` + narrow select | ⏳ open (deferred) | sm-uxnv |
 | — | Traffic dev-session menggelembungkan egress (hot-reload, testing manual pakai akun admin scope lebar) | 22-25 Jun + 07-08 Jul | ngoding langsung ke DB prod live | SEDANG (2 dari 4 hari siklus ini) | Supabase lokal (Docker+CLI) | ⏳ open (P3) | sm-csvk (#133) |
+
+---
+
+## Snapshot Aktivitas Harian — 11 Jul 2026
+
+Egress dashboard (per ~06:00 WIB 12 Jul, hari ke-5 siklus): **1.932 GB / 5 GB (39%)**. Split hari 11 Jul (UTC, bar belum tutup penuh, ~22 dari 24 jam): PostgREST **160.986 MB (80.8%)**, Auth **21.818 MB (11%)**, Realtime **16.285 MB (8.2%)**, Storage 161 KB.
+
+### Verdict: ON-TRACK JEBOL, bukan aman
+- 1.932 GB / 5 hari = **~386 MB/hari** rata → proyeksi **~11.6 GB/bulan = 2.3× over 5GB**.
+- MB/view **turun** vs 10 Jul (fix fase-1 kerja): 11 Jul 161MB/472view = **0.34 MB/view** vs 10 Jul 327MB/476view = **0.69 MB/view** (**-2×**). Views sebanding → penurunan ASLI dari fix, bukan sekadar Sabtu sepi.
+- TAPI 0.34 MB/view × ~470 view/hari-ngajar masih ~160MB/hari, dan hari biasa tetap ratusan MB → **belum cukup masuk budget 167MB/hari**. Butuh potong lagi (biang #9).
+
+### Total (dari `activity_logs`, hari UTC 11 Jul)
+- **23 user aktif** (mayoritas `teacher`, 2 `admin`)
+- **472 page view**
+
+| Halaman | View | Users | Catatan |
+|---------|------|-------|---------|
+| `/home` | 115 | 21 | landing, ringan |
+| `/presensi` (list) | 114 | 18 | sudah di-trim sm-2fux |
+| `/presensi/<meetingId>` (detail) | ~70 | bbrp | **BIANG BARU (#9)** — satu meeting `8deaa725` (117 siswa) di-buka **50× oleh 1 guru** (majalaya). refetch-on-focus 3 query fat |
+| `/users/siswa` (list) | 49 | 11 | sudah di-fix sm-uxnv (pagination) |
+| `/laporan` | 22 | 11 | sudah di-fix sm-5jzd |
+| detail-presensi siswa | 16 | bbrp | sudah di-fix sm-euox |
+
+### User teratas
+| User | Role | View | Halaman terberat |
+|------|------|------|------------------|
+| majalaya_mudamudi | teacher | 73 | **65× /presensi + buka meeting 8deaa725 50×** (input presensi 117 siswa) |
+| pongporang_generus | teacher | 57 | 14 detail-presensi + 9 siswa_list |
+| brangsong_kelompok | teacher | 44 | 16 presensi |
+| kendal_ppg | teacher | 43 | 18 presensi |
+| kendal_daerah_admin | admin | 40 | 18 home |
+
+### Baca situasi
+- **Fix fase-1 terbukti** (MB/view turun 2×). Tapi **biang bergeser**: setelah list-presensi (sm-2fux) & list-siswa (sm-uxnv) beres, sisa biang PostgREST = **halaman DETAIL meeting** (`useMeetingAttendance`), yang refetch-on-focus 3 query fat tiap guru keluar-masuk app saat input presensi — padahal realtime sudah kasih data live. → issue #9.
+- Realtime 16MB (8.2%) = wajar (banyak guru online barengan Sabtu, WS presence + attendance push). BUKAN biang, jangan diutak-atik.
+- Auth 21.8MB (11%) sedikit di atas normal — flood `auth/v1/user` + `profiles?...permissions` tiap navigasi (api-logs). Kandidat P2 (request-scoped auth cache, P1.2 plan lama) tapi bukan prioritas vs #9.
 
 ---
 
