@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { UserProfile } from '@/types/user'
 
 export function canAccessFeature(profile: UserProfile, feature: string): boolean {
@@ -57,22 +58,29 @@ export function getDataFilter(profile: UserProfile | null): {
   return null
 }
 
-export async function getCurrentUserProfile() {
+// Wrapped in React cache(): deduplicates getUser()+profile fetch within a
+// single server request render pass. A page-load fans out to many server
+// actions, each of which used to re-run auth.getUser() + a profiles fetch —
+// the flood of `auth/v1/user` + `profiles?...permissions` in api-logs (Auth
+// ~11% egress). cache() collapses those to one call per request; it resets
+// every request, so auth is still validated once per request (no cross-request
+// staleness). See egress-register (Auth flood, sm-lm8q).
+export const getCurrentUserProfile = cache(async (): Promise<UserProfile | null> => {
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
-  
+
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) return null;
-  
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, full_name, role, email, daerah_id, desa_id, kelompok_id, permissions')
     .eq('id', user.id)
     .single();
-    
+
   return profile as UserProfile | null;
-}
+})
 
 // Alias for consistency with server actions
 export const getUserProfile = getCurrentUserProfile;
