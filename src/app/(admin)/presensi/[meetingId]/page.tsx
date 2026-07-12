@@ -352,8 +352,16 @@ export default function MeetingAttendancePage() {
     else if (isAdminKelompok(userProfile) || isTeacherKelompok(userProfile)) userLevelRank = 1
     else if (userProfile.role === 'admin') userLevelRank = 4 // Fallback for unspecified admins
     
-    // If meeting is higher level than user, it's read only
-    return meetingLevelRank > userLevelRank
+    // If meeting is higher level than user, check for delegated attendance
+    if (meetingLevelRank > userLevelRank) {
+      // If delegated attendance is allowed, they can edit (but server actions will still restrict them to their own students)
+      if (meeting.allow_delegated_attendance) {
+        return false
+      }
+      return true
+    }
+    
+    return false
   }, [userProfile, meeting, isMeetingCreator])
 
   // Scan QR tab is only useful for large, cross-kelompok meetings (Desa/Daerah level)

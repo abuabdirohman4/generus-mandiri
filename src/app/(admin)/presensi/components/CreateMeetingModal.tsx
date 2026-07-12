@@ -47,6 +47,7 @@ export default function CreateMeetingModal({
   meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
   const [checkTimeEnabled, setCheckTimeEnabled] = useState(meeting?.check_time_enabled || false)
+  const [allowDelegatedAttendance, setAllowDelegatedAttendance] = useState(meeting?.allow_delegated_attendance || false)
   const [startTime, setStartTime] = useState(meeting?.start_time || '')
   const [formData, setFormData] = useState({
     date: meeting ? dayjs(meeting.date) : dayjs(),
@@ -152,6 +153,13 @@ export default function CreateMeetingModal({
     const level = activityLevels.find((l: any) => l.code === levelCode)
     return level?.id || null
   }, [userProfile, activityLevels])
+
+  // Check if current activity level is Desa or Daerah
+  const isDesaOrDaerah = useMemo(() => {
+    if (!activityLevelId || !activityLevels) return false
+    const level = activityLevels.find((l: any) => l.id === activityLevelId)
+    return level?.code === 'DESA' || level?.code === 'DAERAH'
+  }, [activityLevelId, activityLevels])
 
   // Count active students per class for filtering empty classes
   const classStudentCounts = useMemo(() => {
@@ -781,6 +789,7 @@ export default function CreateMeetingModal({
           activityLevelId: activityLevelId || undefined,
           startTime: checkTimeEnabled ? (startTime || undefined) : null,
           checkTimeEnabled,
+          allowDelegatedAttendance,
           studentIds: selectedStudentIds
         })
 
@@ -819,6 +828,7 @@ export default function CreateMeetingModal({
           activityLevelId: activityLevelId || undefined,
           startTime: checkTimeEnabled ? (startTime || undefined) : null,
           checkTimeEnabled,
+          allowDelegatedAttendance,
           studentIds: selectedStudentIds
         })
 
@@ -1106,6 +1116,21 @@ export default function CreateMeetingModal({
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Delegated Attendance Toggle (Only for Desa/Daerah) */}
+              {isDesaOrDaerah && (
+                <div className="mb-4">
+                  <Checkbox
+                    label="Izinkan Admin/Guru tingkat bawah untuk mengisi presensi"
+                    checked={allowDelegatedAttendance}
+                    onChange={(checked) => setAllowDelegatedAttendance(checked)}
+                    disabled={isSubmitting}
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Jika diaktifkan, Admin/Guru tingkat Kelompok dapat mengisi kehadiran khusus untuk warganya masing-masing.
+                  </p>
+                </div>
               )}
 
               {/* Student Preview */}
