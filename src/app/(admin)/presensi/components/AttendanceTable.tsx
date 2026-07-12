@@ -35,7 +35,6 @@ interface AttendanceTableProps {
   onSearchQueryChange?: (query: string) => void
   meetingDate?: string
   meetingStartTime?: string | null
-  checkTimeEnabled?: boolean
 }
 
 export default function AttendanceTable({ 
@@ -52,7 +51,6 @@ export default function AttendanceTable({
   onSearchQueryChange,
   meetingDate,
   meetingStartTime,
-  checkTimeEnabled = false
 }: AttendanceTableProps) {
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
   const searchQuery = controlledSearchQuery !== undefined ? controlledSearchQuery : internalSearchQuery
@@ -316,7 +314,7 @@ export default function AttendanceTable({
                             Alasan: {attendance[student.id].reason}
                           </div>
                         )}
-                        {checkTimeEnabled && attendance[student.id]?.status === 'H' && attendance[student.id]?.check_in_time && (
+                        {!!meetingStartTime && attendance[student.id]?.status === 'H' && attendance[student.id]?.check_in_time && (
                           <div className="mt-1 flex items-center gap-1.5">
                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
                               isLate(attendance[student.id].check_in_time, meetingDate || '', meetingStartTime)

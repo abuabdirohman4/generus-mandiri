@@ -31,7 +31,6 @@ interface LivePresensiTabProps {
   connectionStatus: string
   meetingDate?: string
   meetingStartTime?: string | null
-  checkTimeEnabled?: boolean
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -80,7 +79,6 @@ export default function LivePresensiTab({
   connectionStatus,
   meetingDate,
   meetingStartTime,
-  checkTimeEnabled = false
 }: LivePresensiTabProps) {
   const [isPresentationMode, setIsPresentationMode] = useState(false)
 
@@ -153,7 +151,7 @@ export default function LivePresensiTab({
       const entry = attendanceMap[s.id]
       const status = entry?.status
       if (status === 'H') {
-        if (checkTimeEnabled && entry?.check_in_time) {
+        if (!!meetingStartTime && entry?.check_in_time) {
           if (isLate(entry.check_in_time, meetingDate || '', meetingStartTime)) lateCount++
           else onTimeCount++
         }
@@ -162,7 +160,7 @@ export default function LivePresensiTab({
       else alfaCount++
     })
     return { lateCount, onTimeCount, izinCount, sakitCount, alfaCount }
-  }, [students, attendanceMap, checkTimeEnabled, meetingDate, meetingStartTime])
+  }, [students, attendanceMap, meetingDate, meetingStartTime])
 
   const sortedStudents = useMemo(() => {
     // Hadir first (roll-call effect: most-recently-scanned appears at front),
@@ -203,7 +201,7 @@ export default function LivePresensiTab({
             {connectionStatus === 'DISCONNECTED' ? 'Menghubungkan...' : `Status: ${connectionStatus}`}
           </div>
         )}
-        {checkTimeEnabled && (
+        {!!meetingStartTime && (
           <div className={`mt-4 flex flex-wrap justify-center gap-2 ${big ? 'text-sm' : 'text-xs'}`}>
             <span className="px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 font-medium">Telat: {lateCount}</span>
             <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 font-medium">Tepat Waktu: {onTimeCount}</span>
@@ -221,7 +219,7 @@ export default function LivePresensiTab({
           const status = attendanceMap[student.id]?.status
           const isHadir = status === 'H'
           const isNew = recentlyMarked.has(student.id)
-          const hasCheckIn = checkTimeEnabled && isHadir && !!attendanceMap[student.id]?.check_in_time
+          const hasCheckIn = !!meetingStartTime && isHadir && !!attendanceMap[student.id]?.check_in_time
           const late = hasCheckIn && isLate(attendanceMap[student.id].check_in_time, meetingDate || '', meetingStartTime)
 
           const displayLabel = hasCheckIn

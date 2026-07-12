@@ -439,7 +439,6 @@ interface Meeting {
   activity_type?: { id: string; code: string; name: string } | null
   activity_level?: { id: string; code: string; name: string } | null
   start_time?: string | null
-  check_time_enabled?: boolean
   classes: {
     id: string
     name: string

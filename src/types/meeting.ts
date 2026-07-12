@@ -30,7 +30,6 @@ export interface CreateMeetingData {
   activityTypeId?: string | null
   activityLevelId?: string | null
   startTime?: string | null
-  checkTimeEnabled?: boolean
   allowDelegatedAttendance?: boolean
   studentIds?: string[]
 }

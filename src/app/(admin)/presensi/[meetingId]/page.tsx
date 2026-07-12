@@ -1042,7 +1042,6 @@ export default function MeetingAttendancePage() {
             connectionStatus={realtimeStatus}
             meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
             meetingStartTime={meeting?.start_time}
-            checkTimeEnabled={meeting?.check_time_enabled}
           />
         ) : activeTab === 'breakdown' && showOrgBreakdown ? (
           <MeetingOrgBreakdown
@@ -1087,7 +1086,6 @@ export default function MeetingAttendancePage() {
                 onSearchQueryChange={setTableSearchQuery}
                 meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
                 meetingStartTime={meeting?.start_time}
-                checkTimeEnabled={meeting?.check_time_enabled}
               />
             </div>
 

@@ -123,7 +123,7 @@ export async function insertMeeting(
     activity_type_id: data.activityTypeId || null,
     activity_level_id: data.activityLevelId || null,
     start_time: data.startTime || null,
-    check_time_enabled: data.checkTimeEnabled ?? false,
+    check_time_enabled: !!data.startTime,
     allow_delegated_attendance: data.allowDelegatedAttendance ?? false,
     // Note: created_by column does not exist in meetings table
     // teacher_id already tracks who created the meeting
@@ -153,8 +153,10 @@ export async function updateMeetingRecord(
   if (data.description !== undefined) updateData.description = data.description
   if (data.activityTypeId !== undefined) updateData.activity_type_id = data.activityTypeId
   if (data.activityLevelId !== undefined) updateData.activity_level_id = data.activityLevelId
-  if (data.startTime !== undefined) updateData.start_time = data.startTime
-  if (data.checkTimeEnabled !== undefined) updateData.check_time_enabled = data.checkTimeEnabled
+  if (data.startTime !== undefined) {
+    updateData.start_time = data.startTime
+    updateData.check_time_enabled = !!data.startTime
+  }
   if (data.allowDelegatedAttendance !== undefined) updateData.allow_delegated_attendance = data.allowDelegatedAttendance
 
   if (data.classIds !== undefined && data.classIds.length > 0) {
