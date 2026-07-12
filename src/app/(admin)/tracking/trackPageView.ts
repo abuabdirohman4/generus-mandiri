@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAuthClient } from '@/lib/supabase/server'
 import { logActivity } from '@/lib/activityLogger'
 
 /**
@@ -12,7 +12,7 @@ export async function trackPageView(pagePath: string): Promise<void> {
     const supabase = await createClient()
     
     // Gunakan getUser() untuk verifikasi session yang aman (tidak bisa dipalsukan client)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     
     if (!user) return // Tidak ada session, skip logging
 

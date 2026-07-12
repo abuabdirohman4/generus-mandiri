@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { RealtimeChannel } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/client'
+import { createAuthClient } from '@/lib/supabase/client'
 import {
   applyAttendanceEvent,
   type AttendanceMap,
@@ -44,7 +44,7 @@ export function useAttendanceRealtime(
   useEffect(() => {
     if (!meetingId) return
 
-    const supabase = createClient()
+    const supabase = createAuthClient()
     const channel = supabase
       .channel(`attendance-realtime-${meetingId}`)
       .on(

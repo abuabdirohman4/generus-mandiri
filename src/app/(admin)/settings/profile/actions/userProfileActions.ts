@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAuthClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { handleApiError } from '@/lib/errorUtils';
 
@@ -36,7 +36,7 @@ const DEFAULT_SOUND_SETTINGS: SoundSettings = {
 export async function getUserProfile(): Promise<UserSettings | null> {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await (await createAuthClient()).auth.getUser();
     
     if (!user) {
       throw new Error('User not authenticated');
@@ -71,7 +71,7 @@ export async function getUserProfile(): Promise<UserSettings | null> {
 export async function updateSoundSettings(settings: Partial<SoundSettings>): Promise<void> {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await (await createAuthClient()).auth.getUser();
     
     if (!user) {
       throw new Error('User not authenticated');
@@ -146,7 +146,7 @@ export async function getSoundSettings(): Promise<SoundSettings> {
 export async function resetSoundSettings(): Promise<void> {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await (await createAuthClient()).auth.getUser();
     
     if (!user) {
       throw new Error('User not authenticated');

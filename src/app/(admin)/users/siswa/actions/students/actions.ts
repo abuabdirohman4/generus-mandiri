@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import {
@@ -100,7 +100,7 @@ export async function getUserProfile() {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) {
             throw new Error('User not authenticated')
         }
@@ -153,7 +153,7 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) {
             throw new Error('User not authenticated')
         }
@@ -399,7 +399,7 @@ export async function getStudentsPaginated(params: {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: profile } = await supabase
@@ -495,7 +495,7 @@ export async function createStudent(formData: FormData) {
             throw new Error(validation.error)
         }
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: userProfile } = await supabase
@@ -597,7 +597,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: profile } = await supabase
@@ -773,7 +773,7 @@ export async function deleteStudent(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -1021,7 +1021,7 @@ export async function assignStudentsToClass(
 
         if (newStudentIds.length > 0) {
             void logActivity({
-                userId: (await supabase.auth.getUser()).data.user?.id || '',
+                userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
                 action: 'assign_class_teacher', // or a more specific action if defined
                 entityType: 'student_batch',
                 entityId: classId,
@@ -1237,7 +1237,7 @@ export async function createStudentsBatch(
 
             if (insertedStudents.length > 0) {
                 void logActivity({
-                    userId: (await supabase.auth.getUser()).data.user?.id || '',
+                    userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
                     action: 'create_student',
                     entityType: 'student_batch',
                     entityId: classId,
@@ -1314,7 +1314,7 @@ export async function createStudentsBatch(
 
             if (insertedStudents.length > 0) {
                 void logActivity({
-                    userId: (await supabase.auth.getUser()).data.user?.id || '',
+                    userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
                     action: 'create_student',
                     entityType: 'student_batch_cross_kelompok',
                     entityId: target.masterId,
@@ -1346,7 +1346,7 @@ export async function getCurrentUserRole(): Promise<string | null> {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return null
 
         const { data: profile } = await supabase
@@ -1414,7 +1414,7 @@ export async function getStudentInfo(studentId: string): Promise<StudentInfo> {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: profile } = await supabase
@@ -1476,7 +1476,7 @@ export async function getStudentAttendanceHistory(
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: profile } = await supabase

@@ -2,9 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createClient } from '@/lib/supabase/server'
 import { getAllClasses } from '../actions'
 
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => {
+  const __m: any = {
     createClient: vi.fn(),
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 
 function makeQueryBuilder(resolvedValue: any = { data: null, error: null }) {
     const b: any = {}

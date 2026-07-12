@@ -1,6 +1,6 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createAuthClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { handleApiError } from '@/lib/errorUtils';
 import { MaterialProgress, ProgressInput } from '../types';
@@ -31,7 +31,7 @@ export async function getHafalanCategories() {
 export async function getTeacherRestrictions() {
     try {
         const supabase = await createAdminClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await (await createAuthClient()).auth.getUser();
         if (!user) return { success: true, data: null };
 
         const { data, error } = await supabase
@@ -188,7 +188,7 @@ export async function getClassProgress(
 export async function updateMaterialProgress(input: ProgressInput) {
     try {
         const supabase = await createAdminClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await (await createAuthClient()).auth.getUser();
 
         const { error } = await supabase
             .from('student_material_progress')
@@ -225,7 +225,7 @@ export async function updateMaterialProgress(input: ProgressInput) {
 export async function bulkUpdateProgress(updates: ProgressInput[]) {
     try {
         const supabase = await createAdminClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await (await createAuthClient()).auth.getUser();
 
         const records = updates.map(update => ({
             ...update,

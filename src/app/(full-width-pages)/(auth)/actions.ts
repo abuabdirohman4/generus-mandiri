@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { handleApiError, handleAuthError, isRedirectError } from '@/lib/errorUtils';
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAuthClient, createAdminAuthClient } from "@/lib/supabase/server";
 import { isNonEmptyString, isValidEmail } from '@/lib/typeGuards';
 import { logActivity } from '@/lib/activityLogger';
 
@@ -42,7 +42,7 @@ export async function login(formData: FormData) {
     }
 
     // Login menggunakan email dari profiles table
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await (await createAuthClient()).auth.signInWithPassword({
       email: profile.email,
       password
     });
@@ -119,7 +119,7 @@ export async function signup(formData: FormData) {
   };
   
   try {
-    const result = await supabase.auth.signUp({
+    const result = await (await createAuthClient()).auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -150,13 +150,13 @@ export async function signup(formData: FormData) {
       if (profileError) {
         console.error('Error creating profile:', profileError);
         // Jika gagal membuat profile, hapus user yang sudah dibuat
-        await supabase.auth.admin.deleteUser(result.data.user.id);
+        await (await createAdminAuthClient()).auth.admin.deleteUser(result.data.user.id);
         return redirect("/signup?message=Gagal membuat profile user");
       }
     }
 
     // Force sign out to ensure user is not automatically signed in
-    await supabase.auth.signOut();
+    await (await createAuthClient()).auth.signOut();
 
     // Check if user needs email confirmation
     if (result.data.user && !result.data.user.email_confirmed_at) {
@@ -184,7 +184,7 @@ export async function signOut() {
   
   try {
     // Log logout sebelum session dihapus
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (user) {
       void logActivity({
         userId: user.id,
@@ -195,7 +195,7 @@ export async function signOut() {
     }
 
     // Sign out from Supabase
-    const { error } = await supabase.auth.signOut();
+    const { error } = await (await createAuthClient()).auth.signOut();
     
     if (error) {
       console.error('Supabase signOut error:', error);

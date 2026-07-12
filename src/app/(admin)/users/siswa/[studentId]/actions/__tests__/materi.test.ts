@@ -2,9 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStudentMateriProgress } from '../materi'
 
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => {
+  const __m: any = {
     createAdminClient: vi.fn(),
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 
 function makeQueryBuilder(resolvedValue: any = { data: null, error: null }) {
     const b: any = {}

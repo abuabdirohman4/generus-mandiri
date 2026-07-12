@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient, createAdminAuthClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer'
@@ -38,7 +38,7 @@ export async function createTeacher(data: TeacherData) {
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+        const { data: authData, error: authError } = await (await createAdminAuthClient()).auth.admin.createUser({
             email: data.email,
             password: data.password!,
             email_confirm: true,
@@ -49,7 +49,7 @@ export async function createTeacher(data: TeacherData) {
 
         const { error: profileError } = await insertTeacherProfile(supabase, authData.user.id, data)
         if (profileError) {
-            await adminClient.auth.admin.deleteUser(authData.user.id)
+            await (await createAdminAuthClient()).auth.admin.deleteUser(authData.user.id)
             throw profileError
         }
 
@@ -74,7 +74,7 @@ export async function createTeacher(data: TeacherData) {
         revalidatePath('/users/guru')
 
         void logActivity({
-            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
             action: 'create_teacher',
             entityType: 'teacher',
             entityId: authData.user.id,
@@ -115,13 +115,13 @@ export async function updateTeacher(id: string, data: TeacherData) {
         if (profileError) throw profileError
 
         if (data.password) {
-            const { error: passwordError } = await adminClient.auth.admin.updateUserById(id, {
+            const { error: passwordError } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, {
                 password: data.password,
             })
             if (passwordError) throw passwordError
         }
 
-        const { error: metadataError } = await adminClient.auth.admin.updateUserById(id, {
+        const { error: metadataError } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, {
             user_metadata: { username: data.username, full_name: data.full_name },
         })
         if (metadataError) throw metadataError
@@ -129,7 +129,7 @@ export async function updateTeacher(id: string, data: TeacherData) {
         revalidatePath('/users/guru')
 
         void logActivity({
-            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
             action: 'update_teacher',
             entityType: 'teacher',
             entityId: id,
@@ -150,7 +150,7 @@ export async function updateTeacher(id: string, data: TeacherData) {
 export async function deleteTeacher(id: string) {
     try {
         const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         
         const adminClient = await createAdminClient()
 
@@ -176,7 +176,7 @@ export async function deleteTeacher(id: string) {
         ])
 
         // 3. Hapus user dari Supabase Auth (cascade ke profiles melalui auth trigger)
-        const { error } = await adminClient.auth.admin.deleteUser(id)
+        const { error } = await (await createAdminAuthClient()).auth.admin.deleteUser(id)
         if (error) throw error
 
         revalidatePath('/users/guru')
@@ -216,10 +216,10 @@ export async function getTeacherDeleteImpact(id: string) {
 export async function resetTeacherPassword(id: string, newPassword: string) {
     try {
         const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
 
         const adminClient = await createAdminClient()
-        const { error } = await adminClient.auth.admin.updateUserById(id, { password: newPassword })
+        const { error } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, { password: newPassword })
         if (error) throw error
 
         void logActivity({
@@ -340,7 +340,7 @@ export async function assignTeacherToKelompok(teacherId: string, kelompokId: str
         revalidatePath('/users/guru')
 
         void logActivity({
-            userId: (await supabase.auth.getUser()).data.user?.id || '',
+            userId: (await (await createAuthClient()).auth.getUser()).data.user?.id || '',
             action: 'assign_class_teacher',
             entityType: 'teacher',
             entityId: teacherId,

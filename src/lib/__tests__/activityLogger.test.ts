@@ -2,9 +2,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock supabase admin client
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => {
+  const __m: any = {
   createAdminClient: vi.fn(),
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 
 // Mock getCurrentUserProfile
 vi.mock('@/lib/accessControlServer', () => ({

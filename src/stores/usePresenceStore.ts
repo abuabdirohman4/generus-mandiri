@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { RealtimeChannel } from '@supabase/supabase-js'
-import { createClient } from '@/lib/supabase/client'
+import { createAuthClient } from '@/lib/supabase/client'
 
 interface OnlineUser {
   user_id: string
@@ -36,12 +36,11 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
     if (!user?.id) return
     if (realtimeChannel) return
 
-    const supabase = createClient()
     const { isDebug } = get()
     
     if (isDebug) console.log('[PresenceStore] Initializing shared channel...')
 
-    realtimeChannel = supabase.channel('online-users')
+    realtimeChannel = createAuthClient().channel('online-users')
 
     realtimeChannel
       .on('presence', { event: 'sync' }, () => {
@@ -113,8 +112,7 @@ export const usePresenceStore = create<PresenceState>((set, get) => ({
       const { isDebug } = get()
       if (isDebug) console.log('[PresenceStore] Cleaning up global channel...')
       
-      const supabase = createClient()
-      supabase.removeChannel(realtimeChannel)
+      createAuthClient().removeChannel(realtimeChannel)
       realtimeChannel = null
       lastTrackedPath = null
       set({ onlineUsers: [], connectionStatus: 'DISCONNECTED' })

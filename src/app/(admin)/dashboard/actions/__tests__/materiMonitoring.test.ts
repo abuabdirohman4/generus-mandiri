@@ -2,9 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getMateriDashboardSummary } from '../materiMonitoring'
 
 // Mock Supabase
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => {
+  const __m: any = {
     createClient: vi.fn(),
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 
 // Mock accessControlServer
 vi.mock('@/lib/accessControlServer', () => ({

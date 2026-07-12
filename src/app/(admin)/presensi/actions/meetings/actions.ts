@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canEditOrDeleteMeeting } from './helpers.server'
 import { isCaberawitClass, isTeacherClass } from '@/lib/utils/classHelpers'
@@ -34,7 +34,7 @@ export async function createMeeting(data: CreateMeetingData) {
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -195,7 +195,7 @@ export async function getMeetingsByClass(classId?: string, limit: number = 10, c
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated', data: null }
     }
@@ -389,7 +389,7 @@ export async function updateMeeting(meetingId: string, data: UpdateMeetingData) 
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -467,7 +467,7 @@ export async function deleteMeeting(meetingId: string) {
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -521,7 +521,7 @@ export async function getMeetingsWithStats(classId?: string, limit: number = 10,
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated', data: null }
     }
@@ -2204,7 +2204,7 @@ export async function getMyAllowedClassesForMeeting(): Promise<{
   try {
     const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { allowedClassIds: null }
 
     const { data: profile } = await supabase

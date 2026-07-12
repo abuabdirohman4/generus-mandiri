@@ -3,9 +3,14 @@ import { getCurrentUserId, isAdminLegacy, clearUserCache, clearSWRCache } from '
 import { createClient } from '@/lib/supabase/client'
 
 // Mock Supabase client
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => {
+  const __m: any = {
     createClient: vi.fn()
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 
 describe('userUtils', () => {
     describe('getCurrentUserId', () => {

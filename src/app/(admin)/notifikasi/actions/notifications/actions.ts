@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { canSendNotification, isSuperAdmin } from '@/lib/accessControl'
 import { logActivity } from '@/lib/activityLogger'
@@ -28,7 +28,7 @@ import { isPromotionCtaNotification } from '@/lib/utils/notificationUtils'
 export async function sendNotification(input: SendNotificationInput) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -112,7 +112,7 @@ export async function sendNotification(input: SendNotificationInput) {
 export async function getMyNotifications(opts: { limit?: number; onlyUnread?: boolean } = {}) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, data: [], message: 'Tidak terautentikasi' }
 
     // Use profile id for recipient queries
@@ -133,7 +133,7 @@ export async function getMyNotifications(opts: { limit?: number; onlyUnread?: bo
 export async function getUnreadCount() {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, data: 0, message: '' }
 
     const profile = await getCurrentUserProfile()
@@ -150,7 +150,7 @@ export async function getUnreadCount() {
 export async function getSentNotifications(opts: { limit?: number } = {}) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, data: [], message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -168,7 +168,7 @@ export async function getSentNotifications(opts: { limit?: number } = {}) {
 export async function getNotificationRecipients(notificationId: string) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, data: [], message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -186,7 +186,7 @@ export async function getNotificationRecipients(notificationId: string) {
 export async function markNotificationRead(ids: string[]) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -202,7 +202,7 @@ export async function markNotificationRead(ids: string[]) {
 export async function markAllNotificationsRead() {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -219,7 +219,7 @@ export async function markAllNotificationsRead() {
 export async function dismissNotification(notificationId: string) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -235,7 +235,7 @@ export async function dismissNotification(notificationId: string) {
 export async function deleteNotification(notificationId: string) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -256,7 +256,7 @@ export async function deleteNotification(notificationId: string) {
 export async function updateNotification(notificationId: string, input: UpdateNotificationInput) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -284,7 +284,7 @@ export async function updateNotification(notificationId: string, input: UpdateNo
 export async function getNotificationDetail(notificationId: string) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, data: null, message: 'Tidak terautentikasi' }
 
     const profile = await getCurrentUserProfile()
@@ -306,7 +306,7 @@ export async function getNotificationDetail(notificationId: string) {
 export async function previewRecipientCount(target: NotificationTargetScope) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) return { success: false, count: 0 }
 
     const profile = await getCurrentUserProfile()

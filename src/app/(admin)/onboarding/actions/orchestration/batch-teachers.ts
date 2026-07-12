@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAdminAuthClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import { handleApiError } from '@/lib/errorUtils'
 import { canOnboard } from './logic'
@@ -64,7 +64,7 @@ export async function onboardBatchCreateTeachers(payload: BatchTeacherPayload) {
       const password = 'ngaji354'
 
       // 1. Create auth user
-      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+      const { data: authData, error: authError } = await (await createAdminAuthClient()).auth.admin.createUser({
         email,
         password,
         email_confirm: true,
@@ -91,7 +91,7 @@ export async function onboardBatchCreateTeachers(payload: BatchTeacherPayload) {
       })
 
       if (profileError) {
-        await adminClient.auth.admin.deleteUser(userId)
+        await (await createAdminAuthClient()).auth.admin.deleteUser(userId)
         failedTeachers.push({ name: tDef.full_name, reason: profileError.message })
         continue
       }

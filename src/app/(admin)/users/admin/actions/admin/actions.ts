@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient, createAuthClient, createAdminAuthClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserProfile, getDataFilter } from '@/lib/accessControlServer';
@@ -38,7 +38,7 @@ export async function createAdmin(data: AdminData) {
     const adminClient = await createAdminClient();
 
     // First create the user in auth.users using admin client
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+    const { data: authData, error: authError } = await (await createAdminAuthClient()).auth.admin.createUser({
       email: data.email, // Generated format from frontend
       password: data.password!,
       email_confirm: true, // Auto-confirm email
@@ -71,7 +71,7 @@ export async function createAdmin(data: AdminData) {
 
     if (profileError) {
       // If profile creation fails, clean up the auth user using admin client
-      await adminClient.auth.admin.deleteUser(authData.user.id);
+      await (await createAdminAuthClient()).auth.admin.deleteUser(authData.user.id);
       throw profileError;
     }
 
@@ -133,7 +133,7 @@ export async function updateAdmin(id: string, data: AdminData) {
 
     // Update password if provided using admin client
     if (data.password) {
-      const { error: passwordError } = await adminClient.auth.admin.updateUserById(id, {
+      const { error: passwordError } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, {
         password: data.password
       });
 
@@ -143,7 +143,7 @@ export async function updateAdmin(id: string, data: AdminData) {
     }
 
     // Update user metadata using admin client
-    const { error: metadataError } = await adminClient.auth.admin.updateUserById(id, {
+    const { error: metadataError } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, {
       user_metadata: {
         username: data.username,
         full_name: data.full_name
@@ -180,7 +180,7 @@ export async function deleteAdmin(id: string) {
     const adminClient = await createAdminClient();
 
     // Delete from auth.users (this will cascade to profiles due to foreign key)
-    const { error } = await adminClient.auth.admin.deleteUser(id);
+    const { error } = await (await createAdminAuthClient()).auth.admin.deleteUser(id);
 
     if (error) {
       throw error;
@@ -209,10 +209,10 @@ export async function deleteAdmin(id: string) {
 export async function resetAdminPassword(id: string, newPassword: string) {
   try {
     // BUG FIX: Use createAdminClient instead of createClient
-    // The original code incorrectly used supabase.auth.admin which doesn't exist
+    // The original code incorrectly used (await createAuthClient()).auth.admin which doesn't exist
     const adminClient = await createAdminClient();
 
-    const { error } = await adminClient.auth.admin.updateUserById(id, {
+    const { error } = await (await createAdminAuthClient()).auth.admin.updateUserById(id, {
       password: newPassword
     });
 

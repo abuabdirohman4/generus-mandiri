@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createAuthClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 import LandingPageContent from "./LandingPageContent";
@@ -11,12 +11,11 @@ export default function LandingPageClient() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await createAuthClient().auth.getUser();
         setUser(user);
         
         // If user is logged in, redirect to dashboard
@@ -33,7 +32,7 @@ export default function LandingPageClient() {
 
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = createAuthClient().auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         setLoading(false);
@@ -46,7 +45,7 @@ export default function LandingPageClient() {
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth, router]);
+  }, [router]);
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import {
   calculateAttendanceStats,
@@ -44,7 +44,7 @@ export async function saveAttendance(
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -110,7 +110,7 @@ export async function saveAttendanceForMeeting(
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, error: 'User not authenticated' }
     }
@@ -219,7 +219,7 @@ export async function markAttendanceByQrScan(
   try {
     const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await (await createAuthClient()).auth.getUser()
     if (!user) {
       return { success: false, status: 'error', message: 'User not authenticated' }
     }

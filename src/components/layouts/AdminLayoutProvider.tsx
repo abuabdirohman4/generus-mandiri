@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import BlockingNotificationModal from '@/components/layouts/BlockingNotificationModal';
 import { useUserProfileStore } from '@/stores/userProfileStore';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, createAuthClient } from '@/lib/supabase/client';
 import { clearUserCache, clearSWRCache } from '@/lib/userUtils';
 
 interface AdminLayoutProviderProps {
@@ -38,7 +38,7 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
         const supabase = createClient();
         
         // Get authenticated user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await createAuthClient().auth.getUser();
         
         if (userError) {
           throw userError;
@@ -141,8 +141,7 @@ export function AdminLayoutProvider({ children }: AdminLayoutProviderProps) {
     fetchUserData();
 
     // Listen for auth state changes
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = createAuthClient().auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_OUT') {
           // Clear all user-related cache when signing out

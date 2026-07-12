@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import {
@@ -77,7 +77,7 @@ export async function archiveStudent(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -156,7 +156,7 @@ export async function unarchiveStudent(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -305,7 +305,7 @@ export async function createTransferRequest(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -456,7 +456,7 @@ export async function approveTransferRequest(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -532,7 +532,7 @@ export async function rejectTransferRequest(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -601,7 +601,7 @@ export async function cancelTransferRequest(
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: request } = await fetchTransferRequestById(adminClient, requestId)
@@ -658,7 +658,7 @@ export async function getPendingTransferRequests(): Promise<{
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, error: 'User not authenticated' }
 
         const { data: profile } = await supabase
@@ -706,7 +706,7 @@ export async function getAllOrganisationsForTransfer(): Promise<{
         const supabase = await createClient()
         const adminClient = await createAdminClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) return { success: false, daerah: [], desa: [], kelompok: [], error: 'User not authenticated' }
 
         const [daerahResult, desaResult, kelompokResult] = await Promise.all([

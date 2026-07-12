@@ -1,7 +1,7 @@
 'use server'
 
 import { getClassEnrollments } from '@/app/(admin)/tahun-ajaran/actions/enrollments'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import type {
   ReportSubject,
   ReportTemplate,
@@ -130,7 +130,7 @@ export async function bulkUpsertSectionGrades(data: {
 
   if (error) throw error
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -165,7 +165,7 @@ export async function updateGrade(data: GradeInput): Promise<void> {
     throw new Error('Gagal menyimpan nilai')
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -200,7 +200,7 @@ export async function bulkUpdateGrades(updates: GradeInput[]): Promise<void> {
     throw new Error('Gagal menyimpan update nilai masal')
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -257,7 +257,7 @@ export async function updateCharacterAssessment(data: CharacterAssessmentInput):
     throw new Error('Gagal menyimpan penilaian karakter')
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -334,7 +334,7 @@ export async function createReportTemplate(data: ReportTemplateInput): Promise<R
     }
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -373,7 +373,7 @@ export async function updateReportTemplate(id: string, data: ReportTemplateInput
     await updateTemplateSubjects(id, data.subject_ids)
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -492,7 +492,7 @@ export async function generateReport(
     throw new Error('Gagal regenerate rapot')
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,
@@ -516,7 +516,7 @@ export async function publishReport(reportId: string): Promise<void> {
     throw new Error('Gagal publish rapot')
   }
 
-  const { data: { user } } = await (await createClient()).auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (user) {
     void logActivity({
       userId: user.id,

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { handleApiError } from '@/lib/errorUtils'
 import { getTeacherAllowedClassIds } from '@/lib/accessControlServer'
 import {
@@ -21,7 +21,7 @@ export async function getAllClasses() {
     try {
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
 
         const { data: profile } = await supabase

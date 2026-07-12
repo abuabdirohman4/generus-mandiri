@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAuthClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/errorUtils';
 
 /**
@@ -12,7 +12,7 @@ export async function resetCacheAndLogout(): Promise<{ success: boolean }> {
     const supabase = await createClient();
     
     // Sign out user from Supabase (clears server-side session)
-    const { error } = await supabase.auth.signOut();
+    const { error } = await (await createAuthClient()).auth.signOut();
     
     if (error) {
       throw error;

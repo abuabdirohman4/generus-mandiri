@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { createAuthClient } from '@/lib/supabase/client'
 
 /**
  * Get current user ID for cache key generation
@@ -8,8 +8,7 @@ import { createClient } from '@/lib/supabase/client'
  */
 export async function getCurrentUserId(): Promise<string | null> {
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await createAuthClient().auth.getUser()
     return user?.id || null
   } catch (error) {
     console.error('Error getting current user ID:', error)

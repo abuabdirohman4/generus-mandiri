@@ -89,8 +89,7 @@ export default function TrackingPage() {
     loadMetadata()
     loadSummary()
 
-    const { createClient } = require('@/lib/supabase/client')
-    const supabase = createClient()
+    const { createAuthClient } = require('@/lib/supabase/client')
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null
     const scheduleRefresh = () => {
@@ -101,7 +100,7 @@ export default function TrackingPage() {
       }, 3000)
     }
 
-    const channel = supabase.channel('tracking-logs-changes')
+    const channel = createAuthClient().channel('tracking-logs-changes')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'activity_logs' },
@@ -111,7 +110,7 @@ export default function TrackingPage() {
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer)
-      supabase.removeChannel(channel)
+      createAuthClient().removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

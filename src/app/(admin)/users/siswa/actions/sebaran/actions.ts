@@ -1,6 +1,6 @@
 'use server'
 
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient, createAuthClient } from '@/lib/supabase/server'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import {
   fetchKelasWithStudentCount,
@@ -20,7 +20,7 @@ import type { UserProfile } from '@/types/user'
  */
 async function getProfileWithClasses(): Promise<UserProfile | null> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   if (!user) return null
 
   const { data: profile } = await supabase

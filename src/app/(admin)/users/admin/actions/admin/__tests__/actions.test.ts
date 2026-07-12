@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // vi.mock calls BEFORE all imports
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock('@/lib/supabase/server', () => {
+  const __m: any = {
   createClient: vi.fn(),
   createAdminClient: vi.fn(),
-}))
+}
+  __m.createAuthClient = vi.fn(() => __m.createClient?.())
+  __m.createAdminAuthClient = vi.fn(() => __m.createAdminClient?.())
+  return __m
+})
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('../queries', () => ({
   insertAdminProfile: vi.fn(),

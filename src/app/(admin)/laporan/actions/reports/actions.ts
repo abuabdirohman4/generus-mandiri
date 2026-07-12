@@ -1,7 +1,7 @@
 'use server'
 
 import { logError } from '@/lib/logError'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import {
     calculateAttendanceStats,
     type AttendanceLog,
@@ -41,7 +41,7 @@ export async function getAttendanceReport(filters: ReportFilters): Promise<Repor
     try {
         // 1. Auth check
         const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await (await createAuthClient()).auth.getUser()
         if (!user) throw new Error('User not authenticated')
         logUserId = user.id
 

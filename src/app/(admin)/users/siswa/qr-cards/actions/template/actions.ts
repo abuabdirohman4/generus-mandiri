@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
 import { canManageIdCardTemplate } from '@/lib/accessControl'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import {
@@ -21,7 +21,7 @@ async function checkTemplateAdminAccess() {
   const supabase = await createClient()
   const adminSupabase = await createAdminClient()
   const profile = await getCurrentUserProfile()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await (await createAuthClient()).auth.getUser()
   
   if (!canManageIdCardTemplate(profile)) {
     throw new Error('Unauthorized: You do not have permission to manage templates')

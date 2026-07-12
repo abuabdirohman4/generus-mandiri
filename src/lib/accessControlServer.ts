@@ -66,10 +66,10 @@ export function getDataFilter(profile: UserProfile | null): {
 // every request, so auth is still validated once per request (no cross-request
 // staleness). See egress-register (Auth flood, sm-lm8q).
 export const getCurrentUserProfile = cache(async (): Promise<UserProfile | null> => {
-  const { createClient } = await import('@/lib/supabase/server');
+  const { createClient, createAuthClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await (await createAuthClient()).auth.getUser();
 
   if (!user) return null;
 
