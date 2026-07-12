@@ -43,7 +43,7 @@ import { useDesa } from '@/hooks/useDesa'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
 import MeetingOrgBreakdown from './MeetingOrgBreakdown'
-import { shouldShowBreakdown } from './logic'
+import { shouldShowBreakdown, mergeNewStudents } from './logic'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -103,17 +103,7 @@ export default function MeetingAttendancePage() {
       } else {
         // Merge any new attendance records from DB that are not in localAttendance
         // This preserves unsaved local edits while pulling in newly added students (e.g. from Quick Add)
-        setLocalAttendance(prev => {
-          let hasChanges = false
-          const merged = { ...prev }
-          Object.keys(attendance).forEach(studentId => {
-            if (!merged[studentId]) {
-              merged[studentId] = attendance[studentId]
-              hasChanges = true
-            }
-          })
-          return hasChanges ? merged : prev
-        })
+        setLocalAttendance(prev => mergeNewStudents(prev, attendance))
       }
     }
   }, [attendance])
@@ -218,8 +208,7 @@ export default function MeetingAttendancePage() {
       if (result.success) {
         sessionStorage.setItem('presensi_needs_refresh', meetingId)
         toast.success('Data presensi berhasil disimpan!')
-        hasInitialized.current = false
-        mutate() // Refresh current page data
+        mutate() // Refresh SWR baseline (for isDirty + cross-device sync)
 
         // Optimistic upsert: sisipkan meeting baru / patch existing di cache list instan.
         // void = fire-and-forget, navigasi back tidak tertahan refetch berat (40s).
