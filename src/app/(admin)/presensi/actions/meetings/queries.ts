@@ -29,6 +29,7 @@ export async function fetchMeetingById(supabase: SupabaseClient, meetingId: stri
       activity_level_id,
       start_time,
       check_time_enabled,
+      allow_delegated_attendance,
       activity_type:activity_types(id, code, name),
       activity_level:activity_levels(id, code, name),
       classes (
@@ -78,6 +79,7 @@ export async function fetchMeetingsByClass(
       activity_level_id,
       start_time,
       check_time_enabled,
+      allow_delegated_attendance,
       activity_type:activity_types(id, code, name),
       activity_level:activity_levels(id, code, name),
       kelompok_ids,
