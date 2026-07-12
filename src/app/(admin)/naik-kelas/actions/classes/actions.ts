@@ -55,6 +55,7 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
                     kind: 'class' as const,
                     id: c.class_id,
                     name: c.class_name,
+                    kelompok_name: c.kelompok_name || undefined,
                     to_name: toMaster.name,
                     _sortOrder: master?.sort_order ?? 0,
                 }

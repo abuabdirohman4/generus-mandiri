@@ -32,6 +32,8 @@ export interface PromotionSourceOption {
     id: string
     /** "Kelas 1" (class_master) atau "Kelas 1 - Nambo" (class aktual) */
     name: string
+    /** nama kelompok untuk disambiguasi; hanya diisi untuk guru biasa multi-kelompok */
+    kelompok_name?: string
     /** nama class_master tujuan untuk display; null kalau stopper */
     to_name: string | null
 }
