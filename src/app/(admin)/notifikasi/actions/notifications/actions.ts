@@ -66,7 +66,11 @@ export async function sendNotification(input: SendNotificationInput) {
     }
 
     // Resolve recipients
-    const recipientIds = await fetchRecipientProfileIds(adminClient, scopeResult.scope!, user.id)
+    let recipientIds = await fetchRecipientProfileIds(adminClient, scopeResult.scope!, user.id)
+    if (input.excluded_ids?.length) {
+      const excludeSet = new Set(input.excluded_ids)
+      recipientIds = recipientIds.filter((id: string) => !excludeSet.has(id))
+    }
     if (recipientIds.length === 0) return { success: false, message: 'Tidak ada penerima ditemukan untuk scope yang dipilih' }
 
     // Insert notification

@@ -10,8 +10,10 @@ import {
   fetchDesaList,
   fetchKelompokList,
   fetchUserList,
+  fetchRecipientsForScope,
   type OrgItem,
   type UserListItem,
+  type RecipientItem,
 } from '@/app/(admin)/notifikasi/actions/notifications/orgQueries'
 import Button from '@/components/ui/button/Button'
 import InputFilter from '@/components/form/input/InputFilter'
@@ -118,6 +120,12 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [userListLoading, setUserListLoading] = useState(false)
 
+  // Recipient list (scope-based picker)
+  const [recipientList, setRecipientList] = useState<RecipientItem[]>([])
+  const [recipientListLoading, setRecipientListLoading] = useState(false)
+  const [excludedRecipientIds, setExcludedRecipientIds] = useState<Set<string>>(new Set())
+  const [recipientSearch, setRecipientSearch] = useState('')
+
   // UI state
   const [submitting, setSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -177,6 +185,9 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       if (scope === 'all') setSelectedDaerah('')
     }
     setSelectedDaerahIds([])
+    setRecipientList([])
+    setExcludedRecipientIds(new Set())
+    setRecipientSearch('')
   }, [scope, isSA, profile?.daerah_id])
 
   // Load user list for personal scope
@@ -189,6 +200,34 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
       setUserListLoading(false)
     })
   }, [scope, userSearch, isDA, profile?.daerah_id])
+
+  // Load recipient list for scope-based targeting (non-personal)
+  useEffect(() => {
+    if (scope === 'personal') {
+      setRecipientList([])
+      setExcludedRecipientIds(new Set())
+      return
+    }
+    const daerahId = isSA ? selectedDaerah : (profile?.daerah_id ?? undefined)
+    // Only load when scope has enough context
+    if (scope === 'desa' && !selectedDesa) { setRecipientList([]); return }
+    if (scope === 'kelompok' && !selectedKelompok) { setRecipientList([]); return }
+    if (scope === 'daerah' && isSA && selectedDaerahIds.length === 0) { setRecipientList([]); return }
+
+    setRecipientListLoading(true)
+    setExcludedRecipientIds(new Set())
+    fetchRecipientsForScope({
+      daerah_id: (scope === 'daerah' && !isSA) ? daerahId : undefined,
+      daerah_ids: (scope === 'daerah' && isSA && selectedDaerahIds.length > 0) ? selectedDaerahIds : undefined,
+      desa_id: scope === 'desa' ? selectedDesa : undefined,
+      kelompok_id: scope === 'kelompok' ? selectedKelompok : undefined,
+      roles: selectedRoles.length > 0 ? selectedRoles : undefined,
+    }).then(list => {
+      setRecipientList(list)
+      setRecipientListLoading(false)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, selectedDaerah, selectedDaerahIds, selectedDesa, selectedKelompok, selectedRoles, isSA, profile?.daerah_id])
 
   // Debounced preview recipient count
   useEffect(() => {
@@ -278,6 +317,7 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         display_config: activePreset.config,
         action_url: showCtaFields ? actionUrl.trim() : null,
         action_label: showCtaFields && actionLabel.trim() ? actionLabel.trim() : null,
+        excluded_ids: excludedRecipientIds.size > 0 ? [...excludedRecipientIds] : undefined,
       })
       if (result.success) {
         setFeedback({ type: 'success', message: result.message || 'Notifikasi berhasil dikirim.' })
@@ -289,6 +329,9 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         setActionLabel('')
         setSelectedUsers([])
         setUserSearch('')
+        setExcludedRecipientIds(new Set())
+        setRecipientSearch('')
+        setRecipientList([])
         onSuccess()
       } else {
         setFeedback({ type: 'error', message: result.message || 'Gagal mengirim notifikasi.' })
@@ -588,8 +631,72 @@ export default function KirimBroadcastForm({ onSuccess }: KirimBroadcastFormProp
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {previewLoading
             ? 'Menghitung penerima...'
-            : `Estimasi penerima: ${recipientPreview} pengguna`}
+            : `Estimasi penerima: ${(recipientPreview ?? 0) - excludedRecipientIds.size} pengguna${excludedRecipientIds.size > 0 ? ` (${excludedRecipientIds.size} dikecualikan)` : ''}`}
         </p>
+      )}
+
+      {/* Scope-based recipient list with search + deselect */}
+      {scope !== 'personal' && recipientList.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Pilih Penerima
+              <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
+                {recipientList.length - excludedRecipientIds.size}/{recipientList.length} dipilih
+              </span>
+            </p>
+            {excludedRecipientIds.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setExcludedRecipientIds(new Set())}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Pilih semua
+              </button>
+            )}
+          </div>
+          <input
+            type="text"
+            placeholder="Cari nama penerima..."
+            value={recipientSearch}
+            onChange={e => setRecipientSearch(e.target.value)}
+            className="h-9 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div className="max-h-52 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800">
+            {recipientListLoading ? (
+              <p className="px-3 py-3 text-xs text-gray-400 dark:text-gray-500">Memuat penerima...</p>
+            ) : recipientList.filter(r =>
+                !recipientSearch.trim() || r.name.toLowerCase().includes(recipientSearch.toLowerCase())
+              ).length === 0 ? (
+              <p className="px-3 py-3 text-xs text-gray-400 dark:text-gray-500">Tidak ada hasil.</p>
+            ) : (
+              recipientList
+                .filter(r => !recipientSearch.trim() || r.name.toLowerCase().includes(recipientSearch.toLowerCase()))
+                .map(r => (
+                  <label key={r.id} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={!excludedRecipientIds.has(r.id)}
+                      onChange={e => {
+                        setExcludedRecipientIds(prev => {
+                          const next = new Set(prev)
+                          if (!e.target.checked) next.add(r.id)
+                          else next.delete(r.id)
+                          return next
+                        })
+                      }}
+                      disabled={submitting}
+                    />
+                    <span className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{r.name}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{r.subtitle}</span>
+                    </span>
+                  </label>
+                ))
+            )}
+          </div>
+        </div>
       )}
 
       {/* Feedback */}
