@@ -1090,6 +1090,18 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
+              {/* Delegated Attendance Toggle (Only for Desa/Daerah) */}
+              {isDesaOrDaerah && (
+                <div className="mb-4">
+                  <Checkbox
+                    label="Izinkan Akun tingkat bawah untuk mengisi presensi"
+                    checked={allowDelegatedAttendance}
+                    onChange={(checked) => setAllowDelegatedAttendance(checked)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              )}
+
               {/* Cek Waktu Masuk Toggle */}
               {canManageCheckTime(userProfile) && (
                 <>
@@ -1116,21 +1128,6 @@ export default function CreateMeetingModal({
                     </div>
                   )}
                 </>
-              )}
-
-              {/* Delegated Attendance Toggle (Only for Desa/Daerah) */}
-              {isDesaOrDaerah && (
-                <div className="mb-4">
-                  <Checkbox
-                    label="Izinkan Admin/Guru tingkat bawah untuk mengisi presensi"
-                    checked={allowDelegatedAttendance}
-                    onChange={(checked) => setAllowDelegatedAttendance(checked)}
-                    disabled={isSubmitting}
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Jika diaktifkan, Admin/Guru tingkat Kelompok dapat mengisi kehadiran khusus untuk warganya masing-masing.
-                  </p>
-                </div>
               )}
 
               {/* Student Preview */}
