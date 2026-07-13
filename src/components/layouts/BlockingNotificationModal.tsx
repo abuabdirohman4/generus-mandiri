@@ -140,25 +140,26 @@ export default function BlockingNotificationModal() {
         aria-hidden
       />
 
-      {/* Modal */}
+      {/* Modal — flex column: header+body scroll, footer tombol pinned */}
       <div
-        className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-800 shadow-2xl"
+        className="relative w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-gray-800 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Close X — pojok kanan atas, hanya jika bisa ditutup */}
         {!isBlocking && (
           <button
             onClick={handleClose}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="absolute right-4 top-4 z-10 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             aria-label="Tutup"
           >
             <CloseLineIcon className="w-5 h-5" />
           </button>
         )}
 
-        <div className="p-8 flex flex-col items-center text-center">
+        {/* Scroll region — ikon, judul, body */}
+        <div className="flex-1 overflow-y-auto px-8 pt-8 pb-4 flex flex-col items-center text-center">
           {/* Ikon besar di lingkaran — warna ikut tipe */}
-          <div className={`flex items-center justify-center w-20 h-20 rounded-full mb-5 ${cfg.iconBg}`}>
+          <div className={`flex-shrink-0 flex items-center justify-center w-20 h-20 rounded-full mb-5 ${cfg.iconBg}`}>
             <cfg.Icon className={`w-12 h-12 ${cfg.iconColor}`} />
           </div>
 
@@ -169,10 +170,13 @@ export default function BlockingNotificationModal() {
 
           {/* Body — rata kiri-kanan */}
           <div
-            className="prose prose-sm dark:prose-invert max-w-none text-justify text-gray-600 dark:text-gray-300 mb-6"
+            className="prose prose-sm dark:prose-invert max-w-none text-justify text-gray-600 dark:text-gray-300"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(notif.body) }}
           />
+        </div>
 
+        {/* Footer tombol — pinned bawah, selalu terlihat */}
+        <div className="flex-shrink-0 px-8 pb-8 pt-4">
           {/* Tombol — tengah bawah, lebar penuh, warna ikut tipe */}
           {isBlocking && notif.action_url && (
             <button
