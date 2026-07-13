@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/button/Button'
 import InputFilter from '@/components/form/input/InputFilter'
@@ -17,6 +17,7 @@ import { useUserProfile } from '@/stores/userProfileStore'
 import { canManageIdCardTemplate } from '@/lib/userUtils'
 import { detectRole } from '@/components/shared/dataFilterHelpers'
 import { getIdCardTemplatesAction } from '../qr-cards/actions/template/actions'
+import { getCustomFieldValuesAction, upsertCustomFieldValueAction } from '../qr-cards/actions/customField/actions'
 import type { IdCardTemplate } from '@/types/idCardTemplate'
 import { toast } from 'sonner'
 
@@ -34,6 +35,8 @@ export function QrCardsTab() {
   
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [navigating, setNavigating] = useState(false)
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   
   const [filters, setFilters] = useState<DataFilters>({
     daerah: [],
@@ -46,6 +49,10 @@ export function QrCardsTab() {
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState({ current: 0, total: 0 })
+
+  const activeTemplate = templates.find(t => t.id === selectedTemplateId)
+  const showCustomFieldColumn = activeTemplate?.show_custom_field ?? false
+  const customFieldColumnLabel = activeTemplate?.custom_field_label || 'Keterangan'
 
   const role = useMemo(() => detectRole(userProfile ?? null), [userProfile])
   const gridColsClass = useMemo(() => {
@@ -63,6 +70,21 @@ export function QrCardsTab() {
     if (visibleFilters === 6) return 'md:grid-cols-6'
     return 'md:grid-cols-4'
   }, [role])
+
+  useEffect(() => {
+    setCustomFieldValues({})
+    if (!selectedTemplateId || !activeTemplate?.show_custom_field) return
+    getCustomFieldValuesAction(selectedTemplateId).then(res => {
+      if (res.success && res.data) {
+        setCustomFieldValues(res.data)
+      }
+    })
+  }, [selectedTemplateId, activeTemplate?.show_custom_field])
+
+  useEffect(() => {
+    const timers = debounceTimers.current
+    return () => { Object.values(timers).forEach(clearTimeout) }
+  }, [])
 
   useEffect(() => {
     getIdCardTemplatesAction().then(res => {
@@ -123,7 +145,7 @@ export function QrCardsTab() {
       const { generateIdCardsPdfBlob } = await import('@/lib/idCard/idCardPdfUtils')
       const blob = await generateIdCardsPdfBlob(selectedStudentsData, template, (current, total) => {
         setProgress({ current, total })
-      })
+      }, customFieldValues)
       
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -163,6 +185,7 @@ export function QrCardsTab() {
     { key: 'class_name', label: 'Kelas', sortable: false, hideable: true },
     { key: 'kelompok_name', label: 'Kelompok', sortable: true, hideable: true },
     ...(role?.isSuperAdmin || role?.isAdminDaerah || role?.isTeacherDaerah ? [{ key: 'desa_name', label: 'Desa', sortable: true, hideable: true }] : []),
+    ...(showCustomFieldColumn ? [{ key: 'custom_field', label: customFieldColumnLabel, sortable: false }] : []),
   ]
 
   const renderCell = (column: any, item: any) => {
@@ -192,6 +215,24 @@ export function QrCardsTab() {
     }
     if (column.key === 'desa_name') {
       return <span className="text-gray-600 dark:text-gray-400">{item.desa_name || '-'}</span>
+    }
+    if (column.key === 'custom_field') {
+      return (
+        <input
+          type="text"
+          value={customFieldValues[item.id] || ''}
+          onChange={e => {
+            const val = e.target.value
+            setCustomFieldValues(prev => ({ ...prev, [item.id]: val }))
+            clearTimeout(debounceTimers.current[item.id])
+            debounceTimers.current[item.id] = setTimeout(() => {
+              upsertCustomFieldValueAction(item.id, selectedTemplateId, val)
+            }, 800)
+          }}
+          className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm w-full dark:bg-gray-800"
+          placeholder={customFieldColumnLabel}
+        />
+      )
     }
     return item[column.key]
   }

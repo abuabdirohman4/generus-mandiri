@@ -23,6 +23,14 @@ function makePositions(overrides: Partial<TemplatePositions> = {}): TemplatePosi
     kelompok_color: '#000000',
     kelompok_italic: false,
     kelompok_bold: true,
+    show_custom_field: false,
+    custom_field_x_pct: 50,
+    custom_field_y_pct: 70,
+    custom_field_font_size: 18,
+    custom_field_casing: 'original',
+    custom_field_color: '#000000',
+    custom_field_italic: false,
+    custom_field_bold: false,
     ...overrides,
   }
 }

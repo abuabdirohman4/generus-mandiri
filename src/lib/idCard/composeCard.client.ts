@@ -7,11 +7,12 @@ export async function composeCard(params: {
   qrPayload: string
   studentName: string
   studentKelompok?: string
+  customFieldValue?: string
   imageWidth: number
   imageHeight: number
   positions: TemplatePositions
 }): Promise<string> {
-  const { templateImageUrl, qrPayload, studentName, studentKelompok, imageWidth, imageHeight, positions } = params
+  const { templateImageUrl, qrPayload, studentName, studentKelompok, customFieldValue, imageWidth, imageHeight, positions } = params
   
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -77,6 +78,25 @@ export async function composeCard(params: {
           ctx.fillStyle = positions.kelompok_color || '#000000'
           const casedKelompok = applyCasing(studentKelompok, positions.kelompok_casing || 'original')
           ctx.fillText(casedKelompok, kelXPx, kelYPx)
+        }
+
+        // 5. Draw Custom Field if enabled
+        if (positions.show_custom_field && customFieldValue && positions.custom_field_x_pct !== undefined) {
+          const cfXPx = (positions.custom_field_x_pct / 100) * imageWidth
+          const cfYPx = (positions.custom_field_y_pct / 100) * imageHeight
+          const cfFontSize = positions.custom_field_font_size || 18
+
+          const cfStyleParts = [
+            positions.custom_field_italic ? 'italic' : '',
+            positions.custom_field_bold ? 'bold' : '',
+            `${cfFontSize}px`,
+            'sans-serif',
+          ].filter(Boolean)
+
+          ctx.font = cfStyleParts.join(' ')
+          ctx.fillStyle = positions.custom_field_color || '#000000'
+          const casedCf = applyCasing(customFieldValue, positions.custom_field_casing || 'original')
+          ctx.fillText(casedCf, cfXPx, cfYPx)
         }
 
         resolve(canvas.toDataURL('image/png'))

@@ -200,6 +200,15 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [kelompokItalic, setKelompokItalic] = useState(false)
   const [kelompokBold, setKelompokBold] = useState(true)
 
+  const [showCustomField, setShowCustomField] = useState(false)
+  const [customFieldLabel, setCustomFieldLabel] = useState('Keterangan')
+  const [customFieldPos, setCustomFieldPos] = useState<Position>({ x: 50, y: 70 })
+  const [customFieldFontSize, setCustomFieldFontSize] = useState(18)
+  const [customFieldCasing, setCustomFieldCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
+  const [customFieldColor, setCustomFieldColor] = useState('#000000')
+  const [customFieldItalic, setCustomFieldItalic] = useState(false)
+  const [customFieldBold, setCustomFieldBold] = useState(true)
+
   const [showCenterGuide, setShowCenterGuide] = useState(false)
 
   // Preview Mode State
@@ -278,6 +287,14 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
       setKelompokColor(template.kelompok_color)
       setKelompokItalic(template.kelompok_italic)
       setKelompokBold(template.kelompok_bold)
+      setShowCustomField(template.show_custom_field)
+      setCustomFieldLabel(template.custom_field_label || 'Keterangan')
+      setCustomFieldPos({ x: Number(template.custom_field_x_pct), y: Number(template.custom_field_y_pct) })
+      setCustomFieldFontSize(Number(template.custom_field_font_size))
+      setCustomFieldCasing(template.custom_field_casing || 'original')
+      setCustomFieldColor(template.custom_field_color)
+      setCustomFieldItalic(template.custom_field_italic)
+      setCustomFieldBold(template.custom_field_bold)
       setLoadingExisting(false)
     })
     return () => { cancelled = true }
@@ -379,6 +396,12 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
         if (nearCenter) nx = CENTER
         return { x: Math.max(0, Math.min(100, nx)), y: Math.max(0, Math.min(100, prev.y + deltaYPct)) }
       })
+    } else if (id === 'custom-field-box') {
+      setCustomFieldPos(prev => {
+        let nx = prev.x + deltaXPct
+        if (nearCenter) nx = CENTER
+        return { x: Math.max(0, Math.min(100, nx)), y: Math.max(0, Math.min(100, prev.y + deltaYPct)) }
+      })
     }
   }
 
@@ -414,6 +437,15 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
         kelompok_color: kelompokColor,
         kelompok_italic: kelompokItalic,
         kelompok_bold: kelompokBold,
+        show_custom_field: showCustomField,
+        custom_field_label: customFieldLabel,
+        custom_field_x_pct: customFieldPos.x,
+        custom_field_y_pct: customFieldPos.y,
+        custom_field_font_size: customFieldFontSize,
+        custom_field_casing: customFieldCasing,
+        custom_field_color: customFieldColor,
+        custom_field_italic: customFieldItalic,
+        custom_field_bold: customFieldBold,
       }
 
       if (isEditing) {
@@ -607,6 +639,71 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
               </div>
             )}
           </div>
+
+          {/* Custom Field styling */}
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-3">
+            <Checkbox
+              id="show-custom-field"
+              label="Tampilkan Field Kustom"
+              checked={showCustomField}
+              onChange={setShowCustomField}
+            />
+            {showCustomField && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <Label htmlFor="custom-field-label">Label Field</Label>
+                  <Input
+                    id="custom-field-label"
+                    type="text"
+                    value={customFieldLabel}
+                    onChange={e => setCustomFieldLabel(e.target.value)}
+                    placeholder="Keterangan"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1 max-w-45">
+                    <Label htmlFor="custom-field-font-size">Ukuran Font (px)</Label>
+                    <Input
+                      id="custom-field-font-size"
+                      type="number"
+                      value={customFieldFontSize}
+                      onChange={e => setCustomFieldFontSize(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="flex-1 max-w-45">
+                    <InputFilter
+                      id="custom-field-casing"
+                      label="Format Huruf"
+                      value={customFieldCasing}
+                      onChange={(val) => setCustomFieldCasing(val as any)}
+                      options={[
+                        { value: 'original', label: 'Apa adanya' },
+                        { value: 'uppercase', label: 'HURUF BESAR' },
+                        { value: 'titlecase', label: 'Awal Kata Besar' },
+                      ]}
+                      variant="page"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="custom-field-color" className="mb-0">Warna</Label>
+                    <input
+                      id="custom-field-color"
+                      type="color"
+                      value={customFieldColor}
+                      onChange={e => setCustomFieldColor(e.target.value)}
+                      className="h-8 w-8 cursor-pointer rounded-md border border-gray-300 bg-transparent p-0.5 dark:border-gray-600"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Checkbox id="custom-field-bold" label="Tebal" checked={customFieldBold} onChange={setCustomFieldBold} />
+                    <Checkbox id="custom-field-italic" label="Miring" checked={customFieldItalic} onChange={setCustomFieldItalic} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {!templateId && (
@@ -775,6 +872,19 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                   {isPreviewMode && previewStudents[previewIndex] 
                     ? formatCasing(previewStudents[previewIndex].kelompok_name || 'Tanpa Kelompok', kelompokCasing) 
                     : '[NAMA KELOMPOK]'}
+                </DraggableBox>
+              )}
+              {showCustomField && (
+                <DraggableBox
+                  id="custom-field-box"
+                  position={customFieldPos}
+                  imageWidth={imageDims.width}
+                  containerWidthPx={containerWidthPx}
+                  centerAnchor
+                  textStyle={{ color: customFieldColor, italic: customFieldItalic, bold: customFieldBold, fontSizePx: customFieldFontSize }}
+                  disabled={isPreviewMode}
+                >
+                  {customFieldLabel || 'Keterangan'}
                 </DraggableBox>
               )}
             </div>
