@@ -51,6 +51,8 @@ export interface PromotionStudentRow {
     to_class_id: string | null
     to_class_name: string | null
     excluded: boolean
+    /** true = sudah punya grade_promotion_log di tahun ajaran tujuan — auto-uncheck di wizard */
+    already_promoted: boolean
 }
 
 // ─── Execution Payload & Result ─────────────────────────────────────────────────

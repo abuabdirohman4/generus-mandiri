@@ -9,6 +9,7 @@ import {
     fetchClassesWithMasterInKelompok,
     fetchStudentsInClasses,
     fetchTeacherClassIds,
+    fetchKelompokIdsByClassIds,
 } from './queries'
 import { filterPromotableMasters, resolveTargetClassInKelompok, filterSourcesByWindow } from './logic'
 import { getPromotionEnabled } from '../settings/actions'
@@ -40,11 +41,15 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
     const isActive = windowStatus.data.enabled
     const isTk = isTeacherKelompok(profile as any)
 
-    // Guru biasa → kelas yang dia ajar
+    // Guru biasa → kelas yang dia ajar (scope dari teacher_classes, bukan profile.kelompok_id)
     if (await isRegularTeacher(supabase, profile)) {
         const teacherClassIds = await fetchTeacherClassIds(supabase, profile.id)
-        const kelompokIds = await resolveKelompokIdsInScope(supabase, getDataFilter(profile))
-        const { classes } = await fetchClassesWithMasterInKelompok(supabase, kelompokIds)
+        // Resolve kelompok dari kelas yang DIAJAR guru, bukan dari profile.kelompok_id.
+        // Guru multi-kelompok (mis. Guru Paud Warlob 1 + Warlob 2) harus lihat semua kelompoknya.
+        const teacherKelompokIds = teacherClassIds.length > 0
+            ? await fetchKelompokIdsByClassIds(supabase, teacherClassIds)
+            : await resolveKelompokIdsInScope(supabase, getDataFilter(profile))
+        const { classes } = await fetchClassesWithMasterInKelompok(supabase, teacherKelompokIds)
         const mine = classes.filter(c => teacherClassIds.includes(c.class_id))
         let options: PromotionSourceOption[] = mine
             .map(c => {
@@ -94,7 +99,8 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
  * fromClassIds di-dedup → tiap siswa hanya muncul sekali.
  */
 export async function getStudentsToPromote(
-    sources: { kind: 'class_master' | 'class'; id: string }[]
+    sources: { kind: 'class_master' | 'class'; id: string }[],
+    academicYearId?: string
 ): Promise<{ success: boolean; data: PromotionStudentRow[]; message: string }> {
     const profile = await getCurrentUserProfile()
     if (!profile) return { success: false, data: [], message: 'Tidak terautentikasi' }
@@ -109,7 +115,13 @@ export async function getStudentsToPromote(
         masterList.map((m: any) => [m.id, m.promote_to_class_master_id ?? null])
     )
 
-    const kelompokIds = await resolveKelompokIdsInScope(supabase, getDataFilter(profile))
+    // Guru biasa: scope dari kelas yang diajar, bukan profile.kelompok_id
+    const teacherClassIdsForScope = profile.role === 'teacher'
+        ? await fetchTeacherClassIds(supabase, profile.id)
+        : []
+    const kelompokIds = teacherClassIdsForScope.length > 0
+        ? await fetchKelompokIdsByClassIds(supabase, teacherClassIdsForScope)
+        : await resolveKelompokIdsInScope(supabase, getDataFilter(profile))
     const { classes } = await fetchClassesWithMasterInKelompok(supabase, kelompokIds)
     const classById = new Map(classes.map(c => [c.class_id, c]))
 
@@ -138,12 +150,29 @@ export async function getStudentsToPromote(
         masterList.map((m: any) => [m.id, m.sort_order ?? 0])
     )
 
+    // Siswa yang sudah punya log promosi di tahun ajaran tujuan → auto-uncheck
+    const alreadyPromotedSet = new Set<string>()
+    if (academicYearId && students && (students as any[]).length > 0) {
+        const studentIds = [...new Set((students as any[]).map((s: any) => s.id))]
+        const CHUNK = 100
+        for (let i = 0; i < studentIds.length; i += CHUNK) {
+            const chunk = studentIds.slice(i, i + CHUNK)
+            const { data: logs } = await supabase
+                .from('grade_promotion_logs')
+                .select('student_id')
+                .eq('academic_year_id', academicYearId)
+                .in('student_id', chunk)
+            if (logs) (logs as any[]).forEach((l: any) => alreadyPromotedSet.add(l.student_id))
+        }
+    }
+
     const rows: PromotionStudentRow[] = (students || []).map((s: any) => {
         const fromClass = classById.get(s.class_id)
         const fromMasterId = fromClass?.class_master_id ?? ''
         const targetMasterId = promoteMap.get(fromMasterId) ?? null
         const toClassId = resolveTargetClassInKelompok(targetMasterId, s.kelompok_id, classesForResolve)
         const toClass = toClassId ? classById.get(toClassId) : null
+        const already_promoted = alreadyPromotedSet.has(s.id)
         return {
             student_id: s.id,
             student_name: s.name,
@@ -154,7 +183,8 @@ export async function getStudentsToPromote(
             from_class_name: fromClass?.class_name ?? '',
             to_class_id: toClassId,
             to_class_name: toClass?.class_name ?? null,
-            excluded: false,
+            excluded: already_promoted,
+            already_promoted,
         }
     }).sort((a, b) => {
         const fromMasterA = classById.get(a.from_class_id)?.class_master_id ?? ''

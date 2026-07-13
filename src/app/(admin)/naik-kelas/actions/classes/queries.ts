@@ -176,3 +176,17 @@ export async function fetchTeacherClassIds(supabase: SupabaseClient, teacherId: 
         .eq('teacher_id', teacherId)
     return (data || []).map((t: any) => t.class_id)
 }
+
+/** Resolve distinct kelompok_ids dari daftar class_ids (untuk guru multi-kelompok). */
+export async function fetchKelompokIdsByClassIds(
+    supabase: SupabaseClient,
+    classIds: string[]
+): Promise<string[] | null> {
+    if (classIds.length === 0) return null
+    const { data } = await supabase
+        .from('classes')
+        .select('kelompok_id')
+        .in('id', classIds)
+    if (!data || data.length === 0) return null
+    return [...new Set((data as any[]).map((c: any) => c.kelompok_id).filter(Boolean))]
+}
