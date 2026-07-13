@@ -211,11 +211,15 @@ export default function SettingsModal({
     { id: 'showDescription', label: 'Deskripsi' },
     { id: 'showDate', label: 'Tanggal Pertemuan' },
     { id: 'showStudentSelection', label: 'Pilih Siswa' },
+    { id: 'showCheckTime', label: 'Jam Mulai' },
   ]
 
-  const selectedIds = fieldOptions
-    .filter(option => settings[option.id as keyof MeetingFormSettings])
-    .map(option => option.id)
+  const selectedIds = [
+    ...fieldOptions
+      .filter(option => option.id !== 'showCheckTime' && settings[option.id as keyof MeetingFormSettings])
+      .map(option => option.id),
+    ...(canManageCheckTime ? ['showCheckTime'] : []),
+  ]
 
   return (
     <Modal
@@ -304,6 +308,7 @@ export default function SettingsModal({
                 items={fieldOptions}
                 selectedIds={selectedIds}
                 onChange={(ids) => {
+                  setCanManageCheckTime(ids.includes('showCheckTime'))
                   const newSettings: MeetingFormSettings = {
                     showTitle: false,
                     showTopic: false,
@@ -314,7 +319,7 @@ export default function SettingsModal({
                     showStudentSelection: false,
                     showGenderFilter: false
                   }
-                  ids.forEach(id => {
+                  ids.filter(id => id !== 'showCheckTime').forEach(id => {
                     newSettings[id as keyof MeetingFormSettings] = true
                   })
                   setSettings(newSettings)
@@ -401,7 +406,7 @@ export default function SettingsModal({
                 )}
 
                 {(userProfile?.role === 'superadmin' || (userProfile?.role === 'admin' && !userProfile.desa_id)) && (
-                  <label className="flex items-start gap-3 cursor-pointer group mt-4">
+                  <label className="fflex items-center">
                     <input
                       type="checkbox"
                       checked={permissions.can_bulk_assign_cross_kelompok || false}
@@ -409,14 +414,11 @@ export default function SettingsModal({
                         ...prev,
                         can_bulk_assign_cross_kelompok: e.target.checked
                       }))}
-                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       disabled={isSaving}
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                       Bulk Assign Lintas Kelompok
-                      <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
-                        Izinkan guru ini memasukkan banyak siswa sekaligus ke kelas lintas kelompok dalam satu daerah/desa.
-                      </span>
                     </span>
                   </label>
                 )}
@@ -507,29 +509,6 @@ export default function SettingsModal({
               </div>
             </div>
 
-            {/* Presensi Permissions Section */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-base font-medium text-gray-900 dark:text-white mb-2">
-                Presensi
-              </h4>
-              <div className="space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={canManageCheckTime}
-                    onChange={(e) => setCanManageCheckTime(e.target.checked)}
-                    className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    disabled={isSaving}
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                    Aktifkan Cek Waktu Masuk di Pertemuan
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal">
-                      Izinkan guru ini mengaktifkan toggle cek waktu masuk saat membuat pertemuan
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

@@ -46,7 +46,7 @@ export default function CreateMeetingModal({
   classId,
   meeting // Add meeting parameter
 }: CreateMeetingModalProps) {
-  const [checkTimeEnabled, setCheckTimeEnabled] = useState(meeting?.check_time_enabled || false)
+  const [allowDelegatedAttendance, setAllowDelegatedAttendance] = useState(meeting?.allow_delegated_attendance || false)
   const [startTime, setStartTime] = useState(meeting?.start_time || '')
   const [formData, setFormData] = useState({
     date: meeting ? dayjs(meeting.date) : dayjs(),
@@ -152,6 +152,13 @@ export default function CreateMeetingModal({
     const level = activityLevels.find((l: any) => l.code === levelCode)
     return level?.id || null
   }, [userProfile, activityLevels])
+
+  // Check if current activity level is Desa or Daerah
+  const isDesaOrDaerah = useMemo(() => {
+    if (!activityLevelId || !activityLevels) return false
+    const level = activityLevels.find((l: any) => l.id === activityLevelId)
+    return level?.code === 'DESA' || level?.code === 'DAERAH'
+  }, [activityLevelId, activityLevels])
 
   // Count active students per class for filtering empty classes
   const classStudentCounts = useMemo(() => {
@@ -552,10 +559,8 @@ export default function CreateMeetingModal({
         description: fullMeeting?.description ?? meeting.description ?? ''
       })
       setActivityTypeId(meeting.activity_type_id || null)
-      setCheckTimeEnabled(meeting.check_time_enabled || false)
       setStartTime(meeting.start_time || '')
     } else {
-      setCheckTimeEnabled(false)
       setStartTime('')
     }
   }, [meeting, fullMeeting])
@@ -779,8 +784,8 @@ export default function CreateMeetingModal({
           description: formData.description || undefined,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
-          startTime: checkTimeEnabled ? (startTime || undefined) : null,
-          checkTimeEnabled,
+          startTime: startTime || null,
+          allowDelegatedAttendance,
           studentIds: selectedStudentIds
         })
 
@@ -817,8 +822,8 @@ export default function CreateMeetingModal({
           description: formData.description || undefined,
           activityTypeId: activityTypeId || undefined,
           activityLevelId: activityLevelId || undefined,
-          startTime: checkTimeEnabled ? (startTime || undefined) : null,
-          checkTimeEnabled,
+          startTime: startTime || null,
+          allowDelegatedAttendance,
           studentIds: selectedStudentIds
         })
 
@@ -1066,9 +1071,9 @@ export default function CreateMeetingModal({
                 </div>
               )}
 
-              {/* Date Picker */}
+              {/* Date Picker + Jam Mulai */}
               {formSettings.showDate && (
-                <div className="mb-4">
+                <div className={`mb-4 ${canManageCheckTime(userProfile) ? 'grid grid-cols-2 gap-3' : ''}`}>
                   <DatePickerInput
                     mode="single"
                     label="Tanggal Pertemuan"
@@ -1077,35 +1082,33 @@ export default function CreateMeetingModal({
                     format="DD/MM/YYYY"
                     placeholder="Pilih Tanggal"
                   />
-                </div>
-              )}
-
-              {/* Cek Waktu Masuk Toggle */}
-              {canManageCheckTime(userProfile) && (
-                <>
-                  <div className="mb-4">
-                    <Checkbox
-                      label="Aktifkan cek waktu masuk"
-                      checked={checkTimeEnabled}
-                      onChange={(checked) => setCheckTimeEnabled(checked)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {checkTimeEnabled && (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {canManageCheckTime(userProfile) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Jam Mulai
                       </label>
                       <input
                         type="time"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        disabled={isSubmitting}
+                        className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 border-gray-300 text-gray-800 focus:border-brand-300 focus:ring-brand-500/10 dark:border-gray-700"
                       />
                     </div>
                   )}
-                </>
+                </div>
+              )}
+
+              {/* Delegated Attendance Toggle (Only for Desa/Daerah) */}
+              {isDesaOrDaerah && (
+                <div className="mb-4">
+                  <Checkbox
+                    label="Izinkan Akun tingkat bawah untuk mengisi presensi"
+                    checked={allowDelegatedAttendance}
+                    onChange={(checked) => setAllowDelegatedAttendance(checked)}
+                    disabled={isSubmitting}
+                  />
+                </div>
               )}
 
               {/* Student Preview */}

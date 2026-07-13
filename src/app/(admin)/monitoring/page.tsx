@@ -1,25 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-    getClassProgress,
-    getMaterialsByClassAndSemester, 
-    bulkUpdateProgress, 
-    getHafalanCategories, 
-    getMonthlyTargetProgress,
-    getCrossClassHistory,
-    getClassMonthlyTargetSummary,
-    getTeacherRestrictions,
-    getAllowedCategories
-} from './actions/monitoring';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { bulkUpdateProgress } from './actions/monitoring';
 import { getSemesterMonths, getMonthName } from '@/app/(admin)/materi/types';
 import type { Semester, Month } from '@/app/(admin)/materi/types';
-import { getAllClasses } from '@/app/(admin)/users/siswa/actions/classes/actions';
 import { useUserProfile } from '@/stores/userProfileStore';
-import { getActiveAcademicYear, getAcademicYears } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
-import { getAllDaerah } from '@/app/(admin)/organisasi/actions/daerah';
-import { getAllDesa } from '@/app/(admin)/organisasi/actions/desa';
-import { getAllKelompok } from '@/app/(admin)/organisasi/actions/kelompok';
 import { 
     shouldShowDaerahFilter, 
     modalShouldShowDesaFilter, 
@@ -35,6 +20,17 @@ import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
 import { isMobile } from '@/lib/utils';
 import { MonitoringContentSkeleton } from './components/MonitoringSkeleton';
+import {
+    useMonitoringInitial,
+    useClassProgress,
+    useClassProgressAll,
+    useMonitoringMaterials,
+    useMonthlyTargetProgress,
+    useCrossClassHistory,
+    useClassMonthlySummary,
+} from './hooks/useMonitoring';
+import { monitoringKeys } from '@/lib/swr';
+import { mutate } from 'swr';
 
 interface Student {
     id: string;
@@ -71,328 +67,143 @@ export default function MonitoringPage() {
     const { profile: userProfile } = useUserProfile();
 
     const getCurrentSemester = (): 1 | 2 => new Date().getMonth() + 1 >= 7 ? 1 : 2;
+
+    // ── Filter state (UI-controlled) ──────────────────────────────────────────
     const [selectedYearId, setSelectedYearId] = useState<string>('');
     const [selectedSemester, setSelectedSemester] = useState<1 | 2>(getCurrentSemester);
-    const [academicYears, setAcademicYears] = useState<{ value: string; label: string }[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-
-    const [hafalanCategories, setHafalanCategories] = useState<HafalanCategory[]>([]);
-    
-    // Org states
-    const [daerahList, setDaerahList] = useState<Daerah[]>([]);
-    const [desaList, setDesaList] = useState<Desa[]>([]);
-    const [kelompokList, setKelompokList] = useState<Kelompok[]>([]);
     const [selectedDaerahId, setSelectedDaerahId] = useState<string>('');
     const [selectedDesaId, setSelectedDesaId] = useState<string>('');
     const [selectedKelompokId, setSelectedKelompokId] = useState<string>('');
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
 
-    const [classes, setClasses] = useState<any[]>([]);
-    const [students, setStudents] = useState<Student[]>([]);
-    const [materials, setMaterials] = useState<Material[]>([]);
-    const [progressMap, setProgressMap] = useState<Map<string, Progress>>(new Map());
-    const [loading, setLoading] = useState(false);
-    const [filterLoading, setFilterLoading] = useState(true);
+    // ── UI state ──────────────────────────────────────────────────────────────
     const [saving, setSaving] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
-    // New states for Monthly Curriculum Targets
-    const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
-    const [monthlyTargetProgress, setMonthlyTargetProgress] = useState<{
-        total_targets: number;
-        completed: number;
-        percentage: number;
-    } | null>(null);
-    const [monthlyTargetItemIds, setMonthlyTargetItemIds] = useState<Set<string>>(new Set());
-    const [crossClassHistory, setCrossClassHistory] = useState<any[]>([]);
-    const [crossClassLoading, setCrossClassLoading] = useState(false);
-    const [monthlyPercentages, setMonthlyPercentages] = useState<Map<string, number>>(new Map());
+    // ── progressMap: working DRAFT for edits (seed from server, mutate locally) ─
+    const [progressMap, setProgressMap] = useState<Map<string, Progress>>(new Map());
+    // Track which class+year+semester the current draft belongs to (avoid stale seed)
+    const progressDraftKeyRef = useRef<string>('');
+    // Extra materials added via cross-class "Uji Ulang" button (local UI only)
+    const [extraMaterials, setExtraMaterials] = useState<Material[]>([]);
 
-    // Load initial data
+    // ── SWR: initial reference data (org/classes/categories/years) ────────────
+    const { data: initialData, isLoading: filterLoading } = useMonitoringInitial();
+
+    // Derive from SWR initial data
+    const academicYears = initialData?.academicYears ?? [];
+    const daerahList: Daerah[] = initialData?.daerahList ?? [];
+    const desaList: Desa[] = initialData?.desaList ?? [];
+    const kelompokList: Kelompok[] = initialData?.kelompokList ?? [];
+    const classes: any[] = initialData?.classes ?? [];
+    const hafalanCategories: any[] = initialData?.hafalanCategories ?? [];
+
+    // ── SWR: class progress (single class) ────────────────────────────────────
+    const { data: classProgressData, isLoading: classProgressLoading } = useClassProgress(
+        selectedClassId !== 'ALL' ? selectedClassId : '',
+        selectedYearId,
+        selectedSemester
+    );
+
+    // ── SWR: class progress ALL ───────────────────────────────────────────────
+    const { data: classProgressAllData, isLoading: classProgressAllLoading } = useClassProgressAll(
+        selectedClassId === 'ALL' ? classes : [],
+        selectedYearId,
+        selectedSemester
+    );
+
+    // ── SWR: materials ────────────────────────────────────────────────────────
+    const { data: materialsData } = useMonitoringMaterials(
+        selectedClassId !== 'ALL' ? selectedClassId : '',
+        selectedSemester
+    );
+
+    // ── SWR: monthly target progress (per student) ────────────────────────────
+    const { data: monthlyTargetData } = useMonthlyTargetProgress(
+        selectedStudentId && selectedClassId && selectedMonth && selectedYearId
+            ? { classId: selectedClassId, yearId: selectedYearId, semester: selectedSemester, month: selectedMonth, studentId: selectedStudentId }
+            : null
+    );
+
+    // ── SWR: cross-class history ──────────────────────────────────────────────
+    const { data: crossClassData, isLoading: crossClassLoading } = useCrossClassHistory(
+        selectedStudentId,
+        selectedYearId
+    );
+
+    // ── SWR: monthly summary (% per student) ─────────────────────────────────
+    const { data: monthlySummaryData } = useClassMonthlySummary(
+        selectedClassId && selectedMonth && selectedYearId
+            ? { classId: selectedClassId, yearId: selectedYearId, semester: selectedSemester, month: selectedMonth }
+            : null
+    );
+
+    // ── Derive readable values from SWR data ──────────────────────────────────
+    const rawProgressData = selectedClassId === 'ALL' ? classProgressAllData : classProgressData;
+    const students: Student[] = rawProgressData?.students ?? [];
+    const baseMaterials: Material[] = selectedClassId === 'ALL'
+        ? []
+        : (materialsData ?? []);
+    const materials: Material[] = [
+        ...baseMaterials,
+        ...extraMaterials.filter(e => !baseMaterials.find(b => b.id === e.id)),
+    ];
+    const loading = selectedClassId === 'ALL' ? classProgressAllLoading : classProgressLoading;
+    const monthlyTargetProgress = monthlyTargetData?.summary ?? null;
+    const monthlyTargetItemIds = monthlyTargetData?.targetItemIds ?? new Set<string>();
+    const crossClassHistory: any[] = crossClassData ?? [];
+    const monthlyPercentages: Map<string, number> = monthlySummaryData ?? new Map();
+
+    // ── Seed selectedYearId from SWR initial data (once, on first load) ─────────
     useEffect(() => {
-        loadInitialData();
-    }, []);
+        if (initialData?.activeYearId && !selectedYearId) {
+            setSelectedYearId(initialData.activeYearId);
+        }
+    }, [initialData?.activeYearId]);
 
-    // Auto-collapse filter on mobile when student is selected
+    // ── Seed org filter from userProfile (once) ────────────────────────────────
+    useEffect(() => {
+        if (!initialData || !userProfile) return;
+        if (userProfile.daerah_id && !selectedDaerahId) setSelectedDaerahId(userProfile.daerah_id);
+        if (userProfile.desa_id && !selectedDesaId) setSelectedDesaId(userProfile.desa_id);
+        if (userProfile.kelompok_id && !selectedKelompokId) setSelectedKelompokId(userProfile.kelompok_id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialData]);
+
+    // ── Auto-collapse filter on mobile when student is selected (UI only) ──────
     useEffect(() => {
         if (selectedStudentId && isMobile()) {
             setIsFilterCollapsed(true);
         }
     }, [selectedStudentId]);
 
-    // Load class data when filters change
-    useEffect(() => {
-        if (selectedYearId && selectedClassId) {
-            loadClassData();
-        }
-    }, [selectedYearId, selectedSemester, selectedClassId]);
-
-    // Auto-select first student when students list changes
+    // ── Auto-select first student when student list changes ────────────────────
     useEffect(() => {
         if (students.length > 0) {
-            // Always select first student when students change
             setSelectedStudentId(students[0].id);
         } else {
             setSelectedStudentId('');
         }
     }, [students]);
 
-    // Load monthly target progress for selected student and month
+    // ── Seed progressMap from server (ONLY when class/year/semester changes) ───
+    // Ref tracks current draft key — prevents overwriting unsaved edits on same class
     useEffect(() => {
-        if (!selectedStudentId || !selectedClassId || !selectedMonth || !selectedYearId) {
-            setMonthlyTargetProgress(null);
-            setMonthlyTargetItemIds(new Set());
-            return;
-        }
-
-        getMonthlyTargetProgress({
-            classId: selectedClassId,
-            academicYearId: selectedYearId,
-            semester: selectedSemester,
-            month: selectedMonth,
-            studentId: selectedStudentId
-        }).then(result => {
-            if (result.success) {
-                setMonthlyTargetProgress({
-                    total_targets: result.targets.length,
-                    completed: result.progress.filter(p => {
-                        const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0);
-                        return score >= 70; // passing score default
-                    }).length,
-                    percentage: result.percentage
-                });
-                setMonthlyTargetItemIds(new Set(result.targets.map((t: any) => t.material_item_id)));
-            } else {
-                toast.error(result.message || 'Gagal memuat progress target bulanan');
-            }
-        }).catch(err => {
-            console.error(err);
-            toast.error('Terjadi kesalahan saat memuat progress target bulanan');
+        if (!rawProgressData) return;
+        const newKey = `${selectedClassId}:${selectedYearId}:${selectedSemester}`;
+        if (progressDraftKeyRef.current === newKey) return;
+        progressDraftKeyRef.current = newKey;
+        setExtraMaterials([]); // reset local material additions on class/year change
+        const map = new Map<string, Progress>();
+        rawProgressData.progress.forEach((p: any) => {
+            map.set(`${p.student_id}-${p.material_item_id}`, p);
         });
-    }, [selectedStudentId, selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]); // Re-run when progressMap changes to update live
-
-    // Load cross-class history for selected student
-    useEffect(() => {
-        if (selectedStudentId && selectedYearId) {
-            setCrossClassLoading(true);
-            getCrossClassHistory(selectedStudentId, selectedYearId)
-                .then(result => {
-                    if (result.success) {
-                        setCrossClassHistory(result.data);
-                    } else {
-                        toast.error(result.message || 'Gagal memuat riwayat lintas kelas');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    toast.error('Terjadi kesalahan saat memuat riwayat lintas kelas');
-                })
-                .finally(() => setCrossClassLoading(false));
-        } else {
-            setCrossClassHistory([]);
-        }
-    }, [selectedStudentId, selectedYearId]);
-
-    // Load class monthly target summary for all students in the class
-    useEffect(() => {
-        if (!selectedClassId || !selectedMonth || !selectedYearId) {
-            setMonthlyPercentages(new Map());
-            return;
-        }
-
-        getClassMonthlyTargetSummary({
-            classId: selectedClassId,
-            academicYearId: selectedYearId,
-            semester: selectedSemester,
-            month: selectedMonth
-        }).then(result => {
-            if (result.success) {
-                setMonthlyPercentages(new Map(result.data.map(s => [s.student_id, s.percentage])));
-            } else {
-                toast.error(result.message || 'Gagal memuat ringkasan target bulanan');
-            }
-        }).catch(err => {
-            console.error(err);
-            toast.error('Terjadi kesalahan saat memuat ringkasan target bulanan');
-        });
-    }, [selectedClassId, selectedMonth, selectedYearId, selectedSemester, progressMap]);
-
-    const loadInitialData = async () => {
-        try {
-            setFilterLoading(true);
-
-            const activeYear = await getActiveAcademicYear();
-            if (activeYear) {
-                setSelectedYearId(activeYear.id);
-            }
-
-            // Load org data, categories, and classes in parallel
-            // getAllClasses() sudah handle filter berdasarkan role (teacher_classes, hierarchical, admin)
-            const [daerahData, desaData, allKelompokData, categoriesResult, classesResult, cmRestrictionsResult, yearsData] = await Promise.all([
-                getAllDaerah(),
-                getAllDesa(),
-                getAllKelompok(),
-                getHafalanCategories(),
-                getAllClasses(),
-                getTeacherRestrictions(),
-                getAcademicYears()
-            ]);
-
-            setAcademicYears(yearsData.map(y => ({ value: y.id, label: y.name })));
-
-            setDaerahList(daerahData);
-            setDesaList(desaData);
-            setKelompokList(allKelompokData);
-            
-            if (classesResult.success) {
-                setClasses(classesResult.data);
-            } else {
-                toast.error(classesResult.message || 'Gagal memuat daftar kelas');
-                setClasses([]);
-            }
-
-            // Filter categories by class master restriction
-            let finalCategories = categoriesResult.success ? categoriesResult.data : [];
-            if (!categoriesResult.success) {
-                toast.error(categoriesResult.message || 'Gagal memuat kategori hafalan');
-            }
-
-            const cmRestrictions = cmRestrictionsResult.success ? cmRestrictionsResult.data : null;
-            if (cmRestrictions && cmRestrictions.length > 0) {
-                const allowedCategoryIds = await getAllowedCategories(cmRestrictions);
-                finalCategories = categoriesResult.data.filter((cat: any) => allowedCategoryIds.includes(cat.id));
-            }
-            setHafalanCategories(finalCategories);
-
-            // Auto-select org filters from user profile
-            if (userProfile) {
-                if (userProfile.daerah_id && !selectedDaerahId) setSelectedDaerahId(userProfile.daerah_id);
-                if (userProfile.desa_id && !selectedDesaId) setSelectedDesaId(userProfile.desa_id);
-                if (userProfile.kelompok_id && !selectedKelompokId) setSelectedKelompokId(userProfile.kelompok_id);
-            }
-
-            // Auto-select "Hafalan" category or fallback to first
-            /*
-            if (finalCategories.length > 0 && !selectedCategoryId) {
-                const hafalanCategory = finalCategories.find(cat => cat.name.toLowerCase() === 'hafalan');
-                setSelectedCategoryId(hafalanCategory ? hafalanCategory.id : finalCategories[0].id);
-            }
-            */
-        } catch (error: any) {
-            toast.error(error.message || 'Gagal memuat data awal');
-            console.error('Failed to load initial data:', error);
-        } finally {
-            setFilterLoading(false);
-        }
-    };
-
-    const loadClassData = async () => {
-        if (!selectedYearId) {
-            console.error('selectedYearId kosong saat loadClassData dipanggil');
-            return;
-        }
-
-        try {
-            setLoading(true);
-
-            // Handle "Pilih Semua" case - load all students from all classes
-            if (selectedClassId === 'ALL') {
-                const allStudentsMap = new Map<string, Student>();
-                const allProgressMap = new Map<string, Progress>();
-                let allMaterials: Material[] = [];
-
-                // Load data for each class
-                for (const classData of classes) {
-                    try {
-                        const classProgressResult = await getClassProgress(
-                            classData.id,
-                            selectedYearId,
-                            selectedSemester
-                        );
-
-                        if (classProgressResult.success) {
-                            // Add students with class info
-                            classProgressResult.students?.forEach((student: Student) => {
-                                if (!allStudentsMap.has(student.id)) {
-                                    allStudentsMap.set(student.id, {
-                                        ...student,
-                                        class_name: classData.name // Add class name for display
-                                    });
-                                }
-                            });
-
-                            // Merge progress
-                            classProgressResult.progress?.forEach((p: any) => {
-                                const key = `${p.student_id}-${p.material_item_id}`;
-                                allProgressMap.set(key, p);
-                            });
-                        }
-
-                        // Load materials for this class
-                        const classMaterialsResult = await getMaterialsByClassAndSemester(
-                            classData.id,
-                            selectedSemester
-                        );
-
-                        // Merge materials (avoid duplicates)
-                        if (classMaterialsResult.success) {
-                            classMaterialsResult.data.forEach((m: Material) => {
-                                if (!allMaterials.find(existing => existing.id === m.id)) {
-                                    allMaterials.push(m);
-                                }
-                            });
-                        }
-                    } catch (error) {
-                        console.error(`Error loading data for class ${classData.name}:`, error);
-                    }
-                }
-
-                setStudents(Array.from(allStudentsMap.values()));
-                setProgressMap(allProgressMap);
-                setMaterials(allMaterials);
-            } else {
-                // Single class selection - original logic
-                // Load students and progress
-                const classProgressResult = await getClassProgress(
-                    selectedClassId,
-                    selectedYearId,
-                    selectedSemester
-                );
-
-                if (classProgressResult.success) {
-                    setStudents(classProgressResult.students || []);
-
-                    const map = new Map<string, Progress>();
-                    classProgressResult.progress?.forEach((p: any) => {
-                        const key = `${p.student_id}-${p.material_item_id}`;
-                        map.set(key, p);
-                    });
-                    setProgressMap(map);
-                } else {
-                    toast.error(classProgressResult.message || 'Gagal memuat progress kelas');
-                }
-
-                // Load materials
-                const materialsResult = await getMaterialsByClassAndSemester(
-                    selectedClassId,
-                    selectedSemester
-                );
-                if (materialsResult.success) {
-                    setMaterials(materialsResult.data || []);
-                } else {
-                    toast.error(materialsResult.message || 'Gagal memuat materi kelas');
-                }
-            }
-
-
-        } catch (error: any) {
-            toast.error(error.message || 'Gagal memuat data kelas');
-        } finally {
-            setLoading(false);
-        }
-    };
+        setProgressMap(map);
+    }, [rawProgressData]);
 
     const filteredDesaList = useMemo(() => {
         if (!selectedDaerahId) return desaList;
@@ -453,8 +264,6 @@ export default function MonitoringPage() {
         setSelectedKelompokId('');
         setSelectedClassId('');
         setSelectedStudentId('');
-        setStudents([]);
-        setMaterials([]);
     };
 
     const handleDesaChange = (desaId: string) => {
@@ -462,16 +271,12 @@ export default function MonitoringPage() {
         setSelectedKelompokId('');
         setSelectedClassId('');
         setSelectedStudentId('');
-        setStudents([]);
-        setMaterials([]);
     };
 
     const handleKelompokChange = (kelompokId: string) => {
         setSelectedKelompokId(kelompokId);
         setSelectedClassId('');
         setSelectedStudentId('');
-        setStudents([]);
-        setMaterials([]);
     };
 
     const handleProgressChange = (
@@ -513,6 +318,15 @@ export default function MonitoringPage() {
             const result = await bulkUpdateProgress(updates);
             if (result.success) {
                 toast.success('Progress berhasil disimpan');
+                // Revalidate SWR caches after save
+                progressDraftKeyRef.current = ''; // allow re-seed on next SWR update
+                if (selectedClassId !== 'ALL') {
+                    mutate(monitoringKeys.classProgress(selectedClassId, selectedYearId, selectedSemester));
+                    mutate(monitoringKeys.monthlySummary(selectedClassId, selectedYearId, selectedSemester, selectedMonth!));
+                }
+                if (selectedStudentId && selectedMonth) {
+                    mutate(monitoringKeys.monthlyTarget(selectedClassId, selectedYearId, selectedSemester, selectedMonth, selectedStudentId));
+                }
             } else {
                 toast.error(result.message || 'Gagal menyimpan progress');
             }
@@ -1241,7 +1055,7 @@ export default function MonitoringPage() {
                                                                     onClick={() => {
                                                                         const existing = materials.find(m => m.id === item.material_item_id);
                                                                         if (!existing) {
-                                                                            setMaterials(prev => [...prev, {
+                                                                            setExtraMaterials(prev => [...prev, {
                                                                                 id: item.material_item_id,
                                                                                 name: item.material_name,
                                                                                 material_type: { name: 'Riwayat' }

@@ -9,7 +9,8 @@ import React from 'react'
 export async function generateIdCardsPdfBlob(
   students: Student[],
   template: IdCardTemplate & { signedUrl?: string },
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  customFieldValues?: Record<string, string>
 ): Promise<Blob> {
   const templateImageUrl = template.signedUrl || template.image_path
   const cardImages: string[] = []
@@ -25,6 +26,7 @@ export async function generateIdCardsPdfBlob(
       qrPayload,
       studentName: student.name,
       studentKelompok: student.kelompok_name,
+      customFieldValue: customFieldValues?.[student.id],
       imageWidth: template.image_width,
       imageHeight: template.image_height,
       positions: {
@@ -45,7 +47,15 @@ export async function generateIdCardsPdfBlob(
         name_bold: template.name_bold,
         kelompok_color: template.kelompok_color,
         kelompok_italic: template.kelompok_italic,
-        kelompok_bold: template.kelompok_bold
+        kelompok_bold: template.kelompok_bold,
+        show_custom_field: template.show_custom_field,
+        custom_field_x_pct: template.custom_field_x_pct,
+        custom_field_y_pct: template.custom_field_y_pct,
+        custom_field_font_size: template.custom_field_font_size,
+        custom_field_casing: template.custom_field_casing || 'original',
+        custom_field_color: template.custom_field_color,
+        custom_field_italic: template.custom_field_italic,
+        custom_field_bold: template.custom_field_bold
       }
     })
     

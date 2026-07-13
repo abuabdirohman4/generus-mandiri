@@ -20,13 +20,24 @@ export async function fetchClassMasterMappings(
     const classMappings: Map<string, any[]> = new Map()
     if (classIds.length === 0) return classMappings
 
-    // Fetch ALL mappings (total ~657 rows, well under PostgREST 1000 limit),
-    // then filter in-memory. This avoids Headers Overflow when classIds is large (600+).
-    const { data: mappings } = await supabase
-        .from('class_master_mappings')
-        .select('class_id, class_master_id')
+    // Fetch ALL mappings then filter in-memory (avoids Headers Overflow when
+    // classIds large 600+). Paginasi WAJIB: total mappings 1200+ > PostgREST cap
+    // 1000; tanpa paginasi baris >1000 hilang → siswa kelas #1000+ kehilangan master.
+    const PAGE = 1000
+    const mappings: any[] = []
+    let mapOffset = 0
+    while (true) {
+        const { data } = await supabase
+            .from('class_master_mappings')
+            .select('class_id, class_master_id')
+            .range(mapOffset, mapOffset + PAGE - 1)
+        if (!data || data.length === 0) break
+        mappings.push(...data)
+        if (data.length < PAGE) break
+        mapOffset += PAGE
+    }
 
-    if (!mappings || mappings.length === 0) return classMappings
+    if (mappings.length === 0) return classMappings
 
     const classIdSet = new Set(classIds)
     const relevantMappings = mappings.filter((m: any) => classIdSet.has(m.class_id))

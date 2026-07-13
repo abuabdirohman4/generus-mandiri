@@ -188,7 +188,7 @@ export const studentKeys = {
   all: ['students'] as const,
   lists: () => [...studentKeys.all, 'list'] as const,
   list: (classId?: string, userId?: string) => [...studentKeys.lists(), classId || 'all', userId || 'current'] as const,
-  listPaginated: (userId: string, page: number, pageSize: number, search?: string, filters?: string) => [...studentKeys.all, 'list-paginated', userId, page, pageSize, search || '', filters || ''] as const,
+  listPaginated: (userId: string, page: number, pageSize: number, search?: string, filters?: string, sort?: string) => [...studentKeys.all, 'list-paginated', userId, page, pageSize, search || '', filters || '', sort || ''] as const,
   details: () => [...studentKeys.all, 'detail'] as const,
   detail: (id: string, userId?: string) => [...studentKeys.details(), id, userId || 'current'] as const,
 };
@@ -243,6 +243,26 @@ export const teacherActivityTypeKeys = {
 };
 
 /**
+ * SWR key generator for monitoring
+ */
+export const monitoringKeys = {
+  all: ['monitoring'] as const,
+  initial: () => [...monitoringKeys.all, 'initial'] as const,
+  classProgress: (classId: string, yearId: string, semester: number) =>
+    [...monitoringKeys.all, 'class-progress', classId, yearId, semester] as const,
+  classProgressAll: (yearId: string, semester: number, classIds: string) =>
+    [...monitoringKeys.all, 'class-progress-all', yearId, semester, classIds] as const,
+  materials: (classId: string, semester: number) =>
+    [...monitoringKeys.all, 'materials', classId, semester] as const,
+  monthlyTarget: (classId: string, yearId: string, semester: number, month: number, studentId: string) =>
+    [...monitoringKeys.all, 'monthly-target', classId, yearId, semester, month, studentId] as const,
+  crossClass: (studentId: string, yearId: string) =>
+    [...monitoringKeys.all, 'cross-class', studentId, yearId] as const,
+  monthlySummary: (classId: string, yearId: string, semester: number, month: number) =>
+    [...monitoringKeys.all, 'monthly-summary', classId, yearId, semester, month] as const,
+};
+
+/**
  * Centralized data keys export
  */
 export const dataKeys = {
@@ -264,4 +284,5 @@ export const dataKeys = {
   activityTypes: activityTypeKeys,
   activityLevels: activityLevelKeys,
   teacherActivityTypes: teacherActivityTypeKeys,
+  monitoring: monitoringKeys,
 }; 

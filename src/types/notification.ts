@@ -75,6 +75,7 @@ export interface SendNotificationInput {
   display_config?: NotificationDisplayConfig
   action_url?: string | null
   action_label?: string | null
+  excluded_ids?: string[] // recipient IDs to exclude from scope-resolved list
 }
 
 // ─── Edit / Update ────────────────────────────────────────────────────────────

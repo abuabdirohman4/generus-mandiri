@@ -48,6 +48,8 @@ interface StudentsTableProps {
   onPageChange?: (page: number) => void
   onSearchChange?: (search: string) => void
   onItemsPerPageChange?: (size: number) => void
+  onSortChange?: (column: string | null, direction: 'asc' | 'desc' | null) => void
+  isRefetching?: boolean
 }
 
 export default function StudentsTable({
@@ -67,7 +69,9 @@ export default function StudentsTable({
   page,
   onPageChange,
   onSearchChange,
-  onItemsPerPageChange
+  onItemsPerPageChange,
+  onSortChange,
+  isRefetching = false
 }: StudentsTableProps) {
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null)
   const [clickedColumn, setClickedColumn] = useState<'name' | 'actions' | null>(null)
@@ -171,31 +175,31 @@ export default function StudentsTable({
       // Superadmin sees all
       if (userProfile?.role === 'superadmin') {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
-          { key: 'daerah_name', label: 'Daerah', align: 'center' as const, hideable: true },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'daerah_name', label: 'Daerah', align: 'center' as const, hideable: true, sortable: false },
         );
       }
       // Admin Daerah
       else if (isAdminDaerah(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true, sortable: false },
         );
       }
       // Admin Desa
       else if (isAdminDesa(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true, sortable: false },
         );
       }
       // Admin Kelompok - only Kelas
       else if (isAdminKelompok(userProfile)) {
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true }
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false }
         );
       }
     }
@@ -209,20 +213,20 @@ export default function StudentsTable({
       if (isTeacherDaerah) {
         // Guru Daerah: show Desa + Kelompok + Class
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
-          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'desa_name', label: 'Desa', align: 'center' as const, hideable: true, sortable: false },
         )
       } else if (isTeacherDesa || isMultiKelompokTeacher(userProfile)) {
         // Guru Desa atau Guru Multi-Kelompok: show Kelompok + Class
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true },
-          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true },
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false },
+          { key: 'kelompok_name', label: 'Kelompok', align: 'center' as const, hideable: true, sortable: false },
         )
       } else if (isTeacherKelompok && userProfile.classes && userProfile.classes.length > 1) {
         // Guru Kelompok with multiple classes: show Class only
         orgColumns.push(
-          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true }
+          { key: 'class_name', label: 'Kelas', align: 'center' as const, hideable: true, sortable: false }
         )
       }
     }
@@ -259,13 +263,10 @@ export default function StudentsTable({
     ? students.filter(s => s && typeof s === 'object' && s.id && s.name)
     : []
 
+  // Server-side pagination + sort: JANGAN sort client-side di sini (cuma 10 row halaman aktif,
+  // bikin urutan menyesatkan). Urutan datang dari server via onSortChange.
   const tableData = validStudents.length > 0
     ? validStudents
-      .sort((a, b) => {
-        const nameA = String(a.name || '').toLowerCase()
-        const nameB = String(b.name || '').toLowerCase()
-        return nameA.localeCompare(nameB)
-      })
       .map((student) => {
         try {
           return {
@@ -477,6 +478,8 @@ export default function StudentsTable({
         onPageChange={onPageChange}
         onSearchChange={onSearchChange}
         onItemsPerPageChange={onItemsPerPageChange}
+        onSortChange={onSortChange}
+        isLoading={isRefetching}
         searchable={true}
         itemsPerPageOptions={[5, 10, 25, 50]}
         defaultItemsPerPage={10}

@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode } from 'react';
 import DataTable from '@/components/table/Table';
 import TableActions from '@/components/table/TableActions';
 import { PencilIcon, TrashBinIcon, LockIcon, SettingsIcon } from '@/lib/icons';
@@ -31,9 +32,13 @@ interface GuruTableProps {
   onResetPassword: (guru: Guru) => void;
   onConfigureForm?: (guru: Guru) => void;
   userProfile?: UserProfile | null;
+  selectable?: boolean;
+  selectedIds?: Set<string | number>;
+  onSelectionChange?: (next: Set<string | number>) => void;
+  renderBulkActions?: (selectedIds: Set<string | number>, clearSelection: () => void) => ReactNode;
 }
 
-export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onConfigureForm, userProfile }: GuruTableProps) {
+export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onConfigureForm, userProfile, selectable, selectedIds, onSelectionChange, renderBulkActions }: GuruTableProps) {
   // Build columns based on user role
   const buildColumns = (userProfile: UserProfile | null | undefined) => {
     const baseColumns = [
@@ -170,5 +175,5 @@ export default function GuruTable({ data, onEdit, onDelete, onResetPassword, onC
     );
   }
 
-  return <DataTable columns={columns} data={data} renderCell={renderCell} />;
+  return <DataTable columns={columns} data={data} renderCell={renderCell} selectable={selectable} selectedIds={selectedIds} onSelectionChange={onSelectionChange} renderBulkActions={renderBulkActions} />;
 }

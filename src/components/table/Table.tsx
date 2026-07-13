@@ -55,6 +55,7 @@ interface DataTableProps {
   onSearchChange?: (search: string) => void
   onSortChange?: (column: string | null, direction: 'asc' | 'desc' | null) => void
   onItemsPerPageChange?: (size: number) => void
+  isLoading?: boolean
 }
 
 export default function DataTable({
@@ -90,7 +91,8 @@ export default function DataTable({
   onPageChange,
   onSearchChange,
   onSortChange,
-  onItemsPerPageChange
+  onItemsPerPageChange,
+  isLoading = false
 }: DataTableProps) {
   // State management
   const [internalPage, setInternalPage] = useState(1)
@@ -496,7 +498,18 @@ export default function DataTable({
 
             {/* Table Body */}
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {currentPageData.length > 0 ? (
+              {isLoading ? (
+                Array.from({ length: itemsPerPage }).map((_, i) => (
+                  <tr key={`skeleton-${i}`} className="animate-pulse">
+                    {selectable && <td className="px-2 sm:px-6 py-3 sm:py-4"><div className="h-4 w-4 bg-gray-200 dark:bg-gray-600 rounded" /></td>}
+                    {visibleColumns.map(col => (
+                      <td key={col.key} className="px-2 sm:px-6 py-3 sm:py-4">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mx-auto" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : currentPageData.length > 0 ? (
                 currentPageData.map((item, index) => {
                   const rowId = getRowId(item, index)
 

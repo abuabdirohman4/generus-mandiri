@@ -22,6 +22,15 @@ export interface IdCardTemplate {
   kelompok_color: string
   kelompok_italic: boolean
   kelompok_bold: boolean
+  show_custom_field: boolean
+  custom_field_label: string
+  custom_field_x_pct: number
+  custom_field_y_pct: number
+  custom_field_font_size: number
+  custom_field_casing: 'original' | 'uppercase' | 'titlecase'
+  custom_field_color: string
+  custom_field_italic: boolean
+  custom_field_bold: boolean
   card_width_cm: number
   created_by?: string
   created_at?: string
@@ -46,4 +55,12 @@ export interface TemplatePositions {
   kelompok_color: string
   kelompok_italic: boolean
   kelompok_bold: boolean
+  show_custom_field: boolean
+  custom_field_x_pct: number
+  custom_field_y_pct: number
+  custom_field_font_size: number
+  custom_field_casing: 'original' | 'uppercase' | 'titlecase'
+  custom_field_color: string
+  custom_field_italic: boolean
+  custom_field_bold: boolean
 }

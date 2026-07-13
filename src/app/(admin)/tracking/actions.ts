@@ -101,7 +101,13 @@ export async function getLogMetadata() {
 /**
  * Get activity summary for each user in the last 30 days
  */
-export async function getUserActivitySummary() {
+export interface GetUserActivitySummaryParams {
+  daerahId?: string
+  desaId?: string
+  kelompokId?: string
+}
+
+export async function getUserActivitySummary(params?: GetUserActivitySummaryParams) {
   try {
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
@@ -112,64 +118,56 @@ export async function getUserActivitySummary() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const thirtyDaysAgoISO = thirtyDaysAgo.toISOString()
 
-    // Ambil semua profiles dalam scope
+    // last_active_at dibaca dari kolom profiles (di-update via DB trigger tiap
+    // INSERT activity_logs) — tidak terbatas window 30 hari, akurat untuk user
+    // yang jarang login/tidak pernah logout (sm-lurv).
     let profileQuery = supabase
       .from('profiles')
-      .select('id, full_name, username, role')
+      .select('id, full_name, username, role, last_active_at')
       .neq('role', 'superadmin')
 
-    if (filter?.daerah_id) profileQuery = profileQuery.eq('daerah_id', filter.daerah_id)
-    if (filter?.desa_id) profileQuery = profileQuery.eq('desa_id', filter.desa_id)
-    if (filter?.kelompok_id) profileQuery = profileQuery.eq('kelompok_id', filter.kelompok_id)
+    // UI filter (params) override role-based filter jika lebih spesifik
+    const daerahId = params?.daerahId ?? filter?.daerah_id
+    const desaId = params?.desaId ?? filter?.desa_id
+    const kelompokId = params?.kelompokId ?? filter?.kelompok_id
+
+    if (kelompokId) profileQuery = profileQuery.eq('kelompok_id', kelompokId)
+    else if (desaId) profileQuery = profileQuery.eq('desa_id', desaId)
+    else if (daerahId) profileQuery = profileQuery.eq('daerah_id', daerahId)
 
     const { data: profiles, error: profileError } = await profileQuery
     if (profileError) throw profileError
 
     const profileIds = (profiles ?? []).map((p) => p.id)
 
-    // sm-hsp7: single batched query for all users in scope instead of N+1 (was
-    // one 500-row query per profile — up to ~126 queries / 63k rows per page
-    // load). Fetch only the last 30 days directly in the query (was fetching
-    // 500 rows per user unfiltered, then filtering by date in JS).
-    //
-    // .in('user_id', profileIds) is chunked at 100 IDs: PostgREST encodes .in()
-    // into the URL, and >100 UUIDs overflow the URL length limit → data returns
-    // null with NO error (see memory: postgrest-in-url-overflow). profileIds can
-    // reach ~126 for superadmin and grows with the org, so chunking is required.
+    // Fetch hanya action + user_id 30 hari untuk hitung total_actions_30d.
+    // .in() chunked 100 IDs — PostgREST URL overflow >100 UUIDs (sm-hsp7).
     const CHUNK = 100
-    const recentLogs: { user_id: string; created_at: string; action: string }[] = []
+    const actionCountByUser = new Map<string, number>()
     for (let i = 0; i < profileIds.length; i += CHUNK) {
       const chunk = profileIds.slice(i, i + CHUNK)
       const { data, error } = await supabase
         .from('activity_logs')
-        .select('user_id, created_at, action')
+        .select('user_id, action')
         .in('user_id', chunk)
         .gte('created_at', thirtyDaysAgoISO)
-        .order('created_at', { ascending: false })
+        .neq('action', 'open_page')
       if (error) throw error
-      if (data) recentLogs.push(...data)
-    }
-
-    const logsByUser = new Map<string, { created_at: string; action: string }[]>()
-    for (const log of recentLogs) {
-      const list = logsByUser.get(log.user_id) ?? []
-      list.push(log)
-      logsByUser.set(log.user_id, list)
-    }
-
-    const summaries = (profiles ?? []).map((p) => {
-      const userLogs = logsByUser.get(p.id) ?? []
-      const recentActions = userLogs.filter((l) => l.action !== 'open_page')
-
-      return {
-        id: p.id,
-        full_name: p.full_name,
-        username: p.username,
-        role: p.role,
-        last_active: userLogs[0]?.created_at ?? null,
-        total_actions_30d: recentActions.length,
+      if (data) {
+        for (const log of data) {
+          actionCountByUser.set(log.user_id, (actionCountByUser.get(log.user_id) ?? 0) + 1)
+        }
       }
-    })
+    }
+
+    const summaries = (profiles ?? []).map((p) => ({
+      id: p.id,
+      full_name: p.full_name,
+      username: p.username,
+      role: p.role,
+      last_active: (p as any).last_active_at ?? null,
+      total_actions_30d: actionCountByUser.get(p.id) ?? 0,
+    }))
 
     return { success: true, data: summaries }
   } catch (error) {

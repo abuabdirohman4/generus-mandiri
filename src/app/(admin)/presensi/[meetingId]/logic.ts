@@ -191,3 +191,24 @@ export function filterAttendanceRowsByOrg(
     return !!id && selectedSet.has(id)
   })
 }
+
+
+/**
+ * Merge server attendance into local state.
+ * Only adds students missing from local — never overwrites existing entries.
+ * Returns same reference (no re-render) if nothing new.
+ */
+export function mergeNewStudents<T>(
+  prev: Record<string, T>,
+  incoming: Record<string, T>
+): Record<string, T> {
+  let hasChanges = false
+  const merged = { ...prev }
+  Object.keys(incoming).forEach(studentId => {
+    if (!merged[studentId]) {
+      merged[studentId] = incoming[studentId]
+      hasChanges = true
+    }
+  })
+  return hasChanges ? merged : prev
+}

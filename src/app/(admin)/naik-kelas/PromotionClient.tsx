@@ -311,7 +311,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                                         <Checkbox checked={checked} onChange={() => {}} />
                                                     </span>
                                                     <span>
-                                                        <span className="block font-medium text-gray-900 dark:text-white">{opt.name}</span>
+                                                        <span className="block font-medium text-gray-900 dark:text-white">{opt.name}{opt.kelompok_name ? ` (${opt.kelompok_name})` : ''}</span>
                                                         {/* <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
                                                             → {opt.to_name ?? '(tidak naik)'}
                                                         </span> */}

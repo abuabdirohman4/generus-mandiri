@@ -16,6 +16,7 @@ import {
 } from '@/lib/icons'
 import { useUserProfile } from '@/stores/userProfileStore'
 import { canAccessMonitoring } from '@/lib/accessControl'
+import EnrollmentHistory from './EnrollmentHistory'
 
 interface IkhtisarViewProps {
     studentId: string
@@ -243,6 +244,8 @@ export default function IkhtisarView({ studentId }: IkhtisarViewProps) {
                     </div>
                 )}
             </div>
+
+            <EnrollmentHistory studentId={studentId} />
         </div>
     )
 }

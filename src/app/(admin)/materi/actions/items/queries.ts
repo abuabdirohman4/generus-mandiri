@@ -82,10 +82,9 @@ export async function fetchAllItems(supabase: SupabaseClient) {
     return await supabase
         .from('material_items')
         .select(`
-      *,
-      material_type:material_types(
-        *,
-        category:material_categories(*)
+      id, name, description, material_type_id, created_at, updated_at,
+      material_type:material_types(id, name, display_order,
+        category:material_categories(id, name)
       )
     `)
         .order('name')
@@ -115,10 +114,9 @@ export async function fetchAllItemsWithTypes(supabase: SupabaseClient) {
     return await supabase
         .from('material_items')
         .select(`
-      *,
-      material_type:material_types(
-        *,
-        category:material_categories(*)
+      id, name, description, material_type_id, created_at, updated_at,
+      material_type:material_types(id, name, display_order,
+        category:material_categories(id, name)
       )
     `)
         .range(0, 9999)
@@ -132,15 +130,14 @@ export async function fetchItemsForClass(supabase: SupabaseClient, classMasterId
     return await supabase
         .from('material_item_classes')
         .select(`
-      *,
+      id, material_item_id, class_master_id, semester,
       material_item:material_items(
-        *,
-        material_type:material_types(
-          *,
-          category:material_categories(*)
+        id, name, description, material_type_id, created_at, updated_at,
+        material_type:material_types(id, name, display_order,
+          category:material_categories(id, name)
         )
       ),
-      class_master:class_masters(*)
+      class_master:class_masters(id, name, sort_order)
     `)
         .eq('class_master_id', classMasterId)
         .order('material_item(name)')
@@ -157,13 +154,12 @@ export async function fetchItemsForClassAndType(
     return await supabase
         .from('material_items')
         .select(`
-      *,
-      material_type:material_types(
-        *,
-        category:material_categories(*)
+      id, name, description, material_type_id, created_at, updated_at,
+      material_type:material_types(id, name, display_order,
+        category:material_categories(id, name)
       ),
       material_item_classes!inner(
-        class_master:class_masters(*)
+        class_master:class_masters(id, name, sort_order)
       )
     `)
         .eq('material_type_id', materialTypeId)

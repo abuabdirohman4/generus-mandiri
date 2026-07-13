@@ -13,6 +13,7 @@ export interface Meeting {
   start_time?: string | null
   check_time_enabled?: boolean
   student_snapshot?: string[]
+  allow_delegated_attendance?: boolean
   created_at: string
   updated_at?: string
   // Note: created_by column does not exist in meetings table
@@ -29,7 +30,7 @@ export interface CreateMeetingData {
   activityTypeId?: string | null
   activityLevelId?: string | null
   startTime?: string | null
-  checkTimeEnabled?: boolean
+  allowDelegatedAttendance?: boolean
   studentIds?: string[]
 }
 

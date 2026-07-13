@@ -128,7 +128,8 @@ describe('Meeting Queries', () => {
         activity_type_id: null,
         activity_level_id: null,
         start_time: null,
-        check_time_enabled: false
+        check_time_enabled: false,
+        allow_delegated_attendance: false
       })
       expect(result.data).toEqual({ id: 'new-id' })
     })

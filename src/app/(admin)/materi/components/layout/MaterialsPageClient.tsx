@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ClassMaster, MaterialCategory, MaterialType, MaterialItem } from '../../types';
+import { ClassMaster, MaterialCategory, MaterialType, MaterialItem, MaterialItemListRow } from '../../types';
 import { getMaterialCategories, getMaterialTypes, getAllMaterialItems, getAllClasses, getClassesWithMaterialItems, getMaterialItemsWithClassMappings, deleteMaterialItem, getMaterialItem } from '../../actions';
 import { getMonthlyTargetsByItems } from '../../actions/monthly-targets/actions';
 import MateriContentView from '../views/MateriContentView';
@@ -49,6 +49,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<MaterialItem | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
   const [editingItem, setEditingItem] = useState<MaterialItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<MaterialCategory | null>(null);
   const [editingType, setEditingType] = useState<MaterialType | null>(null);
@@ -148,9 +149,17 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
     setTypeModalOpen(true);
   };
 
-  const handleViewContent = (item: MaterialItem) => {
-    setViewingItem(item);
+  const handleViewContent = async (item: MaterialItemListRow | MaterialItem) => {
+    // Buka modal dulu dengan data list (tanpa content), fetch content lazily
+    setViewingItem({ ...item, content: null } as MaterialItem);
     setContentModalOpen(true);
+    setContentLoading(true);
+    try {
+      const full = await getMaterialItem(item.id);
+      if (full) setViewingItem(full);
+    } finally {
+      setContentLoading(false);
+    }
   };
 
   const handleDeleteItem = (item: MaterialItem) => {
@@ -462,6 +471,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
             setViewingItem(null);
           }}
           item={viewingItem}
+          isLoading={contentLoading}
           onEdit={canManage ? (item) => {
             setContentModalOpen(false);
             handleEditItem(item);

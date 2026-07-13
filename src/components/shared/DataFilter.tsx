@@ -275,12 +275,15 @@ export default function DataFilter({
           return acc
         }, {} as Record<string, { name: string; ids: string[]; kelompokIds: Set<string> }>)
 
-        return Object.values(classGroups).map(group => ({
-          value: group.ids.join(','),
-          label: group.kelompokIds.size > 1 ? `${group.name} (${group.kelompokIds.size} kelompok)` : group.name,
-          name: group.name,
-          ids: group.ids
-        }))
+        const firstIdx1 = new Map(filteredClassList.map((cls, i) => [cls.name, i]))
+        return Object.values(classGroups)
+          .sort((a, b) => (firstIdx1.get(a.name) ?? 9999) - (firstIdx1.get(b.name) ?? 9999))
+          .map(group => ({
+            value: group.ids.join(','),
+            label: group.kelompokIds.size > 1 ? `${group.name} (${group.kelompokIds.size} kelompok)` : group.name,
+            name: group.name,
+            ids: group.ids
+          }))
       }
 
       // Create mapping kelompok_id -> kelompok name
@@ -327,19 +330,26 @@ export default function DataFilter({
       }, {} as Record<string, number>)
 
       // Format labels: show kelompok name if there are duplicates with same name from different kelompok
-      return groupsWithNames.map(group => {
-        const hasDuplicate = nameCounts[group.name] > 1
-        const label = hasDuplicate && group.kelompokName
-          ? `${group.name} (${group.kelompokName})`
-          : group.name
+      const firstIdx2 = new Map(filteredClassList.map((cls, i) => [`${cls.name}::${cls.kelompok_id || 'no-kelompok'}`, i]))
+      return groupsWithNames
+        .sort((a, b) => {
+          const keyA = `${a.name}::${a.kelompok_id || 'no-kelompok'}`
+          const keyB = `${b.name}::${b.kelompok_id || 'no-kelompok'}`
+          return (firstIdx2.get(keyA) ?? 9999) - (firstIdx2.get(keyB) ?? 9999)
+        })
+        .map(group => {
+          const hasDuplicate = nameCounts[group.name] > 1
+          const label = hasDuplicate && group.kelompokName
+            ? `${group.name} (${group.kelompokName})`
+            : group.name
 
-        return {
-          value: group.ids.join(','),
-          label,
-          name: group.name,
-          ids: group.ids
-        }
-      })
+          return {
+            value: group.ids.join(','),
+            label,
+            name: group.name,
+            ids: group.ids
+          }
+        })
     }
 
     // Existing logic for non-teacher or teacher without multiple classes
@@ -362,20 +372,23 @@ export default function DataFilter({
 
     // Convert to array with formatted labels
     // Count should be based on unique kelompok IDs, not total class count
-    return Object.values(classGroups).map(group => {
-      const uniqueKelompokCount = group.kelompokIds.size
+    const firstIdx3 = new Map(filteredClassList.map((cls, i) => [cls.name, i]))
+    return Object.values(classGroups)
+      .sort((a, b) => (firstIdx3.get(a.name) ?? 9999) - (firstIdx3.get(b.name) ?? 9999))
+      .map(group => {
+        const uniqueKelompokCount = group.kelompokIds.size
 
-      // Show deduplicated names when no kelompok filter is active (Semua Kelompok)
-      // Only show kelompok suffix when specific kelompok is selected AND there are duplicates
-      const shouldShowKelompokSuffix = filters?.kelompok && filters.kelompok.length > 0 && uniqueKelompokCount > 1
+        // Show deduplicated names when no kelompok filter is active (Semua Kelompok)
+        // Only show kelompok suffix when specific kelompok is selected AND there are duplicates
+        const shouldShowKelompokSuffix = filters?.kelompok && filters.kelompok.length > 0 && uniqueKelompokCount > 1
 
-      return {
-        value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
-        label: shouldShowKelompokSuffix && cascadeFilters ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
-        name: group.name,
-        ids: group.ids
-      }
-    })
+        return {
+          value: group.ids.join(','), // Store all IDs comma-separated for backward compatibility
+          label: shouldShowKelompokSuffix && cascadeFilters ? `${group.name} (${uniqueKelompokCount} kelompok)` : group.name,
+          name: group.name,
+          ids: group.ids
+        }
+      })
   }, [filteredClassList, isTeacher, teacherHasMultipleClasses, teacherHasMultipleKelompok, activeKelompokList, filters?.kelompok, userProfile?.classes])
 
   // Activity types and levels (DB-driven)

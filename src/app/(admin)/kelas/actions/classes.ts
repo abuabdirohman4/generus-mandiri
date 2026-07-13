@@ -88,21 +88,34 @@ export async function getAllClassesByKelompok(): Promise<ClassWithMaster[]> {
     const { data, error } = await classQuery
     if (error) throw error
 
-    // Fetch ALL mappings (657 rows total, well under PostgREST 1000 limit),
-    // then filter in-memory by the class IDs we already have.
-    // This avoids the Headers Overflow from .in('class_id', [640 IDs]).
+    // Fetch ALL mappings then filter in-memory by the class IDs we already have
+    // (avoids Headers Overflow from .in('class_id', [640 IDs])). Paginasi WAJIB:
+    // total mappings 1200+ > PostgREST cap 1000; tanpa paginasi baris >1000 hilang
+    // → kelas #1000+ kehilangan class_master (nama/sort_order kosong).
     let mappingsData: any[] = []
 
     if ((data || []).length > 0) {
-      const { data: allMappings, error: mappingsError } = await adminClient
-        .from('class_master_mappings')
-        .select('class_id, class_master_id, class_masters:class_master_id(id, name, description, sort_order)')
+      const PAGE = 1000
+      const allMappings: any[] = []
+      let mapOffset = 0
+      let mappingsError: any = null
+      while (true) {
+        const { data: page, error } = await adminClient
+          .from('class_master_mappings')
+          .select('class_id, class_master_id, class_masters:class_master_id(id, name, description, sort_order)')
+          .range(mapOffset, mapOffset + PAGE - 1)
+        if (error) { mappingsError = error; break }
+        if (!page || page.length === 0) break
+        allMappings.push(...page)
+        if (page.length < PAGE) break
+        mapOffset += PAGE
+      }
 
       if (mappingsError) {
         console.error('Error fetching mappings:', mappingsError)
       } else {
         const classIdSet = new Set((data || []).map((c: any) => c.id))
-        mappingsData = (allMappings || [])
+        mappingsData = allMappings
           .filter((m: any) => classIdSet.has(m.class_id))
           .map((m: any) => {
             const cm = Array.isArray(m.class_masters) ? m.class_masters[0] : m.class_masters

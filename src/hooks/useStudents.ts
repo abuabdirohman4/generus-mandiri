@@ -72,6 +72,8 @@ export interface UseStudentsPaginatedOptions {
   page: number
   pageSize: number
   search?: string
+  sortColumn?: string
+  sortDirection?: 'asc' | 'desc'
   filters?: {
     daerah?: string[]
     desa?: string[]
@@ -97,7 +99,7 @@ const fetcherPaginated = async (params: UseStudentsPaginatedOptions) => {
   }
 }
 
-export function useStudentsPaginated({ page, pageSize, search, filters, enabled = true }: UseStudentsPaginatedOptions) {
+export function useStudentsPaginated({ page, pageSize, search, sortColumn, sortDirection, filters, enabled = true }: UseStudentsPaginatedOptions) {
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -106,11 +108,12 @@ export function useStudentsPaginated({ page, pageSize, search, filters, enabled 
       .catch((error) => console.error('Error getting user ID:', error))
   }, [])
 
-  const key = enabled && userId ? studentKeys.listPaginated(userId, page, pageSize, search, JSON.stringify(filters)) : null
+  const sortKey = `${sortColumn || ''}:${sortDirection || ''}`
+  const key = enabled && userId ? studentKeys.listPaginated(userId, page, pageSize, search, JSON.stringify(filters), sortKey) : null
 
   const { data, error, isLoading, mutate } = useSWR(
     key,
-    () => fetcherPaginated({ page, pageSize, search, filters }),
+    () => fetcherPaginated({ page, pageSize, search, sortColumn, sortDirection, filters }),
     {
       revalidateOnFocus: false,
       keepPreviousData: true,

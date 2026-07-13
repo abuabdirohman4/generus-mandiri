@@ -43,7 +43,7 @@ import { useDesa } from '@/hooks/useDesa'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
 import MeetingOrgBreakdown from './MeetingOrgBreakdown'
-import { shouldShowBreakdown } from './logic'
+import { shouldShowBreakdown, mergeNewStudents } from './logic'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -103,17 +103,7 @@ export default function MeetingAttendancePage() {
       } else {
         // Merge any new attendance records from DB that are not in localAttendance
         // This preserves unsaved local edits while pulling in newly added students (e.g. from Quick Add)
-        setLocalAttendance(prev => {
-          let hasChanges = false
-          const merged = { ...prev }
-          Object.keys(attendance).forEach(studentId => {
-            if (!merged[studentId]) {
-              merged[studentId] = attendance[studentId]
-              hasChanges = true
-            }
-          })
-          return hasChanges ? merged : prev
-        })
+        setLocalAttendance(prev => mergeNewStudents(prev, attendance))
       }
     }
   }, [attendance])
@@ -218,8 +208,7 @@ export default function MeetingAttendancePage() {
       if (result.success) {
         sessionStorage.setItem('presensi_needs_refresh', meetingId)
         toast.success('Data presensi berhasil disimpan!')
-        hasInitialized.current = false
-        mutate() // Refresh current page data
+        mutate() // Refresh SWR baseline (for isDirty + cross-device sync)
 
         // Optimistic upsert: sisipkan meeting baru / patch existing di cache list instan.
         // void = fire-and-forget, navigasi back tidak tertahan refetch berat (40s).
@@ -352,8 +341,16 @@ export default function MeetingAttendancePage() {
     else if (isAdminKelompok(userProfile) || isTeacherKelompok(userProfile)) userLevelRank = 1
     else if (userProfile.role === 'admin') userLevelRank = 4 // Fallback for unspecified admins
     
-    // If meeting is higher level than user, it's read only
-    return meetingLevelRank > userLevelRank
+    // If meeting is higher level than user, check for delegated attendance
+    if (meetingLevelRank > userLevelRank) {
+      // If delegated attendance is allowed, they can edit (but server actions will still restrict them to their own students)
+      if (meeting.allow_delegated_attendance) {
+        return false
+      }
+      return true
+    }
+    
+    return false
   }, [userProfile, meeting, isMeetingCreator])
 
   // Scan QR tab is only useful for large, cross-kelompok meetings (Desa/Daerah level)
@@ -1034,7 +1031,6 @@ export default function MeetingAttendancePage() {
             connectionStatus={realtimeStatus}
             meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
             meetingStartTime={meeting?.start_time}
-            checkTimeEnabled={meeting?.check_time_enabled}
           />
         ) : activeTab === 'breakdown' && showOrgBreakdown ? (
           <MeetingOrgBreakdown
@@ -1079,7 +1075,6 @@ export default function MeetingAttendancePage() {
                 onSearchQueryChange={setTableSearchQuery}
                 meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
                 meetingStartTime={meeting?.start_time}
-                checkTimeEnabled={meeting?.check_time_enabled}
               />
             </div>
 
