@@ -15,11 +15,11 @@ import InputFilter from '@/components/form/input/InputFilter';
 import { toast } from 'sonner';
 import Button from '@/components/ui/button/Button';
 import { ProgressInput } from './types';
-import { getRateGrade, getRateStyle } from '@/lib/percentages';
+import { getRateGrade, getRateStyle, PREDIKAT_LEGEND, getLegendBadgeClass } from '@/lib/percentages';
 import StudentSidebar from './components/StudentSidebar';
 import FloatingSaveButton from './components/FloatingSaveButton';
 import { isMobile } from '@/lib/utils';
-import { MonitoringContentSkeleton } from './components/MonitoringSkeleton';
+import { MonitoringContentSkeleton, MonitoringMaterialsSkeleton } from './components/MonitoringSkeleton';
 import {
     useMonitoringInitial,
     useClassProgress,
@@ -117,13 +117,13 @@ export default function MonitoringPage() {
     );
 
     // ── SWR: materials ────────────────────────────────────────────────────────
-    const { data: materialsData } = useMonitoringMaterials(
+    const { data: materialsData, isLoading: materialsLoading } = useMonitoringMaterials(
         selectedClassId !== 'ALL' ? selectedClassId : '',
         selectedSemester
     );
 
     // ── SWR: monthly target progress (per student) ────────────────────────────
-    const { data: monthlyTargetData } = useMonthlyTargetProgress(
+    const { data: monthlyTargetData, isLoading: monthlyTargetLoading } = useMonthlyTargetProgress(
         selectedStudentId && selectedClassId && selectedMonth && selectedYearId
             ? { classId: selectedClassId, yearId: selectedYearId, semester: selectedSemester, month: selectedMonth, studentId: selectedStudentId }
             : null
@@ -153,10 +153,12 @@ export default function MonitoringPage() {
         ...extraMaterials.filter(e => !baseMaterials.find(b => b.id === e.id)),
     ];
     const loading = selectedClassId === 'ALL' ? classProgressAllLoading : classProgressLoading;
+    // Loading khusus area materi/target: materi refetch atau target bulanan refetch (mis. ganti filter bulan)
+    const materialsAreaLoading = materialsLoading || (!!selectedMonth && monthlyTargetLoading);
     const monthlyTargetProgress = monthlyTargetData?.summary ?? null;
-    const monthlyTargetItemIds = monthlyTargetData?.targetItemIds ?? new Set<string>();
+    const monthlyTargetItemIds = new Set<string>(Array.isArray(monthlyTargetData?.targetItemIds) ? monthlyTargetData.targetItemIds : []);
     const crossClassHistory: any[] = crossClassData ?? [];
-    const monthlyPercentages: Map<string, number> = monthlySummaryData ?? new Map();
+    const monthlyPercentages: Map<string, number> = Array.isArray(monthlySummaryData) ? new Map(monthlySummaryData) : new Map();
 
     // ── Seed selectedYearId from SWR initial data (once, on first load) ─────────
     useEffect(() => {
@@ -926,7 +928,9 @@ export default function MonitoringPage() {
 
 
                                 {/* Progress Display - Split by Category */}
-                                {displayedMaterials.length === 0 ? (
+                                {materialsAreaLoading ? (
+                                    <MonitoringMaterialsSkeleton />
+                                ) : displayedMaterials.length === 0 ? (
                                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                             {selectedMonth ? 'Tidak ada target materi untuk bulan ini' : 'Tidak ada materi untuk kategori ini'}
@@ -1016,64 +1020,10 @@ export default function MonitoringPage() {
                                     </>
                                 )}
 
-                                {/* Cross-Class History Section */}
-                                {crossClassHistory.length > 0 && (
-                                    <div className="mt-6 border border-amber-200 dark:border-amber-800 rounded-lg overflow-hidden">
-                                        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800">
-                                            <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-500 flex items-center gap-2">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                Materi Belum Tuntas (Tahun Ajaran Sebelumnya)
-                                            </h4>
-                                        </div>
-                                        <div className="bg-white dark:bg-gray-800 p-0">
-                                            {crossClassLoading ? (
-                                                <div className="p-4 text-center text-sm text-gray-500">Memuat riwayat...</div>
-                                            ) : (
-                                                <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {crossClassHistory.map((item, idx) => (
-                                                        <div key={idx} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-750">
-                                                            <div>
-                                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {item.material_name}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                                    TA {item.academic_year_name} • Smt {item.semester} • {item.class_name}
-                                                                </p>
-                                                            </div>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="text-center">
-                                                                    <div className="text-[10px] text-gray-500 uppercase">Nilai Akhir</div>
-                                                                    <div className={`text-sm font-bold ${getRateGrade(item.nilai).color}`}>
-                                                                        {item.nilai} ({getRateGrade(item.nilai).grade})
-                                                                    </div>
-                                                                </div>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => {
-                                                                        const existing = materials.find(m => m.id === item.material_item_id);
-                                                                        if (!existing) {
-                                                                            setExtraMaterials(prev => [...prev, {
-                                                                                id: item.material_item_id,
-                                                                                name: item.material_name,
-                                                                                material_type: { name: 'Riwayat' }
-                                                                            }]);
-                                                                        }
-                                                                        toast.info('Materi ditambahkan ke form penilaian saat ini');
-                                                                    }}
-                                                                >
-                                                                    Uji Ulang
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                {/* Cross-Class History Section — DISABLED: fitur belum siap, monitoring baru rilis TA ini */}
+                                {/* {crossClassHistory.length > 0 && (
+                                    ...
+                                )} */}
 
 
                                 {/* Grading Legend */}
@@ -1085,30 +1035,14 @@ export default function MonitoringPage() {
                                         Keterangan Predikat dan Deskripsi
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-green-600 bg-green-50 dark:bg-green-900/20">
-                                                A
-                                            </span>
-                                            <span className="text-gray-700 dark:text-gray-300">90-100 = Terlampaui</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20">
-                                                B
-                                            </span>
-                                            <span className="text-gray-700 dark:text-gray-300">80-89 = Memenuhi</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20">
-                                                C
-                                            </span>
-                                            <span className="text-gray-700 dark:text-gray-300">70-79 = Cukup Memenuhi</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/20">
-                                                D
-                                            </span>
-                                            <span className="text-gray-700 dark:text-gray-300">&lt;70 = Tidak Memenuhi</span>
-                                        </div>
+                                        {PREDIKAT_LEGEND.map((item) => (
+                                            <div key={`${item.grade}-${item.range}`} className="flex items-center gap-3">
+                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getLegendBadgeClass(item.variant)}`}>
+                                                    {item.grade}
+                                                </span>
+                                                <span className="text-gray-700 dark:text-gray-300">{item.range} = {item.label}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 

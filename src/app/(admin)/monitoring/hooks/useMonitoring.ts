@@ -192,7 +192,7 @@ interface MonthlyTargetParams {
 async function fetchMonthlyTarget(
     _key: readonly unknown[],
     params: MonthlyTargetParams
-): Promise<{ summary: { total_targets: number; completed: number; percentage: number } | null; targetItemIds: Set<string> }> {
+): Promise<{ summary: { total_targets: number; completed: number; percentage: number } | null; targetItemIds: string[] }> {
     const result = await getMonthlyTargetProgress({
         classId: params.classId,
         academicYearId: params.yearId,
@@ -201,7 +201,7 @@ async function fetchMonthlyTarget(
         studentId: params.studentId,
     });
 
-    if (!result.success) return { summary: null, targetItemIds: new Set() };
+    if (!result.success) return { summary: null, targetItemIds: [] };
 
     const completed = result.progress.filter((p: any) => {
         const score = p.nilai !== null && p.nilai !== undefined ? p.nilai : (p.done ? 100 : 0);
@@ -214,7 +214,7 @@ async function fetchMonthlyTarget(
             completed,
             percentage: result.percentage,
         },
-        targetItemIds: new Set(result.targets.map((t: any) => t.material_item_id)),
+        targetItemIds: result.targets.map((t: any) => t.material_item_id as string),
     };
 }
 
@@ -266,7 +266,7 @@ interface MonthlySummaryParams {
 async function fetchMonthlySummary(
     _key: readonly unknown[],
     params: MonthlySummaryParams
-): Promise<Map<string, number>> {
+): Promise<[string, number][]> {
     const result = await getClassMonthlyTargetSummary({
         classId: params.classId,
         academicYearId: params.yearId,
@@ -275,7 +275,7 @@ async function fetchMonthlySummary(
     });
 
     if (!result.success) throw new Error(result.message || 'Gagal memuat ringkasan target bulanan');
-    return new Map(result.data.map((s: any) => [s.student_id, s.percentage]));
+    return result.data.map((s: any) => [s.student_id, s.percentage] as [string, number]);
 }
 
 export function useClassMonthlySummary(params: MonthlySummaryParams | null) {

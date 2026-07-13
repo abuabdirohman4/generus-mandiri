@@ -5,7 +5,7 @@
  * - 90+ : Success (Green / A)
  * - 80+ : Info (Blue / B)
  * - 70+ : Warning (Yellow / C)
- * - <70 : Danger (Red / D)
+ * - <70 : Danger (Red / C, Belum Tuntas)
  */
 
 export type RateVariant = 'text' | 'bg' | 'bg-light' | 'bar' | 'text-pure';
@@ -81,10 +81,10 @@ export const getRateGrade = (value?: number | null) => {
     const text = getRateStyle(value, 'text');
     const bg = getRateStyle(value, 'bg-light');
     
-    const info = value >= 90 ? { g: 'A', l: 'Terlampaui' } :
-                 value >= 80 ? { g: 'B', l: 'Memenuhi' } :
-                 value >= 70 ? { g: 'C', l: 'Cukup Memenuhi' } : 
-                 { g: 'D', l: 'Tidak Memenuhi' };
+    const info = value >= 90 ? { g: 'A', l: 'Sangat Baik' } :
+                 value >= 80 ? { g: 'B', l: 'Baik' } :
+                 value >= 70 ? { g: 'C', l: 'Cukup' } : 
+                 { g: 'C', l: 'Cukup (Belum Tuntas)' };
 
     return {
         grade: info.g,
@@ -94,4 +94,35 @@ export const getRateGrade = (value?: number | null) => {
         text,
         bg
     };
+};
+
+
+/**
+ * Predikat legend — SATU sumber untuk semua tampilan (monitoring, rapot, laporan).
+ * Ubah di sini saja kalau ambang/label/grade berubah.
+ * `variant` = level warna dari COLORS (success/info/warning/danger).
+ */
+export interface PredikatLegendItem {
+    grade: string;
+    range: string;
+    label: string;
+    variant: 'success' | 'info' | 'warning' | 'danger';
+}
+
+export const PREDIKAT_LEGEND: PredikatLegendItem[] = [
+    { grade: 'A', range: '90-100', label: 'Sangat Baik', variant: 'success' },
+    { grade: 'B', range: '80-89', label: 'Baik', variant: 'info' },
+    { grade: 'C', range: '70-79', label: 'Cukup', variant: 'warning' },
+    { grade: 'C', range: '<70', label: 'Cukup (Belum Tuntas)', variant: 'danger' },
+];
+
+/** Ambil kelas warna Tailwind untuk badge legend per variant. */
+export const getLegendBadgeClass = (variant: PredikatLegendItem['variant']): string => {
+    const map = {
+        success: 'text-green-600 bg-green-50 dark:bg-green-900/20',
+        info: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+        warning: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20',
+        danger: 'text-red-600 bg-red-50 dark:bg-red-900/20',
+    };
+    return map[variant];
 };

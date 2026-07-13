@@ -51,3 +51,33 @@ export const MonitoringContentSkeleton = () => {
         </div>
     );
 };
+
+
+export const MonitoringMaterialsSkeleton = () => {
+    return (
+        <div className="space-y-6">
+            {[1, 2].map((group) => (
+                <div key={group} className="mb-6 last:mb-0">
+                    {/* Category header */}
+                    <Skeleton className="h-6 w-40 mb-3" />
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <Skeleton className="h-4 w-24" />
+                        </div>
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="px-4 py-4 flex items-center justify-between gap-4">
+                                    <Skeleton className="h-5 w-1/2" />
+                                    <div className="flex gap-3">
+                                        <Skeleton className="h-9 w-20 rounded" />
+                                        <Skeleton className="h-9 w-16 rounded" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};

@@ -80,30 +80,6 @@ export function getDisplayScore(progress: MaterialProgress): number {
     return progress.done ? 100 : 0;
 }
 
-// Helper function to get predikat for rapot
-export function getPredikat(score: number): string {
-    if (score >= 90) return 'A';
-    if (score >= 80) return 'B';
-    if (score >= 70) return 'C';
-    return 'D';
-}
-
-// Helper function to get deskripsi predikat
-export function getDeskripsiPredikat(score: number): string {
-    if (score >= 90) return 'Terlampaui';
-    if (score >= 80) return 'Memenuhi';
-    if (score >= 70) return 'Cukup Memenuhi';
-    return 'Tidak Memenuhi';
-}
-
-// Combined predikat with description
-export function getPredikatWithDesc(score: number): { predikat: string; deskripsi: string } {
-    return {
-        predikat: getPredikat(score),
-        deskripsi: getDeskripsiPredikat(score)
-    };
-}
-
 // ─── Monthly Target Progress ──────────────────────────────────────────────────
 
 export interface MonthlyTargetProgress {
