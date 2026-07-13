@@ -154,3 +154,52 @@ group by 1,2,3,4 order by total_events desc;
 ```
 
 Lalu baca angka egress GB dari dashboard Supabase (Settings → Usage → Egress) dan tambahkan section snapshot bertanggal baru di atas.
+
+## Snapshot Aktivitas Harian — 11–13 Jul 2026
+
+### Data Dashboard (dari screenshot)
+
+| Tanggal | Auth | PostgREST | Realtime | Storage | **Total** |
+|---------|------|-----------|----------|---------|-----------|
+| 11 Jul | 21.9MB (10.9%) | 162.8MB (80.9%) | 16.3MB (8.1%) | 161KB | **~201MB** |
+| 12 Jul | 14.6MB (12.3%) | 102.3MB (86.4%) | 1.4MB (1.2%) | 158KB | **~118MB** |
+| 13 Jul* | 8.5MB (9.7%) | 78.0MB (89.3%) | 0.9MB (1.0%) | — | **~87MB** (partial) |
+
+*13 Jul belum full day saat diambil.
+
+### Data Aktivitas (activity_logs)
+
+| Tanggal | Page Views | Active Users | /presensi | detail-presensi | /laporan | /monitoring | /users/siswa |
+|---------|-----------|--------------|-----------|-----------------|----------|-------------|--------------|
+| 11 Jul | 472 | 23 | 209 | 16 | 22 | 1 | 49 |
+| 12 Jul | 319 | 23 | 137 | 0 | 18 | 0 | 23 |
+| 13 Jul* | 236 | 22 | 50 | 1 | 10 | 4 | 44 |
+
+### Normalisasi MB/view (PostgREST saja)
+
+| Tanggal | PostgREST MB | Views | MB/view |
+|---------|-------------|-------|---------|
+| 11 Jul | 162.8 | 472 | **0.34** |
+| 12 Jul | 102.3 | 319 | **0.32** |
+| 13 Jul* | 78.0 | 236 | **0.33** |
+
+Pembanding pra-fix (dari register sebelumnya):
+- 8 Jul (spike pra-fix): ~495MB PostgREST / ~450 views ≈ **1.1 MB/view**
+- 10 Jul (pra-Fix C): 327MB / ~400 views ≈ **0.82 MB/view**
+
+### Baca Situasi
+
+**Fix berhasil secara signifikan.** MB/view turun dari ~1.1 (8 Jul, pre-fix) → ~0.33 (11–13 Jul, post-fix A+B+C) = **turun ~70%**. Konsisten di 3 hari berturut-turut (0.34, 0.32, 0.33) → bukan noise, ini memang efek fix.
+
+**11 Jul tinggi** (201MB total, 472 views, 23 user aktif) karena memang hari Sabtu ramai + masih banyak presensi (209 hits). Realtime 16.3MB hari itu lebih tinggi dari biasanya (8%) — kemungkinan realtime presence aktif berbarengan lebih banyak user. Tidak ada anomali — volume tinggi murni dari aktivitas nyata.
+
+**12 Jul lebih rendah** (118MB, 319 views) — hari Sabtu sore/malam lebih sepi. Realtime turun drastis ke 1.4MB (presense user lebih sedikit online bersamaan).
+
+**13 Jul partial** (87MB dari ~236 views) — sesuai tren ~0.33 MB/view. Proyeksi full day: ~110–130MB jika aktivitas selesai di angka 350–400 views.
+
+**Proyeksi bulan ini** (cycle 13 Jul reset atau lanjut): dengan baseline ~0.33 MB/view dan rata-rata ~350 views/hari → ~115MB/hari → ~3.5GB/30 hari. Masih dalam 5GB free tier, tapi mepet jika ada hari spike (presensi massal akhir bulan bisa naik ke 400–500 views).
+
+**Status:** Aman untuk sekarang. Pantau terus jika ada hari ramai akhir bulan.
+
+**Catatan Auth 10–12%:** Auth egress stabil di kisaran ini (14–22MB/hari). Relatif wajar untuk 22–23 user aktif. Middleware fix (P1.1) belum diimplementasi — masih ada potensi penghematan ~5–10MB/hari dari sana.
+
