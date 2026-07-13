@@ -7,6 +7,7 @@ import { MaterialProgress, ProgressInput } from '../types';
 import { logActivity } from '@/lib/activityLogger';
 import { getCurrentUserProfile } from '@/lib/accessControlServer';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
+import { fetchInBatches } from '@/lib/utils/batchFetching';
 
 /**
  * Get hafalan categories (categories with name containing "Hafalan")
@@ -98,9 +99,8 @@ export async function getStudentProgress(
         const { data, error } = await supabase
             .from('student_material_progress')
             .select(`
-          *,
-          material_item:material_items(*),
-          teacher:profiles(id, full_name)
+          id, student_id, material_item_id, nilai, done, notes, semester, academic_year_id, teacher_id, created_at, updated_at,
+          material_item:material_items(id, name, material_type_id)
         `)
             .eq('student_id', studentId)
             .eq('academic_year_id', academicYearId)
@@ -161,23 +161,28 @@ export async function getClassProgress(
             };
         }
 
-        // Get all progress for these students
-        const { data: progress, error: progressError } = await supabase
-            .from('student_material_progress')
-            .select(`
-          *,
-          material_item:material_items(*)
-        `)
-            .in('student_id', studentIds)
-            .eq('academic_year_id', academicYearId)
-            .eq('semester', semester);
+        // Get all progress for these students — chunked to avoid URL overflow (>100 IDs)
+        const progressSelect = 'id, student_id, material_item_id, nilai, done, notes, semester, academic_year_id, teacher_id, created_at, updated_at, material_item:material_items(id, name, material_type_id)'
+        const { data: progress, error: progressError } = await fetchInBatches(
+            supabase,
+            'student_material_progress',
+            studentIds,
+            progressSelect,
+            100,
+            'student_id'
+        )
+        // Apply semester+year filter — fetchInBatches doesn't support additional .eq() filters
+        // so we filter in-memory after merge
+        const filteredProgress = (progress || []).filter(
+            (p: any) => p.academic_year_id === academicYearId && p.semester === semester
+        )
 
         if (progressError) throw progressError;
 
         return {
             success: true,
             students,
-            progress: progress || []
+            progress: filteredProgress
         };
     } catch (error) {
         const errorInfo = handleApiError(error, 'memuat data', 'Gagal memuat progress kelas');
