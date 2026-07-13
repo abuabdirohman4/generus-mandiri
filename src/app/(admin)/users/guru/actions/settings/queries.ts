@@ -127,7 +127,8 @@ export async function bulkUpdateTeacherPermissionsQuery(
     supabase: SupabaseClient,
     teacherIds: string[],
     basePatch: Record<string, boolean>,
-    materialPatch: Record<string, boolean>
+    materialPatch: Record<string, boolean>,
+    meetingFormSettings?: Record<string, boolean> | null
 ): Promise<{ updated: number; failed: { id: string; error: string }[] }> {
     const failed: { id: string; error: string }[] = []
     let updated = 0
@@ -140,6 +141,10 @@ export async function bulkUpdateTeacherPermissionsQuery(
             }
             if (Object.keys(materialPatch).length > 0) {
                 const { error } = await updateTeacherMaterialPermissionsQuery(supabase, id, materialPatch as any)
+                if (error) throw error
+            }
+            if (meetingFormSettings && Object.keys(meetingFormSettings).length > 0) {
+                const { error } = await updateMeetingFormSettingsQuery(supabase, id, meetingFormSettings as any)
                 if (error) throw error
             }
             updated++

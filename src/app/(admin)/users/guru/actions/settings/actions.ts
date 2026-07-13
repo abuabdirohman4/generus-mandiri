@@ -250,9 +250,10 @@ export async function bulkUpdateTeacherPermissions(
             return { success: false, message: 'Tidak ada perubahan dipilih' }
         }
 
-        const { basePatch, materialPatch } = splitPermissionPatch(patch)
+        const { basePatch, materialPatch, meetingFormPatch } = splitPermissionPatch(patch)
+        const hasMeetingForm = Object.keys(meetingFormPatch).length > 0
         const supabase = await createAdminClient()
-        const result = await bulkUpdateTeacherPermissionsQuery(supabase, teacherIds, basePatch as any, materialPatch as any)
+        const result = await bulkUpdateTeacherPermissionsQuery(supabase, teacherIds, basePatch as any, materialPatch as any, hasMeetingForm ? meetingFormPatch as any : null)
 
         revalidatePath('/users/guru')
 
@@ -280,6 +281,70 @@ export async function bulkUpdateTeacherPermissions(
         return {
             success: false,
             message: handleApiError(error, 'menyimpan data', 'Gagal bulk update hak akses').message ?? 'Gagal bulk update hak akses',
+        }
+    }
+}
+
+import { assignActivityTypeToTeacher, removeActivityTypeFromTeacher } from '@/app/(admin)/kegiatan/actions'
+
+/**
+ * Bulk assign/remove activity types across multiple teachers.
+ * selections: Record<activityTypeId, 'add' | 'remove' | 'none'>
+ */
+export async function bulkUpdateTeacherActivityTypes(
+    teacherIds: string[],
+    selections: Record<string, 'add' | 'remove' | 'none'>
+): Promise<{ success: boolean; data?: { updated: number; failed: { id: string; error: string }[] }; message: string }> {
+    try {
+        const profile = await getCurrentUserProfile()
+        if (!profile || !['superadmin', 'admin'].includes(profile.role)) {
+            return { success: false, message: 'Tidak ada akses' }
+        }
+        if (!teacherIds.length) return { success: false, message: 'Tidak ada guru dipilih' }
+
+        const toAdd = Object.entries(selections).filter(([, v]) => v === 'add').map(([k]) => k)
+        const toRemove = Object.entries(selections).filter(([, v]) => v === 'remove').map(([k]) => k)
+        if (!toAdd.length && !toRemove.length) return { success: false, message: 'Tidak ada perubahan dipilih' }
+
+        const failed: { id: string; error: string }[] = []
+        let updated = 0
+
+        for (const teacherId of teacherIds) {
+            try {
+                for (const typeId of toAdd) await assignActivityTypeToTeacher(teacherId, typeId)
+                for (const typeId of toRemove) await removeActivityTypeFromTeacher(teacherId, typeId)
+                updated++
+            } catch (err: any) {
+                failed.push({ id: teacherId, error: err?.message ?? 'Unknown error' })
+            }
+        }
+
+        revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'bulk_update_teacher_activity_types',
+            entityType: 'teacher',
+            entityId: '',
+            entityLabel: `Bulk update activity types ${updated} guru`,
+            pagePath: '/users/guru',
+            metadata: { add: toAdd, remove: toRemove, count: teacherIds.length, updated, failed: failed.length } as any,
+        })
+
+        const allFailed = failed.length === teacherIds.length
+        return {
+            success: !allFailed,
+            data: { updated, failed },
+            message: allFailed
+                ? 'Gagal memperbarui semua guru'
+                : failed.length > 0
+                    ? `${updated} guru diperbarui, ${failed.length} gagal`
+                    : `${updated} guru berhasil diperbarui`,
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: handleApiError(error, 'menyimpan data', 'Gagal bulk update tipe kegiatan').message ?? 'Gagal',
         }
     }
 }

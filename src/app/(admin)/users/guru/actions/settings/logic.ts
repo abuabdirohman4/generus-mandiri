@@ -48,6 +48,16 @@ export interface BulkPermissionSelections {
     can_multi_kelompok_laporan?: TriState
     // Presensi / Form Pertemuan
     can_manage_check_time?: TriState
+    // Form Pertemuan — field visibility
+    showClassSelection?: TriState
+    showGenderFilter?: TriState
+    showMeetingType?: TriState
+    showTitle?: TriState
+    showTopic?: TriState
+    showDescription?: TriState
+    showDate?: TriState
+    showStudentSelection?: TriState
+    showCheckTime?: TriState
 }
 
 export interface BasePatch {
@@ -76,6 +86,23 @@ const BASE_KEYS: (keyof BasePatch)[] = [
     'can_manage_check_time',
 ]
 
+export interface MeetingFormPatch {
+    showClassSelection?: boolean
+    showGenderFilter?: boolean
+    showMeetingType?: boolean
+    showTitle?: boolean
+    showTopic?: boolean
+    showDescription?: boolean
+    showDate?: boolean
+    showStudentSelection?: boolean
+    showCheckTime?: boolean
+}
+
+const FORM_FIELD_KEYS: (keyof MeetingFormPatch)[] = [
+    'showClassSelection', 'showGenderFilter', 'showMeetingType', 'showTitle',
+    'showTopic', 'showDescription', 'showDate', 'showStudentSelection', 'showCheckTime',
+]
+
 /** Maps tri-state selections to concrete boolean patch. Only includes 'grant'/'revoke' fields. */
 export function buildPermissionPatch(selections: BulkPermissionSelections): BasePatch & MaterialPatch {
     const patch: Record<string, boolean> = {}
@@ -86,15 +113,19 @@ export function buildPermissionPatch(selections: BulkPermissionSelections): Base
     return patch
 }
 
-/** Routes fields to base vs material update paths. */
-export function splitPermissionPatch(patch: BasePatch & MaterialPatch): { basePatch: BasePatch; materialPatch: MaterialPatch } {
+/** Routes fields to base, material, and meetingForm update paths. */
+export function splitPermissionPatch(patch: Record<string, boolean>): { basePatch: BasePatch; materialPatch: MaterialPatch; meetingFormPatch: MeetingFormPatch } {
     const basePatch: BasePatch = {}
     const materialPatch: MaterialPatch = {}
+    const meetingFormPatch: MeetingFormPatch = {}
     for (const key of BASE_KEYS) {
-        if ((patch as any)[key] !== undefined) (basePatch as any)[key] = (patch as any)[key]
+        if (patch[key] !== undefined) (basePatch as any)[key] = patch[key]
     }
     if (patch.can_access_materials !== undefined) materialPatch.can_access_materials = patch.can_access_materials
     if (patch.can_manage_materials !== undefined) materialPatch.can_manage_materials = patch.can_manage_materials
     if (patch.can_access_monitoring !== undefined) materialPatch.can_access_monitoring = patch.can_access_monitoring
-    return { basePatch, materialPatch }
+    for (const key of FORM_FIELD_KEYS) {
+        if (patch[key] !== undefined) (meetingFormPatch as any)[key] = patch[key]
+    }
+    return { basePatch, materialPatch, meetingFormPatch }
 }
