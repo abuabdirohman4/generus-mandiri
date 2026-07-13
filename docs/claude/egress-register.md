@@ -255,10 +255,10 @@ MB/view tetap konsisten di ~0.33 — sesuai tren post-fix.
 
 **13 Jul adalah hari tersibuk sejak fix** — 37 user aktif (vs 22–23 hari sebelumnya), 758 views pada ~08:23 UTC. Volume ini yang mendorong total ke ~296MB, BUKAN kebocoran atau regresi fix. MB/view tetap ~0.33 (sama persis dengan 11–12 Jul).
 
-** = 104 hits** — ini mencolok. Setiap hit fetch ~2198 siswa full-table. Ini adalah halaman yang belum dioptimasi (P0.2 dari plan sm-nr89). Dengan 104 hit × payload besar,  kemungkinan kontributor signifikan egress hari ini.
+**`/users/siswa` = 104 hits** — ini mencolok. Setiap hit fetch ~2198 siswa full-table. Ini adalah halaman yang belum dioptimasi (P0.2 dari plan sm-nr89). Dengan 104 hit × payload besar, `/users/siswa` kemungkinan kontributor signifikan egress hari ini.
 
 **Proyeksi hari ini:** Jika sisa hari sepi, total mungkin ~300–350MB. Jika traffic lanjut, bisa mendekati 400MB.
 
 **Proyeksi cycle:** Dengan pola ini — hari Senin (awal minggu) bisa 300–400MB, hari lain 100–150MB → rata-rata ~180MB/hari → ~5.4GB/bulan. **Mepet, hampir pasti lewat 5GB** di bulan aktif dengan banyak Senin ramai.
 
-**Kesimpulan:** Fix bytes/view sudah optimal. Bottleneck berikutnya adalah **volume user yang tumbuh + P0.2 belum landing** ( pagination). Self-host atau upgrade Pro perlu dipertimbangkan serius jika user terus bertambah.
+**Kesimpulan:** Fix bytes/view sudah optimal. Bottleneck berikutnya adalah **volume user yang tumbuh + P0.2 belum landing** (`/users/siswa` pagination). Self-host atau upgrade Pro perlu dipertimbangkan serius jika user terus bertambah.
