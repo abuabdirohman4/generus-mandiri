@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleApiError } from '@/lib/errorUtils'
 import { getCurrentUserProfile, canManageMaterials } from '@/lib/accessControlServer'
-import type { MaterialItem, DayMaterialAssignment, ClassMaster } from '../../types'
+import type { MaterialItem, MaterialItemListRow, DayMaterialAssignment, ClassMaster } from '../../types'
 import { logActivity } from '@/lib/activityLogger'
 import {
     fetchAvailableClassMasters,
@@ -112,7 +112,7 @@ export async function getMaterialItems(materialTypeId: string): Promise<Material
 /**
  * Get all material items (master data view)
  */
-export async function getAllMaterialItems(): Promise<MaterialItem[]> {
+export async function getAllMaterialItems(): Promise<MaterialItemListRow[]> {
     const supabase = await createClient()
     const { data, error } = await fetchAllItems(supabase)
 
@@ -121,7 +121,7 @@ export async function getAllMaterialItems(): Promise<MaterialItem[]> {
         throw new Error('Gagal memuat semua item materi')
     }
 
-    return data || []
+    return (data || []) as unknown as MaterialItemListRow[]
 }
 
 /**
@@ -155,7 +155,7 @@ export async function getMaterialItem(id: string): Promise<MaterialItem | null> 
 /**
  * Get material items for a specific class
  */
-export async function getMaterialItemsByClass(classMasterId: string): Promise<MaterialItem[]> {
+export async function getMaterialItemsByClass(classMasterId: string): Promise<MaterialItemListRow[]> {
     const supabase = await createClient()
     const { data, error } = await fetchItemsForClass(supabase, classMasterId)
 
@@ -164,7 +164,7 @@ export async function getMaterialItemsByClass(classMasterId: string): Promise<Ma
         throw new Error('Gagal memuat item materi per kelas')
     }
 
-    return deduplicateMaterialItemsFromJunction(data || [])
+    return deduplicateMaterialItemsFromJunction(data || []) as unknown as MaterialItemListRow[]
 }
 
 /**
@@ -188,7 +188,7 @@ export async function getMaterialItemsByClassAndType(
 /**
  * Get all material items with class mappings (batch fetching to bypass 1000-row limit)
  */
-export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[]> {
+export async function getMaterialItemsWithClassMappings(): Promise<MaterialItemListRow[]> {
     const supabase = await createClient()
 
     // 1. Fetch all items
@@ -220,7 +220,7 @@ export async function getMaterialItemsWithClassMappings(): Promise<MaterialItem[
         }
     }
 
-    return mapClassMappingsToItems(itemsData || [], allMappingsData)
+    return mapClassMappingsToItems(itemsData || [], allMappingsData) as unknown as MaterialItemListRow[]
 }
 
 /**

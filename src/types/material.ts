@@ -40,7 +40,16 @@ export interface MaterialType {
 // ─── Material Items ───────────────────────────────────────────────────────────
 
 /**
- * Individual material item
+ * List-shape material item (tanpa content — untuk grid/table).
+ * content hanya di-fetch saat detail/editor dibuka (lazy via getMaterialItem).
+ * Extends MaterialItem tapi content optional (tidak di-fetch di list query).
+ */
+export interface MaterialItemListRow extends Omit<MaterialItem, 'content'> {
+  content?: string | null
+}
+
+/**
+ * Individual material item (full — includes content for detail/editor).
  * Use for: Content management, class assignments
  */
 export interface MaterialItem {
@@ -48,7 +57,7 @@ export interface MaterialItem {
   material_type_id: string
   name: string
   description: string | null
-  content: string | null
+  content?: string | null
   created_at: string
   updated_at: string
   material_type?: MaterialType
