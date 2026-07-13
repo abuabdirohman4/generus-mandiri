@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTeachers } from '@/hooks/useTeachers'
 import { useDaerah } from '@/hooks/useDaerah'
 import { useDesa } from '@/hooks/useDesa'
@@ -106,6 +106,9 @@ export function useGuruPage() {
     }
   }, [openDeleteConfirm, setDeleteImpact])
 
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<Set<string>>(new Set())
+  const clearSelection = useCallback(() => setSelectedTeacherIds(new Set()), [])
+
   const handleOrganisasiFilterChange = useCallback((organisasiFilters: { daerah: string[]; desa: string[]; kelompok: string[]; kelas: string[] }) => {
     setFilters(organisasiFilters)
   }, [setFilters])
@@ -136,6 +139,9 @@ export function useGuruPage() {
     handleShowDeleteConfirm,
     handleDelete,
     handleOrganisasiFilterChange,
-    mutate
+    mutate,
+    selectedTeacherIds,
+    setSelectedTeacherIds,
+    clearSelection
   }
 }

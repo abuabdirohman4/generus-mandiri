@@ -216,3 +216,70 @@ export async function updateTeacherMaterialPermissions(
         }
     }
 }
+
+import {
+    buildPermissionPatch,
+    splitPermissionPatch,
+    type BulkPermissionSelections,
+} from './logic'
+import { bulkUpdateTeacherPermissionsQuery } from './queries'
+import { createAdminClient } from '@/lib/supabase/server'
+
+/**
+ * Bulk update 4 permission flags across multiple teachers.
+ * Each flag tri-state: 'grant' | 'revoke' | 'none' (none = leave unchanged).
+ * Uses fetch-then-merge per teacher — no JSONB overwrite.
+ */
+export async function bulkUpdateTeacherPermissions(
+    teacherIds: string[],
+    selections: BulkPermissionSelections
+): Promise<{
+    success: boolean
+    data?: { updated: number; failed: { id: string; error: string }[] }
+    message: string
+}> {
+    try {
+        const profile = await getCurrentUserProfile()
+        if (!profile || !['superadmin', 'admin'].includes(profile.role)) {
+            return { success: false, message: 'Tidak ada akses' }
+        }
+        if (!teacherIds.length) return { success: false, message: 'Tidak ada guru dipilih' }
+
+        const patch = buildPermissionPatch(selections)
+        if (Object.keys(patch).length === 0) {
+            return { success: false, message: 'Tidak ada perubahan dipilih' }
+        }
+
+        const { basePatch, materialPatch } = splitPermissionPatch(patch)
+        const supabase = await createAdminClient()
+        const result = await bulkUpdateTeacherPermissionsQuery(supabase, teacherIds, basePatch as any, materialPatch as any)
+
+        revalidatePath('/users/guru')
+
+        void logActivity({
+            userId: profile.id,
+            action: 'bulk_update_teacher_permissions',
+            entityType: 'teacher',
+            entityId: '',
+            entityLabel: `Bulk update ${result.updated} guru`,
+            pagePath: '/users/guru',
+            metadata: { selections, count: teacherIds.length, updated: result.updated, failed: result.failed.length } as any,
+        })
+
+        const allFailed = result.failed.length === teacherIds.length
+        return {
+            success: !allFailed,
+            data: result,
+            message: allFailed
+                ? 'Gagal memperbarui semua guru'
+                : result.failed.length > 0
+                    ? `${result.updated} guru diperbarui, ${result.failed.length} gagal`
+                    : `${result.updated} guru berhasil diperbarui`,
+        }
+    } catch (error) {
+        return {
+            success: false,
+            message: handleApiError(error, 'menyimpan data', 'Gagal bulk update hak akses').message ?? 'Gagal bulk update hak akses',
+        }
+    }
+}

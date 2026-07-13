@@ -10,7 +10,8 @@ import DataFilter from '@/components/shared/DataFilter';
 import SuperadminTableSkeleton from '@/components/ui/skeleton/SuperadminTableSkeleton';
 import Button from '@/components/ui/button/Button';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import BulkPermissionsModal from './components/BulkPermissionsModal';
 
 export default function GuruManagementPage() {
   const router = useRouter();
@@ -39,8 +40,12 @@ export default function GuruManagementPage() {
     closeFormSettingsModal,
     handleDelete,
     handleOrganisasiFilterChange,
-    mutate
+    mutate,
+    selectedTeacherIds,
+    setSelectedTeacherIds,
+    clearSelection
   } = useGuruPage();
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
   useEffect(() => {
     if (!userProfile) return;
@@ -113,6 +118,26 @@ export default function GuruManagementPage() {
           onDelete={openDeleteConfirm}
           onConfigureForm={openFormSettingsModal}
           userProfile={userProfile}
+          selectable={true}
+          selectedIds={selectedTeacherIds as Set<string | number>}
+          onSelectionChange={(ids) => setSelectedTeacherIds(ids as Set<string>)}
+          renderBulkActions={(ids, clear) => (
+            <div className="flex items-center gap-3 px-4 py-2 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-700 rounded-lg">
+              <span className="text-sm text-brand-700 dark:text-brand-300 font-medium">
+                {ids.size} guru dipilih
+              </span>
+              <Button size="sm" onClick={() => setBulkModalOpen(true)}>
+                Atur Permission
+              </Button>
+              <button
+                type="button"
+                onClick={clear}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Batal
+              </button>
+            </div>
+          )}
         />
 
         {/* Modals */}
@@ -182,6 +207,16 @@ export default function GuruManagementPage() {
           currentPermissions={formSettingsModal.guru?.permissions}
           onSuccess={() => {
             mutate();
+          }}
+        />
+
+        <BulkPermissionsModal
+          isOpen={bulkModalOpen}
+          onClose={() => setBulkModalOpen(false)}
+          teacherIds={[...selectedTeacherIds]}
+          onSuccess={() => {
+            mutate();
+            clearSelection();
           }}
         />
 

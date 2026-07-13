@@ -60,6 +60,7 @@ export async function updateTeacherPermissionsQuery(
         can_hard_delete_students?: boolean
         can_multi_kelompok_laporan?: boolean
         can_manage_check_time?: boolean
+        can_bulk_assign_cross_kelompok?: boolean
     }
 ) {
     // Fetch existing permissions first, then merge (avoid overwriting other fields like can_manage_materials)
@@ -115,4 +116,37 @@ export async function updateTeacherMaterialPermissionsQuery(
             updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
+}
+
+/**
+ * Bulk update permissions for multiple teachers.
+ * Loops per teacher using existing fetch-then-merge queries (guaranteed JSONB merge).
+ * Returns { updated: number, failed: { id, error }[] }.
+ */
+export async function bulkUpdateTeacherPermissionsQuery(
+    supabase: SupabaseClient,
+    teacherIds: string[],
+    basePatch: Record<string, boolean>,
+    materialPatch: Record<string, boolean>
+): Promise<{ updated: number; failed: { id: string; error: string }[] }> {
+    const failed: { id: string; error: string }[] = []
+    let updated = 0
+
+    for (const id of teacherIds) {
+        try {
+            if (Object.keys(basePatch).length > 0) {
+                const { error } = await updateTeacherPermissionsQuery(supabase, id, basePatch as any)
+                if (error) throw error
+            }
+            if (Object.keys(materialPatch).length > 0) {
+                const { error } = await updateTeacherMaterialPermissionsQuery(supabase, id, materialPatch as any)
+                if (error) throw error
+            }
+            updated++
+        } catch (err: any) {
+            failed.push({ id, error: err?.message ?? 'Unknown error' })
+        }
+    }
+
+    return { updated, failed }
 }
