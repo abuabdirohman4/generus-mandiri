@@ -1,93 +1,113 @@
-# Plan — sm-1kz — Bulk Import Siswa via Excel
+# Plan — sm-1kz — Bulk Import Siswa via Excel (kolom lengkap)
 
 **Issue:** sm-1kz · feat: bulk import siswa via Excel
-**Date:** 2026-06-23
+**Date:** 2026-06-23 (revisi 2026-07-13: kolom lengkap + extend createStudentsBatch)
 **Author:** Claude Code (plan) → Antigravity (impl)
+**Related:** sm-2n6i (edit massal upsert — depends on issue ini)
 
 ---
 
-## 1. Goal
+## 1. Context / Goal
 
-Upload Excel → import siswa massal. Fitur: (1) download template Excel, (2) upload → parse → validasi, (3) preview sebelum commit, (4) simpan batch ke `students`. Target: onboarding ratusan siswa tanpa input manual.
+Onboarding ratusan siswa lewat input manual (mode batch existing: name + gender per baris) tidak scalable. Fitur: upload Excel → import siswa baru **dengan data lengkap** (bukan cuma nama+gender). Alur: (1) download template Excel kolom lengkap, (2) upload → parse → validasi, (3) preview ringkas sebelum commit, (4) simpan batch ke `students`.
+
+**Scope issue ini = INSERT-only.** Edit/upsert siswa existing = sm-2n6i (issue terpisah).
 
 ## 2. KEY: extend existing flow, don't rebuild
 
-Sudah ada batch-import 3-step modal yang melakukan manual entry:
-- `BatchImportModal.tsx` → `Step1Config` (pilih kelas/org) → `Step2Input` (entry baris-per-baris: name + gender) → `Step3Preview` → `createStudentsBatch(students, classId)`.
-- Store: `batchImportStore.ts` (`BatchStudent { id, name, gender, error? }`, `currentStep`, `students`).
-- **TIDAK ada** xlsx/exceljs di `package.json` — Step2Input murni manual.
+Sudah ada batch-import 3-step modal:
+- `BatchImportModal` → `Step1Config` (pilih kelas/org via dropdown + DataFilter, sudah handle scope admin) → `Step2Input` (entry manual: name + gender) → `Step3Preview` → `createStudentsBatch(students, target)`.
+- Store: `batchImportStore.ts` (`BatchStudent { id, name, gender, error?, kelompok_id?, desa_id? }`).
+- **TIDAK ada** xlsx di `package.json`.
 
-**sm-1kz = tambah jalur Excel ke Step2Input** (toggle: "Input Manual" vs "Upload Excel"), lalu reuse Step3Preview + `createStudentsBatch` apa adanya. JANGAN bikin modal/preview/commit baru.
+**sm-1kz = tambah jalur Excel ke Step2Input** (toggle manual/excel) + template kolom lengkap. Org tetap via Step1Config (JANGAN taruh UUID org di Excel).
 
-## 3. Reuse Map
+## 3. WARNING: Yang BUKAN pure-reuse (harus di-extend)
+
+`createStudentsBatch` saat ini HANYA terima `{ name, gender, kelompok_id?, desa_id? }` dan map ke `studentsToInsert` cuma 6 field. Untuk kolom lengkap:
+1. **Extend param type** `createStudentsBatch` — tambah semua kolom opsional (lihat #4). Berlaku untuk kedua path `target.type === 'class'` DAN `'master'` (bulk assign).
+2. **Extend `studentsToInsert` map** — sertakan kolom opsional; yang tak diisi → JANGAN set (biar default DB, hindari overwrite null).
+3. **Extend `BatchStudent`** di `batchImportStore.ts` — tambah field opsional lengkap.
+
+File: `src/app/(admin)/users/siswa/actions/students/actions.ts` (`createStudentsBatch`), `siswa/stores/batchImportStore.ts`.
+
+## 4. Kolom template (dari skema `students`)
+
+| Kategori | Kolom Excel (header) | DB col | Aturan |
+|---|---|---|---|
+| Wajib | Nama | `name` | tidak boleh kosong |
+| Wajib | Jenis Kelamin | `gender` | normalize L/P/Laki-laki/Perempuan |
+| Opsional | Nomor Induk | `nomor_induk` | string |
+| Opsional | Tempat Lahir | `tempat_lahir` | string |
+| Opsional | Tanggal Lahir | `tanggal_lahir` | DATE — parse DD/MM/YYYY atau Excel serial → ISO |
+| Opsional | Anak Ke | `anak_ke` | integer |
+| Opsional | Alamat | `alamat` | string |
+| Opsional | No. Telepon | `nomor_telepon` | string |
+| Opsional | Nama Ayah | `nama_ayah` | string |
+| Opsional | Nama Ibu | `nama_ibu` | string |
+| Opsional | Alamat Orang Tua | `alamat_orangtua` | string |
+| Opsional | Telepon Orang Tua | `telepon_orangtua` | string |
+| Opsional | Pekerjaan Ayah | `pekerjaan_ayah` | string |
+| Opsional | Pekerjaan Ibu | `pekerjaan_ibu` | string |
+| Opsional | Nama Wali | `nama_wali` | string |
+| Opsional | Alamat Wali | `alamat_wali` | string |
+| Opsional | Pekerjaan Wali | `pekerjaan_wali` | string |
+
+**JANGAN di template**: `id`, `class_id`/`kelompok_id`/`desa_id`/`daerah_id` (org via Step1Config), `status`, `created_at`, `updated_at`, `deleted_*`, `archived_*`, `transfer_history`.
+
+## 5. Reuse Map
 
 | Need | Reuse | File |
 |---|---|---|
-| Commit batch ke DB | `createStudentsBatch(students, classId)` | `siswa/actions/students/actions.ts` |
-| Preview + validasi tampilan | `Step3Preview.tsx` (sudah handle `error?` per row) | `siswa/components/batch-import/` |
-| Config kelas/org | `Step1Config.tsx` | same |
-| State | `batchImportStore` (`BatchStudent[]`) | `siswa/stores/batchImportStore.ts` |
-| Modal shell | `BatchImportModal.tsx` | same |
-| Button/Input | existing components | `components/form/input`, `components/ui/button` |
-
-## 4. New dependency
-
-Tambah **`xlsx`** (SheetJS) — read `.xlsx`/`.xls`/`.csv`. (`exceljs` lebih berat; `xlsx` cukup untuk parse + template write.) Client-side parse (no server upload needed — file → ArrayBuffer → rows). Konfirmasi ke user kalau prefer exceljs.
-
-⚠️ PostgREST/validation: parsed rows tetap lewat `createStudentsBatch` (server) → permission + scope check tetap jalan. Excel parse hanya di client untuk UX preview.
-
-## 5. Architecture decisions
-
-- **Logic dipisah ke pure module** `siswa/utils/excelImport.ts` (atau `batch-import/parseExcel.ts`):
-  - `parseStudentSheet(rows: any[][]): BatchStudent[]` — map kolom (Nama, Gender/JK) → BatchStudent, generate id, normalize gender (L/P, Laki/Perempuan → canonical).
-  - `validateBatchStudents(students): BatchStudent[]` — set `error` per row (nama kosong, gender invalid, duplikat dalam file). Reuse validasi yang mungkin sudah ada di Step3Preview/store; jangan duplikasi — extract kalau perlu.
-  - PURE → unit-testable tanpa file nyata (feed array).
-- **Template generator** `buildStudentTemplate(): Blob` — xlsx dengan header row (Nama, Jenis Kelamin) + 1 contoh baris + sheet note. Download via `URL.createObjectURL`.
-- Step2Input dapat mode switch (manual / excel). Mode excel: tombol "Download Template" + file input (`accept=.xlsx,.xls,.csv`) → parse → set `students` di store → lanjut Step3Preview (flow lama).
-- Tidak ada server action baru (commit pakai `createStudentsBatch`). Kalau ratusan baris → pertimbangkan chunk insert; cek apakah `createStudentsBatch` sudah batch-safe untuk N besar (lihat impl, mungkin perlu chunking — flag).
+| Config org/kelas + scope | `Step1Config.tsx` (dropdown + DataFilter) | `siswa/components/batch-import/` |
+| Preview + error/row | `Step3Preview.tsx` | same |
+| State | `batchImportStore` | `siswa/stores/batchImportStore.ts` |
+| Commit + org hierarchy | `createStudentsBatch` (EXTEND) + `buildStudentHierarchy` + `insertStudentsBatch` | `siswa/actions/students/actions.ts` |
+| Dropdown/Input/Button | `InputFilter`, `Input`, `Button` | `components/form/input`, `components/ui/button` |
 
 ## 6. Tasks (TDD per task)
 
-### Task 1 — Install xlsx
-- `npm i xlsx`. Verify build. (User jalankan kalau perlu — Claude tidak install.)
+### T1 — Install xlsx
+`npm i xlsx` (SheetJS). User jalankan (Claude tidak install). Verify build. Tambah ke Key Technologies di CLAUDE.md.
 
-### Task 2 — Parse + validate logic (TDD)
-- `batch-import/parseExcel.ts`: `parseStudentSheet`, `validateBatchStudents`, gender normalizer.
-- RED: `__tests__/parseExcel.test.ts` — header mapping, gender normalize (L/P/Laki-laki/Perempuan), empty name → error, dup in file → error, trim whitespace.
-- GREEN. `npm run test:run` → PASS.
+### T2 — Parser + validasi (pure, TDD)
+File baru `siswa/components/batch-import/parseExcel.ts`:
+- `parseStudentSheet(rows: any[][]): BatchStudent[]` — map header (#4) → BatchStudent, generate id, normalize gender, parse tanggal (DD/MM/YYYY + Excel serial → ISO), parse anak_ke → int, trim semua.
+- `validateBatchStudents(students): BatchStudent[]` — set `error` per row: nama kosong, gender invalid, tanggal invalid, anak_ke non-numeric, duplikat nama dalam file. Kolom opsional kosong bukan error.
+- Test `__tests__/parseExcel.test.ts`: header mapping lengkap, gender normalize, date parse (2 format), empty name error, invalid date error, trim, opsional kosong tetap valid, dup dalam file.
 
-### Task 3 — Template generator
-- `buildStudentTemplate()` → xlsx Blob (header + contoh). Unit test: assert sheet has header row "Nama"/"Jenis Kelamin" (parse back with xlsx).
+### T3 — Template generator (TDD)
+`buildStudentTemplate(): Blob` di `parseExcel.ts` — xlsx header semua kolom (#4) + 1 baris contoh + baris catatan format tanggal. Download via `URL.createObjectURL`. Test: parse-back, assert header "Nama"/"Jenis Kelamin"/"Tanggal Lahir" ada.
 
-### Task 4 — Step2Input mode switch + upload UI
-- Add toggle manual/excel di `Step2Input.tsx`. Excel mode: Download Template button + file input → `parseStudentSheet` → `validateBatchStudents` → `setStudents` (store) → auto-advance ke Step3 atau tetap di Step2 dengan jumlah ke-detect. Show parse errors count.
-- Pakai komponen existing; file input boleh raw `<input type=file>` (tidak ada komponen file existing — tapi cek dulu `components/form/input/` ada FileInput atau tidak).
+### T4 — Step2Input mode switch + upload UI
+`Step2Input.tsx`: toggle "Input Manual" vs "Upload Excel". Mode Excel:
+- Tombol "Download Template" → `buildStudentTemplate()`.
+- File input (`accept=.xlsx,.xls,.csv`) → ArrayBuffer → `xlsx.read` → `parseStudentSheet` → `validateBatchStudents` → `setStudents` → tampil jumlah detect + jumlah error → lanjut Step3.
+- Cek `components/form/input/` untuk FileInput dulu; kalau tak ada, raw `<input type=file>` (styled) OK.
 
-### Task 5 — Chunk commit (kalau perlu)
-- Cek `createStudentsBatch` handle N besar (ratusan). Kalau single insert → tambah chunking (mis. 100/batch) di action atau caller. Test kalau logic chunk ditambah.
+### T5 — Chunk commit (kalau perlu)
+Cek `insertStudentsBatch` handle N ratusan. Kalau single insert overflow payload → chunk 100/batch di actions. Test kalau logic chunk ditambah.
 
-### Task 6 — Verify
-- `npm run type-check` → 0. `npm run test:run` → PASS.
-- Manual: download template → isi 5 baris (1 sengaja gender salah, 1 nama kosong) → upload → preview tunjukkan 2 error, 3 valid → commit → 3 siswa masuk DB di kelas terpilih.
+### T6 — Verify
+`npm run type-check` → 0. `npm run test:run` → PASS. Manual: download template → isi 5 baris (1 gender salah, 1 nama kosong, 1 data lengkap) → upload → preview 2 error 3 valid → commit → cek DB kolom lengkap terisi + org benar sesuai Step1Config.
 
 ## 7. Out of scope
-- Import field selain name + gender (NIS, ortu, dll) — follow-up.
-- Update/upsert siswa existing (hanya create baru).
-- Server-side file storage (parse client-side).
+- Edit/upsert siswa existing → sm-2n6i.
+- Org via kolom Excel (pakai Step1Config).
+- Import field custom di luar #4.
 
 ## 8. CLAUDE.md Check
-- [ ] New dep `xlsx` → tambah ke Key Technologies list di CLAUDE.md.
-- [ ] No new table/route (extend existing batch import).
-- [ ] Kalau chunking ditambah ke `createStudentsBatch` → note di database-operations.md (bulk create).
-- [ ] Excel parse pattern baru → pertimbangkan 1-line di architecture-patterns.md kalau reusable (mis. import guru nanti).
+- [ ] `xlsx` → Key Technologies list.
+- [ ] `createStudentsBatch` extended (kolom lengkap + chunking) → note `database-operations.md`.
+- [ ] Pola Excel import → 1-line `architecture-patterns.md` kalau reusable (import guru nanti).
 
 ## 9. Commit message template
 ```
-feat(siswa): bulk import students via Excel (fixes #XX)
+feat(siswa): bulk import students via Excel with full columns (fixes #112)
 
-Add Excel upload path to batch import: downloadable template, client-side
-xlsx parse + validation, preview, commit via existing createStudentsBatch.
-Extends existing 3-step batch import modal (manual + excel modes).
+Add Excel upload path to batch import: downloadable template with all
+student columns, client-side xlsx parse + validation, ringkas preview,
+commit via extended createStudentsBatch. Org via Step1Config (not Excel).
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```

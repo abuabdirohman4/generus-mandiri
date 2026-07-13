@@ -104,7 +104,7 @@ const FORM_FIELD_KEYS: (keyof MeetingFormPatch)[] = [
 ]
 
 /** Maps tri-state selections to concrete boolean patch. Only includes 'grant'/'revoke' fields. */
-export function buildPermissionPatch(selections: BulkPermissionSelections): BasePatch & MaterialPatch {
+export function buildPermissionPatch(selections: BulkPermissionSelections): Record<string, boolean> {
     const patch: Record<string, boolean> = {}
     for (const [key, val] of Object.entries(selections)) {
         if (val === 'grant') patch[key] = true
