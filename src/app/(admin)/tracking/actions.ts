@@ -101,7 +101,13 @@ export async function getLogMetadata() {
 /**
  * Get activity summary for each user in the last 30 days
  */
-export async function getUserActivitySummary() {
+export interface GetUserActivitySummaryParams {
+  daerahId?: string
+  desaId?: string
+  kelompokId?: string
+}
+
+export async function getUserActivitySummary(params?: GetUserActivitySummaryParams) {
   try {
     const supabase = await createClient()
     const profile = await getCurrentUserProfile()
@@ -120,9 +126,14 @@ export async function getUserActivitySummary() {
       .select('id, full_name, username, role, last_active_at')
       .neq('role', 'superadmin')
 
-    if (filter?.daerah_id) profileQuery = profileQuery.eq('daerah_id', filter.daerah_id)
-    if (filter?.desa_id) profileQuery = profileQuery.eq('desa_id', filter.desa_id)
-    if (filter?.kelompok_id) profileQuery = profileQuery.eq('kelompok_id', filter.kelompok_id)
+    // UI filter (params) override role-based filter jika lebih spesifik
+    const daerahId = params?.daerahId ?? filter?.daerah_id
+    const desaId = params?.desaId ?? filter?.desa_id
+    const kelompokId = params?.kelompokId ?? filter?.kelompok_id
+
+    if (kelompokId) profileQuery = profileQuery.eq('kelompok_id', kelompokId)
+    else if (desaId) profileQuery = profileQuery.eq('desa_id', desaId)
+    else if (daerahId) profileQuery = profileQuery.eq('daerah_id', daerahId)
 
     const { data: profiles, error: profileError } = await profileQuery
     if (profileError) throw profileError

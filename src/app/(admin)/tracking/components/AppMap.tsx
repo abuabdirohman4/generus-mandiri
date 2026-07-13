@@ -225,7 +225,7 @@ export default function AppMap() {
               <div
                 key={path}
                 ref={(el) => { cardRefs.current[index] = el }}
-                className={`relative flex flex-col items-center justify-start gap-2 rounded-xl p-4 border transition-all duration-300 min-h-[90px] ${
+                className={`relative flex flex-col items-center justify-start gap-2 rounded-xl p-4 border transition-all duration-300 min-h-22.5 ${
                   isActive
                     ? 'border-green-400 dark:border-green-500 bg-green-50 dark:bg-green-900/20'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
