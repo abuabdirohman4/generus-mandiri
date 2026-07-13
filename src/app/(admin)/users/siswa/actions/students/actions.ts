@@ -388,6 +388,8 @@ export async function getStudentsPaginated(params: {
     page: number
     pageSize: number
     search?: string
+    sortColumn?: string
+    sortDirection?: 'asc' | 'desc'
     filters?: {
         daerah?: string[]
         desa?: string[]
@@ -421,6 +423,8 @@ export async function getStudentsPaginated(params: {
             page: params.page,
             pageSize: params.pageSize,
             search: params.search,
+            sortColumn: params.sortColumn,
+            sortDirection: params.sortDirection,
             filters: params.filters || {},
         }
 

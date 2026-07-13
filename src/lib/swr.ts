@@ -188,7 +188,7 @@ export const studentKeys = {
   all: ['students'] as const,
   lists: () => [...studentKeys.all, 'list'] as const,
   list: (classId?: string, userId?: string) => [...studentKeys.lists(), classId || 'all', userId || 'current'] as const,
-  listPaginated: (userId: string, page: number, pageSize: number, search?: string, filters?: string) => [...studentKeys.all, 'list-paginated', userId, page, pageSize, search || '', filters || ''] as const,
+  listPaginated: (userId: string, page: number, pageSize: number, search?: string, filters?: string, sort?: string) => [...studentKeys.all, 'list-paginated', userId, page, pageSize, search || '', filters || '', sort || ''] as const,
   details: () => [...studentKeys.all, 'detail'] as const,
   detail: (id: string, userId?: string) => [...studentKeys.details(), id, userId || 'current'] as const,
 };

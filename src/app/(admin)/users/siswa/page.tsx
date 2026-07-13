@@ -46,6 +46,7 @@ export default function SiswaPage() {
     kelompok,
     userProfile,
     loading,
+    studentsLoading,
     showModal,
     modalMode,
     selectedStudent,
@@ -65,7 +66,8 @@ export default function SiswaPage() {
     handleDataFilterChange,
     setPage,
     setPageSize,
-    setSearch
+    setSearch,
+    handleSortChange
   } = useSiswaPage()
 
   const allowedKelompokIds = useTeacherKelompokAccess()
@@ -477,6 +479,8 @@ export default function SiswaPage() {
               onPageChange={setPage}
               onSearchChange={setSearch}
               onItemsPerPageChange={setPageSize}
+              onSortChange={handleSortChange}
+              isRefetching={studentsLoading}
             />
           </>
         )}

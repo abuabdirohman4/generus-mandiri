@@ -101,6 +101,8 @@ export interface FetchStudentsParams {
   page: number
   pageSize: number
   search?: string
+  sortColumn?: string
+  sortDirection?: 'asc' | 'desc'
   filters?: {
     daerah?: string[]
     desa?: string[]
@@ -112,11 +114,22 @@ export interface FetchStudentsParams {
   teacherClassIds?: string[]
 }
 
+// Kolom students yang aman untuk sort DB langsung (bukan nested relation).
+// Nested org names (kelompok/desa/daerah) TIDAK bisa .order() reliable di PostgREST → fallback ke name.
+const SORTABLE_COLUMNS = new Set(['name', 'gender', 'created_at'])
+
+function resolveOrder(sortColumn?: string, sortDirection?: 'asc' | 'desc') {
+  const col = sortColumn && SORTABLE_COLUMNS.has(sortColumn) ? sortColumn : 'name'
+  const ascending = sortDirection !== 'desc'
+  return { col, ascending }
+}
+
 export async function fetchStudentsPaginated(
   supabase: SupabaseClient,
   params: FetchStudentsParams
 ) {
-  const { page, pageSize, search, filters, teacherClassIds } = params
+  const { page, pageSize, search, sortColumn, sortDirection, filters, teacherClassIds } = params
+  const { col: orderCol, ascending: orderAsc } = resolveOrder(sortColumn, sortDirection)
 
   // Helper to apply common filters
   const applyFilters = (q: any) => {
@@ -180,7 +193,7 @@ export async function fetchStudentsPaginated(
       
       const from = (page - 1) * pageSize
       const to = from + pageSize - 1
-      q = q.range(from, to).order('name')
+      q = q.range(from, to).order(orderCol, { ascending: orderAsc })
       
       const { data, count, error } = await q
       return { data, count: count || 0, error }
@@ -205,8 +218,11 @@ export async function fetchStudentsPaginated(
       
       const totalCount = allMergedRows.length
       
-      // Sort in memory by name
-      allMergedRows.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      // Sort in memory (name/gender text) — chunk path only supports name/gender fallback
+      allMergedRows.sort((a, b) => {
+        const cmp = (a.name || '').localeCompare(b.name || '', 'id', { sensitivity: 'base' })
+        return orderAsc ? cmp : -cmp
+      })
       
       // Paginate in memory
       const from = (page - 1) * pageSize
@@ -221,7 +237,7 @@ export async function fetchStudentsPaginated(
         .from('students')
         .select(NARROW_SELECT)
         .in('id', paginatedIds)
-        .order('name')
+        .order(orderCol, { ascending: orderAsc })
         
       return { data: finalData, count: totalCount, error: finalError }
     }
@@ -232,7 +248,7 @@ export async function fetchStudentsPaginated(
     
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
-    q = q.range(from, to).order('name')
+    q = q.range(from, to).order(orderCol, { ascending: orderAsc })
     
     const { data, count, error } = await q
     return { data, count: count || 0, error }

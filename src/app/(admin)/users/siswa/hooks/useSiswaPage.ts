@@ -49,7 +49,9 @@ export function useSiswaPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebounce(search, 300)
+  const debouncedSearch = useDebounce(search, 500)
+  const [sortColumn, setSortColumn] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null)
 
   // Combined filters for paginated query
   const paginationParams = useMemo(() => {
@@ -72,17 +74,20 @@ export function useSiswaPage() {
       page,
       pageSize,
       search: debouncedSearch,
+      sortColumn: sortColumn || undefined,
+      sortDirection: sortDirection || undefined,
       filters
     }
-  }, [page, pageSize, debouncedSearch, dataFilters, selectedClassFilter])
+  }, [page, pageSize, debouncedSearch, sortColumn, sortDirection, dataFilters, selectedClassFilter])
 
   const { data: paginatedData, isLoading: studentsLoading, mutate: mutateStudents } = useStudentsPaginated({
     ...paginationParams,
     enabled: !!userProfile
   })
 
-  // Combined loading state
-  const loading = profileLoading || classesLoading || studentsLoading
+  // loading = initial load only (profile + classes); studentsLoading = per-search/filter/page SWR refetch.
+  // JANGAN gabung studentsLoading ke sini — bikin page return <Skeleton> tiap ketik search → DataTable unmount → searchQuery hilang.
+  const loading = profileLoading || classesLoading
 
   // CRUD Mutations
   const { trigger: createStudentMutation } = useSWRMutation(
@@ -208,6 +213,13 @@ export function useSiswaPage() {
     setPage(1) // Reset to first page when filter changes
   }, [setDataFilters])
 
+  // Sort handler — server-side sort (name/gender). Reset ke page 1 tiap ganti sort.
+  const handleSortChange = useCallback((column: string | null, direction: 'asc' | 'desc' | null) => {
+    setSortColumn(column)
+    setSortDirection(direction)
+    setPage(1)
+  }, [])
+
   // Filter students based on data filters and teacher classes
   // Note: filteredStudents is now server-side paginated directly.
   // The rows returned from getStudentsPaginated are already filtered and scoped.
@@ -221,12 +233,15 @@ export function useSiswaPage() {
     page,
     pageSize,
     search,
+    sortColumn,
+    sortDirection,
     classes,
     daerah,
     desa,
     kelompok,
     userProfile,
     loading,
+    studentsLoading,
     showModal,
     modalMode,
     selectedStudent,
@@ -248,6 +263,7 @@ export function useSiswaPage() {
     handleDataFilterChange,
     setPage,
     setPageSize,
-    setSearch
+    setSearch,
+    handleSortChange
   }
 }
