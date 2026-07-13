@@ -10,8 +10,7 @@ import { preparePromotionData, validatePromotionPermission } from './logic'
 import {
     upsertEnrollment,
     updateStudentClassId,
-    deleteStudentClass,
-    upsertStudentClass,
+    replaceStudentClass,
     insertPromotionLog,
 } from './queries'
 
@@ -63,10 +62,7 @@ export async function executeGradePromotion(
             const { error: stuErr } = await updateStudentClassId(supabase, row.student_id, row.to_class_id)
             if (stuErr) throw new Error(stuErr.message)
 
-            const { error: delErr } = await deleteStudentClass(supabase, row.student_id, row.from_class_id)
-            if (delErr) throw new Error(delErr.message)
-
-            const { error: scErr } = await upsertStudentClass(supabase, row.student_id, row.to_class_id)
+            const { error: scErr } = await replaceStudentClass(supabase, row.student_id, row.to_class_id)
             if (scErr) throw new Error(scErr.message)
 
             const { error: logErr } = await insertPromotionLog(supabase, {

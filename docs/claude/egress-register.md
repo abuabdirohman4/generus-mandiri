@@ -203,3 +203,62 @@ Pembanding pra-fix (dari register sebelumnya):
 
 **Catatan Auth 10–12%:** Auth egress stabil di kisaran ini (14–22MB/hari). Relatif wajar untuk 22–23 user aktif. Middleware fix (P1.1) belum diimplementasi — masih ada potensi penghematan ~5–10MB/hari dari sana.
 
+
+---
+
+## Snapshot Aktivitas Harian — 13 Jul 2026 (Update Full Day)
+
+### Data Dashboard (screenshot 13 Jul, angka final atau mendekati akhir hari)
+
+| Sumber | MB | % |
+|--------|----|----|
+| Auth | 31.8MB | 10.7% |
+| PostgREST | 253.2MB | 85.5% |
+| Storage | 0.9MB | 0.3% |
+| Realtime | 10.1MB | 3.4% |
+| **Total** | **~296MB** | — |
+
+### Data Aktivitas (activity_logs, snapshot ~15:23 WIB / 08:23 UTC — belum full day)
+
+| Metrik | Nilai |
+|--------|-------|
+| Active users | 37 |
+| Total page views | 758 |
+|  | 299 |
+|  | 104 |
+|  | 261 |
+|  | 30 |
+|  | 19 |
+| detail-presensi | 2 |
+
+**Top users (berdasarkan activity_logs ~08:23 UTC):**
+
+| User | Role | Events | Dominan |
+|------|------|--------|---------|
+| PJ Kelompok Brangsong | teacher | 129 | /presensi (99x) |
+| PPD Baleendah | teacher | 64 | /monitoring (16x), siswa (18x) |
+| PJ Generus Sukamanah 3 | teacher | 52 | /presensi (31x) |
+| PJ Generus Margahayu Kencana | teacher | 49 | /presensi (18x), siswa (11x) |
+| PJ Generus Cipicung Timur | teacher | 39 | /presensi (15x) |
+
+### Normalisasi MB/view
+
+Snapshot activity_logs diambil saat ~758 views (belum full day). Dashboard menunjukkan ~296MB total (PostgREST 253MB).
+
+| Titik ukur | PostgREST MB | Views (estimasi) | MB/view |
+|------------|-------------|-----------------|---------|
+| 13 Jul (activity partial + dashboard partial/near-full) | 253MB | ~758–900 est. | **~0.28–0.33** |
+
+MB/view tetap konsisten di ~0.33 — sesuai tren post-fix.
+
+### Baca Situasi
+
+**13 Jul adalah hari tersibuk sejak fix** — 37 user aktif (vs 22–23 hari sebelumnya), 758 views pada ~08:23 UTC. Volume ini yang mendorong total ke ~296MB, BUKAN kebocoran atau regresi fix. MB/view tetap ~0.33 (sama persis dengan 11–12 Jul).
+
+**`/users/siswa` = 104 hits** — ini mencolok. Setiap hit fetch ~2198 siswa full-table. Ini adalah halaman yang belum dioptimasi (P0.2 dari plan sm-nr89). Dengan 104 hit × payload besar, `/users/siswa` kemungkinan kontributor signifikan egress hari ini.
+
+**Proyeksi hari ini:** Jika sisa hari sepi, total mungkin ~300–350MB. Jika traffic lanjut, bisa mendekati 400MB.
+
+**Proyeksi cycle:** Dengan pola ini — hari Senin (awal minggu) bisa 300–400MB, hari lain 100–150MB → rata-rata ~180MB/hari → ~5.4GB/bulan. **Mepet, hampir pasti lewat 5GB** di bulan aktif dengan banyak Senin ramai.
+
+**Kesimpulan:** Fix bytes/view sudah optimal. Bottleneck berikutnya adalah **volume user yang tumbuh + P0.2 belum landing** (`/users/siswa` pagination). Self-host atau upgrade Pro perlu dipertimbangkan serius jika user terus bertambah.

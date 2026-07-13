@@ -25,20 +25,21 @@ export async function updateStudentClassId(supabase: SupabaseClient, studentId: 
     return await supabase.from('students').update({ class_id: classId }).eq('id', studentId)
 }
 
-/** Hapus relasi siswa-kelas lama sebelum naik kelas. */
-export async function deleteStudentClass(supabase: SupabaseClient, studentId: string, classId: string) {
-    return await supabase
+/**
+ * Ganti SEMUA baris student_classes siswa dengan 1 baris kelas tujuan.
+ * Delete semua baris != toClassId dulu (termasuk kelas lama dan stale rows),
+ * lalu upsert baris tujuan — pastikan tepat 1 baris aktif.
+ */
+export async function replaceStudentClass(supabase: SupabaseClient, studentId: string, toClassId: string) {
+    const { error: delErr } = await supabase
         .from('student_classes')
         .delete()
         .eq('student_id', studentId)
-        .eq('class_id', classId)
-}
-
-/** Upsert relasi siswa-kelas (student_classes). */
-export async function upsertStudentClass(supabase: SupabaseClient, studentId: string, classId: string) {
+        .neq('class_id', toClassId)
+    if (delErr) return { error: delErr }
     return await supabase
         .from('student_classes')
-        .upsert({ student_id: studentId, class_id: classId }, { onConflict: 'student_id,class_id', ignoreDuplicates: true })
+        .upsert({ student_id: studentId, class_id: toClassId }, { onConflict: 'student_id,class_id', ignoreDuplicates: true })
 }
 
 /** Catat audit trail (immutable). */

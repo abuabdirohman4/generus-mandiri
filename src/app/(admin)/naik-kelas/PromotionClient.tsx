@@ -149,7 +149,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
             .map(o => ({ kind: o.kind, id: o.id }))
         if (sources.length === 0) return
         setLoadingRows(true)
-        const res = await getStudentsToPromote(sources)
+        const res = await getStudentsToPromote(sources, selectedYearId)
         if (res.success) {
             setRows(res.data)
             setSelectedCount(sources.length)
@@ -393,6 +393,11 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                             {r.from_class_name} → {r.to_class_name ?? '(tidak ada)'}
                                                         </div>
+                                                        {r.already_promoted && (
+                                                            <span className="inline-block mt-1 text-xs font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700">
+                                                                Sudah naik kelas tahun ini
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
