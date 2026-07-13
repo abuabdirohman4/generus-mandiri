@@ -83,8 +83,8 @@ export const getRateGrade = (value?: number | null) => {
     
     const info = value >= 90 ? { g: 'A', l: 'Sangat Baik' } :
                  value >= 80 ? { g: 'B', l: 'Baik' } :
-                 value >= 70 ? { g: 'C', l: 'Cukup' } : 
-                 { g: 'C', l: 'Cukup (Belum Tuntas)' };
+                 value >= 70 ? { g: 'C', l: 'Cukup' } :
+                 { g: '—', l: 'Belum Tuntas' };
 
     return {
         grade: info.g,
@@ -113,7 +113,7 @@ export const PREDIKAT_LEGEND: PredikatLegendItem[] = [
     { grade: 'A', range: '90-100', label: 'Sangat Baik', variant: 'success' },
     { grade: 'B', range: '80-89', label: 'Baik', variant: 'info' },
     { grade: 'C', range: '70-79', label: 'Cukup', variant: 'warning' },
-    { grade: 'C', range: '<70', label: 'Cukup (Belum Tuntas)', variant: 'danger' },
+    { grade: '—', range: '<70', label: 'Belum Tuntas', variant: 'danger' },
 ];
 
 /** Ambil kelas warna Tailwind untuk badge legend per variant. */

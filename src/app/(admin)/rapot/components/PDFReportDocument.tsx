@@ -358,7 +358,7 @@ const StudentReportPages = ({ student, activeYear, semester, pageSize = 'A4' }: 
                 <View style={[styles.legendBox, { width: '70%' }]}>
                     <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Keterangan Predikat dan Deskripsi:</Text>
                     <Text>A (90-100) = Sangat Baik, B (80-89) = Baik,</Text>
-                    <Text>C (70-79) = Cukup, C (&lt;70) = Cukup (Belum Tuntas)</Text>
+                    <Text>C (70-79) = Cukup, — (&lt;70) = Belum Tuntas</Text>
                 </View>
             </Page>
 
