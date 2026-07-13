@@ -56,22 +56,43 @@ export async function fetchClassesWithMasterInKelompok(
 ): Promise<{
     classes: { class_id: string; class_name: string; kelompok_id: string; kelompok_name: string; class_master_id: string }[]
 }> {
-    let classQuery = supabase
-        .from('classes')
-        .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
-    if (kelompokIds !== null) {
-        if (kelompokIds.length === 0) return { classes: [] }
-        classQuery = classQuery.in('kelompok_id', kelompokIds)
-    }
-    const { data: rawClasses } = await classQuery
-    if (!rawClasses || rawClasses.length === 0) return { classes: [] }
+    // PostgREST default cap 1000 baris — WAJIB paginasi. Superadmin (kelompokIds null)
+    // ambil SEMUA kelas (1200+) & mappings (1200+); tanpa paginasi baris >1000 hilang
+    // → kelas tujuan tak ketemu di resolve → "(tidak ada)" palsu di naik kelas.
+    const PAGE = 1000
 
-    // map class_id → class_master_id (dua-query, in-memory filter)
-    const { data: mappings } = await supabase
-        .from('class_master_mappings')
-        .select('class_id, class_master_id')
+    // classes (paginasi)
+    const rawClasses: any[] = []
+    let offset = 0
+    while (true) {
+        let classQuery = supabase
+            .from('classes')
+            .select('id, name, kelompok_id, kelompok:kelompok_id(id, name)')
+        if (kelompokIds !== null) {
+            if (kelompokIds.length === 0) return { classes: [] }
+            classQuery = classQuery.in('kelompok_id', kelompokIds)
+        }
+        const { data } = await classQuery.range(offset, offset + PAGE - 1)
+        if (!data || data.length === 0) break
+        rawClasses.push(...data)
+        if (data.length < PAGE) break
+        offset += PAGE
+    }
+    if (rawClasses.length === 0) return { classes: [] }
+
+    // map class_id → class_master_id (dua-query, in-memory filter, paginasi)
     const masterByClass = new Map<string, string>()
-    ;(mappings || []).forEach((m: any) => masterByClass.set(m.class_id, m.class_master_id))
+    offset = 0
+    while (true) {
+        const { data } = await supabase
+            .from('class_master_mappings')
+            .select('class_id, class_master_id')
+            .range(offset, offset + PAGE - 1)
+        if (!data || data.length === 0) break
+        ;(data as any[]).forEach((m: any) => masterByClass.set(m.class_id, m.class_master_id))
+        if (data.length < PAGE) break
+        offset += PAGE
+    }
 
     const classes = rawClasses
         .map((c: any) => ({
