@@ -104,7 +104,7 @@ Default to **B1**.
 
 ## 5. Server capacity / performance / storage impact (this VM)
 
-**Server spec (from `server/README.md`):** Tencent Cloud via sumopod.com · 2 vCPU · 4GB RAM (3.6GB usable) · 60GB disk · **Egress 1.54TB/mo @ 30 Mbps** · Rp90.000/mo · Public IP 43.133.130.123.
+**Server spec (from `server/README.md`):** Tencent Cloud via sumopod.com · 2 vCPU · 4GB RAM (3.6GB usable) · 60GB disk · **Egress: 1.54TB/mo quota + 30 Mbps port speed** · Rp90.000/mo · Public IP 43.133.130.123.
 
 **Current state (measured 2026-07-10):**
 - RAM: 3.6GB total, ~654MB free, **~2.3GB available** (buff/cache reclaimable). Swap 1.9GB (663MB used).
@@ -126,6 +126,8 @@ Per-user monthly egress estimate (by role scope): guru ~10MB · admin sedang ~40
 | **Self-host on this VM** | **1.54 TB** | ~157,000 | ~39,000 | **~13,000** |
 
 **Why self-host wins here:** the VM's 1.54TB is **308× the Supabase Free 5GB** and 6× Pro's 250GB — and it's already paid for. After self-hosting: (1) DB↔PostgREST↔Next.js traffic is **localhost = 0 egress**, doesn't touch the VM's 1.54TB; (2) the only VM egress is Next.js→browser, which already runs on this VM today, so self-hosting **adds nothing** to VM egress; (3) Supabase drops to Auth+Realtime only (~7%, ~28MB/day) → **fits Free tier forever, Supabase bill → 0**. Root bottleneck moves from egress → the 4GB RAM (fine for a 91MB DB).
+
+**Two distinct egress limits (do not conflate):** the VM has (a) a **monthly quota of 1.54TB** and (b) a **port speed of 30 Mbps** (instantaneous burst). These are independent — 30 Mbps sustained 24/7 = ~9.7TB/mo, but the quota caps first at 1.54TB, i.e. ~4.75 Mbps averaged over the month. **The 1.54TB quota is the binding limit**, not the 30 Mbps port speed. (Contrast: Supabase Cloud egress is a *billing* limit → 402 at overage; the VM quota is a *bandwidth* cap → throttle, app does not hard-fail.)
 
 **Added load (native install):**
 | Component | RAM | Disk | Notes |
