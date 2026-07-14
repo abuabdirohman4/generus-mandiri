@@ -38,5 +38,13 @@ export PGRST_SERVER_HOST="127.0.0.1"
 export PGRST_SERVER_PORT="$PORT"
 export PGRST_SERVER_CORS_ALLOWED_ORIGINS="http://localhost:3000"
 
+# Refresh planner statistics before starting PostgREST. After a Postgres.app
+# restart the stats catalog is empty, causing the planner to pick worst-case
+# plans for RLS-heavy queries (e.g. profiles + meetings) -> 2-6s per request.
+# VACUUM ANALYZE takes ~1-2s on the local DB and fixes this permanently.
+/Applications/Postgres.app/Contents/Versions/17/bin/psql \
+  -p "$LOCAL_PG_PORT" -d "$LOCAL_DB" -q -c "VACUUM ANALYZE;" 2>/dev/null \
+  && echo "VACUUM ANALYZE done" || echo "VACUUM ANALYZE skipped (psql not found)"
+
 echo "PostgREST -> http://127.0.0.1:$PORT (db: $LOCAL_DB)"
 exec postgrest

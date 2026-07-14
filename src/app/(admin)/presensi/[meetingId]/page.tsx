@@ -43,7 +43,8 @@ import { useDesa } from '@/hooks/useDesa'
 import { isCaberawitClass, isTeacherClass, isSambungDesaEligible } from '@/lib/utils/classHelpers'
 import { useActivityLevels } from '@/hooks/useActivityLevels'
 import MeetingOrgBreakdown from './MeetingOrgBreakdown'
-import { shouldShowBreakdown, mergeNewStudents } from './logic'
+import { shouldShowBreakdown, mergeNewStudents, reconcileRealtimeAttendance } from './logic'
+import { attendanceDebug } from './attendanceDebug'
 
 // Set Indonesian locale
 dayjs.locale('id')
@@ -70,6 +71,13 @@ export default function MeetingAttendancePage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [tableSearchQuery, setTableSearchQuery] = useState('')
   const [localAttendance, setLocalAttendance] = useState(attendance)
+  // Students the user edited MANUALLY but hasn't Saved yet. This is the real
+  // "don't let a poll clobber my edit" set — NOT a comparison against the SWR
+  // baseline (which is deliberately stale for egress: dedup 5min, no revalidate).
+  // Using the stale baseline caused false-positive "dirty" that froze a student
+  // after a poll-adopted change (the 72↔71 stuck bug). QR scans are already in
+  // the DB, so they are NOT dirty.
+  const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState<'daftar-hadir' | 'scan-qr' | 'live' | 'breakdown'>('daftar-hadir')
   const hasInitialized = useRef(false)
   const { profile: userProfile } = useUserProfile()
@@ -120,29 +128,20 @@ export default function MeetingAttendancePage() {
 
   useEffect(() => {
     if (!realtimeAttendance || Object.keys(realtimeAttendance).length === 0) return
-    // Pull the fresh server baseline (updates `attendance`, feeding the merge below + isDirty).
+    // Pull the fresh server baseline so isDirty stays accurate. Note: the merge
+    // below does NOT depend on this async mutate() completing first — it uses
+    // `attendance` (current baseline) to detect dirty students, and adopts the
+    // realtime value for non-dirty ones. This makes another device's saved
+    // change (incl. manual Daftar Hadir edits) appear live here, and keeps the
+    // header / Daftar Hadir / Presentasi counts in sync (fixes 72-vs-71).
     void mutate()
-
+    const rtHadir = Object.values(realtimeAttendance).filter((e) => e.status === 'H').length
+    attendanceDebug('realtimeHadir:', rtHadir, 'dirtyIds:', [...dirtyIds].map(id => id.slice(0, 8)))
     setLocalAttendance(prev => {
-      let hasChanges = false
-      const next = { ...prev }
-      Object.keys(realtimeAttendance).forEach(studentId => {
-        const incoming = realtimeAttendance[studentId]
-        const current = prev[studentId]
-        const baseline = attendance[studentId]
-        // A student is "locally dirty" when their local value diverges from the
-        // last server baseline — don't clobber those. Otherwise adopt the
-        // realtime value from the other device.
-        const isLocallyDirty = current && baseline
-          ? current.status !== baseline.status || current.reason !== baseline.reason
-          : !!current && !baseline
-        if (isLocallyDirty) return
-        if (!current || current.status !== incoming.status || current.reason !== incoming.reason) {
-          next[studentId] = incoming
-          hasChanges = true
-        }
-      })
-      return hasChanges ? next : prev
+      const next = reconcileRealtimeAttendance(prev, realtimeAttendance, attendance, dirtyIds)
+      const localHadir = Object.values(next).filter((e) => e.status === 'H').length
+      attendanceDebug('localHadir after reconcile:', localHadir)
+      return next
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realtimeAttendance])
@@ -156,6 +155,7 @@ export default function MeetingAttendancePage() {
         ...prev,
         [studentId]: { status, reason: undefined }
       }))
+      setDirtyIds(prev => new Set(prev).add(studentId))
     }
   }
 
@@ -165,6 +165,7 @@ export default function MeetingAttendancePage() {
         ...prev,
         [selectedStudent]: { status: 'I', reason }
       }))
+      setDirtyIds(prev => new Set(prev).add(selectedStudent))
     }
     setShowReasonModal(false)
     setSelectedStudent(null)
@@ -178,6 +179,14 @@ export default function MeetingAttendancePage() {
       ...prev,
       [studentId]: { status: 'H', reason: undefined }
     }))
+    // QR scan is already persisted → not a pending local edit. Clear any stale
+    // dirty flag so the poll can keep this student in sync afterwards.
+    setDirtyIds(prev => {
+      if (!prev.has(studentId)) return prev
+      const next = new Set(prev)
+      next.delete(studentId)
+      return next
+    })
     void mutate()
   }
 
@@ -208,6 +217,8 @@ export default function MeetingAttendancePage() {
       if (result.success) {
         sessionStorage.setItem('presensi_needs_refresh', meetingId)
         toast.success('Data presensi berhasil disimpan!')
+        // Saved → no longer pending local edits; let polls sync these again.
+        setDirtyIds(new Set())
         mutate() // Refresh SWR baseline (for isDirty + cross-device sync)
 
         // Optimistic upsert: sisipkan meeting baru / patch existing di cache list instan.
@@ -1027,7 +1038,7 @@ export default function MeetingAttendancePage() {
         ) : activeTab === 'live' && isDesaOrDaerahMeeting ? (
           <LivePresensiTab
             students={visibleStudents}
-            attendanceMap={realtimeAttendance}
+            attendanceMap={localAttendance}
             connectionStatus={realtimeStatus}
             meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined}
             meetingStartTime={meeting?.start_time}

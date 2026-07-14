@@ -1,80 +1,34 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { RealtimeChannel } from '@supabase/supabase-js'
-import { createAuthClient } from '@/lib/supabase/client'
-import {
-  applyAttendanceEvent,
-  type AttendanceMap,
-  type AttendanceChangePayload,
-} from './useAttendanceRealtime.logic'
+import { useAttendanceRealtimeCloud } from './useAttendanceRealtimeCloud'
+import { useAttendanceRealtimePolling } from './useAttendanceRealtimePolling'
+import type { AttendanceMap } from './useAttendanceRealtime.logic'
 
 export type { AttendanceMap, AttendanceEntry, AttendanceStatus } from './useAttendanceRealtime.logic'
 
 interface UseAttendanceRealtimeOptions {
-  /** Initial attendance map (e.g. from the server-fetched meeting data) to merge realtime deltas into. */
   initialAttendance?: AttendanceMap
 }
 
+const isSelfHost = () =>
+  typeof process !== 'undefined' &&
+  !!process.env.NEXT_PUBLIC_DATA_POSTGREST_URL
+
 /**
- * Subscribes to Supabase `postgres_changes` on `attendance_logs` filtered by
- * `meeting_id`, keeping a live-updated attendance map without polling/refresh.
+ * Env-gated dispatcher:
+ * - NEXT_PUBLIC_DATA_POSTGREST_URL unset -> Cloud postgres_changes (existing)
+ * - NEXT_PUBLIC_DATA_POSTGREST_URL set  -> adaptive polling to local PostgREST
  *
- * Follows the same dedicated-channel + cleanup-on-unmount pattern as
- * `usePresenceStore`/`usePresence`, but is scoped per-meeting (channel per
- * meetingId) rather than a single shared global channel, since each meeting
- * detail page only needs updates for its own meeting.
+ * Return shape is identical in both modes so consumers need no changes.
  */
 export function useAttendanceRealtime(
   meetingId: string | undefined,
   options: UseAttendanceRealtimeOptions = {}
 ) {
-  const { initialAttendance } = options
-  const [attendanceMap, setAttendanceMap] = useState<AttendanceMap>(initialAttendance ?? {})
-  const [connectionStatus, setConnectionStatus] = useState<string>('DISCONNECTED')
-  const channelRef = useRef<RealtimeChannel | null>(null)
+  const selfHost = isSelfHost()
 
-  // Merge in fresh server data (e.g. after SWR revalidation) without clobbering
-  // realtime-only updates that may not yet be reflected in the server fetch.
-  useEffect(() => {
-    if (!initialAttendance) return
-    setAttendanceMap((prev) => ({ ...initialAttendance, ...prev }))
-  }, [initialAttendance])
+  const cloud = useAttendanceRealtimeCloud(selfHost ? undefined : meetingId, options)
+  const polling = useAttendanceRealtimePolling(selfHost ? meetingId : undefined, options)
 
-  useEffect(() => {
-    if (!meetingId) return
-
-    const supabase = createAuthClient()
-    const channel = supabase
-      .channel(`attendance-realtime-${meetingId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'attendance_logs',
-          filter: `meeting_id=eq.${meetingId}`,
-        },
-        (payload) => {
-          setAttendanceMap((prev) =>
-            applyAttendanceEvent(prev, payload as unknown as AttendanceChangePayload)
-          )
-        }
-      )
-      .subscribe((status) => {
-        setConnectionStatus(status)
-      })
-
-    channelRef.current = channel
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
-      }
-      setConnectionStatus('DISCONNECTED')
-    }
-  }, [meetingId])
-
-  return { attendanceMap, connectionStatus }
+  return selfHost ? polling : cloud
 }

@@ -116,7 +116,35 @@ export default function TrackingPage() {
       }, 3000)
     }
 
-    const channel = createAuthClient().channel('tracking-logs-changes')
+    // In self-host mode (NEXT_PUBLIC_DATA_POSTGREST_URL set), Supabase Realtime
+    // reads WAL from Cloud DB which no longer receives writes → postgres_changes
+    // silently stops firing. Use interval polling instead (15s, reuses scheduleRefresh).
+    const isSelfHost = !!process.env.NEXT_PUBLIC_DATA_POSTGREST_URL
+    let pollingTimer: ReturnType<typeof setInterval> | null = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let channel: any = null
+
+    if (isSelfHost) {
+      const handleVisibility = () => {
+        if (document.visibilityState === 'hidden') {
+          if (pollingTimer) clearInterval(pollingTimer)
+          pollingTimer = null
+        } else {
+          scheduleRefresh()
+          pollingTimer = setInterval(scheduleRefresh, 15_000)
+        }
+      }
+      document.addEventListener('visibilitychange', handleVisibility)
+      pollingTimer = setInterval(scheduleRefresh, 15_000)
+
+      return () => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        if (pollingTimer) clearInterval(pollingTimer)
+        document.removeEventListener('visibilitychange', handleVisibility)
+      }
+    }
+
+    channel = createAuthClient().channel('tracking-logs-changes')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'activity_logs' },
@@ -126,7 +154,7 @@ export default function TrackingPage() {
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer)
-      createAuthClient().removeChannel(channel)
+      if (channel) createAuthClient().removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

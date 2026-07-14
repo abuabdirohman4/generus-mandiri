@@ -212,3 +212,52 @@ export function mergeNewStudents<T>(
   })
   return hasChanges ? merged : prev
 }
+
+
+/**
+ * Reconcile realtime/polled server attendance into local UI state.
+ *
+ * Rules per student:
+ * - Locally dirty (unsaved edit: local status/reason differs from the last
+ *   server baseline) -> KEEP local. Don't let a poll clobber an in-progress edit.
+ * - Not dirty -> ADOPT the incoming realtime value (this is what makes another
+ *   device's saved change appear live here, incl. manual Daftar Hadir edits).
+ * - Present in incoming but not local -> ADD it.
+ *
+ * Returns the same `local` reference when nothing changes (avoids re-render).
+ */
+export interface AttendanceLike {
+  status: string
+  reason?: string
+  check_in_time?: string | null
+}
+
+export function reconcileRealtimeAttendance<T extends AttendanceLike>(
+  local: Record<string, T>,
+  incoming: Record<string, T>,
+  _baseline: Record<string, T>,
+  pendingEditIds?: Set<string>
+): Record<string, T> {
+  let hasChanges = false
+  const next = { ...local }
+
+  Object.keys(incoming).forEach(studentId => {
+    // Skip students with an unsaved MANUAL edit (tracked explicitly by the
+    // caller). Don't derive "dirty" from a baseline comparison — the SWR
+    // baseline is intentionally stale (egress dedup), which produced
+    // false-positive dirty and froze poll-adopted students (72↔71 bug).
+    if (pendingEditIds?.has(studentId)) return
+
+    const incomingEntry = incoming[studentId]
+    const currentEntry = local[studentId]
+
+    if (!currentEntry
+        || currentEntry.status !== incomingEntry.status
+        || currentEntry.reason !== incomingEntry.reason) {
+      next[studentId] = incomingEntry
+      hasChanges = true
+    }
+  })
+
+  return hasChanges ? next : local
+}

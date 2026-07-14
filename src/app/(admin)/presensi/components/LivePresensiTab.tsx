@@ -196,9 +196,9 @@ export default function LivePresensiTab({
         <div className={`mt-2 inline-block rounded-full font-bold ${getRateStyle(percentage, 'bg')} ${getRateStyle(percentage, 'text')} ${big ? 'px-6 py-2 text-2xl' : 'px-4 py-1 text-lg'}`}>
           {percentage}%
         </div>
-        {connectionStatus !== 'SUBSCRIBED' && (
+        {connectionStatus === 'DISCONNECTED' && (
           <div className="mt-3 text-sm text-yellow-600 dark:text-yellow-400">
-            {connectionStatus === 'DISCONNECTED' ? 'Menghubungkan...' : `Status: ${connectionStatus}`}
+            Menghubungkan...
           </div>
         )}
         {!!meetingStartTime && (
