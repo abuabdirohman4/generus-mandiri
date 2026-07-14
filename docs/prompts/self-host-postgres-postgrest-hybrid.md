@@ -57,5 +57,27 @@ Migrate the app's **data plane** (PostgreSQL + PostgREST) off Supabase Cloud ont
 - Any deviation from approach B1, with reason.
 - A short "ready for server cutover?" checklist mapped to Phase 2 in the plan.
 
+## Server context — READ BEFORE Phase 2 (server cutover)
+
+*Captured from server docs 2026-07-14. The app is ALREADY live on the VM — this is a **data-plane add**, not a fresh deploy. Verify against source of truth first: `ssh` in and `cat server/docs/{deployment-generus-mandiri,apps,tools,swap,rollback}.md` — docs may have moved since.*
+
+**Existing deployment (do not re-invent):**
+- App generus-mandiri is **production-live on the VM since 2026-06-25** (Next.js 15 standalone). Vercel stays alive as auto-deploy fallback.
+- Deploy pipeline: `git push master` → **GitHub Actions builds in the cloud** (never on the VM — avoids OOM) → rsync `.next/standalone/` → `ssh pm2 reload`. The **server only receives build artifacts — no source, no `npm install` on the VM.**
+- Artifact dir: `/home/ubuntu/apps/generus-mandiri/` (`server.js`, `.env` perm 600, `ecosystem.config.js` auto-loads `.env`). rsync uses `--delete --exclude='.env' --exclude ecosystem.config.js`.
+- Serving path: `nginx :443 (Let's Encrypt) → pm2 → node :3000`. Restart app = `pm2 reload generus-mandiri`. nginx = `sudo nginx -t && sudo systemctl reload nginx`.
+- Installed: Node **20.20.2** (nvm), pm2 7.0.1, nginx 1.24, certbot 2.9. **No Docker on the VM** → Postgres + PostgREST must be **native install** (systemd), not containers. Bind both to `127.0.0.1` only — do NOT open ufw for them (port 3000 already closed post-cutover; ufw = OpenSSH + Nginx Full).
+
+**🚨 HeadersOverflow — directly affects PostgREST cutover:**
+- Existing prod bug: `.in('student_id', [~773 UUIDs])` builds a **~30KB URL**; Node's default 16KB header limit → `UND_ERR_HEADERS_OVERFLOW`. Current band-aid: `NODE_OPTIONS=--max-http-header-size=65536` in `ecosystem.config.js` (64KB).
+- **Self-hosted PostgREST uses the SAME URL-based filter** (`?id=in.(...)`) and has its own URL/header ceilings. Moving to local PostgREST does NOT fix this and may reintroduce it. Phase 2 MUST: (1) confirm PostgREST + any proxy/undici hop between Next.js↔PostgREST tolerates large URLs/headers; (2) land the **still-pending permanent fix** — batch the 11 raw `.in()` calls in `src/app/(admin)/laporan/actions/reports/materiQueries.ts` (lines 113, 133, 143-144, 272, 325-326, 413-414, 506-507) via `fetchInBatches()` (chunk 100) from `src/lib/utils/batchFetching.ts`. `queries.ts` already uses it; `materiQueries.ts` was missed. Treat this as a **required pre-cutover quick-win**, not optional.
+
+**🚨 Rollback gap — the biggest cutover risk, resolve in the plan BEFORE flipping:**
+- Documented rollback = flip DNS `generus` A-record `43.133.130.123` (VM) → `76.76.21.21` (Vercel), TTL 300, ~5 min. Vercel auto-deploys every push so its *code* is always fresh.
+- **But the Vercel build points at Supabase Cloud for its data plane** — it has no knowledge of the VM's local PostgREST. So if the VM data plane breaks and you roll back to Vercel, the app serves against **Supabase Cloud data**. That is only safe if Supabase Cloud is kept live and in sync. A one-way cutover (VM Postgres becomes the sole writable DB, Supabase Cloud goes stale) means **DNS rollback = data rollback to a stale DB = data-loss window**, not a clean failover. Phase 2 MUST decide and document one: (a) keep Supabase Cloud as a synced read-fallback (logical replication VM→Cloud), (b) accept rollback = read-only/stale mode with a documented reconcile step, or (c) dual-write during a bake period. Do not cutover until this is chosen.
+
+**Swap / OOM margin:**
+- Swap is **1.9GB** (`/swap.img`) today. With Postgres + PostgREST + Node co-resident on 3.6GB RAM, **bump swap to 4GB** as an OOM net before cutover (run at low load — `swapoff` needs RAM to hold current swap contents): `swapoff` → `fallocate -l 4G` → `chmod 600` → `mkswap` → `swapon`; ensure `/etc/fstab` has `/swap.img none swap sw 0 0`. Keep Postgres lean regardless (`shared_buffers=192MB`, `max_connections=20`) — RAM, not egress, is the bottleneck.
+
 ## Out of scope (do not do now)
 - Server / VM changes, systemd, native install, production `.env`, deploy, data cutover. Those are Phase 2 (server), done only after local is proven.
