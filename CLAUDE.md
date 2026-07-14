@@ -44,9 +44,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🤖 Execution Mode Selection (MANDATORY)
 
-**Tiap fitur/bug baru, urutan WAJIB:** (1) explore → (2) plan file `docs/plans/YYYY-MM-DD-<sm-id>-<feature>.md` (1 issue=1 file, JANGAN `~/.claude/plans/`) → (3) `bd create` + rename sesi `/rename <sm-id> <slug>` → (4) `gh issue create` title `[sm-id] type: desc` → (5) `bd update <id> --notes "GH-#XX: <url>"` → (6) prompt file `docs/prompts/<date>-<sm-id>-<feature>.md` → (7) output pilihan **A** (Antigravity, ≥3 file/≥100 baris) / **B** (direct, ≤2 file & <100 baris).
+**Tiap fitur/bug baru, urutan WAJIB:** (1) explore → (2) plan file `docs/plans/YYYY-MM-DD-<sm-id>-<feature>.md` (1 issue=1 file, JANGAN `~/.claude/plans/`) → (3) `bd create` + rename sesi `/rename <sm-id> <slug>` → (4) `gh issue create` title `[sm-id] type: desc` → (5) `bd update <id> --notes "GH-#XX: <url>"` → (6) prompt file `docs/prompts/YYYY-MM-DD-<sm-id>-<feature>.md` → (7) output pilihan **A** (Antigravity, ≥3 file/≥100 baris) / **B** (direct, ≤2 file & <100 baris).
 
 > `bd` & `gh` BOLEH dieksekusi langsung (beda dari git — lihat Git Workflow). JANGAN pakai EnterPlanMode untuk plan (simpan ke `~/.claude/plans/`, salah lokasi) — pakai Read/Write/Edit langsung.
+
+> **WAJIB prefix tanggal (`YYYY-MM-DD-`) untuk SEMUA file di `docs/plans/` & `docs/prompts/`** — termasuk file infra/DevOps/non-fitur yang dibuat MANUAL di luar new-feature-workflow (mis. cutover VM, self-host). Tanpa prefix = file tercecer, tak urut kronologis. Ambil tanggal dari hari pembuatan.
 
 **Roles**: Claude Code = plan + issue + review · Antigravity = TDD + implementasi · User = git.
 **📖 Full SOP + format A/B + plan format: READ [`docs/claude/antigravity-workflow.md`](docs/claude/antigravity-workflow.md)**
