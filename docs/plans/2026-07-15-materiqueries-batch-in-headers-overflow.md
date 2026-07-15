@@ -53,6 +53,13 @@ Band-aid Node cuma menutup sisi klien HTTP header, bukan batas URL PostgREST. Ja
 **Solusi:** chunk dimensi `student_id` (yang 773, offender utama), sambil tetap terapkan
 filter `material_item_id` di tiap chunk. Tambah helper di `batchFetching.ts`:
 
+> **Catatan (verifikasi 2026-07-15):** asumsi ini benar KARENA `student_id` (773/daerah) >>
+> `material_item_id` (jumlah item materi per semester, umumnya puluhan). Chunk 100 siswa kira-kira 3.6KB
+> URL (~36 byte/UUID), budget 64KB longgar. TAPI kalau `material_item_id` suatu saat besar
+> (mis. mode kumulatif lintas-semester banyak materi), 100 siswa + materi-besar bisa mendekati
+> batas lagi. Aman untuk sekarang; kalau helper mau generik, chunk **kolom terbesar** dinamis
+> (bukan hard-code `student_id`). Untuk fix ini, hard-code `student_id` cukup.
+
 ```ts
 /**
  * Batch by one column while keeping extra filters applied per chunk.

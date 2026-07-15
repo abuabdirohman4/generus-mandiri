@@ -94,15 +94,19 @@ Before touching anything, report to the user:
 
 ## Step 2 — Pre-cutover quick-wins (land BEFORE the flip)
 
-1. **HeadersOverflow permanent fix (code — via PR, not pushed from VM).** Batch the 11 raw
-   `.in()` calls in `src/app/(admin)/laporan/actions/reports/materiQueries.ts` (lines 113, 133,
-   143–144, 272, 325–326, 413–414, 506–507) via `fetchInBatches()` (chunk 100) from
-   `src/lib/utils/batchFetching.ts` — `queries.ts` already does this; `materiQueries.ts` was
-   missed. Self-hosted PostgREST uses the same `?id=in.(...)` URL filter and has its own URL/header
-   ceiling, so this is **required**, not optional. If done on local (recommended), it deploys to
-   the VM via the normal `git push master` → CI → rsync pipeline. Confirm the deployed artifact
-   already contains it before flipping, OR keep the `--max-http-header-size=65536` band-aid in
-   `ecosystem.config.js` as belt-and-suspenders (keep it regardless).
+1. **HeadersOverflow permanent fix (code — via PR, not pushed from VM).** Batch the raw large
+   `.in()` calls in `src/app/(admin)/laporan/actions/reports/materiQueries.ts` — the 4 compound
+   `student_id`+`material_item_id` progress queries (L143/144, 325/326, 413/414, 506/507) need a
+   new `fetchInBatchesWithFilter()` helper (chunk `student_id`, keep `material_item_id` filter
+   per chunk); the 3 single `.in('id', ...)` (L113, 133, 272) use existing `fetchInBatches()`;
+   the 5 `class_master_id` are bounded-small (skip). `queries.ts` already batches; `materiQueries.ts`
+   was missed. Self-hosted PostgREST uses the same `?id=in.(...)` URL filter with its own URL/header
+   ceiling, so this is **required**, not optional. **Full brief + per-line table:**
+   `docs/prompts/2026-07-15-materiqueries-batch-in-headers-overflow.md` + plan
+   `docs/plans/2026-07-15-materiqueries-batch-in-headers-overflow.md`. Done on local (recommended),
+   it reaches the VM via `git push master` → CI → rsync. Confirm the deployed artifact contains it
+   before flipping, AND keep the `--max-http-header-size=65536` band-aid in `ecosystem.config.js`
+   (belt-and-suspenders, keep regardless).
 2. **Confirm PostgREST tolerates large URLs/headers.** PostgREST/Warp default request-line and
    header limits must accommodate the ~30KB `in.(...)` URLs. Verify with a large `?id=in.(...)`
    curl against the VM PostgREST once it's up (Step 4); if it 414/431s, front it so the limit is raised.
