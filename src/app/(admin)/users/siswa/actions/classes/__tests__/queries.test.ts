@@ -50,7 +50,8 @@ describe('fetchClassMasterMappings', () => {
         ]
         const mastersData = [{ id: 'm1', sort_order: 2 }]
 
-        const mockMappingsSelect = vi.fn().mockResolvedValue({ data: allMappingsData })
+        const mockMappingsRange = vi.fn().mockResolvedValue({ data: allMappingsData })
+        const mockMappingsSelect = vi.fn().mockReturnValue({ range: mockMappingsRange })
 
         const mockMastersIn = vi.fn().mockResolvedValue({ data: mastersData })
         const mockMastersSelect = vi.fn().mockReturnValue({ in: mockMastersIn })
@@ -83,7 +84,7 @@ describe('fetchClassMasterMappings', () => {
 
         const supabase = {
             from: vi.fn()
-                .mockReturnValueOnce({ select: vi.fn().mockResolvedValue({ data: allMappingsData }) })
+                .mockReturnValueOnce({ select: vi.fn().mockReturnValue({ range: vi.fn().mockResolvedValue({ data: allMappingsData }) }) })
                 .mockReturnValueOnce({ select: vi.fn().mockReturnValue({ in: vi.fn().mockResolvedValue({ data: mastersData }) }) }),
         } as any
 
@@ -95,7 +96,7 @@ describe('fetchClassMasterMappings', () => {
         // If DB returns no mappings at all, second query should not be made
         const supabase = {
             from: vi.fn()
-                .mockReturnValueOnce({ select: vi.fn().mockResolvedValue({ data: [] }) }),
+                .mockReturnValueOnce({ select: vi.fn().mockReturnValue({ range: vi.fn().mockResolvedValue({ data: [] }) }) }),
         } as any
 
         const result = await fetchClassMasterMappings(supabase, ['c1'])

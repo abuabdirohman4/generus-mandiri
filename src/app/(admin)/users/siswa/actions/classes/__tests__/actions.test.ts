@@ -22,6 +22,7 @@ function makeQueryBuilder(resolvedValue: any = { data: null, error: null }) {
     b.in = vi.fn().mockReturnValue(b)
     b.is = vi.fn().mockReturnValue(b)
     b.order = vi.fn().mockReturnValue(b)
+    b.range = vi.fn().mockReturnValue(b)
     b.limit = vi.fn().mockReturnValue(b)
     b.single = terminalMock
     b.maybeSingle = terminalMock

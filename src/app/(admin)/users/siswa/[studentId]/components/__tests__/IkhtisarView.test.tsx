@@ -9,6 +9,11 @@ vi.mock('swr', () => ({
     default: vi.fn(),
 }))
 
+// Mock EnrollmentHistory to avoid its own useSWR call
+vi.mock('../EnrollmentHistory', () => ({
+    default: () => <div data-testid="enrollment-history" />
+}))
+
 // Mock overview action
 vi.mock('../../actions/overview', () => ({
     getStudentOverview: vi.fn(),

@@ -318,6 +318,6 @@ describe('fetchStudentsPaginated', () => {
         expect(mockIlike).toHaveBeenCalledWith('name', '%budi%')
         expect(mockEqStatus).toHaveBeenCalledWith('status', 'graduated')
         expect(mockRange).toHaveBeenCalledWith(20, 39) // page 2, size 20 (20-39)
-        expect(mockOrder).toHaveBeenCalledWith('name')
+        expect(mockOrder).toHaveBeenCalledWith('name', { ascending: true })
     })
 })
