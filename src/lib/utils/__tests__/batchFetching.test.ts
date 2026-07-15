@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchAttendanceLogsInBatches } from '../batchFetching'
+import { fetchAttendanceLogsInBatches, fetchInBatchesWithFilter } from '../batchFetching'
 import { createMockSupabaseClient } from '@/test/mocks/supabase'
 
 describe('batchFetching', () => {
@@ -127,5 +127,109 @@ describe('batchFetching', () => {
             expect(result.data).toBeNull()
             expect(result.error).toEqual(error)
         })
+    })
+})
+
+
+describe('fetchInBatchesWithFilter', () => {
+    it('returns empty array when chunkIds is empty', async () => {
+        const mockSupabase = { from: vi.fn() }
+        const result = await fetchInBatchesWithFilter(mockSupabase, 'student_material_progress', 'student_id', [], 'student_id, nilai')
+        expect(result.data).toEqual([])
+        expect(result.error).toBeNull()
+        expect(mockSupabase.from).not.toHaveBeenCalled()
+    })
+
+    it('chunks large array and unions results (chunk-union == non-chunk)', async () => {
+        // 250 student IDs → should split into 3 chunks (100, 100, 50)
+        const studentIds = Array.from({ length: 250 }, (_, i) => `s-${i}`)
+        const allRows = studentIds.map(id => ({ student_id: id, material_item_id: 'm1', nilai: 80, done: false }))
+
+        const mockMaterialIds = ['m1', 'm2']
+        let callCount = 0
+        const mockClient = {
+            from: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                    in: vi.fn().mockImplementation((_col: string, ids: string[]) => ({
+                        in: vi.fn().mockResolvedValue({
+                            data: allRows.filter(r => ids.includes(r.student_id)),
+                            error: null,
+                        }),
+                    })),
+                }),
+            }),
+        }
+
+        const result = await fetchInBatchesWithFilter(
+            mockClient,
+            'student_material_progress',
+            'student_id',
+            studentIds,
+            'student_id, material_item_id, nilai, done',
+            (q) => q.in('material_item_id', mockMaterialIds),
+        )
+
+        expect(result.error).toBeNull()
+        expect(result.data).toHaveLength(250)
+        // All student IDs present
+        const returnedIds = result.data!.map((r: any) => r.student_id).sort()
+        expect(returnedIds).toEqual([...studentIds].sort())
+        // Called 3 times (chunks of 100, 100, 50)
+        expect(mockClient.from).toHaveBeenCalledTimes(3)
+    })
+
+    it('propagates error from any chunk', async () => {
+        const studentIds = Array.from({ length: 5 }, (_, i) => `s-${i}`)
+        const mockError = { message: 'DB error', code: '500' }
+
+        const mockClient = {
+            from: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                    in: vi.fn().mockReturnValue({
+                        in: vi.fn().mockResolvedValue({ data: null, error: mockError }),
+                    }),
+                }),
+            }),
+        }
+
+        const result = await fetchInBatchesWithFilter(
+            mockClient,
+            'student_material_progress',
+            'student_id',
+            studentIds,
+            'student_id, nilai',
+            (q) => q.in('material_item_id', ['m1']),
+        )
+
+        expect(result.data).toBeNull()
+        expect(result.error).toEqual(mockError)
+    })
+
+    it('single chunk (<= chunkSize) produces same result as direct query', async () => {
+        const studentIds = ['s1', 's2', 's3']
+        const expectedRows = studentIds.map(id => ({ student_id: id, nilai: 90, done: true }))
+
+        const mockClient = {
+            from: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                    in: vi.fn().mockReturnValue({
+                        in: vi.fn().mockResolvedValue({ data: expectedRows, error: null }),
+                    }),
+                }),
+            }),
+        }
+
+        const result = await fetchInBatchesWithFilter(
+            mockClient,
+            'student_material_progress',
+            'student_id',
+            studentIds,
+            'student_id, nilai, done',
+            (q) => q.in('material_item_id', ['m1', 'm2']),
+        )
+
+        expect(result.data).toEqual(expectedRows)
+        expect(result.error).toBeNull()
+        expect(mockClient.from).toHaveBeenCalledTimes(1)
     })
 })

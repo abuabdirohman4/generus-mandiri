@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchInBatches, fetchInBatchesWithFilter } from '@/lib/utils/batchFetching'
 import { getMonthName } from '@/app/(admin)/materi/types'
 
 export interface MateriReportFilters {
@@ -107,12 +108,15 @@ export async function fetchMateriReport(
     // Apply category filter to tableItemIds if needed
     let filteredTableItemIds = tableItemIds
     if (filters.categoryId && tableItemIds.length > 0) {
-        const { data: catItems } = await supabase
-            .from('material_items')
-            .select('id, material_types!inner(material_categories!inner(id))')
-            .in('id', tableItemIds)
-            .eq('material_types.material_categories.id', filters.categoryId)
-        filteredTableItemIds = (catItems || []).map((m: any) => m.id)
+        const { data: catItems } = await fetchInBatches(
+            supabase,
+            'material_items',
+            tableItemIds,
+            'id, material_types!inner(material_categories!inner(id))',
+        )
+        filteredTableItemIds = (catItems || [])
+            .filter((m: any) => m.material_types?.material_categories?.id === filters.categoryId)
+            .map((m: any) => m.id)
     }
 
     if (filteredTableItemIds.length === 0) {
@@ -120,30 +124,29 @@ export async function fetchMateriReport(
     }
 
     // Step 4: Get material item details with type + category (for table)
-    const { data: materialItems } = await supabase
-        .from('material_items')
-        .select(`
-            id,
-            name,
-            material_types!inner(
-                name,
-                material_categories!inner(id, name)
-            )
-        `)
-        .in('id', filteredTableItemIds)
+    const { data: materialItems } = await fetchInBatches(
+        supabase,
+        'material_items',
+        filteredTableItemIds,
+        'id, name, material_types!inner(name, material_categories!inner(id, name))',
+    )
 
     if (!materialItems || materialItems.length === 0) {
         return { rows: [], siswaRows: [], summary: { total_materials: 0, avg_completion_rate: 0, class_name: className } }
     }
 
     // Step 5: Get progress for all students × all table material items
-    const { data: progress } = await supabase
-        .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, done')
-        .in('student_id', studentIds)
-        .in('material_item_id', filteredTableItemIds)
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
+    const { data: progress } = await fetchInBatchesWithFilter(
+        supabase,
+        'student_material_progress',
+        'student_id',
+        studentIds,
+        'student_id, material_item_id, nilai, done',
+        (q) => q
+            .in('material_item_id', filteredTableItemIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester),
+    )
 
     // Step 6: Aggregate per material_item
     const progressByMaterial = new Map<string, any[]>()
@@ -261,19 +264,16 @@ async function getMaterialItemIds(
 
     // 3. Filter by category if provided
     if (categoryId) {
-        const { data: materialItems } = await supabase
-            .from('material_items')
-            .select(`
-                id,
-                material_types!inner(
-                    material_categories!inner(id)
-                )
-            `)
-            .in('id', materialItemIds)
-            .eq('material_types.material_categories.id', categoryId)
-
-        if (!materialItems || materialItems.length === 0) return []
-        materialItemIds = materialItems.map((m: any) => m.id)
+        const { data: categoryFilteredItems } = await fetchInBatches(
+            supabase,
+            'material_items',
+            materialItemIds,
+            'id, material_types!inner(material_categories!inner(id))',
+        )
+        const filtered = (categoryFilteredItems || [])
+            .filter((m: any) => m.material_types?.material_categories?.id === categoryId)
+        if (filtered.length === 0) return []
+        materialItemIds = filtered.map((m: any) => m.id)
     }
 
     return materialItemIds
@@ -319,13 +319,17 @@ export async function fetchMateriReportBySiswa(
         : materialItemIds.length
 
     // Step 3: Get progress per student
-    const { data: progressList } = await supabase
-        .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, done')
-        .in('student_id', studentIds)
-        .in('material_item_id', materialItemIds)
-        .eq('academic_year_id', filters.academicYearId)
-        .eq('semester', filters.semester)
+    const { data: progressList } = await fetchInBatchesWithFilter(
+        supabase,
+        'student_material_progress',
+        'student_id',
+        studentIds,
+        'student_id, material_item_id, nilai, done',
+        (q) => q
+            .in('material_item_id', materialItemIds)
+            .eq('academic_year_id', filters.academicYearId)
+            .eq('semester', filters.semester),
+    )
 
     // Step 4: Aggregate per student
     const progressByStudent = new Map<string, any[]>()
@@ -407,13 +411,17 @@ export async function getMateriCumulativeProgress(
     // 4. Get progress for this semester, filtered to only semester material IDs
     // (prevents counting progress from other semesters/materials from inflating the chart)
     const allSemesterMaterialIds = [...new Set(targets.map((t: any) => t.material_item_id as string))]
-    const { data: progress } = await supabase
-        .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, done')
-        .in('student_id', studentIds)
-        .in('material_item_id', allSemesterMaterialIds)
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
+    const { data: progress } = await fetchInBatchesWithFilter(
+        supabase,
+        'student_material_progress',
+        'student_id',
+        studentIds,
+        'student_id, material_item_id, nilai, done',
+        (q) => q
+            .in('material_item_id', allSemesterMaterialIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester),
+    )
 
     // 5. Define month range for the semester
     const semesterMonths = semester === 1 ? [7, 8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6]
@@ -500,13 +508,17 @@ export async function getMateriMonthlyChart(
 
     // Get progress for this semester, filtered to only targeted material IDs
     const allTargetedMaterialIds = [...new Set(targets.map((t: any) => t.material_item_id as string))]
-    const { data: progress } = await supabase
-        .from('student_material_progress')
-        .select('student_id, material_item_id, nilai, done')
-        .in('student_id', studentIds)
-        .in('material_item_id', allTargetedMaterialIds)
-        .eq('academic_year_id', academicYearId)
-        .eq('semester', semester)
+    const { data: progress } = await fetchInBatchesWithFilter(
+        supabase,
+        'student_material_progress',
+        'student_id',
+        studentIds,
+        'student_id, material_item_id, nilai, done',
+        (q) => q
+            .in('material_item_id', allTargetedMaterialIds)
+            .eq('academic_year_id', academicYearId)
+            .eq('semester', semester),
+    )
 
     const semesterMonths = semester === 1 ? [7, 8, 9, 10, 11, 12] : [1, 2, 3, 4, 5, 6]
     const result: MateriMonthlyPoint[] = []

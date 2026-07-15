@@ -149,3 +149,43 @@ export async function fetchAttendanceLogsInBatches(
         return { data: null, error: error }
     }
 }
+
+/**
+ * Batch by one column while keeping extra filters applied per chunk.
+ * Use when a query filters by TWO .in() columns simultaneously (compound filter).
+ * Chunks `chunkIds` (e.g. student_id ~773 UUIDs) into `chunkSize`, applies
+ * `applyExtraFilter` (e.g. .in('material_item_id', ids)) on each chunk in parallel.
+ * PostgREST encodes .in() as query string — large arrays exceed URL/header limits.
+ */
+export async function fetchInBatchesWithFilter(
+    supabaseClient: any,
+    table: string,
+    chunkColumn: string,
+    chunkIds: string[],
+    selectQuery: string,
+    applyExtraFilter: (q: any) => any = (q) => q,
+    chunkSize = 100,
+): Promise<{ data: any[] | null; error: any }> {
+    if (!chunkIds || chunkIds.length === 0) return { data: [], error: null }
+    const chunks: string[][] = []
+    for (let i = 0; i < chunkIds.length; i += chunkSize) {
+        chunks.push(chunkIds.slice(i, i + chunkSize))
+    }
+    try {
+        const results = await Promise.all(
+            chunks.map(chunk =>
+                applyExtraFilter(
+                    supabaseClient.from(table).select(selectQuery).in(chunkColumn, chunk)
+                )
+            )
+        )
+        const allData: any[] = []
+        for (const r of results) {
+            if (r.error) return { data: null, error: r.error }
+            if (r.data) allData.push(...r.data)
+        }
+        return { data: allData, error: null }
+    } catch (error: any) {
+        return { data: null, error }
+    }
+}
