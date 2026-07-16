@@ -39,6 +39,7 @@ export interface PaginatedStudentRow {
   daerah_name?: string
   desa_name?: string
   kelompok_name?: string
+  student_classes?: Array<{ classes: { id: string; name: string } | null }>
 }
 
 /**

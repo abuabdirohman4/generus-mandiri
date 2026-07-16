@@ -104,6 +104,10 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
         )
 
         result.sort((a, b) => {
+            const sortA = a.sort_order ?? 9999
+            const sortB = b.sort_order ?? 9999
+            if (sortA !== sortB) return sortA - sortB
+            
             const cmp = a.class_name.localeCompare(b.class_name)
             return cmp !== 0 ? cmp : (a.kelompok_name || '').localeCompare(b.kelompok_name || '')
         })
@@ -116,6 +120,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
                 daerahNames: Set<string>
                 totalStudents: number
                 hasMeeting: boolean
+                sort_order: number
             }>()
 
             result.forEach(item => {
@@ -127,6 +132,7 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
                         daerahNames: new Set(),
                         totalStudents: 0,
                         hasMeeting: false,
+                        sort_order: 9999,
                     })
                 }
                 const combined = combinedMap.get(item.class_name)!
@@ -136,6 +142,9 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
                 if (item.daerah_name) combined.daerahNames.add(item.daerah_name)
                 combined.totalStudents += item.student_count || 0
                 if (item.has_meeting) combined.hasMeeting = true
+                if (typeof item.sort_order === 'number' && item.sort_order < combined.sort_order) {
+                    combined.sort_order = item.sort_order
+                }
             })
 
             result = Array.from(combinedMap.entries()).map(([className, data]) => {
@@ -155,7 +164,12 @@ export async function getClassMonitoring(filters: ClassMonitoringFilters) {
                 return combinedAggregateResult(className, { ...data, totalStudents: allEnrolledStudents.size }, filteredLogs, meetingMap, filters.uniqueDaysMode)
             })
 
-            result.sort((a, b) => a.class_name.localeCompare(b.class_name))
+            result.sort((a, b) => {
+                const sortA = a.sort_order ?? 9999
+                const sortB = b.sort_order ?? 9999
+                if (sortA !== sortB) return sortA - sortB
+                return a.class_name.localeCompare(b.class_name)
+            })
         }
 
         const filteredResult = result.filter(item => (item.student_count ?? 0) > 0)

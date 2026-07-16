@@ -238,7 +238,11 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
                 const { data: students, error } = await fetchStudentsByIds(adminClient, finalStudentIds)
                 if (error) throw error
 
-                const missing = collectMissingClassIds(students || [])
+                // fetchStudentsByIds sengaja tidak filter status (dipakai bersama snapshot presensi).
+                // Post-filter di sini: modal assign hanya untuk siswa aktif.
+                const activeStudents = (students || []).filter((s: any) => !s.status || s.status === 'active')
+
+                const missing = collectMissingClassIds(activeStudents)
                 let classNameMap = new Map<string, string>()
                 if (missing.size > 0) {
                     const { data: classesData } = await fetchClassNames(adminClient, Array.from(missing))
@@ -247,14 +251,18 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
                     }
                 }
 
-                const result = await transformStudentsData(students || [], classNameMap)
+                const result = await transformStudentsData(activeStudents, classNameMap)
                 return { success: true, data: result }
             }
 
             const { data: students, error: studentsError } = await fetchStudentsByIds(adminClient, studentIds)
             if (studentsError) throw studentsError
 
-            const missing = collectMissingClassIds(students || [])
+            // fetchStudentsByIds sengaja tidak filter status (dipakai bersama snapshot presensi).
+            // Post-filter di sini: modal assign hanya untuk siswa aktif.
+            const activeStudents = (students || []).filter((s: any) => !s.status || s.status === 'active')
+
+            const missing = collectMissingClassIds(activeStudents)
             let classNameMap = new Map<string, string>()
             if (missing.size > 0) {
                 const { data: classesData } = await fetchClassNames(adminClient, Array.from(missing))
@@ -263,7 +271,7 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
                 }
             }
 
-            const result = await transformStudentsData(students || [], classNameMap)
+            const result = await transformStudentsData(activeStudents, classNameMap)
             return { success: true, data: result }
 
         } else if (profile?.role === 'teacher' && (profile.kelompok_id || profile.desa_id || profile.daerah_id)) {
@@ -291,6 +299,7 @@ export async function getAllStudents(classId?: string): Promise<{ success: boole
           kelompok:kelompok_id(name)
         `)
                 .is('deleted_at', null)
+                .or('status.eq.active,status.is.null')
                 .order('name')
 
             if (profile.kelompok_id) {

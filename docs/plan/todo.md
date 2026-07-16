@@ -1,3 +1,7 @@
+- Di filter assign, belum ilangin yang tidak aktif ( cek juga yang lain )
+- Pertemuan gak muncul semua
+- di halaman siswa yang tampil kalau ada lebih 1 kelas, tidak ada koma
+
 ## Backlog
 - [x] Naik Kelas
     - [x] Ada bug tampilan di mobile

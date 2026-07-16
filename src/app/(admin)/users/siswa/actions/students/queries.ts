@@ -39,6 +39,9 @@ const NARROW_SELECT = `
   created_at,
   updated_at,
   deleted_at,
+  student_classes(
+    classes:class_id(id, name)
+  ),
   daerah:daerah_id(name),
   desa:desa_id(name),
   kelompok:kelompok_id(name)
@@ -52,6 +55,7 @@ export async function fetchAllStudents(
     .from('students')
     .select(STUDENT_SELECT)
     .is('deleted_at', null)
+    .or('status.eq.active,status.is.null')
     .order('name')
 
   if (classId) {
@@ -255,6 +259,10 @@ export async function fetchStudentsPaginated(
   }
 }
 
+// NOTE: Sengaja TIDAK filter status di sini. fetchStudentsByIds dipakai bersama
+// oleh getStudentsFromSnapshot (presensi) — roster pertemuan dari student_snapshot
+// harus tetap menampilkan siswa yang kini inactive/graduated tapi dulu ikut pertemuan.
+// Filter status active dilakukan di caller (getAllStudents teacher-branch) via post-filter.
 export async function fetchStudentsByIds(
   supabase: SupabaseClient,
   studentIds: string[]

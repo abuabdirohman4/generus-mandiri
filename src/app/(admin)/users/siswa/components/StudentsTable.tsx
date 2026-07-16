@@ -243,17 +243,25 @@ export default function StudentsTable({
   // Filter classes based on user role for display
   const getDisplayClasses = (student: PaginatedStudentRow): string => {
     try {
-      if (!student || typeof student !== 'object') {
-        return '-'
+      if (!student || typeof student !== 'object') return '-'
+
+      // Multi-class: use student_classes junction if available
+      // Filter ke kelas yang ada di classesData (sudah di-scope ke akun user)
+      if (student.student_classes && student.student_classes.length > 0) {
+        const accessibleClassIds = new Set(classesData?.map(c => c.id) ?? [])
+        const names = student.student_classes
+          .filter(sc => sc.classes?.id && accessibleClassIds.has(sc.classes.id))
+          .map(sc => sc.classes?.name)
+          .filter(Boolean)
+        if (names.length > 0) return names.join(', ')
       }
 
+      // Fallback: primary class_id
       if (!student.class_id) return '-'
-
-      // Just return the primary class name for now using the classes prop
       const cls = classesData?.find(c => c.id === student.class_id)
       return cls ? cls.name : '-'
     } catch (e) {
-      console.error("Error formatting classes for student:", student?.id, e)
+      console.error('Error formatting classes for student:', student?.id, e)
       return '-'
     }
   };

@@ -112,8 +112,13 @@ export function aggregateMonitoringData(
       sort_order: g.sort_order
     }))
 
-    // Sort by name ascending initially (will be overridden by UI sorting)
-    return result.sort((a, b) => a.name.localeCompare(b.name))
+    // Sort by sort_order ascending initially, then by name
+    return result.sort((a, b) => {
+      const sortA = a.sort_order ?? 9999
+      const sortB = b.sort_order ?? 9999
+      if (sortA !== sortB) return sortA - sortB
+      return a.name.localeCompare(b.name)
+    })
   }
 
   // Step 3: For organizational levels (kelompok/desa/daerah)

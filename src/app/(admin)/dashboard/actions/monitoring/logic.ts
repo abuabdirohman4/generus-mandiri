@@ -242,6 +242,7 @@ export function combinedAggregateResult(
         daerahNames: Set<string>
         totalStudents: number
         hasMeeting: boolean
+        sort_order: number
     },
     filteredLogs: AttendanceLog[],
     meetingMap?: Map<string, Meeting>,
@@ -296,6 +297,7 @@ export function combinedAggregateResult(
         student_count: data.totalStudents,
         meeting_ids: Array.from(meetingsWithLogs),
         meeting_dates: meetingDates,
+        sort_order: data.sort_order,
     }
 }
 
