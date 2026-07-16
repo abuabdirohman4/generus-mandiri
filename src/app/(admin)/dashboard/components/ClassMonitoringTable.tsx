@@ -470,8 +470,8 @@ export default function ClassMonitoringTable({
                                 pagination={true}
                                 itemsPerPageOptions={[10, 15, 25, 50, 100]}
                                 defaultItemsPerPage={10}
-                                defaultSortColumn={filters.comparisonLevel === 'class' ? 'class_name' : 'name'}
-                                defaultSortDirection="asc"
+                                defaultSortColumn={filters.comparisonLevel === 'class' ? undefined : 'name'}
+                                defaultSortDirection={filters.comparisonLevel === 'class' ? undefined : 'asc'}
                                 searchPlaceholder={searchPlaceholder}
                                 rowClassName={(item) => {
                                     // Apply warning styling if no meetings or 0% attendance but has students
