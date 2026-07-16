@@ -36,7 +36,55 @@ $PSQL -d "$LOCAL_DB" -f dump/public_full.filtered.sql
 # unfiltered meetings scan), making PostgREST's schema-cache query hang -> 503.
 $PGBIN/psql -p "$LOCAL_PG_PORT" -d "$LOCAL_DB" -q -c "VACUUM ANALYZE;"
 
+# Drop triggers and functions that sync to auth.users (GoTrue only on Supabase Cloud;
+# auth.users does not exist on self-hosted Postgres).
+$PSQL -d "$LOCAL_DB" -c "DROP TRIGGER IF EXISTS sync_profile_email_to_auth_users ON public.profiles;"
+$PSQL -d "$LOCAL_DB" -c "DROP FUNCTION IF EXISTS sync_profile_email_to_auth_users();"
+
 $PSQL -d "$LOCAL_DB" -f sql/02_grants.sql
+
+
+# Audit gate: fail loudly if any public object still references auth.* beyond
+# the 4 shim functions (uid/role/jwt/email). These would blow up at runtime,
+# not at restore time — exactly how sync_profile_email_to_auth_users was missed.
+echo 'Auditing for residual auth.* references...'
+AUDIT_RESULT=$($PGBIN/psql -p "$LOCAL_PG_PORT" -d "$LOCAL_DB" -tA -c "
+  SELECT 'FUNCTION: ' || p.proname || ' references auth.*'
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.prosrc ILIKE '%auth.%'
+    AND p.prosrc NOT ILIKE '%auth.uid%'
+    AND p.prosrc NOT ILIKE '%auth.role%'
+    AND p.prosrc NOT ILIKE '%auth.jwt%'
+    AND p.prosrc NOT ILIKE '%auth.email%'
+  UNION ALL
+  SELECT 'POLICY: ' || tablename || '.' || policyname || ' references auth.users'
+  FROM pg_policies
+  WHERE (qual ILIKE '%auth.users%' OR with_check ILIKE '%auth.users%')
+  UNION ALL
+  SELECT 'VIEW: ' || table_name || ' references auth.*'
+  FROM information_schema.views
+  WHERE table_schema = 'public'
+    AND view_definition ILIKE '%auth.%'
+    AND view_definition NOT ILIKE '%auth.uid%'
+    AND view_definition NOT ILIKE '%auth.role%'
+  UNION ALL
+  SELECT 'FK: ' || tc.table_name || '.' || kcu.column_name || ' -> ' || ccu.table_schema || '.' || ccu.table_name
+  FROM information_schema.table_constraints tc
+  JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
+  JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name
+  WHERE tc.constraint_type = 'FOREIGN KEY'
+    AND ccu.table_schema NOT IN ('public', 'extensions');
+")
+if [ -n "$AUDIT_RESULT" ]; then
+  echo ""
+  echo "ERROR: Residual auth.* references found — these will fail at runtime:"
+  echo "$AUDIT_RESULT"
+  echo ""
+  echo "Fix: add DROP or patch to restore-local.sh before this gate, then re-run."
+  exit 1
+fi
+echo 'Audit OK: no residual auth.* references.'
 
 echo "OK: database $LOCAL_DB restored"
 $PGBIN/psql -p "$LOCAL_PG_PORT" -d "$LOCAL_DB" -tAc "
