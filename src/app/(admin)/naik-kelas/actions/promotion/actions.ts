@@ -6,12 +6,14 @@ import { revalidatePath } from 'next/cache'
 import { logActivity } from '@/lib/activityLogger'
 import { dismissPromotionCtaNotifications } from '@/app/(admin)/notifikasi/actions/notifications/actions'
 import type { PromotionPayload, PromotionResult } from '@/types/promotion'
-import { preparePromotionData, validatePromotionPermission } from './logic'
+import { preparePromotionData, validatePromotionPermission, buildCarryRows } from './logic'
 import {
     upsertEnrollment,
     updateStudentClassId,
     replaceStudentClass,
     insertPromotionLog,
+    fetchCategoryGroupByClassIds,
+    fetchPromotedStudentIds,
 } from './queries'
 
 /**
@@ -77,6 +79,37 @@ export async function executeGradePromotion(
             result.success.push(row.student_id)
         } catch (e: any) {
             result.failed.push({ studentId: row.student_id, error: e?.message ?? 'Unknown error' })
+        }
+    }
+
+    // Auto-carry: siswa tidak naik → enrollment tahun baru, kelas SAMA, TANPA log
+    if (payload.carry_rows && payload.carry_rows.length > 0) {
+        // Defense: jangan carry siswa yang SUDAH naik (punya log di tahun tujuan) —
+        // carry akan overwrite enrollment kelas baru dengan kelas lama.
+        const carryStudentIds = [...new Set(payload.carry_rows.map(r => r.student_id))]
+        const promotedSet = await fetchPromotedStudentIds(supabase, academicYearId, carryStudentIds)
+        const carryCandidates = payload.carry_rows.filter(r => !promotedSet.has(r.student_id))
+
+        const carryClassIds = [...new Set(carryCandidates.map(r => r.class_id))]
+        const categoryMap = await fetchCategoryGroupByClassIds(supabase, carryClassIds)
+        const eligibleCarry = buildCarryRows(
+            carryCandidates.map(r => ({ student_id: r.student_id, from_class_id: r.class_id })),
+            categoryMap
+        )
+        for (const c of eligibleCarry) {
+            try {
+                const { error: enrErr } = await upsertEnrollment(supabase, {
+                    student_id: c.student_id,
+                    class_id: c.class_id,
+                    academic_year_id: academicYearId,
+                    semester: payload.semester,
+                    status: 'active' as const,
+                })
+                if (enrErr) throw new Error(enrErr.message)
+                result.success.push(c.student_id)
+            } catch (e: any) {
+                result.failed.push({ studentId: c.student_id, error: e?.message ?? 'Carry gagal' })
+            }
         }
     }
 

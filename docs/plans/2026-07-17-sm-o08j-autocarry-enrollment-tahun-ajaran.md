@@ -225,3 +225,17 @@ fixes #<GH>
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 ```
+
+
+---
+
+## Review findings (2026-07-18, Opus)
+
+### Bug 1 (FIXED): already_promoted masuk carry_rows
+Client kirim SEMUA `r.excluded` sebagai carry_rows. Siswa `already_promoted` (auto-uncheck → `excluded=true`) ikut ter-carry ke kelas LAMA, overwrite enrollment kelas baru hasil naik (onConflict student+year+semester).
+- Fix client: `excludedRows = filteredRows.filter(r => r.excluded && !r.already_promoted && r.from_class_id)`
+- Fix server (defense): `fetchPromotedStudentIds` + skip carry siswa yang punya grade_promotion_log di tahun tujuan (`actions.ts`).
+
+### Bug 2 (DEFERRED → sm-lyrz): stopper muda_mudi tak muncul di wizard
+`getPromotionSourceOptions` buang semua stopper (`filterPromotableMasters`). Pra Nikah 4 (muda_mudi, promote NULL) tak muncul di Step 1 → auto-carry tidak jalan lewat wizard ke depan. Data existing aman (backfill MCP 190/203; 13 sisa nunggu kelompok wizard). Fix = issue terpisah **sm-lyrz** (carry-only source, ~6-7 file).
+Backfill 5 PN4 Cibaduyut (kelompok sudah wizard tapi kelewat) dieksekusi via MCP 2026-07-18.

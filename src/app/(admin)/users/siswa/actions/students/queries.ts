@@ -582,3 +582,17 @@ export async function insertStudentClassesBatch(
     .from('student_classes')
     .insert(assignments)
 }
+
+/** Insert audit log for manual class edit (kelas berubah tanpa naik kelas / transfer). */
+export async function insertClassChangeLog(
+    supabase: SupabaseClient,
+    log: {
+        student_id: string
+        from_class_id: string | null
+        to_class_id: string | null
+        change_type: string
+        changed_by: string
+    }
+) {
+    return await supabase.from('class_change_logs').insert(log)
+}

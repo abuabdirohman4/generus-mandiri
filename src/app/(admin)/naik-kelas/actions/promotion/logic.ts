@@ -40,3 +40,22 @@ export function validatePromotionPermission(
     // 'promote'
     return true
 }
+
+const CARRY_ELIGIBLE_GROUPS = new Set(['caberawit', 'muda_mudi'])
+
+/**
+ * Dari daftar siswa excluded, pilih yang boleh di-carry (kelas akademik).
+ * Carry hanya caberawit/muda_mudi — Orang Tua/Lainnya di-skip.
+ * Pra Nikah 4 (stopper) tetap di-carry karena category_group = muda_mudi.
+ */
+export function buildCarryRows(
+    excluded: { student_id: string; from_class_id: string }[],
+    categoryByClassId: Map<string, string | null>
+): { student_id: string; class_id: string }[] {
+    return excluded
+        .filter(r => {
+            const cg = categoryByClassId.get(r.from_class_id)
+            return cg !== null && cg !== undefined && CARRY_ELIGIBLE_GROUPS.has(cg)
+        })
+        .map(r => ({ student_id: r.student_id, class_id: r.from_class_id }))
+}

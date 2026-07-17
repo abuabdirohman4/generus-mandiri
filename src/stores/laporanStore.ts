@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getCurrentSemester } from '@/lib/semester'
 import { persist } from 'zustand/middleware'
 
 export type LaporanTab = 'presensi' | 'materi' | 'overview'
@@ -33,7 +34,7 @@ const initialMateriFilters: MateriFilters = {
   desaId: '',
   kelompokId: '',
   academicYearId: '',
-  semester: 1,
+  semester: getCurrentSemester(),
   categoryId: '',
   month: undefined,
 }

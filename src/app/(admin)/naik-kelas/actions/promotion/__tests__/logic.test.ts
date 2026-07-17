@@ -74,3 +74,32 @@ describe('validatePromotionPermission', () => {
         expect(validatePromotionPermission(null, 'promote')).toBe(false)
     })
 })
+
+describe('buildCarryRows', () => {
+    it('carries caberawit and muda_mudi, skips orang_tua and null', () => {
+        const { buildCarryRows } = require('../logic')
+        const excluded = [
+            { student_id: 's1', from_class_id: 'c-paud' },
+            { student_id: 's2', from_class_id: 'c-smp' },
+            { student_id: 's3', from_class_id: 'c-ot' },
+            { student_id: 's4', from_class_id: 'c-null' },
+            { student_id: 's5', from_class_id: 'c-pn4' }, // Pra Nikah 4 = stopper tapi muda_mudi
+        ]
+        const catMap = new Map([
+            ['c-paud', 'caberawit'],
+            ['c-smp', 'muda_mudi'],
+            ['c-ot', 'orang_tua'],
+            ['c-null', null],
+            ['c-pn4', 'muda_mudi'],
+        ])
+        const result = buildCarryRows(excluded, catMap)
+        expect(result.map((r: any) => r.student_id)).toEqual(['s1', 's2', 's5'])
+        expect(result.every((r: any) => r.class_id)).toBe(true)
+    })
+
+    it('returns empty when no excluded rows', () => {
+        const { buildCarryRows } = require('../logic')
+        const result = buildCarryRows([], new Map())
+        expect(result).toEqual([])
+    })
+})

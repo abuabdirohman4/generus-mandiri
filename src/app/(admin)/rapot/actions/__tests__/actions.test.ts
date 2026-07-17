@@ -808,7 +808,7 @@ describe('Rapot Actions (Layer 3)', () => {
       vi.mocked(fetchStudentEnrollment).mockResolvedValue({ data: null, error: null } as any)
 
       await expect(generateReport('student-1', 'year-1', 1)).rejects.toThrow(
-        'Siswa tidak terdaftar pada tahun ajaran/semester ini'
+        'Siswa tidak terdaftar pada tahun ajaran ini'
       )
     })
 

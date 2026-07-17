@@ -55,3 +55,51 @@ export async function insertPromotionLog(
 ) {
     return await supabase.from('grade_promotion_logs').insert(log)
 }
+
+/**
+ * Ambil class_id → category_group untuk daftar class.
+ * Dipakai auto-carry: hanya carry kelas caberawit/muda_mudi.
+ */
+export async function fetchCategoryGroupByClassIds(
+    supabase: SupabaseClient,
+    classIds: string[]
+): Promise<Map<string, string | null>> {
+    if (classIds.length === 0) return new Map()
+    const { data } = await supabase
+        .from('class_master_mappings')
+        .select('class_id, class_masters:class_master_id(category_group)')
+        .in('class_id', classIds)
+    const map = new Map<string, string | null>()
+    for (const row of (data as any[]) || []) {
+        const cg = Array.isArray(row.class_masters)
+            ? row.class_masters[0]?.category_group
+            : row.class_masters?.category_group
+        map.set(row.class_id, cg ?? null)
+    }
+    return map
+}
+
+/**
+ * Ambil set student_id yang SUDAH punya grade_promotion_log di tahun tujuan.
+ * Dipakai defense server-side: siswa yang sudah naik JANGAN di-carry (carry akan
+ * overwrite enrollment kelas baru dengan kelas lama).
+ */
+export async function fetchPromotedStudentIds(
+    supabase: SupabaseClient,
+    academicYearId: string,
+    studentIds: string[]
+): Promise<Set<string>> {
+    const promoted = new Set<string>()
+    if (studentIds.length === 0) return promoted
+    const CHUNK = 100
+    for (let i = 0; i < studentIds.length; i += CHUNK) {
+        const chunk = studentIds.slice(i, i + CHUNK)
+        const { data } = await supabase
+            .from('grade_promotion_logs')
+            .select('student_id')
+            .eq('academic_year_id', academicYearId)
+            .in('student_id', chunk)
+        for (const row of (data as any[]) || []) promoted.add(row.student_id)
+    }
+    return promoted
+}

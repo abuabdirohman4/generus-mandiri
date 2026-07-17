@@ -320,16 +320,16 @@ export async function fetchGradesForAverage(
 export async function fetchStudentEnrollment(
   supabase: SupabaseClient,
   studentId: string,
-  academicYearId: string,
-  semester: number
+  academicYearId: string
 ) {
   return await supabase
     .from('student_enrollments')
     .select('class_id')
     .eq('student_id', studentId)
     .eq('academic_year_id', academicYearId)
-    .eq('semester', semester)
-    .single()
+    .order('semester', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 }
 
 /**

@@ -35,6 +35,7 @@ import {
     fetchClassNames,
     insertStudentsBatch,
     insertStudentClassesBatch,
+    insertClassChangeLog,
 } from './queries'
 import { logActivity } from '@/lib/activityLogger'
 import {
@@ -683,6 +684,14 @@ export async function updateStudent(studentId: string, formData: FormData) {
             ? await createAdminClient()
             : supabase
 
+        // Fetch kelas lama untuk audit trail
+        const { data: studentBefore } = await client
+            .from('students')
+            .select('class_id')
+            .eq('id', studentId)
+            .single()
+        const oldClassId = studentBefore?.class_id ?? null
+
         const updateData: any = {
             name,
             gender,
@@ -751,6 +760,17 @@ export async function updateStudent(studentId: string, formData: FormData) {
                 entityId: studentId,
                 entityLabel: name,
                 pagePath: '/users/siswa',
+            })
+        }
+
+        // Audit trail: catat perubahan kelas manual (bukan naik kelas / transfer)
+        if (updatedStudent?.id && oldClassId !== null && oldClassId !== primaryClassId) {
+            void insertClassChangeLog(client, {
+                student_id: studentId,
+                from_class_id: oldClassId,
+                to_class_id: primaryClassId,
+                change_type: 'manual_edit',
+                changed_by: user.id,
             })
         }
 

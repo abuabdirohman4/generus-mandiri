@@ -878,3 +878,72 @@ Admin daerah dipaksa ke scope daerah sendiri (`resolveTargetScopeForSender` di `
 ### Fase 2 (belum diimplementasi — follow-up issue)
 
 Realtime delivery via Supabase Postgres Changes: `alter publication supabase_realtime add table public.notification_recipients`. Tidak ada di MVP — buat issue terpisah sebelum mengerjakan.
+
+---
+
+## Auto-Carry Enrollment (sm-o08j)
+
+Saat wizard naik kelas berjalan, siswa yang **tidak naik** (excluded) tetap dibuatkan enrollment di tahun ajaran baru di kelas yang **sama** (auto-carry) — tanpa `grade_promotion_log`.
+
+### Aturan carry
+
+Carry hanya kelas akademik: `class_masters.category_group IN ('caberawit', 'muda_mudi')`.
+- `orang_tua` / `null` → **SKIP** (bukan kelas akademik, tidak perlu monitoring).
+- **Pra Nikah 4** = stopper (`promote_to_class_master_id = NULL`) tapi tetap di-carry karena `category_group = 'muda_mudi'`.
+- Aturan carry pakai `category_group`, BUKAN `promote_to_class_master_id IS NULL`.
+
+### Idempotency
+
+`upsertEnrollment` pakai `onConflict: 'student_id,academic_year_id,semester'` → carry lalu naik = upsert ke kelas baru (tidak duplikat).
+
+### Carry TIDAK mengubah
+
+- `students.class_id` — kelas siswa tetap
+- `student_classes` — tidak berubah
+- `grade_promotion_logs` — tidak ada log (bukan naik tingkat)
+
+### Implementasi
+
+- Layer 1: `fetchCategoryGroupByClassIds` (`naik-kelas/actions/promotion/queries.ts`)
+- Layer 2: `buildCarryRows` (`naik-kelas/actions/promotion/logic.ts`)
+- Layer 3: loop carry setelah loop promosi di `executeGradePromotion` (`actions.ts`)
+- Client: `PromotionClient.tsx` kirim `carry_rows` = semua excluded rows, server yang filter category_group
+
+---
+
+## Konsep Semester — Enrollment 1/Tahun + Semester dari Bulan (sm-mseb)
+
+### Model enrollment
+
+**1 siswa = 1 enrollment per tahun ajaran.** Kelas tetap 1 tahun — kenaikan hanya antar-tahun. Kolom `semester` di `student_enrollments` tetap ada (historical), tapi tidak dipakai sebagai filter read enrollment kelas.
+
+### `getCurrentSemester` (`src/lib/semester.ts`)
+
+```
+Juli–Desember = 1, Januari–Juni = 2
+```
+
+Dipakai sebagai **default filter** (monitoring, laporan, materi, rapot). BUKAN untuk membaca/menyimpan data historis — data historis pakai semester tersimpan eksplisit. `laporanStore` dan UI filter default pakai ini.
+
+### Rapot: penentuan kelas lepas dari filter semester
+
+`fetchStudentEnrollment` di `rapot/actions/queries.ts` tidak lagi filter `.eq('semester', semester)`. Ambil enrollment terbaru (`ORDER BY semester DESC LIMIT 1`). Isi rapot (presensi/materi) tetap per semester — hanya header kelas yang lepas dari semester filter.
+
+### Audit trail perubahan kelas: 3 jalur TERPISAH
+
+| Jalur | Tabel | Trigger |
+|---|---|---|
+| Naik kelas | `grade_promotion_logs` | Wizard naik kelas |
+| Transfer antar-org | `transfer_history` / `transfer_requests` | Form transfer |
+| Edit manual (koreksi) | `class_change_logs` (BARU) | `updateStudent` action |
+
+`class_change_logs` = immutable (RLS no UPDATE/DELETE). Insert otomatis di `updateStudent` kalau `class_id` berubah dan perubahan bukan via naik kelas/transfer.
+
+### Migrasi data 2025/2026 (dikerjakan 2026-07-17)
+
+Enrollment 2025/2026 rapikan jadi 1 baris/tahun:
+1. Hapus 128 baris sem2 duplikat (kelas sama dengan sem1)
+2. Hapus 146 baris sem1 (ambil sem2 sebagai kelas terbaru, buang sem1)
+3. Ubah sisa sem2 → sem1 (siswa masuk mid-year)
+
+Hasil: 2191 siswa, masing-masing tepat 1 enrollment di 2025/2026 (semua sem1).

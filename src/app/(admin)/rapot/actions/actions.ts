@@ -467,12 +467,11 @@ export async function generateReport(
   const { data: enrollment } = await fetchStudentEnrollment(
     supabase,
     studentId,
-    academicYearId,
-    semester
+    academicYearId
   )
 
   if (!enrollment) {
-    throw new Error('Siswa tidak terdaftar pada tahun ajaran/semester ini')
+    throw new Error('Siswa tidak terdaftar pada tahun ajaran ini')
   }
 
   // 3. Prepare and upsert report

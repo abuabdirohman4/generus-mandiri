@@ -1,4 +1,5 @@
 'use client';
+import { getCurrentSemester } from '@/lib/semester'
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -47,7 +48,7 @@ export default function RapotPageClient() {
         desa: [] as string[],
         kelompok: [] as string[],
         kelas: [] as string[],
-        semester: (searchParams.get('semester') ? parseInt(searchParams.get('semester')!) : 1),
+        semester: (searchParams.get('semester') ? parseInt(searchParams.get('semester')!) : getCurrentSemester()),
     });
 
     // Content State

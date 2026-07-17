@@ -59,7 +59,10 @@ export interface PromotionStudentRow {
 export interface PromotionPayload {
     academic_year_id: string
     semester: number
+    /** siswa yang NAIK — ada log promosi + pindah kelas */
     rows: { student_id: string; from_class_id: string; to_class_id: string }[]
+    /** siswa yang TIDAK naik tapi di-carry ke tahun baru di kelas SAMA — tanpa log */
+    carry_rows?: { student_id: string; class_id: string }[]
 }
 
 export interface PromotionResult {

@@ -38,7 +38,7 @@ export default function EnrollmentHistory({ studentId }: EnrollmentHistoryProps)
                                 <span className="font-medium text-gray-700 dark:text-gray-300">
                                     {row.academic_year_name}
                                 </span>
-                                <span className="text-xs text-gray-400">· Sem {row.semester}</span>
+
                             </div>
                             <div className="flex items-center gap-2">
                                 <ArrowRightIcon className="w-4 h-4 text-gray-300 dark:text-gray-600" />

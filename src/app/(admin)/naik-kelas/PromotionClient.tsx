@@ -170,6 +170,9 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
             return
         }
         setExecuting(true)
+        // Carry hanya siswa yang di-exclude MANUAL (bukan already_promoted — mereka
+        // sudah punya enrollment via naik kelas; carry akan overwrite balik ke kelas lama).
+        const excludedRows = filteredRows.filter(r => r.excluded && !r.already_promoted && r.from_class_id)
         const res = await executeGradePromotion({
             academic_year_id: selectedYearId,
             semester: 1,
@@ -177,6 +180,10 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                 student_id: r.student_id,
                 from_class_id: r.from_class_id,
                 to_class_id: r.to_class_id as string,
+            })),
+            carry_rows: excludedRows.map(r => ({
+                student_id: r.student_id,
+                class_id: r.from_class_id,
             })),
         })
         setExecuting(false)

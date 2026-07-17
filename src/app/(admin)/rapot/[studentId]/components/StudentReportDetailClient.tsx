@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { getCurrentSemester } from '@/lib/semester'
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
@@ -51,7 +52,7 @@ const StudentReportDetailClient = forwardRef<StudentReportDetailRef, Props>(({ s
 
     // Data State
     const [academicYear, setAcademicYear] = useState<any>(null);
-    const [semester, setSemester] = useState<number>(propSemester || 1);
+    const [semester, setSemester] = useState<number>(propSemester || getCurrentSemester());
     const [studentInfo, setStudentInfo] = useState<any>(null);
     const [className, setClassName] = useState<string>('');
     const [report, setReport] = useState<StudentReport | null>(null);
