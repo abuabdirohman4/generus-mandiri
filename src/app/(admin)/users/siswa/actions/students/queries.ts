@@ -7,6 +7,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { fetchInBatchesWithFilter } from '@/lib/utils/batchFetching'
 
 const STUDENT_SELECT = `
   id,
@@ -170,19 +171,17 @@ export async function fetchStudentsPaginated(
   }
 
   if (targetClassIds.length > 0) {
-    const { data: scData } = await supabase
-      .from('student_classes')
-      .select('student_id')
-      .in('class_id', targetClassIds)
-      
-    const junctionStudentIds = (scData || []).map(sc => sc.student_id)
-    
-    const { data: pcData } = await supabase
-      .from('students')
-      .select('id')
-      .in('class_id', targetClassIds)
-      
-    const primaryStudentIds = (pcData || []).map(s => s.id)
+    // Chunk .in() by 100 to avoid PostgREST URL overflow — a daerah-scoped teacher
+    // can have hundreds of allowed class IDs (sm-g29p).
+    const { data: scData } = await fetchInBatchesWithFilter(
+      supabase, 'student_classes', 'class_id', targetClassIds, 'student_id'
+    )
+    const junctionStudentIds = (scData || []).map((sc: any) => sc.student_id)
+
+    const { data: pcData } = await fetchInBatchesWithFilter(
+      supabase, 'students', 'class_id', targetClassIds, 'id'
+    )
+    const primaryStudentIds = (pcData || []).map((s: any) => s.id)
     
     const allStudentIds = [...new Set([...junctionStudentIds, ...primaryStudentIds])]
     
