@@ -182,13 +182,28 @@ export async function getTeacherAllowedClassIds(
 
   const cmIds = [...new Set([...unrestrictedCmIds, ...customNameFilters.map((f: any) => f.classMasterId)])];
 
-  // 3. Get class IDs that map to these class masters
+  // 3. Get class IDs that map to these class masters.
+  // Paginate: a daerah-scoped teacher can map to >1000 class_master_mappings rows
+  // (e.g. 19 masters x 22 kelompok = 1223), which silently hits PostgREST default
+  // 1000-row cap without .range() and drops classes (sm-7d68).
   let classMasterAllowedIds: string[] = [];
   if (cmIds.length > 0) {
-    const { data: mappingData, error: mappingError } = await adminClient
-      .from('class_master_mappings')
-      .select('class_id, class_master_id, classes:class_id(name)')
-      .in('class_master_id', cmIds);
+    const mappingData: any[] = [];
+    const PAGE = 1000;
+    let from = 0;
+    let mappingError: any = null;
+    while (true) {
+      const { data: page, error } = await adminClient
+        .from('class_master_mappings')
+        .select('class_id, class_master_id, classes:class_id(name)')
+        .in('class_master_id', cmIds)
+        .range(from, from + PAGE - 1);
+      if (error) { mappingError = error; break; }
+      if (!page || page.length === 0) break;
+      mappingData.push(...page);
+      if (page.length < PAGE) break;
+      from += PAGE;
+    }
 
     if (mappingError) {
       console.error('[getTeacherAllowedClassIds] Error fetching mappingData:', mappingError);
