@@ -103,45 +103,45 @@ export async function onboardBatchCreateTeachers(payload: BatchTeacherPayload) {
         )
       }
 
-      // 4. Assign classes automatically
-      // Find all classes that belong to this teacher's scope (kelompok_id, or desa_id, or daerah_id)
-      let classQuery = adminClient.from('classes').select('id, class_master_id, class_masters!inner(sort_order)')
-      
+      // 4. Assign classes automatically via class_master_mappings (classes has no class_master_id column)
+      let kelompokIds: string[] = []
       if (tDef.kelompok_id) {
-        classQuery = classQuery.eq('kelompok_id', tDef.kelompok_id)
+        kelompokIds = [tDef.kelompok_id]
       } else if (tDef.desa_id) {
-        // Find classes in kelompoks belonging to this desa
-        const { data: kelompoks } = await adminClient.from('kelompok').select('id').eq('desa_id', tDef.desa_id)
-        if (kelompoks && kelompoks.length > 0) {
-          classQuery = classQuery.in('kelompok_id', kelompoks.map(k => k.id))
-        } else {
-          classQuery = classQuery.eq('kelompok_id', 'none') // Empty
-        }
+        const { data: kels } = await adminClient.from('kelompok').select('id').eq('desa_id', tDef.desa_id)
+        kelompokIds = kels?.map(k => k.id) ?? []
       } else {
-        // Daerah level: all classes in all kelompoks under all desas in this daerah
-        const { data: kelompoks } = await adminClient.from('kelompok').select('id, desa!inner(daerah_id)').eq('desa.daerah_id', tDef.daerah_id)
-        if (kelompoks && kelompoks.length > 0) {
-          classQuery = classQuery.in('kelompok_id', kelompoks.map(k => k.id))
-        } else {
-          classQuery = classQuery.eq('kelompok_id', 'none')
-        }
+        const { data: kels } = await adminClient
+          .from('kelompok')
+          .select('id, desa!inner(daerah_id)')
+          .eq('desa.daerah_id', tDef.daerah_id)
+        kelompokIds = kels?.map(k => k.id) ?? []
       }
 
-      const { data: availableClasses } = await classQuery
+      if (kelompokIds.length > 0) {
+        // Query via class_master_mappings then filter by kelompok scope
+        const { data: scopeClasses } = await adminClient
+          .from('classes')
+          .select('id, class_master_mappings!inner(class_masters!inner(sort_order))')
+          .in('kelompok_id', kelompokIds)
 
-      if (availableClasses && availableClasses.length > 0) {
-        const allowedSortOrders = tDef.roleType === 'pj_generus' 
-          ? new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]) // Paud to Pra Nikah 4
-          : new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]) // Paud to Orang Tua
+        if (scopeClasses && scopeClasses.length > 0) {
+          const maxSortOrder = tDef.roleType === 'pj_generus' ? 17 : 18 // pj_generus: Paud–Pra Nikah 4, pj_utama: Paud–Orang Tua
 
-        const classIdsToAssign = availableClasses
-          .filter(c => c.class_masters && allowedSortOrders.has((c.class_masters as any).sort_order))
-          .map(c => c.id)
+          const classIdsToAssign = scopeClasses
+            .filter(c => {
+              const mappings = (c as any).class_master_mappings
+              const mapping = Array.isArray(mappings) ? mappings[0] : mappings
+              const sortOrder = mapping?.class_masters?.sort_order
+              return sortOrder != null && sortOrder >= 1 && sortOrder <= maxSortOrder
+            })
+            .map(c => c.id)
 
-        if (classIdsToAssign.length > 0) {
-          await adminClient.from('teacher_classes').insert(
-            classIdsToAssign.map(classId => ({ teacher_id: userId, class_id: classId }))
-          )
+          if (classIdsToAssign.length > 0) {
+            await adminClient.from('teacher_classes').insert(
+              classIdsToAssign.map(classId => ({ teacher_id: userId, class_id: classId }))
+            )
+          }
         }
       }
 
