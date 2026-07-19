@@ -17,6 +17,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${{ secrets.NEXT_PUBLIC_UMAMI_WEBSITE_ID }}
+          NEXT_PUBLIC_DATA_POSTGREST_URL: ${{ secrets.NEXT_PUBLIC_DATA_POSTGREST_URL }}
       - run: |
           cp -r .next/static .next/standalone/.next/static
           cp -r public .next/standalone/public
