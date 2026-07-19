@@ -11,7 +11,7 @@ import {
     fetchTeacherClassIds,
     fetchKelompokIdsByClassIds,
 } from './queries'
-import { filterPromotableMasters, resolveTargetClassInKelompok, filterSourcesByWindow } from './logic'
+import { filterPromotableOrCarryableMasters, isCarryOnlyMaster, resolveTargetClassInKelompok, filterSourcesByWindow } from './logic'
 import { getPromotionEnabled } from '../settings/actions'
 import { isTeacherKelompok } from '@/lib/accessControl'
 
@@ -55,13 +55,16 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
             .map(c => {
                 const master: any = masterById.get(c.class_master_id)
                 const toMaster: any = master?.promote_to_class_master_id ? masterById.get(master.promote_to_class_master_id) : null
-                if (!toMaster) return null // stopper → tidak ditampilkan
+                const carryOnly = master ? isCarryOnlyMaster(master) : false
+                // Buang stopper non-akademik (tak punya tujuan & bukan carry-only)
+                if (!toMaster && !carryOnly) return null
                 return {
                     kind: 'class' as const,
                     id: c.class_id,
                     name: c.class_name,
                     kelompok_name: c.kelompok_name || undefined,
-                    to_name: toMaster.name,
+                    to_name: toMaster ? toMaster.name : null,
+                    carry_only: carryOnly,
                     _sortOrder: master?.sort_order ?? 0,
                 }
             })
@@ -73,15 +76,16 @@ export async function getPromotionSourceOptions(): Promise<{ success: boolean; d
         return { success: true, data: options, message: '', windowClosedForUser: !isActive && isTk }
     }
 
-    // Admin & guru hierarki → class_master promotable
-    const promotable = filterPromotableMasters(masterList as any[])
+    // Admin & guru hierarki → class_master promotable ATAU carry-only stopper akademik
+    const promotable = filterPromotableOrCarryableMasters(masterList as any[])
     let options: PromotionSourceOption[] = promotable.map((m: any) => {
-        const toMaster: any = masterById.get(m.promote_to_class_master_id)
+        const toMaster: any = m.promote_to_class_master_id ? masterById.get(m.promote_to_class_master_id) : null
         return {
             kind: 'class_master' as const,
             id: m.id,
             name: m.name,
             to_name: toMaster ? toMaster.name : null,
+            carry_only: isCarryOnlyMaster(m),
         }
     })
     
@@ -109,6 +113,7 @@ export async function getStudentsToPromote(
     const supabase = await createAdminClient()
     const { data: masters } = await fetchClassMastersWithPromote(supabase)
     const masterList = masters || []
+    const masterById = new Map<string, any>(masterList.map((m: any) => [m.id, m]))
 
     // promoteMap: from_master_id → to_master_id|null (sekali bangun)
     const promoteMap = new Map<string, string | null>(
@@ -169,8 +174,13 @@ export async function getStudentsToPromote(
     const rows: PromotionStudentRow[] = (students || []).map((s: any) => {
         const fromClass = classById.get(s.class_id)
         const fromMasterId = fromClass?.class_master_id ?? ''
+        const fromMaster: any = masterById.get(fromMasterId)
+        const carryOnly = fromMaster ? isCarryOnlyMaster(fromMaster) : false
         const targetMasterId = promoteMap.get(fromMasterId) ?? null
-        const toClassId = resolveTargetClassInKelompok(targetMasterId, s.kelompok_id, classesForResolve)
+        // Carry-only (stopper akademik) → kelas tujuan = kelas SAMA (siswa tidak naik, hanya di-carry).
+        const toClassId = carryOnly
+            ? s.class_id
+            : resolveTargetClassInKelompok(targetMasterId, s.kelompok_id, classesForResolve)
         const toClass = toClassId ? classById.get(toClassId) : null
         const already_promoted = alreadyPromotedSet.has(s.id)
         return {
@@ -182,9 +192,10 @@ export async function getStudentsToPromote(
             from_class_id: s.class_id,
             from_class_name: fromClass?.class_name ?? '',
             to_class_id: toClassId,
-            to_class_name: toClass?.class_name ?? null,
+            to_class_name: carryOnly ? (fromClass?.class_name ?? null) : (toClass?.class_name ?? null),
             excluded: already_promoted,
             already_promoted,
+            carry_only: carryOnly,
         }
     }).sort((a, b) => {
         const fromMasterA = classById.get(a.from_class_id)?.class_master_id ?? ''

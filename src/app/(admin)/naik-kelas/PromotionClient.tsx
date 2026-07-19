@@ -123,9 +123,17 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
     }, [rows, dataFilters, search, kelompokToDesa, desaToDaerah])
 
     const selectedRows = filteredRows.filter(r => !r.excluded && r.to_class_id)
+    const promoteCount = selectedRows.filter(r => !r.carry_only).length
+    const carryCount = selectedRows.filter(r => r.carry_only).length
     const excludedCount = filteredRows.filter(r => r.excluded).length
     const noTargetCount = filteredRows.filter(r => !r.to_class_id).length
     const kelompokCount = new Set(selectedRows.map(r => r.kelompok_id)).size
+
+    // Tampilkan suffix kelompok hanya kalau options mencakup >1 kelompok
+    // (guru 1 kelompok → suffix redundant, buang).
+    const showKelompokSuffix = new Set(
+        options.map(o => o.kelompok_name).filter(Boolean)
+    ).size > 1
 
     const allSelected = options.length > 0 && selectedIds.size === options.length
 
@@ -170,21 +178,27 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
             return
         }
         setExecuting(true)
-        // Carry hanya siswa yang di-exclude MANUAL (bukan already_promoted — mereka
-        // sudah punya enrollment via naik kelas; carry akan overwrite balik ke kelas lama).
+        // Siswa yang dicentang & punya kelas tujuan. Pisah naik vs carry-only (stopper akademik):
+        // - naik (!carry_only) → rows (insert log + pindah kelas)
+        // - carry_only → carry_rows (enrollment kelas sama, tanpa log)
+        const promoteRows = selectedRows.filter(r => !r.carry_only)
+        const carryOnlyRows = selectedRows.filter(r => r.carry_only)
+        // Carry manual: siswa di-exclude manual (bukan already_promoted — mereka sudah punya
+        // enrollment via naik kelas; carry akan overwrite balik ke kelas lama).
         const excludedRows = filteredRows.filter(r => r.excluded && !r.already_promoted && r.from_class_id)
+        const carryRows = [...carryOnlyRows, ...excludedRows].map(r => ({
+            student_id: r.student_id,
+            class_id: r.from_class_id,
+        }))
         const res = await executeGradePromotion({
             academic_year_id: selectedYearId,
             semester: 1,
-            rows: selectedRows.map(r => ({
+            rows: promoteRows.map(r => ({
                 student_id: r.student_id,
                 from_class_id: r.from_class_id,
                 to_class_id: r.to_class_id as string,
             })),
-            carry_rows: excludedRows.map(r => ({
-                student_id: r.student_id,
-                class_id: r.from_class_id,
-            })),
+            carry_rows: carryRows,
         })
         setExecuting(false)
         if (res.success && res.data) {
@@ -318,7 +332,7 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                                         <Checkbox checked={checked} onChange={() => {}} />
                                                     </span>
                                                     <span>
-                                                        <span className="block font-medium text-gray-900 dark:text-white">{opt.name}{opt.kelompok_name ? ` (${opt.kelompok_name})` : ''}</span>
+                                                        <span className="block font-medium text-gray-900 dark:text-white">{opt.name}{showKelompokSuffix && opt.kelompok_name ? ` (${opt.kelompok_name})` : ''}</span>
                                                         {/* <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
                                                             → {opt.to_name ?? '(tidak naik)'}
                                                         </span> */}
@@ -398,7 +412,9 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                                                             {r.student_name}
                                                         </div>
                                                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                            {r.from_class_name} → {r.to_class_name ?? '(tidak ada)'}
+                                                            {r.carry_only
+                                                                ? `${r.from_class_name} · tetap di kelas`
+                                                                : `${r.from_class_name} → ${r.to_class_name ?? '(tidak ada)'}`}
                                                         </div>
                                                         {r.already_promoted && (
                                                             <span className="inline-block mt-1 text-xs font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700">
@@ -427,7 +443,10 @@ export default function PromotionClient({ academicYears, defaultYearId, canPickY
                             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Konfirmasi Naik Kelas</h2>
                             <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                                 <p>Tahun Ajaran: <span className="font-semibold">{selectedYearName}</span></p>
-                                <p><span className="font-semibold">{selectedRows.length}</span> siswa akan naik ({excludedCount} dikecualikan)</p>
+                                <p><span className="font-semibold">{promoteCount}</span> siswa akan naik ({excludedCount} dikecualikan)</p>
+                                {carryCount > 0 && (
+                                    <p><span className="font-semibold">{carryCount}</span> siswa tetap di kelas (didaftarkan ke tahun ajaran baru)</p>
+                                )}
                                 <p>Tersebar di {kelompokCount} kelompok</p>
                                 <p className="text-orange-600 dark:text-orange-400 mt-3">⚠️ Tindakan ini akan tercatat permanen dan tidak dapat dibatalkan otomatis.</p>
                             </div>

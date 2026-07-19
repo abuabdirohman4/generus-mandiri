@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { preparePromotionData, validatePromotionPermission } from '../logic'
+import { preparePromotionData, validatePromotionPermission, buildCarryRows } from '../logic'
 import type { PromotionPayload } from '@/types/promotion'
 
 describe('preparePromotionData', () => {
@@ -77,7 +77,6 @@ describe('validatePromotionPermission', () => {
 
 describe('buildCarryRows', () => {
     it('carries caberawit and muda_mudi, skips orang_tua and null', () => {
-        const { buildCarryRows } = require('../logic')
         const excluded = [
             { student_id: 's1', from_class_id: 'c-paud' },
             { student_id: 's2', from_class_id: 'c-smp' },
@@ -98,7 +97,6 @@ describe('buildCarryRows', () => {
     })
 
     it('returns empty when no excluded rows', () => {
-        const { buildCarryRows } = require('../logic')
         const result = buildCarryRows([], new Map())
         expect(result).toEqual([])
     })

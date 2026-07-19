@@ -36,6 +36,8 @@ export interface PromotionSourceOption {
     kelompok_name?: string
     /** nama class_master tujuan untuk display; null kalau stopper */
     to_name: string | null
+    /** true = kelas stopper akademik (muda_mudi/caberawit) — siswa di-carry ke kelas SAMA, tidak naik */
+    carry_only?: boolean
 }
 
 // ─── Wizard Step 2: Student Row ─────────────────────────────────────────────────
@@ -53,6 +55,8 @@ export interface PromotionStudentRow {
     excluded: boolean
     /** true = sudah punya grade_promotion_log di tahun ajaran tujuan — auto-uncheck di wizard */
     already_promoted: boolean
+    /** true = kelas stopper akademik → siswa di-carry ke kelas SAMA (to_class_id = from_class_id), bukan naik */
+    carry_only?: boolean
 }
 
 // ─── Execution Payload & Result ─────────────────────────────────────────────────

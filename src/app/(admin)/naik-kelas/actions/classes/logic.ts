@@ -7,11 +7,29 @@ interface MasterLike {
     id: string
     name: string
     promote_to_class_master_id: string | null
+    category_group?: string | null
 }
 
 /** Buang class_master yang tidak punya tujuan (stopper). Hanya yang promotable yang muncul di wizard. */
 export function filterPromotableMasters<T extends MasterLike>(masters: T[]): T[] {
     return masters.filter(m => m.promote_to_class_master_id !== null)
+}
+
+const CARRY_ONLY_GROUPS = new Set(['caberawit', 'muda_mudi'])
+
+/**
+ * Stopper akademik (tidak punya kelas tujuan) TAPI kelas akademik (caberawit/muda_mudi)
+ * → siswa di-carry ke kelas SAMA. Contoh: Pra Nikah 4.
+ * Stopper non-akademik (Orang Tua/Lainnya) TIDAK carry-only.
+ */
+export function isCarryOnlyMaster<T extends MasterLike>(m: T): boolean {
+    return m.promote_to_class_master_id === null &&
+        !!m.category_group && CARRY_ONLY_GROUPS.has(m.category_group)
+}
+
+/** Master yang muncul di wizard: promotable (punya tujuan) ATAU carry-only stopper akademik. */
+export function filterPromotableOrCarryableMasters<T extends MasterLike>(masters: T[]): T[] {
+    return masters.filter(m => m.promote_to_class_master_id !== null || isCarryOnlyMaster(m))
 }
 
 interface ClassInKelompok {

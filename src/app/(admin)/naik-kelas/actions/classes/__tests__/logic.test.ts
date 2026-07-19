@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { filterPromotableMasters, resolveTargetClassInKelompok, filterSourcesByWindow } from '../logic'
+import { filterPromotableMasters, filterPromotableOrCarryableMasters, isCarryOnlyMaster, resolveTargetClassInKelompok, filterSourcesByWindow } from '../logic'
 import type { PromotionSourceOption } from '@/types/promotion'
 
 describe('filterPromotableMasters', () => {
@@ -77,5 +77,37 @@ describe('filterSourcesByWindow', () => {
         const result = filterSourcesByWindow(sources, { isTeacherKelompok: true, isActive: false })
         expect(result).toHaveLength(2)
         expect(result.map(r => r.id)).toEqual(['m2', 'c2'])
+    })
+})
+
+
+describe('isCarryOnlyMaster', () => {
+    it('true for stopper akademik (muda_mudi, promote NULL) — e.g. Pra Nikah 4', () => {
+        expect(isCarryOnlyMaster({ id: 'pn4', name: 'Pra Nikah 4', promote_to_class_master_id: null, category_group: 'muda_mudi' })).toBe(true)
+    })
+    it('true for stopper akademik caberawit', () => {
+        expect(isCarryOnlyMaster({ id: 'c6', name: 'Kelas 6', promote_to_class_master_id: null, category_group: 'caberawit' })).toBe(true)
+    })
+    it('false for non-akademik stopper (orang_tua)', () => {
+        expect(isCarryOnlyMaster({ id: 'ou', name: 'Orang Tua', promote_to_class_master_id: null, category_group: 'orang_tua' })).toBe(false)
+    })
+    it('false for null category stopper (Lainnya)', () => {
+        expect(isCarryOnlyMaster({ id: 'x', name: 'Lainnya', promote_to_class_master_id: null, category_group: null })).toBe(false)
+    })
+    it('false for promotable master (punya tujuan)', () => {
+        expect(isCarryOnlyMaster({ id: 'm1', name: 'Kelas 1', promote_to_class_master_id: 'm2', category_group: 'muda_mudi' })).toBe(false)
+    })
+})
+
+describe('filterPromotableOrCarryableMasters', () => {
+    const masters = [
+        { id: 'm1', name: 'Kelas 1', promote_to_class_master_id: 'm2', category_group: 'muda_mudi' },
+        { id: 'pn4', name: 'Pra Nikah 4', promote_to_class_master_id: null, category_group: 'muda_mudi' },
+        { id: 'ou', name: 'Orang Tua', promote_to_class_master_id: null, category_group: 'orang_tua' },
+        { id: 'x', name: 'Lainnya', promote_to_class_master_id: null, category_group: null },
+    ]
+    it('keeps promotable + carry-only stopper, drops non-akademik stopper', () => {
+        const result = filterPromotableOrCarryableMasters(masters)
+        expect(result.map(m => m.id).sort()).toEqual(['m1', 'pn4'])
     })
 })

@@ -904,10 +904,19 @@ Carry hanya kelas akademik: `class_masters.category_group IN ('caberawit', 'muda
 
 ### Implementasi
 
-- Layer 1: `fetchCategoryGroupByClassIds` (`naik-kelas/actions/promotion/queries.ts`)
+- Layer 1: `fetchCategoryGroupByClassIds`, `fetchPromotedStudentIds` (`naik-kelas/actions/promotion/queries.ts`)
 - Layer 2: `buildCarryRows` (`naik-kelas/actions/promotion/logic.ts`)
-- Layer 3: loop carry setelah loop promosi di `executeGradePromotion` (`actions.ts`)
-- Client: `PromotionClient.tsx` kirim `carry_rows` = semua excluded rows, server yang filter category_group
+- Layer 3: loop carry setelah loop promosi di `executeGradePromotion` (`actions.ts`). Defense: skip siswa yang sudah punya `grade_promotion_log` di tahun tujuan (`fetchPromotedStudentIds`) — carry akan overwrite enrollment kelas baru dengan kelas lama.
+- Client: `PromotionClient.tsx` kirim `carry_rows` (excluded manual, kecuali `already_promoted`); server filter category_group.
+
+### Carry-only stopper di wizard (sm-lyrz)
+
+Kelas stopper AKADEMIK (`category_group IN caberawit/muda_mudi` + `promote_to NULL`, contoh Pra Nikah 4) MUNCUL di wizard sebagai **carry-only source** (`PromotionSourceOption.carry_only=true`, `to_name=null`). Siswa-nya `carry_only=true`, `to_class_id = from_class_id`. Client kirim mereka ke `carry_rows` (bukan `rows`) → enrollment kelas sama tanpa log.
+
+- Layer 2: `isCarryOnlyMaster`, `filterPromotableOrCarryableMasters` (`classes/logic.ts`)
+- `getPromotionSourceOptions` + `getStudentsToPromote` (`classes/actions.ts`) — tandai carry-only
+- `fetchClassMastersWithPromote` select tambah `category_group`
+- Stopper NON-akademik (Orang Tua/Lainnya) tetap TIDAK muncul di wizard.
 
 ---
 

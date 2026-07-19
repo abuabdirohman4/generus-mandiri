@@ -16,7 +16,7 @@ export interface ScopeFilter {
 export async function fetchClassMastersWithPromote(supabase: SupabaseClient) {
     return await supabase
         .from('class_masters')
-        .select('id, name, sort_order, promote_to_class_master_id')
+        .select('id, name, sort_order, promote_to_class_master_id, category_group')
         .order('sort_order')
 }
 
