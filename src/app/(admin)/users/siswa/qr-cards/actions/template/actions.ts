@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient, createAdminClient, createAuthClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient, createAuthClient, createStorageClient } from '@/lib/supabase/server'
 import { canManageIdCardTemplate } from '@/lib/accessControl'
 import { getCurrentUserProfile } from '@/lib/accessControlServer'
 import {
@@ -20,18 +20,19 @@ import { revalidatePath } from 'next/cache'
 async function checkTemplateAdminAccess() {
   const supabase = await createClient()
   const adminSupabase = await createAdminClient()
+  const storageSupabase = createStorageClient()
   const profile = await getCurrentUserProfile()
   const { data: { user } } = await (await createAuthClient()).auth.getUser()
   
   if (!canManageIdCardTemplate(profile)) {
     throw new Error('Unauthorized: You do not have permission to manage templates')
   }
-  return { supabase, adminSupabase, profile, user }
+  return { supabase, adminSupabase, storageSupabase, profile, user }
 }
 
 export async function uploadIdCardTemplate(formData: FormData) {
   try {
-    const { adminSupabase, user } = await checkTemplateAdminAccess()
+    const { adminSupabase, storageSupabase, user } = await checkTemplateAdminAccess()
     
     const file = formData.get('file') as File
     const name = formData.get('name') as string
@@ -44,7 +45,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
     }
 
     const fileName = `${Date.now()}-${file.name}`
-    const image_path = await uploadTemplateImage(adminSupabase, file, fileName)
+    const image_path = await uploadTemplateImage(storageSupabase, file, fileName)
 
     const templateData: Omit<IdCardTemplate, 'id' | 'created_at' | 'created_by'> = {
       name,
@@ -97,9 +98,9 @@ export async function uploadIdCardTemplate(formData: FormData) {
 
 export async function getIdCardTemplate(id: string) {
   try {
-    const { adminSupabase } = await checkTemplateAdminAccess()
+    const { adminSupabase, storageSupabase } = await checkTemplateAdminAccess()
     const template = await getIdCardTemplateQuery(adminSupabase, id)
-    const signedUrl = await getTemplateImageSignedUrl(adminSupabase, template.image_path)
+    const signedUrl = await getTemplateImageSignedUrl(storageSupabase, template.image_path)
     
     return { success: true, data: { template, signedUrl } }
   } catch (err: any) {
@@ -123,11 +124,11 @@ export async function saveIdCardTemplatePositions(id: string, positions: Templat
 
 export async function deleteIdCardTemplateAction(id: string) {
   try {
-    const { adminSupabase } = await checkTemplateAdminAccess()
+    const { adminSupabase, storageSupabase } = await checkTemplateAdminAccess()
     const template = await getIdCardTemplateQuery(adminSupabase, id)
     
     await deleteIdCardTemplate(adminSupabase, id)
-    await deleteTemplateImage(adminSupabase, template.image_path)
+    await deleteTemplateImage(storageSupabase, template.image_path)
     
     revalidatePath('/users/siswa')
     return { success: true, data: null }
@@ -138,13 +139,12 @@ export async function deleteIdCardTemplateAction(id: string) {
 
 export async function getIdCardTemplatesAction() {
   try {
-    const { adminSupabase } = await checkTemplateAdminAccess()
+    const { adminSupabase, storageSupabase } = await checkTemplateAdminAccess()
     const templates = await fetchIdCardTemplates(adminSupabase)
     
-    // Also fetch signed urls for all of them so we can show them
     const templatesWithUrls = await Promise.all(
       templates.map(async (t) => {
-        const signedUrl = await getTemplateImageSignedUrl(adminSupabase, t.image_path)
+        const signedUrl = await getTemplateImageSignedUrl(storageSupabase, t.image_path)
         return { ...t, signedUrl }
       })
     )

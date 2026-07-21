@@ -103,6 +103,19 @@ export async function createAdminClient(): Promise<SupabaseClient> {
 }
 
 /**
+ * Storage client — always points at Supabase Cloud Storage (not PostgREST).
+ * Use for all .storage.from() operations (upload, signedUrl, delete).
+ * Storage stays on Supabase Cloud even in self-hosted data plane mode.
+ */
+export function createStorageClient(): SupabaseClient {
+  return createSupabaseJsClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  )
+}
+
+/**
  * Admin AUTH client — Supabase Cloud with service_role key, for
  * auth.admin.* operations (user creation/deletion). Auth stays on
  * Supabase Cloud in the hybrid architecture.
