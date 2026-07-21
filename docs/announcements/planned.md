@@ -72,13 +72,14 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 - **Urgensi**: medium
 - **Draft**:
 
-  > 🗂️ **Fitur Kelola Status Siswa**
+  > Fitur Hapus & Archive Siswa
   >
-  > Sekarang Anda bisa menghapus atau mengarsipkan data siswa yang sudah tidak lagi terdaftar di kelompok Anda.
   >
-  > Gunakan fitur **Hapus Siswa** hanya untuk data yang salah, jika ada siswa yang tidak aktif karena pindah tempat tinggal atau alasan lainnya, bisa pakai fitur **Arsip Siswa** dengan begitu data siswa tersebut tetap ada dan dapat dipakai lagi nantinya, tapi siswa tersebut sudah tidak termasuk siswa yang wajib hadir di suatu pertemuan.
-  >
-  > Data yang diarsipkan tidak hilang permanen dan masih bisa dikembalikan jika diperlukan. Buka halaman **Siswa** untuk menggunakan fitur ini.
+  > Sekarang semua bisa menghapus atau mengarsipkan data siswa yang sudah tidak lagi terdaftar di kelompoknya.
+  > 
+  > Gunakan fitur Hapus Siswa hanya untuk data yang salah, jika ada siswa yang tidak aktif karena pindah tempat tinggal atau alasan lainnya, bisa pakai fitur Arsip Siswa dengan begitu data siswa tersebut tetap ada dan dapat dipakai lagi nantinya, tapi siswa tersebut sudah tidak termasuk siswa yang wajib hadir di suatu pertemuan.
+  > 
+  > Data yang diarsipkan tidak hilang permanen dan masih bisa dikembalikan jika diperlukan. Silahkan buka halaman Siswa untuk menggunakan fitur ini.
 
 - **Dikirim**: -
 
@@ -108,16 +109,41 @@ Urgensi: `low` (info opsional) | `medium` (perlu dibaca) | `high` (segera dibaca
 - **Urgensi**: high
 - **Draft**:
 
-  > 🎓 **Info: Proses Kenaikan Kelas Telah Dibuka**
-  >
-  > Fitur **Naik Kelas** sekarang sudah dapat digunakan langsung melalui menu di aplikasi!
-  >
-  > Kepada seluruh PJ Kelompok, mohon untuk segera memeriksa dan memproses siswa-siswi Anda yang perlu dinaikkan tingkatannya (seperti PAUD ke Kelas 1, dsb). 
-  >
-  > ⚠️ **Perhatian:** Untuk kelas reguler (PAUD s.d. SMA), mohon diproses sebelum **batas waktu (deadline)** yang telah ditentukan pengurus. Setelah batas waktu berakhir, akses kenaikan kelas reguler akan ditutup.
+  > 🎓 Proses Kenaikan Kelas Telah Dibuka
   > 
-  > Khusus untuk kelas **Pra Nikah**, kenaikan tingkatnya dapat Anda proses kapan saja tanpa terikat batas waktu.
+  > Untuk memulai tahun ajaran baru yaitu tahun ajaran 2026/2027 disediakan fitur baru yaitu *Naik Kelas*.
+  > 
+  > Kepada seluruh PJ Kelompok, mohon untuk segera memeriksa dan memproses siswa-siswinya yang perlu dinaikkan tingkatannya.
+  > 
+  > ⚠️ Perhatian: Untuk kelas reguler (PAUD s.d. SMA), mohon diproses sebelum batas waktu yang telah ditentukan yaitu 31 Juli 2026. Setelah batas waktu berakhir, akses kenaikan kelas reguler akan ditutup dan perlu bantuan PJ Desa untuk memprosesnya.
+  > 
+  > Khusus untuk kelas Pra Nikah, kenaikan tingkatnya dapat diproses kapan saja tanpa terikat batas waktu.
+  > 
+  > Tutorial dalam bentuk video bisa dilihat dengan klik link berikut : Generus Mandiri - Naik Kelas
+  > 
+  > Silakan buka menu Naik Kelas sekarang untuk memulai prosesnya!
+
+- **Dikirim**: -
+
+---
+
+### [~] Fitur Materi & Monitoring
+- **Trigger**: Deploy fitur Materi, Monitoring, dan Laporan Materi Pencapaian
+- **Target**: Semua guru
+- **Tipe**: info
+- **Urgensi**: medium
+- **Draft**:
+
+  > **📚 Fitur Materi & Monitoring**
   >
-  > Silakan buka menu **Naik Kelas** sekarang untuk memulai prosesnya!
+  > Ada beberapa fitur baru yang bisa digunakan:
+  >
+  > 1. **Materi** — lihat kurikulum dan target materi per kelas dan semester.
+  > 2. **Monitoring** — catat dan pantau progress pencapaian materi setiap siswa per bulan.
+  > 3. **Laporan Materi Pencapaian** — lihat ringkasan pencapaian seluruh siswa di halaman Laporan, tab Materi.
+  >
+  > Tutorial dalam bentuk video bisa dilihat dengan klik link berikut: [Generus Mandiri - Materi & Monitoring]
+  >
+  > Silakan buka menu Materi atau Monitoring untuk memulai!
 
 - **Dikirim**: -
