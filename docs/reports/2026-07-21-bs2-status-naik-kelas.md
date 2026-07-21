@@ -4,27 +4,27 @@
 > "Belum wizard" = PJ kelompok itu sendiri belum menjalankan wizard naik kelas
 > (belum ada `grade_promotion_logs` yang dibuat oleh PJ kelompok tersebut).
 
-**Belum wizard: 2 kelompok** (semua sudah terima notifikasi)
+**Belum wizard: 1 kelompok** (semua sudah terima notifikasi)
 
 ## Belum jalankan naik kelas
 
 | Kelompok | Desa | Total Siswa |
 |---|---|---|
-| Cibaduyut | Sayati | 95 |
 | TKI | Sayati | 26 |
 
-## Update dari kemarin (2026-07-20)
+## Update hari ini (2026-07-21)
 
-Kelompok yang **baru selesai** jalankan wizard hari ini:
+Kelompok yang **baru selesai** hari ini:
 
 | Kelompok | Desa | Sudah naik | Waktu |
 |---|---|---|---|
 | Palasari | Baleendah | 13 siswa | 03:54 UTC |
 | Manggahang | Baleendah | 7 siswa | 04:58–05:00 UTC |
+| Cibaduyut | Sayati | 31 siswa | rekonstruksi DB (manual) |
 
 ## Catatan kelompok dengan anomali
 
-- **Cibaduyut** — 95 siswa, belum ada satu pun yang dinaikkan. Kelompok terbesar yang tersisa.
+- **Cibaduyut** — PJ edit kelas manual satu-satu (via `/users/siswa`) sebelum fitur naik kelas rilis. Kelas sudah benar. Diperbaiki via DB: insert 29 enrollment 2026/2027 + 31 `grade_promotion_logs` (from = kelas satu level di bawah, promoted_at = 2026-06-27). Modal blocking PJ sudah di-dismiss.
 - **TKI** — 26 siswa, belum ada satu pun yang dinaikkan.
 - **Cijulang** — TIDAK masuk daftar belum. PJ Cijulang sudah jalankan wizard (1 siswa muda-mudi), sisanya sengaja tidak dinaikkan (keputusan PJ).
 - **PPBA & PPMRJ** (Desa Pondok) — dikecualikan: kelompok kosong (0 siswa aktif).
@@ -56,7 +56,7 @@ Kelompok yang **baru selesai** jalankan wizard hari ini:
 | Sukamanah 2 | Majalaya | 46 | 45 | ✅ |
 | Sukamanah 3 | Majalaya | 58 | 43 | ✅ |
 | Burujul | Sayati | 69 | 7 | ✅ |
-| **Cibaduyut** | **Sayati** | **95** | **0** | **⏳** |
+| Cibaduyut | Sayati | 95 | 31 | ✅ |
 | Kopo Permai | Sayati | 28 | 17 | ✅ |
 | Margahayu Kencana | Sayati | 39 | 32 | ✅ |
 | Margahayu Permai | Sayati | 29 | 13 | ✅ |
