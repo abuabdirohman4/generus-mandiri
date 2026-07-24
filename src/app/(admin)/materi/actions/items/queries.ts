@@ -21,7 +21,7 @@ export async function fetchAvailableClassMasters(supabase: SupabaseClient) {
     return await supabase
         .from('class_masters')
         .select('*')
-        .lte('sort_order', 20)
+        .lte('sort_order', 17)
         .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
         .order('sort_order', { ascending: true })
 }
@@ -38,7 +38,7 @@ export async function fetchAllClassMastersWithCategory(supabase: SupabaseClient)
       name,
       sort_order
     `)
-        .lte('sort_order', 20)
+        .lte('sort_order', 17)
         .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
         .order('sort_order', { ascending: true })
 }
@@ -54,7 +54,7 @@ export async function fetchClassMastersWithMaterialItems(supabase: SupabaseClien
       *,
       material_item_classes!inner(id)
     `)
-        .lte('sort_order', 20)
+        .lte('sort_order', 17)
         .not('name', 'in', `(${EXCLUDED_CLASS_NAMES.map(n => `"${n}"`).join(',')})`)
         .order('sort_order', { ascending: true })
 }

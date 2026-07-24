@@ -416,6 +416,7 @@ export default function MaterialsPageClient({ classMasters, userProfile, academi
                   monthsByItemId={monthsByItemId}
                   onViewItem={handleViewContent}
                   searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
                 />
               ) : (
                 <MateriContentView

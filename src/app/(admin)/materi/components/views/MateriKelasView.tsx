@@ -15,6 +15,7 @@ interface MateriKelasViewProps {
     monthsByItemId: Record<string, Array<{ class_master_id: string; semester: number; month: number }>>;
     onViewItem?: (item: MaterialItem) => void;
     searchQuery: string;
+    onSearchChange: (query: string) => void;
 }
 
 export default function MateriKelasView({
@@ -25,6 +26,7 @@ export default function MateriKelasView({
     monthsByItemId,
     onViewItem,
     searchQuery,
+    onSearchChange,
 }: MateriKelasViewProps) {
     const { filters, setFilter, columnVisibility, setColumnVisibility } = useMateriStore();
 
@@ -110,6 +112,24 @@ export default function MateriKelasView({
 
     return (
         <div className="space-y-6">
+            {/* Search */}
+            <div className="relative hidden lg:block">
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    placeholder="Cari materi disini..."
+                    className="w-full px-4 py-3 pl-11 border bg-white border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                />
+                <svg
+                    className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
             {/* Filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 border-b border-gray-200 dark:border-gray-700 pb-4">
                 <InputFilter

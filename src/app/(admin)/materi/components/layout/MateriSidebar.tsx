@@ -294,7 +294,6 @@ export default function MateriSidebar({
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {/* {filters.viewMode === 'by_material' ? 'Kategori Materi' : 'Daftar Kelas'} */}
                             Daftar Materi
                         </h2>
                         <div className="flex items-center gap-2">
@@ -345,26 +344,26 @@ export default function MateriSidebar({
                     </div>
 
                     {/* Tab Navigation */}
-                    {canManage ? (
+                    {/* {canManage ? ( */}
                         <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                            <button
-                                onClick={() => setFilter('activeTab', 'kategori')}
-                                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${filters.activeTab === 'kategori' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-                            >
-                                Kategori
-                            </button>
                             <button
                                 onClick={() => setFilter('activeTab', 'kelas')}
                                 className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${filters.activeTab === 'kelas' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                             >
                                 Kelas
                             </button>
+                            <button
+                                onClick={() => setFilter('activeTab', 'kategori')}
+                                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${filters.activeTab === 'kategori' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                            >
+                                Kategori
+                            </button>
                         </div>
-                    ) : (
+                    {/* ) : (
                         <div className="px-1 py-1.5">
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pilih Kelas</span>
                         </div>
-                    )}
+                    )} */}
                 </div>
 
                 {/* Content - Conditional based on view mode */}
