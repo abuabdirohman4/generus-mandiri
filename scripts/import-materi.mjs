@@ -65,6 +65,7 @@ const CATEGORY_DISPLAY_ORDER = {
     'Praktik Ibadah': 6,
     'Tulis Huruf Arab': 6,
     'Materi Dasar Keagamaan': 6,
+    'Baca Huruf Quran': 6,
 }
 
 // Mapping nama kategori CSV → nama type di DB
@@ -82,6 +83,7 @@ const KATEGORI_TO_TYPE_NAME = {
     'Praktik Ibadah': 'Praktik Ibadah',
     'Tulis Huruf Arab': 'Tulis Huruf Arab',
     'Materi Dasar Keagamaan': 'Materi Dasar Keagamaan',
+    'Baca Huruf Quran': 'Baca Huruf Quran',
 }
 
 // Mapping bulan (nama Indonesia) → nomor bulan

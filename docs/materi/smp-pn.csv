@@ -1,0 +1,666 @@
+No,kelas,kategori,target_bulan,materi
+1,SMP 1,Hafalan Surat Al Qur'an,September - Oktober,3 Ayat terakhir al Hasyr
+2,SMP 1,Baca Huruf Quran,Juli,Al Quran Juz 12
+3,SMP 1,Baca Huruf Quran,September - Oktober,Al Quran Juz 13
+4,SMP 1,Baca Huruf Quran,November - Desember,Al Quran Juz 14
+5,SMP 1,Baca Huruf Quran,Januari - Februari,Al Quran Juz 15
+6,SMP 1,Baca Huruf Quran,Maret - April,Al Quran Juz 16
+7,SMP 1,Baca Huruf Quran,Mei - Juni,Al Quran Juz 17
+8,SMP 1,Baca Huruf Quran,Agustus,Al Quran Juz12
+9,SMP 1,Materi Dasar Keagamaan,Juni,Aurot
+10,SMP 1,Adab/ Tatakrama,Agustus,Bergaul dengan teman
+11,SMP 1,Hafalan Surat Al Qur'an,November - Desember,Dalil Wajibnya Berjamaah 1
+12,SMP 1,Hafalan Surat Al Qur'an,April - Juni,Dalil Wajibnya Berjamaah 2
+13,SMP 1,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+14,SMP 1,Baca Huruf Quran,Januari,Hukum Al Ma'rifat
+15,SMP 1,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+16,SMP 1,Baca Huruf Quran,Maret,"Hukum Idghom (Mutamatsilain, Mutaqorribain, Mutajanisain)"
+17,SMP 1,Baca Huruf Quran,Juli,Hukum Isti'adah dan basmalah
+18,SMP 1,Baca Huruf Quran,Februari,Hukum Lam yang terdapat dalam Fi'il
+19,SMP 1,Materi Dasar Keagamaan,April,hukum mahrom
+20,SMP 1,Baca Huruf Quran,September,Hukum Mim Tasydid dan Nun Tasydid
+21,SMP 1,Baca Huruf Quran,Agustus,"Hukum nun sukun, tanwin dan Hukum Mim sukun"
+22,SMP 1,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+23,SMP 1,Tulis Huruf Arab,November - Desember,K. Sholah
+24,SMP 1,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+25,SMP 1,Akhlaq,September - Oktober,Keluarga
+26,SMP 1,Mandiri,September - Oktober,Kemandirian dalam keluarga
+27,SMP 1,Mandiri,November - Desember,Kemandirian dalam lingkungan jamaah dan sekolah
+28,SMP 1,Mandiri,Juli - Agustus,Kemandirian pribadi
+29,SMP 1,Materi Dasar Keagamaan,September,Kemurnian ibadah
+30,SMP 1,Mandiri,Januari - Maret,Keterampilan Generus Putra
+31,SMP 1,Mandiri,April - Juni,Keterampilan Generus Putri
+32,SMP 1,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+33,SMP 1,Tulis Huruf Arab,Juli - Agustus,Makna Juz 21
+34,SMP 1,Tulis Huruf Arab,September - Oktober,Makna Juz 22
+35,SMP 1,Materi Dasar Keagamaan,Desember,mandi junub
+36,SMP 1,Akhlaq,Januari - Maret,Masyarakat
+37,SMP 1,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+38,SMP 1,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+39,SMP 1,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+40,SMP 1,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+41,SMP 1,Materi Dasar Keagamaan,Agustus,Pengetahuan halal dan harom
+42,SMP 1,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+43,SMP 1,Praktik Ibadah,Januari - Maret,Praktik rutin membaca Al Quran
+44,SMP 1,Praktik Ibadah,April - Juni,Praktik rutin membaca PR 13
+45,SMP 1,Praktik Ibadah,Oktober - Desember,Praktik salat beserta bacaan dan doanya
+46,SMP 1,Praktik Ibadah,Juli - September,Praktik sholat tasbih
+47,SMP 1,Akhlaq,Juli - Agustus,Pribadi
+48,SMP 1,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+49,SMP 1,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+50,SMP 1,Materi Dasar Keagamaan,Oktober,"Sholat sunah rowatib, dhuha, dan tahajud"
+51,SMP 1,Hafalan Surat Al Qur'an,Juli - Agustus,Surat Al Buruj
+52,SMP 1,Hafalan Surat Al Qur'an,Januari - Maret,Surat Al Insyiqaq
+53,SMP 1,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+54,SMP 1,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+55,SMP 1,Adab/ Tatakrama,April,Tata krama bersepeda
+56,SMP 1,Adab/ Tatakrama,September,Tata krama bertamu/ diajak bertamu
+57,SMP 1,Adab/ Tatakrama,Januari,Tata krama di tempat pengajian dan sekolah
+58,SMP 1,Adab/ Tatakrama,Maret,Tata krama ketika bersin
+59,SMP 1,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+60,SMP 1,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+61,SMP 1,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+62,SMP 1,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+63,SMP 1,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+64,SMP 1,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+65,SMP 1,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+66,SMP 1,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+67,SMP 1,Adab/ Tatakrama,Februari,Tata krama tidur
+68,SMP 1,Tulis Huruf Arab,Januari - Juni,Terampil menulis makna pegon
+69,SMP 1,Materi Dasar Keagamaan,Januari,Thoharoh dan Sholat
+70,SMP 1,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+71,SMP 2,Baca Huruf Quran,Juli - Agustus,Al Quran 18
+72,SMP 2,Baca Huruf Quran,September - Oktober,Al Quran 19
+73,SMP 2,Baca Huruf Quran,November - Desember,Al Quran 20
+74,SMP 2,Baca Huruf Quran,Januari - Februari,Al Quran 21
+75,SMP 2,Baca Huruf Quran,Maret - April,Al Quran 22
+76,SMP 2,Baca Huruf Quran,Mei - Juni,Al Quran 23
+77,SMP 2,Materi Dasar Keagamaan,Juni,Aurot
+78,SMP 2,Hafalan Surat Al Qur'an,September - Oktober,Ayat Kursi
+79,SMP 2,Adab/ Tatakrama,Agustus,Bergaul dengan teman
+80,SMP 2,Hafalan Surat Al Qur'an,Juni,Dalil 5 Maqodirulloh
+81,SMP 2,Hafalan Surat Al Qur'an,November - Desember,Dalil 5 Syarat Kerukunan
+82,SMP 2,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+83,SMP 2,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+84,SMP 2,Baca Huruf Quran,Juli,Hukum Mad
+85,SMP 2,Materi Dasar Keagamaan,April,hukum mahrom
+86,SMP 2,Baca Huruf Quran,Februari,Hukum Qolqolah
+87,SMP 2,Baca Huruf Quran,Januari,Hukum Ro'
+88,SMP 2,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+89,SMP 2,Tulis Huruf Arab,Januari - Maret,Juz 26
+90,SMP 2,Tulis Huruf Arab,April - Juni,K. Da'wat
+91,SMP 2,Tulis Huruf Arab,November - Desember,K. Sholatinnawafil
+92,SMP 2,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+93,SMP 2,Akhlaq,September - Oktober,Keluarga
+94,SMP 2,Mandiri,September - Oktober,Kemandirian dalam keluarga
+95,SMP 2,Mandiri,November - Desember,Kemandirian dalam lingkungan jamaah dan sekolah
+96,SMP 2,Mandiri,Juli - Agustus,Kemandirian pribadi
+97,SMP 2,Materi Dasar Keagamaan,September,Kemurnian ibadah
+98,SMP 2,Mandiri,Januari - Maret,Keterampilan Generus Putra
+99,SMP 2,Mandiri,April - Juni,Keterampilan Generus Putri
+100,SMP 2,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+101,SMP 2,Tulis Huruf Arab,Juli - Agustus,Makna Juz 24
+102,SMP 2,Tulis Huruf Arab,September - Oktober,Makna Juz 25
+103,SMP 2,Materi Dasar Keagamaan,Desember,mandi junub
+104,SMP 2,Akhlaq,Januari - Maret,Masyarakat
+105,SMP 2,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+106,SMP 2,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+107,SMP 2,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+108,SMP 2,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+109,SMP 2,Materi Dasar Keagamaan,Agustus,Pengetahuan halal dan harom
+110,SMP 2,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+111,SMP 2,Praktik Ibadah,Januari - Maret,Praktik rutin membaca Al Quran
+112,SMP 2,Praktik Ibadah,April - Juni,Praktik rutin membaca PR 13
+113,SMP 2,Praktik Ibadah,Oktober - Desember,Praktik salat beserta bacaan dan doanya
+114,SMP 2,Praktik Ibadah,Juli - September,Praktik sholat tasbih
+115,SMP 2,Akhlaq,Juli - Agustus,Pribadi
+116,SMP 2,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+117,SMP 2,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+118,SMP 2,Materi Dasar Keagamaan,Oktober,"Sholat sunah rowatib, dhuha, dan tahajud"
+119,SMP 2,Hafalan Surat Al Qur'an,Januari - Februari,Surat Al Infithor
+120,SMP 2,Hafalan Surat Al Qur'an,Juli - Agustus,Surat Al Muthoffifin
+121,SMP 2,Hafalan Surat Al Qur'an,Maret - April,Surat At Takwir
+122,SMP 2,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+123,SMP 2,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+124,SMP 2,Adab/ Tatakrama,April,Tata krama bersepeda
+125,SMP 2,Adab/ Tatakrama,September,Tata krama bertamu/ diajak bertamu
+126,SMP 2,Adab/ Tatakrama,Januari,Tata krama di tempat pengajian dan sekolah
+127,SMP 2,Adab/ Tatakrama,Maret,Tata krama ketika bersin
+128,SMP 2,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+129,SMP 2,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+130,SMP 2,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+131,SMP 2,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+132,SMP 2,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+133,SMP 2,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+134,SMP 2,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+135,SMP 2,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+136,SMP 2,Adab/ Tatakrama,Februari,Tata krama tidur
+137,SMP 2,Materi Dasar Keagamaan,Januari,Thoharoh dan Sholat
+138,SMP 2,Hafalan Surat Al Qur'an,Mei,Tiga ayat terakhir surat al Baqoroh
+139,SMP 2,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+140,SMP 3,Hafalan Surat Al Qur'an,November - Desember,4 Roda Berputar
+141,SMP 3,Hafalan Surat Al Qur'an,Mei - Juni,5 Usaha Mecari Kefahaman
+142,SMP 3,Baca Huruf Quran,Juli - Agustus,Al Quran 24
+143,SMP 3,Baca Huruf Quran,September - Oktober,Al Quran 25
+144,SMP 3,Baca Huruf Quran,November - Desember,Al Quran 26
+145,SMP 3,Baca Huruf Quran,Januari - Februari,Al Quran 27
+146,SMP 3,Baca Huruf Quran,Maret - April,Al Quran 28
+147,SMP 3,Baca Huruf Quran,Mei - Juni,Al Quran 29
+148,SMP 3,Materi Dasar Keagamaan,Juni,Aurot
+149,SMP 3,Adab/ Tatakrama,Agustus,Bergaul dengan teman
+150,SMP 3,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+151,SMP 3,Baca Huruf Quran,Maret,Hukum Bid'ah dalam bacaan
+152,SMP 3,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+153,SMP 3,Materi Dasar Keagamaan,April,hukum mahrom
+154,SMP 3,Baca Huruf Quran,Juli,Hukum Makhorijul Huruf
+155,SMP 3,Baca Huruf Quran,Februari,Hukum Pembagian Waqof
+156,SMP 3,Baca Huruf Quran,Januari,Hukum sifat-sifat huruf
+157,SMP 3,Baca Huruf Quran,April,Hukum Takbir
+158,SMP 3,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+159,SMP 3,Tulis Huruf Arab,Januari - Februari,Juz 29
+160,SMP 3,Tulis Huruf Arab,Maret - April,Juz 30
+161,SMP 3,Tulis Huruf Arab,November - Desember,K. Adillah
+162,SMP 3,Tulis Huruf Arab,Mei - Juni,K. Sifatil Jannati Wannar
+163,SMP 3,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+164,SMP 3,Akhlaq,September - Oktober,Keluarga
+165,SMP 3,Mandiri,September - Oktober,Kemandirian dalam keluarga
+166,SMP 3,Mandiri,November - Desember,Kemandirian dalam lingkungan jamaah dan sekolah
+167,SMP 3,Mandiri,Juli - Agustus,Kemandirian pribadi
+168,SMP 3,Materi Dasar Keagamaan,September,Kemurnian ibadah
+169,SMP 3,Mandiri,Januari - Maret,Keterampilan Generus Putra
+170,SMP 3,Mandiri,April - Juni,Keterampilan Generus Putri
+171,SMP 3,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+172,SMP 3,Tulis Huruf Arab,Juli - Agustus,Makna Juz 27
+173,SMP 3,Tulis Huruf Arab,September - Oktober,Makna Juz 28
+174,SMP 3,Materi Dasar Keagamaan,Desember,mandi junub
+175,SMP 3,Akhlaq,Januari - Maret,Masyarakat
+176,SMP 3,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+177,SMP 3,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+178,SMP 3,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+179,SMP 3,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+180,SMP 3,Materi Dasar Keagamaan,Agustus,Pengetahuan halal dan harom
+181,SMP 3,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+182,SMP 3,Praktik Ibadah,Januari - Maret,Praktik rutin membaca Al Quran
+183,SMP 3,Praktik Ibadah,April - Juni,Praktik rutin membaca PR 13
+184,SMP 3,Praktik Ibadah,Oktober - Desember,Praktik salat beserta bacaan dan doanya
+185,SMP 3,Praktik Ibadah,Juli - September,Praktik sholat tasbih
+186,SMP 3,Akhlaq,Juli - Agustus,Pribadi
+187,SMP 3,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+188,SMP 3,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+189,SMP 3,Materi Dasar Keagamaan,Oktober,"Sholat sunah rowatib, dhuha, dan tahajud"
+190,SMP 3,Hafalan Surat Al Qur'an,Juli - Agustus,Surat Abasa
+191,SMP 3,Hafalan Surat Al Qur'an,Januari - Februari,Surat An Naba'
+192,SMP 3,Hafalan Surat Al Qur'an,September - Oktober,Surat An Naziat
+193,SMP 3,Hafalan Surat Al Qur'an,Maret - April,Surat Shof ayat 10-13
+194,SMP 3,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+195,SMP 3,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+196,SMP 3,Adab/ Tatakrama,April,Tata krama bersepeda
+197,SMP 3,Adab/ Tatakrama,September,Tata krama bertamu/ diajak bertamu
+198,SMP 3,Adab/ Tatakrama,Januari,Tata krama di tempat pengajian dan sekolah
+199,SMP 3,Adab/ Tatakrama,Maret,Tata krama ketika bersin
+200,SMP 3,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+201,SMP 3,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+202,SMP 3,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+203,SMP 3,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+204,SMP 3,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+205,SMP 3,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+206,SMP 3,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+207,SMP 3,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+208,SMP 3,Adab/ Tatakrama,Februari,Tata krama tidur
+209,SMP 3,Materi Dasar Keagamaan,Januari,Thoharoh dan Sholat
+210,SMP 3,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+211,SMA 1,Materi Dasar Keagamaan,Juni,Aurat
+212,SMA 1,Adab/ Tatakrama,September,Bergaul dengan teman
+213,SMA 1,Adab/ Tatakrama,Januari,Berpakaian
+214,SMA 1,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+215,SMA 1,Hafalan Surat Al Qur'an,Mei - Juni,Dalil 3 Sukses Generus
+216,SMA 1,Hafalan Surat Al Qur'an,Maret - April,Dalil 4 TK
+217,SMA 1,Hafalan Surat Al Qur'an,November - Desember,Dalil 5 Bab (masing-masing 2 dalil)
+218,SMA 1,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+219,SMA 1,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+220,SMA 1,Materi Dasar Keagamaan,Mei,Hukum Mahram
+221,SMA 1,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+222,SMA 1,Tulis Huruf Arab,Januari,Juz 8
+223,SMA 1,Tulis Huruf Arab,Februari - Maret,Juz 9
+224,SMA 1,Tulis Huruf Arab,April - Juni,K. Imaroh
+225,SMA 1,Tulis Huruf Arab,November - Desember,K. Janaiz
+226,SMA 1,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+227,SMA 1,Akhlaq,September - Oktober,Keluarga
+228,SMA 1,Mandiri,September - Oktober,Kemandirian dalam keluarga
+229,SMA 1,Mandiri,November - Desember,Kemandirian dalam lingkungan jamaah dan sekolah
+230,SMA 1,Mandiri,Juli - Agustus,Kemandirian pribadi
+231,SMA 1,Materi Dasar Keagamaan,September,Kemurnian ibadah
+232,SMA 1,Mandiri,Januari - Maret,Keterampilan Generus Putra
+233,SMA 1,Mandiri,April - Juni,Keterampilan Generus Putri
+234,SMA 1,Adab/ Tatakrama,Februari,Ketika Bersin
+235,SMA 1,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+236,SMA 1,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+237,SMA 1,Adab/ Tatakrama,Februari,Ketika Menguap
+238,SMA 1,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+239,SMA 1,Tulis Huruf Arab,Juli - Agustus,Makna Juz 7
+240,SMA 1,Tulis Huruf Arab,September - Oktober,Makna Juz 8
+241,SMA 1,Materi Dasar Keagamaan,Januari,Mandi Junub
+242,SMA 1,Akhlaq,Januari - Maret,Masyarakat
+243,SMA 1,Praktik Ibadah,Oktober - Desember,Mempraktikkan doa-doa yang telah dihafal
+244,SMA 1,Praktik Ibadah,April - Juni,Mempraktikkan doa-doa yang telah dihafal
+245,SMA 1,Praktik Ibadah,Juli - September,Mempraktikkan puasa sunah
+246,SMA 1,Praktik Ibadah,Januari - Maret,Mempraktikkan puasa sunah
+247,SMA 1,Baca Huruf Quran,Juli - Juni,Menderes Harian
+248,SMA 1,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+249,SMA 1,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+250,SMA 1,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+251,SMA 1,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+252,SMA 1,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+253,SMA 1,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+254,SMA 1,Akhlaq,Juli - Agustus,Pribadi
+255,SMA 1,Materi Dasar Keagamaan,April,Puasa Romadlon
+256,SMA 1,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+257,SMA 1,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+258,SMA 1,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud dan tasbih"
+259,SMA 1,Hafalan Surat Al Qur'an,Januari - Februari,Surat Al Baqoroh 1-4
+260,SMA 1,Hafalan Surat Al Qur'an,Juli - Oktober,Surat Al Mulk
+261,SMA 1,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+262,SMA 1,Adab/ Tatakrama,April,Tata krama bersepeda
+263,SMA 1,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+264,SMA 1,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+265,SMA 1,Adab/ Tatakrama,Maret,Terhadap Kerabat
+266,SMA 1,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+267,SMA 1,Adab/ Tatakrama,Maret,Terhadap Tetangga
+268,SMA 1,Adab/ Tatakrama,November,Terhadap Ulil Amri
+269,SMA 1,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+270,SMA 1,Adab/ Tatakrama,Januari,Tidur
+271,SMA 1,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+272,SMA 2,Materi Dasar Keagamaan,Juni,Aurat
+273,SMA 2,Adab/ Tatakrama,September,Bergaul dengan teman
+274,SMA 2,Adab/ Tatakrama,Januari,Berpakaian
+275,SMA 2,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+276,SMA 2,Mandiri,Agustus,Dalam Keluarga
+277,SMA 2,Mandiri,Februari,Dalam Keluarga
+278,SMA 2,Hafalan Surat Al Qur'an,Mei - Juni,Dalil 5 Syarat Kerukunan 1
+279,SMA 2,Hafalan Surat Al Qur'an,September - Oktober,Dalil 6 Thobiat Luhur 1
+280,SMA 2,Hafalan Surat Al Qur'an,November - Desember,Dalil Wajibnya Berjama’ah 3
+281,SMA 2,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+282,SMA 2,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+283,SMA 2,Materi Dasar Keagamaan,Mei,Hukum Mahram
+284,SMA 2,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+285,SMA 2,Tulis Huruf Arab,Januari,Juz 11
+286,SMA 2,Tulis Huruf Arab,Februari - Maret,Juz 12
+287,SMA 2,Tulis Huruf Arab,April,Juz12
+288,SMA 2,Tulis Huruf Arab,November - Desember,K. Ahkam
+289,SMA 2,Tulis Huruf Arab,Mei - Juni,K. Jihad
+290,SMA 2,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+291,SMA 2,Akhlaq,September - Oktober,Keluarga
+292,SMA 2,Mandiri,September,Kemandirian dalam keluarga
+293,SMA 2,Mandiri,Maret,Kemandirian dalam keluarga
+294,SMA 2,Mandiri,Juli,Kemandirian pribadi
+295,SMA 2,Mandiri,Januari,Kemandirian pribadi
+296,SMA 2,Materi Dasar Keagamaan,September,Kemurnian ibadah
+297,SMA 2,Mandiri,Oktober,Keterampilan Generus Putra
+298,SMA 2,Mandiri,April,Keterampilan Generus Putra
+299,SMA 2,Mandiri,November - Desember,Keterampilan Generus Putri
+300,SMA 2,Mandiri,Mei - Juni,Keterampilan Generus Putri
+301,SMA 2,Adab/ Tatakrama,Februari,Ketika Bersin
+302,SMA 2,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+303,SMA 2,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+304,SMA 2,Adab/ Tatakrama,Februari,Ketika Menguap
+305,SMA 2,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+306,SMA 2,Tulis Huruf Arab,Juli,Makna Juz 10
+307,SMA 2,Tulis Huruf Arab,September - Oktober,Makna Juz 11
+308,SMA 2,Tulis Huruf Arab,Agustus,Makna Juz10
+309,SMA 2,Materi Dasar Keagamaan,Januari,Mandi Junub
+310,SMA 2,Akhlaq,Januari - Maret,Masyarakat
+311,SMA 2,Praktik Ibadah,Oktober - Desember,Mempraktikkan doa-doa yang telah dihafal
+312,SMA 2,Praktik Ibadah,April - Juni,Mempraktikkan doa-doa yang telah dihafal
+313,SMA 2,Praktik Ibadah,Juli - September,Mempraktikkan puasa sunah
+314,SMA 2,Praktik Ibadah,Januari - Maret,Mempraktikkan puasa sunah
+315,SMA 2,Baca Huruf Quran,Juli - Juni,Menderes Harian
+316,SMA 2,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+317,SMA 2,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+318,SMA 2,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+319,SMA 2,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+320,SMA 2,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+321,SMA 2,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+322,SMA 2,Akhlaq,Juli - Agustus,Pribadi
+323,SMA 2,Materi Dasar Keagamaan,April,Puasa Romadlon
+324,SMA 2,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+325,SMA 2,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+326,SMA 2,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud dan tasbih"
+327,SMA 2,Hafalan Surat Al Qur'an,Maret - April,Surat Al Kahfi 1-10
+328,SMA 2,Hafalan Surat Al Qur'an,Juli - Agustus,Surat Al Mu’minun 1-11
+329,SMA 2,Hafalan Surat Al Qur'an,Januari - Februari,Surat Al Mu’minun 115-118
+330,SMA 2,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+331,SMA 2,Adab/ Tatakrama,April,Tata krama bersepeda
+332,SMA 2,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+333,SMA 2,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+334,SMA 2,Adab/ Tatakrama,Maret,Terhadap Kerabat
+335,SMA 2,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+336,SMA 2,Adab/ Tatakrama,Maret,Terhadap Tetangga
+337,SMA 2,Adab/ Tatakrama,November,Terhadap Ulil Amri
+338,SMA 2,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+339,SMA 2,Adab/ Tatakrama,Januari,Tidur
+340,SMA 2,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+341,SMA 3,Materi Dasar Keagamaan,Juni,Aurat
+342,SMA 3,Adab/ Tatakrama,September,Bergaul dengan teman
+343,SMA 3,Adab/ Tatakrama,Januari,Berpakaian
+344,SMA 3,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+345,SMA 3,Mandiri,Agustus,Dalam Keluarga
+346,SMA 3,Mandiri,Februari,Dalam Keluarga
+347,SMA 3,Hafalan Surat Al Qur'an,Mei - Juni,Dalil 5 Syarat Kerukunan 2
+348,SMA 3,Hafalan Surat Al Qur'an,September - Desember,Dalil 6 Thobiat Luhur 2
+349,SMA 3,Hafalan Surat Al Qur'an,Maret - April,Dalil Wajibnya Berjama’ah 4
+350,SMA 3,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+351,SMA 3,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+352,SMA 3,Materi Dasar Keagamaan,Mei,Hukum Mahram
+353,SMA 3,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+354,SMA 3,Tulis Huruf Arab,Januari,Juz 14
+355,SMA 3,Tulis Huruf Arab,Februari - Maret,Juz 15
+356,SMA 3,Tulis Huruf Arab,April,Juz15
+357,SMA 3,Tulis Huruf Arab,November - Desember,K. Manasik Waljihad
+358,SMA 3,Tulis Huruf Arab,Mei - Juni,K. Shoum
+359,SMA 3,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+360,SMA 3,Akhlaq,September - Oktober,Keluarga
+361,SMA 3,Mandiri,September,Kemandirian dalam keluarga
+362,SMA 3,Mandiri,Maret,Kemandirian dalam keluarga
+363,SMA 3,Mandiri,Juli,Kemandirian pribadi
+364,SMA 3,Mandiri,Januari,Kemandirian pribadi
+365,SMA 3,Materi Dasar Keagamaan,September,Kemurnian ibadah
+366,SMA 3,Mandiri,Oktober,Keterampilan Generus Putra
+367,SMA 3,Mandiri,April,Keterampilan Generus Putra
+368,SMA 3,Mandiri,November - Desember,Keterampilan Generus Putri
+369,SMA 3,Mandiri,Mei - Juni,Keterampilan Generus Putri
+370,SMA 3,Adab/ Tatakrama,Februari,Ketika Bersin
+371,SMA 3,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+372,SMA 3,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+373,SMA 3,Adab/ Tatakrama,Februari,Ketika Menguap
+374,SMA 3,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+375,SMA 3,Tulis Huruf Arab,Juli,Makna Juz 13
+376,SMA 3,Tulis Huruf Arab,September - Oktober,Makna Juz 14
+377,SMA 3,Tulis Huruf Arab,Agustus,Makna Juz13
+378,SMA 3,Materi Dasar Keagamaan,Januari,Mandi Junub
+379,SMA 3,Akhlaq,Januari - Maret,Masyarakat
+380,SMA 3,Praktik Ibadah,Oktober - Desember,Mempraktikkan doa-doa yang telah dihafal
+381,SMA 3,Praktik Ibadah,April - Juni,Mempraktikkan doa-doa yang telah dihafal
+382,SMA 3,Praktik Ibadah,Juli - September,Mempraktikkan puasa sunah
+383,SMA 3,Praktik Ibadah,Januari - Maret,Mempraktikkan puasa sunah
+384,SMA 3,Hafalan Surat Al Qur'an,Juli - Agustus,Menderes hafalan Qur’an
+385,SMA 3,Hafalan Surat Al Qur'an,Januari - Februari,Menderes hafalan Qur’an
+386,SMA 3,Baca Huruf Quran,Juli - Juni,Menderes Harian
+387,SMA 3,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+388,SMA 3,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+389,SMA 3,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+390,SMA 3,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+391,SMA 3,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+392,SMA 3,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+393,SMA 3,Akhlaq,Juli - Agustus,Pribadi
+394,SMA 3,Materi Dasar Keagamaan,April,Puasa Romadlon
+395,SMA 3,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+396,SMA 3,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+397,SMA 3,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud dan tasbih"
+398,SMA 3,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+399,SMA 3,Adab/ Tatakrama,April,Tata krama bersepeda
+400,SMA 3,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+401,SMA 3,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+402,SMA 3,Adab/ Tatakrama,Maret,Terhadap Kerabat
+403,SMA 3,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+404,SMA 3,Adab/ Tatakrama,Maret,Terhadap Tetangga
+405,SMA 3,Adab/ Tatakrama,November,Terhadap Ulil Amri
+406,SMA 3,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+407,SMA 3,Adab/ Tatakrama,Januari,Tidur
+408,SMA 3,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+409,Pra Nikah 1,Materi Dasar Keagamaan,Juni,Aurat
+410,Pra Nikah 1,Adab/ Tatakrama,September,Bergaul dengan teman
+411,Pra Nikah 1,Adab/ Tatakrama,Januari,Berpakaian
+412,Pra Nikah 1,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+413,Pra Nikah 1,Adab/ Tatakrama,Juni,Dalam bermasyarakat
+414,Pra Nikah 1,Adab/ Tatakrama,Mei,Dalam kehidupan berumah tangga
+415,Pra Nikah 1,Mandiri,Agustus,Dalam Keluarga
+416,Pra Nikah 1,Mandiri,Februari,Dalam Keluarga
+417,Pra Nikah 1,Adab/ Tatakrama,Juni,Dalam lingkungan kerja
+418,Pra Nikah 1,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+419,Pra Nikah 1,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+420,Pra Nikah 1,Materi Dasar Keagamaan,Mei,Hukum Mahram
+421,Pra Nikah 1,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+422,Pra Nikah 1,Tulis Huruf Arab,Juli - Oktober,Juz 1 – 2
+423,Pra Nikah 1,Tulis Huruf Arab,Januari - April,Juz 2 – 3
+424,Pra Nikah 1,Tulis Huruf Arab,November - Desember,K. Manasikil Haji (113)
+425,Pra Nikah 1,Tulis Huruf Arab,Mei - Juni,K. Nikah
+426,Pra Nikah 1,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+427,Pra Nikah 1,Akhlaq,September - Oktober,Keluarga
+428,Pra Nikah 1,Mandiri,September,Kemandirian dalam keluarga
+429,Pra Nikah 1,Mandiri,Maret,Kemandirian dalam keluarga
+430,Pra Nikah 1,Mandiri,Juli,Kemandirian pribadi
+431,Pra Nikah 1,Mandiri,Januari,Kemandirian pribadi
+432,Pra Nikah 1,Materi Dasar Keagamaan,September,Kemurnian ibadah
+433,Pra Nikah 1,Mandiri,Oktober,Keterampilan Generus Putra
+434,Pra Nikah 1,Mandiri,April,Keterampilan Generus Putra
+435,Pra Nikah 1,Mandiri,November - Desember,Keterampilan Generus Putri
+436,Pra Nikah 1,Mandiri,Mei - Juni,Keterampilan Generus Putri
+437,Pra Nikah 1,Adab/ Tatakrama,Februari,Ketika Bersin
+438,Pra Nikah 1,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+439,Pra Nikah 1,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+440,Pra Nikah 1,Adab/ Tatakrama,Februari,Ketika Menguap
+441,Pra Nikah 1,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+442,Pra Nikah 1,Materi Dasar Keagamaan,Januari,Mandi Junub
+443,Pra Nikah 1,Akhlaq,Januari - Maret,Masyarakat
+444,Pra Nikah 1,Praktik Ibadah,Juli - September,Mempraktikan sholat hajat
+445,Pra Nikah 1,Praktik Ibadah,Januari - Maret,Mempraktikan sholat hajat
+446,Pra Nikah 1,Praktik Ibadah,Oktober - Desember,Mempraktikan sholat istikhoroh
+447,Pra Nikah 1,Praktik Ibadah,April - Juni,Mempraktikan sholat istikhoroh
+448,Pra Nikah 1,Baca Huruf Quran,Juli - Desember,Menderes Juz 19-20
+449,Pra Nikah 1,Baca Huruf Quran,Januari - Juni,Menderes Juz 21-22
+450,Pra Nikah 1,Hafalan Surat Al Qur'an,Januari - Juni,Menderes: 1. Surah Al-Fil 2. Surah Al-Humazah 3. Surah Al-'Asr 4. At-Takasur 5. Surah Al-Qari'ah 6. Al-'Adiyat 7. Surah Az-Zalzalah
+451,Pra Nikah 1,Hafalan Surat Al Qur'an,Juli - Desember,Menderes: Surah An-Nas 1. Surah Al-Falaq 2. Surah Al-Ikhlas 3. Surah Al-Lahab 4. Surah An-Nasr 5. Al-Kafirun 6. Surah Al-Kausar 7. Surah Al-Ma’un 8. Surah Quraisy
+452,Pra Nikah 1,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+453,Pra Nikah 1,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+454,Pra Nikah 1,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+455,Pra Nikah 1,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+456,Pra Nikah 1,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+457,Pra Nikah 1,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+458,Pra Nikah 1,Akhlaq,Juli - Agustus,Pribadi
+459,Pra Nikah 1,Materi Dasar Keagamaan,April,Puasa Romadlon
+460,Pra Nikah 1,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+461,Pra Nikah 1,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+462,Pra Nikah 1,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud, tasbih, hajat dan istikhoroh"
+463,Pra Nikah 1,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+464,Pra Nikah 1,Adab/ Tatakrama,April,Tata krama bersepeda
+465,Pra Nikah 1,Adab/ Tatakrama,April,Tata krama ketika makan bersama
+466,Pra Nikah 1,Adab/ Tatakrama,Mei,Tata krama mencari ilmu
+467,Pra Nikah 1,Adab/ Tatakrama,Maret,Terhadap Kerabat
+468,Pra Nikah 1,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+469,Pra Nikah 1,Adab/ Tatakrama,Maret,Terhadap Tetangga
+470,Pra Nikah 1,Adab/ Tatakrama,November,Terhadap Ulil Amri
+471,Pra Nikah 1,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+472,Pra Nikah 1,Adab/ Tatakrama,Januari,Tidur
+473,Pra Nikah 1,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+474,Pra Nikah 2,Materi Dasar Keagamaan,Juni,Aurat
+475,Pra Nikah 2,Adab/ Tatakrama,September,Bergaul dengan teman
+476,Pra Nikah 2,Adab/ Tatakrama,Januari,Berpakaian
+477,Pra Nikah 2,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+478,Pra Nikah 2,Adab/ Tatakrama,Juni,Dalam bermasyarakat
+479,Pra Nikah 2,Adab/ Tatakrama,Mei,Dalam kehidupan berumah tangga
+480,Pra Nikah 2,Mandiri,Agustus,Dalam Keluarga
+481,Pra Nikah 2,Mandiri,Februari,Dalam Keluarga
+482,Pra Nikah 2,Adab/ Tatakrama,Juni,Dalam lingkungan kerja
+483,Pra Nikah 2,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+484,Pra Nikah 2,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+485,Pra Nikah 2,Materi Dasar Keagamaan,Mei,Hukum Mahram
+486,Pra Nikah 2,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+487,Pra Nikah 2,Tulis Huruf Arab,Juli - Oktober,Juz 4-5
+488,Pra Nikah 2,Tulis Huruf Arab,Januari - Februari,Juz 5-6
+489,Pra Nikah 2,Tulis Huruf Arab,Mei - Juni,K. Faroidh
+490,Pra Nikah 2,Tulis Huruf Arab,Maret - April,K. Kanzil Umal (90 - 116)
+491,Pra Nikah 2,Tulis Huruf Arab,November - Desember,K. Kanzil Ummal (1-90)
+492,Pra Nikah 2,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+493,Pra Nikah 2,Akhlaq,September - Oktober,Keluarga
+494,Pra Nikah 2,Mandiri,September,Kemandirian dalam keluarga
+495,Pra Nikah 2,Mandiri,Maret,Kemandirian dalam keluarga
+496,Pra Nikah 2,Mandiri,Juli,Kemandirian pribadi
+497,Pra Nikah 2,Mandiri,Januari,Kemandirian pribadi
+498,Pra Nikah 2,Materi Dasar Keagamaan,September,Kemurnian ibadah
+499,Pra Nikah 2,Mandiri,Oktober,Keterampilan Generus Putra
+500,Pra Nikah 2,Mandiri,April,Keterampilan Generus Putra
+501,Pra Nikah 2,Mandiri,November - Desember,Keterampilan Generus Putri
+502,Pra Nikah 2,Mandiri,Mei - Juni,Keterampilan Generus Putri
+503,Pra Nikah 2,Adab/ Tatakrama,Februari,Ketika Bersin
+504,Pra Nikah 2,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+505,Pra Nikah 2,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+506,Pra Nikah 2,Adab/ Tatakrama,Februari,Ketika Menguap
+507,Pra Nikah 2,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+508,Pra Nikah 2,Materi Dasar Keagamaan,Januari,Mandi Junub
+509,Pra Nikah 2,Akhlaq,Januari - Maret,Masyarakat
+510,Pra Nikah 2,Praktik Ibadah,Juli - September,Mempraktikan sholat hajat
+511,Pra Nikah 2,Praktik Ibadah,Januari - Maret,Mempraktikan sholat hajat
+512,Pra Nikah 2,Praktik Ibadah,Oktober - Desember,Mempraktikan sholat istikhoroh
+513,Pra Nikah 2,Praktik Ibadah,April - Juni,Mempraktikan sholat istikhoroh
+514,Pra Nikah 2,Hafalan Surat Al Qur'an,Juli - Desember,Menderes 1. Surah Al-Bayyinah 2. Surah Al-Qadr 3. Surah Al-'Alaq 4. Surah At-Tin 5. Surah Al-Insyirah 6. Surah Ad-Duha 7. Surah Al-Lail
+515,Pra Nikah 2,Hafalan Surat Al Qur'an,Januari - Juni,Menderes 1. Surah Asy-Syams 2. Surah Al-Balad 3. Surah Al-Fajr 4. Surah Al-Gasyiyah
+516,Pra Nikah 2,Baca Huruf Quran,Juli - Desember,Menderes Juz 23-24
+517,Pra Nikah 2,Baca Huruf Quran,Januari - Juni,Menderes Juz 25-26
+518,Pra Nikah 2,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+519,Pra Nikah 2,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+520,Pra Nikah 2,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+521,Pra Nikah 2,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+522,Pra Nikah 2,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+523,Pra Nikah 2,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+524,Pra Nikah 2,Akhlaq,Juli - Agustus,Pribadi
+525,Pra Nikah 2,Materi Dasar Keagamaan,April,Puasa Romadlon
+526,Pra Nikah 2,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+527,Pra Nikah 2,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+528,Pra Nikah 2,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud, tasbih, hajat dan istikhoroh"
+529,Pra Nikah 2,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+530,Pra Nikah 2,Adab/ Tatakrama,April,Tata krama bersepeda
+531,Pra Nikah 2,Adab/ Tatakrama,April,Tata krama ketika makan bersama
+532,Pra Nikah 2,Adab/ Tatakrama,Mei,Tata krama mencari ilmu
+533,Pra Nikah 2,Adab/ Tatakrama,Maret,Terhadap Kerabat
+534,Pra Nikah 2,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+535,Pra Nikah 2,Adab/ Tatakrama,Maret,Terhadap Tetangga
+536,Pra Nikah 2,Adab/ Tatakrama,November,Terhadap Ulil Amri
+537,Pra Nikah 2,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+538,Pra Nikah 2,Adab/ Tatakrama,Januari,Tidur
+539,Pra Nikah 2,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+540,Pra Nikah 3,Materi Dasar Keagamaan,Juni,Aurat
+541,Pra Nikah 3,Adab/ Tatakrama,September,Bergaul dengan teman
+542,Pra Nikah 3,Adab/ Tatakrama,Januari,Berpakaian
+543,Pra Nikah 3,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+544,Pra Nikah 3,Adab/ Tatakrama,Juni,Dalam bermasyarakat
+545,Pra Nikah 3,Adab/ Tatakrama,Mei,Dalam kehidupan berumah tangga
+546,Pra Nikah 3,Mandiri,Agustus,Dalam Keluarga
+547,Pra Nikah 3,Mandiri,Februari,Dalam Keluarga
+548,Pra Nikah 3,Adab/ Tatakrama,Juni,Dalam lingkungan kerja
+549,Pra Nikah 3,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+550,Pra Nikah 3,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+551,Pra Nikah 3,Materi Dasar Keagamaan,Mei,Hukum Mahram
+552,Pra Nikah 3,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+553,Pra Nikah 3,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+554,Pra Nikah 3,Akhlaq,September - Oktober,Keluarga
+555,Pra Nikah 3,Mandiri,September,Kemandirian dalam keluarga
+556,Pra Nikah 3,Mandiri,Maret,Kemandirian dalam keluarga
+557,Pra Nikah 3,Mandiri,Juli,Kemandirian pribadi
+558,Pra Nikah 3,Mandiri,Januari,Kemandirian pribadi
+559,Pra Nikah 3,Materi Dasar Keagamaan,September,Kemurnian ibadah
+560,Pra Nikah 3,Mandiri,Oktober,Keterampilan Generus Putra
+561,Pra Nikah 3,Mandiri,April,Keterampilan Generus Putra
+562,Pra Nikah 3,Mandiri,November - Desember,Keterampilan Generus Putri
+563,Pra Nikah 3,Mandiri,Mei - Juni,Keterampilan Generus Putri
+564,Pra Nikah 3,Adab/ Tatakrama,Februari,Ketika Bersin
+565,Pra Nikah 3,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+566,Pra Nikah 3,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+567,Pra Nikah 3,Adab/ Tatakrama,Februari,Ketika Menguap
+568,Pra Nikah 3,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+569,Pra Nikah 3,Materi Dasar Keagamaan,Januari,Mandi Junub
+570,Pra Nikah 3,Akhlaq,Januari - Maret,Masyarakat
+571,Pra Nikah 3,Praktik Ibadah,Juli - September,Mempraktikan sholat hajat
+572,Pra Nikah 3,Praktik Ibadah,Januari - Maret,Mempraktikan sholat hajat
+573,Pra Nikah 3,Praktik Ibadah,Oktober - Desember,Mempraktikan sholat istikhoroh
+574,Pra Nikah 3,Praktik Ibadah,April - Juni,Mempraktikan sholat istikhoroh
+575,Pra Nikah 3,Baca Huruf Quran,Juli - Desember,Menderes jus 27 - 28
+576,Pra Nikah 3,Baca Huruf Quran,Januari - Juni,Menderes Juz 29 – 30
+577,Pra Nikah 3,Hafalan Surat Al Qur'an,Juli - Desember,Menderes: 1. Surah Al-A’la 2. Surah At-Tariq 3. Surah Al-Buruj 4. Surah Al-Insyiqaq
+578,Pra Nikah 3,Hafalan Surat Al Qur'an,Januari - Juni,Menderes: 1. Surah Al-Tatfif 2. Surah Al-Infitar
+579,Pra Nikah 3,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+580,Pra Nikah 3,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+581,Pra Nikah 3,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+582,Pra Nikah 3,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+583,Pra Nikah 3,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+584,Pra Nikah 3,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+585,Pra Nikah 3,Akhlaq,Juli - Agustus,Pribadi
+586,Pra Nikah 3,Materi Dasar Keagamaan,April,Puasa Romadlon
+587,Pra Nikah 3,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+588,Pra Nikah 3,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+589,Pra Nikah 3,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud, tasbih, hajat dan istikhoroh"
+590,Pra Nikah 3,Tulis Huruf Arab,Juli - Desember,Sunan Ibnu Majjah 1
+591,Pra Nikah 3,Tulis Huruf Arab,Januari - Juni,Sunan Ibnu Majjah 2
+592,Pra Nikah 3,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+593,Pra Nikah 3,Adab/ Tatakrama,April,Tata krama bersepeda
+594,Pra Nikah 3,Adab/ Tatakrama,April,Tata krama ketika makan bersama
+595,Pra Nikah 3,Adab/ Tatakrama,Mei,Tata krama mencari ilmu
+596,Pra Nikah 3,Adab/ Tatakrama,Maret,Terhadap Kerabat
+597,Pra Nikah 3,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+598,Pra Nikah 3,Adab/ Tatakrama,Maret,Terhadap Tetangga
+599,Pra Nikah 3,Adab/ Tatakrama,November,Terhadap Ulil Amri
+600,Pra Nikah 3,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+601,Pra Nikah 3,Adab/ Tatakrama,Januari,Tidur
+602,Pra Nikah 3,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+603,Pra Nikah 4,Materi Dasar Keagamaan,Juni,Aurat
+604,Pra Nikah 4,Adab/ Tatakrama,September,Bergaul dengan teman
+605,Pra Nikah 4,Adab/ Tatakrama,Januari,Berpakaian
+606,Pra Nikah 4,Adab/ Tatakrama,Desember,Bertamu/Diajak Bertamu Dan Kedatangan Tamu
+607,Pra Nikah 4,Adab/ Tatakrama,Juni,Dalam bermasyarakat
+608,Pra Nikah 4,Adab/ Tatakrama,Mei,Dalam kehidupan berumah tangga
+609,Pra Nikah 4,Mandiri,Agustus,Dalam Keluarga
+610,Pra Nikah 4,Mandiri,Februari,Dalam Keluarga
+611,Pra Nikah 4,Adab/ Tatakrama,Juni,Dalam lingkungan kerja
+612,Pra Nikah 4,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+613,Pra Nikah 4,Materi Dasar Keagamaan,Februari,"Hukum haid, mani, madzi dan wadhi"
+614,Pra Nikah 4,Materi Dasar Keagamaan,Mei,Hukum Mahram
+615,Pra Nikah 4,Materi Dasar Keagamaan,Agustus,"Ilmu Manqul, Musnad, Muttashil"
+616,Pra Nikah 4,Materi Dasar Keagamaan,April,Kefadholan puasa dan hal-hal yang diperbolehkan serta membatalkan puasa
+617,Pra Nikah 4,Akhlaq,September - Oktober,Keluarga
+618,Pra Nikah 4,Mandiri,September,Kemandirian dalam keluarga
+619,Pra Nikah 4,Mandiri,Maret,Kemandirian dalam keluarga
+620,Pra Nikah 4,Mandiri,Juli,Kemandirian pribadi
+621,Pra Nikah 4,Mandiri,Januari,Kemandirian pribadi
+622,Pra Nikah 4,Materi Dasar Keagamaan,September,Kemurnian ibadah
+623,Pra Nikah 4,Mandiri,Oktober,Keterampilan Generus Putra
+624,Pra Nikah 4,Mandiri,April,Keterampilan Generus Putra
+625,Pra Nikah 4,Mandiri,November - Desember,Keterampilan Generus Putri
+626,Pra Nikah 4,Mandiri,Mei - Juni,Keterampilan Generus Putri
+627,Pra Nikah 4,Adab/ Tatakrama,Februari,Ketika Bersin
+628,Pra Nikah 4,Adab/ Tatakrama,Oktober,Ketika Di Masjid
+629,Pra Nikah 4,Adab/ Tatakrama,Oktober,Ketika Di Tempat Pengajian Dan Sekolah
+630,Pra Nikah 4,Adab/ Tatakrama,Februari,Ketika Menguap
+631,Pra Nikah 4,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+632,Pra Nikah 4,Materi Dasar Keagamaan,Januari,Mandi Junub
+633,Pra Nikah 4,Akhlaq,Januari - Maret,Masyarakat
+634,Pra Nikah 4,Praktik Ibadah,Juli - September,Mempraktikan sholat hajat
+635,Pra Nikah 4,Praktik Ibadah,Januari - Maret,Mempraktikan sholat hajat
+636,Pra Nikah 4,Praktik Ibadah,Oktober - Desember,Mempraktikan sholat istikhoroh
+637,Pra Nikah 4,Praktik Ibadah,April - Juni,Mempraktikan sholat istikhoroh
+638,Pra Nikah 4,Baca Huruf Quran,Juli - Desember,Menderes juz 1 – 2
+639,Pra Nikah 4,Baca Huruf Quran,Januari - Juni,Menderes juz 3 - 4
+640,Pra Nikah 4,Hafalan Surat Al Qur'an,Januari - Juni,Menderes: 1. Surah An-Nazi’at 2. Surah An-Naba’
+641,Pra Nikah 4,Hafalan Surat Al Qur'an,Juli - Desember,Menderes: 1. Surah At-Takwir 2. Surah 'Abasa
+642,Pra Nikah 4,Hafalan Doa Harian,Juli - Juni,menerampilkan hafalan do'a pada jenjang sebelumnya
+643,Pra Nikah 4,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+644,Pra Nikah 4,Adab/ Tatakrama,Juli,Menghormati yang lebih tua dan menyayangi yang muda
+645,Pra Nikah 4,Materi Dasar Keagamaan,Agustus,Pengertian Qur’an Hadits Jama’ah
+646,Pra Nikah 4,Materi Dasar Keagamaan,November,Pengetahuan hukum halal-haram
+647,Pra Nikah 4,Materi Dasar Keagamaan,Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+648,Pra Nikah 4,Akhlaq,Juli - Agustus,Pribadi
+649,Pra Nikah 4,Materi Dasar Keagamaan,April,Puasa Romadlon
+650,Pra Nikah 4,Materi Dasar Keagamaan,Mei,Puasa Sunnah
+651,Pra Nikah 4,Materi Dasar Keagamaan,Juli,"Rukun iman, rukun islam dan ihsan"
+652,Pra Nikah 4,Materi Dasar Keagamaan,Maret,"Sholat sunnah rowatib, dhuha, tahajjud, tasbih, hajat dan istikhoroh"
+653,Pra Nikah 4,Tulis Huruf Arab,Juli - Desember,Sunan Ibnu Majjah 3
+654,Pra Nikah 4,Tulis Huruf Arab,Januari - Juni,Sunan Ibnu Majjah 4
+655,Pra Nikah 4,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+656,Pra Nikah 4,Adab/ Tatakrama,April,Tata krama bersepeda
+657,Pra Nikah 4,Adab/ Tatakrama,April,Tata krama ketika makan bersama
+658,Pra Nikah 4,Adab/ Tatakrama,Mei,Tata krama mencari ilmu
+659,Pra Nikah 4,Adab/ Tatakrama,Maret,Terhadap Kerabat
+660,Pra Nikah 4,Adab/ Tatakrama,November,Terhadap Lingkungan Dan Alam Sekitar
+661,Pra Nikah 4,Adab/ Tatakrama,Maret,Terhadap Tetangga
+662,Pra Nikah 4,Adab/ Tatakrama,November,Terhadap Ulil Amri
+663,Pra Nikah 4,Materi Dasar Keagamaan,Desember,Thaharah dan Sholat
+664,Pra Nikah 4,Adab/ Tatakrama,Januari,Tidur
+665,Pra Nikah 4,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"

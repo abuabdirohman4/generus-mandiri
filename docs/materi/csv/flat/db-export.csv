@@ -1,0 +1,369 @@
+kelas,kategori,target_bulan,materi
+Kelas Paud,Hafalan Surat Al Qur'an,Juli,Surat Al Fatihah
+Kelas Paud,Hafalan Surat Al Qur'an,Agustus,Surat An Nas
+Kelas Paud,Hafalan Surat Al Qur'an,September - Oktober,Surat Al Falaq
+Kelas Paud,Hafalan Surat Al Qur'an,November - Desember,Surat Al Ikhlas
+Kelas Paud,Hafalan Surat Al Qur'an,Januari - Februari,Surat Al Lahab
+Kelas Paud,Hafalan Surat Al Qur'an,Maret - April,Surat An Nasr
+Kelas Paud,Hafalan Surat Al Qur'an,Mei - Juni,Surat Al Kafirun
+Kelas Paud,Akhlaq,Juli - Agustus,Pribadi
+Kelas Paud,Akhlaq,September - Oktober,Keluarga
+Kelas Paud,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas Paud,Akhlaq,Januari - Maret,Masyarakat
+Kelas Paud,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas Paud,Materi Dasar Keagamaan,Juli - September,Dasar Aqidah
+Kelas Paud,Materi Dasar Keagamaan,Oktober - Desember,"Rukun iman, rukun islam dan ihsan"
+Kelas Paud,Materi Dasar Keagamaan,Januari - Maret,Pengertian Qu'an Hadis Jama'ah
+Kelas Paud,Materi Dasar Keagamaan,April - Juni,Thoharoh dan Sholat
+Kelas Paud,Hafalan Doa Harian,Juli,Asmaul Husna 1 - 20
+Kelas Paud,Hafalan Doa Harian,Juli - Agustus,Asmaul Husna 1 - 20
+Kelas Paud,Hafalan Doa Harian,September - Oktober,Do'a akan dan bangun tidur
+Kelas Paud,Hafalan Doa Harian,November - Desember,Do'a akan dan selesai makan
+Kelas Paud,Hafalan Doa Harian,Januari - Februari,Doa Kebaikan Dunia dan Akhirat
+Kelas Paud,Hafalan Doa Harian,Maret - April,Do'a untuk kedua orang tua
+Kelas Paud,Hafalan Doa Harian,Mei - Juni,Do'a masuk dan keluar WC
+Kelas Paud,Adab/ Tatakrama,Juli - Agustus,Ta'dhim dan berbuat baik kepada orang tua
+Kelas Paud,Adab/ Tatakrama,September - Oktober,Menghormati yang lebih tua dan menyayangi yang muda
+Kelas Paud,Adab/ Tatakrama,November,Menghormati guru dan mubaligh-mubalighot
+Kelas Paud,Adab/ Tatakrama,Desember,Bergaul dengan teman
+Kelas Paud,Adab/ Tatakrama,Januari - Februari,Tata krama ketika di masjid
+Kelas Paud,Adab/ Tatakrama,Maret - April,Tata krama di tempat pengajian dan sekolah
+Kelas Paud,Adab/ Tatakrama,Mei - Juni,Tata krama terhadap lingkungan dan alam sekitar
+Kelas Paud,Mandiri,Juli - September,Kemandirian pribadi
+Kelas Paud,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas Paud,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas Paud,Praktik Ibadah,Juli - Agustus,Praktik Wudhu
+Kelas Paud,Tulis Huruf Arab,Juli - Desember,Menulis Huruf tunggal Hijaiyah
+Kelas Paud,Praktik Ibadah,September - Oktober,Praktik Sholat
+Kelas Paud,Praktik Ibadah,November - Desember,Praktik menjaga Kesucian
+Kelas Paud,Praktik Ibadah,Januari - Februari,Praktik buang air kecil dan besar
+Kelas Paud,Tulis Huruf Arab,Januari - Juni,Menulis Angka Arab
+Kelas Paud,Praktik Ibadah,Maret - April,Praktik mensucikan najis setelah buang air
+Kelas Paud,Praktik Ibadah,Mei - Juni,Praktik doa-doa yang dihafal
+Kelas 1,Hafalan Surat Al Qur'an,Juli - Agustus,Surat Al Kautsar
+Kelas 1,Hafalan Surat Al Qur'an,September - Oktober,Surat Al Maun
+Kelas 1,Hafalan Surat Al Qur'an,November - Desember,Surat Quroisy
+Kelas 1,Hafalan Surat Al Qur'an,Januari - Februari,Surat Al Fiil
+Kelas 1,Hafalan Surat Al Qur'an,Maret - April,Surat Al Humazah
+Kelas 1,Hafalan Surat Al Qur'an,Mei - Juni,Surat Al Asr
+Kelas 1,Akhlaq,Juli - Agustus,Pribadi
+Kelas 1,Akhlaq,September - Oktober,Keluarga
+Kelas 1,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 1,Akhlaq,Januari - Maret,Masyarakat
+Kelas 1,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 1,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 1,Materi Dasar Keagamaan,Agustus,"Rukun iman, rukun islam dan ihsan"
+Kelas 1,Materi Dasar Keagamaan,September - Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 1,Materi Dasar Keagamaan,November - Desember,Pengetahuan halal dan harom
+Kelas 1,Materi Dasar Keagamaan,Januari - Februari,Pengertian Qu'an Hadis Jama'ah
+Kelas 1,Materi Dasar Keagamaan,Maret - April,Thoharoh dan Sholat
+Kelas 1,Materi Dasar Keagamaan,Mei - Juni,Puasa Romadhon
+Kelas 1,Hafalan Doa Harian,Juli,Asmaul Husna 1 - 30
+Kelas 1,Hafalan Doa Harian,Juli,Asmaul Husna 1 - 30
+Kelas 1,Hafalan Doa Harian,Agustus,Do'a dan dzikir sesudah sholat
+Kelas 1,Hafalan Doa Harian,September,Do'a ketetapan iman
+Kelas 1,Hafalan Doa Harian,Oktober,Do'a minta ilmu yang manfaat
+Kelas 1,Hafalan Doa Harian,November,Do'a minta ilham yang baik
+Kelas 1,Hafalan Doa Harian,Desember,Do'a masuk dan keluar rumah
+Kelas 1,Hafalan Doa Harian,Januari - Februari,Asmaul Husna 1 - 40
+Kelas 1,Hafalan Doa Harian,Maret,Do'a pagi dan sore
+Kelas 1,Hafalan Doa Harian,April,Do'a masuk dan keluar masjid
+Kelas 1,Hafalan Doa Harian,Mei,Do'a memakai pakaian
+Kelas 1,Hafalan Doa Harian,Juni,Do'a ketika berbuka puasa
+Kelas 1,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 1,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 1,Adab/ Tatakrama,September,Bergaul dengan teman
+Kelas 1,Adab/ Tatakrama,Oktober,Tata krama terhadap ulil amri
+Kelas 1,Adab/ Tatakrama,November,Tata krama bertamu/ diajak bertamu
+Kelas 1,Adab/ Tatakrama,Desember,Tata krama berpakaian
+Kelas 1,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 1,Adab/ Tatakrama,Februari,Tata krama di tempat pengajian dan sekolah
+Kelas 1,Adab/ Tatakrama,Maret,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 1,Adab/ Tatakrama,April,Tata krama tidur
+Kelas 1,Adab/ Tatakrama,Juni,Tata krama ketika bersin
+Kelas 1,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 1,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 1,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 1,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 1,Tulis Huruf Arab,Juli - September,Menulis huruf tunggal fathah
+Kelas 1,Praktik Ibadah,Agustus,Praktik Sholat
+Kelas 1,Praktik Ibadah,September,Praktik menjaga Kesucian
+Kelas 1,Praktik Ibadah,Oktober,Praktik dzikir selesai Sholat
+Kelas 1,Tulis Huruf Arab,Oktober - Desember,Menulis angka arab
+Kelas 1,Praktik Ibadah,November - Desember,Praktik Puasa Romahon
+Kelas 1,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 1,Tulis Huruf Arab,Januari - Juni,"Menulis huruf sambung (depan, tengah, belakang)"
+Kelas 1,Praktik Ibadah,Februari - Maret,Praktik mensucikan najis setelah buang air
+Kelas 1,Praktik Ibadah,April - Mei,Praktik Sholat berjama'ah
+Kelas 1,Praktik Ibadah,Juni,Praktik doa-doa yang dihafal
+Kelas 2,Hafalan Surat Al Qur'an,Juli - September,Surat At Takasur
+Kelas 2,Hafalan Surat Al Qur'an,Oktober - Desember,Surat Al Qoriah
+Kelas 2,Hafalan Surat Al Qur'an,Februari - April,Surat Az Zalzalah
+Kelas 2,Hafalan Surat Al Qur'an,"Januari, Mei - Juni",Surat Al Adiyat
+Kelas 2,Akhlaq,Juli - Agustus,Pribadi
+Kelas 2,Akhlaq,September - Oktober,Keluarga
+Kelas 2,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 2,Akhlaq,Januari - Maret,Masyarakat
+Kelas 2,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 2,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 2,Materi Dasar Keagamaan,Agustus,"Rukun iman, rukun islam dan ihsan"
+Kelas 2,Materi Dasar Keagamaan,September - Oktober,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 2,Materi Dasar Keagamaan,November - Desember,Pengetahuan halal dan harom
+Kelas 2,Materi Dasar Keagamaan,Januari - Februari,Pengertian Qu'an Hadis Jama'ah
+Kelas 2,Materi Dasar Keagamaan,Maret - April,Thoharoh dan Sholat
+Kelas 2,Materi Dasar Keagamaan,Mei - Juni,Puasa Romadhon
+Kelas 2,Hafalan Doa Harian,Juli - Agustus,Asmaul Husna 1 - 50
+Kelas 2,Hafalan Doa Harian,September - Oktober,Do'a mohon kesabaran
+Kelas 2,Hafalan Doa Harian,November - Desember,Do'a mohon kesehatan
+Kelas 2,Hafalan Doa Harian,Januari - Februari,Asmaul Husna 1 - 60
+Kelas 2,Hafalan Doa Harian,Maret - April,Do'a ketika bersin
+Kelas 2,Hafalan Doa Harian,Mei - Juni,Do'a ketika ada angin kencang
+Kelas 2,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 2,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 2,Adab/ Tatakrama,September,Bergaul dengan teman
+Kelas 2,Adab/ Tatakrama,Oktober,Tata krama terhadap ulil amri
+Kelas 2,Adab/ Tatakrama,November,Tata krama bertamu/ diajak bertamu
+Kelas 2,Adab/ Tatakrama,Desember,Tata krama berpakaian
+Kelas 2,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 2,Adab/ Tatakrama,Februari,Tata krama di tempat pengajian dan sekolah
+Kelas 2,Adab/ Tatakrama,Maret,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 2,Adab/ Tatakrama,April,Tata krama tidur
+Kelas 2,Adab/ Tatakrama,Juni,Tata krama ketika bersin
+Kelas 2,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 2,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 2,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 2,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 2,Tulis Huruf Arab,Juli - Desember,Menulis rangkaian kata
+Kelas 2,Praktik Ibadah,Agustus,Praktik Sholat
+Kelas 2,Praktik Ibadah,September,Praktik menjaga Kesucian
+Kelas 2,Praktik Ibadah,Oktober,Praktik dzikir selesai Sholat
+Kelas 2,Praktik Ibadah,November - Desember,Praktik Puasa Romahon
+Kelas 2,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 2,Tulis Huruf Arab,Januari - Juni,Menulis kata arab baku/ potongan ayat
+Kelas 2,Praktik Ibadah,Februari - Maret,Praktik mensucikan najis setelah buang air
+Kelas 2,Praktik Ibadah,April - Mei,Praktik Sholat berjama'ah
+Kelas 2,Praktik Ibadah,Juni,Praktik doa-doa yang dihafal
+Kelas 3,Hafalan Surat Al Qur'an,Juli - Desember,Surat Al Bayinah
+Kelas 3,Hafalan Surat Al Qur'an,Januari - Juni,Surat Al Qodr
+Kelas 3,Akhlaq,Juli - Agustus,Pribadi
+Kelas 3,Akhlaq,September - Oktober,Keluarga
+Kelas 3,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 3,Akhlaq,Januari - Maret,Masyarakat
+Kelas 3,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 3,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 3,Materi Dasar Keagamaan,Agustus,"Rukun iman, rukun islam dan ihsan"
+Kelas 3,Materi Dasar Keagamaan,September,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 3,Materi Dasar Keagamaan,Oktober,Pengetahuan halal dan harom
+Kelas 3,Materi Dasar Keagamaan,November,Kemurnian ibadah
+Kelas 3,Materi Dasar Keagamaan,Desember,Sholat sunah rowatib
+Kelas 3,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+Kelas 3,Materi Dasar Keagamaan,Februari,Thoharoh dan Sholat
+Kelas 3,Materi Dasar Keagamaan,Maret,Puasa Romadhon
+Kelas 3,Materi Dasar Keagamaan,April,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+Kelas 3,Materi Dasar Keagamaan,Mei - Juni,hukum mahrom
+Kelas 3,Hafalan Doa Harian,Juli - Agustus,Asmaul Husna 1 - 70
+Kelas 3,Hafalan Doa Harian,September,Do'a menjenguk orang sakit
+Kelas 3,Hafalan Doa Harian,Oktober,Do'a memakai pakaian baru
+Kelas 3,Hafalan Doa Harian,November,Do'a naik kendaraan
+Kelas 3,Hafalan Doa Harian,Desember,Do'a mohon kesehatan
+Kelas 3,Hafalan Doa Harian,Januari - Februari,Asmaul Husna 1 - 80
+Kelas 3,Hafalan Doa Harian,Maret,Do'a masuk pasar
+Kelas 3,Hafalan Doa Harian,April - Mei,Do'a berlindung dari syirik
+Kelas 3,Hafalan Doa Harian,Juni,Do'a berlindung dari siksa kubur
+Kelas 3,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 3,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 3,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+Kelas 3,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+Kelas 3,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+Kelas 3,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+Kelas 3,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 3,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 3,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+Kelas 3,Adab/ Tatakrama,April,Tata krama bersepeda
+Kelas 3,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+Kelas 3,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+Kelas 3,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 3,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 3,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 3,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 3,Tulis Huruf Arab,Juli - Desember,Menulis rangkaian kata
+Kelas 3,Praktik Ibadah,Agustus,Praktik Sholat
+Kelas 3,Praktik Ibadah,September,Praktik menjaga Kesucian
+Kelas 3,Praktik Ibadah,Oktober,Praktik dzikir selesai Sholat
+Kelas 3,Praktik Ibadah,November,Praktik Puasa Romahon
+Kelas 3,Praktik Ibadah,Desember,Praktik sholat sunah rowatib
+Kelas 3,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 3,Tulis Huruf Arab,Januari - Juni,Menulis kata arab baku/ potongan ayat
+Kelas 3,Praktik Ibadah,Februari,Praktik mensucikan najis setelah buang air
+Kelas 3,Praktik Ibadah,Maret,Praktik Sholat berjama'ah
+Kelas 3,Praktik Ibadah,April,Praktik doa-doa yang dihafal
+Kelas 3,Praktik Ibadah,Mei - Juni,Praktik menjaga pergaulan laki-laki dan perempuan
+Kelas 4,Hafalan Surat Al Qur'an,Juli - September,Surat Al Alaq
+Kelas 4,Hafalan Surat Al Qur'an,Oktober - Desember,Surat At Tin
+Kelas 4,Hafalan Surat Al Qur'an,Januari - Juni,Surat As Syarh
+Kelas 4,Akhlaq,Juli - Agustus,Pribadi
+Kelas 4,Akhlaq,September - Oktober,Keluarga
+Kelas 4,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 4,Akhlaq,Januari - Maret,Masyarakat
+Kelas 4,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 4,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 4,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 4,Materi Dasar Keagamaan,September,Pengetahuan halal dan harom
+Kelas 4,Materi Dasar Keagamaan,Oktober,Kemurnian ibadah
+Kelas 4,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+Kelas 4,Materi Dasar Keagamaan,Desember,mandi junub
+Kelas 4,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+Kelas 4,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+Kelas 4,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+Kelas 4,Materi Dasar Keagamaan,April,hukum mahrom
+Kelas 4,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+Kelas 4,Materi Dasar Keagamaan,Juni,Aurot
+Kelas 4,Hafalan Doa Harian,Juli - Agustus,Asmaul Husna 1 - 90
+Kelas 4,Hafalan Doa Harian,September,Do'a sujud Al Qur'an
+Kelas 4,Hafalan Doa Harian,Oktober,Kumpulan do'a nabi Muhammad
+Kelas 4,Hafalan Doa Harian,November - Desember,Do'a berlindung dari sifat munafiq
+Kelas 4,Hafalan Doa Harian,Januari - Februari,Asmaul Husna 1 - 99
+Kelas 4,Hafalan Doa Harian,Maret,Do'a agar bisa bersyukur
+Kelas 4,Hafalan Doa Harian,April,"Do'a berlindung dari jeleknya pendengaran, ucapan, dll"
+Kelas 4,Hafalan Doa Harian,Mei - Juni,Do'a berlindung dari sifat pelit dan penakut
+Kelas 4,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 4,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 4,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+Kelas 4,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+Kelas 4,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+Kelas 4,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+Kelas 4,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 4,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 4,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+Kelas 4,Adab/ Tatakrama,April,Tata krama bersepeda
+Kelas 4,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+Kelas 4,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+Kelas 4,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 4,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 4,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 4,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 4,Tulis Huruf Arab,Juli - Desember,Latihan makna pegon
+Kelas 4,Praktik Ibadah,Agustus,Praktik menjaga Kesucian
+Kelas 4,Praktik Ibadah,September,Praktik dzikir selesai Sholat
+Kelas 4,Praktik Ibadah,Oktober,Praktik Puasa Romahon
+Kelas 4,Praktik Ibadah,November,Praktik sholat sunah rowatib
+Kelas 4,Praktik Ibadah,Desember,Praktik Sholat Dhuha
+Kelas 4,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 4,Tulis Huruf Arab,Januari - Juni,Latihan makna pegon dan kode-kodenya
+Kelas 4,Praktik Ibadah,Februari,Praktik Sholat berjama'ah
+Kelas 4,Praktik Ibadah,Maret,Praktik doa-doa yang dihafal
+Kelas 4,Praktik Ibadah,April,Praktik menjaga pergaulan laki-laki dan perempuan
+Kelas 4,Praktik Ibadah,Mei,Praktik berpakaian syar'i
+Kelas 4,Praktik Ibadah,Juni,Praktik mandi junub
+Kelas 5,Hafalan Surat Al Qur'an,Juli - September,Surat Ad Dhuha
+Kelas 5,Hafalan Surat Al Qur'an,Oktober - Desember,Surat Al Lail
+Kelas 5,Hafalan Surat Al Qur'an,Januari - Maret,Surat As Syams
+Kelas 5,Hafalan Surat Al Qur'an,April - Juni,Surat Al Balad
+Kelas 5,Akhlaq,Juli - Agustus,Pribadi
+Kelas 5,Akhlaq,September - Oktober,Keluarga
+Kelas 5,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 5,Akhlaq,Januari - Maret,Masyarakat
+Kelas 5,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 5,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 5,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 5,Materi Dasar Keagamaan,September,Kemurnian ibadah
+Kelas 5,Materi Dasar Keagamaan,Oktober,"Sholat sunah rowatib, dhuha, dan tahajud"
+Kelas 5,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+Kelas 5,Materi Dasar Keagamaan,Desember,mandi junub
+Kelas 5,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+Kelas 5,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+Kelas 5,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+Kelas 5,Materi Dasar Keagamaan,April,hukum mahrom
+Kelas 5,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+Kelas 5,Materi Dasar Keagamaan,Juni,Aurot
+Kelas 5,Hafalan Doa Harian,Juli - Agustus,Do'a minta dimudahkan segala urusan
+Kelas 5,Hafalan Doa Harian,September - Oktober,Do'a minta dipilihkan sesuatu yang baik
+Kelas 5,Hafalan Doa Harian,November - Desember,Do'a minta 10 kebaikan
+Kelas 5,Hafalan Doa Harian,Januari - Maret,Do'a ketika ada petir
+Kelas 5,Hafalan Doa Harian,April - Juni,Do'a perlindungan dari bencana
+Kelas 5,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 5,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 5,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+Kelas 5,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+Kelas 5,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+Kelas 5,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+Kelas 5,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 5,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 5,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+Kelas 5,Adab/ Tatakrama,April,Tata krama bersepeda
+Kelas 5,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+Kelas 5,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+Kelas 5,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 5,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 5,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 5,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 5,Tulis Huruf Arab,Juli - Desember,Terampil menulis arab
+Kelas 5,Praktik Ibadah,Agustus,Praktik menjaga Kesucian
+Kelas 5,Praktik Ibadah,September,Praktik Puasa Romahon
+Kelas 5,Praktik Ibadah,Oktober,Praktik sholat sunah rowatib
+Kelas 5,Praktik Ibadah,November,Praktik Sholat Dhuha
+Kelas 5,Praktik Ibadah,Desember,Praktik do'a dan Sholat malam/ tahajjud
+Kelas 5,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 5,Tulis Huruf Arab,Januari - Juni,Terampil menulis makna pegon
+Kelas 5,Praktik Ibadah,Februari,Praktik Sholat berjama'ah
+Kelas 5,Praktik Ibadah,Maret,Praktik menjaga pergaulan laki-laki dan perempuan
+Kelas 5,Praktik Ibadah,April,Praktik berpakaian syar'i
+Kelas 5,Praktik Ibadah,Mei,Praktik mandi junub
+Kelas 5,Praktik Ibadah,Juni,"Praktik menjaga diri dr lahan, kemaksiatan, keharoman"
+Kelas 6,Hafalan Surat Al Qur'an,Juli - September,Surat Al Fajr
+Kelas 6,Hafalan Surat Al Qur'an,Oktober - Desember,Surat Al Ghosiyah
+Kelas 6,Hafalan Surat Al Qur'an,Januari - Maret,Surat Al A'la
+Kelas 6,Hafalan Surat Al Qur'an,April - Juni,Surat At Thoriq
+Kelas 6,Akhlaq,Juli - Agustus,Pribadi
+Kelas 6,Akhlaq,September - Oktober,Keluarga
+Kelas 6,Akhlaq,November - Desember,"Ulil Amri, Guru, dan Mubaligh-Mubalighot"
+Kelas 6,Akhlaq,Januari - Maret,Masyarakat
+Kelas 6,Akhlaq,April - Juni,Lingkungan dan alam sekitar
+Kelas 6,Materi Dasar Keagamaan,Juli,Dasar Aqidah
+Kelas 6,Materi Dasar Keagamaan,Agustus,Pengetahuan wajibnya taat dan haromnya maksiat
+Kelas 6,Materi Dasar Keagamaan,September,Kemurnian ibadah
+Kelas 6,Materi Dasar Keagamaan,Oktober,"Sholat sunah rowatib, dhuha, dan tahajud"
+Kelas 6,Materi Dasar Keagamaan,November,"ilmu manqul, musnad, muttashil"
+Kelas 6,Materi Dasar Keagamaan,Desember,mandi junub
+Kelas 6,Materi Dasar Keagamaan,Januari,Pengertian Qu'an Hadis Jama'ah
+Kelas 6,Materi Dasar Keagamaan,Februari,Puasa Romadhon
+Kelas 6,Materi Dasar Keagamaan,Maret,"Kefadholan puasa,dan yang di perbolehkan saat puasa"
+Kelas 6,Materi Dasar Keagamaan,April,hukum mahrom
+Kelas 6,Materi Dasar Keagamaan,Mei,"hukum haid, mani, madzi, wadhi"
+Kelas 6,Materi Dasar Keagamaan,Juni,Aurot
+Kelas 6,Hafalan Doa Harian,Juli - Agustus,Do'a perlindungan dari penganiayaan
+Kelas 6,Hafalan Doa Harian,September - Oktober,Do'a ketika takut pada orang kafir
+Kelas 6,Hafalan Doa Harian,November,Do'a bertempat di tempat yang baru
+Kelas 6,Hafalan Doa Harian,Desember,Do'a ketika mimpi baik dan jelek
+Kelas 6,Hafalan Doa Harian,Januari - Februari,Do'a minta surga firdaus
+Kelas 6,Hafalan Doa Harian,Maret - April,Do'a pengayoman
+Kelas 6,Hafalan Doa Harian,Mei - Juni,Do'a maskumambang sapu jagat
+Kelas 6,Adab/ Tatakrama,Juli,Ta'dhim dan berbuat baik kepada orang tua
+Kelas 6,Adab/ Tatakrama,Agustus,Menghormati guru dan mubaligh-mubalighot
+Kelas 6,Adab/ Tatakrama,September,Tata krama terhadap ulil amri
+Kelas 6,Adab/ Tatakrama,Oktober,Tata krama berpakaian
+Kelas 6,Adab/ Tatakrama,November,Tata krama terhadap kerabat
+Kelas 6,Adab/ Tatakrama,Desember,Tata krama terhadap tetangga
+Kelas 6,Adab/ Tatakrama,Januari,Tata krama ketika di masjid
+Kelas 6,Adab/ Tatakrama,Februari,Tata krama terhadap lingkungan dan alam sekitar
+Kelas 6,Adab/ Tatakrama,Maret,Tata krama ketika menguap
+Kelas 6,Adab/ Tatakrama,April,Tata krama bersepeda
+Kelas 6,Adab/ Tatakrama,Mei,Tata krama ketika makan bersama
+Kelas 6,Adab/ Tatakrama,Juni,Tata krama mencari ilmu
+Kelas 6,Mandiri,Juli - September,Kemandirian pribadi
+Kelas 6,Mandiri,Oktober - Desember,Kemandirian dalam keluarga
+Kelas 6,Mandiri,Januari - Juni,Kemandirian dalam lingkungan Jama'ah dan sekolah
+Kelas 6,Praktik Ibadah,Juli,Praktik Wudhu
+Kelas 6,Tulis Huruf Arab,Juli - Desember,Terampil menulis arab
+Kelas 6,Praktik Ibadah,Agustus,Praktik menjaga Kesucian
+Kelas 6,Praktik Ibadah,September,Praktik Puasa Romahon
+Kelas 6,Praktik Ibadah,Oktober,Praktik sholat sunah rowatib
+Kelas 6,Praktik Ibadah,November,Praktik Sholat Dhuha
+Kelas 6,Praktik Ibadah,Desember,Praktik do'a dan Sholat malam/ tahajjud
+Kelas 6,Praktik Ibadah,Januari,Praktik buang air kecil dan besar
+Kelas 6,Tulis Huruf Arab,Januari - Juni,Terampil menulis makna pegon
+Kelas 6,Praktik Ibadah,Februari,Praktik Sholat berjama'ah
+Kelas 6,Praktik Ibadah,Maret,Praktik menjaga pergaulan laki-laki dan perempuan
+Kelas 6,Praktik Ibadah,April,Praktik berpakaian syar'i
+Kelas 6,Praktik Ibadah,Mei,Praktik mandi junub
+Kelas 6,Praktik Ibadah,Juni,"Praktik menjaga diri dr lahan, kemaksiatan, keharoman"
