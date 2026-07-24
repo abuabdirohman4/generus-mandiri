@@ -138,7 +138,6 @@ export async function getMateriDashboardSummary(
                 .from('material_monthly_targets')
                 .select('material_item_id')
                 .in('class_master_id', classMasterIds)
-                .eq('academic_year_id', filters.academicYearId)
                 .eq('semester', filters.semester)
 
             if (filters.month) {
@@ -198,7 +197,6 @@ export async function getMateriDashboardSummary(
                 .from('material_monthly_targets')
                 .select('material_item_id')
                 .in('class_master_id', classMasterIds)
-                .eq('academic_year_id', filters.academicYearId)
                 .eq('semester', filters.semester)
             const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
 

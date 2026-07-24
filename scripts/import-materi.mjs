@@ -186,20 +186,18 @@ function getSemester(month) {
 // ─── DB Lookup ────────────────────────────────────────────────────────────────
 
 async function loadLookupTables() {
-    const [classMastersRes, typesRes, ayRes] = await Promise.all([
+    const [classMastersRes, typesRes] = await Promise.all([
         supabase.from('class_masters').select('id, name').order('sort_order'),
         supabase.from('material_types').select('id, name'),
-        supabase.from('academic_years').select('id').eq('is_active', true).single(),
     ])
 
     if (classMastersRes.error) throw new Error('Failed to load class_masters: ' + classMastersRes.error.message)
     if (typesRes.error) throw new Error('Failed to load material_types: ' + typesRes.error.message)
-    if (ayRes.error) throw new Error('Failed to load academic_years: ' + ayRes.error.message)
 
     const classByName = Object.fromEntries(classMastersRes.data.map(c => [c.name.toLowerCase(), c]))
     const typeByName = Object.fromEntries(typesRes.data.map(t => [t.name.toLowerCase(), t]))
 
-    return { classByName, typeByName, academicYearId: ayRes.data.id }
+    return { classByName, typeByName }
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -212,9 +210,8 @@ async function main() {
     console.log(`📋 ${rows.length} baris ditemukan di CSV\n`)
 
     console.log('🔗 Loading DB lookup tables...')
-    const { classByName, typeByName, academicYearId } = await loadLookupTables()
+    const { classByName, typeByName } = await loadLookupTables()
     console.log(`✅ Loaded: ${Object.keys(classByName).length} classes, ${Object.keys(typeByName).length} types`)
-    console.log(`   Academic year: ${academicYearId}\n`)
 
     // ── Load existing material_items (by name, case-insensitive) ──
     const { data: existingItems, error: eiErr } = await supabase
@@ -289,7 +286,6 @@ async function main() {
             const semester = getSemester(month)
             const targetRow = {
                 class_master_id: classMaster.id,
-                academic_year_id: academicYearId,
                 semester,
                 month,
                 material_item_id: item.id,
@@ -300,7 +296,7 @@ async function main() {
                 const { error } = await supabase
                     .from('material_monthly_targets')
                     .upsert(targetRow, {
-                        onConflict: 'class_master_id,academic_year_id,semester,month,material_item_id',
+                        onConflict: 'class_master_id,semester,month,material_item_id',
                         ignoreDuplicates: true,
                     })
                 if (error) {

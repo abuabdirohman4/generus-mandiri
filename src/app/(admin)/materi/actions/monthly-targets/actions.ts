@@ -18,11 +18,9 @@ import {
   deleteMonthlyTargetsByItemIds,
   fetchMonthlyTargetsByItemIds
 } from './queries'
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
 export async function getMonthlyTargets(params: {
   class_master_id: string
-  academic_year_id: string
   semester: number
   month?: number
 }): Promise<MonthlyTarget[]> {
@@ -100,7 +98,7 @@ export async function deleteMonthlyTarget(id: string): Promise<{ success: boolea
 }
 
 export async function bulkSetMonthlyTargets(
-  params: { class_master_id: string; academic_year_id: string; semester: number; month: number },
+  params: { class_master_id: string; semester: number; month: number },
   materialItemIds: string[]
 ): Promise<{ success: boolean; message?: string }> {
   try {
@@ -117,7 +115,6 @@ export async function bulkSetMonthlyTargets(
     if (materialItemIds.length > 0) {
       const records = materialItemIds.map((itemId, index) => ({
         class_master_id: params.class_master_id,
-        academic_year_id: params.academic_year_id,
         semester: params.semester as 1 | 2,
         month: params.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
         week: null,
@@ -154,12 +151,8 @@ export async function getMonthlyTargetItemIds(params: {
   month: number
   class_master_id?: string
 }): Promise<string[]> {
-  const activeYear = await getActiveAcademicYear()
-  if (!activeYear) return []
-
   const supabase = await createClient()
   const { data, error } = await fetchMonthlyTargetItemIds(supabase, {
-    academic_year_id: activeYear.id,
     semester: params.semester,
     month: params.month,
     class_master_id: params.class_master_id
@@ -174,13 +167,9 @@ export async function getMonthlyTargetItemIds(params: {
 }
 
 export async function getMonthlyTargetsByItem(itemId: string): Promise<Array<{ class_master_id: string; semester: number; month: number }>> {
-  const activeYear = await getActiveAcademicYear()
-  if (!activeYear) return []
-
   const supabase = await createClient()
   const { data, error } = await fetchMonthlyTargetsByItemId(supabase, {
     material_item_id: itemId,
-    academic_year_id: activeYear.id
   })
 
   if (error) {
@@ -200,16 +189,12 @@ export async function syncItemMonthlyTargets(
     if (!profile) throw new Error('Not authenticated')
     if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
-    const activeYear = await getActiveAcademicYear()
-    if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
-
     const supabase = await createClient()
 
     // 1. Delete all existing monthly targets for THIS item in THIS academic year
     const { error: deleteError } = await deleteMonthlyTargetsByItem(supabase, {
       material_item_id: itemId,
-      academic_year_id: activeYear.id
-    })
+      })
 
     if (deleteError) throw deleteError
 
@@ -217,7 +202,6 @@ export async function syncItemMonthlyTargets(
     if (mappings.length > 0) {
       const records = mappings.map((m, index) => ({
         class_master_id: m.class_master_id,
-        academic_year_id: activeYear.id,
         semester: m.semester as 1 | 2,
         month: m.month as (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12) | null,
         material_item_id: itemId,
@@ -258,17 +242,13 @@ export async function syncItemMonthlyTargetsBulk(
     if (!profile) throw new Error('Not authenticated')
     if (!canManageMaterials(profile)) throw new Error('Unauthorized')
 
-    const activeYear = await getActiveAcademicYear()
-    if (!activeYear) throw new Error('Tahun ajaran aktif tidak ditemukan')
-
     const supabase = await createClient()
 
     // 1. Delete existing if replace mode
     if (mode === 'replace') {
       const { error: deleteError } = await deleteMonthlyTargetsByItemIds(supabase, {
         material_item_ids: itemIds,
-        academic_year_id: activeYear.id
-      })
+          })
 
       if (deleteError) throw deleteError
     }
@@ -281,8 +261,7 @@ export async function syncItemMonthlyTargetsBulk(
         mappings.forEach((m, index) => {
           records.push({
             class_master_id: m.class_master_id,
-            academic_year_id: activeYear.id,
-            semester: m.semester as 1 | 2,
+                semester: m.semester as 1 | 2,
             month: m.month as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12,
             material_item_id: itemId,
             display_order: index,
@@ -318,13 +297,9 @@ export async function getMonthlyTargetsByItems(
 ): Promise<Record<string, Array<{ class_master_id: string; semester: number; month: number }>>> {
   if (itemIds.length === 0) return {}
 
-  const activeYear = await getActiveAcademicYear()
-  if (!activeYear) return {}
-
   const supabase = await createClient()
   const { data, error } = await fetchMonthlyTargetsByItemIds(supabase, {
     material_item_ids: itemIds,
-    academic_year_id: activeYear.id
   })
 
   if (error) {

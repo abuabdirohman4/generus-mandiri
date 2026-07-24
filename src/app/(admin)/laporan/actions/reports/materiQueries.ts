@@ -97,7 +97,6 @@ export async function fetchMateriReport(
         .from('material_monthly_targets')
         .select('material_item_id')
         .in('class_master_id', classMasterIdsForAll)
-        .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
     const allSemesterItemIds = [...new Set((allTargets || []).map((t: any) => t.material_item_id as string))]
     const totalUnikSemester = allSemesterItemIds.length
@@ -246,7 +245,6 @@ async function getMaterialItemIds(
         .from('material_monthly_targets')
         .select('material_item_id')
         .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
     if (month) {
@@ -309,7 +307,6 @@ export async function fetchMateriReportBySiswa(
         .from('material_monthly_targets')
         .select('material_item_id')
         .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', filters.academicYearId)
         .eq('semester', filters.semester)
     const totalUnikSemester = new Set((allTargets || []).map((t: any) => t.material_item_id)).size
 
@@ -389,7 +386,6 @@ export async function getMateriCumulativeProgress(
         .from('material_monthly_targets')
         .select('month, material_item_id')
         .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
     
     if (!targets || targets.length === 0) return []
@@ -489,7 +485,6 @@ export async function getMateriMonthlyChart(
         .from('material_monthly_targets')
         .select('month, material_item_id')
         .in('class_master_id', classMasterIds)
-        .eq('academic_year_id', academicYearId)
         .eq('semester', semester)
 
     if (!targets || targets.length === 0) return []

@@ -6,7 +6,6 @@ import { handleApiError } from '@/lib/errorUtils';
 import { MaterialProgress, ProgressInput } from '../types';
 import { logActivity } from '@/lib/activityLogger';
 import { getCurrentUserProfile } from '@/lib/accessControlServer';
-import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { fetchInBatches } from '@/lib/utils/batchFetching';
 
 /**
@@ -296,14 +295,11 @@ export async function getMaterialsByClassAndSemester(
         const classMasterIds = await getClassMasterIds(classId);
         if (classMasterIds.length === 0) return { success: true, data: [] };
 
-        const activeYear = await getActiveAcademicYear();
-        if (!activeYear) return { success: true, data: [] };
 
         const { data: targetRows, error: targetError } = await supabase
             .from('material_monthly_targets')
             .select('material_item_id')
             .in('class_master_id', classMasterIds)
-            .eq('academic_year_id', activeYear.id)
             .eq('semester', semester);
 
         if (targetError) throw targetError;
@@ -359,14 +355,11 @@ export async function getMaterialsByCategory(
         const classMasterIds = await getClassMasterIds(classId);
         if (classMasterIds.length === 0) return { success: true, data: [] };
 
-        const activeYear = await getActiveAcademicYear();
-        if (!activeYear) return { success: true, data: [] };
 
         const { data: targetRows, error: targetError } = await supabase
             .from('material_monthly_targets')
             .select('material_item_id')
             .in('class_master_id', classMasterIds)
-            .eq('academic_year_id', activeYear.id)
             .eq('semester', semester);
 
         if (targetError) throw targetError;
@@ -429,7 +422,6 @@ export async function getMonthlyTargetProgress(params: {
         )
       `)
       .in('class_master_id', classMasterIds)
-      .eq('academic_year_id', params.academicYearId)
       .eq('semester', params.semester)
       .eq('month', params.month)
       .order('display_order', { ascending: true })
@@ -572,7 +564,6 @@ export async function getClassMonthlyTargetSummary(params: {
       .from('material_monthly_targets')
       .select('material_item_id')
       .in('class_master_id', classMasterIds)
-      .eq('academic_year_id', params.academicYearId)
       .eq('semester', params.semester)
       .eq('month', params.month)
 

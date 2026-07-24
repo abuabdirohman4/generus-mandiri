@@ -56,7 +56,6 @@ export async function getStudentMateriProgress(
                 .from('material_monthly_targets')
                 .select('material_item_id, month')
                 .in('class_master_id', classMasterIds)
-                .eq('academic_year_id', academicYearId)
                 .eq('semester', semester)
             
             targetedItemIds = Array.from(new Set(targets?.map(t => t.material_item_id) || []))

@@ -148,7 +148,6 @@ export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6
 export interface MonthlyTarget {
   id: string
   class_master_id: string
-  academic_year_id: string
   semester: Semester
   month: Month | null
   week?: Week | null
@@ -163,7 +162,6 @@ export interface MonthlyTarget {
 
 export interface MonthlyTargetInput {
   class_master_id: string
-  academic_year_id: string
   semester: Semester
   month: Month | null
   week?: Week | null
