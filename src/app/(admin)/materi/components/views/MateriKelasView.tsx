@@ -91,7 +91,10 @@ export default function MateriKelasView({
 
         types
             .filter(t => grouped[t.id])
-            .sort((a, b) => a.display_order - b.display_order)
+            .sort((a, b) => {
+                const catDiff = (a.category?.display_order ?? 0) - (b.category?.display_order ?? 0);
+                return catDiff !== 0 ? catDiff : a.display_order - b.display_order;
+            })
             .forEach(type => {
                 groups.push({ type, items: grouped[type.id] });
             });
