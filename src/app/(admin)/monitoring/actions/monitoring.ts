@@ -318,7 +318,8 @@ export async function getMaterialsByClassAndSemester(
                     name,
                     material_category:material_categories(
                         id,
-                        name
+                        name,
+                        display_order
                     )
                 )
             `)

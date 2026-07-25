@@ -41,11 +41,14 @@ interface Student {
 interface Material {
     id: string;
     name: string;
+    material_type_id?: string;
     material_type?: {
         name?: string;
+        display_order?: number;
         material_category?: {
             id: string;
             name: string;
+            display_order?: number;
         };
     };
 }
@@ -941,14 +944,15 @@ export default function MonitoringPage() {
                                         {/* Group materials by hafalan type (Doa/Surat) */}
                                         {(() => {
                                             const grouped = displayedMaterials.reduce((acc, material) => {
-                                                const typeName = material.material_type?.name || 'Lainnya';
-                                                if (!acc[typeName]) acc[typeName] = [];
-                                                acc[typeName].push(material);
+                                                const typeId = material.material_type_id || 'lainnya';
+                                                if (!acc[typeId]) acc[typeId] = { typeName: material.material_type?.name || 'Lainnya', materials: [], catOrder: (material.material_type?.material_category as any)?.display_order ?? 99, typeOrder: (material.material_type as any)?.display_order ?? 99 };
+                                                acc[typeId].materials.push(material);
                                                 return acc;
-                                            }, {} as Record<string, typeof displayedMaterials>);
+                                            }, {} as Record<string, { typeName: string; materials: typeof displayedMaterials; catOrder: number; typeOrder: number }>);
 
+                                            const sortedGroups = Object.values(grouped).sort((a, b) => a.catOrder - b.catOrder || a.typeOrder - b.typeOrder);
 
-                                            return Object.entries(grouped).map(([typeName, materials]) => (
+                                            return sortedGroups.map(({ typeName, materials }) => (
                                                 <div key={typeName} className="mb-6 last:mb-0">
                                                     {/* Category Header */}
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 px-4 md:px-0">
