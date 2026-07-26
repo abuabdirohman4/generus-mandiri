@@ -569,8 +569,8 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                   id="name-font-size"
                   type="number"
                   step={0.5}
-                  min={0.5}
-                  max={20}
+                  min="0.5"
+                  max="20"
                   value={nameFontSize}
                   onChange={e => setNameFontSize(Number(e.target.value))}
                 />
@@ -625,8 +625,8 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                       id="kelompok-font-size"
                       type="number"
                       step={0.5}
-                      min={0.5}
-                      max={20}
+                      min="0.5"
+                      max="20"
                       value={kelompokFontSize}
                       onChange={e => setKelompokFontSize(Number(e.target.value))}
                     />
@@ -693,8 +693,8 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                       id="custom-field-font-size"
                       type="number"
                       step={0.5}
-                      min={0.5}
-                      max={20}
+                      min="0.5"
+                      max="20"
                       value={customFieldFontSize}
                       onChange={e => setCustomFieldFontSize(Number(e.target.value))}
                     />
