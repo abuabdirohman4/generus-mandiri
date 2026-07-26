@@ -302,9 +302,16 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
     return () => { cancelled = true }
   }, [templateId])
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB — matches nginx client_max_body_size + Next serverActions bodySizeLimit
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
     if (selected) {
+      if (selected.size > MAX_FILE_SIZE) {
+        toast.error('Ukuran file maksimal 5MB. Kompres atau perkecil gambar dulu.')
+        e.target.value = ''
+        return
+      }
       setFile(selected)
       const url = URL.createObjectURL(selected)
       setPreviewUrl(url)

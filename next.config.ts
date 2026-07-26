@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
 
+  // Server Actions body limit: default 1MB too small for ID-card template images
+  // (300 DPI card designs run 1-5MB). File goes to Supabase Storage, not the DB.
+  experimental: {
+    serverActions: { bodySizeLimit: '5mb' },
+  },
+
   // Bundle optimization
   webpack(config) {
     config.module.rules.push({
