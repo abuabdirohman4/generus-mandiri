@@ -67,7 +67,7 @@ export async function composeCard(params: {
         if (positions.show_kelompok && studentKelompok && positions.kelompok_x_pct !== undefined && positions.kelompok_y_pct !== undefined) {
           const kelXPx = (positions.kelompok_x_pct / 100) * imageWidth
           const kelYPx = (positions.kelompok_y_pct / 100) * imageHeight
-          const kelFontPx = ((positions.kelompok_font_size || 3.5) / 100) * imageWidth
+          const kelFontPx = ((positions.kelompok_font_size || 4) / 100) * imageWidth
 
           const kelStyleParts = [
             positions.kelompok_italic ? 'italic' : '',
@@ -86,7 +86,7 @@ export async function composeCard(params: {
         if (positions.show_custom_field && customFieldValue && positions.custom_field_x_pct !== undefined) {
           const cfXPx = (positions.custom_field_x_pct / 100) * imageWidth
           const cfYPx = (positions.custom_field_y_pct / 100) * imageHeight
-          const cfFontPx = ((positions.custom_field_font_size || 3.5) / 100) * imageWidth
+          const cfFontPx = ((positions.custom_field_font_size || 4) / 100) * imageWidth
 
           const cfStyleParts = [
             positions.custom_field_italic ? 'italic' : '',

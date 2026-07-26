@@ -180,13 +180,13 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
 
   const [qrPos, setQrPos] = useState<Position>({ x: 10, y: 10 })
   const [qrSize, setQrSize] = useState(20)
-  const [nameFontSize, setNameFontSize] = useState(5) // persen lebar kartu
+  const [nameFontSize, setNameFontSize] = useState(4) // persen lebar kartu
   const [namePos, setNamePos] = useState<Position>({ x: 50, y: 50 })
   const [nameCasing, setNameCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [showKelompok, setShowKelompok] = useState(false)
   const [kelompokPos, setKelompokPos] = useState<Position>({ x: 50, y: 60 })
-  const [kelompokFontSize, setKelompokFontSize] = useState(3.5) // persen lebar kartu
+  const [kelompokFontSize, setKelompokFontSize] = useState(4) // persen lebar kartu
   const [kelompokCasing, setKelompokCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [nameColor, setNameColor] = useState('#000000')
@@ -199,7 +199,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [showCustomField, setShowCustomField] = useState(false)
   const [customFieldLabel, setCustomFieldLabel] = useState('Keterangan')
   const [customFieldPos, setCustomFieldPos] = useState<Position>({ x: 50, y: 70 })
-  const [customFieldFontSize, setCustomFieldFontSize] = useState(3.5) // persen lebar kartu
+  const [customFieldFontSize, setCustomFieldFontSize] = useState(4) // persen lebar kartu
   const [customFieldCasing, setCustomFieldCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
   const [customFieldColor, setCustomFieldColor] = useState('#000000')
   const [customFieldItalic, setCustomFieldItalic] = useState(false)
@@ -569,8 +569,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                   id="name-font-size"
                   type="number"
                   step={0.5}
-                  min="0.5"
-                  max="20"
+                  min="0.1"
                   value={nameFontSize}
                   onChange={e => setNameFontSize(Number(e.target.value))}
                 />
@@ -625,8 +624,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                       id="kelompok-font-size"
                       type="number"
                       step={0.5}
-                      min="0.5"
-                      max="20"
+                      min="0.1"
                       value={kelompokFontSize}
                       onChange={e => setKelompokFontSize(Number(e.target.value))}
                     />
@@ -693,8 +691,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                       id="custom-field-font-size"
                       type="number"
                       step={0.5}
-                      min="0.5"
-                      max="20"
+                      min="0.1"
                       value={customFieldFontSize}
                       onChange={e => setCustomFieldFontSize(Number(e.target.value))}
                     />

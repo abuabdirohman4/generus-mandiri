@@ -19,17 +19,17 @@ export function validateTemplatePositions(positions: TemplatePositions) {
   // NOTE: QR position + size may exceed 100 by design (QR is allowed to extend
   // past the card edge), so no right/bottom boundary check here.
 
-  // font_size = persen lebar kartu (0.5%–20%), bukan px absolut
-  if (name_font_size < 0.5 || name_font_size > 20) {
-    throw new Error('Ukuran font harus antara 0.5% dan 20% dari lebar kartu')
+  // font_size = persen lebar kartu (min 0.1%, tanpa batas atas), bukan px absolut
+  if (name_font_size < 0.1) {
+    throw new Error('Ukuran font minimal 0.1% dari lebar kartu')
   }
 
-  if (positions.kelompok_font_size && (positions.kelompok_font_size < 0.5 || positions.kelompok_font_size > 20)) {
-    throw new Error('Ukuran font Kelompok tidak valid (0.5%–20%)')
+  if (positions.kelompok_font_size !== undefined && positions.kelompok_font_size < 0.1) {
+    throw new Error('Ukuran font Kelompok minimal 0.1%')
   }
 
-  if (positions.custom_field_font_size && (positions.custom_field_font_size < 0.5 || positions.custom_field_font_size > 20)) {
-    throw new Error('Ukuran font Field tidak valid (0.5%–20%)')
+  if (positions.custom_field_font_size !== undefined && positions.custom_field_font_size < 0.1) {
+    throw new Error('Ukuran font Field minimal 0.1%')
   }
 
   const validCasings = ['original', 'uppercase', 'titlecase']

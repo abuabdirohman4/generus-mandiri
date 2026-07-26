@@ -10,12 +10,12 @@ function makePositions(overrides: Partial<TemplatePositions> = {}): TemplatePosi
     qr_size_pct: 20,
     name_x_pct: 50,
     name_y_pct: 80,
-    name_font_size: 5,
+    name_font_size: 4,
     name_casing: 'original',
     show_kelompok: false,
     kelompok_x_pct: 50,
     kelompok_y_pct: 60,
-    kelompok_font_size: 3.5,
+    kelompok_font_size: 4,
     kelompok_casing: 'original',
     name_color: '#000000',
     name_italic: false,
@@ -26,7 +26,7 @@ function makePositions(overrides: Partial<TemplatePositions> = {}): TemplatePosi
     show_custom_field: false,
     custom_field_x_pct: 50,
     custom_field_y_pct: 70,
-    custom_field_font_size: 3.5,
+    custom_field_font_size: 4,
     custom_field_casing: 'original',
     custom_field_color: '#000000',
     custom_field_italic: false,
@@ -51,9 +51,10 @@ describe('validateTemplatePositions', () => {
     expect(() => validateTemplatePositions(makePositions({ qr_y_pct: 90, qr_size_pct: 50 }))).not.toThrow()
   })
 
-  it('rejects font size out of range (percent 0.5-20)', () => {
-    expect(() => validateTemplatePositions(makePositions({ name_font_size: 0 }))).toThrow('Ukuran font harus antara 0.5% dan 20% dari lebar kartu')
-    expect(() => validateTemplatePositions(makePositions({ name_font_size: 25 }))).toThrow('Ukuran font harus antara 0.5% dan 20% dari lebar kartu')
+  it('rejects font size below minimum (0.1%)', () => {
+    expect(() => validateTemplatePositions(makePositions({ name_font_size: 0 }))).toThrow('Ukuran font minimal 0.1% dari lebar kartu')
+    // no upper bound — large percent is allowed
+    expect(() => validateTemplatePositions(makePositions({ name_font_size: 50 }))).not.toThrow()
   })
 
   it('rejects invalid name color hex', () => {
