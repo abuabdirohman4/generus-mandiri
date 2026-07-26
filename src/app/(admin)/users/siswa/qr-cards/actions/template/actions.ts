@@ -39,6 +39,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
     const imageWidth = parseInt(formData.get('imageWidth') as string)
     const imageHeight = parseInt(formData.get('imageHeight') as string)
     const cardWidthCm = parseFloat(formData.get('cardWidthCm') as string)
+    const cardHeightCm = parseFloat(formData.get('cardHeightCm') as string)
 
     if (!file || !name || !imageWidth || !imageHeight || !cardWidthCm) {
       return { success: false, message: 'Missing required fields' }
@@ -53,6 +54,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
       image_width: imageWidth,
       image_height: imageHeight,
       card_width_cm: cardWidthCm,
+      ...(Number.isFinite(cardHeightCm) ? { card_height_cm: cardHeightCm } : {}),
       qr_x_pct: 10,
       qr_y_pct: 10,
       qr_size_pct: 20,
@@ -108,13 +110,27 @@ export async function getIdCardTemplate(id: string) {
   }
 }
 
-export async function saveIdCardTemplatePositions(id: string, positions: TemplatePositions, name?: string) {
+export async function saveIdCardTemplatePositions(
+  id: string,
+  positions: TemplatePositions,
+  name?: string,
+  dimensions?: { cardWidthCm?: number; cardHeightCm?: number }
+) {
   try {
     const { adminSupabase } = await checkTemplateAdminAccess()
     
     validateTemplatePositions(positions)
     
     const data = await updateIdCardTemplatePositions(adminSupabase, id, positions, name)
+
+    // Persist physical card dimensions if provided (edit mode)
+    const dimUpdate: Record<string, number> = {}
+    if (dimensions?.cardWidthCm && Number.isFinite(dimensions.cardWidthCm)) dimUpdate.card_width_cm = dimensions.cardWidthCm
+    if (dimensions?.cardHeightCm && Number.isFinite(dimensions.cardHeightCm)) dimUpdate.card_height_cm = dimensions.cardHeightCm
+    if (Object.keys(dimUpdate).length > 0) {
+      await adminSupabase.from('id_card_templates').update(dimUpdate).eq('id', id)
+    }
+
     revalidatePath('/users/siswa')
     return { success: true, data }
   } catch (err: any) {

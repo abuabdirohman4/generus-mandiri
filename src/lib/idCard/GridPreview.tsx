@@ -5,6 +5,7 @@ import { calculateCardGrid } from './gridLayout'
 
 interface GridPreviewProps {
   cardWidthCm: number
+  cardHeightCm?: number
   imageWidth: number
   imageHeight: number
 }
@@ -16,16 +17,17 @@ const PAGE_H_CM = 29.7
  * Visual mini-A4 preview: shows how many cards fit per A4 page for the given
  * card width. Updates in realtime as cardWidthCm changes. Cards drawn to scale.
  */
-export default function GridPreview({ cardWidthCm, imageWidth, imageHeight }: GridPreviewProps) {
+export default function GridPreview({ cardWidthCm, cardHeightCm, imageWidth, imageHeight }: GridPreviewProps) {
   const grid = useMemo(() => {
     if (!cardWidthCm || cardWidthCm <= 0 || !imageWidth || !imageHeight) return null
-    const cardHeightCm = cardWidthCm * (imageHeight / imageWidth)
+    const resolvedHeightCm =
+      cardHeightCm && cardHeightCm > 0 ? cardHeightCm : cardWidthCm * (imageHeight / imageWidth)
     return {
-      ...calculateCardGrid({ cardWidthCm, cardHeightCm }),
+      ...calculateCardGrid({ cardWidthCm, cardHeightCm: resolvedHeightCm }),
       cardWidthCm,
-      cardHeightCm,
+      cardHeightCm: resolvedHeightCm,
     }
-  }, [cardWidthCm, imageWidth, imageHeight])
+  }, [cardWidthCm, cardHeightCm, imageWidth, imageHeight])
 
   if (!grid) {
     return (

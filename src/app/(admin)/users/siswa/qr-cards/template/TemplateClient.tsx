@@ -176,6 +176,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [file, setFile] = useState<File | null>(null)
   const [name, setName] = useState('')
   const [cardWidthCm, setCardWidthCm] = useState('8.5')
+  const [cardHeightCm, setCardHeightCm] = useState('')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [imageDims, setImageDims] = useState({ width: 0, height: 0 })
   const [containerWidthPx, setContainerWidthPx] = useState(0)
@@ -270,6 +271,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
       const { template, signedUrl } = res.data
       setName(template.name)
       setCardWidthCm(String(template.card_width_cm))
+      if (template.card_height_cm != null) setCardHeightCm(String(template.card_height_cm))
       setPreviewUrl(signedUrl)
       setImageDims({ width: Number(template.image_width), height: Number(template.image_height) })
       setQrPos({ x: Number(template.qr_x_pct), y: Number(template.qr_y_pct) })
@@ -450,7 +452,10 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
 
       if (isEditing) {
         // Edit mode: image is not replaced, only positions/style are updated.
-        const posRes = await saveIdCardTemplatePositions(templateId, positions, name)
+        const posRes = await saveIdCardTemplatePositions(templateId, positions, name, {
+          cardWidthCm: Number(cardWidthCm) || undefined,
+          cardHeightCm: Number(cardHeightCm) || undefined,
+        })
         if (!posRes.success) throw new Error(posRes.message)
         toast.success('Template berhasil diperbarui')
         onSaved?.()
@@ -459,6 +464,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
         formData.append('file', file as File)
         formData.append('name', name)
         formData.append('cardWidthCm', cardWidthCm)
+        if (cardHeightCm) formData.append('cardHeightCm', cardHeightCm)
         formData.append('imageWidth', imageDims.width.toString())
         formData.append('imageHeight', imageDims.height.toString())
 
@@ -515,6 +521,17 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
             />
           </div>
           <div>
+            <Label htmlFor="card-height-cm">Tinggi Kartu Fisik (cm)</Label>
+            <Input
+              id="card-height-cm"
+              type="number"
+              step={0.1}
+              value={cardHeightCm}
+              onChange={e => setCardHeightCm(e.target.value)}
+              placeholder="Otomatis dari rasio gambar"
+            />
+          </div>
+          <div>
             <Label htmlFor="qr-size">Ukuran QR (%)</Label>
             <Input
               id="qr-size"
@@ -532,6 +549,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
           <Label>Tata Letak di Kertas A4</Label>
           <GridPreview
             cardWidthCm={Number(cardWidthCm)}
+            cardHeightCm={Number(cardHeightCm) || undefined}
             imageWidth={imageDims.width}
             imageHeight={imageDims.height}
           />

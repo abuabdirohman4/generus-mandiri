@@ -32,6 +32,7 @@ export interface IdCardTemplate {
   custom_field_italic: boolean
   custom_field_bold: boolean
   card_width_cm: number
+  card_height_cm?: number // manual; fallback ke rasio gambar bila undefined (data lama)
   created_by?: string
   created_at?: string
 }

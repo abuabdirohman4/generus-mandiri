@@ -66,7 +66,10 @@ export async function generateIdCardsPdfBlob(
     }
   }
 
-  const cardHeightCm = template.card_width_cm * (template.image_height / template.image_width)
+  const cardHeightCm =
+    template.card_height_cm && template.card_height_cm > 0
+      ? template.card_height_cm
+      : template.card_width_cm * (template.image_height / template.image_width)
 
   const doc = React.createElement(IdCardDocument, {
     cardImages,
