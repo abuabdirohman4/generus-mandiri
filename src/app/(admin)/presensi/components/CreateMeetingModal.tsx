@@ -440,10 +440,12 @@ export default function CreateMeetingModal({
     setSelectedKelompokIds(availableKelompok.map((k: any) => k.id))
   }, [isOpen, availableKelompok.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Force revalidate students when modal opens to get fresh data
+  // Revalidate students in background when modal opens — keep cache visible so the
+  // form (auto-selected class + student count) renders instantly instead of flashing
+  // "Tidak ada siswa" while a full-list refetch runs (sm-56bl follow-up).
   useEffect(() => {
     if (isOpen) {
-      mutateStudents(undefined, { revalidate: true }) // Force hard refresh
+      mutateStudents() // background revalidate, does not clear cache
     }
   }, [isOpen, mutateStudents])
 
@@ -1112,7 +1114,13 @@ export default function CreateMeetingModal({
               )}
 
               {/* Student Preview */}
-              {combinedStudents.length > 0 ? (
+              {combinedStudents.length === 0 && (studentsLoading || classesLoading) ? (
+                <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Memuat data siswa...
+                  </h4>
+                </div>
+              ) : combinedStudents.length > 0 ? (
                 <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Jumlah Siswa: <Link href={`/users/siswa`} className="text-blue-500 hover:text-blue-600">{selectedStudentIds.length} dari {combinedStudents.length} siswa dipilih</Link>
