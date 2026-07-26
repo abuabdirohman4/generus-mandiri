@@ -102,7 +102,9 @@ export function QrCardsTab() {
       if (filters.desa && filters.desa.length > 0 && !filters.desa.includes(s.desa_id!)) return false
       if (filters.kelompok && filters.kelompok.length > 0 && !filters.kelompok.includes(s.kelompok_id!)) return false
       if (filters.kelas && filters.kelas.length > 0) {
-        const hasClass = s.classes?.some(c => filters.kelas.includes(c.id)) || filters.kelas.includes(s.class_id!)
+        // Grouped multi-kelompok class values are comma-joined IDs — split before matching (like tab Siswa).
+        const selectedClassIds = filters.kelas.flatMap(k => k.split(','))
+        const hasClass = s.classes?.some(c => selectedClassIds.includes(c.id)) || selectedClassIds.includes(s.class_id!)
         if (!hasClass) return false
       }
       return true
