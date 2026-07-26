@@ -143,6 +143,30 @@ export function canBulkAssignCrossKelompok(profile: UserProfile | null | undefin
  * Optionally filters by hierarchy if a profile is provided.
  * Returns null if no restrictions are found.
  */
+// Fetch ALL class IDs for the given kelompok, paginating past PostgREST's 1000-row
+// default cap. Without this, a daerah/desa teacher (>1000 classes in scope) silently
+// loses classes beyond row 1000, breaking the allowed-class intersection (sm-56bl).
+async function fetchClassIdsByKelompokPaginated(
+  adminClient: any,
+  kelompokIds: string[]
+): Promise<string[]> {
+  const ids: string[] = [];
+  const PAGE = 1000;
+  let from = 0;
+  while (true) {
+    const { data: page, error } = await adminClient
+      .from('classes')
+      .select('id')
+      .in('kelompok_id', kelompokIds)
+      .range(from, from + PAGE - 1);
+    if (error || !page || page.length === 0) break;
+    ids.push(...page.map((c: any) => c.id));
+    if (page.length < PAGE) break;
+    from += PAGE;
+  }
+  return ids;
+}
+
 export async function getTeacherAllowedClassIds(
   userId: string,
   profile?: { daerah_id?: string | null; desa_id?: string | null; kelompok_id?: string | null } | null
@@ -258,14 +282,11 @@ export async function getTeacherAllowedClassIds(
     }
 
     // Fetch all classes in scope (by kelompok only — allAllowedClassIds may be too large for .in())
-    const { data: classes } = await adminClient
-      .from('classes')
-      .select('id')
-      .in('kelompok_id', kelompokIds);
+    const scopeClassIds = await fetchClassIdsByKelompokPaginated(adminClient, kelompokIds);
 
     // Intersect in-memory with allAllowedClassIds
     const allowedSet = new Set(allAllowedClassIds);
-    return new Set((classes || []).filter((c: any) => allowedSet.has(c.id)).map((c: any) => c.id));
+    return new Set(scopeClassIds.filter((id: string) => allowedSet.has(id)));
   }
 
   if (profile.daerah_id) {
@@ -285,14 +306,11 @@ export async function getTeacherAllowedClassIds(
     if (kelompokIds.length === 0) return new Set();
 
     // Fetch all classes in scope (by kelompok only — allAllowedClassIds may be too large for .in())
-    const { data: classes } = await adminClient
-      .from('classes')
-      .select('id')
-      .in('kelompok_id', kelompokIds);
+    const scopeClassIds = await fetchClassIdsByKelompokPaginated(adminClient, kelompokIds);
 
     // Intersect in-memory with allAllowedClassIds
     const allowedSet = new Set(allAllowedClassIds);
-    return new Set((classes || []).filter((c: any) => allowedSet.has(c.id)).map((c: any) => c.id));
+    return new Set(scopeClassIds.filter((id: string) => allowedSet.has(id)));
   }
 
   // No org filter → return all class IDs matching the class masters
