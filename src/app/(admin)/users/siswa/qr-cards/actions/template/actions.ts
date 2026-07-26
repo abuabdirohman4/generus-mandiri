@@ -60,12 +60,12 @@ export async function uploadIdCardTemplate(formData: FormData) {
       qr_size_pct: 20,
       name_x_pct: 50,
       name_y_pct: 50,
-      name_font_size: 24,
+      name_font_size: 5, // persen lebar kartu
       name_casing: 'original',
       show_kelompok: false,
       kelompok_x_pct: 50,
       kelompok_y_pct: 60,
-      kelompok_font_size: 18,
+      kelompok_font_size: 3.5, // persen lebar kartu
       kelompok_casing: 'original',
       name_color: '#000000',
       name_italic: false,
@@ -77,7 +77,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
       custom_field_label: 'Keterangan',
       custom_field_x_pct: 50,
       custom_field_y_pct: 70,
-      custom_field_font_size: 18,
+      custom_field_font_size: 3.5, // persen lebar kartu
       custom_field_casing: 'original',
       custom_field_color: '#000000',
       custom_field_italic: false,

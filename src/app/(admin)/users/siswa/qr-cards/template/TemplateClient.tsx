@@ -72,17 +72,12 @@ function DraggableBox({
     transform: transformParts.length ? transformParts.join(' ') : undefined,
     width: sizePct ? `${sizePct}%` : 'auto',
     aspectRatio: sizePct ? '1 / 1' : undefined,
-    // Text font-size must scale with the rendered image width so the preview
-    // matches composeCard.client.ts, which draws at native image resolution
-    // (fontSizePx is stored relative to imageWidth). Computed directly in px
-    // from the container's measured rendered width (via ResizeObserver) rather
-    // than CSS container query units (cqw) — cqw resolves against the query
-    // container's own inline-size, which in practice didn't track the
-    // displayed <img> width reliably (nested scroll/grid ancestors), causing
-    // preview/PDF font-size mismatch.
+    // Font size = persen lebar kartu (lihat composeCard.client.ts). Preview render
+    // relatif ke lebar container terukur (ResizeObserver), independen resolusi
+    // gambar → cocok dengan PDF di ukuran file berapapun.
     fontSize:
-      textStyle && imageWidth && containerWidthPx
-        ? `${(textStyle.fontSizePx / imageWidth) * containerWidthPx}px`
+      textStyle && containerWidthPx
+        ? `${(textStyle.fontSizePx / 100) * containerWidthPx}px`
         : undefined,
     zIndex: isDragging ? 10 : 1,
     cursor: disabled ? 'default' : isDragging ? 'grabbing' : 'grab',
@@ -185,13 +180,13 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
 
   const [qrPos, setQrPos] = useState<Position>({ x: 10, y: 10 })
   const [qrSize, setQrSize] = useState(20)
-  const [nameFontSize, setNameFontSize] = useState(24)
+  const [nameFontSize, setNameFontSize] = useState(5) // persen lebar kartu
   const [namePos, setNamePos] = useState<Position>({ x: 50, y: 50 })
   const [nameCasing, setNameCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [showKelompok, setShowKelompok] = useState(false)
   const [kelompokPos, setKelompokPos] = useState<Position>({ x: 50, y: 60 })
-  const [kelompokFontSize, setKelompokFontSize] = useState(18)
+  const [kelompokFontSize, setKelompokFontSize] = useState(3.5) // persen lebar kartu
   const [kelompokCasing, setKelompokCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
 
   const [nameColor, setNameColor] = useState('#000000')
@@ -204,7 +199,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [showCustomField, setShowCustomField] = useState(false)
   const [customFieldLabel, setCustomFieldLabel] = useState('Keterangan')
   const [customFieldPos, setCustomFieldPos] = useState<Position>({ x: 50, y: 70 })
-  const [customFieldFontSize, setCustomFieldFontSize] = useState(18)
+  const [customFieldFontSize, setCustomFieldFontSize] = useState(3.5) // persen lebar kartu
   const [customFieldCasing, setCustomFieldCasing] = useState<'original' | 'uppercase' | 'titlecase'>('original')
   const [customFieldColor, setCustomFieldColor] = useState('#000000')
   const [customFieldItalic, setCustomFieldItalic] = useState(false)
@@ -569,10 +564,13 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Nama</p>
             <div className="flex gap-4">
               <div className="flex-1 max-w-45">
-                <Label htmlFor="name-font-size">Ukuran Font (px)</Label>
+                <Label htmlFor="name-font-size">Ukuran Font (% lebar)</Label>
                 <Input
                   id="name-font-size"
                   type="number"
+                  step={0.5}
+                  min={0.5}
+                  max={20}
                   value={nameFontSize}
                   onChange={e => setNameFontSize(Number(e.target.value))}
                 />
@@ -622,10 +620,13 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
               <div className="space-y-3 pt-1">
                 <div className="flex gap-4">
                   <div className="flex-1 max-w-45">
-                    <Label htmlFor="kelompok-font-size">Ukuran Font (px)</Label>
+                    <Label htmlFor="kelompok-font-size">Ukuran Font (% lebar)</Label>
                     <Input
                       id="kelompok-font-size"
                       type="number"
+                      step={0.5}
+                      min={0.5}
+                      max={20}
                       value={kelompokFontSize}
                       onChange={e => setKelompokFontSize(Number(e.target.value))}
                     />
@@ -687,10 +688,13 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                 </div>
                 <div className="flex gap-4">
                   <div className="flex-1 max-w-45">
-                    <Label htmlFor="custom-field-font-size">Ukuran Font (px)</Label>
+                    <Label htmlFor="custom-field-font-size">Ukuran Font (% lebar)</Label>
                     <Input
                       id="custom-field-font-size"
                       type="number"
+                      step={0.5}
+                      min={0.5}
+                      max={20}
                       value={customFieldFontSize}
                       onChange={e => setCustomFieldFontSize(Number(e.target.value))}
                     />

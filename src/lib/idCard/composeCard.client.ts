@@ -48,10 +48,12 @@ export async function composeCard(params: {
         const nameXPx = (positions.name_x_pct / 100) * imageWidth
         const nameYPx = (positions.name_y_pct / 100) * imageHeight
 
+        // font_size = persen lebar gambar (proporsional di semua resolusi)
+        const nameFontPx = (positions.name_font_size / 100) * imageWidth
         const nameStyleParts = [
           positions.name_italic ? 'italic' : '',
           positions.name_bold ? 'bold' : '',
-          `${positions.name_font_size}px`,
+          `${nameFontPx}px`,
           'sans-serif',
         ].filter(Boolean)
         ctx.font = nameStyleParts.join(' ')
@@ -65,12 +67,12 @@ export async function composeCard(params: {
         if (positions.show_kelompok && studentKelompok && positions.kelompok_x_pct !== undefined && positions.kelompok_y_pct !== undefined) {
           const kelXPx = (positions.kelompok_x_pct / 100) * imageWidth
           const kelYPx = (positions.kelompok_y_pct / 100) * imageHeight
-          const kelFontSize = positions.kelompok_font_size || 18
+          const kelFontPx = ((positions.kelompok_font_size || 3.5) / 100) * imageWidth
 
           const kelStyleParts = [
             positions.kelompok_italic ? 'italic' : '',
             positions.kelompok_bold ? 'bold' : '',
-            `${kelFontSize}px`,
+            `${kelFontPx}px`,
             'sans-serif',
           ].filter(Boolean)
           
@@ -84,12 +86,12 @@ export async function composeCard(params: {
         if (positions.show_custom_field && customFieldValue && positions.custom_field_x_pct !== undefined) {
           const cfXPx = (positions.custom_field_x_pct / 100) * imageWidth
           const cfYPx = (positions.custom_field_y_pct / 100) * imageHeight
-          const cfFontSize = positions.custom_field_font_size || 18
+          const cfFontPx = ((positions.custom_field_font_size || 3.5) / 100) * imageWidth
 
           const cfStyleParts = [
             positions.custom_field_italic ? 'italic' : '',
             positions.custom_field_bold ? 'bold' : '',
-            `${cfFontSize}px`,
+            `${cfFontPx}px`,
             'sans-serif',
           ].filter(Boolean)
 
