@@ -115,8 +115,8 @@ export default function StudentModal({
         kelas: [] as string[]
       })
 
-      // Fetch current classes for admin in edit mode
-      if (isAdminLegacy(userProfile?.role)) {
+      // Fetch current classes for admin or guru desa/daerah in edit mode
+      if (isAdminLegacy(userProfile?.role) || (userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile)))) {
         setLoadingClasses(true)
         getStudentClasses(student.id)
           .then(classes => {
