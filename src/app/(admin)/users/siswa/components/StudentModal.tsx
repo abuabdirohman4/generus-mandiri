@@ -254,6 +254,8 @@ export default function StudentModal({
     }
   }, [filters.kelompok, filteredClasses, mode, selectedClassIds])
 
+  const useMultiClass = mode === 'edit' && (isAdminLegacy(userProfile?.role) || (userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile))))
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -274,7 +276,6 @@ export default function StudentModal({
     }
 
     // For admin edit mode OR guru desa/daerah edit mode, use multiple classes
-    const useMultiClass = mode === 'edit' && (isAdminLegacy(userProfile?.role) || (userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile))))
     if (useMultiClass) {
       if (selectedClassIds.length === 0) {
         toast.error('Pilih minimal satu kelas')
@@ -373,10 +374,10 @@ export default function StudentModal({
             />
           )}
 
-          {/* Only show class selection for admins or superadmins */}
-          {isAdminLegacy(userProfile?.role) && (
+          {/* Class selection: multi for admin/guru desa+daerah edit, single otherwise */}
+          {(isAdminLegacy(userProfile?.role) || userProfile?.role === 'teacher') && (
             <div>
-              {mode === 'edit' ? (
+              {useMultiClass ? (
                 <MultiSelectCheckbox
                   label="Kelas"
                   items={filteredClasses.map((cls) => ({
@@ -386,7 +387,6 @@ export default function StudentModal({
                   selectedIds={selectedClassIds}
                   onChange={(ids) => {
                     setSelectedClassIds(ids)
-                    // Sync to filters.kelas
                     setFilters(prev => ({ ...prev, kelas: ids }))
                   }}
                   isLoading={loadingClasses}
@@ -404,42 +404,6 @@ export default function StudentModal({
                     label: cls.name,
                   }))}
                   allOptionLabel="Pilih kelas"
-                  widthClassName="!max-w-full"
-                  disabled={!!userProfile && modalShouldShowKelompokFilter(userProfile) && filters.kelompok.length === 0}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Show class selector for teachers */}
-          {userProfile?.role === 'teacher' && (
-            <div>
-              {mode === 'edit' && userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile)) ? (
-                <MultiSelectCheckbox
-                  label="Kelas"
-                  items={filteredClasses.map((cls) => ({
-                    id: cls.id,
-                    label: cls.name,
-                  }))}
-                  selectedIds={selectedClassIds}
-                  onChange={(ids) => {
-                    setSelectedClassIds(ids)
-                    setFilters(prev => ({ ...prev, kelas: ids }))
-                  }}
-                  maxHeight="12rem"
-                  hint="Pilih minimal satu kelas"
-                />
-              ) : (
-                <InputFilter
-                  id="classId"
-                  label="Kelas"
-                  value={formData.classId}
-                  onChange={(value: string) => setFormData({ ...formData, classId: value })}
-                  options={filteredClasses.map((cls) => ({
-                    value: cls.id,
-                    label: cls.name,
-                  }))}
-                  placeholder="Pilih kelas"
                   widthClassName="!max-w-full"
                   disabled={!!userProfile && modalShouldShowKelompokFilter(userProfile) && filters.kelompok.length === 0}
                 />

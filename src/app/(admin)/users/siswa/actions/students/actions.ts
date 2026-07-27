@@ -728,7 +728,17 @@ export async function updateStudent(studentId: string, formData: FormData) {
             const currentClassIds = new Set(currentClasses?.map(c => c.class_id) || [])
             const newClassIds = new Set(classIds)
 
-            const toDelete = Array.from(currentClassIds).filter(id => !newClassIds.has(id))
+            // For teachers: only delete classes within their allowed scope.
+            // Classes outside their access (e.g. Pra Nikah 2 for a guru daerah
+            // restricted to custom classes) must be preserved.
+            let deletableClassIds = Array.from(currentClassIds)
+            if (profile.role === 'teacher') {
+                const teacherAllowed = await getTeacherAllowedClassIds(user.id, profile)
+                if (teacherAllowed !== null) {
+                    deletableClassIds = deletableClassIds.filter(id => teacherAllowed.has(id))
+                }
+            }
+            const toDelete = deletableClassIds.filter(id => !newClassIds.has(id))
             if (toDelete.length > 0) {
                 const { error: deleteError } = await deleteStudentClasses(client, studentId, toDelete)
                 if (deleteError && deleteError.code !== 'PGRST301') {
