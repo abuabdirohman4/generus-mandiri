@@ -38,52 +38,53 @@ Lalu saat pilih kelasnya, misal "Kelas Paud", maka akan langsung muncul semua ma
 
 ---
 
-## SCENE 2 — Menu Monitoring: catat progress (1:10–2:40) · ~90 detik
+## SCENE 2 — Menu Monitoring: catat progress (1:10–3:00) · ~110 detik
 
-> "Lalu selanjutnya menu **Monitoring** ini untuk *mencatat* pencapaian siswa"
+> "Lalu selanjutnya menu **Monitoring** ini untuk *mencatat* pencapaian siswa."
 
-> "Untuk **tahun ajaran** dan **semester** nya akan otomatis terpilih berdasarkan tahun ajaran dan semester sekarang. Lalu pilih **kelas** yang mau kita nilai." 
+> "Untuk **tahun ajaran** dan **semester** akan otomatis terpilih berdasarkan tahun ajaran dan semester sekarang. Lalu pilih **kelas** yang mau kita nilai."
 
-> "Begitu kelas dipilih, akan muncul tabelnya. Di kiri materinya, ke bawah itu nama siswanya. Tinggal centang materi yang udah dicapai, atau isi nilainya kalau ada. Gampang kan — kayak ngisi absen."
+> "Begitu kelas dipilih, akan muncul daftar materi & sub materinya, dan bisa kita beri nilai untuk setiap sub materi nya, misal 80 berarti akan otomatis muncul predikat B"
 
-> "Kalau udah selesai ngisi, jangan lupa klik tombol **Simpan** yang muncul di bawah ini. Kalau belum diklik, datanya belum kesimpen ya."
+> "Untuk keterangan nilai dan predikatnya ada di paling bawah ini. 
 
-> "Nah, muncul notifikasi *berhasil* — berarti data pencapaian anak-anak udah tersimpan. Gitu aja, diulang tiap bulan buat update progressnya."
+Nilai **90 sampai 100** berarti **A** — Sangat Baik. 
 
-> ⚠️ **Catatan rekam**: Sebelum rekam, pastikan kelas yang dipilih PUNYA materi yang sudah dimapping (dari menu Materi). Kalau kosong, tabel gak muncul dan bikin video bingung.
+**80 sampai 89** berarti **B** — Baik. 
+
+**70 sampai 79** berarti **C** — Cukup. 
+
+Dan di bawah 70 verarti **Belum Tuntas**."
+
+> "Sebuah materi dianggap **tercapai** kalau nilainya minimal **70**. Jadi kalau nilainya di bawah 70, materi itu belum dihitung tuntas. Sehingga persentase pencapaian siswa yang ada di samping sini tidak akan naik."
+
+> "Contoh kalau kita tambah lagi ini berisi 70, persentase akan naik, kalau 69, tidak akan naik"
+
+> "Di atas sini ada **rangkuman satu kelas**: rata-rata pencapaian, rata-rata nilai, dan predikat seluruh siswa di kelas."
+
+> "Kalau udah selesai ngisi, jangan lupa klik tombol **Simpan**."
 
 ---
 
-## SCENE 3 — Laporan Materi: lihat ringkasan (2:40–3:40) · ~60 detik
+## SCENE 3 — Laporan Materi: lihat ringkasan (3:00–4:00) · ~60 detik
 
-**🎬 LAYAR**: Klik menu **Laporan** di sidebar. Klik tab **Materi**.
+> "Terakhir, untuk laporan pencapaian materi, kita buka menu **Laporan**, lalu pilih tab **Materi**."
 
-**🎙️ UCAP**:
-> "Terakhir, buat lihat hasilnya secara keseluruhan, kita buka menu **Laporan**, terus pilih tab **Materi**."
+> "Kita pilih kelasnya"
 
-**🎬 LAYAR**: Kartu statistik atas muncul — tunjuk **Persentase Pencapaian**.
+> "Di ata sini persentase pencapaian satu kelasnya, dan ada laporan kumulatif dan bulanan. Kumulatif berarti pencapaian selama 1 semester, untuk bulanan, pencapaian per bulan nya. Jadi untuk kumulatif persentase nya akan selalu naik selama ada progress, untuk bulanan bisa naik turun tergantung pencapaian di bulan terkait."
 
-**🎙️ UCAP**:
-> "Di atas ada ringkasannya: rata-rata persentase pencapaian seluruh siswa. Jadi sekali lihat, kita udah tau kelas atau kelompok kita udah nyampe berapa persen targetnya."
+> "Di paling bawa ada tabel rincian. Bisa melihat **per siswa**, untuk melihat pencapaian tiap anak, dan **per materi**, untuk melihat materi mana yang paling banyak atau paling sedikit dicapai."
 
-**🎬 LAYAR**: Scroll ke tabel: kolom **Nama Siswa · Tercapai (%) · Nilai**. Klik ikon **Detail** salah satu siswa.
+> "Di tabel per siswa, ada persentase yang tercapai dan nilainya lengkap dengan predikatnya — A, B, atau C — sama seperti standar di menu Monitoring tadi. Kalau mau lihat lebih detail materi per anak, tinggal klik tombol **Detail** di sampingnya."
 
-**🎙️ UCAP**:
-> "Di bawahnya ada rincian per siswa — berapa persen yang udah tercapai, sama nilainya. Kalau mau lihat lebih detail materi per anak, tinggal klik tombol **Detail** di sampingnya."
-
-**🎬 LAYAR**: (Opsional) Ganti filter periode / kelas untuk tunjukkan data berubah.
-
-**🎙️ UCAP**:
-> "Filternya juga bisa disesuaikan — mau lihat per bulan, per kelas, semua bisa dari sini."
+> "Lalu di tab "Semua", ketika kita pilih kelasnya, maka akan muncul juga laporan kehadiran dan pencapaian materi dari tiap kelasnya"
 
 ---
 
 ## SCENE 4 — Penutup (3:40–4:00) · ~20 detik
 
-**🎬 LAYAR**: Kembali ke Home / tampilkan 3 menu (Materi, Monitoring, Laporan) di sidebar.
-
-**🎙️ UCAP**:
-> "Jadi singkatnya: **Materi** buat lihat targetnya, **Monitoring** buat nyatet pencapaiannya, dan **Laporan** buat lihat hasil keseluruhannya. Silakan dicoba ya Bapak Ibu. Kalau ada kesulitan, boleh tanya lewat grup. Terima kasih, Wassalammualaikum Wr. Wb."
+> "Sekian penjelasan tentang 3 fitur terbaru."
 
 ---
 
@@ -93,11 +94,11 @@ Lalu saat pilih kelasnya, misal "Kelas Paud", maka akan langsung muncul semua ma
 |---|---|---|
 | 0 Pembuka | Diam di Home | 20s |
 | 1 Materi | Menu Materi → tab Kelas (pilih kelas) → tab Kategori (expand Hafalan) → filter → klik materi | 60s |
-| 2 Monitoring | Menu Monitoring → filter (tahun/sem/kelas) → isi sel → Simpan | 90s |
-| 3 Laporan | Menu Laporan → tab Materi → lihat kartu → klik Detail | 60s |
+| 2 Monitoring | Menu Monitoring → pilih kelas → isi sel (nilai + centang) → klik siswa (predikat + rangkuman kelas di sidebar) → Simpan | 110s |
+| 3 Laporan | Menu Laporan → tab Materi → lihat kartu → toggle per siswa/per materi (predikat) → klik Detail | 60s |
 | 4 Penutup | Balik Home | 20s |
 
-**Total ± 4 menit** (sudah termasuk jeda; hasil edit bisa 3-3.5 menit setelah loading dipotong).
+**Total ± 4,5 menit** (sudah termasuk jeda; hasil edit bisa 3,5-4 menit setelah loading dipotong).
 
 ## Checklist sebelum rekam
 - [ ] Login sebagai **guru** (bukan admin) biar tampilan sesuai audiens
