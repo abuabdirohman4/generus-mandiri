@@ -28,21 +28,23 @@ export async function composeCard(params: {
         // 1. Draw template
         ctx.drawImage(img, 0, 0, imageWidth, imageHeight)
 
-        // 2. Generate and draw QR code
-        const qrSizePx = (positions.qr_size_pct / 100) * imageWidth
-        const qrXPx = (positions.qr_x_pct / 100) * imageWidth
-        const qrYPx = (positions.qr_y_pct / 100) * imageHeight
+        // 2. Generate and draw QR code (optional)
+        if (positions.show_qr !== false) {
+          const qrSizePx = (positions.qr_size_pct / 100) * imageWidth
+          const qrXPx = (positions.qr_x_pct / 100) * imageWidth
+          const qrYPx = (positions.qr_y_pct / 100) * imageHeight
 
-        const qrCanvas = document.createElement('canvas')
-        await QRCode.toCanvas(qrCanvas, qrPayload, {
-          width: qrSizePx,
-          margin: 1, // minimal margin
-          color: {
-            dark: '#000000',
-            light: '#ffffff'
-          }
-        })
-        ctx.drawImage(qrCanvas, qrXPx, qrYPx, qrSizePx, qrSizePx)
+          const qrCanvas = document.createElement('canvas')
+          await QRCode.toCanvas(qrCanvas, qrPayload, {
+            width: qrSizePx,
+            margin: 1, // minimal margin
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          })
+          ctx.drawImage(qrCanvas, qrXPx, qrYPx, qrSizePx, qrSizePx)
+        }
 
         // 3. Draw Name
         const nameXPx = (positions.name_x_pct / 100) * imageWidth

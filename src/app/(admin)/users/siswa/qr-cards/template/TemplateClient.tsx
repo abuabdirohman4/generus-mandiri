@@ -205,6 +205,8 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
   const [customFieldItalic, setCustomFieldItalic] = useState(false)
   const [customFieldBold, setCustomFieldBold] = useState(true)
 
+  const [showQr, setShowQr] = useState(true)
+
   const [showCenterGuide, setShowCenterGuide] = useState(false)
 
   // Preview Mode State
@@ -285,6 +287,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
       setKelompokItalic(template.kelompok_italic)
       setKelompokBold(template.kelompok_bold)
       setShowCustomField(template.show_custom_field)
+      setShowQr(template.show_qr ?? true)
       setCustomFieldLabel(template.custom_field_label || 'Keterangan')
       setCustomFieldPos({ x: Number(template.custom_field_x_pct), y: Number(template.custom_field_y_pct) })
       setCustomFieldFontSize(Number(template.custom_field_font_size))
@@ -442,6 +445,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
         kelompok_italic: kelompokItalic,
         kelompok_bold: kelompokBold,
         show_custom_field: showCustomField,
+        show_qr: showQr,
         custom_field_label: customFieldLabel,
         custom_field_x_pct: customFieldPos.x,
         custom_field_y_pct: customFieldPos.y,
@@ -732,6 +736,16 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
           </div>
         </div>
 
+        {/* QR Code toggle */}
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+          <Checkbox
+            id="show-qr"
+            label="Tampilkan QR Code"
+            checked={showQr}
+            onChange={setShowQr}
+          />
+        </div>
+
         {!templateId && (
           <div className="mt-auto border-t border-gray-200 dark:border-gray-700 pt-4">
             <Label htmlFor="template-file">Upload Gambar Template</Label>
@@ -859,6 +873,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                 />
               )}
 
+              {showQr && (
               <DraggableBox id="qr-box" position={qrPos} sizePct={qrSize} onResize={handleQrResize} disabled={isPreviewMode}>
                 {isPreviewMode && previewStudents[previewIndex] ? (
                   <QRCodeSVG
@@ -872,6 +887,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
                   <div className="text-xs text-center pointer-events-none">QR CODE<br />(Area)</div>
                 )}
               </DraggableBox>
+              )}
               <DraggableBox
                 id="name-box"
                 position={namePos}

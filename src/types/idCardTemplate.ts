@@ -31,6 +31,7 @@ export interface IdCardTemplate {
   custom_field_color: string
   custom_field_italic: boolean
   custom_field_bold: boolean
+  show_qr: boolean
   card_width_cm: number
   card_height_cm?: number // manual; fallback ke rasio gambar bila undefined (data lama)
   created_by?: string
@@ -57,6 +58,7 @@ export interface TemplatePositions {
   kelompok_italic: boolean
   kelompok_bold: boolean
   show_custom_field: boolean
+  show_qr: boolean
   custom_field_x_pct: number
   custom_field_y_pct: number
   custom_field_font_size: number

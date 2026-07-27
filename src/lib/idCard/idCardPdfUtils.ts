@@ -49,6 +49,7 @@ export async function generateIdCardsPdfBlob(
         kelompok_italic: template.kelompok_italic,
         kelompok_bold: template.kelompok_bold,
         show_custom_field: template.show_custom_field,
+        show_qr: template.show_qr,
         custom_field_x_pct: template.custom_field_x_pct,
         custom_field_y_pct: template.custom_field_y_pct,
         custom_field_font_size: template.custom_field_font_size,

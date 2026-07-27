@@ -74,6 +74,7 @@ export async function uploadIdCardTemplate(formData: FormData) {
       kelompok_italic: false,
       kelompok_bold: true,
       show_custom_field: false,
+      show_qr: true,
       custom_field_label: 'Keterangan',
       custom_field_x_pct: 50,
       custom_field_y_pct: 70,
