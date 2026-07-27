@@ -12,6 +12,7 @@ function makePositions(overrides: Partial<TemplatePositions> = {}): TemplatePosi
     name_y_pct: 80,
     name_font_size: 4,
     name_casing: 'original',
+    show_qr: true,
     show_kelompok: false,
     kelompok_x_pct: 50,
     kelompok_y_pct: 60,

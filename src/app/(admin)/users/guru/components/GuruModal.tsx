@@ -9,7 +9,6 @@ import InputField from '@/components/form/input/InputField';
 import PasswordInput from '@/components/form/input/PasswordInput';
 import DataFilter from '@/components/shared/DataFilter';
 import Label from '@/components/form/Label';
-import InputFilter from '@/components/form/input/InputFilter';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { useModalOrganisationFilters } from '@/hooks/useModalOrganisationFilters';
 import { useDaerah } from '@/hooks/useDaerah';
@@ -95,7 +94,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
     kelompok_id: '',
     classIds: [] as string[],
     classMasterIds: [] as string[],
-    customClassName: '' as string,
+    customClassNames: [] as string[],
     kelompokAccessIds: [] as string[]
   });
   const [dataFilters, setDataFilters] = useState({
@@ -213,14 +212,14 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           const classIds = result.success ? result.data.map((tc: any) => tc.class_id) : [];
 
           let classMasterIds: string[] = [];
-          let loadedCustomClassName = '';
+          let loadedCustomClassNames: string[] = [];
           if (detectedLevel === 'desa' || detectedLevel === 'daerah') {
             try {
               const result = await getTeacherClassMasters(guru.id);
               const cmData = result.success ? result.data : [];
               classMasterIds = cmData.map((cm: any) => cm.class_master_id);
-              const withCustomName = cmData.find((cm: any) => cm.custom_class_name);
-              loadedCustomClassName = withCustomName?.custom_class_name || '';
+              const withCustomNames = cmData.find((cm: any) => cm.custom_class_names && cm.custom_class_names.length > 0);
+              loadedCustomClassNames = withCustomNames?.custom_class_names || [];
             } catch (cmError) {
               console.error('Error loading class masters:', cmError);
             }
@@ -244,7 +243,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             kelompok_id: guru.kelompok_id || '',
             classIds: classIds,
             classMasterIds: classMasterIds,
-            customClassName: loadedCustomClassName,
+            customClassNames: loadedCustomClassNames,
             kelompokAccessIds: kelompokAccessIds
           });
         } catch (error) {
@@ -257,7 +256,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
             kelompok_id: guru.kelompok_id || '',
             classIds: [],
             classMasterIds: [],
-            customClassName: '',
+            customClassNames: [],
             kelompokAccessIds: []
           });
         }
@@ -301,7 +300,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
           kelompok_id: autoFilledKelompok,
           classIds: [],
           classMasterIds: [],
-          customClassName: '',
+          customClassNames: [],
           kelompokAccessIds: []
         });
         setDataFilters({
@@ -573,7 +572,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         if (teacherLevel === 'desa' || teacherLevel === 'daerah') {
           const assignments = formData.classMasterIds.map(id => ({
             classMasterId: id,
-            customClassName: (lainnyaMasterId && id === lainnyaMasterId) ? (formData.customClassName || null) : null
+            customClassNames: (lainnyaMasterId && id === lainnyaMasterId) ? (formData.customClassNames.length > 0 ? formData.customClassNames : null) : null
           }));
           const masterResult = await updateTeacherClassMasters(guru.id, assignments);
           if (!masterResult.success) {
@@ -608,7 +607,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
         if ((teacherLevel === 'desa' || teacherLevel === 'daerah') && formData.classMasterIds.length > 0) {
           const assignments = formData.classMasterIds.map(id => ({
             classMasterId: id,
-            customClassName: (lainnyaMasterId && id === lainnyaMasterId) ? (formData.customClassName || null) : null
+            customClassNames: (lainnyaMasterId && id === lainnyaMasterId) ? (formData.customClassNames.length > 0 ? formData.customClassNames : null) : null
           }));
           const masterResult = await updateTeacherClassMasters(result.teacher.id, assignments);
           if (!masterResult.success) {
@@ -934,7 +933,7 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
                     onChange={(ids) => setFormData(prev => ({
                       ...prev,
                       classMasterIds: ids,
-                      customClassName: lainnyaMasterId && ids.includes(lainnyaMasterId) ? prev.customClassName : ''
+                      customClassNames: lainnyaMasterId && ids.includes(lainnyaMasterId) ? prev.customClassNames : []
                     }))}
                     disabled={isLoading}
                     maxHeight="8rem"
@@ -944,20 +943,15 @@ export default function GuruModal({ isOpen, onClose, guru, daerah, desa, kelompo
 
                 {lainnyaMasterId && formData.classMasterIds.includes(lainnyaMasterId) && (
                   <div className="mb-3">
-                    <InputFilter
-                      id="customClassName"
+                    <MultiSelectCheckbox
                       label="Batasi ke Kelas Custom Spesifik (Opsional)"
-                      value={formData.customClassName}
-                      onChange={(value) => setFormData(prev => ({ ...prev, customClassName: value }))}
-                      options={lainnyaClassNames.map((name: string) => ({ value: name, label: name }))}
-                      allOptionLabel="Semua kelas custom (Lainnya)"
-                      widthClassName="!max-w-full"
-                      variant="modal"
+                      items={lainnyaClassNames.map((name: string) => ({ id: name, label: name }))}
+                      selectedIds={formData.customClassNames}
+                      onChange={(names) => setFormData(prev => ({ ...prev, customClassNames: names }))}
                       disabled={isLoading}
+                      maxHeight="8rem"
+                      hint="Kosongkan untuk memberi akses ke SEMUA kelas custom (Lainnya). Pilih satu atau lebih nama untuk membatasi akses hanya ke kelas custom tersebut."
                     />
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Kosongkan untuk memberi akses ke SEMUA kelas custom (Lainnya). Pilih satu nama untuk membatasi akses hanya ke kelas custom tersebut (mis. hanya "CAI 2026").
-                    </p>
                   </div>
                 )}
               </div>

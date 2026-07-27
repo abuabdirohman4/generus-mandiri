@@ -28,7 +28,7 @@ export async function fetchTeachers(supabase: SupabaseClient, filter?: {
       ),
       teacher_class_masters(
         class_master_id,
-        custom_class_name,
+        custom_class_names,
         class_masters(name)
       )
     `)

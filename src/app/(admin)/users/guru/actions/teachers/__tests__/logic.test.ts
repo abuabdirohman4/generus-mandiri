@@ -197,11 +197,11 @@ describe('transformTeacher', () => {
         expect(result.kelompok_name).toBe('Kel C')
     })
 
-    it('appends custom_class_name in parens for restricted "Lainnya" master', () => {
+    it('appends custom_class_names in parens for restricted "Lainnya" master', () => {
         const teacher = {
             teacher_classes: [],
             teacher_class_masters: [
-                { class_master_id: 'cm-lainnya', custom_class_name: 'CAI 2026', class_masters: { name: 'Lainnya' } }
+                { class_master_id: 'cm-lainnya', custom_class_names: ['CAI 2026'], class_masters: { name: 'Lainnya' } }
             ],
             daerah: null, desa: null, kelompok: null,
         }
@@ -209,11 +209,11 @@ describe('transformTeacher', () => {
         expect(result.class_master_names).toBe('Lainnya (CAI 2026)')
     })
 
-    it('shows plain master name when custom_class_name is null', () => {
+    it('shows plain master name when custom_class_names is null', () => {
         const teacher = {
             teacher_classes: [],
             teacher_class_masters: [
-                { class_master_id: 'cm-1', custom_class_name: null, class_masters: { name: 'PAUD' } }
+                { class_master_id: 'cm-1', custom_class_names: null, class_masters: { name: 'PAUD' } }
             ],
             daerah: null, desa: null, kelompok: null,
         }
@@ -225,8 +225,8 @@ describe('transformTeacher', () => {
         const teacher = {
             teacher_classes: [],
             teacher_class_masters: [
-                { class_master_id: 'cm-1', custom_class_name: null, class_masters: { name: 'PAUD' } },
-                { class_master_id: 'cm-lainnya', custom_class_name: 'CAI 2026', class_masters: { name: 'Lainnya' } }
+                { class_master_id: 'cm-1', custom_class_names: null, class_masters: { name: 'PAUD' } },
+                { class_master_id: 'cm-lainnya', custom_class_names: ['CAI 2026'], class_masters: { name: 'Lainnya' } }
             ],
             daerah: null, desa: null, kelompok: null,
         }

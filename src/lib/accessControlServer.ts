@@ -185,7 +185,7 @@ export async function getTeacherAllowedClassIds(
   // 2. Check if this teacher has any class master restrictions (hierarchical assignments)
   const { data: tcmData } = await adminClient
     .from('teacher_class_masters')
-    .select('class_master_id, custom_class_name')
+    .select('class_master_id, custom_class_names')
     .eq('teacher_id', userId);
   
   // If no assignments at all → null means "no filter, see everything in my scope"
@@ -194,15 +194,15 @@ export async function getTeacherAllowedClassIds(
   // where Guru Kelompok with no teacher_classes saw everything in their kelompok.
   if ((!tcData || tcData.length === 0) && (!tcmData || tcmData.length === 0)) return null;
 
-  // Split: class masters with NO custom_class_name grant ALL classes under that master.
-  // Class masters WITH a custom_class_name (used for shared masters like "Lainnya")
-  // grant access ONLY to the class whose name matches exactly.
+  // Split: class masters with NO custom_class_names grant ALL classes under that master.
+  // Class masters WITH custom_class_names (used for shared masters like "Lainnya")
+  // grant access ONLY to classes whose name is included in custom_class_names.
   const unrestrictedCmIds = (tcmData || [])
-    .filter((t: any) => !t.custom_class_name)
+    .filter((t: any) => !t.custom_class_names || t.custom_class_names.length === 0)
     .map((t: any) => t.class_master_id);
   const customNameFilters = (tcmData || [])
-    .filter((t: any) => !!t.custom_class_name)
-    .map((t: any) => ({ classMasterId: t.class_master_id, customClassName: t.custom_class_name as string }));
+    .filter((t: any) => t.custom_class_names && t.custom_class_names.length > 0)
+    .map((t: any) => ({ classMasterId: t.class_master_id, customClassNames: t.custom_class_names as string[] }));
 
   const cmIds = [...new Set([...unrestrictedCmIds, ...customNameFilters.map((f: any) => f.classMasterId)])];
 
@@ -234,13 +234,13 @@ export async function getTeacherAllowedClassIds(
     } else {
       classMasterAllowedIds = (mappingData || [])
         .filter((m: any) => {
-          // Unrestricted master (custom_class_name null) → allow this class
+          // Unrestricted master (custom_class_names null or empty) → allow this class
           if (unrestrictedCmIds.includes(m.class_master_id)) return true
           // Restricted master → allow only if class name matches one of the assigned custom names
           const filters = customNameFilters.filter((f: any) => f.classMasterId === m.class_master_id)
           if (filters.length === 0) return false
           const className = Array.isArray(m.classes) ? m.classes[0]?.name : m.classes?.name
-          return filters.some((f: any) => f.customClassName === className)
+          return filters.some((f: any) => f.customClassNames.includes(className))
         })
         .map((m: any) => m.class_id);
     }

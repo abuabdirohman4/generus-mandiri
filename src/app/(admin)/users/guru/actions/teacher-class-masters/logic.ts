@@ -1,16 +1,16 @@
 export interface ClassMasterAssignmentInput {
   classMasterId: string
-  customClassName?: string | null
+  customClassNames?: string[] | null
 }
 
 export function buildClassMasterMappings(
   teacherId: string,
   assignments: ClassMasterAssignmentInput[]
-): Array<{ teacher_id: string; class_master_id: string; custom_class_name: string | null }> {
+): Array<{ teacher_id: string; class_master_id: string; custom_class_names: string[] | null }> {
   return assignments.map(a => ({
     teacher_id: teacherId,
     class_master_id: a.classMasterId,
-    custom_class_name: a.customClassName?.trim() || null,
+    custom_class_names: a.customClassNames && a.customClassNames.length > 0 ? a.customClassNames : null,
   }))
 }
 
@@ -21,7 +21,8 @@ export function mapTeacherClassMastersToResult(raw: any[]) {
       id: tcm.id,
       class_master_id: tcm.class_master_id,
       class_master_name: cm?.name || '',
-      custom_class_name: tcm.custom_class_name ?? null,
+      custom_class_names: tcm.custom_class_names ?? null,
     }
   })
 }
+
