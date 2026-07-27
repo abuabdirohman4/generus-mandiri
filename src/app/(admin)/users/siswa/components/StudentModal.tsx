@@ -182,7 +182,7 @@ export default function StudentModal({
 
   // Sync selectedClassIds → filters.kelas (edit mode)
   useEffect(() => {
-    if (mode === 'edit' && isAdminLegacy(userProfile?.role)) {
+    if (mode === 'edit' && (isAdminLegacy(userProfile?.role) || (userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile))))) {
       // Only update if different to prevent circular updates
       setFilters(prev => {
         const currentKelas = prev.kelas
@@ -199,7 +199,8 @@ export default function StudentModal({
 
   // Sync formData.classId → filters.kelas (create mode)
   useEffect(() => {
-    if (mode !== 'edit' || !isAdminLegacy(userProfile?.role)) {
+    const isHierarchicalTeacher = userProfile && (isTeacherDesa(userProfile) || isTeacherDaerah(userProfile))
+    if ((mode !== 'edit' || !isAdminLegacy(userProfile?.role)) && !isHierarchicalTeacher) {
       if (formData.classId) {
         setFilters(prev => ({ ...prev, kelas: [formData.classId] }))
       } else {
