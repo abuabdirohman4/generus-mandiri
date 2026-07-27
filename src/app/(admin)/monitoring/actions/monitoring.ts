@@ -17,8 +17,8 @@ export async function getHafalanCategories() {
 
         const { data, error } = await supabase
             .from('material_categories')
-            .select('id, name')
-            .order('name');
+            .select('id, name, display_order')
+            .order('display_order');
 
         if (error) throw error;
         return { success: true, data: data || [] };
@@ -313,9 +313,11 @@ export async function getMaterialsByClassAndSemester(
                 id,
                 name,
                 description,
+                material_type_id,
                 material_type:material_types(
                     id,
                     name,
+                    display_order,
                     material_category:material_categories(
                         id,
                         name,

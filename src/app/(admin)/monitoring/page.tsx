@@ -944,15 +944,20 @@ export default function MonitoringPage() {
                                         {/* Group materials by hafalan type (Doa/Surat) */}
                                         {(() => {
                                             const grouped = displayedMaterials.reduce((acc, material) => {
-                                                const typeId = material.material_type_id || 'lainnya';
-                                                if (!acc[typeId]) acc[typeId] = { typeName: material.material_type?.name || 'Lainnya', materials: [], catOrder: (material.material_type?.material_category as any)?.display_order ?? 99, typeOrder: (material.material_type as any)?.display_order ?? 99 };
-                                                acc[typeId].materials.push(material);
+                                                const typeName = material.material_type?.name || 'Lainnya';
+                                                if (!acc[typeName]) acc[typeName] = [];
+                                                acc[typeName].push(material);
                                                 return acc;
-                                            }, {} as Record<string, { typeName: string; materials: typeof displayedMaterials; catOrder: number; typeOrder: number }>);
+                                            }, {} as Record<string, typeof displayedMaterials>);
 
-                                            const sortedGroups = Object.values(grouped).sort((a, b) => a.catOrder - b.catOrder || a.typeOrder - b.typeOrder);
+                                            const sortedGroups = Object.entries(grouped).sort(([, aMats], [, bMats]) => {
+                                                const a = aMats[0]?.material_type;
+                                                const b = bMats[0]?.material_type;
+                                                const catDiff = ((a?.material_category as any)?.display_order ?? 99) - ((b?.material_category as any)?.display_order ?? 99);
+                                                return catDiff !== 0 ? catDiff : ((a as any)?.display_order ?? 99) - ((b as any)?.display_order ?? 99);
+                                            });
 
-                                            return sortedGroups.map(({ typeName, materials }) => (
+                                            return sortedGroups.map(([typeName, materials]) => (
                                                 <div key={typeName} className="mb-6 last:mb-0">
                                                     {/* Category Header */}
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 px-4 md:px-0">
@@ -965,7 +970,7 @@ export default function MonitoringPage() {
                                                             <thead className="bg-gray-50 dark:bg-gray-700">
                                                                 <tr>
                                                                     <th className="px-3 md:px-4 py-2 md:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                                                        Materi
+                                                                        Sub Materi
                                                                     </th>
                                                                     <th className="px-3 md:px-4 py-2 md:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20 md:w-32">
                                                                         Nilai
@@ -980,7 +985,6 @@ export default function MonitoringPage() {
                                                                     const key = `${selectedStudentId}-${material.id}`;
                                                                     const progress = progressMap.get(key);
                                                                     const gradeInfo = getRateGrade(progress?.nilai);
-                                                                    console.log('gradeInfo', gradeInfo)
 
                                                                     return (
                                                                         <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
