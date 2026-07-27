@@ -538,10 +538,7 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
             />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label htmlFor="qr-size" className="mb-0">Ukuran QR (%)</Label>
-              <Checkbox id="show-qr" label="Tampilkan QR" checked={showQr} onChange={setShowQr} />
-            </div>
+            <Label htmlFor="qr-size">Ukuran QR (%)</Label>
             <Input
               id="qr-size"
               type="number"
@@ -551,6 +548,9 @@ export default function TemplateClient({ templateId, onCancelEdit, onSaved }: Te
               onChange={e => setQrSizeClamped(Number(e.target.value))}
               disabled={!showQr}
             />
+          </div>
+          <div className="flex items-center pt-6">
+            <Checkbox id="show-qr" label="Tampilkan QR Code" checked={showQr} onChange={setShowQr} />
           </div>
         </div>
 
