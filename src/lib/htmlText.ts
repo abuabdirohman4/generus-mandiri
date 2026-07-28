@@ -10,7 +10,7 @@ export function sanitizeHtml(html: string): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const DOMPurify = require('dompurify')
   return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a'],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'span', 'ul', 'ol', 'li'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style'],
   })
 }

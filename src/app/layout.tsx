@@ -1,4 +1,4 @@
-import { Outfit } from 'next/font/google';
+import { Outfit, Amiri, Scheherazade_New, Roboto } from 'next/font/google';
 import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 
@@ -11,6 +11,24 @@ import SWRProvider from '@/components/common/SWRProvider';
 
 const outfit = Outfit({
   subsets: ["latin"],
+});
+
+const amiri = Amiri({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+  variable: '--font-amiri',
+});
+
+const scheherazade = Scheherazade_New({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+  variable: '--font-scheherazade',
+});
+
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-roboto',
 });
 
 const toastConfig = {
@@ -82,7 +100,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={outfit.className} suppressHydrationWarning>
+    <html lang="en" className={`${outfit.className} ${amiri.variable} ${scheherazade.variable} ${roboto.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         {/* Inject global timer for Weekly Sync loading measurement */}
         <script

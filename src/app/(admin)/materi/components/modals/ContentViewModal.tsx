@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/modal';
 import Button from '@/components/ui/button/Button';
 import Spinner from '@/components/ui/spinner/Spinner';
 import { MaterialItem } from '../../types';
+import { sanitizeHtml } from '@/lib/htmlText';
 
 interface ContentViewModalProps {
     isOpen: boolean;
@@ -36,9 +37,15 @@ export default function ContentViewModal({ isOpen, onClose, item, onEdit, isLoad
                             <Spinner size={24} />
                         </div>
                     ) : item.content ? (
-                        <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                            {item.content}
-                        </div>
+                        <div
+                            className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"
+                            dir="auto"
+                            dangerouslySetInnerHTML={{
+                                __html: /<[a-z][\s\S]*>/i.test(item.content)
+                                    ? sanitizeHtml(item.content)
+                                    : item.content.split('\n').map(l => `<p style="white-space:pre-wrap">${l || '&nbsp;'}</p>`).join('')
+                            }}
+                        />
                     ) : (
                         <div className="text-center py-8 text-gray-500 dark:text-gray-400 italic">
                             Tidak ada konten untuk materi ini

@@ -6,6 +6,9 @@
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-amiri: var(--font-amiri), 'Amiri', serif;
+  --font-scheherazade: var(--font-scheherazade), 'Scheherazade New', serif;
+  --font-roboto: var(--font-roboto), 'Roboto', sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -816,3 +819,27 @@ span.flatpickr-weekday,
     }
   }
 }
+
+/* Arabic font utilities (sm-g5pj) */
+.font-amiri { font-family: var(--font-amiri), 'Amiri', serif; }
+.font-scheherazade { font-family: var(--font-scheherazade), 'Scheherazade New', serif; }
+.font-arabic { font-family: var(--font-amiri), 'Amiri', serif; }
+
+/* Additional web fonts (sm-g5pj update) */
+@font-face {
+  font-family: 'Calibri';
+  src: url('/fonts/calibri-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Calibri';
+  src: url('/fonts/calibri-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+.font-roboto { font-family: var(--font-roboto), 'Roboto', sans-serif; }
+.font-arial { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+.font-calibri { font-family: 'Calibri', 'Gill Sans', sans-serif; }
+.font-times { font-family: 'Times New Roman', Times, serif; }

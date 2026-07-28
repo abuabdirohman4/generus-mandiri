@@ -18,6 +18,7 @@ import {
 import { getMonthlyTargetsByItem, syncItemMonthlyTargets } from '../../actions/monthly-targets/actions';
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years';
 import { toast } from 'sonner';
+import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor';
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -328,7 +329,7 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
     }));
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg m-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[40rem] m-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
         {item ? 'Edit Sub Materi' : 'Tambah Sub Materi'}
       </h3>
@@ -401,14 +402,14 @@ export default function ItemModal({ isOpen, onClose, item, defaultTypeId, onSucc
 
         <div>
           <Label htmlFor="content">Konten</Label>
-          <textarea
-            id="content"
-            name="content"
+          <RichTextEditor
             value={formData.content}
-            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            onChange={(html) => setFormData({ ...formData, content: html })}
             placeholder="Masukkan konten (opsional)"
             rows={8}
-            className="w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:placeholder:text-white/30 dark:focus:border-brand-800 text-gray-800 border-gray-300 focus:ring-brand-500/10 focus:border-brand-500 dark:text-gray-200 dark:border-gray-600 resize-y"
+            enableFontFamily
+            enableLists
+            enableTextAlign
           />
         </div>
 
