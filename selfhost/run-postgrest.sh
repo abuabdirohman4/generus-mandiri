@@ -13,7 +13,7 @@ set +a
 
 LOCAL_DB="${LOCAL_DB:-generus_local}"
 LOCAL_PG_PORT="${LOCAL_PG_PORT:-5417}"
-PORT="${POSTGREST_PORT:-3001}"
+PORT="${POSTGREST_PORT:-3011}"
 
 export PGRST_DB_URI="postgres://authenticator:postgrest_local_dev@localhost:$LOCAL_PG_PORT/$LOCAL_DB"
 export PGRST_DB_SCHEMAS="public"
