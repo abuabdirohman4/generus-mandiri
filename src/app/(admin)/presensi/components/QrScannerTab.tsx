@@ -45,6 +45,7 @@ function isCommonScanError(errorMessage: string): boolean {
 export default function QrScannerTab({ meetingId, students, onAttendanceChange, meetingStartTime, meetingDate }: QrScannerTabProps) {
   const [history, setHistory] = useState<Array<ScanResult & { studentName?: string; at: number; late?: boolean }>>([])
   const [cameraError, setCameraError] = useState<string | null>(null)
+  const [isCameraReady, setIsCameraReady] = useState(false)
   const qrRef = useRef<HTMLDivElement>(null)
   const html5QrInstanceRef = useRef<Html5Qrcode | null>(null)
   const isProcessingRef = useRef(false)
@@ -101,6 +102,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange, 
       }
       html5QrInstanceRef.current = null
       if (qrRef.current) qrRef.current.innerHTML = ''
+      setIsCameraReady(false)
       isStoppingRef.current = false
     }
 
@@ -130,6 +132,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange, 
             }
           }
         )
+        if (!cancelled) setIsCameraReady(true)
       } catch (e) {
         if (cancelled) return
         console.error('Scanner start error:', e)
@@ -166,6 +169,12 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange, 
               className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_#qr-shaded-region]:hidden [&_img]:hidden"
             />
             <div className="qr-scanline" />
+            {!isCameraReady && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-100 dark:bg-gray-900 text-sm text-gray-500 dark:text-gray-400">
+                <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-brand-500" />
+                Memuat kamera...
+              </div>
+            )}
           </div>
         )}
       </div>
