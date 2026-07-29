@@ -821,10 +821,13 @@ span.flatpickr-weekday,
 }
 
 @keyframes qr-scanline {
-  0%   { top: 0%; }
-  50%  { top: calc(100% - 2px); }
-  100% { top: 0%; }
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(calc(100cqh - 100%)); }
+  100% { transform: translateY(0); }
 }
+
+/* Container context so scanline can travel full viewport height via cqh */
+#qr-reader-presensi-wrapper { container-type: size; }
 
 /* Hide html5-qrcode default scan region UI (white box, border lines) */
 #qr-reader-presensi > div { display: none !important; }
@@ -847,15 +850,17 @@ span.flatpickr-weekday,
 /* Style: Bank Jago (solid line + glow above) */
 .qr-scanline {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
   height: 8px;
   background: #f59e0b;
   background-image: none;
   background-size: auto;
-  box-shadow: 0 -8px 30px 8px rgba(245, 158, 11, 0.6), 0 -2px 8px 2px rgba(245, 158, 11, 0.8);
+  box-shadow: 0 -6px 12px 2px rgba(245, 158, 11, 0.5);
   animation: qr-scanline 6s ease-in-out infinite;
   pointer-events: none;
+  will-change: transform;
 }
 
 /* Arabic font utilities (sm-g5pj) */

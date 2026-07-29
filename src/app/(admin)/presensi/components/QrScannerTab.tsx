@@ -146,7 +146,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
         {cameraError ? (
           <div className="p-6 text-center text-sm text-red-500 dark:text-red-400">{cameraError}</div>
         ) : (
-          <div className="relative w-full overflow-hidden rounded-md" style={{ aspectRatio: "3/4" }}>
+          <div id="qr-reader-presensi-wrapper" className="relative w-full overflow-hidden rounded-md" style={{ aspectRatio: "3/4" }}>
             <div
               id={QR_ELEMENT_ID}
               ref={qrRef}
