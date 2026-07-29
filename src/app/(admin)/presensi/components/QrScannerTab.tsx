@@ -100,7 +100,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
       try {
         await instance.start(
           { facingMode: 'environment' },
-          { fps: 10, aspectRatio: 1.333, disableFlip: false },
+          { fps: 5, aspectRatio: 1.333, disableFlip: false },
           (decodedText) => {
             if (isProcessingRef.current) return
             isProcessingRef.current = true
