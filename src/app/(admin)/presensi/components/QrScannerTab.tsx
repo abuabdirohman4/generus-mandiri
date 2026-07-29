@@ -100,7 +100,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
       try {
         await instance.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: 250, aspectRatio: 1.0, disableFlip: false },
+          { fps: 10, aspectRatio: 1.333, disableFlip: false },
           (decodedText) => {
             if (isProcessingRef.current) return
             isProcessingRef.current = true
@@ -146,11 +146,14 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
         {cameraError ? (
           <div className="p-6 text-center text-sm text-red-500 dark:text-red-400">{cameraError}</div>
         ) : (
-          <div
-            id={QR_ELEMENT_ID}
-            ref={qrRef}
-            className="aspect-square w-full overflow-hidden rounded-md [&_video]:h-full [&_video]:w-full [&_video]:object-cover"
-          />
+          <div className="relative w-full overflow-hidden rounded-md" style={{ aspectRatio: "3/4" }}>
+            <div
+              id={QR_ELEMENT_ID}
+              ref={qrRef}
+              className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover [&_#qr-shaded-region]:hidden [&_img]:hidden"
+            />
+            <div className="qr-scanline" />
+          </div>
         )}
       </div>
 
