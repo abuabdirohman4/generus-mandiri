@@ -177,7 +177,7 @@ export default function MeetingAttendancePage() {
   const handleQrScanSuccess = (studentId: string) => {
     setLocalAttendance(prev => ({
       ...prev,
-      [studentId]: { status: 'H', reason: undefined }
+      [studentId]: { status: 'H', reason: undefined, check_in_time: new Date().toISOString() }
     }))
     // QR scan is already persisted → not a pending local edit. Clear any stale
     // dirty flag so the poll can keep this student in sync afterwards.
@@ -990,7 +990,12 @@ export default function MeetingAttendancePage() {
                   </div>
                 )}
                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span>{dayjs(meeting.date).format('dddd, DD MMMM YYYY')}</span>
+                  <span>
+                    {meeting.start_time && (
+                      <span> Pukul {meeting.start_time.slice(0, 5)} WIB, </span>
+                    )}
+                    {dayjs(meeting.date).format('dddd, DD MMMM YYYY')}
+                  </span>
                 </div>
               </div>
               
@@ -1036,7 +1041,7 @@ export default function MeetingAttendancePage() {
         />
 
         {activeTab === 'scan-qr' && !isReadOnlyMeeting && isDesaOrDaerahMeeting ? (
-          <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} />
+          <QrScannerTab meetingId={meetingId} students={visibleStudents} onAttendanceChange={handleQrScanSuccess} meetingStartTime={meeting?.start_time} meetingDate={meeting?.date ? getMeetingWibDateStr(meeting.date) : undefined} />
         ) : activeTab === 'live' && isDesaOrDaerahMeeting ? (
           <LivePresensiTab
             students={visibleStudents}

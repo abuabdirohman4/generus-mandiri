@@ -5,6 +5,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { toast } from 'sonner'
 import { useQrScanCooldown, type ScanResult } from '../hooks/useQrScanCooldown'
 import { playBeep } from '../utils/playBeep'
+import { isLate } from '../actions/attendance/logic'
 
 interface Student {
   id: string
@@ -15,6 +16,8 @@ interface QrScannerTabProps {
   meetingId: string
   students: Student[]
   onAttendanceChange?: (studentId: string) => void
+  meetingStartTime?: string | null
+  meetingDate?: string
 }
 
 const STATUS_LABEL: Record<ScanResult['status'], string> = {
@@ -39,8 +42,8 @@ function isCommonScanError(errorMessage: string): boolean {
   )
 }
 
-export default function QrScannerTab({ meetingId, students, onAttendanceChange }: QrScannerTabProps) {
-  const [history, setHistory] = useState<Array<ScanResult & { studentName?: string; at: number }>>([])
+export default function QrScannerTab({ meetingId, students, onAttendanceChange, meetingStartTime, meetingDate }: QrScannerTabProps) {
+  const [history, setHistory] = useState<Array<ScanResult & { studentName?: string; at: number; late?: boolean }>>([])
   const [cameraError, setCameraError] = useState<string | null>(null)
   const qrRef = useRef<HTMLDivElement>(null)
   const html5QrInstanceRef = useRef<Html5Qrcode | null>(null)
@@ -50,9 +53,19 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
   const handleResult = (result: ScanResult) => {
     const studentName = students.find((s) => s.id === result.studentId)?.name
 
+    // Late = derived from scan time vs meeting start (same rule as AttendanceTable/LivePresensiTab).
+    // Client timestamp is accurate enough since the late threshold is minutes.
+    const late =
+      result.status === 'marked' &&
+      isLate(new Date().toISOString(), meetingDate || '', meetingStartTime)
+
     if (result.status === 'marked') {
       playBeep()
-      toast.success(`${studentName || 'Siswa'} — Hadir`)
+      if (late) {
+        toast.warning(`${studentName || 'Siswa'} — Hadir (Telat)`)
+      } else {
+        toast.success(`${studentName || 'Siswa'} — Hadir`)
+      }
       if (result.studentId) onAttendanceChange?.(result.studentId)
     } else if (result.status === 'already_marked') {
       playBeep()
@@ -63,7 +76,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
       toast.error(result.message || 'Gagal memproses QR')
     }
 
-    setHistory((prev) => [{ ...result, studentName, at: Date.now() }, ...prev].slice(0, 10))
+    setHistory((prev) => [{ ...result, studentName, at: Date.now(), late }, ...prev].slice(0, 10))
   }
 
   const { handleScan } = useQrScanCooldown(meetingId, handleResult)
@@ -169,13 +182,15 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
                 <span
                   className={
                     item.status === 'marked'
-                      ? 'text-green-600 dark:text-green-400'
+                      ? item.late
+                        ? 'text-amber-500 dark:text-amber-400'
+                        : 'text-green-600 dark:text-green-400'
                       : item.status === 'already_marked'
                         ? 'text-blue-500 dark:text-blue-400'
                         : 'text-red-500 dark:text-red-400'
                   }
                 >
-                  {STATUS_LABEL[item.status]}
+                  {item.status === 'marked' && item.late ? 'Hadir (Telat)' : STATUS_LABEL[item.status]}
                 </span>
               </div>
             ))}
