@@ -18,7 +18,7 @@ import {
     sliceAttendanceByPeriod,
 } from './logic'
 
-export type { Dashboard, DashboardFilters, TodayMeeting, ClassPerformance, MeetingTypeDistribution } from '@/types/dashboard'
+
 
 /**
  * Get dashboard overview statistics

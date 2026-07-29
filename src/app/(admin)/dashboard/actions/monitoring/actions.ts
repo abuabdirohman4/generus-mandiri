@@ -23,7 +23,7 @@ import {
     deduplicateLogsForCombined,
 } from './logic'
 
-export type { ClassMonitoringData, ClassMonitoringFilters } from '@/types/dashboard'
+
 
 /**
  * Get class monitoring data for the given period and filters

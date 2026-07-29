@@ -10,7 +10,7 @@ export type {
     TodayMeeting,
     ClassPerformance,
     MeetingTypeDistribution,
-} from './overview/actions'
+} from '@/types/dashboard'
 
 // ─── Monitoring ───────────────────────────────────────────────────────────────
 export {
@@ -21,4 +21,4 @@ export {
 export type {
     ClassMonitoringData,
     ClassMonitoringFilters,
-} from './monitoring/actions'
+} from '@/types/dashboard'

@@ -12,7 +12,7 @@ import {
 import { sortClassesByMasterOrder, attachClassMasterMappings } from './logic'
 import type { Class } from '@/types/class'
 
-export type { Class }
+
 
 /**
  * Mendapatkan daftar kelas berdasarkan role user

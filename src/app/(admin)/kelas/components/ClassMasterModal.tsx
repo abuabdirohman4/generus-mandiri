@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { ClassMaster, createClassMaster, updateClassMaster } from '../actions/masters';
+import { createClassMaster, updateClassMaster } from '../actions/masters';
+import type { ClassMaster } from '@/types/class';
 import Modal from '@/components/ui/modal';
 import InputField from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';

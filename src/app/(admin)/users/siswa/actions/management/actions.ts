@@ -36,8 +36,7 @@ import {
 } from './logic'
 import { logActivity } from '@/lib/activityLogger'
 
-// Re-export centralized types
-export type { Student, TransferRequest }
+// Re-export centralized types via non-server barrel (management types)
 
 export interface ArchiveStudentInput {
     studentId: string

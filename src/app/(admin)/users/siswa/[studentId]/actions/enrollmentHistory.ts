@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { transformEnrollmentHistory, type EnrollmentHistoryRow } from './enrollmentHistoryLogic'
 
-export type { EnrollmentHistoryRow }
+
 
 /**
  * Riwayat kelas siswa per tahun ajaran (dari student_enrollments).

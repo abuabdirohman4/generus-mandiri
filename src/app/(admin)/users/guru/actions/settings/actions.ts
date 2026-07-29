@@ -15,7 +15,7 @@ import {
 } from './queries'
 import { extractMeetingFormSettings } from './logic'
 
-export type { MeetingFormSettings }
+
 
 /**
  * Get material permission for a teacher

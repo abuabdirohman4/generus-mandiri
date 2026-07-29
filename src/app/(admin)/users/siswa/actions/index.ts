@@ -22,18 +22,22 @@ export {
     getMeetingDetail,
     getStudentBiodata,
     updateStudentBiodata,
-    type Student,
     type StudentInfo,
     type AttendanceLog,
     type MonthlyStats,
     type AttendanceHistoryResponse,
 } from './students/actions'
 
+// Students types — re-export from canonical source (not from use-server file)
+export type { StudentWithClasses as Student } from '@/types/student'
+
 // Classes domain
 export {
     getAllClasses,
-    type Class,
 } from './classes/actions'
+
+// Classes types — re-export from canonical source (not from use-server file)
+export type { Class } from '@/types/class'
 
 // Management domain
 export {
@@ -44,9 +48,12 @@ export {
     rejectTransferRequest,
     cancelTransferRequest,
     getPendingTransferRequests,
+    getAllOrganisationsForTransfer,
     type ArchiveStudentInput,
     type ArchiveStudentResponse,
     type CreateTransferRequestInput,
     type TransferRequestResponse,
-    type TransferRequest,
 } from './management/actions'
+
+// Management types — re-export from canonical source (not from use-server file)
+export type { TransferRequest } from './students/permissions'

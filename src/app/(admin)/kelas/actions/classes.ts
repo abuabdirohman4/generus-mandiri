@@ -7,7 +7,7 @@ import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServ
 import { logActivity } from '@/lib/activityLogger'
 import type { ClassWithMaster } from '@/types/class'
 
-export type { ClassWithMaster }
+
 
 /**
  * Sort classes by minimum class_master sort_order

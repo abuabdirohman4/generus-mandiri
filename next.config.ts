@@ -16,6 +16,15 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: '5mb' },
   },
 
+  // Turbopack: SVGR rule for *.svg imports as React components (dev only)
+  // Key top-level (Next 15.3+) — experimental.turbopack is silently ignored.
+  // Blok webpack() di bawah tetap dipakai saat next build (Webpack).
+  turbopack: {
+    rules: {
+      '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
+    },
+  },
+
   // Bundle optimization
   webpack(config) {
     config.module.rules.push({

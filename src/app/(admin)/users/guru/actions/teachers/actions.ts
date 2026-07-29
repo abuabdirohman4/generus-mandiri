@@ -26,7 +26,7 @@ import {
 } from './logic'
 import { logActivity } from '@/lib/activityLogger'
 
-export type { TeacherData }
+
 
 /**
  * Create a new teacher

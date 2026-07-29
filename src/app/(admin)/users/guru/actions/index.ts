@@ -10,7 +10,7 @@ export {
 } from './teachers/actions'
 
 // ─── Teacher Types ─────────────────────────────────────────────────────────────
-export type { TeacherData } from './teachers/actions'
+export type { TeacherData } from './types'
 
 // ─── Class Assignments ─────────────────────────────────────────────────────────
 export {
@@ -29,7 +29,7 @@ export {
 } from './settings/actions'
 
 // ─── Settings Types ────────────────────────────────────────────────────────────
-export type { MeetingFormSettings } from './settings/actions'
+export type { MeetingFormSettings } from './types'
 
 // ─── Class Master Restrictions (Guru Desa/Daerah) ──────────────────────────────
 export {

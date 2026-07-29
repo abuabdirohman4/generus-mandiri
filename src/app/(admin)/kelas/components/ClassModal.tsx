@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { ClassWithMaster, createClassFromMaster, createCustomClass, updateClass } from '../actions/classes';
+import { createClassFromMaster, createCustomClass, updateClass } from '../actions/classes';
 import { getAllClassMasters } from '../actions/masters';
-import { ClassMaster } from '../actions/masters';
+import type { ClassWithMaster } from '@/types/class';
+import type { ClassMaster } from '@/types/class';
 import { useUserProfile } from '@/stores/userProfileStore';
 import { useDaerah } from '@/hooks/useDaerah';
 import { useDesa } from '@/hooks/useDesa';

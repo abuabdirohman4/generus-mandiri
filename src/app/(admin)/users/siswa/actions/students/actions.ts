@@ -46,8 +46,7 @@ import {
 } from './logic'
 import { getActiveAcademicYear } from '@/app/(admin)/tahun-ajaran/actions/academic-years'
 
-// Re-export centralized type for consistency
-export type Student = StudentWithClasses
+
 
 /**
  * Auto-detect current semester based on month

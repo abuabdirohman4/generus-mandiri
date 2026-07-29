@@ -6,7 +6,7 @@ import { handleApiError } from '@/lib/errorUtils'
 import { canAccessFeature, getCurrentUserProfile } from '@/lib/accessControlServer'
 import type { ClassMaster, ClassMasterData } from '@/types/class'
 
-export type { ClassMaster }
+
 
 // Get all class masters (visible to all authenticated users)
 export async function getAllClassMasters(): Promise<ClassMaster[]> {

@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { ClassWithMaster } from '../actions/classes'
-import { ClassMaster } from '../actions/masters'
+import type { ClassWithMaster, ClassMaster } from '@/types/class'
 
 interface KelasState {
   // Modal states for Kelompok tab
