@@ -187,7 +187,9 @@ export default function MeetingAttendancePage() {
       next.delete(studentId)
       return next
     })
-    void mutate()
+    // No mutate() here: local state updates the UI instantly and cross-device
+    // sync is handled by useAttendanceRealtime. A refetch on every scan re-runs
+    // 3 fat server actions and re-renders this large page — the scan-time lag.
   }
 
   const isDirty = useMemo(() => {
