@@ -41,7 +41,7 @@ export function useStudents({ classId, enabled = true }: UseStudentsOptions = {}
 
   const key = enabled && userId ? studentKeys.list(classId, userId) : null
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<Student[]>(
     key,
     () => fetcher(classId),
     {
