@@ -165,7 +165,7 @@ export default function QrScannerTab({ meetingId, students, onAttendanceChange }
           <div className="space-y-2">
             {history.map((item) => (
               <div key={item.at} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">{item.studentName || item.studentId || '-'}</span>
+                <span className="text-gray-700 dark:text-gray-300">{item.studentName || (item.status === 'not_in_meeting' || item.status === 'invalid_qr' ? '-' : item.studentId) || '-'}</span>
                 <span
                   className={
                     item.status === 'marked'
